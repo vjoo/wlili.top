@@ -17,7 +17,7 @@
     {
       "id": "image-compress",
       "name": "图片压缩",
-      "file": "压缩图片工具.html",
+      "file": "image-compress.html",
       "category": "image",
       "icon": "image",
       "iconColor": "blue",
@@ -28,7 +28,7 @@
     {
       "id": "image-layout",
       "name": "配图排版",
-      "file": "配图排版工具.html",
+      "file": "image-layout.html",
       "category": "image",
       "icon": "layout",
       "iconColor": "green",
@@ -39,7 +39,7 @@
     {
       "id": "unit-converter",
       "name": "在线换算",
-      "file": "在线换算工具.html",
+      "file": "unit-converter.html",
       "category": "convert",
       "icon": "ruler",
       "iconColor": "orange",
@@ -50,7 +50,7 @@
     {
       "id": "password-generator",
       "name": "密码生成器",
-      "file": "密码生成器.html",
+      "file": "password-gen.html",
       "category": "security",
       "icon": "lock",
       "iconColor": "purple",
@@ -61,7 +61,7 @@
     {
       "id": "ip-mascot",
       "name": "IP形象生成器",
-      "file": "IP形象生成器-v2.html",
+      "file": "ip-mascot.html",
       "category": "creative",
       "icon": "palette",
       "iconColor": "pink",
@@ -72,7 +72,7 @@
     {
       "id": "3d-filament",
       "name": "3D 耗材及预设管理",
-      "file": "3D耗材及预设管理.html",
+      "file": "filament-manager.html",
       "category": "reference",
       "icon": "layers",
       "iconColor": "teal",
@@ -83,7 +83,7 @@
     {
       "id": "phonetic-chart",
       "name": "48 音标速查表",
-      "file": "48 音标速查表.html",
+      "file": "phonetic-chart.html",
       "category": "reference",
       "icon": "book",
       "iconColor": "red",

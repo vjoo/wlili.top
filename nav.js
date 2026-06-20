@@ -6,13 +6,13 @@
 (function() {
   const TOOLS = [
     { name: '首页', href: 'index.html' },
-    { name: '图片压缩', href: '压缩图片工具.html' },
-    { name: '配图排版', href: '配图排版工具.html' },
-    { name: '在线换算', href: '在线换算工具.html' },
-    { name: '密码生成器', href: '密码生成器.html' },
-    { name: 'IP形象生成器', href: 'IP形象生成器-v2.html' },
-    { name: '3D耗材管理', href: '3D耗材及预设管理.html' },
-    { name: '音标速查', href: '48 音标速查表.html' }
+    { name: '图片压缩', href: 'image-compress.html' },
+    { name: '配图排版', href: 'image-layout.html' },
+    { name: '在线换算', href: 'unit-converter.html' },
+    { name: '密码生成器', href: 'password-gen.html' },
+    { name: 'IP形象生成器', href: 'ip-mascot.html' },
+    { name: '3D耗材管理', href: 'filament-manager.html' },
+    { name: '音标速查', href: 'phonetic-chart.html' }
   ];
 
   function getCurrentFile() {
