@@ -5,14 +5,14 @@
  */
 (function() {
   const TOOLS = [
-    { name: '首页', href: 'index.html' },
-    { name: '图片压缩', href: 'image-compress.html' },
-    { name: '配图排版', href: 'image-layout.html' },
-    { name: '在线换算', href: 'unit-converter.html' },
-    { name: '密码生成器', href: 'password-gen.html' },
-    { name: 'IP形象生成器', href: 'ip-mascot.html' },
-    { name: '3D耗材管理', href: 'filament-manager.html' },
-    { name: '音标速查', href: 'phonetic-chart.html' }
+    { name: '首页', href: '../index.html' },
+    { name: '图片压缩', href: './image-compress.html' },
+    { name: '配图排版', href: './image-layout.html' },
+    { name: '在线换算', href: './unit-converter.html' },
+    { name: '密码生成器', href: './password-gen.html' },
+    { name: 'IP形象生成器', href: './ip-mascot.html' },
+    { name: '3D耗材管理', href: './filament-manager.html' },
+    { name: '音标速查', href: './phonetic-chart.html' }
   ];
 
   function getCurrentFile() {
