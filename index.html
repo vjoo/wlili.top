@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WLi Tools - 工具聚合首页</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { touch-action: manipulation; }
+
+  :root {
+    --ink: #2B3041;
+    --ink-secondary: #424245;
+    --ink-tertiary: #6e6e73;
+    --ink-quaternary: #86868b;
+    --bg: #f5f5f7;
+    --bg-white: #ffffff;
+    --bg-elevated: #fbfbfd;
+    --border: #d2d2d7;
+    --border-light: #e8e8ed;
+    --link: #6366f1;
+    --link-hover: #0077ed;
+    --fill-black: #2B3041;
+    --fill-gray: #86868b;
+    --fill-gray-light: #d2d2d7;
+    --fill-white: #ffffff;
+    --green: #34c759;
+    --red: #ff3b30;
+    --orange: #ff9500;
+    --purple: #7B61FF;
+    --radius-sm: 8px;
+    --radius-md: 11px;
+    --radius-lg: 18px;
+    --radius-pill: 980px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
+    background: var(--bg-white);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ===== Global Nav ===== */
+  .global-nav {
+    background: var(--bg);
+    height: 48px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .global-nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 22px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-box {
+    width: 32px;
+    height: 32px;
+    background: var(--fill-black);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fill-white);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .nav-link {
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+  }
+  .nav-link:hover { opacity: 1; color: var(--link); }
+  .nav-link.active { opacity: 1; color: var(--link); font-weight: 500; }
+
+  /* ===== Page Hero ===== */
+  .page-hero {
+    text-align: center;
+    padding: 64px 22px 40px;
+    background: var(--bg-white);
+  }
+  .page-hero h1 {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 56px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .page-hero p {
+    font-size: 21px;
+    font-weight: 400;
+    color: var(--ink-tertiary);
+    line-height: 1.38;
+    letter-spacing: 0.011em;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ===== Section ===== */
+  .section { padding: 24px 0 64px; }
+  .section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 22px;
+  }
+
+  /* ===== Category Tabs ===== */
+  .category-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .category-tab {
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-light);
+    background: var(--bg-white);
+    color: var(--ink-secondary);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .category-tab:hover { border-color: var(--border); background: var(--bg); }
+  .category-tab.active {
+    background: var(--fill-black);
+    color: var(--fill-white);
+    border-color: var(--fill-black);
+  }
+
+  /* ===== Tool Grid ===== */
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .tool-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+    cursor: pointer;
+  }
+  .tool-card:hover {
+    border-color: var(--border);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+  .tool-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .tool-icon.blue { background: #EDF4FF; color: #2D6BC7; }
+  .tool-icon.green { background: #E8F5E9; color: #2E7D32; }
+  .tool-icon.orange { background: #FFF3E0; color: #E65100; }
+  .tool-icon.purple { background: #F3E5F5; color: #7B1FA2; }
+  .tool-icon.red { background: #FFEBEE; color: #C62828; }
+  .tool-icon.teal { background: #E0F2F1; color: #00695C; }
+  .tool-icon.indigo { background: #E8EAF6; color: #303F9F; }
+  .tool-icon.pink { background: #FCE4EC; color: #C2185B; }
+  .tool-name {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .tool-desc {
+    font-size: 13px;
+    color: var(--ink-tertiary);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .tool-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    background: var(--bg);
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+    color: var(--ink-quaternary);
+    font-weight: 500;
+    align-self: flex-start;
+    letter-spacing: 0.01em;
+  }
+
+  /* ===== Footer ===== */
+  .page-footer {
+    text-align: center;
+    padding: 32px 22px 48px;
+    font-size: 12px;
+    color: var(--ink-quaternary);
+    letter-spacing: -0.01em;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 1068px) {
+    .page-hero h1 { font-size: 48px; }
+    .tool-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 734px) {
+    .global-nav-content { padding: 0 16px; }
+    .nav-links { gap: 16px; }
+    .page-hero { padding: 48px 16px 32px; }
+    .page-hero h1 { font-size: 36px; }
+    .page-hero p { font-size: 17px; }
+    .section { padding: 20px 0 48px; }
+    .section-inner { padding: 0 16px; }
+    .tool-grid { grid-template-columns: 1fr; }
+    .category-tabs { gap: 6px; }
+    .category-tab { padding: 6px 14px; font-size: 13px; }
+  }
+
+  @media (max-width: 480px) {
+    .nav-links { display: none; }
+    .page-hero h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Global Nav -->
+<nav class="global-nav">
+  <div class="global-nav-content">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-box">WLi</div>
+      工具聚合首页
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">全部工具</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Hero -->
+<div class="page-hero">
+  <h1>WLi Tools</h1>
+  <p>简洁高效的在线工具集，一键直达，即用即走</p>
+</div>
+
+<!-- Main Section -->
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Category Tabs -->
+    <div class="category-tabs" id="categoryTabs">
+      <button class="category-tab active" data-cat="all">全部</button>
+      <button class="category-tab" data-cat="image">图像处理</button>
+      <button class="category-tab" data-cat="convert">换算工具</button>
+      <button class="category-tab" data-cat="security">安全隐私</button>
+      <button class="category-tab" data-cat="creative">创意生成</button>
+      <button class="category-tab" data-cat="reference">查询参考</button>
+    </div>
+
+    <!-- Tool Grid -->
+    <div class="tool-grid" id="toolGrid">
+      <a class="tool-card" href="压缩图片工具.html" data-cat="image" data-name="图片压缩">
+        <div class="tool-icon blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </div>
+        <div class="tool-name">图片压缩</div>
+        <div class="tool-desc">批量上传图片，智能压缩至更小体积，支持 JPG / PNG / WebP / AVIF 多格式导出</div>
+        <span class="tool-tag">图像处理</span>
+      </a>
+
+      <a class="tool-card" href="配图排版工具.html" data-cat="image" data-name="配图排版">
+        <div class="tool-icon green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </div>
+        <div class="tool-name">配图排版</div>
+        <div class="tool-desc">植物特写布局编辑器，轻松创建精美的图文排版设计</div>
+        <span class="tool-tag">图像处理</span>
+      </a>
+
+      <a class="tool-card" href="在线换算工具.html" data-cat="convert" data-name="在线换算">
+        <div class="tool-icon orange">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 12h16"/><path d="M12 4v16"/></svg>
+        </div>
+        <div class="tool-name">在线换算</div>
+        <div class="tool-desc">单位换算、货币汇率、重量转换、单价计算，多种换算精准快速</div>
+        <span class="tool-tag">换算工具</span>
+      </a>
+
+      <a class="tool-card" href="密码生成器.html" data-cat="security" data-name="密码生成器">
+        <div class="tool-icon purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="tool-name">密码生成器</div>
+        <div class="tool-desc">中文姓名衍生专属单词，生成支付/社交/重要账户三类安全密码</div>
+        <span class="tool-tag">安全隐私</span>
+      </a>
+
+      <a class="tool-card" href="IP形象生成器-v2.html" data-cat="creative" data-name="IP形象生成器">
+        <div class="tool-icon pink">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="tool-name">IP形象生成器</div>
+        <div class="tool-desc">AI 驱动的 IP 吉祥物提示词工作室，快速生成专业级角色设计提示词</div>
+        <span class="tool-tag">创意生成</span>
+      </a>
+
+      <a class="tool-card" href="3D耗材及预设管理.html" data-cat="reference" data-name="3D耗材管理">
+        <div class="tool-icon teal">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="tool-name">3D 耗材及预设管理</div>
+        <div class="tool-desc">拓竹 3D 打印机参数知识库，耗材管理与打印预设一站式管理</div>
+        <span class="tool-tag">查询参考</span>
+      </a>
+
+      <a class="tool-card" href="48 音标速查表.html" data-cat="reference" data-name="音标速查">
+        <div class="tool-icon red">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="tool-name">48 音标速查表</div>
+        <div class="tool-desc">英语 48 个国际音标完整速查，元音、辅音、双元音分类清晰展示</div>
+        <span class="tool-tag">查询参考</span>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- Footer -->
+<div class="page-footer">
+  Wli Tools — 简洁高效的在线工具集
+</div>
+
+<script>
+(function() {
+  const categoryTabs = document.querySelectorAll('.category-tab');
+  const toolCards = document.querySelectorAll('.tool-card');
+  let currentCategory = 'all';
+
+  function filterTools() {
+    toolCards.forEach(card => {
+      const cat = card.dataset.cat;
+      card.style.display = currentCategory === 'all' || cat === currentCategory ? '' : 'none';
+    });
+  }
+
+  categoryTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      categoryTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentCategory = tab.dataset.cat;
+      filterTools();
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WLi-在线换算工具</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { touch-action: manipulation; }
+
+  :root {
+    --ink: #2B3041;
+    --ink-secondary: #424245;
+    --ink-tertiary: #6e6e73;
+    --ink-quaternary: #86868b;
+    --bg: #f5f5f7;
+    --bg-white: #ffffff;
+    --bg-elevated: #fbfbfd;
+    --border: #d2d2d7;
+    --border-light: #e8e8ed;
+    --link: #6366f1;
+    --link-hover: #0077ed;
+    --fill-black: #2B3041;
+    --fill-gray: #86868b;
+    --fill-gray-light: #d2d2d7;
+    --fill-white: #ffffff;
+    --green: #34c759;
+    --red: #ff3b30;
+    --orange: #ff9500;
+    --radius-sm: 8px;
+    --radius-md: 11px;
+    --radius-lg: 18px;
+    --radius-pill: 980px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
+    background: var(--bg-white);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ===== Global Nav ===== */
+  .global-nav {
+    background: var(--bg);
+    height: 48px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .global-nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 22px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-box {
+    width: 32px;
+    height: 32px;
+    background: var(--fill-black);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fill-white);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .nav-link {
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+  }
+  .nav-link:hover { opacity: 1; color: var(--link); }
+  .nav-link.active { opacity: 1; color: var(--link); font-weight: 500; }
+
+  /* ===== Page Hero ===== */
+  .page-hero {
+    text-align: center;
+    padding: 48px 22px 32px;
+    background: var(--bg-white);
+  }
+  .page-hero h1 {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .page-hero p {
+    font-size: 21px;
+    font-weight: 400;
+    color: var(--ink-tertiary);
+    line-height: 1.38;
+    letter-spacing: 0.011em;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ===== Section ===== */
+  .section { padding: 32px 0 64px; }
+  .section-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 22px;
+  }
+
+  /* ===== Tab Navigation ===== */
+  .tab-nav {
+    display: flex;
+    gap: 2px;
+    background: var(--bg);
+    border-radius: var(--radius-pill);
+    padding: 2px;
+    margin-bottom: 28px;
+    border: 1px solid var(--border-light);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    border-radius: var(--radius-pill);
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--ink);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+    white-space: nowrap;
+    touch-action: manipulation;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .tab-btn.active {
+    background: var(--fill-black);
+    color: var(--fill-white);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  }
+  .tab-btn:not(.active):hover { background: rgba(0,0,0,0.04); }
+  .tab-btn:active { transform: scale(0.97); }
+  .tab-btn svg { width: 16px; height: 16px; }
+
+  /* ===== Converter Card ===== */
+  .converter-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .converter-card:hover { border-color: var(--border); }
+
+  .converter-header {
+    padding: 20px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .converter-title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    color: var(--ink);
+  }
+  .converter-subtitle {
+    font-size: 12px;
+    color: var(--ink-quaternary);
+    letter-spacing: -0.01em;
+  }
+
+  /* ===== Converter Body ===== */
+  .converter-body { padding: 20px 24px 24px; }
+
+  .converter-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    align-items: end;
+    margin-bottom: 16px;
+  }
+  .converter-row:last-child { margin-bottom: 0; }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .input-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink-tertiary);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .converter-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    color: var(--ink);
+    padding: 0 14px;
+    padding-right: 90px;
+    border-radius: var(--radius-md);
+    font-size: 22px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    outline: none;
+    transition: all 0.2s;
+    height: 52px;
+    line-height: 52px;
+  }
+  .converter-input:focus {
+    border-color: var(--link);
+    box-shadow: 0 0 0 3px rgba(0,102,204,0.12);
+    background: var(--bg-white);
+  }
+  .converter-input::placeholder { color: var(--ink-quaternary); font-size: 16px; line-height: 52px; }
+  .converter-input::-webkit-inner-spin-button,
+  .converter-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .converter-input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  .converter-input.result {
+    background: var(--bg-elevated);
+    color: var(--link);
+    font-weight: 500;
+  }
+
+  .unit-select-wrapper {
+    position: absolute;
+    right: 6px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+  }
+  .unit-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: var(--fill-black);
+    color: var(--fill-white);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 6px 28px 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    transition: opacity 0.2s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .unit-select:focus {
+    box-shadow: none;
+  }
+  .unit-select::-ms-expand { display: none; }
+  .unit-select:hover { opacity: 0.85; }
+  .unit-select option {
+    background: var(--fill-black);
+    color: var(--fill-white);
+  }
+
+  /* ===== Price Converter ===== */
+  .price-row {
+    margin-bottom: 16px;
+  }
+  .price-row:last-of-type {
+    margin-bottom: 0;
+  }
+  .price-row .input-wrapper {
+    width: 100%;
+  }
+
+  /* Swap Button */
+  .swap-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: var(--bg-white);
+    color: var(--ink-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+    flex-shrink: 0;
+    align-self: center;
+    touch-action: manipulation;
+  }
+  .swap-btn:hover {
+    border-color: var(--link);
+    color: var(--link);
+    background: rgba(0,102,204,0.04);
+  }
+  .swap-btn:active { transform: scale(0.9); }
+  .swap-btn svg { width: 16px; height: 16px; }
+
+  /* ===== Quick Reference ===== */
+  .quick-ref {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+  }
+  .quick-ref-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .quick-ref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  .quick-ref-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .quick-ref-item:hover { background: var(--bg-elevated); }
+  .quick-ref-from {
+    color: var(--ink-secondary);
+    font-size: 12px;
+  }
+  .quick-ref-arrow {
+    color: var(--ink-quaternary);
+    font-size: 11px;
+    margin: 0 6px;
+  }
+  .quick-ref-to {
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  /* ===== Category Selector ===== */
+  .category-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .category-chip {
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-light);
+    background: var(--bg-white);
+    color: var(--ink-secondary);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    white-space: nowrap;
+  }
+  .category-chip.active {
+    background: var(--fill-black);
+    color: var(--fill-white);
+    border-color: var(--fill-black);
+  }
+  .category-chip:not(.active):hover {
+    border-color: var(--border);
+    background: var(--bg);
+  }
+  .category-chip:active { transform: scale(0.96); }
+
+  /* ===== Rate Info ===== */
+  .rate-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--ink-quaternary);
+    margin-top: 12px;
+  }
+  .rate-info .rate-val {
+    color: var(--ink-secondary);
+    font-weight: 500;
+  }
+  .rate-info .rate-update {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--ink-quaternary);
+  }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    background: var(--fill-black);
+    color: var(--fill-white);
+    border-radius: var(--radius-lg);
+    padding: 16px 28px;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+  /* ===== Footer ===== */
+  .page-footer {
+    text-align: center;
+    padding: 32px 22px 48px;
+    font-size: 12px;
+    color: var(--ink-quaternary);
+    letter-spacing: -0.01em;
+  }
+  .page-footer a {
+    color: var(--link);
+    text-decoration: none;
+  }
+  .page-footer a:hover { text-decoration: underline; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 1068px) {
+    .page-hero h1 { font-size: 40px; }
+  }
+
+  @media (max-width: 734px) {
+    .global-nav-content { padding: 0 16px; }
+    .nav-links { gap: 16px; }
+    .page-hero { padding: 36px 16px 24px; }
+    .page-hero h1 { font-size: 32px; }
+    .page-hero p { font-size: 17px; }
+    .section { padding: 24px 0 48px; }
+    .section-inner { padding: 0 16px; }
+    .tab-nav { margin-bottom: 20px; }
+    .tab-btn { font-size: 13px; padding: 8px 0; }
+    .converter-row {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .swap-btn {
+      align-self: center;
+    }
+    .converter-input { font-size: 18px; height: 48px; padding: 0 12px; padding-right: 80px; line-height: 48px; }
+    .converter-input::placeholder { line-height: 48px; }
+    .converter-body { padding: 16px; }
+    .converter-header { padding: 16px 16px 0; }
+    .quick-ref-grid { grid-template-columns: 1fr; }
+    .category-bar { gap: 6px; }
+    .category-chip { font-size: 12px; padding: 5px 10px; }
+  }
+
+  @media (max-width: 480px) {
+    .nav-links { display: none; }
+    .tab-btn svg { display: none; }
+    .tab-btn { font-size: 12px; }
+  }
+</style>
+<script src="nav.js"></script>
+</head>
+<body>
+
+<!-- Page Hero -->
+<div class="page-hero">
+  <h1>在线换算</h1>
+  <p>多种换算，精准快速，一键搞定</p>
+</div>
+
+<!-- Main Section -->
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav" id="tabNav">
+      <button class="tab-btn active" data-tab="unit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 12h16"/><path d="M12 4v16"/></svg>
+        单位换算
+      </button>
+      <button class="tab-btn" data-tab="currency">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15 9.5c0-1.38-.9-2.5-2.5-2.5S10 8.12 10 9.5s1.12 2 3.5 2 2.5 1.12 2.5 2.5-.9 2.5-2.5 2.5S10 15.88 10 14.5"/></svg>
+        货币换算
+      </button>
+      <button class="tab-btn" data-tab="weight">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 00-3 3c0 1.3.84 2.4 2 2.82V20a1 1 0 002 0V8.82A3 3 0 0012 3z"/><path d="M6 10a3 3 0 00-3 3c0 1.3.84 2.4 2 2.82V20a1 1 0 002 0v-4.18A3 3 0 006 10z"/><path d="M18 10a3 3 0 00-3 3c0 1.3.84 2.4 2 2.82V20a1 1 0 002 0v-4.18A3 3 0 0018 10z"/></svg>
+        重量换算
+      </button>
+      <button class="tab-btn" data-tab="price">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        单价换算
+      </button>
+    </div>
+
+    <!-- Unit Converter -->
+    <div class="tab-panel" id="panel-unit">
+      <div class="category-bar" id="unitCategoryBar">
+        <button class="category-chip active" data-cat="length">长度</button>
+        <button class="category-chip" data-cat="area">面积</button>
+        <button class="category-chip" data-cat="volume">体积</button>
+        <button class="category-chip" data-cat="temperature">温度</button>
+        <button class="category-chip" data-cat="speed">速度</button>
+        <button class="category-chip" data-cat="data">数据存储</button>
+        <button class="category-chip" data-cat="time">时间</button>
+      </div>
+      <div class="converter-card">
+        <div class="converter-header">
+          <div>
+            <div class="converter-title" id="unitTitle">长度换算</div>
+            <div class="converter-subtitle" id="unitSubtitle">在公制、英制等单位之间自由转换</div>
+          </div>
+        </div>
+        <div class="converter-body">
+          <div class="converter-row">
+            <div class="input-group">
+              <label class="input-label">从</label>
+              <div class="input-wrapper">
+                <input type="number" class="converter-input" id="unitFrom" placeholder="输入数值" step="any">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="unitFromSelect"></select>
+                </div>
+              </div>
+            </div>
+            <button class="swap-btn" id="unitSwap" title="交换单位">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12h10"/><path d="M15 6l6 6-6 6"/><path d="M9 6L3 12l6 6"/></svg>
+            </button>
+            <div class="input-group">
+              <label class="input-label">到</label>
+              <div class="input-wrapper">
+                <input type="text" class="converter-input result" id="unitTo" readonly placeholder="结果">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="unitToSelect"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="quick-ref" id="unitQuickRef">
+            <div class="quick-ref-title">常用换算</div>
+            <div class="quick-ref-grid" id="unitQuickRefGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Currency Converter -->
+    <div class="tab-panel" id="panel-currency" style="display:none">
+      <div class="converter-card">
+        <div class="converter-header">
+          <div>
+            <div class="converter-title">货币换算</div>
+            <div class="converter-subtitle">基于最新汇率的实时货币换算</div>
+          </div>
+        </div>
+        <div class="converter-body">
+          <div class="converter-row">
+            <div class="input-group">
+              <label class="input-label">从</label>
+              <div class="input-wrapper">
+                <input type="number" class="converter-input" id="currencyFrom" placeholder="输入金额" step="any">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="currencyFromSelect"></select>
+                </div>
+              </div>
+            </div>
+            <button class="swap-btn" id="currencySwap" title="交换货币">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12h10"/><path d="M15 6l6 6-6 6"/><path d="M9 6L3 12l6 6"/></svg>
+            </button>
+            <div class="input-group">
+              <label class="input-label">到</label>
+              <div class="input-wrapper">
+                <input type="text" class="converter-input result" id="currencyTo" readonly placeholder="结果">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="currencyToSelect"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="rate-info" id="rateInfo">
+            <span>汇率</span>
+            <span class="rate-val" id="rateVal">1 USD = 7.2450 CNY</span>
+            <span class="rate-update" id="rateUpdate">参考汇率</span>
+          </div>
+          <div class="quick-ref" style="margin-top:16px">
+            <div class="quick-ref-title">常用货币</div>
+            <div class="quick-ref-grid" id="currencyQuickRefGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weight Converter -->
+    <div class="tab-panel" id="panel-weight" style="display:none">
+      <div class="converter-card">
+        <div class="converter-header">
+          <div>
+            <div class="converter-title">重量换算</div>
+            <div class="converter-subtitle">在千克、磅、盎司等重量单位之间精确转换</div>
+          </div>
+        </div>
+        <div class="converter-body">
+          <div class="converter-row">
+            <div class="input-group">
+              <label class="input-label">从</label>
+              <div class="input-wrapper">
+                <input type="number" class="converter-input" id="weightFrom" placeholder="输入数值" step="any">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="weightFromSelect"></select>
+                </div>
+              </div>
+            </div>
+            <button class="swap-btn" id="weightSwap" title="交换单位">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12h10"/><path d="M15 6l6 6-6 6"/><path d="M9 6L3 12l6 6"/></svg>
+            </button>
+            <div class="input-group">
+              <label class="input-label">到</label>
+              <div class="input-wrapper">
+                <input type="text" class="converter-input result" id="weightTo" readonly placeholder="结果">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="weightToSelect"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="quick-ref">
+            <div class="quick-ref-title">常用换算</div>
+            <div class="quick-ref-grid" id="weightQuickRefGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price Converter -->
+    <div class="tab-panel" id="panel-price" style="display:none">
+      <div class="category-bar" id="priceCategoryBar">
+        <button class="category-chip active" data-cat="weight">重量</button>
+        <button class="category-chip" data-cat="area">面积</button>
+        <button class="category-chip" data-cat="volume">体积</button>
+        <button class="category-chip" data-cat="length">长度</button>
+        <button class="category-chip" data-cat="time">时间</button>
+        <button class="category-chip" data-cat="data">数据存储</button>
+      </div>
+      <div class="converter-card">
+        <div class="converter-header">
+          <div>
+            <div class="converter-title" id="priceTitle">单价换算</div>
+            <div class="converter-subtitle" id="priceSubtitle">输入任意两项，自动计算第三项</div>
+          </div>
+        </div>
+        <div class="converter-body">
+          <div class="price-row">
+            <div class="input-group">
+              <label class="input-label">总价</label>
+              <div class="input-wrapper">
+                <input type="number" class="converter-input" id="priceTotal" placeholder="输入金额" step="any">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="priceCurrencySelect"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="price-row">
+            <div class="input-group">
+              <label class="input-label">数量</label>
+              <div class="input-wrapper">
+                <input type="number" class="converter-input" id="priceQuantity" placeholder="输入数量" step="any">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="priceQuantitySelect"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="price-row">
+            <div class="input-group">
+              <label class="input-label">单价</label>
+              <div class="input-wrapper">
+                <input type="text" class="converter-input result" id="priceUnitPrice" readonly placeholder="自动计算">
+                <div class="unit-select-wrapper">
+                  <select class="unit-select" id="priceUnitSelect" disabled></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="quick-ref">
+            <div class="quick-ref-title">常用换算</div>
+            <div class="quick-ref-grid" id="priceQuickRefGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Footer -->
+<div class="page-footer">
+  WLi Tools &mdash; 简洁高效的在线工具集
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  // ─── Toast ───────────────────────────────
+  const toastEl = document.getElementById('toast');
+  let toastTimer;
+  function showToast(msg) {
+    clearTimeout(toastTimer);
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  // ─── Tab Switching ──────────────────────
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      panels.forEach(p => p.style.display = p.id === 'panel-' + tab ? '' : 'none');
+    });
+  });
+
+  // ─── Number Formatting ───────────────────
+  function formatNumber(n) {
+    if (n === 0) return '0';
+    const abs = Math.abs(n);
+    if (abs >= 1e12) return n.toExponential(6);
+    if (abs >= 1e9) return n.toFixed(2);
+    if (abs >= 1) {
+      if (abs >= 1000) return n.toLocaleString('zh-CN', { maximumFractionDigits: 4 });
+      const s = n.toPrecision(10);
+      return parseFloat(s).toString();
+    }
+    if (abs >= 0.001) return parseFloat(n.toPrecision(8)).toString();
+    if (abs >= 0.0000001) return n.toExponential(4);
+    return n.toExponential(6);
+  }
+
+  // ═══════════════════════════════════════════
+  //  UNIT CONVERTER
+  // ═══════════════════════════════════════════
+  const unitData = {
+    length: {
+      title: '长度换算', subtitle: '在公制、英制等单位之间自由转换',
+      units: {
+        'm':   { name: '米 (m)',     factor: 1 },
+        'km':  { name: '千米 (km)',  factor: 1000 },
+        'cm':  { name: '厘米 (cm)',  factor: 0.01 },
+        'mm':  { name: '毫米 (mm)',  factor: 0.001 },
+        'um':  { name: '微米 (μm)',  factor: 0.000001 },
+        'in':  { name: '英寸 (in)',  factor: 0.0254 },
+        'ft':  { name: '英尺 (ft)',  factor: 0.3048 },
+        'yd':  { name: '码 (yd)',    factor: 0.9144 },
+        'mi':  { name: '英里 (mi)',  factor: 1609.344 },
+        'nmi': { name: '海里 (nmi)', factor: 1852 },
+        'li':  { name: '里',         factor: 500 },
+        'zhang': { name: '丈',       factor: 10/3 },
+        'chi': { name: '尺',         factor: 1/3 },
+        'cun': { name: '寸',         factor: 1/30 },
+      },
+      defaults: ['mm', 'cm'],
+      quickRef: [
+        { from: 1, fromUnit: 'km', toUnit: 'mi', label: '1 千米' },
+        { from: 1, fromUnit: 'mi', toUnit: 'km', label: '1 英里' },
+        { from: 1, fromUnit: 'ft', toUnit: 'm', label: '1 英尺' },
+        { from: 1, fromUnit: 'in', toUnit: 'cm', label: '1 英寸' },
+        { from: 1, fromUnit: 'm', toUnit: 'chi', label: '1 米' },
+        { from: 1, fromUnit: 'nmi', toUnit: 'km', label: '1 海里' },
+      ]
+    },
+    area: {
+      title: '面积换算', subtitle: '平方米、平方英尺、亩等单位转换',
+      units: {
+        'm2':   { name: '平方米 (m²)',   factor: 1 },
+        'km2':  { name: '平方千米 (km²)', factor: 1e6 },
+        'cm2':  { name: '平方厘米 (cm²)', factor: 0.0001 },
+        'ha':   { name: '公顷 (ha)',     factor: 10000 },
+        'mu':   { name: '亩',           factor: 666.6667 },
+        'ft2':  { name: '平方英尺 (ft²)', factor: 0.092903 },
+        'ac':   { name: '英亩 (ac)',    factor: 4046.8564 },
+        'mi2':  { name: '平方英里 (mi²)', factor: 2589988.11 },
+      },
+      defaults: ['m2', 'ft2'],
+      quickRef: [
+        { from: 1, fromUnit: 'm2', toUnit: 'ft2', label: '1 平方米' },
+        { from: 1, fromUnit: 'ha', toUnit: 'mu', label: '1 公顷' },
+        { from: 1, fromUnit: 'mu', toUnit: 'm2', label: '1 亩' },
+        { from: 1, fromUnit: 'ac', toUnit: 'm2', label: '1 英亩' },
+      ]
+    },
+    volume: {
+      title: '体积换算', subtitle: '升、毫升、加仑等体积单位转换',
+      units: {
+        'm3':    { name: '立方米 (m³)',   factor: 1000 },
+        'L':     { name: '升 (L)',         factor: 1 },
+        'mL':    { name: '毫升 (mL)',      factor: 0.001 },
+        'gal':   { name: '美加仑 (gal)',  factor: 3.78541 },
+        'qt':    { name: '夸脱 (qt)',     factor: 0.946353 },
+        'pt':    { name: '品脱 (pt)',     factor: 0.473176 },
+        'cup':   { name: '杯 (cup)',      factor: 0.236588 },
+        'floz':  { name: '液盎司 (fl oz)', factor: 0.0295735 },
+        'tbsp':  { name: '汤匙 (tbsp)',   factor: 0.0147868 },
+        'tsp':   { name: '茶匙 (tsp)',    factor: 0.00492892 },
+        'ft3':   { name: '立方英尺 (ft³)', factor: 28.3168 },
+      },
+      defaults: ['L', 'gal'],
+      quickRef: [
+        { from: 1, fromUnit: 'L', toUnit: 'mL', label: '1 升' },
+        { from: 1, fromUnit: 'gal', toUnit: 'L', label: '1 美加仑' },
+        { from: 1, fromUnit: 'cup', toUnit: 'mL', label: '1 杯' },
+        { from: 1, fromUnit: 'tbsp', toUnit: 'mL', label: '1 汤匙' },
+      ]
+    },
+    temperature: {
+      title: '温度换算', subtitle: '摄氏度、华氏度、开尔文之间转换',
+      units: {
+        'C': { name: '摄氏度 (°C)' },
+        'F': { name: '华氏度 (°F)' },
+        'K': { name: '开尔文 (K)' },
+      },
+      defaults: ['C', 'F'],
+      quickRef: [
+        { from: 0, fromUnit: 'C', toUnit: 'F', label: '水的冰点' },
+        { from: 100, fromUnit: 'C', toUnit: 'F', label: '水的沸点' },
+        { from: 37, fromUnit: 'C', toUnit: 'F', label: '体温' },
+        { from: -40, fromUnit: 'C', toUnit: 'F', label: '-40°C' },
+      ]
+    },
+    speed: {
+      title: '速度换算', subtitle: '米/秒、千米/时、英里/时等单位转换',
+      units: {
+        'ms':   { name: '米/秒 (m/s)',    factor: 1 },
+        'kmh':  { name: '千米/时 (km/h)', factor: 1/3.6 },
+        'mph':  { name: '英里/时 (mph)',  factor: 0.44704 },
+        'kn':   { name: '节 (kn)',        factor: 0.514444 },
+        'mach': { name: '马赫 (Mach)',   factor: 340.29 },
+        'c':    { name: '光速 (c)',      factor: 299792458 },
+      },
+      defaults: ['kmh', 'mph'],
+      quickRef: [
+        { from: 1, fromUnit: 'kmh', toUnit: 'mph', label: '1 千米/时' },
+        { from: 1, fromUnit: 'mph', toUnit: 'kmh', label: '1 英里/时' },
+        { from: 1, fromUnit: 'kn', toUnit: 'kmh', label: '1 节' },
+        { from: 1, fromUnit: 'mach', toUnit: 'kmh', label: '1 马赫' },
+      ]
+    },
+    data: {
+      title: '数据存储换算', subtitle: '比特、字节、KB、MB、GB等单位转换',
+      units: {
+        'bit':   { name: '比特 (bit)',     factor: 1/8 },
+        'B':     { name: '字节 (B)',       factor: 1 },
+        'KB':    { name: '千字节 (KB)',    factor: 1024 },
+        'MB':    { name: '兆字节 (MB)',    factor: 1048576 },
+        'GB':    { name: '吉字节 (GB)',    factor: 1073741824 },
+        'TB':    { name: '太字节 (TB)',    factor: 1099511627776 },
+        'PB':    { name: '拍字节 (PB)',    factor: 1125899906842624 },
+        'Kbit':  { name: '千比特 (Kbit)',  factor: 128 },
+        'Mbit':  { name: '兆比特 (Mbit)',  factor: 131072 },
+        'Gbit':  { name: '吉比特 (Gbit)',  factor: 134217728 },
+      },
+      defaults: ['MB', 'GB'],
+      quickRef: [
+        { from: 1, fromUnit: 'GB', toUnit: 'MB', label: '1 GB' },
+        { from: 1, fromUnit: 'TB', toUnit: 'GB', label: '1 TB' },
+        { from: 100, fromUnit: 'Mbit', toUnit: 'MB', label: '100 兆比特' },
+        { from: 1, fromUnit: 'PB', toUnit: 'TB', label: '1 PB' },
+      ]
+    },
+    time: {
+      title: '时间换算', subtitle: '秒、分、时、天等时间单位转换',
+      units: {
+        'ns':  { name: '纳秒 (ns)',   factor: 1e-9 },
+        'us':  { name: '微秒 (μs)',   factor: 1e-6 },
+        'ms':  { name: '毫秒 (ms)',   factor: 0.001 },
+        's':   { name: '秒 (s)',      factor: 1 },
+        'min': { name: '分钟 (min)',  factor: 60 },
+        'h':   { name: '小时 (h)',    factor: 3600 },
+        'd':   { name: '天 (d)',      factor: 86400 },
+        'wk':  { name: '周 (wk)',     factor: 604800 },
+        'mo':  { name: '月 (约30天)', factor: 2592000 },
+        'yr':  { name: '年 (约365天)', factor: 31536000 },
+      },
+      defaults: ['h', 'min'],
+      quickRef: [
+        { from: 1, fromUnit: 'd', toUnit: 'h', label: '1 天' },
+        { from: 1, fromUnit: 'wk', toUnit: 'd', label: '1 周' },
+        { from: 1, fromUnit: 'yr', toUnit: 'd', label: '1 年' },
+        { from: 1, fromUnit: 'h', toUnit: 's', label: '1 小时' },
+      ]
+    }
+  };
+
+  let currentUnitCat = 'length';
+  const unitFromInput = document.getElementById('unitFrom');
+  const unitToInput = document.getElementById('unitTo');
+  const unitFromSelect = document.getElementById('unitFromSelect');
+  const unitToSelect = document.getElementById('unitToSelect');
+  const unitTitle = document.getElementById('unitTitle');
+  const unitSubtitle = document.getElementById('unitSubtitle');
+  const unitQuickRefGrid = document.getElementById('unitQuickRefGrid');
+
+  function populateUnitSelects(cat) {
+    const data = unitData[cat];
+    unitTitle.textContent = data.title;
+    unitSubtitle.textContent = data.subtitle;
+    unitFromSelect.innerHTML = '';
+    unitToSelect.innerHTML = '';
+    Object.entries(data.units).forEach(([key, val]) => {
+      unitFromSelect.innerHTML += `<option value="${key}">${val.name}</option>`;
+      unitToSelect.innerHTML += `<option value="${key}">${val.name}</option>`;
+    });
+    unitFromSelect.value = data.defaults[0];
+    unitToSelect.value = data.defaults[1];
+    unitFromInput.value = '';
+    unitToInput.value = '';
+    renderUnitQuickRef(cat);
+  }
+
+  function convertUnit() {
+    const cat = currentUnitCat;
+    const data = unitData[cat];
+    const val = parseFloat(unitFromInput.value);
+    if (isNaN(val)) { unitToInput.value = ''; return; }
+
+    let result;
+    if (cat === 'temperature') {
+      const from = unitFromSelect.value;
+      const to = unitToSelect.value;
+      let celsius;
+      if (from === 'C') celsius = val;
+      else if (from === 'F') celsius = (val - 32) * 5/9;
+      else celsius = val - 273.15;
+
+      if (to === 'C') result = celsius;
+      else if (to === 'F') result = celsius * 9/5 + 32;
+      else result = celsius + 273.15;
+    } else {
+      const fromFactor = data.units[unitFromSelect.value].factor;
+      const toFactor = data.units[unitToSelect.value].factor;
+      result = val * fromFactor / toFactor;
+    }
+    unitToInput.value = formatNumber(result);
+  }
+
+  function renderUnitQuickRef(cat) {
+    const data = unitData[cat];
+    unitQuickRefGrid.innerHTML = '';
+    data.quickRef.forEach(item => {
+      let result;
+      if (cat === 'temperature') {
+        let celsius;
+        if (item.fromUnit === 'C') celsius = item.from;
+        else if (item.fromUnit === 'F') celsius = (item.from - 32) * 5/9;
+        else celsius = item.from - 273.15;
+        if (item.toUnit === 'C') result = celsius;
+        else if (item.toUnit === 'F') result = celsius * 9/5 + 32;
+        else result = celsius + 273.15;
+      } else {
+        result = item.from * data.units[item.fromUnit].factor / data.units[item.toUnit].factor;
+      }
+      const fromName = data.units[item.fromUnit].name.split('(')[0].trim();
+      const toName = data.units[item.toUnit].name.split('(')[0].trim();
+      unitQuickRefGrid.innerHTML += `
+        <div class="quick-ref-item" onclick="document.getElementById('unitFrom').value=${item.from};document.getElementById('unitFromSelect').value='${item.fromUnit}';document.getElementById('unitToSelect').value='${item.toUnit}';window._convertUnit();">
+          <span class="quick-ref-from">${item.label} =</span>
+          <span class="quick-ref-arrow">→</span>
+          <span class="quick-ref-to">${formatNumber(result)} ${toName}</span>
+        </div>`;
+    });
+  }
+
+  // Category bar
+  document.querySelectorAll('#unitCategoryBar .category-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#unitCategoryBar .category-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentUnitCat = chip.dataset.cat;
+      populateUnitSelects(currentUnitCat);
+    });
+  });
+
+  unitFromInput.addEventListener('input', convertUnit);
+  unitFromSelect.addEventListener('change', convertUnit);
+  unitToSelect.addEventListener('change', convertUnit);
+  document.getElementById('unitSwap').addEventListener('click', () => {
+    const tmp = unitFromSelect.value;
+    unitFromSelect.value = unitToSelect.value;
+    unitToSelect.value = tmp;
+    convertUnit();
+  });
+  window._convertUnit = convertUnit;
+
+  populateUnitSelects('length');
+
+  // ═══════════════════════════════════════════
+  //  CURRENCY CONVERTER
+  // ═══════════════════════════════════════════
+  // 汇率数据基于 2026-06-13 最新中间价 (来源: 中国外汇交易中心 / 中国银行)
+  // 以 CNY 为基准 1 CNY = ? 外币
+  const currencies = {
+    'CNY': { name: '人民币 (¥)',     symbol: '¥',  rate: 1 },
+    'USD': { name: '美元 ($)',       symbol: '$',  rate: 0.1468 },   // 1 USD = 6.8109 CNY
+    'EUR': { name: '欧元 (€)',       symbol: '€',  rate: 0.1273 },   // 1 EUR = 7.8576 CNY
+    'GBP': { name: '英镑 (£)',       symbol: '£',  rate: 0.1098 },   // 1 GBP = 9.1053 CNY
+    'JPY': { name: '日元 (¥)',       symbol: '¥',  rate: 23.58 },    // 100 JPY = 4.2419 CNY
+    'KRW': { name: '韩元 (₩)',       symbol: '₩',  rate: 224.3 },    // 1 CNY = 224.3 KRW
+    'HKD': { name: '港币 (HK$)',     symbol: 'HK$', rate: 1.150 },    // 1 HKD = 0.86926 CNY
+    'TWD': { name: '新台币 (NT$)',   symbol: 'NT$', rate: 4.666 },    // 1 TWD = 0.2143 CNY
+    'SGD': { name: '新加坡元 (S$)',   symbol: 'S$', rate: 0.1891 },   // 1 SGD = 5.2891 CNY
+    'AUD': { name: '澳元 (A$)',      symbol: 'A$', rate: 0.2092 },   // 1 AUD = 4.7807 CNY
+    'CAD': { name: '加元 (C$)',      symbol: 'C$', rate: 0.2059 },   // 1 CAD = 4.8559 CNY
+    'CHF': { name: '瑞士法郎 (Fr)',  symbol: 'Fr', rate: 0.1171 },   // 1 CHF = 8.5399 CNY
+    'THB': { name: '泰铢 (฿)',       symbol: '฿',  rate: 4.836 },    // 1 THB = 0.2068 CNY
+    'MYR': { name: '马来西亚令吉 (RM)', symbol: 'RM', rate: 0.5978 }, // 1 MYR = 1.6729 CNY
+    'INR': { name: '印度卢比 (₹)',   symbol: '₹',  rate: 11.43 },    // 1 INR = 0.0875 CNY
+    'RUB': { name: '俄罗斯卢布 (₽)', symbol: '₽',  rate: 10.63 },    // 1 RUB = 0.0941 CNY
+    'BRL': { name: '巴西雷亚尔 (R$)', symbol: 'R$', rate: 0.7531 },   // 1 BRL = 1.3277 CNY
+    'MXN': { name: '墨西哥比索 (MX$)', symbol: 'MX$', rate: 2.537 },  // 1 MXN = 0.3942 CNY
+    'PHP': { name: '菲律宾比索 (₱)', symbol: '₱', rate: 9.025 },     // 1 PHP = 0.1108 CNY
+    'VND': { name: '越南盾 (₫)',     symbol: '₫',  rate: 3891 },     // 1 VND = 0.000257 CNY
+  };
+
+  const currencyFromInput = document.getElementById('currencyFrom');
+  const currencyToInput = document.getElementById('currencyTo');
+  const currencyFromSelect = document.getElementById('currencyFromSelect');
+  const currencyToSelect = document.getElementById('currencyToSelect');
+  const rateVal = document.getElementById('rateVal');
+
+  // Populate selects
+  Object.entries(currencies).forEach(([code, data]) => {
+    currencyFromSelect.innerHTML += `<option value="${code}">${data.name}</option>`;
+    currencyToSelect.innerHTML += `<option value="${code}">${data.name}</option>`;
+  });
+  currencyFromSelect.value = 'USD';
+  currencyToSelect.value = 'CNY';
+
+  function convertCurrency() {
+    const val = parseFloat(currencyFromInput.value);
+    if (isNaN(val)) { currencyToInput.value = ''; return; }
+    const fromRate = currencies[currencyFromSelect.value].rate;
+    const toRate = currencies[currencyToSelect.value].rate;
+    const result = val * toRate / fromRate;
+    currencyToInput.value = formatNumber(result);
+    const crossRate = toRate / fromRate;
+    rateVal.textContent = `1 ${currencyFromSelect.value} = ${formatNumber(crossRate)} ${currencyToSelect.value}`;
+  }
+
+  currencyFromInput.addEventListener('input', convertCurrency);
+  currencyFromSelect.addEventListener('change', convertCurrency);
+  currencyToSelect.addEventListener('change', convertCurrency);
+  document.getElementById('currencySwap').addEventListener('click', () => {
+    const tmp = currencyFromSelect.value;
+    currencyFromSelect.value = currencyToSelect.value;
+    currencyToSelect.value = tmp;
+    convertCurrency();
+  });
+
+  // Currency quick ref
+  const currencyQuickRefGrid = document.getElementById('currencyQuickRefGrid');
+  const popularPairs = [
+    ['CNY','USD'], ['CNY','EUR'], ['CNY','JPY'], ['CNY','GBP'],
+    ['USD','EUR'], ['USD','JPY'], ['USD','KRW'], ['EUR','GBP']
+  ];
+  popularPairs.forEach(([from, to]) => {
+    const rate = currencies[to].rate / currencies[from].rate;
+    currencyQuickRefGrid.innerHTML += `
+      <div class="quick-ref-item" onclick="document.getElementById('currencyFromSelect').value='${from}';document.getElementById('currencyToSelect').value='${to}';window._convertCurrency();">
+        <span class="quick-ref-from">1 ${from}</span>
+        <span class="quick-ref-arrow">→</span>
+        <span class="quick-ref-to">${formatNumber(rate)} ${to}</span>
+      </div>`;
+  });
+  window._convertCurrency = convertCurrency;
+
+  // ═══════════════════════════════════════════
+  //  WEIGHT CONVERTER
+  // ═══════════════════════════════════════════
+  const weightUnits = {
+    'kg':    { name: '千克 (kg)',     factor: 1 },
+    'g':     { name: '克 (g)',        factor: 0.001 },
+    'mg':    { name: '毫克 (mg)',     factor: 0.000001 },
+    't':     { name: '吨 (t)',        factor: 1000 },
+    'lb':    { name: '磅 (lb)',       factor: 0.453592 },
+    'oz':    { name: '盎司 (oz)',     factor: 0.0283495 },
+    'st':    { name: '英石 (st)',     factor: 6.35029 },
+    'ct':    { name: '克拉 (ct)',     factor: 0.0002 },
+    'jin':   { name: '斤',           factor: 0.5 },
+    'liang': { name: '两',           factor: 0.05 },
+    'dan':   { name: '担',           factor: 50 },
+    'grain': { name: '格令 (gr)',     factor: 0.0000647989 },
+    'dram':  { name: '打兰 (dr)',     factor: 0.00388793 },
+    'long_tn': { name: '长吨 (UK ton)', factor: 1016.0469 },
+    'short_tn': { name: '短吨 (US ton)', factor: 907.1847 },
+  };
+
+  const weightFromInput = document.getElementById('weightFrom');
+  const weightToInput = document.getElementById('weightTo');
+  const weightFromSelect = document.getElementById('weightFromSelect');
+  const weightToSelect = document.getElementById('weightToSelect');
+  const weightQuickRefGrid = document.getElementById('weightQuickRefGrid');
+
+  Object.entries(weightUnits).forEach(([key, val]) => {
+    weightFromSelect.innerHTML += `<option value="${key}">${val.name}</option>`;
+    weightToSelect.innerHTML += `<option value="${key}">${val.name}</option>`;
+  });
+  weightFromSelect.value = 'kg';
+  weightToSelect.value = 'g';
+
+  function convertWeight() {
+    const val = parseFloat(weightFromInput.value);
+    if (isNaN(val)) { weightToInput.value = ''; return; }
+    const fromFactor = weightUnits[weightFromSelect.value].factor;
+    const toFactor = weightUnits[weightToSelect.value].factor;
+    const result = val * fromFactor / toFactor;
+    weightToInput.value = formatNumber(result);
+  }
+
+  weightFromInput.addEventListener('input', convertWeight);
+  weightFromSelect.addEventListener('change', convertWeight);
+  weightToSelect.addEventListener('change', convertWeight);
+  document.getElementById('weightSwap').addEventListener('click', () => {
+    const tmp = weightFromSelect.value;
+    weightFromSelect.value = weightToSelect.value;
+    weightToSelect.value = tmp;
+    convertWeight();
+  });
+
+  // Weight quick ref
+  const weightQuickRef = [
+    { from: 1, fromUnit: 'kg', toUnit: 'lb', label: '1 千克' },
+    { from: 1, fromUnit: 'lb', toUnit: 'g', label: '1 磅' },
+    { from: 1, fromUnit: 'jin', toUnit: 'g', label: '1 斤' },
+    { from: 1, fromUnit: 'oz', toUnit: 'g', label: '1 盎司' },
+    { from: 1, fromUnit: 'ct', toUnit: 'mg', label: '1 克拉' },
+    { from: 1, fromUnit: 't', toUnit: 'kg', label: '1 吨' },
+  ];
+  weightQuickRef.forEach(item => {
+    const result = item.from * weightUnits[item.fromUnit].factor / weightUnits[item.toUnit].factor;
+    const toName = weightUnits[item.toUnit].name.split('(')[0].trim();
+    weightQuickRefGrid.innerHTML += `
+      <div class="quick-ref-item" onclick="document.getElementById('weightFrom').value=${item.from};document.getElementById('weightFromSelect').value='${item.fromUnit}';document.getElementById('weightToSelect').value='${item.toUnit}';window._convertWeight();">
+        <span class="quick-ref-from">${item.label} =</span>
+        <span class="quick-ref-arrow">→</span>
+        <span class="quick-ref-to">${formatNumber(result)} ${toName}</span>
+      </div>`;
+  });
+  window._convertWeight = convertWeight;
+
+  // ═══════════════════════════════════════════
+  //  PRICE (UNIT PRICE) CONVERTER
+  // ═══════════════════════════════════════════
+
+  const priceQuantityUnits = {
+    weight: {
+      title: '重量单价换算', subtitle: '输入总价和数量，快速计算每单位价格',
+      units: {
+        'kg': { name: '千克 (kg)', factor: 1 },
+        'g': { name: '克 (g)', factor: 0.001 },
+        'mg': { name: '毫克 (mg)', factor: 0.000001 },
+        't': { name: '吨 (t)', factor: 1000 },
+        'lb': { name: '磅 (lb)', factor: 0.453592 },
+        'oz': { name: '盎司 (oz)', factor: 0.0283495 },
+        'jin': { name: '斤', factor: 0.5 },
+        'liang': { name: '两', factor: 0.05 },
+      },
+      defaults: ['kg', 'g'],
+      quickRef: [
+        { total: 500, totalCurr: 'CNY', qty: 1, qtyUnit: 'kg', label: '¥500/千克' },
+        { total: 50, totalCurr: 'CNY', qty: 500, qtyUnit: 'g', label: '¥50/500克' },
+        { total: 100, totalCurr: 'CNY', qty: 1, qtyUnit: 'jin', label: '¥100/斤' },
+        { total: 30, totalCurr: 'CNY', qty: 1, qtyUnit: 'lb', label: '¥30/磅' },
+      ]
+    },
+    area: {
+      title: '面积单价换算', subtitle: '输入总价和面积，快速计算每单位面积价格',
+      units: {
+        'm2': { name: '平方米 (m²)', factor: 1 },
+        'km2': { name: '平方千米 (km²)', factor: 1e6 },
+        'cm2': { name: '平方厘米 (cm²)', factor: 0.0001 },
+        'ha': { name: '公顷 (ha)', factor: 10000 },
+        'mu': { name: '亩', factor: 666.6667 },
+        'ft2': { name: '平方英尺 (ft²)', factor: 0.092903 },
+        'ac': { name: '英亩 (ac)', factor: 4046.8564 },
+      },
+      defaults: ['m2', 'ft2'],
+      quickRef: [
+        { total: 10000, totalCurr: 'CNY', qty: 1, qtyUnit: 'm2', label: '¥10000/平方米' },
+        { total: 5000, totalCurr: 'CNY', qty: 1, qtyUnit: 'mu', label: '¥5000/亩' },
+        { total: 100000, totalCurr: 'CNY', qty: 1, qtyUnit: 'ha', label: '¥10万/公顷' },
+      ]
+    },
+    volume: {
+      title: '体积单价换算', subtitle: '输入总价和体积，快速计算每单位体积价格',
+      units: {
+        'L': { name: '升 (L)', factor: 1 },
+        'mL': { name: '毫升 (mL)', factor: 0.001 },
+        'm3': { name: '立方米 (m³)', factor: 1000 },
+        'gal': { name: '美加仑 (gal)', factor: 3.78541 },
+        'cup': { name: '杯 (cup)', factor: 0.236588 },
+        'floz': { name: '液盎司 (fl oz)', factor: 0.0295735 },
+      },
+      defaults: ['L', 'mL'],
+      quickRef: [
+        { total: 8, totalCurr: 'CNY', qty: 1, qtyUnit: 'L', label: '¥8/升' },
+        { total: 5, totalCurr: 'CNY', qty: 500, qtyUnit: 'mL', label: '¥5/500毫升' },
+        { total: 30, totalCurr: 'CNY', qty: 1, qtyUnit: 'gal', label: '¥30/加仑' },
+      ]
+    },
+    length: {
+      title: '长度单价换算', subtitle: '输入总价和长度，快速计算每单位长度价格',
+      units: {
+        'm': { name: '米 (m)', factor: 1 },
+        'km': { name: '千米 (km)', factor: 1000 },
+        'cm': { name: '厘米 (cm)', factor: 0.01 },
+        'mm': { name: '毫米 (mm)', factor: 0.001 },
+        'ft': { name: '英尺 (ft)', factor: 0.3048 },
+        'yd': { name: '码 (yd)', factor: 0.9144 },
+        'in': { name: '英寸 (in)', factor: 0.0254 },
+        'mi': { name: '英里 (mi)', factor: 1609.344 },
+      },
+      defaults: ['m', 'ft'],
+      quickRef: [
+        { total: 50, totalCurr: 'CNY', qty: 1, qtyUnit: 'm', label: '¥50/米' },
+        { total: 100, totalCurr: 'CNY', qty: 1, qtyUnit: 'ft', label: '¥100/英尺' },
+        { total: 5, totalCurr: 'CNY', qty: 1, qtyUnit: 'cm', label: '¥5/厘米' },
+      ]
+    },
+    time: {
+      title: '时间单价换算', subtitle: '输入总价和时间，快速计算每单位时间价格',
+      units: {
+        's': { name: '秒 (s)', factor: 1 },
+        'min': { name: '分钟 (min)', factor: 60 },
+        'h': { name: '小时 (h)', factor: 3600 },
+        'd': { name: '天 (d)', factor: 86400 },
+        'wk': { name: '周 (wk)', factor: 604800 },
+        'mo': { name: '月 (约30天)', factor: 2592000 },
+        'yr': { name: '年 (约365天)', factor: 31536000 },
+      },
+      defaults: ['h', 'd'],
+      quickRef: [
+        { total: 100, totalCurr: 'CNY', qty: 1, qtyUnit: 'h', label: '¥100/小时' },
+        { total: 500, totalCurr: 'CNY', qty: 1, qtyUnit: 'd', label: '¥500/天' },
+        { total: 10000, totalCurr: 'CNY', qty: 1, qtyUnit: 'mo', label: '¥10000/月' },
+      ]
+    },
+    data: {
+      title: '数据单价换算', subtitle: '输入总价和数据量，快速计算每单位数据价格',
+      units: {
+        'B': { name: '字节 (B)', factor: 1 },
+        'KB': { name: '千字节 (KB)', factor: 1024 },
+        'MB': { name: '兆字节 (MB)', factor: 1048576 },
+        'GB': { name: '吉字节 (GB)', factor: 1073741824 },
+        'TB': { name: '太字节 (TB)', factor: 1099511627776 },
+      },
+      defaults: ['GB', 'MB'],
+      quickRef: [
+        { total: 50, totalCurr: 'CNY', qty: 1, qtyUnit: 'GB', label: '¥50/GB' },
+        { total: 10, totalCurr: 'CNY', qty: 1, qtyUnit: 'MB', label: '¥10/MB' },
+        { total: 200, totalCurr: 'CNY', qty: 1, qtyUnit: 'TB', label: '¥200/TB' },
+      ]
+    }
+  };
+
+  let currentPriceCat = 'weight';
+  const priceTotalInput = document.getElementById('priceTotal');
+  const priceQuantityInput = document.getElementById('priceQuantity');
+  const priceUnitPriceInput = document.getElementById('priceUnitPrice');
+  const priceCurrencySelect = document.getElementById('priceCurrencySelect');
+  const priceQuantitySelect = document.getElementById('priceQuantitySelect');
+  const priceUnitSelect = document.getElementById('priceUnitSelect');
+  const priceTitle = document.getElementById('priceTitle');
+  const priceSubtitle = document.getElementById('priceSubtitle');
+  const priceQuickRefGrid = document.getElementById('priceQuickRefGrid');
+
+  // Populate currency select (reuse existing currencies)
+  Object.entries(currencies).forEach(([code, data]) => {
+    priceCurrencySelect.innerHTML += `<option value="${code}">${data.name}</option>`;
+  });
+  priceCurrencySelect.value = 'CNY';
+
+  function populatePriceSelects(cat) {
+    const data = priceQuantityUnits[cat];
+    priceTitle.textContent = data.title;
+    priceSubtitle.textContent = data.subtitle;
+    priceQuantitySelect.innerHTML = '';
+    Object.entries(data.units).forEach(([key, val]) => {
+      priceQuantitySelect.innerHTML += `<option value="${key}">${val.name}</option>`;
+    });
+    priceQuantitySelect.value = data.defaults[0];
+    updatePriceUnitLabel();
+    priceTotalInput.value = '';
+    priceQuantityInput.value = '';
+    priceUnitPriceInput.value = '';
+    renderPriceQuickRef(cat);
+  }
+
+  function updatePriceUnitLabel() {
+    const cat = currentPriceCat;
+    const data = priceQuantityUnits[cat];
+    const qtyUnit = data.units[priceQuantitySelect.value];
+    const qtyName = qtyUnit.name.split('(')[0].trim();
+    const currCode = priceCurrencySelect.value;
+    const currSymbol = currencies[currCode].symbol;
+    priceUnitSelect.innerHTML = `<option value="combined">${currSymbol}/${qtyName}</option>`;
+  }
+
+  function convertPrice() {
+    const cat = currentPriceCat;
+    const data = priceQuantityUnits[cat];
+    const totalVal = parseFloat(priceTotalInput.value);
+    const qtyVal = parseFloat(priceQuantityInput.value);
+    const unitVal = parseFloat(priceUnitPriceInput.value);
+
+    const hasTotal = !isNaN(totalVal);
+    const hasQty = !isNaN(qtyVal);
+    const hasUnit = !isNaN(unitVal);
+
+    if (hasTotal && hasQty) {
+      // Calculate unit price: total / qty
+      const unitPrice = totalVal / qtyVal;
+      priceUnitPriceInput.value = formatNumber(unitPrice);
+      priceUnitPriceInput.classList.add('result');
+      priceUnitPriceInput.readOnly = true;
+    } else if (hasTotal && hasUnit) {
+      // Calculate quantity: total / unitPrice
+      const qty = totalVal / unitVal;
+      priceQuantityInput.value = formatNumber(qty);
+      priceQuantityInput.readOnly = false;
+    } else if (hasQty && hasUnit) {
+      // Calculate total: qty * unitPrice
+      const total = qtyVal * unitVal;
+      priceTotalInput.value = formatNumber(total);
+      priceTotalInput.readOnly = false;
+    } else {
+      priceUnitPriceInput.value = '';
+    }
+    updatePriceUnitLabel();
+  }
+
+  function renderPriceQuickRef(cat) {
+    const data = priceQuantityUnits[cat];
+    priceQuickRefGrid.innerHTML = '';
+    data.quickRef.forEach(item => {
+      const unitPrice = item.total / item.qty;
+      const qtyName = data.units[item.qtyUnit].name.split('(')[0].trim();
+      const currSymbol = currencies[item.totalCurr].symbol;
+      priceQuickRefGrid.innerHTML += `
+        <div class="quick-ref-item" onclick="document.getElementById('priceTotal').value=${item.total};document.getElementById('priceCurrencySelect').value='${item.totalCurr}';document.getElementById('priceQuantity').value=${item.qty};document.getElementById('priceQuantitySelect').value='${item.qtyUnit}';window._convertPrice();">
+          <span class="quick-ref-from">${item.label} =</span>
+          <span class="quick-ref-arrow">→</span>
+          <span class="quick-ref-to">${currSymbol}${formatNumber(unitPrice)}/${qtyName}</span>
+        </div>`;
+    });
+  }
+
+  // Category bar
+  document.querySelectorAll('#priceCategoryBar .category-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#priceCategoryBar .category-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentPriceCat = chip.dataset.cat;
+      populatePriceSelects(currentPriceCat);
+    });
+  });
+
+  priceTotalInput.addEventListener('input', convertPrice);
+  priceQuantityInput.addEventListener('input', convertPrice);
+  priceCurrencySelect.addEventListener('change', () => { updatePriceUnitLabel(); convertPrice(); });
+  priceQuantitySelect.addEventListener('change', () => { updatePriceUnitLabel(); convertPrice(); });
+
+  window._convertPrice = convertPrice;
+  populatePriceSelects('weight');
+
+})();
+</script>
+</body>
+</html>
