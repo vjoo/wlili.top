@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<!-- Content Security Policy - WLi Tools -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>48 音标速查表</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <style>
+/* ============================================
+   WLi Tools - 在线工具集
+   Copyright (c) 2025 WLi. All rights reserved.
+   Developer: WLi
+   ============================================ */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#ffffff;
@@ -260,6 +267,11 @@ html,body{
 <div class="audio-error" id="audioError">无法播放音频，请检查网络连接</div>
 
 <script>
+/* ============================================
+   WLi Tools - 在线工具集
+   Copyright (c) 2025 WLi. All rights reserved.
+   Developer: WLi
+   ============================================ */
 // 新东方音标音频基础URL
 var AUDIO_BASE_URL='https://www.xdf.cn/zhuanti/bd-phonetic-alphabet-card/';
 
