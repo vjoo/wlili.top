@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- Content Security Policy - WLi Studio -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self';">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="WLi Studio - 个人创意工作室，提供在线工具集、设计作品集与音乐媒体库">
+<title>WLi Studio</title>
+<style>
+/* ============================================
+   WLi Studio - 个人创意工作室首页
+   Copyright (c) 2025 WLi. All rights reserved.
+   Developer: WLi
+   ============================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { touch-action: manipulation; }
+
+:root {
+  --ink: #1d1d1f;
+  --ink-secondary: #424245;
+  --ink-tertiary: #86868b;
+  --bg: #ffffff;
+  --bg-secondary: #f5f5f7;
+  --border: #d2d2d7;
+  --border-light: #e8e8ed;
+  --link: #0071e3;
+  --link-hover: #0077ed;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 980px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Hero ===== */
+.hero {
+  text-align: center;
+  padding: 120px 22px 60px;
+}
+.hero-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-size: 64px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+.hero-subtitle {
+  font-size: 21px;
+  font-weight: 400;
+  color: var(--ink-tertiary);
+  line-height: 1.4;
+  letter-spacing: 0.011em;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ===== Section ===== */
+.section {
+  flex: 1;
+  padding: 20px 0 80px;
+}
+.section-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 22px;
+}
+
+/* ===== Card Grid ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover {
+  border-color: var(--border);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+  transform: translateY(-3px);
+}
+.card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.card-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-tertiary);
+  transition: all 0.25s;
+  flex-shrink: 0;
+}
+.card:hover .card-arrow {
+  background: var(--link);
+  color: #fff;
+  transform: translateX(2px);
+}
+
+.card-desc {
+  font-size: 14px;
+  color: var(--ink-tertiary);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  font-weight: 500;
+  align-self: flex-start;
+  letter-spacing: 0.01em;
+}
+
+/* ===== Footer ===== */
+.page-footer {
+  text-align: center;
+  padding: 32px 22px 48px;
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  letter-spacing: -0.01em;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1068px) {
+  .hero-title { font-size: 52px; }
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 734px) {
+  .hero { padding: 80px 16px 40px; }
+  .hero-title { font-size: 40px; }
+  .hero-subtitle { font-size: 17px; }
+  .section { padding: 16px 0 48px; }
+  .section-inner { padding: 0 16px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .card { padding: 24px 20px; }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 36px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <h1 class="hero-title">WLi Studio</h1>
+  <p class="hero-subtitle">个人创意工作室，探索工具、设计与音乐的交汇点</p>
+</div>
+
+<!-- Main Section -->
+<section class="section">
+  <div class="section-inner">
+    <div class="card-grid">
+
+      <a class="card" href="./tools/index.html">
+        <div class="card-header">
+          <div class="card-title">Tools</div>
+          <div class="card-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+        <div class="card-desc">在线工具集，涵盖图像处理、单位换算、密码生成、IP 设计等实用工具，简洁高效，一键直达</div>
+        <span class="card-badge">已上线</span>
+      </a>
+
+      <a class="card" href="./ui/index.html">
+        <div class="card-header">
+          <div class="card-title">UI</div>
+          <div class="card-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+        <div class="card-desc">设计作品集，展示界面设计、交互原型与视觉探索，记录创意灵感与实践经验</div>
+        <span class="card-badge">即将上线</span>
+      </a>
+
+      <a class="card" href="./zhonglele/index.html">
+        <div class="card-header">
+          <div class="card-title">Zhonglele</div>
+          <div class="card-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+        <div class="card-desc">音乐媒体库，整理与分享音乐收藏、歌单推荐与音频相关的内容探索</div>
+        <span class="card-badge">即将上线</span>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<div class="page-footer">
+  &copy; 2025 WLi. All rights reserved.
+</div>
+
+</body>
+</html>
