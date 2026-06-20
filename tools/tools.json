@@ -1,9 +1,9 @@
 {
   "site": {
-    "name": "WLi Tools",
+    "name": "W. Tools",
     "subtitle": "简洁高效的在线工具集，一键直达，即用即走",
-    "logo": "WLi",
-    "footer": "WLi Tools — 简洁高效的在线工具集"
+    "logo": "W.",
+    "footer": "© 2025 WLi"
   },
   "categories": [
     { "id": "all",       "label": "全部" },
