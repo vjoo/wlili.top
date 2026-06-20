@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>密码衍生生成器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/pinyin-pro/dist/index.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #ffffff; padding: 0; color: #1a1a1a; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 22px; display: flex; gap: 48px; align-items: flex-start; }
+        .left { flex: 0 0 320px; }
+        .right { flex: 1; min-width: 0; }
+        h1 { font-size: 40px; font-weight: 600; letter-spacing: -0.02em; color: #2B3041; margin-bottom: 6px; }
+        .subtitle { font-size: 15px; color: #6e6e73; margin-bottom: 28px; font-weight: 400; }
+        .field { margin-bottom: 18px; }
+        .field label { display: block; font-size: 13px; font-weight: 600; color: #2B3041; margin-bottom: 6px; }
+        .field input { width: 100%; padding: 10px 14px; border: 1px solid #d2d2d7; border-radius: 10px; font-size: 15px; font-family: inherit; transition: all 0.2s; background: #fff; outline: none; }
+        .field input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+        .field .hint { font-size: 12px; color: #86868b; margin-top: 4px; }
+        .warning-text { color: #c62828; font-size: 12px; margin-top: 4px; display: none; }
+
+        .result-list { display: flex; flex-direction: column; gap: 12px; }
+        .result-card { background: #f5f5f7; border-radius: 14px; padding: 16px 18px; }
+        .result-card .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .result-card .head span { font-size: 14px; font-weight: 600; color: #2B3041; }
+        .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+        .badge-red { background: #FFEDED; color: #CC3A3A; }
+        .badge-blue { background: #EDF4FF; color: #2D6BC7; }
+        .badge-orange { background: #FFF5E5; color: #B45F06; }
+        .pwd-box { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 15px; background: #fff; padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e8e8ed; word-break: break-all; }
+        .copy-btn { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: #6366f1; transition: background 0.15s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: 8px; }
+        .copy-btn:hover { background: rgba(99,102,241,0.08); }
+        .radio-group { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .radio-group label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 400; color: #424245; cursor: pointer; margin: 0; }
+        .radio-group input { width: auto; accent-color: #6366f1; }
+        .radio-group code { font-family: 'SF Mono', monospace; background: #e8e8ed; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
+
+        .tips { margin-top: 20px; padding: 16px; background: #f5f5f7; border-radius: 14px; font-size: 13px; color: #424245; line-height: 1.6; }
+        .tips strong { display: block; margin-bottom: 6px; font-weight: 600; color: #2B3041; font-size: 14px; }
+        .tips ul { list-style: none; padding: 0; }
+        .tips li { padding: 2px 0; padding-left: 14px; position: relative; }
+        .tips li::before { content: '•'; position: absolute; left: 0; color: #86868b; }
+        .summary { margin-top: 16px; padding: 14px; background: #f5f5f7; border-radius: 14px; }
+        .summary-title { font-weight: 600; font-size: 14px; color: #2B3041; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .summary-box { position: relative; background: #fff; border: 1px solid #e8e8ed; border-radius: 10px; padding: 12px; }
+        .summary-pre { font-family: 'SF Mono', monospace; font-size: 13px; line-height: 1.7; color: #2B3041; white-space: pre-wrap; word-break: break-all; margin: 0; }
+        .summary-copy { position: absolute; top: 8px; right: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 5px; cursor: pointer; color: #6366f1; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+        .summary-copy:hover { border-color: #6366f1; }
+
+        .empty { text-align: center; color: #86868b; padding: 40px 0; font-size: 14px; }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; padding: 20px 16px; gap: 28px; }
+            .left { flex: 1 1 100%; }
+            h1 { font-size: 32px; }
+        }
+    </style>
+    <script src="nav.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="left">
+            <h1>密码衍生生成器</h1>
+            <p class="subtitle">姓名 + 专属单词 + 数字 → 三类密码</p>
+
+            <div class="field">
+                <label>中文姓名</label>
+                <input type="text" id="chineseNameInput" placeholder="例如: 张三" maxlength="10">
+                <div class="hint">用于校验单词不能与拼音相同</div>
+            </div>
+
+            <div class="field">
+                <label>专属单词</label>
+                <input type="text" id="wordInput" placeholder="例如: Lemon" maxlength="20">
+                <div class="hint">5–8个字母，不与拼音一致</div>
+                <div id="nameWarning" class="warning-text">单词不能与姓名拼音相同</div>
+            </div>
+
+            <div class="field">
+                <label>支付 / 门禁数字</label>
+                <input type="text" id="mainNumberInput" placeholder="例如: 249536" maxlength="6">
+                <div class="hint">4–6位数字</div>
+            </div>
+
+            <div class="field">
+                <label>社交 / 临时数字 <span style="color:#86868b;font-weight:400;">(可选)</span></label>
+                <input type="text" id="socialNumberInput" placeholder="例如: 710482" maxlength="6">
+                <div class="hint">不填则使用支付数字</div>
+            </div>
+        </div>
+
+        <div class="right">
+            <div class="result-list" id="passwordList">
+                <div class="empty">请输入左侧信息生成密码</div>
+            </div>
+
+            <div class="tips">
+                <strong>使用建议</strong>
+                <ul>
+                    <li>重要账户（支付宝/网银/邮箱）→ 重要账户密码</li>
+                    <li>支付/门禁/SIM卡 → 支付门禁密码</li>
+                    <li>社交/论坛/临时App → 社交临时密码（可分享）</li>
+                </ul>
+                <div class="summary-title" style="margin-top:14px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    密码汇总
+                </div>
+                <div class="summary-box">
+                    <pre class="summary-pre" id="summaryTextarea">请先输入左侧信息</pre>
+                    <button class="summary-copy" id="summaryCopyTop" title="复制全部">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 2.5H10.5C11.05 2.5 11.5 2.95 11.5 3.5V11H10.5V3.5H5.5V2.5Z"/><path d="M4 5.5H3.5V13.5H10V11H11V14C11 14.28 10.78 14.5 10.5 14.5H3.5C3.22 14.5 3 14.28 3 14V6C3 5.72 3.22 5.5 3.5 5.5H4ZM5 4H12.5C12.78 4 13 4.22 13 4.5V11.5H12V5H5V4Z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const REPLACE_MAP = { 'a': '@', 'e': '3', 'o': '0', 's': '$' };
+
+        function transformWord(word) {
+            if (!word) return '';
+            let transformed = '';
+            let replaced = false;
+            for (let ch of word) {
+                const lowerCh = ch.toLowerCase();
+                if (!replaced && REPLACE_MAP.hasOwnProperty(lowerCh)) {
+                    transformed += REPLACE_MAP[lowerCh];
+                    replaced = true;
+                } else {
+                    transformed += ch;
+                }
+            }
+            return transformed.charAt(0).toUpperCase() + transformed.slice(1);
+        }
+
+        function cleanDigits(input) { return input.replace(/\D/g, '').slice(0, 6); }
+
+        function updateSummaryAndCard(paymentPwd, socialPwd, importantPwd) {
+            const summary = `支付/门禁密码：${paymentPwd}\n社交/临时密码：${socialPwd}\n重要账户密码：${importantPwd}`;
+            document.getElementById('summaryTextarea').textContent = summary;
+            const cardValue = document.querySelector('#importantCard .pwd-box span');
+            const cardCopyBtn = document.querySelector('#importantCard .copy-btn');
+            if (cardValue && cardCopyBtn) {
+                cardValue.textContent = importantPwd;
+                cardCopyBtn.setAttribute('data-value', importantPwd);
+            }
+        }
+
+        function generatePasswords() {
+            const chineseName = document.getElementById('chineseNameInput').value.trim();
+            const word = document.getElementById('wordInput').value.trim();
+            let mainDigits = cleanDigits(document.getElementById('mainNumberInput').value);
+            let socialDigits = cleanDigits(document.getElementById('socialNumberInput').value);
+
+            document.getElementById('mainNumberInput').value = mainDigits;
+            document.getElementById('socialNumberInput').value = socialDigits;
+
+            const nameWarningDiv = document.getElementById('nameWarning');
+            let nameConflict = false;
+            if (chineseName && word) {
+                try {
+                    const pinyin = pinyinPro.pinyin(chineseName, { toneType: 'none', type: 'array' }).join('').toLowerCase();
+                    if (word.toLowerCase() === pinyin) nameConflict = true;
+                } catch (e) {}
+            }
+            nameWarningDiv.style.display = nameConflict ? 'flex' : 'none';
+
+            if (!word || mainDigits.length < 4) {
+                document.getElementById('passwordList').innerHTML = '<div class="empty">请输入单词和至少4位支付数字</div>';
+                document.getElementById('summaryTextarea').textContent = '请先输入左侧信息';
+                document.getElementById('summaryCopyTop').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('summaryCopyTop').style.display = 'flex';
+
+            const socialEffective = socialDigits.length >= 4 ? socialDigits : mainDigits;
+            const socialNote = socialDigits.length >= 4 ? '社交数字' : '未填，使用支付数字';
+            const transformedWord = transformWord(word);
+            const plainWordCapitalized = word.charAt(0).toUpperCase() + word.slice(1);
+            const paymentPwd = mainDigits;
+            const socialPwd = plainWordCapitalized + socialEffective;
+
+            const standardPwd = plainWordCapitalized + mainDigits;
+            const optionA = transformedWord + mainDigits;
+            const optionB = transformedWord + '!' + mainDigits;
+            const pwdLength = standardPwd.length;
+            let lengthWarning = '';
+            if (pwdLength < 8) lengthWarning = '密码长度不足8位';
+            else if (pwdLength > 20) lengthWarning = '密码超过20位，可能超限';
+
+            let html = '';
+            [
+                { label: '支付 / 门禁密码', badge: '仅数字', badgeClass: 'badge-red', value: paymentPwd, desc: '纯数字' },
+                { label: '社交 / 临时密码', badge: '可分享', badgeClass: 'badge-blue', value: socialPwd, desc: `单词 + ${socialNote}` }
+            ].forEach(p => {
+                html += `
+                    <div class="result-card">
+                        <div class="head">
+                            <span>${p.label}</span>
+                            <span class="badge ${p.badgeClass}">${p.badge}</span>
+                        </div>
+                        <div style="font-size:12px;color:#86868b;margin-bottom:8px;">${p.desc}</div>
+                        <div class="pwd-box">
+                            <span>${p.value}</span>
+                            <button class="copy-btn" data-value="${p.value.replace(/"/g, '&quot;')}" title="复制">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 2.5H10.5C11.05 2.5 11.5 2.95 11.5 3.5V11H10.5V3.5H5.5V2.5Z"/><path d="M4 5.5H3.5V13.5H10V11H11V14C11 14.28 10.78 14.5 10.5 14.5H3.5C3.22 14.5 3 14.28 3 14V6C3 5.72 3.22 5.5 3.5 5.5H4ZM5 4H12.5C12.78 4 13 4.22 13 4.5V11.5H12V5H5V4Z"/></svg>
+                            </button>
+                        </div>
+                    </div>`;
+            });
+
+            html += `
+                <div class="result-card" id="importantCard">
+                    <div class="head">
+                        <span>重要账户密码</span>
+                        <span class="badge badge-orange">交易·主邮箱</span>
+                    </div>
+                    <div style="font-size:12px;color:#86868b;margin-bottom:8px;">选择方案</div>
+                    <div class="pwd-box">
+                        <span>${standardPwd}</span>
+                        <button class="copy-btn" data-value="${standardPwd.replace(/"/g, '&quot;')}" title="复制">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 2.5H10.5C11.05 2.5 11.5 2.95 11.5 3.5V11H10.5V3.5H5.5V2.5Z"/><path d="M4 5.5H3.5V13.5H10V11H11V14C11 14.28 10.78 14.5 10.5 14.5H3.5C3.22 14.5 3 14.28 3 14V6C3 5.72 3.22 5.5 3.5 5.5H4ZM5 4H12.5C12.78 4 13 4.22 13 4.5V11.5H12V5H5V4Z"/></svg>
+                        </button>
+                    </div>
+                    <div class="radio-group" id="radioGroup">
+                        <label><input type="radio" name="importantPwdType" value="standard" checked><span>标准</span><code>${standardPwd}</code></label>
+                        <label><input type="radio" name="importantPwdType" value="optionA"><span>增强A</span><code>${optionA}</code></label>
+                        <label><input type="radio" name="importantPwdType" value="optionB"><span>增强B</span><code>${optionB}</code></label>
+                    </div>
+                    ${lengthWarning ? `<div style="color:#c62828;font-size:12px;margin-top:8px;">${lengthWarning}</div>` : ''}
+                </div>`;
+
+            document.getElementById('passwordList').innerHTML = html;
+            updateSummaryAndCard(paymentPwd, socialPwd, standardPwd);
+
+            document.querySelectorAll('input[name="importantPwdType"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    let selectedPwd;
+                    if (this.value === 'standard') selectedPwd = standardPwd;
+                    else if (this.value === 'optionA') selectedPwd = optionA;
+                    else if (this.value === 'optionB') selectedPwd = optionB;
+                    updateSummaryAndCard(paymentPwd, socialPwd, selectedPwd);
+                });
+            });
+
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const val = this.getAttribute('data-value');
+                    navigator.clipboard.writeText(val).then(() => {
+                        const original = this.innerHTML;
+                        this.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M13.5 4.5L6.5 11.5L2.5 7.5"/></svg>';
+                        setTimeout(() => { this.innerHTML = original; }, 1200);
+                    }).catch(() => alert('复制失败'));
+                });
+            });
+        }
+
+        document.getElementById('summaryCopyTop').addEventListener('click', function() {
+            const text = document.getElementById('summaryTextarea').textContent;
+            if (!text || text === '请先输入左侧信息') return;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = this.innerHTML;
+                this.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M13.5 4.5L6.5 11.5L2.5 7.5"/></svg>';
+                setTimeout(() => { this.innerHTML = original; }, 1200);
+            }).catch(() => alert('复制失败'));
+        });
+
+        document.getElementById('chineseNameInput').addEventListener('input', generatePasswords);
+        document.getElementById('wordInput').addEventListener('input', generatePasswords);
+        document.getElementById('mainNumberInput').addEventListener('input', generatePasswords);
+        document.getElementById('socialNumberInput').addEventListener('input', generatePasswords);
+        generatePasswords();
+    </script>
+</body>
+</html>

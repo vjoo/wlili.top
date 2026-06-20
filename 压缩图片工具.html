@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WLi-图片压缩工具</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { touch-action: manipulation; }
+
+  :root {
+    --ink: #2B3041;
+    --ink-secondary: #424245;
+    --ink-tertiary: #6e6e73;
+    --ink-quaternary: #86868b;
+    --bg: #f5f5f7;
+    --bg-white: #ffffff;
+    --bg-elevated: #fbfbfd;
+    --border: #d2d2d7;
+    --border-light: #e8e8ed;
+    --link: #6366f1;
+    --link-hover: #0077ed;
+    --fill-black: #2B3041;
+    --fill-gray: #86868b;
+    --fill-gray-light: #d2d2d7;
+    --fill-white: #ffffff;
+    --green: #34c759;
+    --red: #ff3b30;
+    --radius-sm: 8px;
+    --radius-md: 11px;
+    --radius-lg: 18px;
+    --radius-pill: 980px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
+    background: var(--bg-white);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ===== Global Nav ===== */
+  .global-nav {
+    background: var(--bg);
+    height: 48px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .global-nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 22px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-box {
+    width: 32px;
+    height: 32px;
+    background: var(--fill-black);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fill-white);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .nav-link {
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+  }
+  .nav-link:hover { opacity: 1; color: var(--link); }
+
+  /* ===== Page Hero ===== */
+  .page-hero {
+    text-align: center;
+    padding: 48px 22px 32px;
+    background: var(--bg-white);
+  }
+  .page-hero h1 {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .page-hero p {
+    font-size: 21px;
+    font-weight: 400;
+    color: var(--ink-tertiary);
+    line-height: 1.38;
+    letter-spacing: 0.011em;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ===== Section ===== */
+  .section { padding: 32px 0 64px; }
+  .section-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 22px;
+  }
+
+  /* ===== Apple Buttons ===== */
+  .btn-filled {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: var(--fill-black);
+    color: var(--fill-white);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.18;
+    letter-spacing: -0.022em;
+    border: 1.5px solid var(--fill-black);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: opacity 0.3s;
+    text-decoration: none;
+    white-space: nowrap;
+    touch-action: manipulation;
+  }
+  .btn-filled:hover { opacity: 0.85; }
+  .btn-filled:active { transform: scale(0.98); }
+  .btn-filled:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.18;
+    letter-spacing: -0.022em;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    white-space: nowrap;
+    touch-action: manipulation;
+  }
+  .btn-outline:hover { border-color: var(--ink); }
+  .btn-outline:active { transform: scale(0.98); }
+  .btn-outline:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  .btn-link {
+    color: var(--link);
+    font-size: 17px;
+    font-weight: 400;
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    transition: color 0.2s;
+  }
+  .btn-link:hover { color: var(--link-hover); text-decoration: underline; }
+
+  .btn-sm { font-size: 14px; padding: 6px 14px; letter-spacing: -0.016em; }
+  .btn-danger-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: transparent;
+    color: var(--red);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.18;
+    letter-spacing: -0.022em;
+    border: 1.5px solid rgba(255,59,48,0.3);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    white-space: nowrap;
+    touch-action: manipulation;
+  }
+  .btn-danger-outline:hover { border-color: var(--red); background: rgba(255,59,48,0.04); }
+  .btn-danger-outline:active { transform: scale(0.98); }
+  .btn-danger-outline:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  /* ===== Settings Bar ===== */
+  .settings-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+    background: var(--bg);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 140px;
+  }
+  .setting-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink-tertiary);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .setting-label .val {
+    color: var(--link);
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    font-size: 12px;
+    margin-left: 4px;
+  }
+
+  /* Segmented Control */
+  .segmented-control {
+    display: flex;
+    flex-wrap: nowrap;
+    background: var(--bg-white);
+    border-radius: var(--radius-pill);
+    padding: 2px;
+    gap: 2px;
+    border: 1px solid var(--border-light);
+    height: 36px;
+    width: 100%;
+    overflow: hidden;
+  }
+  .segment-btn {
+    padding: 6px 0;
+    border: none;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--ink);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    touch-action: manipulation;
+    font-family: inherit;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .segment-btn.active {
+    background: var(--fill-black);
+    color: var(--fill-white);
+  }
+  .segment-btn:not(.active):hover { background: rgba(0,0,0,0.04); }
+  .segment-btn:active { transform: scale(0.97); }
+
+  /* Range Input */
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 36px;
+    background: transparent;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    height: 34px;
+    background: var(--fill-white);
+    border-radius: 17px;
+    border: 1px solid var(--border-light);
+    box-sizing: border-box;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 33px; height: 33px;
+    background: var(--fill-black);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    margin-top: 0px;
+    transition: transform 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+
+  /* Text Input */
+  .text-input {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    color: var(--ink);
+    padding: 6px 14px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-family: inherit;
+    width: 80px;
+    height: 36px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .text-input:focus { border-color: var(--link); box-shadow: 0 0 0 3px rgba(0,102,204,0.12); }
+  .text-input::placeholder { color: var(--ink-quaternary); }
+
+  /* ===== Drop Zone ===== */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--bg-white);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    touch-action: manipulation;
+  }
+  .dropzone:hover, .dropzone.drag-over { border-color: var(--link); background: var(--bg); }
+  .dropzone:active { transform: scale(0.995); }
+  .drop-icon {
+    margin-bottom: 12px;
+    color: var(--ink-tertiary);
+  }
+  .drop-icon svg {
+    width: 48px; height: 48px;
+  }
+  .drop-title {
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: 0.011em;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .drop-desc {
+    font-size: 14px;
+    color: var(--ink-tertiary);
+    line-height: 1.43;
+  }
+  .drop-desc span { color: var(--link); cursor: pointer; }
+  .drop-desc span:hover { text-decoration: underline; }
+  #fileInput { display: none; }
+
+  /* ===== Actions Row ===== */
+  .actions-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  /* ===== Progress ===== */
+  .progress-wrap { margin-bottom: 20px; display: none; }
+  .progress-wrap.visible { display: block; }
+  .progress-bar-bg {
+    height: 4px;
+    background: var(--border-light);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--link);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-text {
+    font-size: 12px;
+    color: var(--ink-quaternary);
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* ===== Stats ===== */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: 'SF Pro Display', -apple-system, sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  .stat-val.accent { color: var(--link); }
+  .stat-val.green { color: var(--green); }
+  .stat-label {
+    font-size: 12px;
+    color: var(--ink-quaternary);
+    letter-spacing: -0.01em;
+    margin-top: 4px;
+  }
+
+  /* ===== Image List ===== */
+  .image-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .image-card {
+    display: grid;
+    grid-template-columns: 56px 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    transition: all 0.2s;
+  }
+  .image-card:hover { border-color: var(--border); }
+  .image-card.done { border-left: 3px solid var(--green); }
+  .image-card.processing { border-left: 3px solid var(--link); opacity: 0.7; }
+  .card-thumb {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    background: var(--bg);
+  }
+  .card-info { min-width: 0; }
+  .card-name {
+    font-size: 14px;
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .card-meta {
+    font-size: 12px;
+    color: var(--ink-quaternary);
+    font-family: 'SF Mono', monospace;
+    display: flex;
+    gap: 8px;
+  }
+  .card-meta .reduced { color: var(--green); }
+  .card-size-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'SF Mono', monospace;
+    font-size: 14px;
+  }
+  .card-size.original { color: var(--ink-secondary); }
+  .card-size.compressed { color: var(--ink); font-weight: 600; }
+  .card-size.arrow { color: var(--ink-quaternary); }
+  .card-actions { display: flex; gap: 8px; }
+  .card-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: var(--bg-white);
+    color: var(--ink-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+    touch-action: manipulation;
+  }
+  .card-btn:active { transform: scale(0.9); }
+  .card-btn:hover { border-color: var(--link); color: var(--link); background: rgba(0,102,204,0.04); }
+  .card-btn.danger:hover { border-color: var(--ink); color: var(--ink); background: rgba(0,0,0,0.04); }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    background: var(--fill-black);
+    color: var(--fill-white);
+    border-radius: var(--radius-lg);
+    padding: 16px 28px;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 1068px) {
+    .page-hero h1 { font-size: 40px; }
+  }
+
+  @media (max-width: 734px) {
+    .global-nav-content { padding: 0 16px; }
+    .nav-links { gap: 16px; }
+    .page-hero { padding: 36px 16px 24px; }
+    .page-hero h1 { font-size: 32px; }
+    .page-hero p { font-size: 17px; }
+    .section { padding: 24px 0 48px; }
+    .section-inner { padding: 0 16px; }
+    .settings-bar { padding: 16px; gap: 14px; }
+    .setting-group { min-width: 100%; }
+    .dropzone { padding: 36px 16px; }
+    .drop-icon { font-size: 36px; }
+    .drop-title { font-size: 17px; }
+    .drop-desc { font-size: 12px; }
+    .actions-row { gap: 8px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 12px; }
+    .stat-val { font-size: 22px; }
+    .image-card {
+      grid-template-columns: 44px 1fr auto;
+      gap: 10px;
+      padding: 10px 12px;
+    }
+    .card-thumb { width: 40px; height: 40px; }
+    .card-name { font-size: 13px; }
+    .card-size-group { display: none; }
+    .card-actions { grid-column: 3; }
+  }
+
+  @media (max-width: 480px) {
+    .nav-links { display: none; }
+    .btn-filled, .btn-outline, .btn-danger-outline { font-size: 14px; padding: 7px 16px; }
+    .btn-sm { font-size: 12px; padding: 5px 10px; }
+    .segment-btn { padding: 5px 0; font-size: 11px; }
+  }
+</style>
+<script src="nav.js"></script>
+</head>
+<body>
+
+<!-- Page Hero -->
+<div class="page-hero">
+  <h1>图片压缩</h1>
+  <p>批量上传图片，智能压缩至更小体积，支持多格式导出</p>
+</div>
+
+<!-- Main Section -->
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Settings -->
+    <div class="settings-bar">
+      <div class="setting-group">
+        <label class="setting-label">压缩品质 <span class="val" id="qualityVal">90</span></label>
+        <input type="range" id="quality" min="10" max="100" value="90" step="1">
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">输出格式</label>
+        <div class="segmented-control" id="formatGroup">
+          <button class="segment-btn active" data-fmt="image/jpeg">JPG</button>
+          <button class="segment-btn" data-fmt="image/png">PNG</button>
+          <button class="segment-btn" data-fmt="image/webp">WebP</button>
+          <button class="segment-btn" data-fmt="image/avif">AVIF</button>
+          <button class="segment-btn" data-fmt="image/svg+xml">SVG</button>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">最大尺寸 (px，0=保持原始)</label>
+        <input type="number" class="text-input" id="maxSize" value="0" min="0" max="10000" placeholder="例如 1920">
+      </div>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone">
+      <div class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
+      <div class="drop-title">拖拽图片到此处，或 <span class="drop-link">点击选择</span></div>
+      <div class="drop-desc">支持 JPG / PNG / WebP / AVIF / SVG / BMP / TIFF，可批量上传</div>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-row">
+      <button class="btn-filled btn-sm" id="btnCompressAll" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 一键压缩全部</button>
+      <button class="btn-outline btn-sm" id="btnDownloadAll" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 批量下载 (ZIP)</button>
+      <button class="btn-outline btn-sm" id="btnClear" disabled>清空列表</button>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat-card">
+        <div class="stat-val" id="statTotal">0</div>
+        <div class="stat-label">图片数量</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statOriginal">0 MB</div>
+        <div class="stat-label">原始总大小</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statCompressed">0 MB</div>
+        <div class="stat-label">压缩后总大小</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val green" id="statSaved">0%</div>
+        <div class="stat-label">节省空间</div>
+      </div>
+    </div>
+
+    <!-- Image List -->
+    <div class="image-list" id="imageList"></div>
+
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  const dropzone   = document.getElementById('dropzone');
+  const fileInput  = document.getElementById('fileInput');
+  const imageList  = document.getElementById('imageList');
+  const qualityInp = document.getElementById('quality');
+  const qualityVal = document.getElementById('qualityVal');
+  const maxSizeInp = document.getElementById('maxSize');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const statsRow   = document.getElementById('statsRow');
+  const toastEl    = document.getElementById('toast');
+  const btnCompressAll = document.getElementById('btnCompressAll');
+  const btnDownloadAll = document.getElementById('btnDownloadAll');
+  const btnClear    = document.getElementById('btnClear');
+
+  let images = [];
+  let idCounter = 0;
+  let selectedFormat = 'image/jpeg';
+
+  // ─── Helpers ─────────────────────────────
+  function formatBytes(bytes) {
+    if (!bytes && bytes !== 0) return '—';
+    if (bytes === 0) return '0 B';
+    const mb = bytes / (1024 * 1024);
+    if (mb >= 1) return mb.toFixed(2) + ' MB';
+    const kb = bytes / 1024;
+    if (kb >= 1) return kb.toFixed(1) + ' KB';
+    return bytes + ' B';
+  }
+  function formatBytesCompact(bytes) {
+    if (!bytes && bytes !== 0) return '—';
+    if (bytes === 0) return '0B';
+    const mb = bytes / (1024 * 1024);
+    if (mb >= 1) return mb.toFixed(2) + ' MB';
+    const kb = bytes / 1024;
+    return kb.toFixed(1) + ' KB';
+  }
+  let toastTimer;
+  function showToast(msg) {
+    clearTimeout(toastTimer);
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+  function getExt(fmt) {
+    return { 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/avif':'avif','image/svg+xml':'svg' }[fmt] || 'jpg';
+  }
+
+  // ─── Settings ─────────────────────────────
+  qualityInp.addEventListener('input', () => { qualityVal.textContent = qualityInp.value; });
+  document.querySelectorAll('#formatGroup .segment-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#formatGroup .segment-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      selectedFormat = b.dataset.fmt;
+    });
+  });
+
+  // ─── AVIF support check ──────────────────
+  (function() {
+    const c = document.createElement('canvas'); c.width = 1; c.height = 1;
+    c.toBlob(blob => {
+      if (!blob || blob.type !== 'image/avif') {
+        const btn = document.querySelector('[data-fmt="image/avif"]');
+        if (btn) { btn.style.opacity = '0.4'; btn.title = '当前浏览器不支持 AVIF'; btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); showToast('当前浏览器不支持 AVIF'); }); }
+      }
+    }, 'image/avif');
+  })();
+
+  // ─── Touch & Drag Upload ─────────────────
+  let touchStartY = 0;
+  let touchHandled = false;
+
+  dropzone.addEventListener('click', (e) => {
+    if (touchHandled) { touchHandled = false; return; }
+    fileInput.click();
+  });
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+  dropzone.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; dropzone.style.transform = 'scale(0.98)'; }, { passive: true });
+  dropzone.addEventListener('touchend', (e) => {
+    dropzone.style.transform = '';
+    if (Math.abs(e.changedTouches[0].clientY - touchStartY) < 10) { touchHandled = true; fileInput.click(); }
+  }, { passive: true });
+  fileInput.addEventListener('change', () => { handleFiles(fileInput.files); fileInput.value = ''; });
+
+  function handleFiles(files) {
+    const validTypes = ['image/jpeg','image/png','image/webp','image/avif','image/svg+xml','image/bmp','image/tiff','image/gif'];
+    let added = 0;
+    for (const f of files) {
+      if (!validTypes.includes(f.type) && !f.name.match(/\.(jpg|jpeg|png|webp|avif|svg|bmp|tiff|tif|gif)$/i)) continue;
+      images.push({ id: ++idCounter, file: f, compressedBlob: null, compressedSize: null, status: 'pending' });
+      added++;
+    }
+    if (added > 0) { showToast(`已添加 ${added} 张图片`); renderList(); }
+    else { showToast('未识别到有效图片文件'); }
+  }
+
+  function removeImage(id) {
+    const im = images.find(i => i.id === id);
+    if (im && im._thumbUrl) URL.revokeObjectURL(im._thumbUrl);
+    images = images.filter(im => im.id !== id);
+    renderList();
+  }
+  function findCardById(id) { return document.querySelector(`[data-id="${id}"]`); }
+
+  // ─── Compression ─────────────────────────
+  async function compressImage(imgObj) {
+    const quality = parseInt(qualityInp.value) / 100;
+    const maxDim = parseInt(maxSizeInp.value) || 0;
+    const outFmt = selectedFormat;
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(imgObj.file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (maxDim > 0 && (w > maxDim || h > maxDim)) { const r = Math.min(maxDim / w, maxDim / h); w = Math.round(w * r); h = Math.round(h * r); }
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(img, 0, 0, w, h);
+        cv.toBlob(blob => { blob ? resolve({ blob, size: blob.size }) : reject(new Error('toBlob 返回空')); }, outFmt, (outFmt === 'image/png' || outFmt === 'image/svg+xml') ? undefined : quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('图片加载失败')); };
+      img.src = url;
+    });
+  }
+
+  async function compressAll() {
+    const pending = images.filter(im => im.status === 'pending');
+    if (!pending.length) { showToast('没有需要压缩的图片'); return; }
+    btnCompressAll.disabled = true;
+    progressWrap.classList.add('visible');
+    let done = 0; const total = pending.length;
+    for (const imgObj of pending) {
+      imgObj.status = 'processing'; renderCard(imgObj);
+      try { const r = await compressImage(imgObj); imgObj.compressedBlob = r.blob; imgObj.compressedSize = r.size; imgObj.status = 'done'; }
+      catch (err) { imgObj.status = 'error'; imgObj.compressError = err.message; }
+      done++; progressFill.style.width = ((done / total) * 100) + '%'; progressText.textContent = `压缩进度：${done} / ${total}`;
+      renderCard(imgObj); updateStats(); enableButtons();
+    }
+    setTimeout(() => { progressWrap.classList.remove('visible'); progressFill.style.width = '0%'; }, 1200);
+    btnCompressAll.disabled = false; enableButtons(); updateStats();
+    showToast(`压缩完成！共处理 ${total} 张图片`);
+  }
+
+  // ─── Render ──────────────────────────────
+  function renderList() {
+    images.forEach(im => { if (im._thumbUrl) { URL.revokeObjectURL(im._thumbUrl); im._thumbUrl = null; } });
+    if (!images.length) { imageList.innerHTML = ''; statsRow.style.display = 'none'; enableButtons(); return; }
+    imageList.innerHTML = images.map(im => cardHTML(im)).join('');
+    updateStats(); enableButtons();
+  }
+  function renderCard(im) { const c = findCardById(im.id); if (c) c.outerHTML = cardHTML(im); }
+
+  function cardHTML(im) {
+    if (im._thumbUrl) URL.revokeObjectURL(im._thumbUrl);
+    im._thumbUrl = URL.createObjectURL(im.file);
+    const origSize = im.file.size, compSize = im.compressedSize;
+    const done = im.status === 'done', processing = im.status === 'processing', error = im.status === 'error';
+    let sizeHTML = '';
+    if (done) {
+      const pct = ((1 - compSize / origSize) * 100).toFixed(1), bigger = compSize >= origSize;
+      sizeHTML = `<span class="card-size original">${formatBytesCompact(origSize)}</span><span class="card-size arrow">→</span><span class="card-size compressed">${formatBytesCompact(compSize)}</span><span style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap">${bigger?'+'+(pct*-1):+pct}%</span>`;
+    } else if (processing) { sizeHTML = `<span style="color:var(--link);font-size:12px">压缩中…</span>`; }
+    else if (error) { sizeHTML = `<span style="color:var(--red);font-size:12px">失败</span>`; }
+    else { sizeHTML = `<span class="card-size original">${formatBytesCompact(origSize)}</span>`; }
+    const cls = done ? 'done' : (processing ? 'processing' : '');
+    const dlBtn = done ? `<button class="card-btn" onclick="event.stopPropagation();downloadSingle(${im.id})" title="下载"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>` : '';
+    return `<div class="image-card ${cls}" data-id="${im.id}"><img class="card-thumb" src="${im._thumbUrl}" alt="" loading="lazy"><div class="card-info"><div class="card-name" title="${im.file.name}">${im.file.name}</div><div class="card-meta"><span>${im.file.type.replace('image/','').toUpperCase()}</span>${done?`<span class="reduced">→ ${getExt(selectedFormat).toUpperCase()}</span>`:''}</div></div><div class="card-size-group">${sizeHTML}</div><div class="card-actions">${dlBtn}<button class="card-btn danger" onclick="event.stopPropagation();removeImage(${im.id})" title="移除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>`;
+  }
+
+  function updateStats() {
+    const total = images.length, original = images.reduce((s, im) => s + im.file.size, 0);
+    const doneList = images.filter(im => im.status === 'done'), compressed = doneList.reduce((s, im) => s + (im.compressedSize || 0), 0);
+    const pct = original > 0 ? ((1 - compressed / original) * 100).toFixed(1) : '0', saved = compressed > 0 ? pct : '—';
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statOriginal').textContent = formatBytes(original);
+    document.getElementById('statCompressed').textContent = formatBytes(compressed || 0);
+    document.getElementById('statSaved').textContent = saved === '—' ? '—' : saved + '%';
+    document.getElementById('statSaved').style.color = parseFloat(saved) > 0 ? 'var(--green)' : (parseFloat(saved) < 0 ? 'var(--red)' : 'var(--ink)');
+    statsRow.style.display = total > 0 ? 'grid' : 'none';
+  }
+
+  function enableButtons() {
+    const total = images.length, pending = images.filter(im => im.status === 'pending').length, done = images.filter(im => im.status === 'done').length;
+    btnCompressAll.disabled = pending === 0; btnDownloadAll.disabled = done === 0; btnClear.disabled = total === 0;
+  }
+
+  // ─── Download ────────────────────────────
+  function downloadSingle(id) {
+    const im = images.find(i => i.id === id); if (!im || !im.compressedBlob) return;
+    const ext = getExt(selectedFormat), name = im.file.name.replace(/\.[^.]+$/, '') + '_compressed.' + ext;
+    const url = URL.createObjectURL(im.compressedBlob); const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  async function downloadAll() {
+    const doneList = images.filter(im => im.status === 'done' && im.compressedBlob); if (!doneList.length) return;
+    const ext = getExt(selectedFormat), zip = new JSZip();
+    showToast('正在打包 ZIP...');
+    for (const im of doneList) zip.file(im.file.name.replace(/\.[^.]+$/, '') + '_compressed.' + ext, im.compressedBlob);
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(zipBlob); const a = document.createElement('a'); a.href = url; a.download = 'compressed_images.zip'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000); showToast('ZIP 下载已开始！');
+  }
+  function clearAll() {
+    images.forEach(im => { if (im._thumbUrl) URL.revokeObjectURL(im._thumbUrl); });
+    images = []; imageList.innerHTML = ''; statsRow.style.display = 'none'; enableButtons(); showToast('列表已清空');
+  }
+
+  btnCompressAll.addEventListener('click', compressAll);
+  btnDownloadAll.addEventListener('click', downloadAll);
+  btnClear.addEventListener('click', clearAll);
+  window.removeImage = removeImage;
+  window.downloadSingle = downloadSingle;
+})();
+</script>
+</body>
+</html>

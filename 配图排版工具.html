@@ -1,0 +1,2118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>植物特写布局编辑器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --ink: #2B3041;
+            --ink-secondary: #424245;
+            --ink-tertiary: #6e6e73;
+            --ink-quaternary: #86868b;
+            --bg: #f5f5f7;
+            --bg-white: #ffffff;
+            --bg-elevated: #fbfbfd;
+            --border: #d2d2d7;
+            --border-light: #e8e8ed;
+            --link: #6366f1;
+            --link-hover: #0077ed;
+            --fill-black: #2B3041;
+            --fill-gray: #86868b;
+            --fill-gray-light: #d2d2d7;
+            --fill-white: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
+            background: var(--bg-white);
+            color: var(--ink);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===== Global Nav — 浅灰背景 + 黑色文字（和 apple.com/mac 一致） ===== */
+        .global-nav {
+            background: var(--bg);
+            height: 48px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .global-nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 22px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            color: var(--ink);
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box {
+            width: 32px;
+            height: 32px;
+            background: var(--fill-black);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--fill-white);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 1;
+            color: var(--link);
+        }
+
+        /* ===== Promo Banner ===== */
+        .promo-banner {
+            background: var(--bg);
+            text-align: center;
+            padding: 12px 22px;
+            font-size: 14px;
+            color: var(--ink);
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .promo-banner a {
+            color: var(--link);
+            text-decoration: none;
+        }
+
+        .promo-banner a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== Page Title — Apple 大标题风格 ===== */
+        .page-hero {
+            text-align: center;
+            padding: 56px 22px 40px;
+            background: var(--bg-white);
+        }
+
+        .page-hero h1 {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            font-size: 56px;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            line-height: 1.07;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .page-hero p {
+            font-size: 21px;
+            font-weight: 400;
+            color: var(--ink-tertiary);
+            line-height: 1.38;
+            letter-spacing: 0.011em;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ===== Apple 按钮：黑色填充 pill + 黑色线框 pill ===== */
+        .btn-filled {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            background: var(--fill-black);
+            color: var(--fill-white);
+            font-size: 17px;
+            font-weight: 400;
+            line-height: 1.18;
+            letter-spacing: -0.022em;
+            border: 1.5px solid var(--fill-black);
+            border-radius: 980px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-filled:hover {
+            opacity: 0.85;
+        }
+
+        .btn-filled:active {
+            transform: scale(0.98);
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            background: transparent;
+            color: var(--ink);
+            font-size: 17px;
+            font-weight: 400;
+            line-height: 1.18;
+            letter-spacing: -0.022em;
+            border: 1.5px solid var(--border);
+            border-radius: 980px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--ink);
+        }
+
+        .btn-outline:active {
+            transform: scale(0.98);
+        }
+
+        .btn-link {
+            color: var(--link);
+            font-size: 17px;
+            font-weight: 400;
+            text-decoration: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            transition: color 0.2s;
+        }
+
+        .btn-link:hover {
+            color: var(--link-hover);
+            text-decoration: underline;
+        }
+
+        .btn-sm {
+            font-size: 14px;
+            padding: 6px 14px;
+            letter-spacing: -0.016em;
+        }
+
+        /* ===== 分段控制器 — 黑色 pill 选中态（和 apple.com/mac 一致） ===== */
+        .segmented-control {
+            display: inline-flex;
+            background: var(--bg);
+            border-radius: 980px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .segment-btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 980px;
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--ink);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .segment-btn.active {
+            background: var(--fill-black);
+            color: var(--fill-white);
+        }
+
+        .segment-btn:not(.active):hover {
+            background: rgba(0,0,0,0.04);
+        }
+
+        /* ===== Section ===== */
+        .section {
+            padding: 64px 0;
+        }
+
+        .section-bg {
+            background: var(--bg);
+        }
+
+        .section-white {
+            background: var(--bg-white);
+        }
+
+        .section-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 22px;
+        }
+
+        .section-headline {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            font-size: 40px;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            line-height: 1.1;
+            color: var(--ink);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .section-subhead {
+            font-size: 21px;
+            font-weight: 400;
+            color: var(--ink-tertiary);
+            line-height: 1.38;
+            letter-spacing: 0.011em;
+            margin-bottom: 36px;
+        }
+
+        /* ===== Plant Input ===== */
+        .plant-input-wrap {
+            max-width: 680px;
+            margin: 0 auto 0;
+            text-align: center;
+        }
+
+        .field-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 8px;
+            display: block;
+            letter-spacing: -0.016em;
+        }
+
+        .field-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--ink);
+            background: var(--bg);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            letter-spacing: -0.022em;
+        }
+
+        .field-input:focus {
+            border-color: var(--link);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
+        }
+
+        .field-input::placeholder {
+            color: var(--ink-quaternary);
+        }
+
+        .tags-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag-chip {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 980px;
+            font-size: 14px;
+            color: var(--ink-secondary);
+            background: var(--bg-white);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tag-chip:hover {
+            background: var(--fill-black);
+            color: var(--fill-white);
+            border-color: var(--fill-black);
+        }
+
+        /* ===== Main Layout ===== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* ===== Card ===== */
+        .card {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 28px;
+            border: 1px solid var(--border-light);
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 0.011em;
+            color: var(--ink);
+            margin-bottom: 20px;
+        }
+
+        /* ===== Toolbar ===== */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .toolbar-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ===== Ratio Selector — 用分段控制器风格 ===== */
+        .ratio-group {
+            display: flex;
+            background: var(--bg);
+            border-radius: 980px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .ratio-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 980px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--ink-secondary);
+        }
+
+        .ratio-btn.active {
+            background: var(--fill-black);
+            color: var(--fill-white);
+        }
+
+        .ratio-btn:not(.active):hover {
+            background: rgba(0,0,0,0.04);
+        }
+
+        .ratio-icon {
+            width: 12px;
+            height: 12px;
+            border: 1.5px solid currentColor;
+            border-radius: 2px;
+        }
+
+        .ratio-icon.square { aspect-ratio: 1/1; }
+        .ratio-icon.p2-3 { aspect-ratio: 2/3; height: 14px; width: 9px; }
+        .ratio-icon.p3-4 { aspect-ratio: 3/4; height: 14px; width: 11px; }
+        .ratio-icon.l4-3 { aspect-ratio: 4/3; width: 16px; height: 12px; }
+        .ratio-icon.p9-16 { aspect-ratio: 9/16; height: 14px; width: 8px; }
+        .ratio-icon.l16-9 { aspect-ratio: 16/9; width: 18px; height: 10px; }
+
+        /* ===== Editor Area ===== */
+        .editor-area {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 460px;
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .flip-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border-light);
+            background: var(--bg-white);
+            color: var(--ink-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .flip-btn:hover {
+            background: var(--fill-black);
+            color: var(--fill-white);
+            border-color: var(--fill-black);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .flip-btn-h { left: 6px; }
+        .flip-btn-v { right: 6px; }
+
+        .grid-container {
+            position: relative;
+            background: var(--bg-white);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .grid-background {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            background-image: 
+                linear-gradient(to right, var(--border-light) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--border-light) 1px, transparent 1px);
+            background-size: 10% 10%;
+            opacity: 0.5;
+        }
+
+        /* ===== Grid Cells — 高饱和度鲜明色系 ===== */
+        .grid-cell {
+            position: absolute;
+            border-radius: 8px;
+            cursor: move;
+            transition: filter 0.2s, transform 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            user-select: none;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .grid-cell.selected {
+            z-index: 100;
+            filter: brightness(0.85) saturate(0.3);
+        }
+
+        .grid-cell:hover:not(.selected) {
+            filter: brightness(1.15);
+            z-index: 50;
+            transform: scale(1.01);
+        }
+
+        .grid-cell .cell-num {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .grid-cell .cell-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #ffffff;
+            margin-top: 4px;
+        }
+
+        .grid-cell .cell-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            background: rgba(0,0,0,0.25);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-cell:hover .cell-delete,
+        .grid-cell.selected .cell-delete {
+            opacity: 1;
+        }
+
+        .grid-cell .cell-delete:hover {
+            background: rgba(200, 50, 50, 0.7);
+        }
+
+        .grid-cell.dragging {
+            opacity: 0.85;
+            transform: scale(1.02);
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        /* Resize Handles */
+        .resize-handle {
+            position: absolute;
+            background: var(--ink-quaternary);
+            border-radius: 3px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .grid-cell:hover .resize-handle,
+        .grid-cell.selected .resize-handle {
+            opacity: 0.6;
+        }
+
+        .resize-handle.e { right: -3px; top: 25%; height: 50%; width: 5px; cursor: ew-resize; }
+        .resize-handle.s { bottom: -3px; left: 25%; width: 50%; height: 5px; cursor: ns-resize; }
+        .resize-handle.se { right: -3px; bottom: -3px; width: 12px; height: 12px; cursor: nwse-resize; border-radius: 0 0 5px 0; }
+
+        /* Snap Guides */
+        .snap-guide {
+            position: absolute;
+            background: var(--ink);
+            opacity: 0.3;
+            z-index: 99;
+            pointer-events: none;
+        }
+
+        .snap-guide.v { width: 1px; height: 100%; }
+        .snap-guide.h { width: 100%; height: 1px; }
+
+        /* ===== Templates ===== */
+        .templates-section {
+            margin-top: 32px;
+        }
+
+        .template-grid {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .template-btn {
+            flex-shrink: 0;
+            width: 80px;
+            aspect-ratio: 1/1;
+            padding: 6px;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            background: var(--bg-white);
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--ink-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .template-btn:hover {
+            border-color: var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .template-preview {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            background: var(--bg);
+            border-radius: 4px;
+            margin-bottom: 4px;
+            display: grid;
+            gap: 2px;
+            padding: 3px;
+        }
+
+        /* ===== Properties Panel ===== */
+        .prop-group {
+            margin-bottom: 14px;
+        }
+
+        .prop-label {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--ink-quaternary);
+            margin-bottom: 6px;
+            display: block;
+            letter-spacing: -0.01em;
+        }
+
+        .prop-input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--ink);
+            background: var(--bg-white);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .prop-input:focus {
+            border-color: var(--link);
+        }
+
+        .prop-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .content-select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--ink);
+            background: var(--bg-white);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .content-select:focus {
+            border-color: var(--link);
+        }
+
+        /* ===== Custom Dropdown ===== */
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-trigger {
+            width: 100%;
+            padding: 9px 36px 9px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--ink);
+            background: var(--bg-white);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .custom-select-trigger:hover {
+            border-color: var(--border);
+        }
+
+        .custom-select-trigger.open {
+            border-color: var(--link);
+        }
+
+        .custom-select-trigger .trigger-icon {
+            width: 22px;
+            height: 22px;
+            background: var(--fill-black);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .custom-select-trigger .trigger-icon svg {
+            width: 13px;
+            height: 13px;
+            stroke: var(--fill-white);
+        }
+
+        .custom-select-trigger .trigger-arrow {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ink-quaternary);
+            transition: transform 0.2s;
+        }
+
+        .custom-select-trigger.open .trigger-arrow {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .custom-select-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            z-index: 100;
+            padding: 4px;
+            display: none;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .custom-select-dropdown.show {
+            display: block;
+        }
+
+        .custom-select-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--ink);
+            transition: background 0.15s;
+        }
+
+        .custom-select-option:hover {
+            background: var(--bg);
+        }
+
+        .custom-select-option.selected {
+            background: var(--fill-black);
+            color: var(--fill-white);
+        }
+
+        .custom-select-option .opt-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--fill-black);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .custom-select-option .opt-icon svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--fill-white);
+            fill: none;
+        }
+
+        .custom-select-option.selected .opt-icon {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .custom-select-option.selected .opt-icon svg {
+            stroke: var(--fill-white);
+        }
+
+        /* ===== Output ===== */
+        .output-box {
+            background: var(--bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 14px;
+            min-height: 100px;
+            max-height: 260px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.65;
+            color: var(--ink-secondary);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-bottom: 14px;
+        }
+
+        .output-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* ===== Tip ===== */
+        .tip-text {
+            font-size: 13px;
+            color: var(--ink-quaternary);
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: var(--fill-black);
+            color: var(--fill-white);
+            padding: 12px 24px;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 400;
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        /* ===== Snap Indicator ===== */
+        .snap-indicator {
+            position: fixed;
+            top: 56px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--fill-black);
+            color: var(--fill-white);
+            padding: 6px 16px;
+            border-radius: 980px;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 200;
+        }
+
+        .snap-indicator.show {
+            opacity: 1;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            background: var(--bg);
+            padding: 20px 22px;
+            text-align: center;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: var(--ink-quaternary);
+            line-height: 1.42;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            font-size: 12px;
+            color: var(--link);
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 1068px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-hero h1 {
+                font-size: 40px;
+            }
+
+            .section-headline {
+                font-size: 32px;
+            }
+
+            .template-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 734px) {
+            .global-nav-content {
+                padding: 0 16px;
+            }
+
+            .nav-links {
+                gap: 16px;
+            }
+
+            .page-hero {
+                padding: 40px 16px 28px;
+            }
+
+            .page-hero h1 {
+                font-size: 32px;
+            }
+
+            .page-hero p {
+                font-size: 17px;
+            }
+
+            .section {
+                padding: 40px 0;
+            }
+
+            .section-inner {
+                padding: 0 16px;
+            }
+
+            .section-headline {
+                font-size: 28px;
+            }
+
+            .section-subhead {
+                font-size: 17px;
+            }
+
+            .toolbar {
+                gap: 8px;
+            }
+
+            .toolbar-right {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .card {
+                padding: 20px;
+                border-radius: 16px;
+            }
+
+            .template-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .editor-area {
+                min-height: 320px;
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-links {
+                display: none;
+            }
+
+            .template-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script src="nav.js"></script>
+</head>
+<body>
+    <!-- Editor Section -->
+    <section class="section section-white" style="padding-top: 32px;">
+        <div class="section-inner">
+            <div class="main-grid">
+                <!-- Left: Editor -->
+                <div class="card">
+                    <div class="toolbar">
+                        <button class="btn-filled btn-sm" data-ratio="1:1" onclick="changeAspectRatio('1:1')">1:1</button>
+                        <button class="btn-outline btn-sm" data-ratio="2:3" onclick="changeAspectRatio('2:3')">2:3</button>
+                        <button class="btn-outline btn-sm" data-ratio="3:4" onclick="changeAspectRatio('3:4')">3:4</button>
+                        <button class="btn-outline btn-sm" data-ratio="4:3" onclick="changeAspectRatio('4:3')">4:3</button>
+                        <button class="btn-outline btn-sm" data-ratio="9:16" onclick="changeAspectRatio('9:16')">9:16</button>
+                        <button class="btn-outline btn-sm" data-ratio="16:9" onclick="changeAspectRatio('16:9')">16:9</button>
+                        <div style="margin-left:auto;display:flex;gap:6px;">
+                            <button class="btn-outline btn-sm" onclick="addCell()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                格子
+                            </button>
+                            <button class="btn-outline btn-sm" onclick="resetLayout()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                                重置
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="editor-area">
+                        <!-- 左右翻转按钮（画布左侧） -->
+                        <button class="flip-btn flip-btn-h" onclick="flipLayout('h')" title="左右翻转">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="9" x2="19" y2="9"></line><polyline points="9 5 5 9 9 13"></polyline><line x1="19" y1="15" x2="5" y2="15"></line><polyline points="15 19 19 15 15 11"></polyline></svg>
+                        </button>
+                        <!-- 上下翻转按钮（画布右侧） -->
+                        <button class="flip-btn flip-btn-v" onclick="flipLayout('v')" title="上下翻转">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(90deg)"><line x1="5" y1="9" x2="19" y2="9"></line><polyline points="9 5 5 9 9 13"></polyline><line x1="19" y1="15" x2="5" y2="15"></line><polyline points="15 19 19 15 15 11"></polyline></svg>
+                        </button>
+                        <div class="grid-container" id="gridContainer">
+                            <div class="grid-background" id="gridBackground"></div>
+                        </div>
+                    </div>
+
+                    <p class="tip-text">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+                        拖拽移动格子 · 拖拽边缘调整大小 · 自动磁吸对齐
+                    </p>
+
+                    <!-- Templates -->
+                    <div class="templates-section" id="template-section">
+                        <h3 class="card-title">预设模板</h3>
+                        <div class="template-grid">
+                            <button class="template-btn" onclick="loadTemplate('leftBig')">
+                                <div class="template-preview" style="grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 2fr 1fr 1fr;">
+                                    <div style="grid-column: 1/3; grid-row: 1/3; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 3; grid-row: 1; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 3; grid-row: 2; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 1; grid-row: 3; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 2; grid-row: 3; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 3; grid-row: 3; background: #1d1d1f; border-radius: 2px;"></div>
+                                </div>
+                                左大右小
+                            </button>
+                            <button class="template-btn" onclick="loadTemplate('topBig')">
+                                <div class="template-preview" style="grid-template-columns: 1fr 1fr; grid-template-rows: 1.5fr 1fr;">
+                                    <div style="grid-column: 1/3; grid-row: 1; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 1; grid-row: 2; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 2; grid-row: 2; background: #1d1d1f; border-radius: 2px;"></div>
+                                </div>
+                                上大下小
+                            </button>
+                            <button class="template-btn" onclick="loadTemplate('equal')">
+                                <div class="template-preview" style="grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr;">
+                                    <div style="background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="background: #1d1d1f; border-radius: 2px;"></div>
+                                </div>
+                                均等六格
+                            </button>
+                            <button class="template-btn" onclick="loadTemplate('masonry')">
+                                <div class="template-preview" style="grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr 1fr;">
+                                    <div style="grid-column: 1; grid-row: 1/3; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 2; grid-row: 1; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 3; grid-row: 1; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 2/4; grid-row: 2; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 1; grid-row: 3/5; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 2; grid-row: 3; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 3; grid-row: 3/5; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 2; grid-row: 4; background: #1d1d1f; border-radius: 2px;"></div>
+                                </div>
+                                瀑布流
+                            </button>
+                            <button class="template-btn" onclick="loadTemplate('rightBig')">
+                                <div class="template-preview" style="grid-template-columns: 3fr 2fr; grid-template-rows: 1fr 1fr 1fr;">
+                                    <div style="grid-column: 1; grid-row: 1; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 1; grid-row: 2; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 1; grid-row: 3; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 2; grid-row: 1/4; background: #1d1d1f; border-radius: 2px;"></div>
+                                </div>
+                                左小右大
+                            </button>
+                            <button class="template-btn" onclick="loadTemplate('center')">
+                                <div class="template-preview" style="grid-template-columns: 1fr 1.5fr 1fr; grid-template-rows: 1fr 1fr;">
+                                    <div style="grid-column: 1; grid-row: 1; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 2; grid-row: 1/3; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 3; grid-row: 1; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 1; grid-row: 2; background: #1d1d1f; border-radius: 2px;"></div>
+                                    <div style="grid-column: 3; grid-row: 2; background: #1d1d1f; border-radius: 2px;"></div>
+                                </div>
+                                中心突出
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Properties & Output -->
+                <div>
+                    <div class="card" style="margin-bottom: 20px;">
+                        <h3 class="card-title">主体设置</h3>
+                        <input type="text" id="plantInput" class="field-input" placeholder="例如：银杏树、樱花树、松树..." style="margin-bottom: 12px;">
+                        <div class="tags-row" style="justify-content: flex-start;">
+                            <span class="tag-chip" onclick="fillPlant('银杏树')">银杏树</span>
+                            <span class="tag-chip" onclick="fillPlant('樱花树')">樱花树</span>
+                            <span class="tag-chip" onclick="fillPlant('松树')">松树</span>
+                            <span class="tag-chip" onclick="fillPlant('红枫')">红枫</span>
+                            <span class="tag-chip" onclick="fillPlant('梧桐树')">梧桐树</span>
+                            <span class="tag-chip" onclick="fillPlant('柳树')">柳树</span>
+                            <span class="tag-chip" onclick="fillPlant('竹子')">竹子</span>
+                            <span class="tag-chip" onclick="fillPlant('椰子树')">椰子树</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 20px;">
+                        <h3 class="card-title">选中格子属性</h3>
+                        <div id="propsPanel">
+                            <p style="color: var(--ink-quaternary); font-size: 13px;">请点击画布中的格子进行编辑</p>
+                        </div>
+                    </div>
+
+                    <div class="card" id="output-section">
+                        <h3 class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
+                            生成的提示词
+                            <button class="btn-outline btn-sm" onclick="clearOutput()" style="padding:4px 8px;" title="清空">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </h3>
+                        <div class="output-box" id="outputBox"></div>
+                        <div class="output-actions">
+                            <button class="btn-filled btn-sm" onclick="generatePrompt()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                生成提示词
+                            </button>
+                            <button class="btn-outline btn-sm" onclick="copyPrompt()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                复制
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-text">图片排版编辑器 · 灵感来自 Apple 设计语言</p>
+        <div class="footer-links">
+            <a href="#">编辑器</a>
+            <a href="#">模板</a>
+            <a href="#">输出</a>
+        </div>
+    </footer>
+
+    <div class="snap-indicator" id="snapIndicator">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        磁吸对齐
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== Data Model =====
+        let cells = [];
+        let selectedCellId = null;
+        let cellIdCounter = 1;
+        let isDragging = false;
+        let isResizing = false;
+        let currentDragCell = null;
+        let snapGuides = [];
+        let currentRatio = '1:1';
+
+        const SNAP_THRESHOLD = 8;
+        let gridSize = 10;
+
+        // 中等饱和度配色，确保白色文字可读
+        const COLORS = [
+            '#22c55e', // 翠绿
+            '#d97706', // 琥珀
+            '#2563eb', // 宝蓝
+            '#7c3aed', // 紫罗兰
+            '#db2777', // 玫红
+            '#dc2626', // 朱红
+            '#0d9488', // 青碧
+            '#ea580c', // 橘橙
+        ];
+
+        const CONTENT_OPTIONS = [
+            { value: 'tree', label: '整株/树林', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M8 22h8"/><path d="M7 12c0-3 2-5 5-7 3 2 5 4 5 7"/><path d="M5 16c0-2 1.5-4 3.5-5.5"/><path d="M19 16c0-2-1.5-4-3.5-5.5"/></svg>' },
+            { value: 'bark', label: '树干/树皮', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M8 6c2 1 3 3 4 4"/><path d="M16 6c-2 1-3 3-4 4"/><path d="M9 14c1.5 0.5 2 2 3 3"/><path d="M15 14c-1.5 0.5-2 2-3 3"/><path d="M8 22h8"/></svg>' },
+            { value: 'branch', label: '枝叶/叶片', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6"/><path d="M18 6c-2 0-4 1-5 3"/><path d="M18 6c0 2-1 4-3 5"/><path d="M6 18c2 0 4-1 5-3"/><path d="M6 18c0-2 1-4 3-5"/></svg>' },
+            { value: 'leaf', label: '单片叶子', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66L12 14l6.34 8 1.89-.66C18.1 16.17 15.9 10 17 8z"/><path d="M12 14c-2-3-6-4-9-4 1 4 3 7 9 4z"/></svg>' },
+            { value: 'flower', label: '花/花序', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2a4 4 0 0 1 0 8"/><path d="M12 2a4 4 0 0 0 0 8"/><path d="M20.66 7.5a4 4 0 0 1-5.66 5.66"/><path d="M20.66 7.5a4 4 0 0 0-5.66 5.66"/><path d="M20.66 16.5a4 4 0 0 1-5.66-5.66"/><path d="M20.66 16.5a4 4 0 0 0-5.66-5.66"/><path d="M3.34 16.5a4 4 0 0 1 5.66-5.66"/><path d="M3.34 16.5a4 4 0 0 0 5.66-5.66"/><path d="M3.34 7.5a4 4 0 0 1 5.66 5.66"/><path d="M3.34 7.5a4 4 0 0 0 5.66-5.66"/></svg>' },
+            { value: 'fruit', label: '果实', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="8"/><path d="M12 6V2"/><path d="M8 4c2 0 3 1 4 2"/><path d="M16 4c-2 0-3 1-4 2"/></svg>' },
+            { value: 'seed', label: '种子', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="14" rx="6" ry="8"/><path d="M12 6c-2-2-5-3-8-2"/><path d="M12 6c2-2 5-3 8-2"/></svg>' },
+            { value: 'custom', label: '自定义', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' }
+        ];
+
+        const CONTENT_DESCRIPTIONS = {
+            'tree': '树林或单株全貌广角照片，展现整体树形、树冠轮廓和自然生长状态',
+            'bark': '树干近距离特写，展现树皮纹理、表面质感、裂纹和自然风化痕迹',
+            'branch': '枝叶近距离特写，展现叶片排列方式和分枝结构',
+            'leaf': '单片叶子微距特写，展现叶脉纹路、叶片形状和边缘特征',
+            'flower': '花或花序近距离特写，展现花的结构、花瓣细节或花序形态',
+            'fruit': '果实近距离特写，展现成熟果实的外形和色彩',
+            'seed': '种子或加工后果实的特写，展现种子外壳纹理或果核内部细节',
+            'custom': '植物局部特写'
+        };
+
+        // ===== Plant Features Database =====
+        // 记录常见植物的真实特征，用于智能替换不存在的部位
+        const PLANT_FEATURES = {
+            // 裸子植物
+            '竹子': {
+                hasTree: true, hasBark: true, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {},
+                customFeatures: ['竹笋', '竹节', '竹米']
+            },
+            '银杏': {
+                hasTree: true, hasBark: true, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: false, hasSeed: true,
+                alternatives: {
+                    fruit: '白果（种子）特写，展现成熟种子的外形和黄色外种皮'
+                },
+                flowerDescription: '球花（花序）近距离特写，银杏为雌雄异株，雄株有穗状雄球花，雌株有胚珠结构，无花瓣，呈绿色或黄绿色',
+                customFeatures: ['扇形叶', '白果', '雄球花']
+            },
+            '松树': {
+                hasTree: true, hasBark: true, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: false, hasSeed: true,
+                alternatives: {
+                    fruit: '松果（松塔）特写，展现球果的鳞片结构'
+                },
+                flowerDescription: '球花近距离特写，松树为雌雄同株，雄球花呈穗状淡黄色，雌球花呈球形或卵形，无花瓣',
+                customFeatures: ['松针', '松果', '雄球花']
+            },
+            '柏树': {
+                hasTree: true, hasBark: true, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: false, hasSeed: true,
+                alternatives: {
+                    fruit: '柏果特写，展现球果形态'
+                },
+                flowerDescription: '球花近距离特写，柏树球花较小，雄球花黄色球形，雌球花绿色，无花瓣',
+                customFeatures: ['鳞叶', '柏果', '球花']
+            },
+            // 蕨类植物
+            '蕨类': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: false, hasFruit: false, hasSeed: false,
+                alternatives: {
+                    bark: '根状茎特写，展现地下茎的形态',
+                    flower: '孢子囊群特写，展现叶背的孢子结构',
+                    fruit: '卷曲幼叶特写，展现蕨类特有的拳卷形态',
+                    seed: '孢子叶特写，展现产生孢子的叶片'
+                },
+                customFeatures: ['孢子囊', '拳卷叶', '根状茎']
+            },
+            // 单子叶植物
+            '兰花': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: false, hasSeed: true,
+                alternatives: {
+                    bark: '假鳞茎特写，展现兰花特有的储水结构',
+                    fruit: '蒴果特写，展现兰花种荚形态'
+                },
+                customFeatures: ['假鳞茎', '唇瓣']
+            },
+            '百合': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: false, hasSeed: true,
+                alternatives: {
+                    bark: '鳞茎特写，展现地下鳞茎结构',
+                    fruit: '蒴果特写，展现成熟种荚'
+                },
+                customFeatures: ['鳞茎', '花蕊']
+            },
+            '荷花': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '藕节特写，展现地下茎结构'
+                },
+                customFeatures: ['莲蓬', '藕']
+            },
+            '睡莲': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: false, hasSeed: true,
+                alternatives: {
+                    bark: '根状茎特写，展现水下茎结构',
+                    fruit: '花后种荚特写，展现结实过程'
+                },
+                customFeatures: ['根状茎', '浮水叶']
+            },
+            '芦苇': {
+                hasTree: true, hasBark: true, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {},
+                customFeatures: ['芦花', '芦穗']
+            },
+            // 多肉植物
+            '仙人掌': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: false,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '茎干特写，展现肉质茎结构',
+                    leaf: '刺座特写，展现仙人掌特有的刺结构'
+                },
+                customFeatures: ['刺座', '肉质茎']
+            },
+            '多肉': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '肉质茎特写，展现储水组织'
+                },
+                customFeatures: ['肉质叶', '莲座状']
+            },
+            // 棕榈植物
+            '棕榈': {
+                hasTree: true, hasBark: true, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {},
+                customFeatures: ['羽状叶', '叶鞘', '棕榈果']
+            },
+            '椰子树': {
+                hasTree: true, hasBark: true, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {},
+                customFeatures: ['羽状叶', '椰果', '佛焰花序']
+            },
+            // 苔藓地衣
+            '苔藓': {
+                hasTree: true, hasBark: false, hasBranch: false, hasLeaf: true,
+                hasFlower: false, hasFruit: false, hasSeed: false,
+                alternatives: {
+                    bark: '假根特写，展现苔藓附着结构',
+                    branch: '配子体特写，展现绿色叶状体',
+                    flower: '孢蒴特写，展现孢子繁殖体',
+                    fruit: '蒴帽特写，展现孢子囊盖',
+                    seed: '孢子特写，展现微观孢子'
+                },
+                customFeatures: ['孢蒴', '假根', '配子体']
+            },
+            // 草本植物
+            '蒲公英': {
+                hasTree: true, hasBark: false, hasBranch: false, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '茎秆特写，展现中空花葶和绒毛质感',
+                    branch: '花葶特写，展现花茎上的苞片排列'
+                },
+                customFeatures: ['花葶', '冠毛', '蒲公英种子球']
+            },
+            '向日葵': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '粗壮茎秆特写，展现茎表粗糙质感和绒毛'
+                },
+                customFeatures: ['花盘', '葵花籽']
+            },
+            '玫瑰': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '带刺茎秆特写，展现玫瑰刺和茎皮质感'
+                },
+                customFeatures: ['花刺', '玫瑰果']
+            },
+            '菊花': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '茎秆特写，展现直立茎和分枝结构'
+                },
+                customFeatures: ['花蕾', '舌状花', '瘦果']
+            },
+            '薰衣草': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '木质化茎基部特写，展现茎干纹理'
+                },
+                customFeatures: ['花穗', '轮伞花序']
+            },
+            '郁金香': {
+                hasTree: true, hasBark: false, hasBranch: false, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '花茎特写，展现直立光滑的花葶',
+                    branch: '鳞茎特写，展现地下球根结构'
+                },
+                customFeatures: ['花茎', '鳞茎', '杯状花']
+            },
+            '绿萝': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: false, hasFruit: false, hasSeed: false,
+                alternatives: {
+                    bark: '气生根特写，展现攀附根的形态',
+                    flower: '新芽特写，展现嫩叶卷曲展开',
+                    fruit: '藤蔓特写，展现匍匐茎和节间',
+                    seed: '叶斑特写，展现叶片上的金色斑纹'
+                },
+                customFeatures: ['气生根', '藤蔓', '新芽']
+            },
+            '吊兰': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '匍匐茎特写，展现走茎和节上小植株'
+                },
+                customFeatures: ['匍匐茎', '小植株']
+            },
+            '含羞草': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '茎秆特写，展现茎上的倒钩刺',
+                    fruit: '荚果特写，展现含羞草的扁平豆荚'
+                },
+                customFeatures: ['倒钩刺', '荚果', '闭合叶']
+            },
+            '铜钱草': {
+                hasTree: true, hasBark: false, hasBranch: true, hasLeaf: true,
+                hasFlower: true, hasFruit: true, hasSeed: true,
+                alternatives: {
+                    bark: '匍匐茎特写，展现水横枝的蔓延结构'
+                },
+                customFeatures: ['匍匐茎', '花葶', '根系']
+            }
+        };
+
+        // 植物名称匹配（支持模糊匹配）
+        function matchPlantFeature(plantName) {
+            // 精确匹配
+            if (PLANT_FEATURES[plantName]) {
+                return { matched: true, features: PLANT_FEATURES[plantName], name: plantName };
+            }
+            // 模糊匹配（去除常见后缀）
+            const cleanName = plantName
+                .replace(/树|花|草|木|藤|竹/g, '')
+                .replace(/的|之/g, '');
+            for (const key in PLANT_FEATURES) {
+                if (key.includes(cleanName) || cleanName.includes(key)) {
+                    return { matched: true, features: PLANT_FEATURES[key], name: key };
+                }
+            }
+            // 无匹配，返回null表示使用默认描述
+            return { matched: false, features: null, name: plantName };
+        }
+
+        // 获取智能替换后的内容描述
+        function getSmartContentDescription(content, plantName, plantInfo) {
+            // 如果是自定义内容，直接返回
+            if (content === 'custom') {
+                return CONTENT_DESCRIPTIONS['custom'];
+            }
+            
+            // 如果没有植物特征数据，使用默认描述
+            if (!plantInfo.matched || !plantInfo.features) {
+                return CONTENT_DESCRIPTIONS[content] || content;
+            }
+            
+            const features = plantInfo.features;
+            
+            // 检查该植物是否有此特征
+            const featureMap = {
+                'tree': 'hasTree',
+                'bark': 'hasBark',
+                'branch': 'hasBranch',
+                'leaf': 'hasLeaf',
+                'flower': 'hasFlower',
+                'fruit': 'hasFruit',
+                'seed': 'hasSeed'
+            };
+            
+            const hasFeature = features[featureMap[content]];
+            
+            // 如果有该特征
+            if (hasFeature !== false) {
+                // 特殊处理：花描述优先使用 flowerDescription（用于裸子植物等无花瓣的植物）
+                if (content === 'flower' && features.flowerDescription) {
+                    return features.flowerDescription;
+                }
+                return CONTENT_DESCRIPTIONS[content];
+            }
+            
+            // 如果没有该特征，使用替代描述
+            if (features.alternatives && features.alternatives[content]) {
+                return features.alternatives[content];
+            }
+            
+            // 如果没有替代描述，返回一个通用描述
+            const fallbackMap = {
+                'flower': '花苞或花序特写（若该植物开花）',
+                'fruit': '成熟繁殖体特写',
+                'seed': '繁殖器官特写',
+                'bark': '茎干或根茎特写'
+            };
+            return fallbackMap[content] || CONTENT_DESCRIPTIONS[content];
+        }
+
+        // ===== Init =====
+        function init() {
+            // 尝试从 localStorage 恢复数据
+            const saved = localStorage.getItem('layoutToolState');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    cells = state.cells || [];
+                    cellIdCounter = state.cellIdCounter || 1;
+                    selectedCellId = state.selectedCellId || null;
+                    currentRatio = state.currentRatio || '1:1';
+                    // 恢复植物名称
+                    if (state.plantName) document.getElementById('plantInput').value = state.plantName;
+                    // 恢复输出内容
+                    if (state.outputText) document.getElementById('outputBox').textContent = state.outputText;
+                    // 恢复比例按钮状态
+                    document.querySelectorAll('[data-ratio]').forEach(btn => {
+                        if (btn.dataset.ratio === currentRatio) {
+                            btn.classList.remove('btn-outline');
+                            btn.classList.add('btn-filled');
+                        } else {
+                            btn.classList.remove('btn-filled');
+                            btn.classList.add('btn-outline');
+                        }
+                    });
+                    renderCells();
+                    updatePropsPanel();
+                    return;
+                } catch (e) { /* 解析失败则正常初始化 */ }
+            }
+            loadTemplate('leftBig');
+        }
+
+        function fillPlant(name) {
+            document.getElementById('plantInput').value = name;
+        }
+
+        function updateGridBackground() {
+            const bg = document.getElementById('gridBackground');
+            const p = 100 / gridSize;
+            bg.style.backgroundSize = `${p}% ${p}%`;
+        }
+
+        // ===== Aspect Ratio =====
+        const ASPECT_MAP = {
+            '1:1': { w: 1, h: 1 }, '2:3': { w: 2, h: 3 }, '3:4': { w: 3, h: 4 },
+            '4:3': { w: 4, h: 3 }, '9:16': { w: 9, h: 16 }, '16:9': { w: 16, h: 9 }
+        };
+
+        function changeAspectRatio(ratio) {
+            currentRatio = ratio;
+            const container = document.getElementById('gridContainer');
+            const area = document.querySelector('.editor-area');
+
+            document.querySelectorAll('[data-ratio]').forEach(btn => {
+                if (btn.dataset.ratio === ratio) {
+                    btn.classList.remove('btn-outline');
+                    btn.classList.add('btn-filled');
+                } else {
+                    btn.classList.remove('btn-filled');
+                    btn.classList.add('btn-outline');
+                }
+            });
+
+            const aw = area.clientWidth - 48;
+            const ah = area.clientHeight - 48;
+            const r = ASPECT_MAP[ratio];
+            const rv = r.w / r.h;
+            let cw, ch;
+
+            if (rv >= 1) {
+                cw = Math.min(aw, 560);
+                ch = cw / rv;
+                if (ch > ah) { ch = ah; cw = ch * rv; }
+            } else {
+                ch = Math.min(ah, 460);
+                cw = ch * rv;
+                if (cw > aw) { cw = aw; ch = cw / rv; }
+            }
+
+            container.style.width = cw + 'px';
+            container.style.height = ch + 'px';
+        }
+
+        // ===== Templates =====
+        function loadTemplate(type) {
+            cells = [];
+            cellIdCounter = 1;
+            selectedCellId = null;
+
+            switch (type) {
+                case 'leftBig':
+                    cells = [
+                        { id: 1, x: 0, y: 0, w: 66.7, h: 66.7, content: 'tree', label: '整株/树林', colorIndex: 0 },
+                        { id: 2, x: 66.7, y: 0, w: 33.3, h: 33.3, content: 'bark', label: '树干/树皮', colorIndex: 1 },
+                        { id: 3, x: 66.7, y: 33.3, w: 33.3, h: 33.3, content: 'fruit', label: '果实', colorIndex: 2 },
+                        { id: 4, x: 0, y: 66.7, w: 33.3, h: 33.3, content: 'leaf', label: '单叶', colorIndex: 3 },
+                        { id: 5, x: 33.3, y: 66.7, w: 33.3, h: 33.3, content: 'flower', label: '花', colorIndex: 4 },
+                        { id: 6, x: 66.7, y: 66.7, w: 33.3, h: 33.3, content: 'seed', label: '种子', colorIndex: 5 }
+                    ];
+                    break;
+                case 'topBig':
+                    cells = [
+                        { id: 1, x: 0, y: 0, w: 100, h: 60, content: 'tree', label: '整株/树林', colorIndex: 0 },
+                        { id: 2, x: 0, y: 60, w: 50, h: 40, content: 'bark', label: '树干/树皮', colorIndex: 1 },
+                        { id: 3, x: 50, y: 60, w: 50, h: 40, content: 'leaf', label: '单叶', colorIndex: 2 }
+                    ];
+                    break;
+                case 'equal':
+                    for (let i = 0; i < 6; i++) {
+                        cells.push({
+                            id: i + 1, x: (i % 3) * 33.33, y: Math.floor(i / 3) * 50,
+                            w: 33.33, h: 50,
+                            content: ['tree', 'bark', 'leaf', 'flower', 'fruit', 'seed'][i],
+                            label: ['整株', '树干/树皮', '单叶', '花', '果实', '种子'][i],
+                            colorIndex: i
+                        });
+                    }
+                    break;
+                case 'masonry':
+                    cells = [
+                        { id: 1, x: 0, y: 0, w: 33.33, h: 50, content: 'tree', label: '整株', colorIndex: 0 },
+                        { id: 2, x: 33.33, y: 0, w: 33.33, h: 25, content: 'leaf', label: '单叶', colorIndex: 1 },
+                        { id: 3, x: 66.67, y: 0, w: 33.33, h: 25, content: 'flower', label: '花', colorIndex: 2 },
+                        { id: 4, x: 33.33, y: 25, w: 66.67, h: 25, content: 'bark', label: '树干/树皮', colorIndex: 3 },
+                        { id: 5, x: 0, y: 50, w: 33.33, h: 50, content: 'leaf', label: '单叶', colorIndex: 4 },
+                        { id: 6, x: 33.33, y: 50, w: 33.33, h: 25, content: 'fruit', label: '果实', colorIndex: 5 },
+                        { id: 7, x: 66.67, y: 50, w: 33.33, h: 50, content: 'seed', label: '种子', colorIndex: 6 },
+                        { id: 8, x: 33.33, y: 75, w: 33.33, h: 25, content: 'custom', label: '其他', colorIndex: 7 }
+                    ];
+                    break;
+                case 'rightBig':
+                    cells = [
+                        { id: 1, x: 0, y: 0, w: 60, h: 33.33, content: 'bark', label: '树干/树皮', colorIndex: 1 },
+                        { id: 2, x: 0, y: 33.33, w: 60, h: 33.33, content: 'leaf', label: '单叶', colorIndex: 3 },
+                        { id: 3, x: 0, y: 66.67, w: 60, h: 33.33, content: 'flower', label: '花', colorIndex: 4 },
+                        { id: 4, x: 60, y: 0, w: 40, h: 100, content: 'tree', label: '整株/树林', colorIndex: 0 }
+                    ];
+                    break;
+                case 'center':
+                    cells = [
+                        { id: 1, x: 0, y: 0, w: 33.33, h: 50, content: 'bark', label: '树干/树皮', colorIndex: 1 },
+                        { id: 2, x: 33.33, y: 0, w: 33.33, h: 100, content: 'tree', label: '整株/树林', colorIndex: 0 },
+                        { id: 3, x: 66.67, y: 0, w: 33.33, h: 50, content: 'fruit', label: '果实', colorIndex: 2 },
+                        { id: 4, x: 0, y: 50, w: 33.33, h: 50, content: 'leaf', label: '单叶', colorIndex: 3 },
+                        { id: 5, x: 66.67, y: 50, w: 33.33, h: 50, content: 'flower', label: '花', colorIndex: 4 }
+                    ];
+                    break;
+            }
+            cellIdCounter = cells.length + 1;
+            renderCells();
+            updatePropsPanel();
+            clearOutput();
+            showToast('已加载模板');
+        }
+
+        // ===== Snap =====
+        function snapToGrid(v) { const s = 100 / gridSize; return Math.round(v / s) * s; }
+
+        function getSnapLines(excludeId) {
+            const lines = { vertical: [0, 100], horizontal: [0, 100] };
+            cells.forEach(c => {
+                if (c.id === excludeId) return;
+                lines.vertical.push(c.x, c.x + c.w);
+                lines.horizontal.push(c.y, c.y + c.h);
+            });
+            return lines;
+        }
+
+        function applySnap(value, lines, isV) {
+            const key = isV ? 'vertical' : 'horizontal';
+            for (let line of lines[key]) {
+                if (Math.abs(value - line) < SNAP_THRESHOLD) return { value: line, snapped: true };
+            }
+            return { value: snapToGrid(value), snapped: false };
+        }
+
+        function showSnapGuide(type, pos) {
+            const c = document.getElementById('gridContainer');
+            const g = document.createElement('div');
+            g.className = `snap-guide ${type}`;
+            if (type === 'v') g.style.left = pos + '%'; else g.style.top = pos + '%';
+            c.appendChild(g);
+            snapGuides.push(g);
+            const ind = document.getElementById('snapIndicator');
+            ind.classList.add('show');
+            setTimeout(() => ind.classList.remove('show'), 300);
+        }
+
+        function clearSnapGuides() { snapGuides.forEach(g => g.remove()); snapGuides = []; }
+
+        // ===== Render =====
+        function renderCells() {
+            const container = document.getElementById('gridContainer');
+            const gridBg = document.getElementById('gridBackground');
+            container.innerHTML = '';
+            container.appendChild(gridBg);
+
+            [...cells].sort((a, b) => a.id - b.id).forEach(cell => {
+                const div = document.createElement('div');
+                div.className = 'grid-cell' + (selectedCellId === cell.id ? ' selected' : '');
+                div.id = 'cell-' + cell.id;
+                const gap = 0.8;
+                div.style.cssText = `left:${cell.x + gap/2}%;top:${cell.y + gap/2}%;width:${cell.w - gap}%;height:${cell.h - gap}%;background:${COLORS[cell.colorIndex % COLORS.length]};`;
+                div.dataset.cellId = cell.id;
+
+                div.innerHTML = `
+                    <div class="cell-num">${cell.id}</div>
+                    <div class="cell-label">${cell.label || ''}</div>
+                    <button class="cell-delete" onclick="event.stopPropagation(); deleteCell(${cell.id})">×</button>
+                    <div class="resize-handle e"></div>
+                    <div class="resize-handle s"></div>
+                    <div class="resize-handle se"></div>
+                `;
+
+                div.addEventListener('click', () => { if (!isDragging && !isResizing) selectCell(cell.id); });
+                div.addEventListener('mousedown', (e) => {
+                    if (e.target.classList.contains('resize-handle') || e.target.classList.contains('cell-delete')) return;
+                    startDrag(e, cell);
+                });
+                div.querySelector('.resize-handle.e').addEventListener('mousedown', (e) => startResize(e, cell, 'e'));
+                div.querySelector('.resize-handle.s').addEventListener('mousedown', (e) => startResize(e, cell, 's'));
+                div.querySelector('.resize-handle.se').addEventListener('mousedown', (e) => startResize(e, cell, 'se'));
+
+                container.appendChild(div);
+            });
+        }
+
+        function selectCell(id) { selectedCellId = id; renderCells(); updatePropsPanel(); }
+
+        // ===== Drag =====
+        let dragStartPos = { x: 0, y: 0 }, dragStartCell = { x: 0, y: 0 };
+
+        function startDrag(e, cell) {
+            isDragging = true; currentDragCell = cell; selectCell(cell.id);
+            dragStartPos = { x: e.clientX, y: e.clientY };
+            dragStartCell = { x: cell.x, y: cell.y };
+            document.getElementById('cell-' + cell.id).classList.add('dragging');
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function onDrag(e) {
+            if (!isDragging || !currentDragCell) return;
+            clearSnapGuides();
+            const rect = document.getElementById('gridContainer').getBoundingClientRect();
+            const dx = ((e.clientX - dragStartPos.x) / rect.width) * 100;
+            const dy = ((e.clientY - dragStartPos.y) / rect.height) * 100;
+            let nx = dragStartCell.x + dx, ny = dragStartCell.y + dy;
+            const lines = getSnapLines(currentDragCell.id);
+
+            const ls = applySnap(nx, lines, true), rs = applySnap(nx + currentDragCell.w, lines, true);
+            const ts = applySnap(ny, lines, false), bs = applySnap(ny + currentDragCell.h, lines, false);
+
+            if (ls.snapped) { nx = ls.value; showSnapGuide('v', ls.value); }
+            else if (rs.snapped) { nx = rs.value - currentDragCell.w; showSnapGuide('v', rs.value); }
+            else { nx = snapToGrid(nx); }
+
+            if (ts.snapped) { ny = ts.value; showSnapGuide('h', ts.value); }
+            else if (bs.snapped) { ny = bs.value - currentDragCell.h; showSnapGuide('h', bs.value); }
+            else { ny = snapToGrid(ny); }
+
+            nx = Math.max(0, Math.min(100 - currentDragCell.w, nx));
+            ny = Math.max(0, Math.min(100 - currentDragCell.h, ny));
+            currentDragCell.x = nx; currentDragCell.y = ny;
+            renderCells();
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            if (currentDragCell) { const el = document.getElementById('cell-' + currentDragCell.id); if (el) el.classList.remove('dragging'); }
+            currentDragCell = null; clearSnapGuides();
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        // ===== Resize =====
+        let resizeStartPos = { x: 0, y: 0 }, resizeStartCell = { w: 0, h: 0, x: 0, y: 0 }, resizeDirection = '';
+
+        function startResize(e, cell, dir) {
+            isResizing = true; currentDragCell = cell; resizeDirection = dir; e.stopPropagation();
+            resizeStartPos = { x: e.clientX, y: e.clientY };
+            resizeStartCell = { w: cell.w, h: cell.h, x: cell.x, y: cell.y };
+            document.addEventListener('mousemove', onResize);
+            document.addEventListener('mouseup', stopResize);
+        }
+
+        function onResize(e) {
+            if (!isResizing || !currentDragCell) return;
+            clearSnapGuides();
+            const rect = document.getElementById('gridContainer').getBoundingClientRect();
+            const dx = ((e.clientX - resizeStartPos.x) / rect.width) * 100;
+            const dy = ((e.clientY - resizeStartPos.y) / rect.height) * 100;
+            const lines = getSnapLines(currentDragCell.id);
+            let nw = resizeStartCell.w, nh = resizeStartCell.h;
+            const nx = resizeStartCell.x, ny = resizeStartCell.y;
+
+            if (resizeDirection.includes('e')) {
+                const re = resizeStartCell.x + resizeStartCell.w + dx;
+                const sr = applySnap(re, lines, true);
+                nw = sr.snapped ? sr.value - resizeStartCell.x : snapToGrid(re) - resizeStartCell.x;
+                if (sr.snapped) showSnapGuide('v', sr.value);
+            }
+            if (resizeDirection.includes('s')) {
+                const be = resizeStartCell.y + resizeStartCell.h + dy;
+                const sb = applySnap(be, lines, false);
+                nh = sb.snapped ? sb.value - resizeStartCell.y : snapToGrid(be) - resizeStartCell.y;
+                if (sb.snapped) showSnapGuide('h', sb.value);
+            }
+
+            const min = 100 / gridSize;
+            nw = Math.max(min, Math.min(100 - nx, nw));
+            nh = Math.max(min, Math.min(100 - ny, nh));
+            currentDragCell.w = nw; currentDragCell.h = nh;
+            renderCells();
+        }
+
+        function stopResize() {
+            isResizing = false; currentDragCell = null; resizeDirection = ''; clearSnapGuides();
+            document.removeEventListener('mousemove', onResize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+
+        // ===== CRUD =====
+        function addCell() {
+            const gs = 100 / gridSize;
+            for (let y = 0; y < 100; y += gs) {
+                for (let x = 0; x < 100; x += gs) {
+                    const t = { x, y, w: gs * 2, h: gs * 2 };
+                    if (!cells.some(c => !(t.x + t.w <= c.x + 1 || c.x + c.w <= t.x + 1 || t.y + t.h <= c.y + 1 || c.y + c.h <= t.y + 1))) {
+                        cells.push({ id: cellIdCounter++, x, y, w: gs * 2, h: gs * 2, content: 'custom', label: '新格子', colorIndex: (cellIdCounter - 1) % COLORS.length });
+                        renderCells(); selectCell(cells[cells.length - 1].id); showToast('已添加新格子'); return;
+                    }
+                }
+            }
+        }
+
+        function deleteCell(id) {
+            cells = cells.filter(c => c.id !== id);
+            if (selectedCellId === id) selectedCellId = null;
+            renderCells(); updatePropsPanel();
+        }
+
+        function resetLayout() { if (confirm('确定要重置所有布局吗？')) loadTemplate('leftBig'); }
+
+        // ===== Flip Layout =====
+        function flipLayout(direction) {
+            if (direction === 'h') {
+                // 左右翻转：x → 100 - x - w
+                cells.forEach(c => { c.x = parseFloat((100 - c.x - c.w).toFixed(1)); });
+            } else {
+                // 上下翻转：y → 100 - y - h
+                cells.forEach(c => { c.y = parseFloat((100 - c.y - c.h).toFixed(1)); });
+            }
+            renderCells();
+            showToast(direction === 'h' ? '已左右翻转' : '已上下翻转');
+        }
+
+        // ===== Properties =====
+        function updatePropsPanel() {
+            const panel = document.getElementById('propsPanel');
+            if (!selectedCellId) { panel.innerHTML = '<p style="color:var(--ink-quaternary);font-size:13px;">请点击画布中的格子进行编辑</p>'; return; }
+            const cell = cells.find(c => c.id === selectedCellId);
+            if (!cell) return;
+
+            panel.innerHTML = `
+                <div class="prop-group"><label class="prop-label">格子序号</label><div class="prop-input" style="background:var(--bg);">第 ${cell.id} 张</div></div>
+                <div class="prop-group"><label class="prop-label">图片内容</label>
+                    <div class="custom-select" id="contentSelect-${cell.id}">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect(${cell.id})">
+                            <div class="trigger-icon">${CONTENT_OPTIONS.find(o => o.value === cell.content)?.icon || ''}</div>
+                            <span>${CONTENT_OPTIONS.find(o => o.value === cell.content)?.label || ''}</span>
+                            <div class="trigger-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                        </div>
+                        <div class="custom-select-dropdown">
+                            ${CONTENT_OPTIONS.map(o => `
+                                <div class="custom-select-option ${cell.content === o.value ? 'selected' : ''}" onclick="selectCustomOption(${cell.id}, '${o.value}')">
+                                    <div class="opt-icon">${o.icon}</div>
+                                    <span>${o.label}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                ${cell.content === 'custom' ? `<div class="prop-group"><label class="prop-label">自定义描述</label><input type="text" class="prop-input" value="${cell.customLabel || ''}" placeholder="输入自定义内容描述" onchange="updateCellCustomLabel(${cell.id}, this.value)"></div>` : ''}
+                <div class="prop-group"><label class="prop-label">显示标签</label><input type="text" class="prop-input" value="${cell.label || ''}" placeholder="输入显示标签" onchange="updateCellLabel(${cell.id}, this.value)"></div>
+                <div class="prop-row">
+                    <div class="prop-group"><label class="prop-label">位置 X (%)</label><input type="number" class="prop-input" value="${cell.x.toFixed(1)}" min="0" max="90" step="0.1" onchange="updateCellPos(${cell.id},'x',this.value)"></div>
+                    <div class="prop-group"><label class="prop-label">位置 Y (%)</label><input type="number" class="prop-input" value="${cell.y.toFixed(1)}" min="0" max="90" step="0.1" onchange="updateCellPos(${cell.id},'y',this.value)"></div>
+                </div>
+                <div class="prop-row">
+                    <div class="prop-group"><label class="prop-label">宽度 (%)</label><input type="number" class="prop-input" value="${cell.w.toFixed(1)}" min="5" max="100" step="0.1" onchange="updateCellPos(${cell.id},'w',this.value)"></div>
+                    <div class="prop-group"><label class="prop-label">高度 (%)</label><input type="number" class="prop-input" value="${cell.h.toFixed(1)}" min="5" max="100" step="0.1" onchange="updateCellPos(${cell.id},'h',this.value)"></div>
+                </div>
+            `;
+        }
+
+        function updateCellContent(id, v) { const c = cells.find(c => c.id === id); if (c) { c.content = v; c.label = CONTENT_OPTIONS.find(o => o.value === v)?.label.split(' ')[1] || ''; if (v === 'custom') c.customLabel = ''; renderCells(); updatePropsPanel(); } }
+
+        // ===== Custom Select =====
+        function toggleCustomSelect(cellId) {
+            const el = document.getElementById('contentSelect-' + cellId);
+            if (!el) return;
+            const trigger = el.querySelector('.custom-select-trigger');
+            const dropdown = el.querySelector('.custom-select-dropdown');
+            const isOpen = dropdown.classList.contains('show');
+
+            // Close all other dropdowns first
+            document.querySelectorAll('.custom-select-dropdown.show').forEach(d => {
+                d.classList.remove('show');
+                d.closest('.custom-select').querySelector('.custom-select-trigger').classList.remove('open');
+            });
+
+            if (!isOpen) {
+                trigger.classList.add('open');
+                dropdown.classList.add('show');
+            }
+        }
+
+        function selectCustomOption(cellId, value) {
+            updateCellContent(cellId, value);
+            // Close dropdown
+            const el = document.getElementById('contentSelect-' + cellId);
+            if (el) {
+                el.querySelector('.custom-select-trigger').classList.remove('open');
+                el.querySelector('.custom-select-dropdown').classList.remove('show');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-select')) {
+                document.querySelectorAll('.custom-select-dropdown.show').forEach(d => {
+                    d.classList.remove('show');
+                    d.closest('.custom-select').querySelector('.custom-select-trigger').classList.remove('open');
+                });
+            }
+        });
+        function updateCellLabel(id, l) { const c = cells.find(c => c.id === id); if (c) { c.label = l; renderCells(); } }
+        function updateCellCustomLabel(id, l) { const c = cells.find(c => c.id === id); if (c) { c.customLabel = l; c.label = l; renderCells(); } }
+        function updateCellPos(id, p, v) { const c = cells.find(c => c.id === id); if (c) { c[p] = Math.max(0, Math.min(100, parseFloat(v) || 0)); renderCells(); } }
+
+        // ===== Generate Prompt =====
+        function generatePrompt() {
+            const plantName = document.getElementById('plantInput').value.trim();
+            if (!plantName) { showToast('请先输入植物主体名称！'); document.getElementById('plantInput').focus(); return; }
+            if (cells.length === 0) { showToast('请先添加格子！'); return; }
+
+            // 匹配植物特征
+            const plantInfo = matchPlantFeature(plantName);
+            
+            // 如果匹配到特殊植物，显示提示
+            if (plantInfo.matched && plantInfo.name !== plantName) {
+                showToast(`已识别为"${plantInfo.name}"的特征`);
+            }
+
+            const sorted = [...cells].sort((a, b) => Math.abs(a.y - b.y) > 5 ? a.y - b.y : a.x - b.x);
+            const biggest = sorted.reduce((m, c) => c.w * c.h > m.w * m.h ? c : m);
+            const smallest = sorted.reduce((m, c) => c.w * c.h < m.w * m.h ? c : m);
+            const sr = (biggest.w * biggest.h) / (smallest.w * smallest.h);
+
+            let desc = `【整体布局：一张${plantName}的植物特写拼图，画布比例为${currentRatio}，由${cells.length}张不同部位的特写照片拼贴而成。`;
+            if (sr > 2) desc += `其中第${biggest.id}张图片面积最大（宽${biggest.w.toFixed(1)}%×高${biggest.h.toFixed(1)}%），其他图片面积较小。`;
+            const rows = [...new Set(sorted.map(c => Math.round(c.y / 20) * 20))].sort((a, b) => a - b);
+            desc += rows.length === 1 ? '所有图片排成一行。' : `图片从上到下分${rows.length}行排列。`;
+            desc += `所有图片之间有细白色间隙分隔，整体构成一张完整的${plantName}植物科普拼图海报。】\n`;
+
+            const imgs = sorted.map(cell => {
+                // 使用智能内容描述
+                const cd = getSmartContentDescription(cell.content, plantName, plantInfo) || (cell.customLabel || cell.label);
+                const pd = getPosDesc(cell);
+                const sd = getSizeDesc(cell, sorted);
+                const ap = Math.round(cell.w * cell.h / 100);
+                return `第${cell.id}张${pd}${sd}：位置X=${cell.x.toFixed(1)}% Y=${cell.y.toFixed(1)}%，宽${cell.w.toFixed(1)}% 高${cell.h.toFixed(1)}%（面积约${ap}%）。${plantName}的${cd}`;
+            }).join('\n\n');
+
+            const req = `\n\n【画面要求：所有照片均为${plantName}的真实摄影风格。自然光拍摄，柔和的黄金时刻阳光，浅景深背景虚化效果，专业植物摄影风格，高清晰度，色彩鲜艳自然，8K分辨率】`;
+            document.getElementById('outputBox').textContent = desc + '\n' + imgs + req;
+            showToast('提示词生成成功！');
+        }
+
+        function getPosDesc(cell) {
+            const p = [];
+            if (cell.x < 5) p.push(cell.h > 90 ? '左侧占满全高' : cell.h > 60 ? '左侧占大部分高度' : '左侧');
+            else if (cell.x > 90) p.push('最右侧');
+            else if (cell.x < 35) p.push('偏左');
+            else if (cell.x > 60) p.push('偏右');
+            else p.push('中间');
+            if (!p.some(q => q.includes('高度') || q.includes('全高'))) {
+                if (cell.y < 5) p.push(cell.w > 90 ? '顶部占满全宽' : '顶部');
+                else if (cell.y > 85) p.push('底部');
+                else if (cell.y < 35) p.push('上方');
+                else if (cell.y > 60) p.push('下方');
+                else p.push('中部');
+            }
+            if (cell.w > 90 && !p.some(q => q.includes('全宽'))) p.push('占满全宽');
+            return `（${p.join('，')}）`;
+        }
+
+        function getSizeDesc(cell, all) {
+            const r = (cell.w * cell.h) / (all.reduce((s, c) => s + c.w * c.h, 0) / all.length);
+            if (r > 2) return '，大图'; if (r > 1.3) return '，中图'; if (r < 0.6) return '，小图'; return '';
+        }
+
+        function copyPrompt() {
+            const t = document.getElementById('outputBox').textContent;
+            if (!t) { showToast('没有可复制的提示词！'); return; }
+            navigator.clipboard.writeText(t).then(() => showToast('已复制！')).catch(() => {
+                const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;opacity:0';
+                document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                showToast('已复制！');
+            });
+        }
+
+        function clearOutput() { document.getElementById('outputBox').textContent = ''; saveState(); }
+
+        // ===== State Persistence =====
+        function saveState() {
+            const state = {
+                cells,
+                cellIdCounter,
+                selectedCellId,
+                currentRatio,
+                plantName: document.getElementById('plantInput').value.trim(),
+                outputText: document.getElementById('outputBox').textContent
+            };
+            localStorage.setItem('layoutToolState', JSON.stringify(state));
+        }
+
+        // 在关键操作后自动保存
+        const _origRenderCells = renderCells;
+        renderCells = function() { _origRenderCells(); saveState(); };
+        const _origChangeAspectRatio = changeAspectRatio;
+        changeAspectRatio = function(ratio) { _origChangeAspectRatio(ratio); saveState(); };
+
+        // 植物名称输入时也保存
+        document.getElementById('plantInput').addEventListener('input', saveState);
+
+        function showToast(msg) {
+            const t = document.getElementById('toast'); t.textContent = msg;
+            t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        init();
+        updateGridBackground();
+        setTimeout(() => changeAspectRatio('1:1'), 100);
+    </script>
+</body>
+</html>
