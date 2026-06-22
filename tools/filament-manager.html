@@ -136,7 +136,7 @@
         }
 
         .nav-item.active {
-            background: var(--accent-light);
+            background: #ffffff;
             color: var(--accent-color);
         }
 
@@ -1231,6 +1231,19 @@
             box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
             animation: dashFadeIn 0.4s ease-out forwards;
             opacity: 0;
+            transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+            cursor: pointer;
+        }
+
+        .dash-card:hover {
+            border-color: var(--border-color);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+            transform: translateY(-3px);
+        }
+
+        .dash-card:active {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
         }
 
         .dash-card-title {
@@ -1258,6 +1271,14 @@
 
         .dashboard-pair-row .dash-card {
             flex: 1;
+            height: 190px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-pair-row .dash-card > *:last-child {
+            flex: 1;
+            min-height: 0;
         }
 
         .monthly-trend-table {
@@ -1307,7 +1328,6 @@
         .dashboard-rank-row {
             display: flex;
             gap: 20px;
-            margin-bottom: 20px;
         }
 
         .dashboard-rank-row .dash-card {
@@ -1389,7 +1409,7 @@
         .channel-bar-label {
             font-size: 14px;
             color: var(--text-secondary);
-            min-width: 60px;
+            min-width: 80px;
         }
 
         .channel-bar-track {
@@ -1420,7 +1440,7 @@
 
         .color-dist-bar {
             display: flex;
-            height: 32px;
+            height: 8px;
             border-radius: var(--radius-md);
             overflow: hidden;
             margin-bottom: 16px;
@@ -1518,7 +1538,7 @@
 
         .price-mini-card {
             text-align: center;
-            padding: 20px 12px;
+            padding: 10px 12px;
             background: var(--bg-primary);
             border-radius: var(--radius-md);
             border: 1px solid var(--border-color);
@@ -1544,9 +1564,8 @@
 
         .extreme-item {
             display: flex;
-            flex-direction: column;
             align-items: flex-start;
-            justify-content: center;
+            justify-content: space-between;
             padding: 12px 16px;
             background: var(--bg-primary);
             border-radius: var(--radius-md);
@@ -1632,7 +1651,11 @@
         <!-- 左侧导航栏 -->
         <aside class="sidebar" id="sidebar">
             <nav class="nav-menu">
-                <div class="nav-item active" data-module="filaments">
+                <div class="nav-item active" data-module="dashboard">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+                    <span>仪表台</span>
+                </div>
+                <div class="nav-item" data-module="filaments">
                     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>
                     <span>耗材管理</span>
                 </div>
@@ -1644,10 +1667,7 @@
                     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
                     <span>知识库</span>
                 </div>
-                <div class="nav-item" data-module="dashboard">
-                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
-                    <span>仪表台</span>
-                </div>
+
             </nav>
             <div class="sidebar-footer">
                 <div style="display:flex;gap:8px;">
@@ -2316,6 +2336,7 @@
         init() {
             this.loadData();
             this.bindEvents();
+            this.currentModule = 'dashboard';
             this.render();
         },
 
@@ -2619,17 +2640,25 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">品牌 <span class="required">*</span></label>
-                            <select class="form-select" id="f_brand" required onchange="app.onBrandChange(this.value)">
-                                <option value="">请选择</option>
-                                ${FILAMENT_BRANDS.map(b => `<option value="${b}" ${data.brand === b ? 'selected' : ''}>${b}</option>`).join('')}
-                            </select>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <select class="form-select" id="f_brandSelect" style="flex:1" required onchange="app.onBrandChange(this.value)">
+                                    <option value="">请选择</option>
+                                    ${FILAMENT_BRANDS.filter(b => b !== '其他').map(b => `<option value="${b}" ${data.brand === b ? 'selected' : ''}>${b}</option>`).join('')}
+                                    <option value="自定义" ${!FILAMENT_BRANDS.includes(data.brand) && data.brand ? 'selected' : ''}>自定义</option>
+                                </select>
+                                <input type="text" class="form-input" id="f_brandInput" value="${!FILAMENT_BRANDS.includes(data.brand) && data.brand ? data.brand : ''}" placeholder="输入品牌" style="flex:1;display:none;" oninput="app.onBrandInputChange(this.value)">
+                            </div>
+                            <input type="hidden" id="f_brand" value="${data.brand || ''}">
                         </div>
                         <div class="form-group">
                             <label class="form-label">名称</label>
-                            <select class="form-select" id="f_nameSelect" onchange="app.onNameChange(this.value)">
-                                <option value="">请选择品牌后选择名称</option>
-                            </select>
-                            <input type="text" class="form-input" id="f_nameInput" value="${data.name || ''}" placeholder="输入自定义名称" style="display:none">
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <select class="form-select" id="f_nameSelect" style="flex:1" onchange="app.onNameChange(this.value)">
+                                    <option value="">请选择品牌后选择名称</option>
+                                </select>
+                                <input type="text" class="form-input" id="f_nameInput" value="${data.name || ''}" placeholder="输入自定义名称" style="flex:1;display:none;" oninput="app.onNameInputChange(this.value)">
+                            </div>
+                            <input type="hidden" id="f_name" value="${data.name || ''}">
                         </div>
                         <div class="form-group">
                             <label class="form-label">类型 <span class="required">*</span></label>
@@ -2726,15 +2755,31 @@
             // 编辑时自动触发品牌联动，加载名称列表
             if (isEdit && data.brand) {
                 setTimeout(() => {
-                    this.onBrandChange(data.brand);
-                    // 如果有自定义名称，选中"自定义"并显示输入框
+                    // 如果品牌是自定义（不在预设列表中），选中"自定义"并显示输入框
+                    const brandSelect = document.getElementById('f_brandSelect');
+                    const brandInput = document.getElementById('f_brandInput');
+                    const brandHidden = document.getElementById('f_brand');
+                    if (brandSelect && !FILAMENT_BRANDS.includes(data.brand)) {
+                        brandSelect.value = '自定义';
+                        if (brandInput) {
+                            brandInput.style.display = '';
+                            brandInput.value = data.brand;
+                        }
+                        if (brandHidden) brandHidden.value = data.brand;
+                    } else {
+                        this.onBrandChange(data.brand);
+                    }
+
+                    // 如果有名称，设置名称
                     if (data.name) {
                         const nameSelect = document.getElementById('f_nameSelect');
                         const nameInput = document.getElementById('f_nameInput');
+                        const nameHidden = document.getElementById('f_name');
                         if (nameSelect) {
                             const options = Array.from(nameSelect.options).map(o => o.value);
                             if (options.includes(data.name)) {
                                 nameSelect.value = data.name;
+                                if (nameHidden) nameHidden.value = data.name;
                             } else {
                                 nameSelect.value = '自定义';
                                 if (nameInput) {
@@ -2742,6 +2787,7 @@
                                     nameInput.style.display = '';
                                     nameInput.value = data.name;
                                 }
+                                if (nameHidden) nameHidden.value = data.name;
                             }
                         }
                     }
@@ -2805,12 +2851,28 @@
             };
 
             const spoolTypeEl = document.querySelector('input[name="f_spoolType"]:checked');
-            const nameInput = document.getElementById('f_nameInput');
-            const nameValue = nameInput && nameInput.style.display !== 'none' ? nameInput.value.trim() : (document.getElementById('f_nameSelect')?.value || '');
             const isBundle = document.getElementById('f_isBundle')?.checked || false;
 
             // 公共字段
+            // 品牌：优先取 hidden，为空时取自定义输入框
+            const brandSelectVal = document.getElementById('f_brandSelect')?.value || '';
+            const brandInputVal = document.getElementById('f_brandInput')?.value?.trim() || '';
+            const brandHidden = document.getElementById('f_brand');
+            if (brandSelectVal === '自定义' && brandInputVal) {
+                if (brandHidden) brandHidden.value = brandInputVal;
+            }
             const brand = getValue('f_brand', '品牌', true);
+
+            // 名称：优先取 hidden，为空时取自定义输入框
+            const nameSelectVal = document.getElementById('f_nameSelect')?.value || '';
+            const nameInputVal = document.getElementById('f_nameInput')?.value?.trim() || '';
+            const nameHidden = document.getElementById('f_name');
+            if (nameSelectVal === '自定义' && nameInputVal) {
+                if (nameHidden) nameHidden.value = nameInputVal;
+            }
+            const name = nameHidden?.value?.trim() || nameSelectVal || '';
+            if (!name) errors.push('名称不能为空');
+
             // 类型：优先取 hidden，为空时取自定义输入框
             const typeSelectVal = document.getElementById('f_typeSelect')?.value || '';
             const typeInputVal = document.getElementById('f_typeInput')?.value?.trim() || '';
@@ -2860,7 +2922,7 @@
                 const bundleFilament = {
                     id: id || Utils.generateId('fil'),
                     brand,
-                    name: nameValue === '自定义' ? '' : nameValue,
+                    name: name,
                     type,
                     spoolType,
                     netWeight,
@@ -2891,7 +2953,7 @@
                 const filament = {
                     id: id || Utils.generateId('fil'),
                     brand,
-                    name: nameValue === '自定义' ? '' : nameValue,
+                    name: name,
                     type,
                     spoolType,
                     netWeight,
@@ -4099,38 +4161,86 @@
         },
 
         // 品牌选择变化时更新名称下拉
-        onBrandChange(brand) {
+        onBrandChange(value) {
+            const brandInput = document.getElementById('f_brandInput');
+            const brandHidden = document.getElementById('f_brand');
             const nameSelect = document.getElementById('f_nameSelect');
             const nameInput = document.getElementById('f_nameInput');
+            const nameHidden = document.getElementById('f_name');
+
+            if (value === '自定义') {
+                if (brandInput) {
+                    brandInput.style.display = '';
+                    brandInput.focus();
+                }
+                if (brandHidden) brandHidden.value = '';
+                // 品牌自定义时，名称也显示自定义输入
+                if (nameSelect) {
+                    nameSelect.innerHTML = '<option value="自定义" selected>自定义</option>';
+                    nameSelect.style.display = 'none';
+                }
+                if (nameInput) {
+                    nameInput.style.display = '';
+                    nameInput.value = '';
+                }
+                if (nameHidden) nameHidden.value = '';
+                return;
+            }
+
+            if (brandInput) {
+                brandInput.style.display = 'none';
+                brandInput.value = '';
+            }
+            if (brandHidden) brandHidden.value = value;
+
+            // 更新名称下拉
             if (!nameSelect) return;
             if (nameInput) nameInput.style.display = 'none';
-            if (!brand) {
+            if (nameHidden) nameHidden.value = '';
+            if (!value) {
                 nameSelect.innerHTML = '<option value="">请选择品牌后选择名称</option>';
                 nameSelect.style.display = '';
                 return;
             }
-            const products = this.getBrandProducts(brand);
+            const products = this.getBrandProducts(value);
             let html = '<option value="">请选择名称</option>';
             products.forEach(p => {
                 html += `<option value="${p}">${p}</option>`;
             });
-            html += '<option value="自定义">自定义...</option>';
+            html += '<option value="自定义">自定义</option>';
             nameSelect.innerHTML = html;
             nameSelect.style.display = '';
+        },
+
+        // 自定义品牌输入时同步到 hidden
+        onBrandInputChange(value) {
+            const brandHidden = document.getElementById('f_brand');
+            if (brandHidden) brandHidden.value = value.trim();
         },
 
         // 名称选择变化：自定义时显示输入框
         onNameChange(value) {
             const nameSelect = document.getElementById('f_nameSelect');
             const nameInput = document.getElementById('f_nameInput');
+            const nameHidden = document.getElementById('f_name');
             if (!nameSelect || !nameInput) return;
             if (value === '自定义') {
                 nameSelect.style.display = 'none';
                 nameInput.style.display = '';
+                nameInput.value = '';
                 nameInput.focus();
+                if (nameHidden) nameHidden.value = '';
             } else {
-                nameInput.value = value;
+                nameInput.style.display = 'none';
+                nameInput.value = '';
+                if (nameHidden) nameHidden.value = value;
             }
+        },
+
+        // 自定义名称输入时同步到 hidden
+        onNameInputChange(value) {
+            const nameHidden = document.getElementById('f_name');
+            if (nameHidden) nameHidden.value = value.trim();
         },
 
         // 盘型选择变化时更新价格
@@ -4386,7 +4496,7 @@
                             <div class="channel-bar-item">
                                 <div class="channel-bar-label">${this.escHtml(name)}</div>
                                 <div class="channel-bar-track">
-                                    <div class="channel-bar-fill" style="width:${(cost / brandCostMax * 100).toFixed(1)}%;background:${color}">
+                                    <div class="channel-bar-fill" style="width:${(cost / brandCostMax * 100).toFixed(1)}%;background:#38a169">
                                         <span>${pct}%</span>
                                     </div>
                                 </div>
@@ -4579,7 +4689,7 @@
                         <div class="channel-bar-item">
                             <div class="channel-bar-label">${app.escHtml(name)}</div>
                             <div class="channel-bar-track">
-                                <div class="channel-bar-fill" style="width:${(count / maxVal * 100).toFixed(1)}%;background:${color}">
+                                <div class="channel-bar-fill" style="width:${(count / maxVal * 100).toFixed(1)}%;background:#eb370a">
                                     <span>${pct}%</span>
                                 </div>
                             </div>
@@ -4645,7 +4755,7 @@
                         ? 'background:repeating-conic-gradient(#e2e8f0 0% 25%, #fff 0% 50%) 50%/8px 8px;'
                         : 'background:' + bgColor + ';';
                     const swatchBorder = (isTransparent || app.isLightColor(bgColor)) ? 'border:1.5px solid #999;' : '';
-                    html += `<div class="color-dist-legend-item"><div class="color-dist-legend-swatch" style="${swatchBg}${swatchBorder}"></div>${app.escHtml(name)} (${pct}%)</div>`;
+                    html += `<div class="color-dist-legend-item"><div class="color-dist-legend-swatch" style="${swatchBg}${swatchBorder}"></div>${app.escHtml(name)} (${count}个)</div>`;
                 });
                 html += '</div>';
                 container.innerHTML = html;
