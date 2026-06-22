@@ -54,7 +54,6 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             min-width: 320px;
-            overflow-x: hidden;
         }
 
         /* ============================================
@@ -1254,18 +1253,11 @@
         .dashboard-pair-row {
             display: flex;
             gap: 20px;
-            align-items: stretch;
+            align-items: flex-start;
         }
 
         .dashboard-pair-row .dash-card {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .dashboard-pair-row .dash-card > *:last-child {
-            flex: 1;
-            min-height: 0;
         }
 
         .monthly-trend-table {
@@ -1519,7 +1511,7 @@
 
         .price-extreme-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 20px;
         }
@@ -1545,15 +1537,16 @@
         }
 
         .extreme-list {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
         }
 
         .extreme-item {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
             padding: 12px 16px;
             background: var(--bg-primary);
             border-radius: var(--radius-md);
@@ -2386,6 +2379,11 @@
             });
             const addBtn = document.getElementById('addBtn');
             const addBtnText = document.getElementById('addBtnText');
+            if (!addBtn) {
+                // addBtn 可能尚未渲染（如 dashboard 模块），先渲染再处理
+                this.render();
+                return;
+            }
             if (module === 'dashboard') {
                 addBtn.style.display = 'none';
             } else {
@@ -2425,6 +2423,23 @@
 
         renderFilamentsModule() {
             let data = [...this.data.filaments];
+
+            // 向后兼容：将旧版 color 字段拆分为 colorName 和 colorValue
+            data.forEach(item => {
+                if (item.color !== undefined && item.colorName === undefined && item.colorValue === undefined) {
+                    const val = (item.color || '').trim();
+                    if (/^#[0-9A-Fa-f]{3,8}$/.test(val)) {
+                        item.colorName = '';
+                        item.colorValue = val;
+                    } else if (val) {
+                        item.colorName = val;
+                        item.colorValue = this.colorNameMap[val] || '';
+                    } else {
+                        item.colorName = '';
+                        item.colorValue = '';
+                    }
+                }
+            });
 
             // 应用筛选
             const f = this.filters.filaments;
@@ -2489,7 +2504,7 @@
                                 <th>品牌</th>
                                 <th>名称</th>
                                 <th>类型</th>
-                                <th>颜色</th><th>色值</th>
+                                <th>颜色名</th><th>颜色值</th>
                                 <th>渠道</th>
                                 <th>盘型</th>
                                 <th>净重</th>
@@ -2499,17 +2514,25 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${data.map(item => `
+                            ${data.map(item => {
+                                const bundleColorSwatches = item.isBundle && item.bundleItems ? item.bundleItems.map(bi => {
+                                    const name = bi.colorName || '-';
+                                    const val = bi.colorValue || '';
+                                    return `<span style="position:relative;cursor:default;" title="${name} ${val}">${this.getColorSwatch(bi.colorValue)}</span>`;
+                                }).join('') : '';
+                                const bundleCount = item.isBundle && item.bundleItems ? item.bundleItems.length : 0;
+                                const displayWeight = item.isBundle && bundleCount > 0 ? (bundleCount * (item.netWeight || 1000)) : (item.netWeight || 1000);
+                                return `
                                 <tr>
-                                    <td><strong>${item.brand}</strong></td>
+                                    <td><strong>${item.brand}</strong>${item.isBundle ? '<span class="tag-badge" style="background:var(--warning-color);color:#fff;font-size:11px;margin-left:6px;">套装</span>' : ''}</td>
                                     <td>${item.name || '-'}</td>
                                     <td><span class="tag-badge">${item.type}</span></td>
-                                    <td>${this.getColorSwatch(item.color)}${item.color || '-'}</td>
-                                    <td style="font-size:13px;color:var(--text-secondary)">${this.getColorHex(item.color) || '-'}</td>
+                                    <td>${item.isBundle && item.bundleItems ? item.bundleItems.map(bi => bi.colorName || '-').join('、') : (item.colorName || '-')}</td>
+                                    <td>${item.isBundle && bundleColorSwatches ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${bundleColorSwatches}</div>` : (this.getColorSwatch(item.colorValue) + (item.colorValue || '-'))}</td>
                                     <td style="font-size:13px">${item.purchaseChannel || '-'}</td>
                                     <td><span class="tag-badge" style="background:${item.spoolType === '有盘' ? 'var(--accent-light)' : 'var(--bg-hover)'};color:${item.spoolType === '有盘' ? 'var(--accent-color)' : 'var(--text-secondary)'};font-size:12px">${item.spoolType || '-'}</span></td>
-                                    <td>${item.netWeight || 1000}g</td>
-                                    <td>¥${item.price.toFixed(1)}</td>
+                                    <td>${displayWeight}g${item.isBundle ? '<br><span style="font-size:11px;color:var(--text-secondary);">(' + bundleCount + '盘)</span>' : ''}</td>
+                                    <td>¥${item.price.toFixed(1)}${item.isBundle && bundleCount > 0 ? '<br><span style="font-size:11px;color:var(--text-secondary);">(≈¥' + (item.price / bundleCount).toFixed(1) + ')</span>' : ''}</td>
                                     <td>${Utils.renderStars(item.rating)}</td>
                                     <td>
                                         <div class="action-btns">
@@ -2519,7 +2542,8 @@
                                         </div>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -2532,13 +2556,33 @@
             const item = this.data.filaments.find(f => f.id === id);
             if (!item) return;
 
+            const bundleSection = item.isBundle && item.bundleItems ? `
+                <div class="form-group full-width">
+                    <label class="form-label">套装颜色 (${item.bundleItems.length} 盘)</label>
+                    <div style="background:var(--bg-primary);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:10px;">
+                        ${item.bundleItems.map((bi, idx) => `
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="font-size:12px;color:var(--text-secondary);width:24px;">#${idx + 1}</span>
+                                ${this.getColorSwatch(bi.colorValue)}
+                                <span style="font-weight:500;">${bi.colorName || '-'}</span>
+                                <span style="color:var(--text-secondary);font-size:13px;">${bi.colorValue || ''}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : '';
+
             this.openModal('耗材详情', `
                 <div class="form-grid">
                     <div class="form-group"><label class="form-label">品牌</label><div class="form-input" style="background:var(--bg-primary)">${item.brand}</div></div>
                     <div class="form-group"><label class="form-label">名称</label><div class="form-input" style="background:var(--bg-primary)">${item.name || '-'}</div></div>
                     <div class="form-group"><label class="form-label">类型</label><div class="form-input" style="background:var(--bg-primary)">${item.type}</div></div>
                     <div class="form-group"><label class="form-label">盘型</label><div class="form-input" style="background:var(--bg-primary)">${item.spoolType || '-'}</div></div>
-                    <div class="form-group"><label class="form-label">颜色</label><div class="form-input" style="background:var(--bg-primary)">${item.color}</div></div>
+                    ${!item.isBundle ? `
+                    <div class="form-group"><label class="form-label">颜色名</label><div class="form-input" style="background:var(--bg-primary)">${item.colorName || '-'}</div></div>
+                    <div class="form-group"><label class="form-label">颜色值</label><div class="form-input" style="background:var(--bg-primary)">${this.getColorSwatch(item.colorValue)}${item.colorValue || '-'}</div></div>
+                    ` : ''}
+                    ${bundleSection}
                     <div class="form-group"><label class="form-label">购买渠道</label><div class="form-input" style="background:var(--bg-primary)">${item.purchaseChannel || '-'}</div></div>
                     <div class="form-group"><label class="form-label">净重量</label><div class="form-input" style="background:var(--bg-primary)">${item.netWeight || 1000}g</div></div>
                     <div class="form-group"><label class="form-label">价格</label><div class="form-input" style="background:var(--bg-primary)">¥${item.price.toFixed(1)}</div></div>
@@ -2589,10 +2633,15 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">类型 <span class="required">*</span></label>
-                            <select class="form-select" id="f_type" required>
-                                <option value="">请选择</option>
-                                ${FILAMENT_TYPES.map(t => `<option value="${t}" ${data.type === t ? 'selected' : ''}>${t}</option>`).join('')}
-                            </select>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <select class="form-select" id="f_typeSelect" style="flex:1" onchange="app.onTypeChange(this.value)">
+                                    <option value="">请选择</option>
+                                    ${FILAMENT_TYPES.filter(t => t !== '其他').map(t => `<option value="${t}" ${data.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+                                    <option value="自定义" ${!FILAMENT_TYPES.includes(data.type) && data.type ? 'selected' : ''}>自定义</option>
+                                </select>
+                                <input type="text" class="form-input" id="f_typeInput" value="${!FILAMENT_TYPES.includes(data.type) && data.type ? data.type : ''}" placeholder="输入类型" style="flex:1;display:none;" oninput="app.onTypeInputChange(this.value)">
+                            </div>
+                            <input type="hidden" id="f_type" value="${data.type || ''}">
                         </div>
                         <div class="form-group">
                             <label class="form-label">盘型 <span class="required">*</span></label>
@@ -2612,12 +2661,16 @@
                             <input type="number" class="form-input" id="f_netWeight" value="${data.netWeight || 1000}" min="0" step="10">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">颜色</label>
+                            <label class="form-label">颜色名称</label>
+                            <input type="text" class="form-input" id="f_colorName" value="${data.colorName || ''}" placeholder="如：白色、红色" style="flex:1" oninput="app.onColorNameChange(this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">颜色值</label>
                             <div style="display:flex;gap:8px;align-items:center">
-                                <input type="text" class="form-input" id="f_color" value="${data.color || ''}" placeholder="如：白色、#FF0000" style="flex:1" oninput="app.updateColorPreview(this.value)">
-                                <div id="f_colorPreview" style="width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:${data.color || 'transparent'};flex-shrink:0;transition:background 0.2s"></div>
+                                <input type="text" class="form-input" id="f_colorValue" value="${data.colorValue || ''}" placeholder="如：#FF0000" style="flex:1" oninput="app.updateColorPreview(this.value)">
+                                <div id="f_colorPreview" style="width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:${data.colorValue || 'transparent'};flex-shrink:0;transition:background 0.2s"></div>
                             </div>
-                            <div class="form-hint">支持中文名称或十六进制色值（如 #FF5733）</div>
+                            <div class="form-hint">支持十六进制色值（如 #FF5733）</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">购买渠道</label>
@@ -2631,15 +2684,28 @@
                                 <option value="闲鱼" ${data.purchaseChannel === '闲鱼' ? 'selected' : ''}>闲鱼</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group full-width">
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
+                                <input type="checkbox" id="f_isBundle" ${data.isBundle ? 'checked' : ''} onchange="app.onBundleChange(this.checked)">
+                                <span>这是套装（多盘耗材捆绑购买）</span>
+                            </label>
+                        </div>
+                        <div id="bundleItemsContainer" style="display:${data.isBundle ? 'block' : 'none'};" class="form-group full-width">
+                            <label class="form-label">套装包含的耗材 <span class="required">*</span></label>
+                            <div id="bundleItemsList">
+                                    ${this.renderBundleItems(data.bundleItems || [{ colorName: '', colorValue: '' }])}
+                                </div>
+                            <button type="button" class="btn-secondary" onclick="app.addBundleItem()" style="margin-top:8px;">+ 添加一盘</button>
+                        </div>
+                        <div class="form-group full-width">
                             <label class="form-label">价格 (元)</label>
                             <input type="number" class="form-input" id="f_price" value="${data.price || ''}" step="0.1" min="0">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group full-width">
                             <label class="form-label">购买日期</label>
-                            <input type="date" class="form-input" id="f_purchaseDate" value="${data.purchaseDate || ''}">
+                            <input type="date" class="form-input" id="f_purchaseDate" value="${data.purchaseDate || new Date().toISOString().split('T')[0]}">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group full-width">
                             <label class="form-label">评分</label>
                             <select class="form-select" id="f_rating">
                                 <option value="">未评分</option>
@@ -2656,6 +2722,59 @@
                 { text: '保存', class: 'btn-primary', action: () => this.saveFilament(isEdit ? item.id : '') },
                 { text: '取消', class: 'btn-secondary', action: () => this.closeModal() }
             ]);
+
+            // 编辑时自动触发品牌联动，加载名称列表
+            if (isEdit && data.brand) {
+                setTimeout(() => {
+                    this.onBrandChange(data.brand);
+                    // 如果有自定义名称，选中"自定义"并显示输入框
+                    if (data.name) {
+                        const nameSelect = document.getElementById('f_nameSelect');
+                        const nameInput = document.getElementById('f_nameInput');
+                        if (nameSelect) {
+                            const options = Array.from(nameSelect.options).map(o => o.value);
+                            if (options.includes(data.name)) {
+                                nameSelect.value = data.name;
+                            } else {
+                                nameSelect.value = '自定义';
+                                if (nameInput) {
+                                    nameSelect.style.display = 'none';
+                                    nameInput.style.display = '';
+                                    nameInput.value = data.name;
+                                }
+                            }
+                        }
+                    }
+                }, 0);
+            }
+
+            // 编辑时恢复类型选择器状态
+            if (isEdit && data.type) {
+                setTimeout(() => {
+                    const typeSelect = document.getElementById('f_typeSelect');
+                    const typeInput = document.getElementById('f_typeInput');
+                    const typeHidden = document.getElementById('f_type');
+                    if (typeSelect && typeInput && typeHidden) {
+                        if (FILAMENT_TYPES.includes(data.type)) {
+                            typeSelect.value = data.type;
+                            typeInput.style.display = 'none';
+                        } else {
+                            typeSelect.value = '自定义';
+                            typeInput.style.display = '';
+                            typeInput.value = data.type;
+                        }
+                        typeHidden.value = data.type;
+                    }
+                }, 0);
+            }
+
+            // 设置评分默认值（新增默认5星，编辑保留原值）
+            setTimeout(() => {
+                const ratingEl = document.getElementById('f_rating');
+                if (ratingEl) {
+                    ratingEl.value = data.rating || 5;
+                }
+            }, 0);
         },
 
         // 保存耗材
@@ -2688,31 +2807,109 @@
             const spoolTypeEl = document.querySelector('input[name="f_spoolType"]:checked');
             const nameInput = document.getElementById('f_nameInput');
             const nameValue = nameInput && nameInput.style.display !== 'none' ? nameInput.value.trim() : (document.getElementById('f_nameSelect')?.value || '');
-            const filament = {
-                id: id || Utils.generateId('fil'),
-                brand: getValue('f_brand', '品牌', true),
-                name: nameValue === '自定义' ? '' : nameValue,
-                type: getValue('f_type', '类型', true),
-                spoolType: spoolTypeEl ? spoolTypeEl.value : '有盘',
-                netWeight: getNumber('f_netWeight', '净重量') || 1000,
-                color: getValue('f_color', '颜色'),
-                purchaseChannel: getValue('f_purchaseChannel', '购买渠道'),
-                price: getNumber('f_price', '价格', false, true) || 0,
-                purchaseDate: document.getElementById('f_purchaseDate').value || null,
-                rating: parseInt(document.getElementById('f_rating').value) || 0,
-                notes: document.getElementById('f_notes').value
-            };
+            const isBundle = document.getElementById('f_isBundle')?.checked || false;
+
+            // 公共字段
+            const brand = getValue('f_brand', '品牌', true);
+            // 类型：优先取 hidden，为空时取自定义输入框
+            const typeSelectVal = document.getElementById('f_typeSelect')?.value || '';
+            const typeInputVal = document.getElementById('f_typeInput')?.value?.trim() || '';
+            const typeHidden = document.getElementById('f_type');
+            // 同步最终类型值到 hidden
+            if (typeSelectVal === '自定义' && typeInputVal) {
+                if (typeHidden) typeHidden.value = typeInputVal;
+            }
+            const type = getValue('f_type', '类型', true);
+            const spoolType = spoolTypeEl ? spoolTypeEl.value : '有盘';
+            const netWeight = getNumber('f_netWeight', '净重量') || 1000;
+            const purchaseChannel = getValue('f_purchaseChannel', '购买渠道');
+            const price = getNumber('f_price', '价格', false, true) || 0;
+            const purchaseDate = document.getElementById('f_purchaseDate').value || null;
+            const rating = parseInt(document.getElementById('f_rating').value) || 0;
+            const notes = document.getElementById('f_notes').value;
 
             if (errors.length > 0) {
                 alert('请修正以下错误：\n' + errors.join('\n'));
                 return;
             }
 
-            if (id) {
-                const idx = this.data.filaments.findIndex(f => f.id === id);
-                if (idx !== -1) this.data.filaments[idx] = filament;
+            // 套装模式
+            if (isBundle) {
+                const bundleRows = document.querySelectorAll('#bundleItemsList .bundle-item-row');
+                if (bundleRows.length === 0) {
+                    alert('套装至少包含一盘耗材');
+                    return;
+                }
+                const bundleItems = [];
+                let hasError = false;
+                bundleRows.forEach(row => {
+                    const colorName = row.querySelector('.bundle-color-name')?.value.trim() || '';
+                    const colorValue = row.querySelector('.bundle-color-value')?.value.trim() || '';
+                    if (!colorName && !colorValue) {
+                        hasError = true;
+                    }
+                    bundleItems.push({ colorName, colorValue });
+                });
+                if (hasError) {
+                    alert('每盘套装耗材至少需要填写颜色名或颜色值');
+                    return;
+                }
+
+                const bundleId = id || Utils.generateId('bundle');
+                // 套装只保存为一条记录，包含所有子颜色
+                const bundleFilament = {
+                    id: id || Utils.generateId('fil'),
+                    brand,
+                    name: nameValue === '自定义' ? '' : nameValue,
+                    type,
+                    spoolType,
+                    netWeight,
+                    colorName: bundleItems[0]?.colorName || '',
+                    colorValue: bundleItems[0]?.colorValue || '',
+                    purchaseChannel,
+                    price,
+                    purchaseDate,
+                    rating,
+                    notes,
+                    isBundle: true,
+                    bundleId: bundleId,
+                    bundleItems: bundleItems // 子颜色列表
+                };
+
+                if (id) {
+                    const idx = this.data.filaments.findIndex(f => f.id === id);
+                    if (idx !== -1) {
+                        this.data.filaments.splice(idx, 1, bundleFilament);
+                    } else {
+                        this.data.filaments.push(bundleFilament);
+                    }
+                } else {
+                    this.data.filaments.push(bundleFilament);
+                }
             } else {
-                this.data.filaments.push(filament);
+                // 单盘模式
+                const filament = {
+                    id: id || Utils.generateId('fil'),
+                    brand,
+                    name: nameValue === '自定义' ? '' : nameValue,
+                    type,
+                    spoolType,
+                    netWeight,
+                    colorName: getValue('f_colorName', '颜色名称'),
+                    colorValue: getValue('f_colorValue', '颜色值'),
+                    purchaseChannel,
+                    price,
+                    purchaseDate,
+                    rating,
+                    notes
+                };
+
+                if (id) {
+                    const idx = this.data.filaments.findIndex(f => f.id === id);
+                    if (idx !== -1) this.data.filaments[idx] = filament;
+                } else {
+                    this.data.filaments.push(filament);
+                }
             }
 
             StorageService.saveFilaments(this.data.filaments);
@@ -3758,13 +3955,40 @@
 
         // 颜色名称到色值的映射（用于色块预览）
         colorNameMap: {
-            '白色': '#FFFFFF', '黑色': '#1a1a1a', '红色': '#E53E3E', '蓝色': '#3182CE',
-            '绿色': '#38A169', '黄色': '#D69E2E', '橙色': '#DD6B20', '紫色': '#805AD5',
-            '粉色': '#ED64A6', '灰色': '#A0AEC0', '透明': '#E2E8F0', '棕色': '#8B4513',
-            '金色': '#FFD700', '银色': '#C0C0C0', '青色': '#0BC5EA', '深灰': '#4A5568',
-            '浅灰': '#CBD5E0', '米色': '#F5F5DC', '天蓝': '#87CEEB', '深蓝': '#1A365D',
-            '深红': '#9B2C2C', '深绿': '#276749', '浅绿': '#C6F6D5', '珊瑚色': '#FF7F50',
-            '紫色': '#9F7AEA', '藏青': '#2A4365', '卡其': '#C3B091', '酒红': '#722F37'
+            // Bambu Lab PLA Basic 官方颜色
+            'Jade White': '#FFFFFF', '翡翠白': '#FFFFFF', '玉石白': '#FFFFFF',
+            'Beige': '#F7E6DE', '米色': '#F7E6DE',
+            'Light Gray': '#D1D3D5', '浅灰': '#D1D3D5',
+            'Silver': '#A6A9AA', '银色': '#A6A9AA',
+            'Gray': '#8E9089', '灰色': '#8E9089',
+            'Magenta': '#EC008C', '品红': '#EC008C',
+            'Pink': '#F55A74', '粉色': '#F55A74',
+            'Hot Pink': '#F5547C', '亮粉': '#F5547C',
+            'Orange': '#FF6A13', '橙色': '#FF6A13',
+            'Pumpkin Orange': '#FF9016', '南瓜橙': '#FF9016',
+            'Gold': '#E4BD68', '金色': '#E4BD68',
+            'Sunflower Yellow': '#FEC600', '向日葵黄': '#FEC600',
+            'Yellow': '#F4EE2A', '黄色': '#F4EE2A',
+            'Bright Green': '#BECF00', '亮绿': '#BECF00',
+            'Bambu Green': '#00AE42', '拓竹绿': '#00AE42',
+            'Mistletoe Green': '#3F8E43', '槲寄生绿': '#3F8E43',
+            'Bronze': '#847D48', '青铜': '#847D48',
+            'Cocoa Brown': '#6F5034', '可可棕': '#6F5034',
+            'Brown': '#9D432C', '棕色': '#9D432C',
+            'Maroon Red': '#9D2235', '栗红': '#9D2235',
+            'Red': '#C12E1F', '红色': '#C12E1F',
+            'Turquoise': '#00B1B7', '松石绿': '#00B1B7',
+            'Cyan': '#0086D6', '青色': '#0086D6',
+            'Blue': '#0A2989', '蓝色': '#0A2989',
+            'Cobalt Blue': '#0056B8', '钴蓝': '#0056B8',
+            'Purple': '#5E43B7', '紫色': '#5E43B7',
+            'Indigo Purple': '#482960', '靛紫': '#482960',
+            'Blue Grey': '#5B6579', '蓝灰': '#5B6579',
+            'Dark Gray': '#545454', '深灰': '#545454',
+            'Black': '#000000', '黑色': '#000000',
+            // 通用颜色
+            '白色': '#FFFFFF', '透明': '#E2E8F0', '深红': '#9B2C2C', '深绿': '#276749',
+            '浅绿': '#C6F6D5', '珊瑚色': '#FF7F50', '藏青': '#2A4365', '卡其': '#C3B091', '酒红': '#722F37'
         },
 
         // 更新颜色预览色块
@@ -3793,6 +4017,18 @@
                 } else {
                     preview.style.background = 'transparent';
                 }
+            }
+        },
+
+        // 颜色名称变化时自动填充颜色值
+        onColorNameChange(name) {
+            const trimmed = name.trim();
+            const colorValueInput = document.getElementById('f_colorValue');
+            if (!colorValueInput) return;
+            // 如果 colorNameMap 中有对应色值，自动填充
+            if (this.colorNameMap[trimmed]) {
+                colorValueInput.value = this.colorNameMap[trimmed];
+                this.updateColorPreview(this.colorNameMap[trimmed]);
             }
         },
 
@@ -3914,6 +4150,140 @@
             }
         },
 
+        // 类型选择变化
+        onTypeChange(value) {
+            const typeInput = document.getElementById('f_typeInput');
+            const typeHidden = document.getElementById('f_type');
+            if (value === '自定义') {
+                if (typeInput) {
+                    typeInput.style.display = '';
+                    typeInput.focus();
+                }
+                if (typeHidden) typeHidden.value = '';
+            } else {
+                if (typeInput) {
+                    typeInput.style.display = 'none';
+                    typeInput.value = '';
+                }
+                if (typeHidden) typeHidden.value = value;
+            }
+        },
+
+        // 自定义类型输入时同步到 hidden
+        onTypeInputChange(value) {
+            const typeHidden = document.getElementById('f_type');
+            if (typeHidden) typeHidden.value = value.trim();
+        },
+
+        // 套装模式切换
+        onBundleChange(checked) {
+            const container = document.getElementById('bundleItemsContainer');
+            if (container) {
+                container.style.display = checked ? 'block' : 'none';
+            }
+            if (checked) {
+                const list = document.getElementById('bundleItemsList');
+                if (list && list.children.length === 0) {
+                    this.addBundleItem();
+                }
+            }
+        },
+
+        // 添加一盘套装耗材
+        addBundleItem() {
+            const list = document.getElementById('bundleItemsList');
+            if (!list) return;
+            const index = list.children.length;
+            const div = document.createElement('div');
+            div.className = 'bundle-item-row';
+            div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 36px 32px;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg-hover);border-radius:var(--radius-sm);';
+            div.innerHTML = `
+                <input type="text" class="form-input bundle-color-name" placeholder="颜色名" oninput="app.onBundleColorNameChange(this)">
+                <input type="text" class="form-input bundle-color-value" placeholder="颜色值" oninput="app.updateBundleColorPreview(this)">
+                <div class="bundle-color-preview" style="width:32px;height:32px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:transparent;"></div>
+                <button type="button" class="btn-icon delete" onclick="app.removeBundleItem(${index})" title="删除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+            `;
+            list.appendChild(div);
+            this.refreshBundleItemIndexes();
+        },
+
+        // 删除一盘套装耗材
+        removeBundleItem(index) {
+            const list = document.getElementById('bundleItemsList');
+            if (!list) return;
+            const rows = list.querySelectorAll('.bundle-item-row');
+            if (rows[index]) {
+                rows[index].remove();
+                this.refreshBundleItemIndexes();
+            }
+        },
+
+        // 刷新套装行索引
+        refreshBundleItemIndexes() {
+            const list = document.getElementById('bundleItemsList');
+            if (!list) return;
+            const rows = list.querySelectorAll('.bundle-item-row');
+            rows.forEach((row, idx) => {
+                const btn = row.querySelector('button[onclick^="app.removeBundleItem"]');
+                if (btn) btn.setAttribute('onclick', `app.removeBundleItem(${idx})`);
+            });
+        },
+
+        // 渲染套装列表（用于编辑时回显）
+        renderBundleItems(items) {
+            if (!items || items.length === 0) return '';
+            return items.map((item, index) => `
+                <div class="bundle-item-row" style="display:grid;grid-template-columns:1fr 1fr 36px 32px;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg-hover);border-radius:var(--radius-sm);">
+                    <input type="text" class="form-input bundle-color-name" placeholder="颜色名" value="${this.escHtml(item.colorName || '')}" oninput="app.onBundleColorNameChange(this)">
+                    <input type="text" class="form-input bundle-color-value" placeholder="颜色值" value="${this.escHtml(item.colorValue || '')}" oninput="app.updateBundleColorPreview(this)">
+                    <div class="bundle-color-preview" style="width:32px;height:32px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:${item.colorValue || 'transparent'};"></div>
+                    <button type="button" class="btn-icon delete" onclick="app.removeBundleItem(${index})" title="删除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                </div>
+            `).join('');
+        },
+
+        // 套装行颜色名称变化时自动填充颜色值
+        onBundleColorNameChange(input) {
+            const row = input.closest('.bundle-item-row');
+            if (!row) return;
+            const trimmed = input.value.trim();
+            const colorValueInput = row.querySelector('.bundle-color-value');
+            const preview = row.querySelector('.bundle-color-preview');
+            if (!colorValueInput || !preview) return;
+            // 如果 colorNameMap 中有对应色值，自动填充
+            if (this.colorNameMap[trimmed]) {
+                colorValueInput.value = this.colorNameMap[trimmed];
+                preview.style.background = this.colorNameMap[trimmed];
+            }
+        },
+
+        // 更新套装行颜色预览
+        updateBundleColorPreview(input) {
+            const row = input.closest('.bundle-item-row');
+            if (!row) return;
+            const colorValueInput = row.querySelector('.bundle-color-value');
+            const preview = row.querySelector('.bundle-color-preview');
+            if (!colorValueInput || !preview) return;
+            const value = colorValueInput.value.trim();
+            if (!value) {
+                preview.style.background = 'transparent';
+                return;
+            }
+            if (/^#[0-9A-Fa-f]{3,8}$/.test(value)) {
+                preview.style.background = value;
+            } else if (this.colorNameMap[value]) {
+                preview.style.background = this.colorNameMap[value];
+            } else {
+                const testEl = document.createElement('div');
+                testEl.style.color = value;
+                if (testEl.style.color !== '') {
+                    preview.style.background = value;
+                } else {
+                    preview.style.background = 'transparent';
+                }
+            }
+        },
+
         // ============================================
         // 仪表台（Dashboard）模块
         // ============================================
@@ -3939,10 +4309,14 @@
             // 计算统计数据
             const totalCost = filaments.reduce((s, f) => s + (parseFloat(f.price) || 0), 0);
             const totalCount = filaments.length;
+            const totalWeight = filaments.reduce((s, f) => {
+                if (f.isBundle && f.bundleItems && f.bundleItems.length > 0) {
+                    return s + f.bundleItems.length * (parseFloat(f.netWeight) || 1000);
+                }
+                return s + (parseFloat(f.netWeight) || 1000);
+            }, 0) / 1000; // 转换为 kg
             const brands = [...new Set(filaments.map(f => f.brand).filter(Boolean))];
             const brandCount = brands.length;
-            const ratedFilaments = filaments.filter(f => f.rating && f.rating > 0);
-            const avgRating = ratedFilaments.length > 0 ? (ratedFilaments.reduce((s, f) => s + f.rating, 0) / ratedFilaments.length).toFixed(1) : '--';
 
             // 图标辅助函数
             const getStatIcon = (type) => {
@@ -3950,7 +4324,7 @@
                     dollar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
                     box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
                     tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
-                    star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+                    weight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3V5a3 3 0 0 0-3-3z"/><circle cx="12" cy="14" r="3"/></svg>'
                 };
                 return icons[type] || icons.box;
             };
@@ -3960,9 +4334,9 @@
             // 统计卡片（横向 flex 4列）
             const stats = [
                 { label: '总花费', value: '¥' + totalCost.toFixed(2), icon: 'dollar', bg: 'var(--accent-color)' },
-                { label: '耗材总数', value: filaments.length, icon: 'box', bg: 'var(--success-color)' },
-                { label: '品牌数量', value: brandCount, icon: 'tag', bg: 'var(--warning-color)' },
-                { label: '平均评分', value: avgRating, icon: 'star', bg: '#805ad5' }
+                { label: '耗材总数', value: filaments.length + ' 盘', icon: 'box', bg: 'var(--success-color)' },
+                { label: '耗材总量', value: totalWeight.toFixed(1) + ' kg', icon: 'weight', bg: '#805ad5' },
+                { label: '品牌数量', value: brandCount, icon: 'tag', bg: 'var(--warning-color)' }
             ];
 
             html += '<div class="dashboard-stats-row">';
@@ -4030,25 +4404,15 @@
                 </div>
             </div>`;
 
-            // 3. 颜色分布
-            html += `
-            <div class="dash-card">
-                <div class="dash-card-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-                    颜色分布
-                </div>
-                <div id="colorDistContainer"></div>
-            </div>`;
-
             // 4. 排名类图表（三列）
             html += `
             <div class="dashboard-rank-row">
                 <div class="dash-card">
                     <div class="dash-card-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                        耗材评分排名
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+                        颜色分布
                     </div>
-                    <div id="rankRatingContainer"></div>
+                    <div id="colorDistContainer"></div>
                 </div>
                 <div class="dash-card">
                     <div class="dash-card-title">
@@ -4066,39 +4430,15 @@
                 </div>
             </div>`;
 
-            // 5. 库存预警
-            const lowStock = filaments.filter(f => {
-                const rw = parseFloat(f.remainingWeight) || 0;
-                const tw = parseFloat(f.totalWeight) || 1;
-                return rw < 200 || (rw / tw) < 0.15;
-            });
-            if (lowStock.length > 0) {
-                html += `
-                <div class="dash-card">
-                    <div class="dash-card-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        库存预警
-                    </div>
-                    <div class="stock-warning-list">
-                        ${lowStock.map(f => {
-                            const rw = parseFloat(f.remainingWeight) || 0;
-                            const tw = parseFloat(f.totalWeight) || 1;
-                            const pct = ((rw / tw) * 100).toFixed(1);
-                            const isDanger = rw < 100 || (rw / tw) < 0.08;
-                            return `
-                            <div class="stock-warning-item ${isDanger ? 'danger' : ''}">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <div style="flex:1;min-width:0">
-                                    <div class="stock-warning-item-name">${this.escHtml(f.name)}</div>
-                                </div>
-                                <div class="stock-warning-item-pct">${pct}%</div>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                </div>`;
-            }
-
-            // 6. 价格区间 + 极值统计（合并卡片）
+            // 5. 价格区间 + 极值统计（合并卡片）
+            // 计算每盘的实际单价（套装按均价）
+            const getAvgPrice = (f) => {
+                const price = parseFloat(f.price) || 0;
+                if (f.isBundle && f.bundleItems && f.bundleItems.length > 0) {
+                    return price / f.bundleItems.length;
+                }
+                return price;
+            };
             const priceRanges = [
                 { label: '0 - 50 元', min: 0, max: 50 },
                 { label: '50 - 100 元', min: 50, max: 100 },
@@ -4108,11 +4448,11 @@
             const priceRangeCounts = priceRanges.map(r => ({
                 label: r.label,
                 count: filaments.filter(f => {
-                    const p = parseFloat(f.price) || 0;
+                    const p = getAvgPrice(f);
                     return p >= r.min && p < r.max;
                 }).length
             }));
-            const sortedByPrice = [...filaments].sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
+            const sortedByPrice = [...filaments].sort((a, b) => getAvgPrice(b) - getAvgPrice(a));
             const sortedByRating = [...filaments].filter(f => f.rating && f.rating > 0).sort((a, b) => b.rating - a.rating);
             const mostExpensive = sortedByPrice[0];
             const cheapest = sortedByPrice[sortedByPrice.length - 1];
@@ -4143,14 +4483,14 @@
                             <div class="extreme-item-label">最贵耗材</div>
                             <div class="extreme-item-name">${mostExpensive ? this.escHtml(mostExpensive.name) : '--'}</div>
                         </div>
-                        <div class="extreme-item-value">${mostExpensive ? '&yen;' + parseFloat(mostExpensive.price).toFixed(2) : '--'}</div>
+                        <div class="extreme-item-value">${mostExpensive ? '&yen;' + getAvgPrice(mostExpensive).toFixed(2) + (mostExpensive.isBundle ? ' <span style="font-size:11px;color:var(--text-secondary)">(均价)</span>' : '') : '--'}</div>
                     </div>
                     <div class="extreme-item">
                         <div>
                             <div class="extreme-item-label">最便宜耗材</div>
                             <div class="extreme-item-name">${cheapest ? this.escHtml(cheapest.name) : '--'}</div>
                         </div>
-                        <div class="extreme-item-value">${cheapest ? '&yen;' + parseFloat(cheapest.price).toFixed(2) : '--'}</div>
+                        <div class="extreme-item-value">${cheapest ? '&yen;' + getAvgPrice(cheapest).toFixed(2) + (cheapest.isBundle ? ' <span style="font-size:11px;color:var(--text-secondary)">(均价)</span>' : '') : '--'}</div>
                     </div>
                     <div class="extreme-item">
                         <div>
@@ -4256,8 +4596,16 @@
                 if (!container) return;
                 const colorCounts = {};
                 filaments.forEach(f => {
-                    const c = f.color || '未知';
-                    colorCounts[c] = (colorCounts[c] || 0) + 1;
+                    if (f.isBundle && f.bundleItems && f.bundleItems.length > 0) {
+                        // 套装：统计每个子颜色
+                        f.bundleItems.forEach(bi => {
+                            const c = bi.colorName || bi.colorValue || '未知';
+                            colorCounts[c] = (colorCounts[c] || 0) + 1;
+                        });
+                    } else {
+                        const c = f.colorName || f.colorValue || '未知';
+                        colorCounts[c] = (colorCounts[c] || 0) + 1;
+                    }
                 });
                 const entries = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
                 const total = entries.reduce((s, e) => s + e[1], 0);
@@ -4281,7 +4629,7 @@
                         ? 'background:repeating-conic-gradient(#e2e8f0 0% 25%, #fff 0% 50%) 50%/10px 10px;'
                         : 'background:' + bgColor + ';';
                     const textColor = isLight ? 'color:#1a1a1a;' : 'color:#ffffff;';
-                    html += `<div class="color-dist-bar-item" style="flex:${count};${bgStyle}${textColor}" title="${app.escHtml(name)}: ${count}个 (${pct}%)"><span>${pct > 8 ? app.escHtml(name) : ''}</span></div>`;
+                    html += `<div class="color-dist-bar-item" style="flex:${count};${bgStyle}${textColor}" title="${app.escHtml(name)}: ${count}个 (${pct}%)"></div>`;
                 });
                 html += '</div><div class="color-dist-legend">';
                 entries.forEach(([name, count]) => {
@@ -4417,5 +4765,7 @@
         app.init();
     });
     </script>
+    <!-- 隐藏的文件输入，用于导入数据 -->
+    <input type="file" id="importInput" class="hidden-input" accept=".json" onchange="app.importData(this)">
 </body>
 </html>
