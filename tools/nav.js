@@ -27,7 +27,7 @@
     const toolsDropdown = TOOLS.map(t => {
       const isActive = currentFile === t.href;
       const style = isActive ? 'color:#6366f1;font-weight:500;' : 'color:#2B3041;';
-      return `<a href="${t.href}" style="display:block;padding:8px 16px;font-size:13px;text-decoration:none;${style}transition:background 0.15s;border-radius:6px;" onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='transparent'">${t.name}</a>`;
+      return `<a href="${t.href}" style="display:block;padding:10px 18px;font-size:14px;text-decoration:none;${style}border-radius:8px;" class="nav-dropdown-item">${t.name}</a>`;
     }).join('');
 
     const isHomeActive = currentFile === '../index.html';
@@ -43,14 +43,14 @@
       W. Tools
     </a>
     <div style="display:flex;gap:24px;align-items:center;flex-shrink:0;margin-left:24px;padding-right:10px;">
-      <a href="../index.html" style="color:#2B3041;font-size:12px;text-decoration:none;transition:opacity 0.3s;white-space:nowrap;${homeStyle}">首页</a>
-      <a href="./index.html" style="color:#2B3041;font-size:12px;text-decoration:none;transition:opacity 0.3s;white-space:nowrap;${toolsHomeStyle}">工具首页</a>
-      <div style="position:relative;" onmouseenter="document.getElementById('toolsDropdown').style.display='block'" onmouseleave="document.getElementById('toolsDropdown').style.display='none'">
-        <span style="color:#2B3041;font-size:12px;cursor:pointer;opacity:0.8;transition:opacity 0.3s;display:flex;align-items:center;gap:4px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">
-          工具
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style="transition:transform 0.2s;"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <a href="../index.html" style="color:#2B3041;font-size:14px;text-decoration:none;transition:opacity 0.3s;white-space:nowrap;${homeStyle}">Studio</a>
+      <a href="./index.html" style="color:#2B3041;font-size:14px;text-decoration:none;transition:opacity 0.3s;white-space:nowrap;${toolsHomeStyle}">Tools</a>
+      <div id="navDropdownWrap" style="position:relative;">
+        <span id="navDropdownTrigger" style="color:#2B3041;font-size:14px;cursor:pointer;opacity:0.8;transition:opacity 0.3s;display:flex;align-items:center;gap:4px;padding:4px 0;" onclick="window.toggleNavDropdown(event)">
+          Tools
+          <svg id="navDropdownArrow" width="10" height="6" viewBox="0 0 10 6" fill="none" style="transition:transform 0.2s;"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
-        <div id="toolsDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:6px;min-width:140px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <div id="navDropdownMenu" style="display:none;position:absolute;top:100%;right:0;margin-top:0;background:#fff;border:1px solid #e8e8ed;border-radius:12px;padding:6px;min-width:150px;box-shadow:0 8px 30px rgba(0,0,0,0.12);">
           ${toolsDropdown}
         </div>
       </div>
@@ -59,8 +59,69 @@
 </nav>`;
   }
 
+  // 全局函数：切换下拉菜单（支持点击和悬停）
+  window.toggleNavDropdown = function(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('navDropdownMenu');
+    const arrow = document.getElementById('navDropdownArrow');
+    if (menu.style.display === 'none') {
+      menu.style.display = 'block';
+      arrow.style.transform = 'rotate(180deg)';
+    } else {
+      menu.style.display = 'none';
+      arrow.style.transform = 'rotate(0deg)';
+    }
+  };
+
   document.addEventListener('DOMContentLoaded', function() {
     const nav = buildNav();
     document.body.insertAdjacentHTML('afterbegin', nav);
+
+    const wrap = document.getElementById('navDropdownWrap');
+    const menu = document.getElementById('navDropdownMenu');
+    const arrow = document.getElementById('navDropdownArrow');
+
+    if (!wrap || !menu) return;
+
+    // 鼠标悬停显示（桌面端）
+    let hoverTimer;
+    wrap.addEventListener('mouseenter', function() {
+      clearTimeout(hoverTimer);
+      menu.style.display = 'block';
+      arrow.style.transform = 'rotate(180deg)';
+    });
+    wrap.addEventListener('mouseleave', function() {
+      hoverTimer = setTimeout(function() {
+        menu.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+      }, 150);
+    });
+    menu.addEventListener('mouseenter', function() {
+      clearTimeout(hoverTimer);
+    });
+    menu.addEventListener('mouseleave', function() {
+      hoverTimer = setTimeout(function() {
+        menu.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+      }, 150);
+    });
+
+    // 点击外部关闭
+    document.addEventListener('click', function(e) {
+      if (!wrap.contains(e.target)) {
+        menu.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // 下拉菜单项悬停效果
+    document.querySelectorAll('.nav-dropdown-item').forEach(function(item) {
+      item.addEventListener('mouseenter', function() {
+        this.style.background = '#f5f5f7';
+      });
+      item.addEventListener('mouseleave', function() {
+        this.style.background = 'transparent';
+      });
+    });
   });
 })();
