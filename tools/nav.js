@@ -40,7 +40,7 @@
   <div style="width:100%;padding:0 22px;height:100%;display:flex;align-items:center;justify-content:space-between;">
     <a href="./index.html" style="color:#2B3041;font-size:17px;font-weight:600;letter-spacing:-0.01em;text-decoration:none;display:flex;align-items:center;gap:10px;flex-shrink:0;">
       <div style="width:32px;height:32px;background:#2B3041;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">W.</div>
-      W. Tools
+      Studio Tools
     </a>
     <div style="display:flex;gap:24px;align-items:center;flex-shrink:0;margin-left:24px;padding-right:10px;">
       <a href="../index.html" style="color:#2B3041;font-size:14px;text-decoration:none;transition:opacity 0.3s;white-space:nowrap;${homeStyle}">Studio</a>

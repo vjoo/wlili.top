@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>W. Tools - 工具聚合首页</title>
+<title>Studio Tools - 工具聚合首页</title>
 <style>
 /* ============================================
    WLi Tools - 在线工具集
@@ -110,7 +110,7 @@
   /* ===== Page Hero ===== */
   .page-hero {
     text-align: center;
-    padding: 64px 22px 40px;
+    padding: 50px 22px 30px;
     background: var(--bg-white);
   }
   .page-hero h1 {
@@ -170,7 +170,7 @@
   /* ===== Tool Grid ===== */
   .tool-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
   }
   .tool-card {
@@ -275,7 +275,7 @@
   <div class="global-nav-content">
     <a href="index.html" class="nav-logo">
       <div class="logo-box">W.</div>
-      W. Tools
+      Studio Tools
     </a>
     <div class="nav-links">
       <a href="../index.html" class="nav-link">首页</a>
@@ -286,7 +286,7 @@
 
 <!-- Page Hero -->
 <div class="page-hero">
-  <h1>W. Tools</h1>
+  <h1>Studio Tools</h1>
   <p>简洁高效的在线工具集，一键直达，即用即走</p>
 </div>
 
@@ -295,7 +295,7 @@
   <div class="section-inner">
 
     <!-- Category Tabs -->
-    <div class="category-tabs" id="categoryTabs">
+    <div class="category-tabs" id="categoryTabs" style="display:none;">
       <button class="category-tab active" data-cat="all">全部</button>
       <button class="category-tab" data-cat="image">图像处理</button>
       <button class="category-tab" data-cat="convert">换算工具</button>
