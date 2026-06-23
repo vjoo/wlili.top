@@ -3185,8 +3185,6 @@
             let data = [...this.data.presets];
             const f = this.filters.presets;
 
-            if (f.subType) data = data.filter(item => item.subType === f.subType);
-            if (f.machine) data = data.filter(item => item.machine === f.machine);
             if (f.search) {
                 const kw = f.search.toLowerCase();
                 data = data.filter(item => item.name.toLowerCase().includes(kw));
@@ -3194,41 +3192,42 @@
 
             return `
                 <div class="filter-bar">
-                    <div class="filter-group">
-                        <span class="filter-label">子类型：</span>
-                        <select class="filter-select" onchange="app.setFilter('presets', 'subType', this.value)">
-                            <option value="">全部</option>
-                            ${PRESET_SUBTYPES.map(t => `<option value="${t.value}" ${f.subType === t.value ? 'selected' : ''}>${t.label}</option>`).join('')}
-                        </select>
-                    </div>
                     <div class="filter-group" style="display:none;">
                         <span class="filter-label">搜索：</span>
                         <input type="text" class="form-input" style="width:200px;padding:8px 12px;" placeholder="按名称搜索..."
                             value="${f.search}" oninput="app.setFilter('presets', 'search', this.value)">
                     </div>
+                    <button class="btn-primary" id="addBtn" style="display:flex;align-items:center;gap:6px;" onclick="app.openPresetModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        新增预设
+                    </button>
                 </div>
-                ${data.length === 0 ? this.renderEmptyState('暂无预设数据', '点击右上角"新增"添加第一条预设') : `
+                ${data.length === 0 ? this.renderEmptyState('暂无预设数据', '点击右上角"新增预设"添加第一条预设') : `
                 <div class="data-table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>名称</th>
-                                <th>子类型</th>
                                 <th>创建日期</th>
                                 <th>备注</th>
+                                <th>工艺参数</th>
+                                <th>耗材丝参数</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${data.map(item => {
-                                const subTypeLabel = PRESET_SUBTYPES.find(t => t.value === item.subType)?.label || item.subType;
-                                const subTypeIcon = PRESET_SUBTYPES.find(t => t.value === item.subType)?.icon || '';
+                                const processCount = item.processParams ? item.processParams.length : (item.parameters ? item.parameters.length : 0);
+                                const filamentCount = item.filamentParams ? item.filamentParams.length : 0;
+                                const processDisplay = processCount > 0 ? processCount : (item.subType ? '旧格式' : 0);
+                                const filamentDisplay = filamentCount > 0 ? filamentCount : 0;
                                 return `
                                 <tr>
                                     <td><strong>${item.name}</strong></td>
-                                    <td><span class="tag-badge">${subTypeIcon} ${subTypeLabel}</span></td>
                                     <td>${Utils.formatDate(item.createdDate)}</td>
                                     <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.notes || '-'}</td>
+                                    <td>${processDisplay}</td>
+                                    <td>${filamentDisplay}</td>
                                     <td>
                                         <div class="action-btns">
                                             <button class="btn-icon edit" onclick="app.viewPresetDetail('${item.id}')" title="查看详情"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
@@ -3251,42 +3250,83 @@
             const item = this.data.presets.find(p => p.id === id);
             if (!item) return;
 
-            const subTypeLabel = PRESET_SUBTYPES.find(t => t.value === item.subType)?.label || item.subType;
             let detailHtml = `
                 <div class="form-grid">
                     <div class="form-group"><label class="form-label">名称</label><div class="form-input" style="background:var(--bg-primary)">${item.name}</div></div>
-                    <div class="form-group"><label class="form-label">子类型</label><div class="form-input" style="background:var(--bg-primary)">${subTypeIcon} ${subTypeLabel}</div></div>
                     <div class="form-group"><label class="form-label">创建日期</label><div class="form-input" style="background:var(--bg-primary)">${Utils.formatDate(item.createdDate)}</div></div>
                     <div class="form-group full-width"><label class="form-label">备注</label><div class="form-textarea" style="background:var(--bg-primary);min-height:60px">${item.notes || '-'}</div></div>
             `;
 
-            // 根据子类型渲染专属字段
-            if (['standard', 'fine', 'draft', 'strength'].includes(item.subType)) {
+            // 工艺参数（新格式 processParams，或向后兼容的 parameters）
+            const processParams = item.processParams || item.parameters || [];
+            if (processParams.length > 0) {
                 detailHtml += `
                     <div class="form-group full-width" style="grid-column:1/-1;margin-top:8px"><strong style="font-size:14px">工艺参数</strong></div>
-                    <div class="form-group"><label class="form-label">层高 (mm)</label><div class="form-input" style="background:var(--bg-primary)">${item.layerHeight}</div><div class="param-path">${parameterPathMap.layerHeight}</div></div>
-                    <div class="form-group"><label class="form-label">首层层高 (mm)</label><div class="form-input" style="background:var(--bg-primary)">${item.firstLayerHeight}</div><div class="param-path">${parameterPathMap.firstLayerHeight}</div></div>
-                    <div class="form-group"><label class="form-label">线宽 (mm)</label><div class="form-input" style="background:var(--bg-primary)">${item.lineWidth}</div><div class="param-path">${parameterPathMap.lineWidth}</div></div>
-                    <div class="form-group"><label class="form-label">墙层数</label><div class="form-input" style="background:var(--bg-primary)">${item.wallCount}</div><div class="param-path">${parameterPathMap.wallCount}</div></div>
-                    <div class="form-group"><label class="form-label">填充密度 (%)</label><div class="form-input" style="background:var(--bg-primary)">${item.infillDensity}</div><div class="param-path">${parameterPathMap.infillDensity}</div></div>
-                    <div class="form-group"><label class="form-label">填充图案</label><div class="form-input" style="background:var(--bg-primary)">${item.infillPattern}</div><div class="param-path">${parameterPathMap.infillPattern}</div></div>
-                    <div class="form-group"><label class="form-label">顶层/底层数</label><div class="form-input" style="background:var(--bg-primary)">${item.topBottomLayers}</div><div class="param-path">${parameterPathMap.topBottomLayers}</div></div>
-                    <div class="form-group"><label class="form-label">打印温度 (℃)</label><div class="form-input" style="background:var(--bg-primary)">${item.printTemp}</div><div class="param-path">${parameterPathMap.printTemp}</div></div>
-                    <div class="form-group"><label class="form-label">热床温度 (℃)</label><div class="form-input" style="background:var(--bg-primary)">${item.bedTemp}</div><div class="param-path">${parameterPathMap.bedTemp}</div></div>
-                    <div class="form-group"><label class="form-label">打印速度 (mm/s)</label><div class="form-input" style="background:var(--bg-primary)">${item.printSpeed}</div><div class="param-path">${parameterPathMap.printSpeed}</div></div>
-                    <div class="form-group"><label class="form-label">风扇速度 (%)</label><div class="form-input" style="background:var(--bg-primary)">${item.fanSpeed}</div><div class="param-path">${parameterPathMap.fanSpeed}</div></div>
                 `;
-            } else if (item.subType === 'support') {
+                processParams.forEach(param => {
+                    detailHtml += `
+                        <div class="form-group">
+                            <label class="form-label">${param.name}</label>
+                            <div class="form-input" style="background:var(--bg-primary)">${param.value}</div>
+                            <div class="param-path">${parameterPathMap[param.name] || parameterPathMap[Object.keys(parameterPathMap).find(k => parameterPathMap[k] === param.name)] || '自定义参数'}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            // 耗材丝参数
+            if (item.filamentParams && item.filamentParams.length > 0) {
                 detailHtml += `
-                    <div class="form-group full-width" style="grid-column:1/-1;margin-top:8px"><strong style="font-size:14px">支撑参数</strong></div>
-                    <div class="form-group"><label class="form-label">支撑类型</label><div class="form-input" style="background:var(--bg-primary)">${item.supportType}</div><div class="param-path">${parameterPathMap.supportType}</div></div>
-                    <div class="form-group"><label class="form-label">悬垂阈值 (°)</label><div class="form-input" style="background:var(--bg-primary)">${item.supportAngle}</div><div class="param-path">${parameterPathMap.supportAngle}</div></div>
-                    <div class="form-group"><label class="form-label">XY 间距 (mm)</label><div class="form-input" style="background:var(--bg-primary)">${item.supportXYDistance}</div><div class="param-path">${parameterPathMap.supportXYDistance}</div></div>
-                    <div class="form-group"><label class="form-label">Z轴间隙 (mm)</label><div class="form-input" style="background:var(--bg-primary)">${item.supportZDistance}</div><div class="param-path">${parameterPathMap.supportZDistance}</div></div>
-                    <div class="form-group"><label class="form-label">顶层界面层</label><div class="form-input" style="background:var(--bg-primary)">${item.topInterfaceLayers}</div><div class="param-path">${parameterPathMap.topInterfaceLayers}</div></div>
-                    <div class="form-group"><label class="form-label">界面间距 (mm)</label><div class="form-input" style="background:var(--bg-primary)">${item.interfaceSpacing}</div><div class="param-path">${parameterPathMap.interfaceSpacing}</div></div>
-                    <div class="form-group"><label class="form-label">独立支撑</label><div class="form-input" style="background:var(--bg-primary)">${item.independentSupport ? '是' : '否'}</div><div class="param-path">${parameterPathMap.independentSupport}</div></div>
+                    <div class="form-group full-width" style="grid-column:1/-1;margin-top:8px"><strong style="font-size:14px">耗材丝参数</strong></div>
                 `;
+                item.filamentParams.forEach(param => {
+                    detailHtml += `
+                        <div class="form-group">
+                            <label class="form-label">${param.name}</label>
+                            <div class="form-input" style="background:var(--bg-primary)">${param.value}</div>
+                            <div class="param-path">${parameterPathMap[param.name] || parameterPathMap[Object.keys(parameterPathMap).find(k => parameterPathMap[k] === param.name)] || '自定义参数'}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            // 旧格式：向后兼容（subType 旧字段）
+            if ((!processParams || processParams.length === 0) && item.subType) {
+                detailHtml += `
+                    <div class="form-group full-width" style="grid-column:1/-1;margin-top:8px"><strong style="font-size:14px">工艺参数（旧格式）</strong></div>
+                `;
+                const oldFields = [
+                    { key: 'layerHeight', label: '层高 (mm)' },
+                    { key: 'firstLayerHeight', label: '首层层高 (mm)' },
+                    { key: 'lineWidth', label: '线宽 (mm)' },
+                    { key: 'wallCount', label: '墙层数' },
+                    { key: 'infillDensity', label: '填充密度 (%)' },
+                    { key: 'infillPattern', label: '填充图案' },
+                    { key: 'topBottomLayers', label: '顶层/底层数' },
+                    { key: 'printTemp', label: '打印温度 (℃)' },
+                    { key: 'bedTemp', label: '热床温度 (℃)' },
+                    { key: 'printSpeed', label: '打印速度 (mm/s)' },
+                    { key: 'fanSpeed', label: '风扇速度 (%)' },
+                    { key: 'supportType', label: '支撑类型' },
+                    { key: 'supportAngle', label: '悬垂阈值 (°)' },
+                    { key: 'supportXYDistance', label: 'XY 间距 (mm)' },
+                    { key: 'supportZDistance', label: 'Z轴间隙 (mm)' },
+                    { key: 'topInterfaceLayers', label: '顶层界面层' },
+                    { key: 'interfaceSpacing', label: '界面间距 (mm)' },
+                    { key: 'independentSupport', label: '独立支撑' }
+                ];
+                oldFields.forEach(f => {
+                    if (item[f.key] !== undefined && item[f.key] !== null && item[f.key] !== '') {
+                        const val = f.key === 'independentSupport' ? (item[f.key] ? '是' : '否') : item[f.key];
+                        detailHtml += `
+                            <div class="form-group">
+                                <label class="form-label">${f.label}</label>
+                                <div class="form-input" style="background:var(--bg-primary)">${val}</div>
+                                <div class="param-path">${parameterPathMap[f.key] || ''}</div>
+                            </div>
+                        `;
+                    }
+                });
             }
 
             detailHtml += '</div>';
@@ -3297,231 +3337,297 @@
             ]);
         },
 
-        // 打开新增预设
+        // 打开新增预设（直接打开通用弹窗，不再选择子类型）
         openAddPresetModal() {
-            this.openPresetSubtypeSelector();
+            this.openPresetModal();
         },
 
-        // 选择预设子类型
+        // 选择预设子类型（已废弃，保留空方法以兼容旧调用）
         openPresetSubtypeSelector() {
-            this.openModal('选择预设类型', `
-                <div class="subtype-selector">
-                    ${PRESET_SUBTYPES.map(t => `
-                        <div class="subtype-option" onclick="app.openPresetModal('${t.value}')">
-                            <div class="subtype-option-icon">${t.icon}</div>
-                            <div class="subtype-option-label">${t.label}</div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${t.desc}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `, [
-                { text: '取消', class: 'btn-secondary', action: () => this.closeModal() }
-            ]);
+            this.openPresetModal();
         },
 
         // 打开预设编辑
         editPreset(id) {
             const item = this.data.presets.find(p => p.id === id);
             if (!item) return;
-            this.openPresetModal(item.subType, item);
+            this.openPresetModal(item);
         },
 
-        // 预设模态框
-        openPresetModal(subType, item = null) {
+        // 预设参数名称列表
+        PRESET_PARAM_NAMES: ['层高', '首层层高', '线宽', '墙层数', '填充密度', '填充图案', '顶层/底层数', '打印温度', '热床温度', '打印速度', '风扇速度', '支撑类型', '悬垂阈值', 'XY间距', 'Z轴间隙', '顶层界面层', '界面间距', '独立支撑'],
+
+        // 耗材丝参数名称列表
+        FILAMENT_PARAM_NAMES: ['耗材类型', '品牌', '颜色', '线径', '喷嘴温度', '热床温度', '流速', '回抽距离', '回抽速度', '冷却风扇', '干燥温度', '干燥时间'],
+
+        // 添加参数行
+        addPresetParameterRow(container, name = '', value = '', paramType = 'process') {
+            const row = document.createElement('div');
+            row.className = 'preset-param-row';
+            row.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;';
+            const paramNames = paramType === 'filament' ? this.FILAMENT_PARAM_NAMES : this.PRESET_PARAM_NAMES;
+            const isCustom = name && !paramNames.includes(name);
+            const paramOptions = paramNames.map(n => `<option value="${n}" ${n === name ? 'selected' : ''}>${n}</option>`).join('');
+            row.innerHTML = `
+                <select class="form-select preset-param-name" style="flex:1;min-width:120px;" onchange="app.onPresetParamNameChange(this)">
+                    ${paramOptions}
+                    <option value="自定义" ${isCustom ? 'selected' : ''}>自定义</option>
+                </select>
+                <input type="text" class="form-input preset-param-custom" placeholder="输入参数名" style="flex:1;min-width:100px;${isCustom ? '' : 'display:none;'}">
+                <input type="text" class="form-input preset-param-value" placeholder="参数值" style="flex:1;min-width:100px;" value="${value}">
+                <button type="button" class="btn-icon" onclick="app.addPresetParameterRow(this.closest('.preset-param-row').parentElement, '', '', '${paramType}')" title="添加参数" style="flex-shrink:0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <button type="button" class="btn-icon delete" onclick="app.removePresetParamRow(this, '${paramType}')" title="删除参数" style="flex-shrink:0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            `;
+            if (isCustom) {
+                const customInput = row.querySelector('.preset-param-custom');
+                if (customInput) customInput.value = name;
+            }
+            container.appendChild(row);
+            this.updatePresetParamDeleteButtons(container);
+        },
+
+        // 删除工艺参数行（至少保留一行）
+        removePresetParamRow(btn, paramType = 'process') {
+            const containerId = paramType === 'filament' ? 'presetFilamentContainer' : 'presetProcessContainer';
+            const container = document.getElementById(containerId);
+            const rows = container.querySelectorAll('.preset-param-row');
+            if (rows.length <= 1) {
+                alert('至少需要保留一组' + (paramType === 'filament' ? '耗材丝参数' : '工艺参数'));
+                return;
+            }
+            btn.closest('.preset-param-row').remove();
+            this.updatePresetParamDeleteButtons(container);
+        },
+
+        // 更新删除按钮显示状态（只剩一行时隐藏删除按钮）
+        updatePresetParamDeleteButtons(container) {
+            const rows = container.querySelectorAll('.preset-param-row');
+            rows.forEach(row => {
+                const deleteBtn = row.querySelector('.btn-icon.delete');
+                if (deleteBtn) {
+                    deleteBtn.style.display = rows.length <= 1 ? 'none' : '';
+                }
+            });
+        },
+
+        // 参数名称下拉框变化
+        onPresetParamNameChange(select) {
+            const customInput = select.parentElement.querySelector('.preset-param-custom');
+            if (select.value === '自定义') {
+                customInput.style.display = '';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+                customInput.value = '';
+            }
+        },
+
+        // 预设模态框（通用新增/编辑）
+        openPresetModal(item = null) {
             const isEdit = !!item;
-            const title = isEdit ? '编辑预设' : `新增${PRESET_SUBTYPES.find(t => t.value === subType)?.label || ''}预设`;
+            const title = isEdit ? '编辑预设' : '新增预设';
             const data = item || {};
 
-            let fieldsHtml = '';
+            // 旧数据迁移：如果有旧字段，转换为 processParams 数组用于编辑
+            let processParams = data.processParams || [];
+            // 向后兼容：旧数据的 parameters 数组视为工艺参数
+            if (processParams.length === 0 && data.parameters && data.parameters.length > 0) {
+                processParams = data.parameters.map(p => ({ ...p }));
+            }
+            if (processParams.length === 0 && data.subType) {
+                const oldFieldMap = [
+                    { key: 'layerHeight', name: '层高' },
+                    { key: 'firstLayerHeight', name: '首层层高' },
+                    { key: 'lineWidth', name: '线宽' },
+                    { key: 'wallCount', name: '墙层数' },
+                    { key: 'infillDensity', name: '填充密度' },
+                    { key: 'infillPattern', name: '填充图案' },
+                    { key: 'topBottomLayers', name: '顶层/底层数' },
+                    { key: 'printTemp', name: '打印温度' },
+                    { key: 'bedTemp', name: '热床温度' },
+                    { key: 'printSpeed', name: '打印速度' },
+                    { key: 'fanSpeed', name: '风扇速度' },
+                    { key: 'supportType', name: '支撑类型' },
+                    { key: 'supportAngle', name: '悬垂阈值' },
+                    { key: 'supportXYDistance', name: 'XY间距' },
+                    { key: 'supportZDistance', name: 'Z轴间隙' },
+                    { key: 'topInterfaceLayers', name: '顶层界面层' },
+                    { key: 'interfaceSpacing', name: '界面间距' },
+                    { key: 'independentSupport', name: '独立支撑' }
+                ];
+                oldFieldMap.forEach(f => {
+                    if (data[f.key] !== undefined && data[f.key] !== null && data[f.key] !== '') {
+                        processParams.push({
+                            name: f.name,
+                            value: f.key === 'independentSupport' ? (data[f.key] ? '是' : '否') : String(data[f.key])
+                        });
+                    }
+                });
+            }
+            if (processParams.length === 0) {
+                processParams = [{ name: '层高', value: '' }];
+            }
 
-            // 基础字段
-            fieldsHtml += `
+            let filamentParams = data.filamentParams || [];
+            if (filamentParams.length === 0) {
+                filamentParams = [{ name: '耗材类型', value: '' }];
+            }
+
+            const processParamRowsHtml = processParams.map(p => {
+                const isCustom = !this.PRESET_PARAM_NAMES.includes(p.name);
+                const paramOptions = this.PRESET_PARAM_NAMES.map(n => `<option value="${n}" ${n === p.name ? 'selected' : ''}>${n}</option>`).join('');
+                return `
+                    <div class="preset-param-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
+                        <select class="form-select preset-param-name" style="flex:1;min-width:120px;" onchange="app.onPresetParamNameChange(this)">
+                            ${paramOptions}
+                            <option value="自定义" ${isCustom ? 'selected' : ''}>自定义</option>
+                        </select>
+                        <input type="text" class="form-input preset-param-custom" placeholder="输入参数名" style="flex:1;min-width:100px;${isCustom ? '' : 'display:none;'}" value="${isCustom ? p.name : ''}">
+                        <input type="text" class="form-input preset-param-value" placeholder="参数值" style="flex:1;min-width:100px;" value="${p.value}">
+                        <button type="button" class="btn-icon" onclick="app.addPresetParameterRow(document.getElementById('presetProcessContainer'), '', '', 'process')" title="添加参数" style="flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                        <button type="button" class="btn-icon delete" onclick="app.removePresetParamRow(this, 'process')" title="删除参数" style="flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            const filamentParamRowsHtml = filamentParams.map(p => {
+                const isCustom = !this.FILAMENT_PARAM_NAMES.includes(p.name);
+                const paramOptions = this.FILAMENT_PARAM_NAMES.map(n => `<option value="${n}" ${n === p.name ? 'selected' : ''}>${n}</option>`).join('');
+                return `
+                    <div class="preset-param-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
+                        <select class="form-select preset-param-name" style="flex:1;min-width:120px;" onchange="app.onPresetParamNameChange(this)">
+                            ${paramOptions}
+                            <option value="自定义" ${isCustom ? 'selected' : ''}>自定义</option>
+                        </select>
+                        <input type="text" class="form-input preset-param-custom" placeholder="输入参数名" style="flex:1;min-width:100px;${isCustom ? '' : 'display:none;'}" value="${isCustom ? p.name : ''}">
+                        <input type="text" class="form-input preset-param-value" placeholder="参数值" style="flex:1;min-width:100px;" value="${p.value}">
+                        <button type="button" class="btn-icon" onclick="app.addPresetParameterRow(document.getElementById('presetFilamentContainer'), '', '', 'filament')" title="添加参数" style="flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                        <button type="button" class="btn-icon delete" onclick="app.removePresetParamRow(this, 'filament')" title="删除参数" style="flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            const fieldsHtml = `
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">名称 <span class="required">*</span></label>
                         <input type="text" class="form-input" id="p_name" value="${data.name || ''}" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">创建日期</label>
-                        <input type="date" class="form-input" id="p_createdDate" value="${data.createdDate || new Date().toISOString().split('T')[0]}">
-                    </div>
+                    <input type="hidden" id="p_createdDate" value="${data.createdDate || new Date().toISOString()}">
                     <div class="form-group full-width">
                         <label class="form-label">备注</label>
                         <textarea class="form-textarea" id="p_notes">${data.notes || ''}</textarea>
                     </div>
+                    <div class="form-group full-width" style="grid-column:1/-1;margin-top:8px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <strong style="font-size:14px">工艺参数</strong>
+                        </div>
+                        <div id="presetProcessContainer" style="max-height:300px;overflow-y:auto;">
+                            ${processParamRowsHtml}
+                        </div>
+                    </div>
+                    <div class="form-group full-width" style="grid-column:1/-1;margin-top:8px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <strong style="font-size:14px">耗材丝参数</strong>
+                        </div>
+                        <div id="presetFilamentContainer" style="max-height:300px;overflow-y:auto;">
+                            ${filamentParamRowsHtml}
+                        </div>
+                    </div>
+                </div>
             `;
 
-            // 工艺专属字段（标准/精细/快速/强度）
-            if (['standard', 'fine', 'draft', 'strength'].includes(subType)) {
-                fieldsHtml += `
-                    <div class="form-group full-width" style="grid-column:1/-1;margin-top:8px"><strong style="font-size:14px">工艺参数</strong></div>
-                    <div class="form-group">
-                        <label class="form-label">层高 (mm)</label>
-                        <input type="number" class="form-input" id="p_layerHeight" value="${data.layerHeight || ''}" step="0.01" min="0.04" max="0.5">
-                        <div class="param-path">${parameterPathMap.layerHeight}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">首层层高 (mm)</label>
-                        <input type="number" class="form-input" id="p_firstLayerHeight" value="${data.firstLayerHeight || ''}" step="0.01" min="0.04" max="0.5">
-                        <div class="param-path">${parameterPathMap.firstLayerHeight}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">线宽 (mm)</label>
-                        <input type="number" class="form-input" id="p_lineWidth" value="${data.lineWidth || ''}" step="0.01" min="0.1" max="1.0">
-                        <div class="param-path">${parameterPathMap.lineWidth}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">墙层数</label>
-                        <input type="number" class="form-input" id="p_wallCount" value="${data.wallCount || ''}" min="1" max="10">
-                        <div class="param-path">${parameterPathMap.wallCount}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">填充密度 (%)</label>
-                        <input type="number" class="form-input" id="p_infillDensity" value="${data.infillDensity || ''}" min="0" max="100">
-                        <div class="param-path">${parameterPathMap.infillDensity}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">填充图案</label>
-                        <input type="text" class="form-input" id="p_infillPattern" value="${data.infillPattern || ''}">
-                        <div class="param-path">${parameterPathMap.infillPattern}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">顶层/底层数</label>
-                        <input type="number" class="form-input" id="p_topBottomLayers" value="${data.topBottomLayers || ''}" min="0" max="20">
-                        <div class="param-path">${parameterPathMap.topBottomLayers}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">打印温度 (℃)</label>
-                        <input type="number" class="form-input" id="p_printTemp" value="${data.printTemp || ''}" min="150" max="350">
-                        <div class="param-path">${parameterPathMap.printTemp}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">热床温度 (℃)</label>
-                        <input type="number" class="form-input" id="p_bedTemp" value="${data.bedTemp || ''}" min="0" max="150">
-                        <div class="param-path">${parameterPathMap.bedTemp}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">打印速度 (mm/s)</label>
-                        <input type="number" class="form-input" id="p_printSpeed" value="${data.printSpeed || ''}" min="10" max="500">
-                        <div class="param-path">${parameterPathMap.printSpeed}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">风扇速度 (%)</label>
-                        <input type="number" class="form-input" id="p_fanSpeed" value="${data.fanSpeed || ''}" min="0" max="100">
-                        <div class="param-path">${parameterPathMap.fanSpeed}</div>
-                    </div>
-                `;
-            }
-
-            // 支撑专属字段
-            if (subType === 'support') {
-                fieldsHtml += `
-                    <div class="form-group full-width" style="grid-column:1/-1;margin-top:8px"><strong style="font-size:14px">支撑参数</strong></div>
-                    <div class="form-group">
-                        <label class="form-label">支撑类型</label>
-                        <select class="form-select" id="p_supportType">
-                            <option value="">请选择</option>
-                            <option value="树状" ${data.supportType === '树状' ? 'selected' : ''}>树状</option>
-                            <option value="正常" ${data.supportType === '正常' ? 'selected' : ''}>正常</option>
-                            <option value="无" ${data.supportType === '无' ? 'selected' : ''}>无</option>
-                        </select>
-                        <div class="param-path">${parameterPathMap.supportType}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">悬垂阈值 (°)</label>
-                        <input type="number" class="form-input" id="p_supportAngle" value="${data.supportAngle || ''}" min="0" max="90">
-                        <div class="param-path">${parameterPathMap.supportAngle}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">XY 间距 (mm)</label>
-                        <input type="number" class="form-input" id="p_supportXYDistance" value="${data.supportXYDistance || ''}" step="0.1" min="0">
-                        <div class="param-path">${parameterPathMap.supportXYDistance}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Z轴间隙 (mm)</label>
-                        <input type="number" class="form-input" id="p_supportZDistance" value="${data.supportZDistance || ''}" step="0.01" min="0">
-                        <div class="param-path">${parameterPathMap.supportZDistance}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">顶层界面层</label>
-                        <input type="number" class="form-input" id="p_topInterfaceLayers" value="${data.topInterfaceLayers || ''}" min="0" max="10">
-                        <div class="param-path">${parameterPathMap.topInterfaceLayers}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">界面间距 (mm)</label>
-                        <input type="number" class="form-input" id="p_interfaceSpacing" value="${data.interfaceSpacing || ''}" step="0.1" min="0">
-                        <div class="param-path">${parameterPathMap.interfaceSpacing}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">独立支撑</label>
-                        <select class="form-select" id="p_independentSupport">
-                            <option value="true" ${data.independentSupport === true ? 'selected' : ''}>是</option>
-                            <option value="false" ${data.independentSupport === false ? 'selected' : ''}>否</option>
-                        </select>
-                        <div class="param-path">${parameterPathMap.independentSupport}</div>
-                    </div>
-                `;
-            }
-
-            fieldsHtml += '</div>';
-
             this.openModal(title, fieldsHtml, [
-                { text: '保存', class: 'btn-primary', action: () => this.savePreset(isEdit ? item.id : '', subType) },
+                { text: '保存', class: 'btn-primary', action: () => this.savePreset(isEdit ? item.id : '') },
                 { text: '取消', class: 'btn-secondary', action: () => this.closeModal() }
             ]);
         },
 
         // 保存预设
-        savePreset(id, subType) {
+        savePreset(id) {
             const errors = [];
             const getValue = (fieldId) => document.getElementById(fieldId)?.value?.trim() || '';
-            const getNumber = (fieldId, fieldName, allowFloat = false) => {
-                const val = document.getElementById(fieldId)?.value?.trim();
-                if (!val) return null;
-                const num = allowFloat ? parseFloat(val) : parseInt(val);
-                if (isNaN(num)) {
-                    errors.push(`${fieldName}必须是有效数字`);
+
+            const name = getValue('p_name');
+            if (!name) errors.push('名称不能为空');
+
+            // 收集工艺参数
+            const processParams = [];
+            const processRows = document.querySelectorAll('#presetProcessContainer .preset-param-row');
+            processRows.forEach(row => {
+                const nameSelect = row.querySelector('.preset-param-name');
+                const customInput = row.querySelector('.preset-param-custom');
+                const valueInput = row.querySelector('.preset-param-value');
+                if (!nameSelect || !valueInput) return;
+
+                let paramName = nameSelect.value;
+                if (paramName === '自定义') {
+                    paramName = customInput?.value?.trim() || '';
                 }
-                return num;
-            };
+                const paramValue = valueInput.value?.trim() || '';
+                if (paramName && paramValue) {
+                    processParams.push({ name: paramName, value: paramValue });
+                }
+            });
 
-            const preset = {
-                id: id || Utils.generateId('preset'),
-                name: getValue('p_name'),
-                subType: subType,
-                machine: 'X2D',
-                createdDate: document.getElementById('p_createdDate').value,
-                notes: document.getElementById('p_notes').value
-            };
+            // 收集耗材丝参数
+            const filamentParams = [];
+            const filamentRows = document.querySelectorAll('#presetFilamentContainer .preset-param-row');
+            filamentRows.forEach(row => {
+                const nameSelect = row.querySelector('.preset-param-name');
+                const customInput = row.querySelector('.preset-param-custom');
+                const valueInput = row.querySelector('.preset-param-value');
+                if (!nameSelect || !valueInput) return;
 
-            if (!preset.name) errors.push('名称不能为空');
-
-            if (['standard', 'fine', 'draft', 'strength'].includes(subType)) {
-                preset.layerHeight = getNumber('p_layerHeight', '层高', true);
-                preset.firstLayerHeight = getNumber('p_firstLayerHeight', '首层层高', true);
-                preset.lineWidth = getNumber('p_lineWidth', '线宽', true);
-                preset.wallCount = getNumber('p_wallCount', '墙层数');
-                preset.infillDensity = getNumber('p_infillDensity', '填充密度');
-                preset.infillPattern = getValue('p_infillPattern');
-                preset.topBottomLayers = getNumber('p_topBottomLayers', '顶层/底层数');
-                preset.printTemp = getNumber('p_printTemp', '打印温度');
-                preset.bedTemp = getNumber('p_bedTemp', '热床温度');
-                preset.printSpeed = getNumber('p_printSpeed', '打印速度');
-                preset.fanSpeed = getNumber('p_fanSpeed', '风扇速度');
-            } else if (subType === 'support') {
-                preset.supportType = document.getElementById('p_supportType').value;
-                preset.supportAngle = getNumber('p_supportAngle', '悬垂阈值');
-                preset.supportXYDistance = getNumber('p_supportXYDistance', 'XY 间距', true);
-                preset.supportZDistance = getNumber('p_supportZDistance', 'Z轴间隙', true);
-                preset.topInterfaceLayers = getNumber('p_topInterfaceLayers', '顶层界面层');
-                preset.interfaceSpacing = getNumber('p_interfaceSpacing', '界面间距', true);
-                preset.independentSupport = document.getElementById('p_independentSupport').value === 'true';
-            }
+                let paramName = nameSelect.value;
+                if (paramName === '自定义') {
+                    paramName = customInput?.value?.trim() || '';
+                }
+                const paramValue = valueInput.value?.trim() || '';
+                if (paramName && paramValue) {
+                    filamentParams.push({ name: paramName, value: paramValue });
+                }
+            });
 
             if (errors.length > 0) {
                 alert('请修正以下错误：\n' + errors.join('\n'));
                 return;
             }
+
+            const preset = {
+                id: id || Utils.generateId('preset'),
+                name: name,
+                createdDate: new Date().toISOString(),
+                notes: document.getElementById('p_notes')?.value || ''
+            };
+
+            // 保留旧数据的 subType 等字段用于向后兼容显示，但不再依赖它们
+            if (id) {
+                const oldItem = this.data.presets.find(p => p.id === id);
+                if (oldItem) {
+                    preset.subType = oldItem.subType;
+                    preset.machine = oldItem.machine;
+                    // 向后兼容：保留旧数据的 parameters 字段
+                    if (oldItem.parameters) {
+                        preset.parameters = oldItem.parameters;
+                    }
+                }
+            }
+
+            preset.processParams = processParams;
+            preset.filamentParams = filamentParams;
 
             if (id) {
                 const idx = this.data.presets.findIndex(p => p.id === id);
