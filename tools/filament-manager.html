@@ -653,6 +653,117 @@
             color: var(--text-muted);
         }
 
+        /* ========== 颜色选择器面板 ========== */
+        .color-picker-wrap {
+            position: relative;
+            flex: 1;
+        }
+
+        .color-input-with-swatch {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding-right: 6px;
+            position: relative;
+        }
+
+        .color-input-with-swatch input {
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            flex: 1;
+            padding: 9px 12px;
+            font-size: 14px;
+            background: transparent;
+            min-width: 0;
+        }
+
+        .color-input-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.15s, box-shadow 0.15s;
+            background: transparent;
+            position: relative;
+        }
+
+        .color-input-swatch:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .color-picker-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e8e8ed;
+            border-radius: 12px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            padding: 14px;
+            z-index: 2000;
+            display: none;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        .color-picker-panel.open {
+            display: block;
+        }
+
+        .color-picker-group {
+            margin-bottom: 10px;
+        }
+
+        .color-picker-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .color-picker-group-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .color-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+        }
+
+        .color-picker-item {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            border: 1.5px solid #e8e8ed;
+            cursor: pointer;
+            transition: transform 0.12s, box-shadow 0.12s;
+            position: relative;
+        }
+
+        .color-picker-item:hover {
+            transform: scale(1.15);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        .color-picker-item.selected {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+
+        .color-picker-item.clear-color {
+            background: repeating-conic-gradient(#e2e8f0 0% 25%, #fff 0% 50%) 50%/8px 8px;
+            border-style: dashed;
+        }
+
         .modal-footer {
             padding: 16px 24px;
             border-top: 1px solid var(--border-color);
@@ -1210,6 +1321,8 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
+            position: relative;
+            flex: 1;
         }
 
         .stat-card-label {
@@ -1221,6 +1334,18 @@
             font-size: 24px;
             font-weight: 700;
             color: var(--text-primary);
+        }
+
+        .stat-card-consumed {
+            position: absolute;
+            top: -4px;
+            right: 0;
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-hover);
+            padding: 2px 8px;
+            border-radius: 10px;
+            white-space: nowrap;
         }
 
         .dash-card {
@@ -1691,11 +1816,11 @@
         <!-- 右侧主区域 -->
         <main class="main-content">
             <!-- 顶部栏 -->
-            <header class="top-bar">
+            <header class="top-bar" style="display:none;">
                 <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="app.toggleSidebar()" aria-label="打开菜单">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                 </button>
-                <div class="search-box" style="flex:1;max-width:400px">
+                <div class="search-box" style="flex:1;max-width:400px;display:none;">
                     <span class="search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                     <input type="text" id="globalSearch" placeholder="全局搜索..." oninput="app.handleSearch(this.value)">
                     <div class="search-dropdown" id="searchDropdown"></div>
@@ -2389,6 +2514,12 @@
                 if (!searchBox.contains(e.target)) {
                     document.getElementById('searchDropdown').classList.remove('active');
                 }
+                // 点击外部关闭颜色选择器
+                document.querySelectorAll('.color-picker-panel.open').forEach(panel => {
+                    if (!panel.closest('.color-picker-wrap')?.contains(e.target)) {
+                        panel.classList.remove('open');
+                    }
+                });
             });
         },
 
@@ -2522,6 +2653,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th style="width:50px;text-align:center">#</th>
                                 <th>品牌</th>
                                 <th>名称</th>
                                 <th>类型</th>
@@ -2535,7 +2667,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${data.map(item => {
+                            ${data.map((item, idx) => {
                                 const bundleColorSwatches = item.isBundle && item.bundleItems ? item.bundleItems.map(bi => {
                                     const name = bi.colorName || '-';
                                     const val = bi.colorValue || '';
@@ -2543,9 +2675,11 @@
                                 }).join('') : '';
                                 const bundleCount = item.isBundle && item.bundleItems ? item.bundleItems.length : 0;
                                 const displayWeight = item.isBundle && bundleCount > 0 ? (bundleCount * (item.netWeight || 1000)) : (item.netWeight || 1000);
+                                const consumedBadge = item.tags && item.tags.includes('已用完') ? '<span class="tag-badge" style="background:#e2e8f0;color:#64748b;font-size:11px;margin-left:6px;">已耗完</span>' : '';
                                 return `
                                 <tr>
-                                    <td><strong>${item.brand}</strong>${item.isBundle ? '<span class="tag-badge" style="background:var(--warning-color);color:#fff;font-size:11px;margin-left:6px;">套装</span>' : ''}</td>
+                                    <td style="text-align:center;color:var(--text-muted);font-size:13px">${idx + 1}</td>
+                                    <td><strong>${item.brand}</strong>${item.isBundle ? '<span class="tag-badge" style="background:var(--warning-color);color:#fff;font-size:11px;margin-left:6px;">套装</span>' : ''}${consumedBadge}</td>
                                     <td>${item.name || '-'}</td>
                                     <td><span class="tag-badge">${item.type}</span></td>
                                     <td>${item.isBundle && item.bundleItems ? item.bundleItems.map(bi => bi.colorName || '-').join('、') : (item.colorName || '-')}</td>
@@ -2577,21 +2711,35 @@
             const item = this.data.filaments.find(f => f.id === id);
             if (!item) return;
 
+            const isConsumed = item.tags && item.tags.includes('已用完');
+
+            // 套装：每个子项旁显示"已耗完"按钮
             const bundleSection = item.isBundle && item.bundleItems ? `
                 <div class="form-group full-width">
                     <label class="form-label">套装颜色 (${item.bundleItems.length} 盘)</label>
                     <div style="background:var(--bg-primary);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:10px;">
-                        ${item.bundleItems.map((bi, idx) => `
+                        ${item.bundleItems.map((bi, idx) => {
+                            const biConsumed = bi.consumed ? true : false;
+                            const btnText = biConsumed ? '恢复' : '已耗完';
+                            const btnClass = biConsumed ? 'btn-secondary' : 'btn-primary';
+                            return `
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <span style="font-size:12px;color:var(--text-secondary);width:24px;">#${idx + 1}</span>
                                 ${this.getColorSwatch(bi.colorValue)}
                                 <span style="font-weight:500;">${bi.colorName || '-'}</span>
                                 <span style="color:var(--text-secondary);font-size:13px;">${bi.colorValue || ''}</span>
+                                <button class="${btnClass}" style="margin-left:auto;padding:4px 12px;font-size:12px;border-radius:var(--radius-sm);" onclick="app.toggleBundleConsumed('${item.id}', ${idx})">${btnText}</button>
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             ` : '';
+
+            // 单盘：底部显示"已耗完"按钮
+            const singleConsumeBtn = !item.isBundle ? [
+                { text: isConsumed ? '恢复' : '已耗完', class: isConsumed ? 'btn-secondary' : 'btn-primary', action: () => this.toggleConsumed(item.id) }
+            ] : [];
 
             this.openModal('耗材详情', `
                 <div class="form-grid">
@@ -2612,6 +2760,7 @@
                     <div class="form-group full-width"><label class="form-label">备注</label><div class="form-textarea" style="background:var(--bg-primary);min-height:60px">${item.notes || '-'}</div></div>
                 </div>
             `, [
+                ...singleConsumeBtn,
                 { text: '编辑', class: 'btn-primary', action: () => { this.closeModal(); setTimeout(() => this.editFilament(id), 100); } },
                 { text: '关闭', class: 'btn-secondary', action: () => this.closeModal() }
             ]);
@@ -2696,10 +2845,14 @@
                         <div class="form-group">
                             <label class="form-label">颜色值</label>
                             <div style="display:flex;gap:8px;align-items:center">
-                                <input type="text" class="form-input" id="f_colorValue" value="${data.colorValue || ''}" placeholder="如：#FF0000" style="flex:1" oninput="app.updateColorPreview(this.value)">
-                                <div id="f_colorPreview" style="width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:${data.colorValue || 'transparent'};flex-shrink:0;transition:background 0.2s"></div>
+                                <div class="color-picker-wrap">
+                                    <div class="form-input color-input-with-swatch" style="padding:0;">
+                                        <input type="text" id="f_colorValue" value="${data.colorValue || ''}" placeholder="如：#FF0000" oninput="app.updateColorPreview(this.value)" onfocus="app.openColorPicker('f_colorValue','f_colorPreview')">
+                                        <div id="f_colorPreview" class="color-input-swatch" onclick="app.toggleColorPicker(event,'f_colorValue','f_colorPreview')" title="点击选择颜色"></div>
+                                    </div>
+                                    <div class="color-picker-panel" id="colorPickerPanel_f_colorValue"></div>
+                                </div>
                             </div>
-                            <div class="form-hint">支持十六进制色值（如 #FF5733）</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">购买渠道</label>
@@ -2783,7 +2936,6 @@
                             } else {
                                 nameSelect.value = '自定义';
                                 if (nameInput) {
-                                    nameSelect.style.display = 'none';
                                     nameInput.style.display = '';
                                     nameInput.value = data.name;
                                 }
@@ -2988,6 +3140,43 @@
             });
         },
 
+        // 切换单盘耗材"已耗完"状态
+        toggleConsumed(id) {
+            const item = this.data.filaments.find(f => f.id === id);
+            if (!item) return;
+            if (!item.tags) item.tags = [];
+            const idx = item.tags.indexOf('已用完');
+            if (idx >= 0) {
+                item.tags.splice(idx, 1);
+            } else {
+                item.tags.push('已用完');
+            }
+            StorageService.saveFilaments(this.data.filaments);
+            this.closeModal();
+            this.render();
+        },
+
+        // 切换套装子项"已耗完"状态
+        toggleBundleConsumed(itemId, bundleIdx) {
+            const item = this.data.filaments.find(f => f.id === itemId);
+            if (!item || !item.bundleItems || !item.bundleItems[bundleIdx]) return;
+            const bi = item.bundleItems[bundleIdx];
+            bi.consumed = !bi.consumed;
+            // 只要任一子项耗完，整条数据打上"已用完"标签
+            const anyConsumed = item.bundleItems.some(b => b.consumed);
+            if (!item.tags) item.tags = [];
+            const tagIdx = item.tags.indexOf('已用完');
+            if (anyConsumed && tagIdx < 0) {
+                item.tags.push('已用完');
+            } else if (!anyConsumed && tagIdx >= 0) {
+                item.tags.splice(tagIdx, 1);
+            }
+            StorageService.saveFilaments(this.data.filaments);
+            // 刷新弹窗内容
+            this.closeModal();
+            setTimeout(() => this.viewFilamentDetail(itemId), 50);
+        },
+
         // ============================================
         // 打印参数预设模块
         // ============================================
@@ -3012,7 +3201,7 @@
                             ${PRESET_SUBTYPES.map(t => `<option value="${t.value}" ${f.subType === t.value ? 'selected' : ''}>${t.label}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="filter-group">
+                    <div class="filter-group" style="display:none;">
                         <span class="filter-label">搜索：</span>
                         <input type="text" class="form-input" style="width:200px;padding:8px 12px;" placeholder="按名称搜索..."
                             value="${f.search}" oninput="app.setFilter('presets', 'search', this.value)">
@@ -3387,8 +3576,11 @@
                         <input type="text" class="form-input" style="width:150px;padding:8px 12px;" placeholder="搜索标签..."
                             value="${f.tag}" oninput="app.setFilter('knowledge', 'tag', this.value)">
                     </div>
-                    <button class="btn-secondary" style="margin-left:auto;display:flex;align-items:center;gap:6px;" onclick="app.openOfficialDocsSearchModal()">
+                    <button class="btn-secondary" style="display:flex;align-items:center;gap:6px;" onclick="app.openOfficialDocsSearchModal()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> 查官方文档
+                    </button>
+                    <button class="btn-primary" id="addBtn" style="margin-left:auto;" onclick="app.openAddKnowledgeModal()">
+                        <span>+</span> <span>新增知识</span>
                     </button>
                 </div>
                 ${data.length === 0 ? this.renderEmptyState('暂无知识库数据', '点击右上角"新增"添加第一条记录') : `
@@ -3795,8 +3987,10 @@
 
         // 打开官方文档链接（新增）
         openOfficialDocLink(url) {
-            document.getElementById('searchDropdown').classList.remove('active');
-            document.getElementById('globalSearch').value = '';
+            const dropdown = document.getElementById('searchDropdown');
+            if (dropdown) dropdown.classList.remove('active');
+            const globalSearch = document.getElementById('globalSearch');
+            if (globalSearch) globalSearch.value = '';
             window.open(url, '_blank');
         },
 
@@ -3962,7 +4156,7 @@
         // 打开官方文档搜索模态框（新增）
         openOfficialDocsSearchModal() {
             this.openModal('拓竹官方文档查询', `
-                <div style="margin-bottom:16px">
+                <div style="margin-bottom:16px;">
                     <div class="search-box" style="width:100%">
                         <span class="search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                         <input type="text" id="officialDocSearchInput" placeholder="输入关键词搜索官方文档..." style="width:100%;padding:10px 14px 10px 40px" oninput="app.searchOfficialDocsOnly(this.value)">
@@ -4018,39 +4212,72 @@
         // 颜色名称到色值的映射（用于色块预览）
         colorNameMap: {
             // Bambu Lab PLA Basic 官方颜色
-            'Jade White': '#FFFFFF', '翡翠白': '#FFFFFF', '玉石白': '#FFFFFF',
+            'Jade White': '#FFFFFF', '翡翠白': '#FFFFFF', '玉石白': '#FFFFFF', '白色': '#FFFFFF',
             'Beige': '#F7E6DE', '米色': '#F7E6DE',
-            'Light Gray': '#D1D3D5', '浅灰': '#D1D3D5',
-            'Silver': '#A6A9AA', '银色': '#A6A9AA',
+            'Light Gray': '#D1D3D5', '淺灰色': '#D1D3D5', '浅灰': '#D1D3D5',
+            'Silver': '#A6A9AA', '銀色': '#A6A9AA', '银色': '#A6A9AA',
             'Gray': '#8E9089', '灰色': '#8E9089',
-            'Magenta': '#EC008C', '品红': '#EC008C',
-            'Pink': '#F55A74', '粉色': '#F55A74',
-            'Hot Pink': '#F5547C', '亮粉': '#F5547C',
+            'Magenta': '#EC008C', '紫红色': '#EC008C', '品红': '#EC008C',
+            'Pink': '#F55A74', '粉红色': '#F55A74', '粉色': '#F55A74',
+            'Hot Pink': '#F5547C', '桃红色': '#F5547C', '亮粉': '#F5547C',
             'Orange': '#FF6A13', '橙色': '#FF6A13',
-            'Pumpkin Orange': '#FF9016', '南瓜橙': '#FF9016',
+            'Pumpkin Orange': '#FF9016', '南瓜橙色': '#FF9016', '南瓜橙': '#FF9016',
             'Gold': '#E4BD68', '金色': '#E4BD68',
-            'Sunflower Yellow': '#FEC600', '向日葵黄': '#FEC600',
-            'Yellow': '#F4EE2A', '黄色': '#F4EE2A',
-            'Bright Green': '#BECF00', '亮绿': '#BECF00',
-            'Bambu Green': '#00AE42', '拓竹绿': '#00AE42',
-            'Mistletoe Green': '#3F8E43', '槲寄生绿': '#3F8E43',
-            'Bronze': '#847D48', '青铜': '#847D48',
-            'Cocoa Brown': '#6F5034', '可可棕': '#6F5034',
-            'Brown': '#9D432C', '棕色': '#9D432C',
-            'Maroon Red': '#9D2235', '栗红': '#9D2235',
+            'Sunflower Yellow': '#FEC600', '向日葵黃色': '#FEC600', '向日葵黄': '#FEC600',
+            'Yellow': '#F4EE2A', '黃色': '#F4EE2A', '黄色': '#F4EE2A',
+            'Bright Green': '#BECF00', '鮮綠色': '#BECF00', '亮绿': '#BECF00',
+            'Bambu Green': '#00AE42', '拓竹綠色': '#00AE42', '拓竹绿': '#00AE42',
+            'Mistletoe Green': '#3F8E43', '聖誕綠色': '#3F8E43', '槲寄生绿': '#3F8E43',
+            'Bronze': '#847D48', '銅色': '#847D48', '青铜': '#847D48',
+            'Cocoa Brown': '#6F5034', '可可啡色': '#6F5034', '可可棕': '#6F5034',
+            'Brown': '#9D432C', '啡色': '#9D432C', '棕色': '#9D432C',
+            'Maroon Red': '#9D2235', '深红色': '#9D2235', '栗红': '#9D2235',
             'Red': '#C12E1F', '红色': '#C12E1F',
-            'Turquoise': '#00B1B7', '松石绿': '#00B1B7',
-            'Cyan': '#0086D6', '青色': '#0086D6',
-            'Blue': '#0A2989', '蓝色': '#0A2989',
-            'Cobalt Blue': '#0056B8', '钴蓝': '#0056B8',
+            'Turquoise': '#00B1B7', '松綠色': '#00B1B7', '松石绿': '#00B1B7',
+            'Cyan': '#0086D6', '青藍色': '#0086D6', '青色': '#0086D6',
+            'Blue': '#0A2989', '藍色': '#0A2989', '蓝色': '#0A2989',
+            'Cobalt Blue': '#0056B8', '鈷藍色': '#0056B8', '钴蓝': '#0056B8',
             'Purple': '#5E43B7', '紫色': '#5E43B7',
-            'Indigo Purple': '#482960', '靛紫': '#482960',
-            'Blue Grey': '#5B6579', '蓝灰': '#5B6579',
-            'Dark Gray': '#545454', '深灰': '#545454',
+            'Indigo Purple': '#482960', '深紫色': '#482960', '靛紫': '#482960',
+            'Blue Gray': '#5B6579', '灰藍色': '#5B6579', '蓝灰': '#5B6579',
+            'Dark Gray': '#545454', '深灰色': '#545454', '深灰': '#545454',
             'Black': '#000000', '黑色': '#000000',
+            // Bambu Lab PLA Matte (哑光) 官方颜色
+            'Ivory White': '#FFFFFF', '象牙白': '#FFFFFF',
+            'Latte Brown': '#D3B7A7', '拿铁棕': '#D3B7A7',
+            'Desert Tan': '#E8DBB7', '沙漠棕褐色': '#E8DBB7',
+            'Ash Gray': '#9B9EA0', '火山灰': '#9B9EA0',
+            'Lilac Purple': '#AE96D4', '丁香紫': '#AE96D4',
+            'Sakura Pink': '#E8AFCF', '樱花粉': '#E8AFCF',
+            'Mandarin Orange': '#F99963', '柑橘橙': '#F99963',
+            'Lemon Yellow': '#F7D959', '柠檬黄': '#F7D959',
+            'Scarlet Red': '#DE4343', '猩红': '#DE4343',
+            'Dark Red': '#BB3D43', '暗红': '#BB3D43',
+            'Dark Brown': '#7D6556', '深棕': '#7D6556',
+            'Dark Green': '#68724D', '深绿': '#68724D',
+            'Grass Green': '#61C680', '草绿': '#61C680',
+            'Ice Blue': '#A3D8E1', '冰蓝': '#A3D8E1',
+            'Marine Blue': '#0078BF', '海洋蓝': '#0078BF',
+            'Dark Blue': '#042F56', '深蓝': '#042F56',
+            'Charcoal': '#000000', '炭黑': '#000000',
+            // SUNLU PETG 官方颜色
+            'Grey': '#75787B',
+            'Cherry Red': '#CC1133', '樱桃红': '#CC1133',
+            'Transparent Red': '#E60026', '透明红': '#E60026',
+            'Transparent Orange': '#FF9933', '透明橙': '#FF9933',
+            'Lemon Yellow PETG': '#FFF44F',
+            'Vivid Yellow': '#FFE302', '鲜艳黄': '#FFE302',
+            'Transparent Yellow': '#FFE033', '透明黄': '#FFE033',
+            'Sky Blue': '#87CEEB', '天蓝': '#87CEEB',
+            'Mint Green': '#98FF98', '薄荷绿': '#98FF98',
+            'Olive Green': '#708573', '橄榄绿': '#708573',
+            'Sakura Pink PETG': '#FFB7C5',
+            'Coffee': '#6F4E37', '咖啡色': '#6F4E37',
+            'Transparent': '#B2B4B2', '透明': '#B2B4B2',
+            'Carbon Fiber Black': '#1A1A1A', '碳纤维黑': '#1A1A1A',
+            'Glow-in-the-Dark Green': '#CCFF00', '夜光绿': '#CCFF00', 'Glow Green': '#CCFF00',
             // 通用颜色
-            '白色': '#FFFFFF', '透明': '#E2E8F0', '深红': '#9B2C2C', '深绿': '#276749',
-            '浅绿': '#C6F6D5', '珊瑚色': '#FF7F50', '藏青': '#2A4365', '卡其': '#C3B091', '酒红': '#722F37'
+            '深红': '#9B2C2C', '浅绿': '#C6F6D5', '珊瑚色': '#FF7F50', '藏青': '#2A4365', '卡其': '#C3B091', '酒红': '#722F37'
         },
 
         // 更新颜色预览色块
@@ -4135,6 +4362,132 @@
             return colorName;
         },
 
+        // ========== 颜色选择器面板 ==========
+        colorPalette: [
+            { label: 'PLA Basic', colors: [
+                ['#9D2235','深红色 Maroon Red'], ['#C12E1F','红色 Red'], ['#EC008C','紫红色 Magenta'],
+                ['#F5547C','桃红色 Hot Pink'], ['#F55A74','粉红色 Pink'], ['#FF6A13','橙色 Orange'],
+                ['#FF9016','南瓜橙色 Pumpkin Orange'], ['#FEC600','向日葵黃色 Sunflower Yellow'],
+                ['#F4EE2A','黃色 Yellow'], ['#BECF00','鮮綠色 Bright Green'], ['#00AE42','拓竹綠色 Bambu Green'],
+                ['#3F8E43','聖誕綠色 Mistletoe Green'], ['#00B1B7','松綠色 Turquoise'],
+                ['#0086D6','青藍色 Cyan'], ['#0056B8','鈷藍色 Cobalt Blue'], ['#0A2989','藍色 Blue'],
+                ['#482960','深紫色 Indigo Purple'], ['#5E43B7','紫色 Purple'], ['#5B6579','灰藍色 Blue Gray'],
+                ['#F7E6DE','米色 Beige'], ['#FFFFFF','白色 Jade White'], ['#D1D3D5','淺灰色 Light Gray'],
+                ['#8E9089','灰色 Gray'], ['#545454','深灰色 Dark Gray'], ['#000000','黑色 Black'],
+                ['#E4BD68','金色 Gold'], ['#A6A9AA','銀色 Silver'], ['#847D48','銅色 Bronze'],
+                ['#6F5034','可可啡色 Cocoa Brown'], ['#9D432C','啡色 Brown']
+            ]},
+            { label: 'PLA Matte (哑光)', colors: [
+                ['#FFFFFF','象牙白 Ivory White'], ['#D3B7A7','拿铁棕 Latte Brown'],
+                ['#E8DBB7','沙漠棕褐色 Desert Tan'], ['#9B9EA0','火山灰 Ash Gray'],
+                ['#AE96D4','丁香紫 Lilac Purple'], ['#E8AFCF','樱花粉 Sakura Pink'],
+                ['#F99963','柑橘橙 Mandarin Orange'], ['#F7D959','柠檬黄 Lemon Yellow'],
+                ['#DE4343','猩红 Scarlet Red'], ['#BB3D43','暗红 Dark Red'],
+                ['#7D6556','深棕 Dark Brown'], ['#68724D','深绿 Dark Green'],
+                ['#61C680','草绿 Grass Green'], ['#A3D8E1','冰蓝 Ice Blue'],
+                ['#0078BF','海洋蓝 Marine Blue'], ['#042F56','深蓝 Dark Blue'],
+                ['#000000','炭黑 Charcoal']
+            ]},
+            { label: 'SUNLU PETG', colors: [
+                // 白/灰/黑
+                ['#FFFFFF','白色 White'], ['#75787B','灰色 Grey'], ['#3F4444','黑色 Black'],
+                // 红/粉
+                ['#FF0000','红色 Red'], ['#CC1133','樱桃红 Cherry Red'],
+                ['#FFC0CB','粉红色 Pink'], ['#FFB7C5','樱花粉 Sakura Pink'],
+                // 橙
+                ['#FF6600','橙色 Orange'],
+                // 黄
+                ['#FFD700','黄色 Yellow'], ['#FFF44F','柠檬黄 Lemon Yellow'], ['#FFE302','鲜艳黄 Vivid Yellow'],
+                // 绿
+                ['#00FF00','绿色 Green'], ['#98FF98','薄荷绿 Mint Green'], ['#708573','橄榄绿 Olive Green'],
+                // 蓝
+                ['#0000FF','蓝色 Blue'], ['#87CEEB','天蓝 Sky Blue'], ['#00FFFF','青色 Cyan'],
+                // 紫
+                ['#800080','紫色 Purple'],
+                // 棕/米
+                ['#F5F5DC','米色 Beige'], ['#6F4E37','咖啡色 Coffee'],
+                // 特殊
+                ['#1A1A1A','碳纤维黑 Carbon Fiber Black'], ['#CCFF00','夜光绿 Glow Green'],
+                // 透明色放最后
+                ['#E60026','透明红 Transparent Red'], ['#FF9933','透明橙 Transparent Orange'],
+                ['#FFE033','透明黄 Transparent Yellow'], ['#B2B4B2','透明 Transparent']
+            ]}
+        ],
+
+        // 打开颜色选择器面板
+        openColorPicker(inputId, previewId) {
+            const panel = document.getElementById('colorPickerPanel_' + inputId);
+            if (!panel) return;
+            if (panel.classList.contains('open')) return;
+
+            let html = '';
+            this.colorPalette.forEach(group => {
+                html += `<div class="color-picker-group"><div class="color-picker-group-label">${group.label}</div><div class="color-picker-grid">`;
+                group.colors.forEach(([hex, name]) => {
+                    const val = document.getElementById(inputId)?.value?.trim().toUpperCase() || '';
+                    const isSelected = (val === hex) ? ' selected' : '';
+                    const isTransparent = (name.includes('透明') || name.includes('Transparent'));
+                    let bgStyle = '';
+                    if (isTransparent) {
+                        // 透明色：用实际颜色作为底色 + 棋盘格覆盖，既能看出颜色倾向又能表示透明
+                        bgStyle = 'background:' + hex + ';background-image:repeating-conic-gradient(rgba(226,232,240,0.7) 0% 25%,rgba(255,255,255,0.7) 0% 50%);background-size:8px 8px;';
+                    } else {
+                        bgStyle = 'background:' + hex + ';';
+                    }
+                    html += `<div class="color-picker-item${isSelected}" style="${bgStyle}" title="${name} (${hex})" onclick="app.selectColor(event,'${inputId}','${previewId}','${hex}','${name}')"></div>`;
+                });
+                html += '</div></div>';
+            });
+            html += `<div style="margin-top:8px;border-top:1px solid #eee;padding-top:8px;"><div class="color-picker-grid"><div class="color-picker-item clear-color" onclick="app.selectColor(event,'${inputId}','${previewId}','','')" title="清除颜色"></div></div></div>`;
+
+            panel.innerHTML = html;
+            panel.classList.add('open');
+        },
+
+        // 切换颜色选择器（点击色块时调用）
+        toggleColorPicker(e, inputId, previewId) {
+            e.stopPropagation();
+            const panel = document.getElementById('colorPickerPanel_' + inputId);
+            if (!panel) return;
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open');
+            } else {
+                // 关闭所有其他面板
+                document.querySelectorAll('.color-picker-panel.open').forEach(p => p.classList.remove('open'));
+                this.openColorPicker(inputId, previewId);
+            }
+        },
+
+        // 选择颜色
+        selectColor(e, inputId, previewId, hex, name) {
+            e.stopPropagation();
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            if (input) {
+                input.value = hex || '';
+                // 触发 input 事件
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (preview) {
+                preview.style.background = hex || 'transparent';
+            }
+            // 关闭面板
+            const panel = document.getElementById('colorPickerPanel_' + inputId);
+            if (panel) panel.classList.remove('open');
+
+            // 如果输入框被隐藏（自定义模式用输入框），自动填充输入框值
+            if (!preview && input) {
+                // 套装颜色预览的更新
+                if (hex) {
+                    const row = input.closest('.bundle-item-row');
+                    if (row) {
+                        const cp = row.querySelector('.bundle-color-preview');
+                        if (cp) cp.style.background = hex;
+                    }
+                }
+            }
+        },
+
         // 品牌-名称联动数据
         getBrandProducts(brand) {
             const products = {
@@ -4177,7 +4530,6 @@
                 // 品牌自定义时，名称也显示自定义输入
                 if (nameSelect) {
                     nameSelect.innerHTML = '<option value="自定义" selected>自定义</option>';
-                    nameSelect.style.display = 'none';
                 }
                 if (nameInput) {
                     nameInput.style.display = '';
@@ -4218,14 +4570,13 @@
             if (brandHidden) brandHidden.value = value.trim();
         },
 
-        // 名称选择变化：自定义时显示输入框
+        // 名称选择变化：自定义时显示输入框（和品牌一样的交互：下拉框不隐藏）
         onNameChange(value) {
             const nameSelect = document.getElementById('f_nameSelect');
             const nameInput = document.getElementById('f_nameInput');
             const nameHidden = document.getElementById('f_name');
             if (!nameSelect || !nameInput) return;
             if (value === '自定义') {
-                nameSelect.style.display = 'none';
                 nameInput.style.display = '';
                 nameInput.value = '';
                 nameInput.focus();
@@ -4306,11 +4657,16 @@
             const index = list.children.length;
             const div = document.createElement('div');
             div.className = 'bundle-item-row';
-            div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 36px 32px;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg-hover);border-radius:var(--radius-sm);';
+            div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 32px;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg-hover);border-radius:var(--radius-sm);';
             div.innerHTML = `
                 <input type="text" class="form-input bundle-color-name" placeholder="颜色名" oninput="app.onBundleColorNameChange(this)">
-                <input type="text" class="form-input bundle-color-value" placeholder="颜色值" oninput="app.updateBundleColorPreview(this)">
-                <div class="bundle-color-preview" style="width:32px;height:32px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:transparent;"></div>
+                <div class="color-picker-wrap" style="width:100%;">
+                    <div class="form-input color-input-with-swatch" style="padding:0;">
+                        <input type="text" class="form-input bundle-color-value" placeholder="颜色值" style="border:none!important;box-shadow:none!important;padding:9px 12px;background:transparent;" oninput="app.updateBundleColorPreview(this)" onfocus="app.openBundleColorPicker(this)">
+                        <div class="color-input-swatch bundle-color-swatch" style="background:transparent;" onclick="app.toggleBundleColorPicker(event,this)"></div>
+                    </div>
+                    <div class="color-picker-panel bundle-color-panel"></div>
+                </div>
                 <button type="button" class="btn-icon delete" onclick="app.removeBundleItem(${index})" title="删除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             `;
             list.appendChild(div);
@@ -4343,10 +4699,15 @@
         renderBundleItems(items) {
             if (!items || items.length === 0) return '';
             return items.map((item, index) => `
-                <div class="bundle-item-row" style="display:grid;grid-template-columns:1fr 1fr 36px 32px;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg-hover);border-radius:var(--radius-sm);">
+                <div class="bundle-item-row" style="display:grid;grid-template-columns:1fr 1fr 32px;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg-hover);border-radius:var(--radius-sm);">
                     <input type="text" class="form-input bundle-color-name" placeholder="颜色名" value="${this.escHtml(item.colorName || '')}" oninput="app.onBundleColorNameChange(this)">
-                    <input type="text" class="form-input bundle-color-value" placeholder="颜色值" value="${this.escHtml(item.colorValue || '')}" oninput="app.updateBundleColorPreview(this)">
-                    <div class="bundle-color-preview" style="width:32px;height:32px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:${item.colorValue || 'transparent'};"></div>
+                    <div class="color-picker-wrap" style="width:100%;">
+                        <div class="form-input color-input-with-swatch" style="padding:0;">
+                            <input type="text" class="form-input bundle-color-value" placeholder="颜色值" value="${this.escHtml(item.colorValue || '')}" style="border:none!important;box-shadow:none!important;padding:9px 12px;background:transparent;" oninput="app.updateBundleColorPreview(this)" onfocus="app.openBundleColorPicker(this)">
+                            <div class="color-input-swatch bundle-color-swatch" style="background:${item.colorValue || 'transparent'};" onclick="app.toggleBundleColorPicker(event,this)"></div>
+                        </div>
+                        <div class="color-picker-panel bundle-color-panel"></div>
+                    </div>
                     <button type="button" class="btn-icon delete" onclick="app.removeBundleItem(${index})" title="删除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                 </div>
             `).join('');
@@ -4372,26 +4733,92 @@
             const row = input.closest('.bundle-item-row');
             if (!row) return;
             const colorValueInput = row.querySelector('.bundle-color-value');
-            const preview = row.querySelector('.bundle-color-preview');
-            if (!colorValueInput || !preview) return;
+            const swatch = row.querySelector('.bundle-color-swatch');
+            if (!colorValueInput || !swatch) return;
             const value = colorValueInput.value.trim();
             if (!value) {
-                preview.style.background = 'transparent';
+                swatch.style.background = 'transparent';
                 return;
             }
             if (/^#[0-9A-Fa-f]{3,8}$/.test(value)) {
-                preview.style.background = value;
+                swatch.style.background = value;
             } else if (this.colorNameMap[value]) {
-                preview.style.background = this.colorNameMap[value];
+                swatch.style.background = this.colorNameMap[value];
             } else {
                 const testEl = document.createElement('div');
                 testEl.style.color = value;
                 if (testEl.style.color !== '') {
-                    preview.style.background = value;
+                    swatch.style.background = value;
                 } else {
-                    preview.style.background = 'transparent';
+                    swatch.style.background = 'transparent';
                 }
             }
+        },
+
+        // 打开套装颜色选择器
+        openBundleColorPicker(input) {
+            const row = input.closest('.bundle-item-row');
+            if (!row) return;
+            const panel = row.querySelector('.bundle-color-panel');
+            if (!panel) return;
+            if (panel.classList.contains('open')) return;
+
+            let html = '';
+            this.colorPalette.forEach(group => {
+                html += `<div class="color-picker-group"><div class="color-picker-group-label">${group.label}</div><div class="color-picker-grid">`;
+                group.colors.forEach(([hex, name]) => {
+                    const val = input.value.trim().toUpperCase() || '';
+                    const isSelected = (val === hex) ? ' selected' : '';
+                    const isTransparent = (name.includes('透明') || name.includes('Transparent'));
+                    let bgStyle = '';
+                    if (isTransparent) {
+                        // 透明色：用实际颜色作为底色 + 棋盘格覆盖
+                        bgStyle = 'background:' + hex + ';background-image:repeating-conic-gradient(rgba(226,232,240,0.7) 0% 25%,rgba(255,255,255,0.7) 0% 50%);background-size:8px 8px;';
+                    } else {
+                        bgStyle = 'background:' + hex + ';';
+                    }
+                    html += `<div class="color-picker-item${isSelected}" style="${bgStyle}" title="${name} (${hex})" onclick="app.selectBundleColor(event,this,'${hex}')"></div>`;
+                });
+                html += '</div></div>';
+            });
+            html += `<div style="margin-top:8px;border-top:1px solid #eee;padding-top:8px;"><div class="color-picker-grid"><div class="color-picker-item clear-color" onclick="app.selectBundleColor(event,this,'')" title="清除颜色"></div></div></div>`;
+
+            panel.innerHTML = html;
+            panel.classList.add('open');
+        },
+
+        // 切换套装颜色选择器
+        toggleBundleColorPicker(e, swatch) {
+            e.stopPropagation();
+            const row = swatch.closest('.bundle-item-row');
+            if (!row) return;
+            const panel = row.querySelector('.bundle-color-panel');
+            if (!panel) return;
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open');
+            } else {
+                document.querySelectorAll('.color-picker-panel.open').forEach(p => p.classList.remove('open'));
+                const input = row.querySelector('.bundle-color-value');
+                if (input) this.openBundleColorPicker(input);
+            }
+        },
+
+        // 选择套装颜色
+        selectBundleColor(e, el, hex) {
+            e.stopPropagation();
+            const row = el.closest('.bundle-item-row');
+            if (!row) return;
+            const input = row.querySelector('.bundle-color-value');
+            const swatch = row.querySelector('.bundle-color-swatch');
+            if (input) {
+                input.value = hex || '';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (swatch) {
+                swatch.style.background = hex || 'transparent';
+            }
+            const panel = row.querySelector('.bundle-color-panel');
+            if (panel) panel.classList.remove('open');
         },
 
         // ============================================
@@ -4418,7 +4845,9 @@
 
             // 计算统计数据
             const totalCost = filaments.reduce((s, f) => s + (parseFloat(f.price) || 0), 0);
-            const totalCount = filaments.length;
+            const totalCount = filaments.reduce((s, f) => {
+                return s + (f.isBundle && f.bundleItems ? f.bundleItems.length : 1);
+            }, 0);
             const totalWeight = filaments.reduce((s, f) => {
                 if (f.isBundle && f.bundleItems && f.bundleItems.length > 0) {
                     return s + f.bundleItems.length * (parseFloat(f.netWeight) || 1000);
@@ -4427,6 +4856,26 @@
             }, 0) / 1000; // 转换为 kg
             const brands = [...new Set(filaments.map(f => f.brand).filter(Boolean))];
             const brandCount = brands.length;
+
+            // 已用完统计（不影响总量，单独计算）
+            const consumedCount = filaments.reduce((s, f) => {
+                if (f.isBundle && f.bundleItems) {
+                    // 套装：只统计标记了 consumed=true 的子项
+                    return s + f.bundleItems.filter(bi => bi.consumed).length;
+                } else {
+                    // 单盘：按 tags 统计
+                    return s + (f.tags && f.tags.includes('已用完') ? 1 : 0);
+                }
+            }, 0);
+            const consumedWeight = filaments.reduce((s, f) => {
+                if (f.isBundle && f.bundleItems) {
+                    // 套装：只统计标记了 consumed=true 的子项重量
+                    return s + f.bundleItems.filter(bi => bi.consumed).length * (parseFloat(f.netWeight) || 1000);
+                } else {
+                    // 单盘：按 tags 统计
+                    return s + (f.tags && f.tags.includes('已用完') ? (parseFloat(f.netWeight) || 1000) : 0);
+                }
+            }, 0) / 1000;
 
             // 图标辅助函数
             const getStatIcon = (type) => {
@@ -4443,21 +4892,23 @@
 
             // 统计卡片（横向 flex 4列）
             const stats = [
-                { label: '总花费', value: '¥' + totalCost.toFixed(2), icon: 'dollar', bg: 'var(--accent-color)' },
-                { label: '耗材总数', value: filaments.length + ' 盘', icon: 'box', bg: 'var(--success-color)' },
-                { label: '耗材总量', value: totalWeight.toFixed(1) + ' kg', icon: 'weight', bg: '#805ad5' },
-                { label: '品牌数量', value: brandCount, icon: 'tag', bg: 'var(--warning-color)' }
+                { label: '总花费', value: '¥' + totalCost.toFixed(2), icon: 'dollar', bg: 'var(--accent-color)', consumed: null },
+                { label: '耗材总数', value: totalCount + ' 盘', icon: 'box', bg: 'var(--success-color)', consumed: consumedCount > 0 ? '消耗 ' + consumedCount + ' 盘' : null },
+                { label: '耗材总量', value: totalWeight.toFixed(1) + ' kg', icon: 'weight', bg: '#805ad5', consumed: consumedWeight > 0 ? '消耗 ' + consumedWeight.toFixed(1) + ' kg' : null },
+                { label: '品牌数量', value: brandCount, icon: 'tag', bg: 'var(--warning-color)', consumed: null }
             ];
 
             html += '<div class="dashboard-stats-row">';
             stats.forEach((stat, i) => {
                 const iconSvg = getStatIcon(stat.icon);
+                const consumedHtml = stat.consumed ? `<div class="stat-card-consumed">${stat.consumed}</div>` : '';
                 html += `
                 <div class="stat-card" style="animation-delay:${i * 0.05}s">
                     <div class="stat-card-icon" style="background:${stat.bg};color:#fff">
                         ${iconSvg}
                     </div>
                     <div class="stat-card-info">
+                        ${consumedHtml}
                         <div class="stat-card-label">${stat.label}</div>
                         <div class="stat-card-value">${stat.value}</div>
                     </div>
@@ -4550,17 +5001,18 @@
                 return price;
             };
             const priceRanges = [
-                { label: '0 - 50 元', min: 0, max: 50 },
-                { label: '50 - 100 元', min: 50, max: 100 },
-                { label: '100 - 150 元', min: 100, max: 150 },
-                { label: '150 元以上', min: 150, max: Infinity }
+                { label: '0 - 30 元', min: 0, max: 31 },
+                { label: '31 - 50 元', min: 31, max: 51 },
+                { label: '51 - 80 元', min: 51, max: 81 },
+                { label: '81 - 100 元', min: 81, max: 101 }
             ];
             const priceRangeCounts = priceRanges.map(r => ({
                 label: r.label,
-                count: filaments.filter(f => {
+                count: filaments.reduce((sum, f) => {
+                    const qty = (f.isBundle && f.bundleItems) ? f.bundleItems.length : 1;
                     const p = getAvgPrice(f);
-                    return p >= r.min && p < r.max;
-                }).length
+                    return sum + (p >= r.min && p < r.max ? qty : 0);
+                }, 0)
             }));
             const sortedByPrice = [...filaments].sort((a, b) => getAvgPrice(b) - getAvgPrice(a));
             const sortedByRating = [...filaments].filter(f => f.rating && f.rating > 0).sort((a, b) => b.rating - a.rating);
@@ -4625,7 +5077,10 @@
             filaments.forEach(f => {
                 if (f.purchaseDate) {
                     const m = new Date(f.purchaseDate).getMonth();
-                    if (m >= 0 && m < 12) monthCounts[m]++;
+                    if (m >= 0 && m < 12) {
+                        const qty = (f.isBundle && f.bundleItems) ? f.bundleItems.length : 1;
+                        monthCounts[m] += qty;
+                    }
                 }
             });
             const monthMax = Math.max(...monthCounts, 1);
@@ -4671,7 +5126,8 @@
                 const channelCounts = {};
                 filaments.forEach(f => {
                     const ch = f.purchaseChannel || '未知';
-                    channelCounts[ch] = (channelCounts[ch] || 0) + 1;
+                    const qty = (f.isBundle && f.bundleItems) ? f.bundleItems.length : 1;
+                    channelCounts[ch] = (channelCounts[ch] || 0) + qty;
                 });
                 const entries = Object.entries(channelCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
                 if (entries.length === 0) {
@@ -4793,7 +5249,8 @@
                     const brandCounts = {};
                     filaments.forEach(f => {
                         const b = f.brand || '未知';
-                        brandCounts[b] = (brandCounts[b] || 0) + 1;
+                        const qty = (f.isBundle && f.bundleItems) ? f.bundleItems.length : 1;
+                        brandCounts[b] = (brandCounts[b] || 0) + qty;
                     });
                     const entries = Object.entries(brandCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
                     const maxVal = Math.max(...entries.map(e => e[1]), 1);
@@ -4823,7 +5280,8 @@
                     const typeCounts = {};
                     filaments.forEach(f => {
                         const t = f.type || '未知';
-                        typeCounts[t] = (typeCounts[t] || 0) + 1;
+                        const qty = (f.isBundle && f.bundleItems) ? f.bundleItems.length : 1;
+                        typeCounts[t] = (typeCounts[t] || 0) + qty;
                     });
                     const entries = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
                     const maxVal = Math.max(...entries.map(e => e[1]), 1);
