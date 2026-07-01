@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>纸墨耗材管理</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { touch-action: manipulation; }
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --bg-sidebar: #f5f5f5;
+  --bg-hover: #f0f0f0;
+  --bg-active: #e8e8e8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border-color: #e0e0e0;
+  --accent-color: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-light: #eef2ff;
+  --danger-color: #e53e3e;
+  --success-color: #38a169;
+  --warning-color: #d69e2e;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --sidebar-width: 220px;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-width: 320px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Global Nav ===== */
+.global-nav {
+  background: var(--bg-sidebar);
+  height: 48px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid var(--border-color);
+}
+.global-nav-content {
+  width: 100%;
+  padding: 0 22px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ===== App Layout ===== */
+.app-container {
+  display: flex;
+  min-height: calc(100vh - 48px);
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: calc(100vh - 48px);
+  left: 0;
+  top: 48px;
+  z-index: 100;
+}
+.nav-menu {
+  flex: 1;
+  padding: 12px 0;
+  overflow-y: auto;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin: 2px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.nav-item.active { background: #ffffff; color: var(--accent-color); }
+.nav-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nav-icon svg { width: 16px; height: 16px; }
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sidebar-footer .sf-btns {
+  display: flex;
+  gap: 6px;
+}
+.sf-btn {
+  flex: 1;
+  padding: 7px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.sf-btn:hover { background: var(--bg-hover); border-color: var(--text-muted); }
+.sf-copy { text-align: center; padding-top: 4px; color: var(--text-muted); font-size: 11px; }
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 48px);
+}
+.content-area { flex: 1; padding: 20px 24px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.page-title { font-size: 20px; font-weight: 700; }
+
+/* ===== Buttons ===== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #2B3041;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: #333336; }
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background: var(--bg-hover); }
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  background: var(--danger-color);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-danger:hover { background: #c53030; }
+.btn-icon {
+  width: 32px; height: 32px; border: none; background: transparent;
+  border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: all 0.2s ease; color: var(--text-muted);
+}
+.btn-icon:hover { background: var(--bg-hover); color: var(--text-primary); }
+.btn-icon.delete:hover { background: rgba(239,68,68,0.08); color: #EF4444; }
+.btn-icon.delete { font-size: 18px; font-weight: 300; }
+
+/* ===== Panel / Card ===== */
+.panel {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  margin-bottom: 20px;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.panel:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+}
+.panel-static,
+.panel-static:hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+  transform: none !important;
+}
+.stock-grid > div:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04) !important;
+  transform: translateY(-1px);
+}
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.panel-title { font-size: 16px; font-weight: 700; }
+.panel-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.panel-body { padding: 16px 20px; }
+
+/* ===== Stats Grid ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.stat-box {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-box-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.stat-box-value.green { color: var(--success-color); }
+.stat-box-value.red { color: var(--danger-color); }
+.stat-box-value.blue { color: var(--accent-color); }
+.stat-box-value.orange { color: var(--warning-color); }
+.stat-box-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.stat-box-delta {
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+.stat-box-delta.up { color: var(--success-color); }
+.stat-box-delta.down { color: var(--danger-color); }
+
+/* ===== Table ===== */
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+.data-table th {
+  background: var(--bg-secondary);
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+.data-table th.text-right { text-align: right; }
+.data-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td { transition: background 0.15s ease; }
+.data-table tbody tr:hover td { background: #f5f5f5; }
+
+/* ===== Form ===== */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.form-group { display: flex; flex-direction: column; gap: 10px; }
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+.form-input, .form-select {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+  font-family: inherit;
+  background: var(--bg-secondary);
+  width: 100%;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+.form-input::placeholder { color: var(--text-muted); }
+.form-select { cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  background: var(--bg-secondary) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+}
+.form-select option { color: var(--text-primary); }
+.form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.form-row .form-group { flex: 1; min-width: 180px; }
+.set-item-row { flex-wrap: nowrap; align-items: center; }
+.set-item-row .form-group { min-width: 0; }
+
+/* ===== Radio Group ===== */
+.radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  user-select: none;
+}
+.radio-label:hover { border-color: var(--accent-color); }
+.radio-label.active {
+  border-color: var(--accent-color);
+  background: var(--accent-light);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+.radio-label input[type="radio"] {
+  appearance: none; -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  margin: 0;
+  position: relative;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.radio-label input[type="radio"]:checked {
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+  box-shadow: inset 0 0 0 3px #fff;
+}
+
+/* ===== Segmented Control ===== */
+.seg-control {
+  display: flex;
+  background: var(--bg-hover);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--border-color);
+  height: 38px;
+  overflow: hidden;
+}
+.seg-btn {
+  padding: 6px 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: inherit;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seg-btn.active { background: #fff; color: var(--text-primary); box-shadow: var(--shadow-sm); font-weight: 600; }
+.seg-btn:not(.active):hover { background: rgba(0,0,0,0.03); }
+
+/* ===== Sub Tabs ===== */
+.sub-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  border: 1px solid var(--border-color);
+  width: fit-content;
+  margin-bottom: 28px;
+}
+.sub-tab {
+  padding: 7px 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.sub-tab.active {
+  background: #fff;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+.sub-tab:not(.active):hover { background: rgba(0,0,0,0.03); }
+.sub-tab-content { display: none; }
+.sub-tab-content.active { display: block; }
+
+/* ===== Progress Bar ===== */
+.progress-bar { width: 100%; height: 6px; background: var(--bg-hover); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent-color); border-radius: 3px; transition: width 0.5s ease; }
+.progress-fill.warning { background: var(--warning-color); }
+.progress-fill.danger { background: var(--danger-color); }
+.op-switch { position:relative; display:inline-flex; width:40px; height:22px; vertical-align:middle; margin-left:10px; flex-shrink:0; cursor:pointer; }
+.op-switch input { opacity:0; width:0; height:0; position:absolute; }
+.op-switch .slider { position:absolute; top:0; left:0; right:0; bottom:0; background:#ccc; border-radius:22px; transition:.2s; }
+.op-switch .slider:before { content:''; position:absolute; height:16px; width:16px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s; }
+.op-switch input:checked + .slider { background:var(--link, #4f6ef7); }
+.op-switch input:checked + .slider:before { transform:translateX(18px); }
+
+/* ===== Badge ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.badge-green { background: rgba(56,161,105,0.1); color: var(--success-color); }
+.badge-red { background: rgba(229,62,62,0.1); color: var(--danger-color); }
+.badge-orange { background: rgba(214,158,46,0.1); color: var(--warning-color); }
+.badge-blue { background: rgba(99,102,241,0.1); color: var(--accent-color); }
+.badge-gray { background: var(--bg-hover); color: var(--text-muted); }
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.empty-state-desc { font-size: 14px; }
+
+/* ===== Record Row ===== */
+.record-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.15s;
+}
+.record-row:hover { background: var(--bg-hover); }
+.record-row:last-child { border-bottom: none; }
+.record-icon {
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.record-icon.self { background: var(--bg-hover); color: var(--text-muted); }
+.record-icon.order { background: rgba(56,161,105,0.1); color: var(--success-color); }
+.record-info { min-width: 0; }
+.record-title { font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
+.record-meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 10px; flex-wrap: wrap; }
+.record-amount { text-align: right; font-family: 'SF Mono', monospace; font-size: 13px; }
+.record-amount .rev { font-weight: 600; color: var(--text-primary); }
+.record-amount .cost { color: var(--text-muted); font-size: 12px; }
+.record-amount .profit { font-size: 12px; font-weight: 600; }
+.record-amount .profit.pos { color: var(--success-color); }
+.record-amount .profit.neg { color: var(--danger-color); }
+
+/* ===== Chart ===== */
+.chart-wrap { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding: 16px 0 28px; border-bottom: 1px solid var(--border-color); position: relative; }
+.chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.chart-bar-stack { display: flex; align-items: flex-end; gap: 2px; height: 120px; width: 100%; justify-content: center; }
+.chart-bar { width: 100%; max-width: 28px; border-radius: 3px 3px 0 0; min-height: 4px; transition: height 0.5s ease; position: relative; }
+.chart-bar:hover .chart-tip { opacity: 1; }
+.chart-tip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #2B3041; color: #fff; font-size: 11px; padding: 4px 8px; border-radius: 4px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; margin-bottom: 4px; }
+.chart-label { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35); z-index: 2000;
+  align-items: center; justify-content: center; padding: 22px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg-primary); border-radius: var(--radius-lg);
+  width: 100%; max-width: 480px; max-height: 85vh; overflow: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+.modal-close:hover { background: var(--bg-hover); }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+  background: #2B3041; color: #fff; border-radius: var(--radius-lg);
+  padding: 14px 24px; font-size: 14px; font-weight: 500;
+  box-shadow: var(--shadow-lg); opacity: 0;
+  transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+  z-index: 3000; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+/* ===== Alert Row ===== */
+.alert-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border-color);
+}
+.alert-row:last-child { border-bottom: none; }
+.alert-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+.alert-icon.warn { background: rgba(214,158,46,0.1); color: var(--warning-color); }
+.alert-info { flex: 1; }
+.alert-title { font-size: 14px; font-weight: 500; }
+.alert-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ===== Misc ===== */
+.text-mono { font-family: 'SF Mono', 'Cascadia Code', monospace; }
+.text-right { text-align: right; }
+.flex { display: flex; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mb-0 { margin-bottom: 0; }
+.w-full { width: 100%; }
+
+/* ===== Responsive ===== */
+@media (max-width: 1100px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-grid { grid-template-columns: repeat(2, 1fr); }
+  .record-row { grid-template-columns: auto 1fr auto; }
+  .stock-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .overview-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .overview-grid > div[style*="grid-column"] { grid-column: auto !important; grid-row: auto !important; }
+  .overview-grid > div.overview-wide { grid-column: 1 / -1 !important; }
+}
+@media (max-width: 600px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-row { flex-direction: column; gap: 12px; }
+  .content-area { padding: 16px; }
+  .chart-wrap { height: 120px; }
+  .stock-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+<script src="nav.js"></script>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <nav class="nav-menu">
+      <div class="nav-item active" data-mod="overview" onclick="switchModule('overview')">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+        <span>概览</span>
+      </div>
+      <div class="nav-item" data-mod="paper" onclick="switchModule('paper')">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        <span>纸张库存</span>
+      </div>
+      <div class="nav-item" data-mod="ink" onclick="switchModule('ink')">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></span>
+        <span>墨水库存</span>
+      </div>
+      <div class="nav-item" data-mod="ledger" onclick="switchModule('ledger')">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+        <span>打印记账</span>
+      </div>
+      <div class="nav-item" data-mod="settings" onclick="switchModule('settings')">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        <span>设置</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sf-btns">
+        <button class="sf-btn" onclick="importData()">导入</button>
+        <button class="sf-btn" onclick="exportData()">导出</button>
+      </div>
+      <div class="sf-copy">© 2025 WLi</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-area" id="contentArea"></div>
+  </main>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="paperModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="paperModalTitle">添加纸张</div><button class="modal-close" onclick="closeModal('paperModal')">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group"><label class="form-label">品牌</label><input type="text" class="form-input" id="pBrand" value="晨光"></div>
+        <div class="form-group"><label class="form-label">规格</label><input type="text" class="form-input" id="pSpec" value="A4"></div>
+        <div class="form-group"><label class="form-label">克重 (g)</label><input type="number" class="form-input" id="pWeight" min="1" value="70" placeholder="如 70"></div>
+        <div class="form-group"><label class="form-label">总价 (元)</label><input type="number" class="form-input" id="pPrice" step="0.01" min="0" placeholder="如 66"></div>
+        <div class="form-group"><label class="form-label">包数</label><input type="number" class="form-input" id="pPacks" min="1" placeholder="如 5" oninput="updatePaperTotal()"></div>
+        <div class="form-group"><label class="form-label">每包张数</label><input type="number" class="form-input" id="pSheetsPerPack" min="1" value="500" oninput="updatePaperTotal()"></div>
+        <div class="form-group"><label class="form-label">总张数</label><input type="number" class="form-input" id="pTotalSheets" readonly style="background:var(--bg-hover);color:var(--text-muted);" placeholder="自动计算"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">备注</label><input type="text" class="form-input" id="pNote" placeholder="可选"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('paperModal')">取消</button><button class="btn-primary" onclick="addPaper()">添加</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="inkModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="inkModalTitle">添加墨水</div><button class="modal-close" onclick="closeModal('inkModal')">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group"><label class="form-label">类型</label><select class="form-select" id="iType" onchange="onInkTypeChange(this.value)"><option value="black">单支黑色</option><option value="color">单支彩色</option><option value="set">套装</option></select></div>
+        <div class="form-group"><label class="form-label">品牌/型号</label><input type="text" class="form-input" id="iModel" placeholder="如 EPSON 004"></div>
+        <div class="form-group"><label class="form-label">购入价 (元)</label><input type="number" class="form-input" id="iPrice" step="0.01" min="0"></div>
+        <div class="form-group" id="iCapacityGroup"><label class="form-label">容量 (ml)</label><input type="number" class="form-input" id="iCapacity" min="1" placeholder="如 130"></div>
+        <div class="form-group" id="iPagesGroup"><label class="form-label">预计可打页数</label><input type="number" class="form-input" id="iPages" min="1" placeholder="参考厂商标称值"></div>
+        <div class="form-group"><label class="form-label">备注</label><input type="text" class="form-input" id="iNote" placeholder="可选"></div>
+      </div>
+      <div id="setItemsArea" style="display:none;margin-top:12px;">
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label">套装包含颜色 <span style="font-weight:400;color:var(--text-muted);">（可添加任意颜色及数量）</span></label>
+          <div style="background:var(--bg-hover);border-radius:var(--radius-md);padding:10px;display:flex;flex-direction:column;gap:8px;" id="setItemsList">
+            <div style="display:flex;gap:10px;padding:0 4px 2px;font-size:12px;color:var(--text-muted);">
+              <span style="flex:1.2;">颜色</span>
+              <span style="flex:0.7;">数量</span>
+              <span style="flex:0.8;">容量</span>
+              <span style="flex:1;">页数</span>
+              <span style="width:28px;"></span>
+            </div>
+            <div class="form-row set-item-row" style="margin-bottom:0;gap:10px;">
+              <div class="form-group" style="flex:1.2;margin-bottom:0;">
+                <select class="form-select set-item-select" style="width:100%;padding:8px 10px;font-size:13px;" onchange="onSetItemColorChange(this);updateSetTotal();">
+                  <option value="黑色">黑色</option>
+                  <option value="青色">青色</option>
+                  <option value="红色">红色</option>
+                  <option value="黄色">黄色</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:0.7;margin-bottom:0;"><input type="number" class="form-input set-item-count" min="1" value="1" placeholder="数量" oninput="updateSetTotal()" style="padding:8px 10px;font-size:13px;"></div>
+              <div class="form-group" style="flex:0.8;margin-bottom:0;"><input type="number" class="form-input set-item-capacity" min="1" style="padding:8px 10px;font-size:13px;" value="130" placeholder="ml" oninput="updateSetTotal()"></div>
+              <div class="form-group" style="flex:1;margin-bottom:0;"><input type="number" class="form-input set-item-pages" min="1" style="padding:8px 10px;font-size:13px;" value="15000" placeholder="页数" oninput="updateSetTotal()"></div>
+              <div style="display:flex;align-items:center;flex-shrink:0;"><button type="button" class="btn-icon delete" onclick="this.closest('.set-item-row').remove();updateSetTotal();" title="删除">&times;</button></div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" onclick="addSetItemRow();updateSetTotal();" style="margin-top:8px;font-size:12px;padding:6px 12px;">+ 添加颜色</button>
+        </div>
+        <div class="form-row" style="margin-bottom:0;">
+          <div class="form-group" id="setPagesGroup"><label class="form-label">套装总预计页数</label><input type="number" class="form-input" id="iSetPages" min="1" readonly style="background:var(--bg-hover);color:var(--text-muted);" placeholder="自动计算"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('inkModal')">取消</button><button class="btn-primary" onclick="addInk()">添加</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="recordModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header"><div class="modal-title" id="recordModalTitle">编辑记账记录</div><button class="modal-close" onclick="closeModal('recordModal')">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="reDate"></div>
+        <div class="form-group"><label class="form-label">页数</label><input type="number" class="form-input" id="rePages" min="1"></div>
+        <div class="form-group"><label class="form-label">类型</label>
+          <div class="seg-control"><button type="button" class="seg-btn" data-val="self" onclick="setReType(this)">自用</button><button type="button" class="seg-btn" data-val="order" onclick="setReType(this)">订单</button></div>
+        </div>
+        <div class="form-group"><label class="form-label">单双面</label>
+          <div class="seg-control"><button type="button" class="seg-btn" data-val="single" onclick="setReDuplex(this)">单面</button><button type="button" class="seg-btn" data-val="duplex" onclick="setReDuplex(this)">双面</button></div>
+        </div>
+        <div class="form-group"><label class="form-label">颜色</label>
+          <div class="seg-control"><button type="button" class="seg-btn" data-val="bw" onclick="setReColor(this)">黑白</button><button type="button" class="seg-btn" data-val="color" onclick="setReColor(this)">彩色</button></div>
+        </div>
+        <div class="form-group"><label class="form-label">单价 (元/页)</label><input type="number" class="form-input" id="reUnitPrice" step="0.01" min="0"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">客户</label><input type="text" class="form-input" id="reCustomer" placeholder="订单客户名"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">备注</label><input type="text" class="form-input" id="reNote" placeholder="可选"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('recordModal')">取消</button><button class="btn-primary" onclick="saveRecordEdit()">保存</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  const STORAGE_KEY = 'printManager';
+  let data = loadData();
+  let currentModule = 'overview';
+
+  function loadData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      try {
+        const d = JSON.parse(raw);
+        // migrate old settings
+        if (!d.settings) d.settings = {};
+        if (d.settings.bwPrice === undefined) d.settings.bwPrice = 0;
+        if (d.settings.colorPrice === undefined) d.settings.colorPrice = 0;
+        if (d.settings.bwInkCostPerPage === undefined) d.settings.bwInkCostPerPage = 0.015;
+        if (d.settings.colorInkCostPerPage === undefined) d.settings.colorInkCostPerPage = 0.08;
+        if (d.paperStock) d.paperStock.forEach(p => { if (p.usedPacks === undefined) p.usedPacks = 0; });
+        // Auto-fix: if no records but stock shows usage, reset inventory
+        if (!d.records || d.records.length === 0) {
+          if (d.paperStock) d.paperStock.forEach(p => { if (p.usedSheets > 0 || p.remainingSheets !== p.totalSheets) { p.usedSheets = 0; p.remainingSheets = p.totalSheets; p.usedPacks = 0; } });
+          if (d.inkStock) d.inkStock.forEach(i => { if (i.usedPages > 0 || i.remainingPages !== i.estimatedPages) { i.usedPages = 0; i.remainingPages = i.estimatedPages; } });
+        }
+        return d;
+      } catch(e) {}
+    }
+    return getDefaultData();
+  }
+  function getDefaultData() {
+    return {
+      settings: { bwPrice: 0, colorPrice: 0, bwInkCostPerPage: 0.015, colorInkCostPerPage: 0.08 },
+      paperStock: [], inkStock: [], records: []
+    };
+  }
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  function fmtMoney(n) { return n === undefined || n === null ? '—' : '¥' + Number(n).toFixed(2); }
+  function fmtMoney3(n) { return n === undefined || n === null ? '—' : '¥' + Number(n).toFixed(3); }
+  function fmtMoney4(n) { return n === undefined || n === null ? '—' : '¥' + Number(n).toFixed(4); }
+  function fmtNum(n) { return n === undefined || n === null ? '—' : Number(n).toLocaleString(); }
+
+  // Auto-calculate current per-unit costs based on inventory (FIFO)
+  // 墨水成本模型：机器每张消耗 1份黑墨水 + 1份彩色墨水（青+红+黄各一份）
+  // 黑色单瓶预计 N 张 = 打 N 张黑白每瓶黑墨水用完
+  // 彩色单瓶预计 M 张 = 打 M 张每瓶彩色墨水用完（3色等比例消耗）
+  // 套装 = 多瓶组合，总页数 = 各瓶页数之和，成本按瓶数占比分摊
+  function calcAutoCosts() {
+    let paperPerSheet = 0, bwInkPerPage = 0, colorInkPerPage = 0;
+    let paperSource = '', bwInkSource = '', colorInkSource = '';
+    let hasStock = false;
+
+    // Paper
+    const availPaper = data.paperStock.filter(p => p.remainingSheets > 0).sort((a, b) => new Date(a.buyDate) - new Date(b.buyDate));
+    if (availPaper.length > 0) {
+      const p = availPaper[0];
+      paperPerSheet = p.buyPrice / p.totalSheets;
+      paperSource = p.brand + ' ' + p.spec + '（' + p.buyDate + '购入）';
+      hasStock = true;
+    }
+
+    // Collect all available ink (single + set), sorted by buy date
+    const allAvailInk = data.inkStock.filter(i => i.remainingPages > 0).sort((a, b) => new Date(a.buyDate) - new Date(b.buyDate));
+
+    // Expand sets into per-bottle items for cost calculation
+    // Each bottle in a set: cost = (套装价格 × 该色瓶数/总瓶数), pages = 该瓶预计页数
+    function expandInk(ink) {
+      if (!ink.isSet || !ink.setItems) {
+        // Single cartridge
+        return [{ colorType: ink.colorType, cost: ink.buyPrice, pages: ink.estimatedPages, name: ink.model, isSet: false }];
+      }
+      const result = [];
+      const totalBottles = ink.setItems.reduce((sum, s) => sum + (s.count || 1), 0);
+      ink.setItems.forEach(s => {
+        const name = s.colorName || '';
+        const count = s.count || 1;
+        const pages = (s.estimatedPages || 0) * count; // 2瓶黑 = 2 × 15000 = 30000张
+        const cost = ink.buyPrice * (count / totalBottles); // 按瓶数占比分摊价格
+        const ct = /黑|black|bk/i.test(name) ? 'black' : 'color';
+        result.push({ colorType: ct, cost, pages, name: ink.model + ' ' + name, isSet: true });
+      });
+      return result;
+    }
+
+    const allBottles = [];
+    allAvailInk.forEach(ink => {
+      expandInk(ink).forEach(b => allBottles.push({ ...b, buyDate: ink.buyDate }));
+    });
+
+    // Black ink cost: sum all black bottles cost / sum all black bottles pages
+    const blackBottles = allBottles.filter(b => b.colorType === 'black' && b.pages > 0);
+    if (blackBottles.length > 0) {
+      const totalCost = blackBottles.reduce((s, b) => s + b.cost, 0);
+      const totalPages = blackBottles.reduce((s, b) => s + b.pages, 0);
+      bwInkPerPage = totalPages > 0 ? totalCost / totalPages : 0;
+      bwInkSource = blackBottles.map(b => b.name).join(', ');
+      hasStock = true;
+    }
+
+    // Color ink cost: sum all color bottles cost / sum all color bottles pages
+    const colorBottles = allBottles.filter(b => b.colorType === 'color' && b.pages > 0);
+    if (colorBottles.length > 0) {
+      const totalCost = colorBottles.reduce((s, b) => s + b.cost, 0);
+      const totalPages = colorBottles.reduce((s, b) => s + b.pages, 0);
+      colorInkPerPage = totalPages > 0 ? totalCost / totalPages : 0;
+      colorInkSource = colorBottles.map(b => b.name).join(', ');
+      hasStock = true;
+    }
+
+    // Operating costs: electricity + printer depreciation
+    const elecPrice = (data.settings.elecPrice || 0.538); // 元/度，默认杭州第一档
+    const printerPrice = (data.settings.printerPrice || 2000); // 打印机购入价
+    const printerLife = (data.settings.printerLife || 3); // 折旧年限
+    const printerWatt = (data.settings.printerWatt || 20); // 打印功率W
+    // Calculate monthly average pages from all records
+    let monthlyAvg = 0;
+    if (data.records.length > 0) {
+      const dates = data.records.filter(r => r.date).map(r => new Date(r.date).getTime()).sort();
+      if (dates.length > 0) {
+        const firstDate = new Date(dates[0]);
+        const months = Math.max(1, (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth()) + 1);
+        const totalAllPages = data.records.reduce((s, r) => s + (r.pages || 0), 0);
+        monthlyAvg = Math.round(totalAllPages / months);
+      }
+    }
+    // Electricity per page: fixed cost (doesn't depend on volume)
+    const elecPerPage = (elecPrice * printerWatt * 0.5 / 60 / 1000);
+    // Depreciation: (price × 90%) / (years × 12 × monthly pages)
+    const deprecPerPage = monthlyAvg > 0 ? ((printerPrice * 0.9) / (printerLife * 12 * monthlyAvg)) : 0;
+    const opCostPerSheet = elecPerPage + deprecPerPage;
+    const opEnabled = data.settings.opCostEnabled !== false;
+    const finalOpCost = opEnabled ? opCostPerSheet : 0;
+
+    return {
+      hasStock, paperPerSheet, bwInkPerPage, colorInkPerPage,
+      bwTotal: paperPerSheet + bwInkPerPage + finalOpCost,
+      colorTotal: paperPerSheet + colorInkPerPage + bwInkPerPage * 0.1 + finalOpCost,
+      elecPerSheet: opEnabled ? elecPerPage : 0, deprecPerSheet: opEnabled ? deprecPerPage : 0, opCostPerSheet: finalOpCost, monthlyAvg,
+      paperSource, bwInkSource, colorInkSource
+    };
+  }
+
+  function renderProfitAnalysis(costs) {
+    if (!costs.hasStock) {
+      return '<div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;">请先添加库存以查看盈亏分析</div>';
+    }
+    const bwPrice = data.settings.bwPrice || 0;
+    const colorPrice = data.settings.colorPrice || 0;
+
+    function analysisCard(title, price, cost) {
+      if (!price) {
+        return '<div style="border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:16px;">' +
+          '<div style="font-size:14px;font-weight:700;margin-bottom:12px;">' + title + '</div>' +
+          '<div style="color:var(--text-muted);font-size:13px;">尚未设置售价</div></div>';
+      }
+      const profit = price - cost;
+      const margin = price > 0 ? ((profit / price) * 100).toFixed(1) : 0;
+      const isProfit = profit > 0;
+      const breakEven = cost;
+      const suggest30 = cost * 1.3;
+      const suggest50 = cost * 1.5;
+      return '<div style="border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:16px;">' +
+        '<div style="font-size:14px;font-weight:700;margin-bottom:12px;">' + title + '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px;">' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--text-muted);">当前售价</span><span style="font-weight:600;">¥' + price.toFixed(2) + '</span></div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--text-muted);">单张成本</span><span style="font-weight:600;">¥' + cost.toFixed(3) + '</span></div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--text-muted);">单张利润</span><span style="font-weight:600;color:' + (isProfit ? 'var(--success-color)' : 'var(--danger-color)') + ';">' + (isProfit ? '+' : '') + '¥' + profit.toFixed(3) + '</span></div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--text-muted);">毛利率</span><span style="font-weight:600;color:' + (isProfit ? 'var(--success-color)' : 'var(--danger-color)') + ';">' + (isProfit ? margin + '%' : '亏损') + '</span></div>' +
+          '<div style="height:1px;background:var(--border-color);margin:4px 0;"></div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--text-muted);">保本价</span><span style="font-weight:600;">¥' + breakEven.toFixed(3) + '</span></div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--text-muted);">建议定价 (30%利润)</span><span style="font-weight:600;color:var(--accent-color);">¥' + suggest30.toFixed(2) + '</span></div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--text-muted);">建议定价 (50%利润)</span><span style="font-weight:600;color:var(--accent-color);">¥' + suggest50.toFixed(2) + '</span></div>' +
+        '</div></div>';
+    }
+
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+      analysisCard('黑白打印', bwPrice, costs.bwTotal) +
+      analysisCard('彩色打印', colorPrice, costs.colorTotal) +
+    '</div>';
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    clearTimeout(toastTimer);
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  // ===== Module Switching =====
+  window.switchModule = function(name) {
+    currentModule = name;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.mod === name));
+    renderContent();
+  };
+
+  function renderContent() {
+    const area = document.getElementById('contentArea');
+    switch(currentModule) {
+      case 'overview': area.innerHTML = renderOverview(); break;
+      case 'paper': area.innerHTML = renderPaper(); break;
+      case 'ink': area.innerHTML = renderInk(); break;
+      case 'ledger': area.innerHTML = renderLedger(); break;
+
+      case 'settings': area.innerHTML = renderSettings(); break;
+    }
+    if (currentModule === 'ledger') initLedgerForm();
+    if (currentModule === 'settings') initSettingsForm();
+  }
+
+  // ===== Overview =====
+  function renderOverview() {
+    const recs = data.records;
+    const totalPages = recs.reduce((s,r) => s + (r.pages||0), 0);
+    const orderCnt = recs.filter(r => r.type === 'order').length;
+    // Split by type
+    const orderRecs = recs.filter(r => r.type === 'order');
+    const selfRecs = recs.filter(r => r.type === 'self');
+    const orderRev = orderRecs.reduce((s,r) => s + (r.revenue||0), 0);
+    const orderCost = orderRecs.reduce((s,r) => s + (r.paperCost||0) + (r.inkCost||0), 0);
+    const orderProfit = orderRev - orderCost;
+    const selfCost = selfRecs.reduce((s,r) => s + (r.paperCost||0) + (r.inkCost||0), 0);
+    const selfPages = selfRecs.reduce((s,r) => s + r.pages, 0);
+    const orderPages = totalPages - selfPages;
+    const now = new Date();
+    const thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    const monthRecs = recs.filter(r => r.date && r.date.startsWith(thisMonth));
+    const monthOrderProfit = monthRecs.filter(r => r.type==='order').reduce((s,r) => s + (r.profit||0), 0);
+    const monthSelfCost = monthRecs.filter(r => r.type==='self').reduce((s,r) => s + (r.paperCost||0) + (r.inkCost||0), 0);
+
+    // Monthly chart + table
+    const months = {};
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      months[key] = { revenue:0, cost:0, profit:0, pages:0, orders:0 };
+    }
+    recs.forEach(r => {
+      if (!r.date) return;
+      const key = r.date.slice(0,7);
+      if (months[key]) {
+        months[key].revenue += r.revenue||0;
+        months[key].cost += (r.paperCost||0) + (r.inkCost||0);
+        months[key].pages += r.pages||0;
+        if (r.type==='order') months[key].orders++;
+      }
+    });
+    Object.keys(months).forEach(k => { months[k].profit = months[k].revenue - months[k].cost; });
+    const labels = Object.keys(months);
+    const values = Object.values(months);
+    const maxVal = Math.max(...values.map(v => Math.max(v.revenue, v.cost, Math.abs(v.profit))), 1);
+
+    const chartHTML = `<div style="display:flex;gap:16px;margin-bottom:12px;justify-content:center;font-size:12px;">
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent-color);display:inline-block;"></span>收入</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--text-muted);display:inline-block;"></span>成本</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--success-color);display:inline-block;"></span>利润</span>
+    </div>
+    <div class="chart-wrap">
+      ${labels.map((label,i) => {
+        const v = values[i];
+        const hRev = Math.max(4, (v.revenue/maxVal)*100);
+        const hCost = Math.max(4, (v.cost/maxVal)*100);
+        const hProf = Math.max(4, (Math.abs(v.profit)/maxVal)*100);
+        return `<div class="chart-col" title="${label}\n收入：${fmtMoney(v.revenue)}\n成本：${fmtMoney(v.cost)}\n利润：${fmtMoney(v.profit)}\n打印页：${fmtNum(v.pages)}\n订单数：${v.orders}">
+          <div class="chart-bar-stack">
+            <div class="chart-bar" style="height:${hRev}px;background:var(--accent-color);"><span class="chart-tip">${fmtMoney(v.revenue)}</span></div>
+            <div class="chart-bar" style="height:${hCost}px;background:var(--text-muted);"><span class="chart-tip">${fmtMoney(v.cost)}</span></div>
+            <div class="chart-bar" style="height:${hProf}px;background:${v.profit<0?'var(--danger-color)':'var(--success-color)'};"><span class="chart-tip">${fmtMoney(v.profit)}</span></div>
+          </div>
+          <div class="chart-label">${label.slice(5)}月</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    const tableHTML = `<table class="data-table">
+      <thead><tr><th>月份</th><th>收入</th><th>成本</th><th>利润</th><th>打印页</th><th>订单数</th></tr></thead>
+      <tbody>${labels.map((label,i) => {
+        const v = values[i];
+        return `<tr><td>${label}</td><td class="text-mono">${fmtMoney(v.revenue)}</td><td class="text-mono">${fmtMoney(v.cost)}</td><td class="text-mono" style="${v.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${fmtMoney(v.profit)}</td><td class="text-mono">${fmtNum(v.pages)}</td><td>${v.orders}</td></tr>`;
+      }).join('')}</tbody>
+    </table>`;
+
+    const bwPages = recs.filter(r => r.colorMode==='bw').reduce((s,r) => s + r.pages, 0);
+    const colorPages = totalPages - bwPages;
+
+    const totalPaperRemaining = data.paperStock.reduce((s,p) => s + (p.remainingSheets||0), 0);
+    const totalInkRemaining = data.inkStock.reduce((s,i) => s + (i.remainingPages||0), 0);
+    const paperBuyTotal = data.paperStock.reduce((s,p) => s + (p.buyPrice||0), 0);
+    const inkBuyTotal = data.inkStock.reduce((s,i) => s + (i.buyPrice||0), 0);
+    // single ink remaining
+    const inkBlackSingle = data.inkStock.filter(i => !i.isSet && i.colorType==='black').reduce((s,i) => s + (i.remainingPages||0), 0);
+    const inkColorSingle = data.inkStock.filter(i => !i.isSet && i.colorType==='color').reduce((s,i) => s + (i.remainingPages||0), 0);
+    // allocate set remaining pages proportionally by color
+    let blackFromSets = 0, colorFromSets = 0;
+    data.inkStock.filter(i => i.isSet && i.setItems && i.estimatedPages > 0).forEach(i => {
+      const ratio = i.remainingPages / i.estimatedPages;
+      i.setItems.forEach(item => {
+        const itemTotal = (item.count || 1) * (item.estimatedPages || 0);
+        if (item.colorName === '黑色') blackFromSets += itemTotal * ratio;
+        else colorFromSets += itemTotal * ratio;
+      });
+    });
+    const inkBlackRemaining = Math.round(inkBlackSingle + blackFromSets);
+    const inkColorRemaining = Math.round(inkColorSingle + colorFromSets);
+    const inkSetCount = data.inkStock.filter(i => i.isSet).length;
+    const paperPacks = data.paperStock.reduce((s,p) => s + (p.packs||0), 0);
+    const inkCounts = {};
+    data.inkStock.filter(i => !i.isSet).forEach(i => {
+      const name = i.colorType === 'black' ? '黑色' : '彩色';
+      inkCounts[name] = (inkCounts[name] || 0) + 1;
+    });
+    data.inkStock.filter(i => i.isSet && i.setItems).forEach(i => {
+      i.setItems.forEach(item => {
+        const name = item.colorName || '彩色';
+        inkCounts[name] = (inkCounts[name] || 0) + (item.count || 1);
+      });
+    });
+    const inkEntries = Object.entries(inkCounts).sort((a, b) => {
+      if (a[0] === '黑色') return -1;
+      if (b[0] === '黑色') return 1;
+      return a[0].localeCompare(b[0]);
+    });
+
+    const icon = (bg, svg) => `<div style="width:48px;height:48px;border-radius:12px;background:${bg};display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;">${svg}</div>`;
+    const iRevenue = icon('#6366F1','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>');
+    const iProfit = icon('#10B981','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>');
+    const iSelf = icon('#F59E0B','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>');
+    const iPrint = icon('#2563EB','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>');
+    const iPaper = icon('#06B6D4','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>');
+    const iInk = icon('#EC4899','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>');
+    const iPalette = icon('#8B5CF6','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>');
+    const iBox = icon('#6B7280','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>');
+    const card = `background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);transition:box-shadow 0.25s ease,transform 0.25s ease;cursor:default;`;
+    const cardLabel = `font-size:13px;color:var(--text-muted);margin-bottom:4px;`;
+    const cardValue = `font-size:26px;font-weight:700;color:var(--text-primary);line-height:1.2;`;
+    const cardUnit = `font-size:13px;color:var(--text-muted);margin-left:3px;font-weight:400;`;
+    const kpi = (ico, label, value) => `<div style="${card}display:flex;align-items:center;gap:16px;height:100%;">${ico}<div style="flex:1;"><div style="${cardLabel}">${label}</div><div style="${cardValue}">${value}</div></div></div>`;
+
+    return `
+    <div class="overview-grid overview-row-1" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+      <!-- 耗材费用 (占左侧2行) -->
+      <div class="overview-wide" style="${card}grid-row:1/3;grid-column:1/2;display:flex;flex-direction:column;justify-content:center;">
+        <div style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">耗材费用</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">${thisMonth}</div>
+        <div style="display:flex;gap:0;align-items:flex-end;">
+          <div style="flex:1;text-align:center;">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">总费用</div>
+            <div style="font-size:28px;font-weight:700;color:var(--text-primary);">${fmtMoney(paperBuyTotal + inkBuyTotal)}</div>
+          </div>
+          <div style="flex:1;text-align:center;border-left:1px solid var(--border-color);border-right:1px solid var(--border-color);">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">A4纸购买</div>
+            <div style="font-size:28px;font-weight:700;color:var(--text-primary);">${fmtMoney(paperBuyTotal)}</div>
+          </div>
+          <div style="flex:1;text-align:center;">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">墨水购买</div>
+            <div style="font-size:28px;font-weight:700;color:var(--text-primary);">${fmtMoney(inkBuyTotal)}</div>
+          </div>
+        </div>
+      </div>
+      <!-- 右侧2x2 -->
+      ${kpi(iRevenue, '订单收入', fmtMoney(orderRev))}
+      ${kpi(iProfit, '纯利润', `<span style="color:${orderProfit>=0?'#10B981':'#EF4444'}">${fmtMoney(orderProfit)}</span>`)}
+      ${kpi(iPrint, '打印页数', `${fmtNum(totalPages)}<span style="${cardUnit}">页</span>`)}
+      ${kpi(iSelf, '自用成本', fmtMoney(selfCost))}
+    </div>
+
+    <div class="overview-grid overview-row-2" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+      <!-- 耗材库存 -->
+      <div class="overview-wide" style="${card};position:relative;">
+        <div style="position:absolute;top:16px;right:16px;background:var(--bg-hover);color:var(--text-muted);padding:3px 10px;border-radius:20px;font-size:12px;">已用完${data.paperStock.reduce((s,p)=>s+(p.usedPacks||0),0)}包</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">耗材库存</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">${thisMonth}</div>
+        <div style="display:flex;gap:0;align-items:flex-end;">
+          <div style="flex:1;text-align:center;">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">A4库存（包）</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+              <span style="font-size:28px;font-weight:700;color:var(--text-primary);">${paperPacks}</span>
+            </div>
+          </div>
+          <div style="flex:1;text-align:center;border-left:1px solid var(--border-color);border-right:1px solid var(--border-color);">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">纸余量（张）</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+              <span style="font-size:28px;font-weight:700;color:var(--text-primary);">${fmtNum(totalPaperRemaining)}</span>
+            </div>
+          </div>
+          <div style="flex:1;text-align:center;">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">黑/彩色(瓶)</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+              <span style="font-size:28px;font-weight:700;color:var(--text-primary);">${inkCounts['黑色']||0}</span>
+              <span style="font-size:20px;color:var(--text-muted);">/</span>
+              <span style="font-size:28px;font-weight:700;color:var(--text-primary);">${data.inkStock.filter(i => !i.isSet).length + data.inkStock.filter(i => i.isSet && i.setItems).reduce((s,i) => s + i.setItems.reduce((t,item) => t + (item.count||1), 0), 0) - (inkCounts['黑色']||0)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 订单分析 -->
+      <div style="${card}">
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">订单分析</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">自用 vs 订单</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="flex:1;height:10px;background:var(--bg-hover);border-radius:5px;overflow:hidden;display:flex;">
+            <div style="width:${totalPages?(selfPages/totalPages*100):0}%;background:var(--text-muted);transition:width 0.5s;"></div>
+            <div style="width:${totalPages?(orderPages/totalPages*100):0}%;background:var(--success-color);transition:width 0.5s;"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;font-size:12px;">
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--text-muted);"></span>自用 ${fmtNum(selfPages)}页</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--success-color);"></span>订单 ${fmtNum(orderPages)}页</span>
+        </div>
+      </div>
+      <!-- 打印分析 -->
+      <div style="${card}">
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">打印分析</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">黑白 vs 彩色</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="flex:1;height:10px;background:var(--bg-hover);border-radius:5px;overflow:hidden;display:flex;">
+            <div style="width:${totalPages?(bwPages/totalPages*100):0}%;background:var(--text-secondary);transition:width 0.5s;"></div>
+            <div style="width:${totalPages?(colorPages/totalPages*100):0}%;background:#7B61FF;transition:width 0.5s;"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;font-size:12px;">
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--text-secondary);"></span>黑白 ${fmtNum(bwPages)}页</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#7B61FF;"></span>彩色 ${fmtNum(colorPages)}页</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div><div class="panel-title">月度收支</div><div class="panel-subtitle">近 12 个月收入、成本与利润统计（鼠标悬停柱状图查看详细数据）</div></div></div>
+      <div class="panel-body">${chartHTML}</div>
+    </div>`;
+
+  }
+
+  // ===== Paper =====
+  function renderPaper() {
+    const btn = `<button class="btn-primary" style="display:flex;align-items:center;gap:6px;" onclick="openModal('paperModal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加纸张</button>`;
+    if (!data.paperStock.length) {
+      return `<div class="page-header"><div class="page-title">纸张库存</div>${btn}</div><div class="panel panel-static"><div class="empty-state"><div class="empty-state-title">暂无纸张库存</div><div class="empty-state-desc">点击上方按钮添加纸张批次</div></div></div>`;
+    }
+    return `<div class="page-header"><div class="page-title">纸张库存</div>${btn}</div><div class="panel panel-static">
+      <table class="data-table">
+        <thead><tr><th style="width:50px;">序号</th><th>品牌/规格</th><th>克重</th><th>购入价</th><th>总张数</th><th>每包张数</th><th>已用</th><th>余量</th><th>单张成本</th><th style="width:100px;"></th></tr></thead>
+        <tbody>${data.paperStock.map((p, idx) => {
+          const totalPacks = p.packs || 1;
+          const usedPacks = p.usedPacks || 0;
+          const usedSheets = usedPacks * (p.sheetsPerPack || p.totalSheets);
+          const remainingSheets = Math.max(0, (p.totalSheets || 0) - usedSheets);
+          const pct = p.totalSheets > 0 ? Math.max(0, (remainingSheets / p.totalSheets) * 100) : 0;
+          const actions = `<div style="display:flex;gap:4px;justify-content:flex-end;"><button class="btn-icon" onclick="openModal('paperModal','${p.id}')" title="编辑"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon delete" onclick="deletePaper('${p.id}')" title="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`;
+          // Parent row (batch overview)
+          const parentRow = `<tr style="font-weight:500;">
+            <td class="text-mono">${idx+1}</td>
+            <td>${p.brand||'-'} <span style="color:var(--text-muted);font-size:12px;">${p.spec||''}</span></td>
+            <td>${p.weight?p.weight+'g':'-'}</td>
+            <td class="text-mono">${fmtMoney(p.buyPrice)}</td>
+            <td class="text-mono">${fmtNum(p.totalSheets)}</td>
+            <td class="text-mono">${p.sheetsPerPack||p.totalSheets}</td>
+            <td class="text-mono">${fmtNum(usedSheets)}</td>
+            <td><div style="display:flex;align-items:center;gap:8px;"><div class="progress-bar" style="width:80px;"><div class="progress-fill ${pct<15?'danger':pct<30?'warning':''}" style="width:${pct}%"></div></div><span class="text-mono" style="font-size:12px;${pct<15?'color:var(--danger-color);font-weight:600;':''}">${Math.round(pct)}%</span></div></td>
+            <td class="text-mono">${fmtMoney3(p.buyPrice/p.totalSheets)}</td>
+            <td>${actions}</td>
+          </tr>`;
+          // Child rows (each pack)
+          let childRows = '';
+          if (totalPacks > 1) {
+            for (let i = 1; i <= totalPacks; i++) {
+              const isUsed = i <= usedPacks;
+              const packSheets = p.sheetsPerPack || (p.totalSheets / totalPacks);
+              const packCost = p.buyPrice / totalPacks;
+              childRows += `<tr style="background:var(--bg-hover,rgba(0,0,0,0.02));${isUsed?'opacity:0.45;':''}">
+                <td class="text-mono" style="font-size:11px;color:var(--text-muted);">\u251C</td>
+                <td style="padding-left:28px;">第 ${i} 包</td>
+                <td></td>
+                <td class="text-mono" style="font-size:12px;">${fmtMoney(packCost)}</td>
+                <td class="text-mono">${fmtNum(packSheets)}</td>
+                <td></td>
+                <td></td>
+                <td>${isUsed?'<span class="badge badge-gray" style="font-size:11px;">已用完</span>':'<span class="badge badge-green" style="font-size:11px;">使用中</span>'}</td>
+                <td class="text-mono">${fmtMoney3(packCost/packSheets)}</td>
+                <td>${isUsed?`<button class="btn-secondary" onclick="restorePack('${p.id}')" style="font-size:11px;padding:3px 8px;white-space:nowrap;">恢复</button>`:`<button class="btn-secondary" onclick="useUpPack('${p.id}')" style="font-size:11px;padding:3px 8px;white-space:nowrap;">标记用完</button>`}</td>
+              </tr>`;
+            }
+          }
+          return parentRow + childRows;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // ===== Ink =====
+  function renderInk() {
+    const btn = '<button class="btn-primary" style="display:flex;align-items:center;gap:6px;" onclick="openModal(\'inkModal\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加墨水</button>';
+    if (!data.inkStock.length) {
+      return '<div class="page-header"><div class="page-title">墨水库存</div>' + btn + '</div><div class="panel panel-static"><div class="empty-state"><div class="empty-state-title">暂无墨水库存</div><div class="empty-state-desc">点击上方按钮添加墨水批次</div></div></div>';
+    }
+    let tbody = '';
+    data.inkStock.forEach((i, idx) => {
+      const actions = '<div style="display:flex;gap:4px;justify-content:flex-end;"><button class="btn-icon" onclick="openModal(\'inkModal\',\'' + i.id + '\')" title="编辑"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon delete" onclick="deleteInk(\'' + i.id + '\')" title="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
+      if (i.isSet && i.setItems) {
+        const actualTotalPages = i.setItems.reduce((s, item) => s + (item.count||1) * (item.estimatedPages||0), 0) || i.estimatedPages;
+        const pct = Math.max(0, ((i.estimatedPages - i.usedPages)/i.estimatedPages)*100);
+        const actualTotalCap = i.setItems.reduce((s, item) => s + (item.count||1) * (item.capacity||0), 0);
+        const totalBottles = i.setItems.reduce((sum, x) => sum + (x.count||1), 0);
+        // Parent set row
+        tbody += '<tr style="font-weight:500;">' +
+          '<td class="text-mono">' + (idx+1) + '</td>' +
+          '<td><span class="badge badge-orange">套装</span></td>' +
+          '<td>' + (i.model||'-') + ' <span style="color:var(--text-muted);font-size:12px;">' + i.setItems.length + '种 ' + totalBottles + '瓶</span></td>' +
+          '<td class="text-mono">' + fmtMoney(i.buyPrice) + '</td>' +
+          '<td class="text-mono">' + (actualTotalCap>0?actualTotalCap+'ml':'\u2014') + '</td>' +
+          '<td class="text-mono">' + fmtNum(i.estimatedPages) + '</td>' +
+          '<td class="text-mono">' + fmtNum(i.usedPages) + '</td>' +
+          '<td><div style="display:flex;align-items:center;gap:8px;"><div class="progress-bar" style="width:80px;"><div class="progress-fill ' + (pct<15?'danger':pct<30?'warning':'') + '" style="width:' + pct + '%"></div></div><span class="text-mono" style="font-size:12px;' + (pct<15?'color:var(--danger-color);font-weight:600;':'') + '">' + Math.round(pct) + '%</span></div></td>' +
+          '<td class="text-mono">' + fmtMoney3(i.buyPrice/actualTotalPages) + '</td>' +
+           '<td>' + actions + '</td></tr>';
+        // Child rows: each bottle
+        i.setItems.forEach(s => {
+          const repeat = s.count || 1;
+          for (let n = 0; n < repeat; n++) {
+            const isBlack = /黑|black|bk/i.test(s.colorName || '');
+            const badge = isBlack ? 'gray' : 'blue';
+            const label = isBlack ? '黑色' : '彩色';
+            const totalPages = s.estimatedPages || 0;
+            const cap = s.capacity || 0;
+            const bottleCost = i.buyPrice / totalBottles;
+            const bottleUsed = Math.round((i.usedPages || 0) * (totalPages / actualTotalPages));
+            const bottleRemaining = Math.max(0, totalPages - bottleUsed);
+            const bottlePct = totalPages > 0 ? Math.max(0, (bottleRemaining / totalPages) * 100) : 0;
+            const perPageCost = totalPages > 0 ? bottleCost / totalPages : 0;
+            tbody += '<tr style="background:var(--bg-hover,rgba(0,0,0,0.02));">' +
+              '<td class="text-mono" style="font-size:11px;color:var(--text-muted);">\u251C</td>' +
+              '<td><span class="badge badge-' + badge + '">' + label + '</span></td>' +
+              '<td style="padding-left:28px;">' + s.colorName + '</td>' +
+              '<td class="text-mono" style="font-size:12px;">' + fmtMoney(bottleCost) + '</td>' +
+              '<td class="text-mono">' + (cap>0?cap+'ml':'\u2014') + '</td>' +
+              '<td class="text-mono">' + fmtNum(totalPages) + '</td>' +
+              '<td class="text-mono">' + fmtNum(bottleUsed) + '</td>' +
+              '<td><div style="display:flex;align-items:center;gap:8px;"><div class="progress-bar" style="width:60px;"><div class="progress-fill ' + (bottlePct<15?'danger':bottlePct<30?'warning':'') + '" style="width:' + bottlePct + '%"></div></div><span class="text-mono" style="font-size:12px;">' + Math.round(bottlePct) + '%</span></div></td>' +
+              '<td class="text-mono">' + fmtMoney(perPageCost) + '</td>' +
+              '<td></td></tr>';
+          }
+        });
+      } else {
+        const pct = Math.max(0, ((i.estimatedPages - i.usedPages)/i.estimatedPages)*100);
+        tbody += '<tr>' +
+          '<td class="text-mono">' + (idx+1) + '</td>' +
+          '<td><span class="badge badge-' + (i.colorType==='black'?'gray':'blue') + '">' + (i.colorType==='black'?'黑色':'彩色') + '</span></td>' +
+          '<td>' + (i.model||'-') + '</td>' +
+          '<td class="text-mono">' + fmtMoney(i.buyPrice) + '</td>' +
+          '<td class="text-mono">' + (i.capacity?i.capacity+'ml':'-') + '</td>' +
+          '<td class="text-mono">' + fmtNum(i.estimatedPages) + '</td>' +
+          '<td class="text-mono">' + fmtNum(i.usedPages) + '</td>' +
+          '<td><div style="display:flex;align-items:center;gap:8px;"><div class="progress-bar" style="width:80px;"><div class="progress-fill ' + (pct<15?'danger':pct<30?'warning':'') + '" style="width:' + pct + '%"></div></div><span class="text-mono" style="font-size:12px;' + (pct<15?'color:var(--danger-color);font-weight:600;':'') + '">' + Math.round(pct) + '%</span></div></td>' +
+          '<td class="text-mono">' + fmtMoney(i.buyPrice/i.estimatedPages) + '</td>' +
+          '<td>' + actions + '</td></tr>';
+      }
+    });
+    return '<div class="page-header"><div class="page-title">墨水库存</div>' + btn + '</div><div class="panel panel-static">' +
+      '<table class="data-table"><thead><tr><th style="width:50px;">序号</th><th>类型</th><th>品牌/型号</th><th>购入价</th><th>容量</th><th>预计页数</th><th>已用</th><th>余量</th><th>单页成本</th><th style="width:80px;"></th></tr></thead>' +
+      '<tbody>' + tbody + '</tbody></table></div>';
+  }
+
+  // ===== Ledger =====
+  function renderLedger() {
+    const list = [...data.records].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    const formHTML = `
+      <div class="panel">
+        <div class="panel-body">
+          <form id="ledgerForm" onsubmit="return addRecord(event)">
+            <div class="form-row" id="customerPriceRow">
+              <div class="form-group"><label class="form-label">客户名称</label><input type="text" class="form-input" id="rCustomer" placeholder="客户姓名或备注"></div>
+              <div class="form-group"><label class="form-label">单价 (元/页)</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="number" class="form-input" id="rUnitPrice" step="0.01" min="0" placeholder="0.50" readonly style="background:var(--bg-hover);color:var(--text-primary);">
+                  <button type="button" class="btn-secondary" id="editPriceBtn" onclick="toggleEditUnitPrice()" style="white-space:nowrap;padding:8px 14px;font-size:13px;height:38px;">修改</button>
+                </div>
+              </div>
+              <div class="form-group"><label class="form-label">类型</label>
+                <div class="radio-group">
+                  <label class="radio-label active" id="radioSelf" onclick="setRecType('self')">
+                    <input type="radio" name="recType" value="self" checked> 自用
+                  </label>
+                  <label class="radio-label" id="radioOrder" onclick="setRecType('order')">
+                    <input type="radio" name="recType" value="order"> 订单
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="rDate" required></div>
+              <div class="form-group"><label class="form-label">页数</label><input type="number" class="form-input" id="rPages" min="1" value="1" required></div>
+              <div class="form-group"><label class="form-label">单双面</label>
+                <div class="seg-control"><button type="button" class="seg-btn active" data-val="single" onclick="setDuplex(this)">单面</button><button type="button" class="seg-btn" data-val="duplex" onclick="setDuplex(this)">双面</button></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">彩色 / 黑白</label>
+                <div class="seg-control"><button type="button" class="seg-btn active" data-val="bw" onclick="setColorMode(this)">黑白</button><button type="button" class="seg-btn" data-val="color" onclick="setColorMode(this)">彩色</button></div>
+              </div>
+              <div class="form-group"><label class="form-label">使用纸张</label><select class="form-select" id="rPaper" required></select></div>
+              <div class="form-group"><label class="form-label">备注</label><input type="text" class="form-input" id="rNote" placeholder="可选"></div>
+            </div>
+            <div class="form-row" style="margin-top:16px;align-items:center;">
+              <div style="color:var(--text-muted);font-size:13px;" id="costPreview"></div>
+              <div style="margin-left:auto;"><button type="submit" class="btn-primary">确认记账</button></div>
+            </div>
+          </form>
+        </div>
+      </div>`;
+
+    const recordsTableHTML = list.length ? `
+      <table class="data-table">
+        <thead><tr>
+          <th style="width:100px;">日期</th><th style="width:60px;">类型</th><th style="width:100px;">客户</th><th style="width:50px;">页数</th><th style="width:60px;">单双面</th><th style="width:60px;">颜色</th><th style="width:120px;">纸张</th>
+          <th class="text-right" style="width:90px;">纸张成本</th><th class="text-right" style="width:90px;">墨水成本</th><th class="text-right" style="width:90px;">收入</th><th class="text-right" style="width:90px;">利润</th>
+          <th style="width:80px;"></th>
+        </tr></thead>
+        <tbody>${list.map(r => recordRowHTML(r)).join('')}</tbody>
+      </table>` :
+      `<div class="empty-state" style="padding:40px;"><div class="empty-state-title">暂无记账记录</div><div class="empty-state-desc">切换到"快速记账"添加第一条记录</div></div>`;
+
+    return `
+    <div class="page-header"><div class="page-title">打印记账</div></div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-sub="form" onclick="switchLedgerTab('form')">快速记账</button>
+      <button class="sub-tab" data-sub="list" onclick="switchLedgerTab('list')">记账记录 (${list.length})</button>
+    </div>
+    <div class="sub-tab-content active" id="ledger-tab-form">${formHTML}</div>
+    <div class="sub-tab-content" id="ledger-tab-list">
+      <div class="panel">
+        <div class="panel-header"><div><div class="panel-title">记账记录</div><div class="panel-subtitle">全部历史打印记录</div></div>${list.length?`<button class="btn-secondary" onclick="clearAllRecords()">清空全部</button>`:''}</div>
+        <div class="panel-body" style="padding:0;">${recordsTableHTML}</div>
+      </div>
+    </div>`;
+  }
+
+  // ===== Report =====
+  function renderReport() {
+    const records = data.records;
+    const months = {};
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      months[key] = { revenue:0, cost:0, profit:0, pages:0, orders:0 };
+    }
+    records.forEach(r => {
+      if (!r.date) return;
+      const key = r.date.slice(0,7);
+      if (months[key]) {
+        months[key].revenue += r.revenue||0;
+        months[key].cost += (r.paperCost||0) + (r.inkCost||0);
+        months[key].pages += r.pages||0;
+        if (r.type==='order') months[key].orders++;
+      }
+    });
+    Object.keys(months).forEach(k => { months[k].profit = months[k].revenue - months[k].cost; });
+    const labels = Object.keys(months);
+    const values = Object.values(months);
+    const maxVal = Math.max(...values.map(v => Math.max(v.revenue, v.cost, Math.abs(v.profit))), 1);
+
+    const chartHTML = `<div style="display:flex;gap:16px;margin-bottom:12px;justify-content:center;font-size:12px;">
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent-color);display:inline-block;"></span>收入</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--text-muted);display:inline-block;"></span>成本</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--success-color);display:inline-block;"></span>利润</span>
+    </div>
+    <div class="chart-wrap">
+      ${labels.map((label,i) => {
+        const v = values[i];
+        const hRev = Math.max(4, (v.revenue/maxVal)*100);
+        const hCost = Math.max(4, (v.cost/maxVal)*100);
+        const hProf = Math.max(4, (Math.abs(v.profit)/maxVal)*100);
+        return `<div class="chart-col">
+          <div class="chart-bar-stack">
+            <div class="chart-bar" style="height:${hRev}px;background:var(--accent-color);"><span class="chart-tip">${fmtMoney(v.revenue)}</span></div>
+            <div class="chart-bar" style="height:${hCost}px;background:var(--text-muted);"><span class="chart-tip">${fmtMoney(v.cost)}</span></div>
+            <div class="chart-bar" style="height:${hProf}px;background:${v.profit<0?'var(--danger-color)':'var(--success-color)'};"><span class="chart-tip">${fmtMoney(v.profit)}</span></div>
+          </div>
+          <div class="chart-label">${label.slice(5)}月</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    const tableHTML = `<table class="data-table">
+      <thead><tr><th>月份</th><th>收入</th><th>成本</th><th>利润</th><th>打印页</th><th>订单数</th></tr></thead>
+      <tbody>${labels.map((label,i) => {
+        const v = values[i];
+        return `<tr><td>${label}</td><td class="text-mono">${fmtMoney(v.revenue)}</td><td class="text-mono">${fmtMoney(v.cost)}</td><td class="text-mono" style="${v.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${fmtMoney(v.profit)}</td><td class="text-mono">${fmtNum(v.pages)}</td><td>${v.orders}</td></tr>`;
+      }).join('')}</tbody>
+    </table>`;
+
+    const totalPages = records.reduce((s,r) => s + r.pages, 0);
+    const selfPages = records.filter(r => r.type==='self').reduce((s,r) => s + r.pages, 0);
+    const orderPages = totalPages - selfPages;
+    const bwPages = records.filter(r => r.colorMode==='bw').reduce((s,r) => s + r.pages, 0);
+    const colorPages = totalPages - bwPages;
+
+    return `
+    <div class="page-header"><div class="page-title">报表</div></div>
+    <div class="panel">
+      <div class="panel-header"><div><div class="panel-title">月度收支</div><div class="panel-subtitle">近 12 个月收入、成本与利润统计</div></div></div>
+      <div class="panel-body">${chartHTML}</div>
+      <div style="padding:0 20px 16px;">${tableHTML}</div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div><div class="panel-title">打印量分析</div><div class="panel-subtitle">自用 vs 订单 / 黑白 vs 彩色</div></div></div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px;">
+          <div>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">自用 vs 订单</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div style="flex:1;height:24px;background:var(--bg-hover);border-radius:var(--radius-sm);overflow:hidden;display:flex;">
+                <div style="width:${totalPages?(selfPages/totalPages*100):0}%;background:var(--text-muted);transition:width 0.5s;"></div>
+                <div style="width:${totalPages?(orderPages/totalPages*100):0}%;background:var(--success-color);transition:width 0.5s;"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;font-size:13px;">
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--text-muted);"></span>自用 ${fmtNum(selfPages)}页</span>
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--success-color);"></span>订单 ${fmtNum(orderPages)}页</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">黑白 vs 彩色</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div style="flex:1;height:24px;background:var(--bg-hover);border-radius:var(--radius-sm);overflow:hidden;display:flex;">
+                <div style="width:${totalPages?(bwPages/totalPages*100):0}%;background:var(--text-secondary);transition:width 0.5s;"></div>
+                <div style="width:${totalPages?(colorPages/totalPages*100):0}%;background:#7B61FF;transition:width 0.5s;"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;font-size:13px;">
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--text-secondary);"></span>黑白 ${fmtNum(bwPages)}页</span>
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#7B61FF;"></span>彩色 ${fmtNum(colorPages)}页</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ===== Settings =====
+  function renderSettings() {
+    const costs = calcAutoCosts();
+    return `
+    <div class="page-header"><div class="page-title">设置</div></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div class="panel" style="flex:1;min-width:280px;">
+        <div class="panel-header"><div><div class="panel-title">售价设置</div><div class="panel-subtitle">设置黑白与彩色打印单张售价</div></div><span id="priceActions"><button class="btn-primary" onclick="togglePriceEdit()">修改</button></span></div>
+        <div class="panel-body">
+          <div class="form-group" style="margin-bottom:10px;"><label class="form-label">黑白售价 (元)</label><input type="number" class="form-input" id="sBwPrice" step="0.01" min="0" placeholder="如 0.50" readonly style="background:var(--bg-hover);"></div>
+          <div class="form-group" style="margin-bottom:0;"><label class="form-label">彩色售价 (元)</label><input type="number" class="form-input" id="sColorPrice" step="0.01" min="0" placeholder="如 1.00" readonly style="background:var(--bg-hover);"></div>
+        </div>
+      </div>
+      <div class="panel" style="flex:1;min-width:280px;">
+        <div class="panel-header"><div><div class="panel-title">成本手动修正</div><div class="panel-subtitle">若自动计算值不符，可手动覆盖</div></div><span id="costActions"><button class="btn-primary" onclick="toggleCostPanelEdit()">修改</button></span></div>
+        <div class="panel-body">
+          <div class="form-group" style="margin-bottom:10px;"><label class="form-label">黑白墨水单页成本 (元)</label><div style="display:flex;gap:8px;align-items:center;"><input type="number" class="form-input" id="sBwCost" step="0.001" min="0" readonly style="background:var(--bg-hover);flex:1;"><button class="btn-secondary cost-restore-btn" id="sBwCostRestore" style="display:none;white-space:nowrap;" onclick="restoreBwCost()">恢复</button></div></div>
+          <div class="form-group" style="margin-bottom:0;"><label class="form-label">彩色墨水单页成本 (元)</label><div style="display:flex;gap:8px;align-items:center;"><input type="number" class="form-input" id="sColorCost" step="0.001" min="0" readonly style="background:var(--bg-hover);flex:1;"><button class="btn-secondary cost-restore-btn" id="sColorCostRestore" style="display:none;white-space:nowrap;" onclick="restoreColorCost()">恢复</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div><div class="panel-title">实时成本分析${data.settings.opCostEnabled !== false ? ' <span class="badge badge-green" style="font-size:11px;vertical-align:middle;">+运营成本</span>' : ''}</div><div class="panel-subtitle">基于当前库存自动计算（先进先出 FIFO）</div></div></div>
+      <div class="panel-body">
+        ${costs.hasStock ? `
+        <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
+          <div class="stat-box"><div class="stat-box-value">${fmtMoney3(costs.paperPerSheet)}</div><div class="stat-box-label">纸张单张成本</div></div>
+          <div class="stat-box"><div class="stat-box-value">${fmtMoney3(costs.bwInkPerPage)}</div><div class="stat-box-label">黑白墨水单页成本</div></div>
+          <div class="stat-box"><div class="stat-box-value">${fmtMoney3(costs.colorInkPerPage)}</div><div class="stat-box-label">彩色墨水单页成本</div></div>
+          <div class="stat-box"><div class="stat-box-value blue">${fmtMoney3(costs.bwTotal)}</div><div class="stat-box-label">黑白总成本 / 张</div></div>
+          <div class="stat-box"><div class="stat-box-value orange">${fmtMoney3(costs.colorTotal)}</div><div class="stat-box-label">彩色总成本 / 张</div></div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">
+          ${costs.paperSource ? '纸张：' + costs.paperSource : ''}
+          ${costs.bwInkSource ? ' · 黑白墨水：' + costs.bwInkSource : ''}
+          ${costs.colorInkSource ? ' · 彩色墨水：' + costs.colorInkSource : ''}
+        </div>
+        ` : '<div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;">暂无库存数据，请先添加纸张和墨水库存</div>'}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div><div class="panel-title">运营成本 <label class="op-switch"><input type="checkbox" id="opCostToggle" ${data.settings.opCostEnabled !== false ? 'checked' : ''} onchange="toggleOpCost()"><span class="slider"></span></label></div><div class="panel-subtitle">电费与打印机折旧${data.settings.opCostEnabled !== false ? '（已启用）' : '（已关闭）'}</div></div><span id="opCostActions"><button class="btn-primary" onclick="toggleOpCostEdit()">修改</button></span></div>
+      <div class="panel-body">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label class="form-label">电价 (元/度)</label><input type="number" class="form-input" id="sElecPrice" step="0.001" min="0" readonly style="background:var(--bg-hover);"></div>
+          <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label class="form-label">打印机购入价 (元)</label><input type="number" class="form-input" id="sPrinterPrice" step="1" min="0" readonly style="background:var(--bg-hover);"></div>
+          <div class="form-group" style="flex:1;min-width:100px;margin-bottom:0;"><label class="form-label">折旧年限 (年)</label><input type="number" class="form-input" id="sPrinterLife" step="1" min="1" readonly style="background:var(--bg-hover);"></div>
+          <div class="form-group" style="flex:1;min-width:100px;margin-bottom:0;"><label class="form-label">打印功率 (W)</label><input type="number" class="form-input" id="sPrinterWatt" step="1" min="0" readonly style="background:var(--bg-hover);"></div>
+        </div>
+        ${costs.opCostPerSheet > 0 ? '<div style="margin-top:10px;font-size:12px;color:var(--text-muted);">电费 ¥' + fmtMoney4(costs.elecPerSheet) + '/张 + 折旧 ¥' + fmtMoney4(costs.deprecPerSheet) + '/张 = 运营成本 ¥' + fmtMoney4(costs.opCostPerSheet) + '/张（月均打印 ' + costs.monthlyAvg + ' 张）</div>' : ''}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div><div class="panel-title">盈亏分析${data.settings.opCostEnabled !== false ? ' <span class="badge badge-green" style="font-size:11px;vertical-align:middle;">+运营成本</span>' : ''}</div><div class="panel-subtitle">对比当前售价与自动计算的成本</div></div></div>
+      <div class="panel-body">
+        ${renderProfitAnalysis(costs)}
+      </div>
+    </div>`;
+  }
+
+  function initSettingsForm() {
+    const bwPriceEl = document.getElementById('sBwPrice');
+    const colorPriceEl = document.getElementById('sColorPrice');
+    bwPriceEl.value = data.settings.bwPrice || '';
+    colorPriceEl.value = data.settings.colorPrice || '';
+    bwPriceEl.readOnly = true; bwPriceEl.style.background = 'var(--bg-hover)';
+    colorPriceEl.readOnly = true; colorPriceEl.style.background = 'var(--bg-hover)';
+    const bwEl = document.getElementById('sBwCost');
+    const colorEl = document.getElementById('sColorCost');
+    bwEl.value = data.settings.bwInkCostPerPage;
+    colorEl.value = data.settings.colorInkCostPerPage;
+    bwEl.readOnly = true; bwEl.style.background = 'var(--bg-hover)';
+    colorEl.readOnly = true; colorEl.style.background = 'var(--bg-hover)';
+    // Op cost fields
+    const epEl = document.getElementById('sElecPrice');
+    const ppEl = document.getElementById('sPrinterPrice');
+    const plEl = document.getElementById('sPrinterLife');
+    const pwEl = document.getElementById('sPrinterWatt');
+    if (epEl) { epEl.value = data.settings.elecPrice || 0.538; epEl.readOnly = true; epEl.style.background = 'var(--bg-hover)'; }
+    if (ppEl) { ppEl.value = data.settings.printerPrice || 2000; ppEl.readOnly = true; ppEl.style.background = 'var(--bg-hover)'; }
+    if (plEl) { plEl.value = data.settings.printerLife || 3; plEl.readOnly = true; plEl.style.background = 'var(--bg-hover)'; }
+    if (pwEl) { pwEl.value = data.settings.printerWatt || 20; pwEl.readOnly = true; pwEl.style.background = 'var(--bg-hover)'; }
+  }
+  window.toggleCostEdit = function(inputId, btn) {
+    const el = document.getElementById(inputId);
+    if (el.readOnly) {
+      el.readOnly = false;
+      el.style.background = '';
+      el.focus();
+      btn.textContent = '恢复默认';
+    } else {
+      el.readOnly = true;
+      el.style.background = 'var(--bg-hover)';
+      btn.textContent = '修改';
+      if (inputId === 'sBwCost') el.value = calcInkCostPerPage('black');
+      if (inputId === 'sColorCost') el.value = calcInkCostPerPage('color');
+    }
+  };
+  window.calcInkCostPerPage = function(type) {
+    const costs = calcAutoCosts();
+    return type === 'black' ? costs.bwInkPerPage : costs.colorInkPerPage;
+  };
+
+  // ===== Record Row (table format) =====
+  function recordRowHTML(r) {
+    const paper = data.paperStock.find(p => p.id === r.paperId);
+    return `
+      <tr>
+        <td>${r.date}</td>
+        <td><span class="badge badge-${r.type==='order'?'green':'gray'}">${r.type==='order'?'订单':'自用'}</span></td>
+        <td>${r.type==='order'?r.customer:'—'}</td>
+        <td class="text-mono">${r.pages}</td>
+        <td>${r.duplex==='duplex'?'双面':'单面'}</td>
+        <td>${r.colorMode==='bw'?'黑白':'彩色'}</td>
+        <td>${paper?paper.brand+' '+paper.spec:'—'}</td>
+        <td class="text-mono text-right">${fmtMoney(r.paperCost)}</td>
+        <td class="text-mono text-right">${fmtMoney(r.inkCost)}</td>
+        <td class="text-mono text-right">${r.type==='order'?fmtMoney(r.revenue):'—'}</td>
+        <td class="text-mono text-right" style="${r.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${r.type==='order'?(r.profit>=0?'+':'')+fmtMoney(r.profit).replace('¥',''):'—'}</td>
+        <td><div style="display:flex;gap:4px;justify-content:flex-end;"><button class="btn-icon" onclick="editRecord('${r.id}')" title="编辑"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon delete" onclick="deleteRecord('${r.id}')" title="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></td>
+      </tr>`;
+  }
+
+  // ===== Record Card (for overview) =====
+  function recordHTML(r) {
+    const paper = data.paperStock.find(p => p.id === r.paperId);
+    return `
+      <div class="record-row">
+        <div class="record-icon ${r.type}">${r.type==='order'?'¥':'自'}</div>
+        <div class="record-info">
+          <div class="record-title">${r.type==='order'?r.customer:'自用打印'} · ${r.pages}页 · ${r.colorMode==='bw'?'黑白':'彩色'}${r.duplex==='duplex'?'·双面':''}</div>
+          <div class="record-meta"><span>${r.date}</span><span>${paper?paper.brand+' '+paper.spec:'未知纸张'}</span>${r.note?'<span>'+r.note+'</span>':''}</div>
+        </div>
+        ${r.type==='order'?`
+        <div class="record-amount">
+          <div class="rev">${fmtMoney(r.revenue)}</div>
+          <div class="cost">成本 ${fmtMoney(r.paperCost+r.inkCost)}</div>
+          <div class="profit ${r.profit>=0?'pos':'neg'}">${r.profit>=0?'+':''}${fmtMoney(r.profit)}</div>
+        </div>`:`<div class="record-amount"><div class="cost">成本 ${fmtMoney(r.paperCost+r.inkCost)}</div></div>`}
+        <div><button class="btn-icon delete" onclick="deleteRecord('${r.id}')" title="删除">&times;</button></div>
+      </div>`;
+  }
+
+  // ===== Ledger Form Logic =====
+  let recType = 'self', duplex = 'single', colorMode = 'bw';
+  window.setRecType = function(val) {
+    recType = val;
+    document.getElementById('radioSelf').classList.toggle('active', val === 'self');
+    document.getElementById('radioOrder').classList.toggle('active', val === 'order');
+    document.querySelector('input[name="recType"][value="self"]').checked = val === 'self';
+    document.querySelector('input[name="recType"][value="order"]').checked = val === 'order';
+    const cusEl = document.getElementById('rCustomer');
+    if (val === 'order' && cusEl && !cusEl.value.trim()) cusEl.value = '邻居';
+    updateCostPreview();
+  };
+  window.setDuplex = function(btn) {
+    btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    duplex = btn.dataset.val;
+    updateCostPreview();
+  };
+  window.toggleEditUnitPrice = function() {
+    const input = document.getElementById('rUnitPrice');
+    const btn = document.getElementById('editPriceBtn');
+    if (!input || !btn) return;
+    if (input.readOnly) {
+      input.readOnly = false;
+      input.style.background = '';
+      input.style.cursor = 'text';
+      btn.textContent = '恢复默认';
+      input.focus();
+    } else {
+      input.readOnly = true;
+      input.style.background = 'var(--bg-hover)';
+      input.style.cursor = 'default';
+      btn.textContent = '修改';
+      input.value = colorMode === 'bw' ? (data.settings?.salesPrices?.bw ?? data.settings?.bwPrice ?? 0.1) : (data.settings?.salesPrices?.color ?? data.settings?.colorPrice ?? 0.15);
+    }
+  };
+  window.setColorMode = function(btn) {
+    btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    colorMode = btn.dataset.val;
+    const upEl = document.getElementById('rUnitPrice');
+    if (upEl && upEl.readOnly) {
+      upEl.value = colorMode === 'bw' ? (data.settings?.salesPrices?.bw ?? data.settings?.bwPrice ?? 0.1) : (data.settings?.salesPrices?.color ?? data.settings?.colorPrice ?? 0.15);
+    }
+    updateCostPreview();
+  };
+
+  function updateCostPreview() {
+    const pages = parseInt(document.getElementById('rPages')?.value) || 0;
+    const paperId = document.getElementById('rPaper')?.value;
+    const el = document.getElementById('costPreview');
+    if (!el) return;
+    if (!pages || !paperId) { el.innerHTML = ''; return; }
+    const paper = data.paperStock.find(p => p.id === paperId);
+    if (!paper) { el.innerHTML = ''; return; }
+    const sheets = duplex === 'duplex' ? Math.ceil(pages/2) : pages;
+    const paperCost = (paper.buyPrice / paper.totalSheets) * sheets;
+    const inkCost = (colorMode==='bw'?data.settings.bwInkCostPerPage:data.settings.colorInkCostPerPage) * pages;
+    el.innerHTML = `预估成本：纸张 ${fmtMoney(paperCost)} + 墨水 ${fmtMoney(inkCost)} = <b>${fmtMoney(paperCost+inkCost)}</b>`;
+  }
+
+  function initLedgerForm() {
+    document.getElementById('rDate').value = new Date().toISOString().slice(0,10);
+    refreshPaperSelect();
+    document.getElementById('rPages').addEventListener('input', updateCostPreview);
+    document.getElementById('rPaper').addEventListener('change', updateCostPreview);
+    document.getElementById('rCustomer').value = '邻居';
+    const upEl = document.getElementById('rUnitPrice');
+    if (upEl) {
+      upEl.readOnly = true;
+      upEl.style.background = 'var(--bg-hover)';
+      upEl.style.cursor = 'default';
+      upEl.value = colorMode === 'bw' ? (data.settings?.salesPrices?.bw ?? data.settings?.bwPrice ?? 0.1) : (data.settings?.salesPrices?.color ?? data.settings?.colorPrice ?? 0.15);
+    }
+    const editBtn = document.getElementById('editPriceBtn');
+    if (editBtn) editBtn.textContent = '修改';
+    setRecType('self');
+  }
+
+  window.switchLedgerTab = function(name) {
+    document.querySelectorAll('.sub-tab').forEach(t => {
+      if (t.closest('.sub-tabs')) t.classList.toggle('active', t.dataset.sub === name);
+    });
+    document.getElementById('ledger-tab-form').classList.toggle('active', name === 'form');
+    document.getElementById('ledger-tab-list').classList.toggle('active', name === 'list');
+  };
+
+  function refreshPaperSelect() {
+    const sel = document.getElementById('rPaper');
+    if (!sel) return;
+    const opts = data.paperStock.filter(p => p.remainingSheets > 0).map(p =>
+      `<option value="${p.id}">${p.brand} ${p.spec} (余${p.remainingSheets}张)</option>`
+    ).join('');
+    sel.innerHTML = opts || '<option value="">无可用纸张</option>';
+  }
+
+  window.addRecord = function(e) {
+    e.preventDefault();
+    const date = document.getElementById('rDate').value;
+    const pages = parseInt(document.getElementById('rPages').value) || 0;
+    const paperId = document.getElementById('rPaper').value;
+    if (!date || pages <= 0) { toast('请填写完整信息'); return false; }
+    if (!paperId) { toast('请至少添加一种纸张库存'); return false; }
+
+    const paper = data.paperStock.find(p => p.id === paperId);
+    const sheets = duplex === 'duplex' ? Math.ceil(pages/2) : pages;
+    if (paper.remainingSheets < sheets) { toast('纸张库存不足'); return false; }
+
+    const paperCost = (paper.buyPrice / paper.totalSheets) * sheets;
+    const inkCost = (colorMode==='bw'?data.settings.bwInkCostPerPage:data.settings.colorInkCostPerPage) * pages;
+    let revenue = 0;
+    if (recType === 'order') revenue = (parseFloat(document.getElementById('rUnitPrice').value) || 0) * pages;
+
+    const record = {
+      id: uid(), date, type: recType,
+      customer: recType==='order' ? (document.getElementById('rCustomer').value.trim() || '匿名客户') : '',
+      pages, duplex, colorMode, paperId,
+      unitPrice: recType==='order'?(parseFloat(document.getElementById('rUnitPrice').value)||0):0,
+      revenue, paperCost, inkCost, profit: revenue - paperCost - inkCost,
+      note: document.getElementById('rNote').value
+    };
+
+    paper.usedSheets += sheets;
+    paper.remainingSheets -= sheets;
+
+    // Deduct ink (FIFO: find last added ink with remaining pages)
+    // For sets: match sets that contain the needed color
+    if (colorMode === 'bw') {
+      const ink = [...data.inkStock].reverse().find(i => i.remainingPages>0 && (i.colorType==='black' || (i.isSet && i.setItems && i.setItems.some(s => /黑|black|bk/i.test(s.colorName||'')))));
+      if (ink) { ink.usedPages += pages; ink.remainingPages = Math.max(0, ink.estimatedPages - ink.usedPages); }
+    } else {
+      const ink = [...data.inkStock].reverse().find(i => i.remainingPages>0 && (i.colorType==='color' || (i.isSet && i.setItems && i.setItems.some(s => /青|红|黄|color|cyan|red|yellow/i.test(s.colorName||'')))));
+      if (ink) { ink.usedPages += pages; ink.remainingPages = Math.max(0, ink.estimatedPages - ink.usedPages); }
+    }
+
+    data.records.push(record);
+    save();
+    renderContent();
+    toast('记账成功');
+    return false;
+  };
+
+  let _editRecordType = 'self', _editRecordDuplex = 'single', _editRecordColor = 'bw';
+  window.setReType = function(btn) { btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); _editRecordType = btn.dataset.val; };
+  window.setReDuplex = function(btn) { btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); _editRecordDuplex = btn.dataset.val; };
+  window.setReColor = function(btn) { btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); _editRecordColor = btn.dataset.val; };
+  window.editRecord = function(id) {
+    const r = data.records.find(x => x.id === id);
+    if (!r) return;
+    window._editingRecordId = id;
+    document.getElementById('reDate').value = r.date || '';
+    document.getElementById('rePages').value = r.pages || 1;
+    document.getElementById('reUnitPrice').value = r.unitPrice || 0;
+    document.getElementById('reCustomer').value = r.customer || '';
+    document.getElementById('reNote').value = r.note || '';
+    _editRecordType = r.type || 'self';
+    _editRecordDuplex = r.duplex || 'single';
+    _editRecordColor = r.colorMode || 'bw';
+    const modal = document.getElementById('recordModal');
+    modal.querySelectorAll('.seg-control').forEach(sc => {
+      sc.querySelectorAll('.seg-btn').forEach(b => {
+        b.classList.toggle('active',
+          (b.dataset.val === _editRecordType && sc.querySelector('[data-val="self"]')) ||
+          (b.dataset.val === _editRecordDuplex && sc.querySelector('[data-val="single"]')) ||
+          (b.dataset.val === _editRecordColor && sc.querySelector('[data-val="bw"]'))
+        );
+      });
+    });
+    openModal('recordModal');
+  };
+  window.saveRecordEdit = function() {
+    const id = window._editingRecordId;
+    const r = data.records.find(x => x.id === id);
+    if (!r) return;
+    r.date = document.getElementById('reDate').value;
+    r.pages = parseInt(document.getElementById('rePages').value) || 1;
+    r.unitPrice = parseFloat(document.getElementById('reUnitPrice').value) || 0;
+    r.customer = document.getElementById('reCustomer').value;
+    r.note = document.getElementById('reNote').value;
+    r.type = _editRecordType;
+    r.duplex = _editRecordDuplex;
+    r.colorMode = _editRecordColor;
+    const perPage = r.duplex === 'duplex' ? 1 : 0.5;
+    const inkCost = r.colorMode === 'bw' ? (data.settings.bwInkCostPerPage * r.pages) : (data.settings.colorInkCostPerPage * r.pages);
+    const paperCost = r.pages * perPage * (data.paperStock.length ? (data.paperStock[0].buyPrice / data.paperStock[0].totalSheets) : 0);
+    r.paperCost = paperCost;
+    r.inkCost = inkCost;
+    r.revenue = r.type === 'order' ? (r.pages * perPage * r.unitPrice) : 0;
+    r.profit = r.revenue - paperCost - inkCost;
+    save(); renderContent(); closeModal('recordModal'); switchLedgerTab('list'); toast('记录已更新');
+  };
+  window.deleteRecord = function(id) {
+    if (!confirm('确定删除该记账记录？')) return;
+    const rec = data.records.find(r => r.id === id);
+    if (rec) {
+      // Restore paper stock
+      const sheets = rec.duplex === 'duplex' ? Math.ceil(rec.pages/2) : rec.pages;
+      const paper = data.paperStock.find(p => p.id === rec.paperId);
+      if (paper) {
+        paper.usedSheets = Math.max(0, (paper.usedSheets || 0) - sheets);
+        paper.remainingSheets = Math.min(paper.totalSheets, (paper.remainingSheets || 0) + sheets);
+      }
+      // Restore ink stock
+      const inkList = rec.colorMode === 'bw' ? data.inkStock.filter(i => i.colorType==='black' || (i.isSet && i.setItems && i.setItems.some(s => /黑|black|bk/i.test(s.colorName||'')))) : data.inkStock.filter(i => i.colorType==='color' || (i.isSet && i.setItems && i.setItems.some(s => /青|红|黄|color|cyan|red|yellow/i.test(s.colorName||''))));
+      let pagesToRestore = rec.pages || 0;
+      // Reverse FIFO: restore from last deducted
+      [...inkList].reverse().forEach(ink => {
+        if (pagesToRestore <= 0) return;
+        const wasUsed = ink.usedPages || 0;
+        if (wasUsed > 0) {
+          const restore = Math.min(wasUsed, pagesToRestore);
+          ink.usedPages -= restore;
+          ink.remainingPages = Math.min(ink.estimatedPages, ink.estimatedPages - ink.usedPages);
+          pagesToRestore -= restore;
+        }
+      });
+    }
+    data.records = data.records.filter(r => r.id !== id);
+    save(); renderContent(); toast('已删除，库存已恢复');
+  };
+  window.clearAllRecords = function() {
+    if (!confirm('确定清空所有记账记录？库存将恢复到初始状态。')) return;
+    // Restore all inventory
+    data.paperStock.forEach(p => { p.usedSheets = 0; p.remainingSheets = p.totalSheets; p.usedPacks = 0; });
+    data.inkStock.forEach(i => { i.usedPages = 0; i.remainingPages = i.estimatedPages; });
+    data.records = [];
+    save(); renderContent(); toast('已清空，库存已恢复');
+  };
+
+  // ===== Inventory CRUD =====
+  window.openModal = function(id, editId) {
+    document.getElementById(id).classList.add('show');
+    if (id === 'paperModal') {
+      window._editingPaperId = editId || null;
+      document.getElementById('paperModalTitle').textContent = editId ? '编辑纸张' : '添加纸张';
+      if (editId) {
+        const p = data.paperStock.find(x => x.id === editId);
+        if (p) {
+          document.getElementById('pBrand').value = p.brand || '';
+          document.getElementById('pSpec').value = p.spec || '';
+          document.getElementById('pWeight').value = p.weight || '';
+          document.getElementById('pPrice').value = p.buyPrice || '';
+          document.getElementById('pPacks').value = p.packs || '';
+          document.getElementById('pSheetsPerPack').value = p.sheetsPerPack || '';
+          document.getElementById('pTotalSheets').value = p.totalSheets || '';
+          document.getElementById('pNote').value = p.note || '';
+        }
+      } else {
+        document.getElementById('pBrand').value = '晨光';
+        document.getElementById('pSpec').value = 'A4';
+        document.getElementById('pWeight').value = '70';
+        document.getElementById('pSheetsPerPack').value = '500';
+        ['pPrice','pPacks','pTotalSheets','pNote'].forEach(k => document.getElementById(k).value = '');
+      }
+    }
+    if (id === 'inkModal') {
+      window._editingInkId = editId || null;
+      document.getElementById('inkModalTitle').textContent = editId ? '编辑墨水' : '添加墨水';
+      if (editId) {
+        const i = data.inkStock.find(x => x.id === editId);
+        if (i) {
+          document.getElementById('iType').value = i.colorType;
+          document.getElementById('iModel').value = i.model || '';
+          document.getElementById('iPrice').value = i.buyPrice || '';
+          document.getElementById('iNote').value = i.note || '';
+          if (i.isSet) {
+            document.getElementById('setItemsArea').style.display = '';
+            document.getElementById('iPagesGroup').style.display = 'none';
+            document.getElementById('iCapacityGroup').style.display = 'none';
+            document.getElementById('iSetPages').value = i.estimatedPages || '';
+            const list = document.getElementById('setItemsList');
+            let itemsHtml = `
+              <div style="display:flex;gap:16px;padding:0 4px 2px;font-size:12px;color:var(--text-muted);">
+                <span style="flex:1.2;">颜色</span>
+                <span style="flex:0.7;">数量</span>
+                <span style="flex:0.8;">容量(ml)</span>
+                <span style="flex:1;">预计页数</span>
+                <span style="width:28px;"></span>
+              </div>`;
+            if (i.setItems && i.setItems.length) {
+              i.setItems.forEach(s => {
+                itemsHtml += `
+                <div class="form-row set-item-row" style="margin-bottom:0;">
+                  <div class="form-group" style="flex:1.2;margin-bottom:0;">
+                    <select class="form-select set-item-select" style="width:100%;" onchange="onSetItemColorChange(this);updateSetTotal();">
+                      <option value="黑色" ${s.colorName==='黑色'?'selected':''}>黑色</option>
+                      <option value="青色" ${s.colorName==='青色'?'selected':''}>青色</option>
+                      <option value="红色" ${s.colorName==='红色'?'selected':''}>红色</option>
+                      <option value="黄色" ${s.colorName==='黄色'?'selected':''}>黄色</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="flex:0.7;margin-bottom:0;"><input type="number" class="form-input set-item-count" min="1" value="${s.count||1}" placeholder="数量" oninput="updateSetTotal()"></div>
+                  <div class="form-group" style="flex:0.8;margin-bottom:0;"><input type="number" class="form-input set-item-capacity" min="1" style="font-size:12px;" value="${s.capacity||75}" placeholder="容量" oninput="updateSetTotal()"></div>
+                  <div class="form-group" style="flex:1;margin-bottom:0;"><input type="number" class="form-input set-item-pages" min="1" style="font-size:12px;" value="${s.estimatedPages||8000}" placeholder="页数" oninput="updateSetTotal()"></div>
+                  <div style="display:flex;align-items:center;flex-shrink:0;"><button type="button" class="btn-icon delete" onclick="this.closest('.set-item-row').remove();updateSetTotal();" title="删除">&times;</button></div>
+                </div>`;
+              });
+            }
+            list.innerHTML = itemsHtml;
+            updateSetTotal();
+          } else {
+            document.getElementById('setItemsArea').style.display = 'none';
+            document.getElementById('iPagesGroup').style.display = '';
+            document.getElementById('iCapacityGroup').style.display = '';
+            document.getElementById('iCapacity').value = i.capacity || '';
+            document.getElementById('iPages').value = i.estimatedPages || '';
+            const list = document.getElementById('setItemsList');
+            list.innerHTML = `
+              <div style="display:flex;gap:16px;padding:0 4px 2px;font-size:12px;color:var(--text-muted);">
+                <span style="flex:1.2;">颜色</span>
+                <span style="flex:0.7;">数量</span>
+                <span style="flex:0.8;">容量(ml)</span>
+                <span style="flex:1;">预计页数</span>
+                <span style="width:28px;"></span>
+              </div>
+              <div class="form-row set-item-row" style="margin-bottom:0;">
+                <div class="form-group" style="flex:1.2;margin-bottom:0;">
+                  <select class="form-select set-item-select" style="width:100%;" onchange="onSetItemColorChange(this)">
+                    <option value="黑色">黑色</option>
+                    <option value="青色">青色</option>
+                    <option value="红色">红色</option>
+                    <option value="黄色">黄色</option>
+                  </select>
+                </div>
+                <div class="form-group" style="flex:0.7;margin-bottom:0;"><input type="number" class="form-input set-item-count" min="1" value="1" placeholder="数量"></div>
+                <div class="form-group" style="flex:0.8;margin-bottom:0;"><input type="number" class="form-input set-item-capacity" min="1" style="font-size:12px;" value="130" placeholder="容量"></div>
+                <div class="form-group" style="flex:1;margin-bottom:0;"><input type="number" class="form-input set-item-pages" min="1" style="font-size:12px;" value="15000" placeholder="页数"></div>
+                <div style="display:flex;align-items:center;flex-shrink:0;"><button type="button" class="btn-icon delete" onclick="this.closest('.set-item-row').remove()" title="删除">&times;</button></div>
+              </div>`;
+          }
+        }
+      } else {
+        document.getElementById('iType').value = 'black';
+        ['iModel','iPrice','iCapacity','iPages','iSetPages','iNote'].forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
+        document.getElementById('setItemsArea').style.display = 'none';
+        document.getElementById('iPagesGroup').style.display = '';
+        document.getElementById('iCapacityGroup').style.display = '';
+        document.getElementById('iCapacity').value = '130';
+        document.getElementById('iPages').value = '15000';
+        const list = document.getElementById('setItemsList');
+        list.innerHTML = `
+          <div style="display:flex;gap:16px;padding:0 4px 2px;font-size:12px;color:var(--text-muted);">
+            <span style="flex:1.2;">颜色</span>
+            <span style="flex:0.7;">数量</span>
+            <span style="flex:0.8;">容量(ml)</span>
+            <span style="flex:1;">预计页数</span>
+            <span style="width:28px;"></span>
+          </div>
+          <div class="form-row set-item-row" style="margin-bottom:0;">
+            <div class="form-group" style="flex:1.2;margin-bottom:0;">
+              <select class="form-select set-item-select" style="width:100%;" onchange="onSetItemColorChange(this)">
+                <option value="黑色">黑色</option>
+                <option value="青色">青色</option>
+                <option value="红色">红色</option>
+                <option value="黄色">黄色</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:0.7;margin-bottom:0;"><input type="number" class="form-input set-item-count" min="1" value="1" placeholder="数量"></div>
+            <div class="form-group" style="flex:0.8;margin-bottom:0;"><input type="number" class="form-input set-item-capacity" min="1" style="font-size:12px;" value="130" placeholder="容量"></div>
+            <div class="form-group" style="flex:1;margin-bottom:0;"><input type="number" class="form-input set-item-pages" min="1" style="font-size:12px;" value="15000" placeholder="页数"></div>
+            <div style="display:flex;align-items:center;flex-shrink:0;"><button type="button" class="btn-icon delete" onclick="this.closest('.set-item-row').remove()" title="删除">&times;</button></div>
+          </div>`;
+      }
+    }
+  };
+  window.closeModal = function(id) { document.getElementById(id).classList.remove('show'); };
+
+  window.updatePaperTotal = function() {
+    const packs = parseInt(document.getElementById('pPacks')?.value) || 0;
+    const sheetsPerPack = parseInt(document.getElementById('pSheetsPerPack')?.value) || 0;
+    const totalEl = document.getElementById('pTotalSheets');
+    if (totalEl) totalEl.value = packs > 0 && sheetsPerPack > 0 ? packs * sheetsPerPack : '';
+  };
+
+  window.addPaper = function() {
+    const brand = document.getElementById('pBrand').value.trim();
+    const spec = document.getElementById('pSpec').value.trim();
+    const weight = parseInt(document.getElementById('pWeight').value) || 70;
+    const price = parseFloat(document.getElementById('pPrice').value) || 0;
+    const packs = parseInt(document.getElementById('pPacks').value) || 0;
+    const sheetsPerPack = parseInt(document.getElementById('pSheetsPerPack').value) || 0;
+    const totalSheets = packs * sheetsPerPack;
+    if (!brand || !spec || price <= 0 || packs <= 0 || sheetsPerPack <= 0) { toast('请填写完整信息'); return; }
+    if (window._editingPaperId) {
+      const p = data.paperStock.find(x => x.id === window._editingPaperId);
+      if (p) {
+        p.brand = brand; p.spec = spec; p.weight = weight; p.buyPrice = price;
+        p.packs = packs; p.sheetsPerPack = sheetsPerPack; p.totalSheets = totalSheets;
+        p.remainingSheets = Math.max(0, totalSheets - p.usedSheets);
+        p.note = document.getElementById('pNote').value;
+      }
+      window._editingPaperId = null;
+      save(); renderContent(); closeModal('paperModal'); toast('纸张已更新');
+    } else {
+      data.paperStock.push({ id: uid(), brand, spec, weight, buyPrice: price, packs, sheetsPerPack, totalSheets, usedSheets: 0, remainingSheets: totalSheets, usedPacks: 0, buyDate: new Date().toISOString().slice(0,10), note: document.getElementById('pNote').value });
+      save(); renderContent(); closeModal('paperModal'); toast('纸张添加成功');
+    }
+  };
+  window.useUpPack = function(id) {
+    const p = data.paperStock.find(x => x.id === id);
+    if (!p) return;
+    if ((p.usedPacks || 0) >= (p.packs || 1)) { toast('该批次已全部用完'); return; }
+    if (!confirm('标记该包为已用完？')) return;
+    p.usedPacks = (p.usedPacks || 0) + 1;
+    p.usedSheets = (p.usedSheets || 0) + (p.sheetsPerPack || Math.ceil(p.totalSheets / p.packs));
+    p.remainingSheets = Math.max(0, p.totalSheets - p.usedSheets);
+    save(); renderContent(); toast('已标记用完');
+  };
+  window.restorePack = function(id) {
+    const p = data.paperStock.find(x => x.id === id);
+    if (!p) return;
+    if ((p.usedPacks || 0) <= 0) { toast('该批次没有已用完的包'); return; }
+    if (!confirm('恢复该包为使用中？')) return;
+    p.usedPacks = Math.max(0, (p.usedPacks || 0) - 1);
+    p.usedSheets = Math.max(0, (p.usedSheets || 0) - (p.sheetsPerPack || Math.ceil(p.totalSheets / p.packs)));
+    p.remainingSheets = Math.min(p.totalSheets, p.totalSheets - p.usedSheets);
+    save(); renderContent(); toast('已恢复');
+  };
+  window.deletePaper = function(id) {
+    if (!confirm('确定删除该纸张记录？')) return;
+    data.paperStock = data.paperStock.filter(p => p.id !== id);
+    save(); renderContent(); toast('已删除');
+  };
+
+  window.onInkTypeChange = function(val) {
+    document.getElementById('setItemsArea').style.display = val === 'set' ? '' : 'none';
+    document.getElementById('iPagesGroup').style.display = val === 'set' ? 'none' : '';
+    document.getElementById('iCapacityGroup').style.display = val === 'set' ? 'none' : '';
+    const capEl = document.getElementById('iCapacity');
+    const pagesEl = document.getElementById('iPages');
+    const setPagesEl = document.getElementById('iSetPages');
+    if (val === 'black') { if (capEl) capEl.value = '130'; if (pagesEl) pagesEl.value = '15000'; }
+    else if (val === 'color') { if (capEl) capEl.value = '75'; if (pagesEl) pagesEl.value = '8000'; }
+    else if (val === 'set') { updateSetTotal(); }
+  };
+
+  window.onSetItemColorChange = function(sel) {
+    const row = sel.closest('.set-item-row');
+    const capEl = row.querySelector('.set-item-capacity');
+    const pagesEl = row.querySelector('.set-item-pages');
+    if (!capEl || !pagesEl) return;
+    // only auto-fill if current value matches default black or color defaults, or is empty
+    const currCap = parseInt(capEl.value);
+    const currPages = parseInt(pagesEl.value);
+    const isDefaultBlack = currCap === 130 && currPages === 15000;
+    const isDefaultColor = currCap === 75 && currPages === 8000;
+    if (sel.value === '黑色') {
+      if (!currCap || isDefaultColor) capEl.value = '130';
+      if (!currPages || isDefaultColor) pagesEl.value = '15000';
+    } else {
+      if (!currCap || isDefaultBlack) capEl.value = '75';
+      if (!currPages || isDefaultBlack) pagesEl.value = '8000';
+    }
+  };
+
+  window.updateSetTotal = function() {
+    const rows = document.querySelectorAll('#setItemsList .set-item-row');
+    let totalPages = 0;
+    rows.forEach(row => {
+      const count = parseInt(row.querySelector('.set-item-count')?.value) || 0;
+      const pages = parseInt(row.querySelector('.set-item-pages')?.value) || 0;
+      totalPages += count * pages;
+    });
+    const el = document.getElementById('iSetPages');
+    if (el) el.value = totalPages > 0 ? totalPages : '';
+  };
+
+  window.addSetItemRow = function(name, count) {
+    const container = document.getElementById('setItemsList');
+    const row = document.createElement('div');
+    row.className = 'form-row set-item-row';
+    row.style.marginBottom = '0';
+    row.style.gap = '10px';
+    const options = ['黑色','青色','红色','黄色'];
+    const optHtml = options.map(o => `<option value="${o}" ${o===(name||'黑色')?'selected':''}>${o}</option>`).join('');
+    const isBlack = (name || '黑色') === '黑色';
+    row.innerHTML = `
+      <div class="form-group" style="flex:1.2;margin-bottom:0;">
+        <select class="form-select set-item-select" style="width:100%;padding:8px 10px;font-size:13px;" onchange="onSetItemColorChange(this);updateSetTotal();">${optHtml}</select>
+      </div>
+      <div class="form-group" style="flex:0.7;margin-bottom:0;"><input type="number" class="form-input set-item-count" min="1" value="${count||1}" placeholder="数量" oninput="updateSetTotal()" style="padding:8px 10px;font-size:13px;"></div>
+      <div class="form-group" style="flex:0.8;margin-bottom:0;"><input type="number" class="form-input set-item-capacity" min="1" style="padding:8px 10px;font-size:13px;" value="${isBlack?'130':'75'}" placeholder="ml" oninput="updateSetTotal()"></div>
+      <div class="form-group" style="flex:1;margin-bottom:0;"><input type="number" class="form-input set-item-pages" min="1" style="padding:8px 10px;font-size:13px;" value="${isBlack?'15000':'8000'}" placeholder="页数" oninput="updateSetTotal()"></div>
+      <div style="display:flex;align-items:center;flex-shrink:0;"><button type="button" class="btn-icon delete" onclick="this.closest('.set-item-row').remove();updateSetTotal();" title="删除">&times;</button></div>
+    `;
+    container.appendChild(row);
+  };
+
+  window.addInk = function() {
+    const colorType = document.getElementById('iType').value;
+    const model = document.getElementById('iModel').value.trim();
+    const price = parseFloat(document.getElementById('iPrice').value) || 0;
+    if (!model || price <= 0) { toast('请填写完整信息'); return; }
+
+    if (colorType === 'set') {
+      const rows = document.querySelectorAll('#setItemsList .set-item-row');
+      const setItems = [];
+      let hasError = false;
+      rows.forEach(row => {
+        const name = row.querySelector('.set-item-select')?.value || '';
+        const count = parseInt(row.querySelector('.set-item-count').value) || 0;
+        const capacity = parseInt(row.querySelector('.set-item-capacity')?.value) || 0;
+        const estPages = parseInt(row.querySelector('.set-item-pages')?.value) || 0;
+        if (!name || count <= 0) hasError = true;
+        setItems.push({ colorName: name, count, capacity, estimatedPages: estPages });
+      });
+      if (hasError || setItems.length === 0) { toast('请填写完整的颜色名称和数量'); return; }
+      let totalPages = 0;
+      setItems.forEach(s => { totalPages += (s.count || 1) * (s.estimatedPages || 0); });
+      if (totalPages <= 0) { toast('套装总预计页数不能为0，请检查各颜色的数量和预计页数'); return; }
+      if (window._editingInkId) {
+        const i = data.inkStock.find(x => x.id === window._editingInkId);
+        if (i) {
+          i.colorType = 'set'; i.model = model; i.buyPrice = price;
+          i.estimatedPages = totalPages;
+          i.remainingPages = Math.max(0, totalPages - i.usedPages);
+          i.setItems = setItems;
+          i.note = document.getElementById('iNote').value;
+        }
+        window._editingInkId = null;
+        save(); renderContent(); closeModal('inkModal'); toast('墨水已更新');
+      } else {
+        data.inkStock.push({ id: uid(), colorType: 'set', model, buyPrice: price, isSet: true, estimatedPages: totalPages, usedPages: 0, remainingPages: totalPages, setItems, buyDate: new Date().toISOString().slice(0,10), note: document.getElementById('iNote').value });
+        save(); renderContent(); closeModal('inkModal'); toast('墨水添加成功');
+      }
+    } else {
+      const pages = parseInt(document.getElementById('iPages').value) || 0;
+      const capacity = parseInt(document.getElementById('iCapacity').value) || 0;
+      if (pages <= 0) { toast('请填写完整信息'); return; }
+      if (window._editingInkId) {
+        const i = data.inkStock.find(x => x.id === window._editingInkId);
+        if (i) {
+          i.colorType = colorType; i.model = model; i.buyPrice = price;
+          i.capacity = capacity; i.estimatedPages = pages;
+          i.remainingPages = Math.max(0, pages - i.usedPages);
+          i.isSet = false; i.setItems = undefined;
+          i.note = document.getElementById('iNote').value;
+        }
+        window._editingInkId = null;
+        save(); renderContent(); closeModal('inkModal'); toast('墨水已更新');
+      } else {
+        data.inkStock.push({ id: uid(), colorType, model, buyPrice: price, capacity, isSet: false, estimatedPages: pages, usedPages: 0, remainingPages: pages, buyDate: new Date().toISOString().slice(0,10), note: document.getElementById('iNote').value });
+        save(); renderContent(); closeModal('inkModal'); toast('墨水添加成功');
+      }
+    }
+  };
+  window.deleteInk = function(id) {
+    if (!confirm('确定删除该墨水记录？')) return;
+    data.inkStock = data.inkStock.filter(i => i.id !== id);
+    save(); renderContent(); toast('已删除');
+  };
+
+  // ===== Settings =====
+  window.saveSettings = function() {
+    data.settings.bwPrice = parseFloat(document.getElementById('sBwPrice').value) || 0;
+    data.settings.colorPrice = parseFloat(document.getElementById('sColorPrice').value) || 0;
+    data.settings.bwInkCostPerPage = parseFloat(document.getElementById('sBwCost').value) || 0;
+    data.settings.colorInkCostPerPage = parseFloat(document.getElementById('sColorCost').value) || 0;
+    if (!data.settings.salesPrices) data.settings.salesPrices = {};
+    data.settings.salesPrices.bw = data.settings.bwPrice;
+    data.settings.salesPrices.color = data.settings.colorPrice;
+    save(); renderContent(); toast('设置已保存');
+  };
+  window.saveCostOverride = function() {
+    data.settings.bwInkCostPerPage = parseFloat(document.getElementById('sBwCost').value) || 0;
+    data.settings.colorInkCostPerPage = parseFloat(document.getElementById('sColorCost').value) || 0;
+    save(); renderContent(); toast('成本修正已保存');
+  };
+
+  // Price panel edit toggle
+  let priceBackup = {};
+  window.togglePriceEdit = function(editing) {
+    const bwEl = document.getElementById('sBwPrice');
+    const colorEl = document.getElementById('sColorPrice');
+    const actionsEl = document.getElementById('priceActions');
+    if (editing === undefined) editing = bwEl.readOnly;
+    if (editing) {
+      // Enter edit mode
+      priceBackup = { bw: bwEl.value, color: colorEl.value };
+      bwEl.readOnly = false; bwEl.style.background = '';
+      colorEl.readOnly = false; colorEl.style.background = '';
+      bwEl.focus();
+      actionsEl.innerHTML = '<button class="btn-primary" onclick="saveSettings();togglePriceEdit(false);">保存</button> <button class="btn-secondary" onclick="cancelPriceEdit()">取消</button>';
+    } else {
+      // Exit edit mode
+      bwEl.readOnly = true; bwEl.style.background = 'var(--bg-hover)';
+      colorEl.readOnly = true; colorEl.style.background = 'var(--bg-hover)';
+      actionsEl.innerHTML = '<button class="btn-primary" onclick="togglePriceEdit()">修改</button>';
+    }
+  };
+  window.cancelPriceEdit = function() {
+    const bwEl = document.getElementById('sBwPrice');
+    const colorEl = document.getElementById('sColorPrice');
+    bwEl.value = priceBackup.bw || '';
+    colorEl.value = priceBackup.color || '';
+    togglePriceEdit(false);
+  };
+
+  // Cost panel edit toggle
+  let costBackup = {};
+  window.toggleCostPanelEdit = function(editing) {
+    const bwEl = document.getElementById('sBwCost');
+    const colorEl = document.getElementById('sColorCost');
+    const actionsEl = document.getElementById('costActions');
+    const bwRestore = document.getElementById('sBwCostRestore');
+    const colorRestore = document.getElementById('sColorCostRestore');
+    if (editing === undefined) editing = bwEl.readOnly;
+    if (editing) {
+      costBackup = { bw: bwEl.value, color: colorEl.value };
+      bwEl.readOnly = false; bwEl.style.background = '';
+      colorEl.readOnly = false; colorEl.style.background = '';
+      if (bwRestore) bwRestore.style.display = '';
+      if (colorRestore) colorRestore.style.display = '';
+      bwEl.focus();
+      actionsEl.innerHTML = '<button class="btn-primary" onclick="saveCostOverride();toggleCostPanelEdit(false);">保存</button> <button class="btn-secondary" onclick="cancelCostPanelEdit()">取消</button>';
+    } else {
+      bwEl.readOnly = true; bwEl.style.background = 'var(--bg-hover)';
+      colorEl.readOnly = true; colorEl.style.background = 'var(--bg-hover)';
+      if (bwRestore) bwRestore.style.display = 'none';
+      if (colorRestore) colorRestore.style.display = 'none';
+      actionsEl.innerHTML = '<button class="btn-primary" onclick="toggleCostPanelEdit()">修改</button>';
+    }
+  };
+  window.restoreBwCost = function() {
+    document.getElementById('sBwCost').value = calcInkCostPerPage('black');
+  };
+  window.restoreColorCost = function() {
+    document.getElementById('sColorCost').value = calcInkCostPerPage('color');
+  };
+  window.cancelCostPanelEdit = function() {
+    const bwEl = document.getElementById('sBwCost');
+    const colorEl = document.getElementById('sColorCost');
+    bwEl.value = costBackup.bw || '';
+    colorEl.value = costBackup.color || '';
+    toggleCostPanelEdit(false);
+  };
+
+  // Op cost edit toggle
+  let opCostBackup = {};
+  window.toggleOpCostEdit = function(editing) {
+    const fields = ['sElecPrice','sPrinterPrice','sPrinterLife','sPrinterWatt'];
+    const actionsEl = document.getElementById('opCostActions');
+    if (editing === undefined) editing = document.getElementById('sElecPrice').readOnly;
+    if (editing) {
+      opCostBackup = {};
+      fields.forEach(id => { opCostBackup[id] = document.getElementById(id).value; });
+      fields.forEach(id => { const el = document.getElementById(id); el.readOnly = false; el.style.background = ''; });
+      actionsEl.innerHTML = '<button class="btn-primary" onclick="saveOpCost();toggleOpCostEdit(false);">保存</button> <button class="btn-secondary" onclick="cancelOpCostEdit()">取消</button>';
+    } else {
+      fields.forEach(id => { const el = document.getElementById(id); el.readOnly = true; el.style.background = 'var(--bg-hover)'; });
+      actionsEl.innerHTML = '<button class="btn-primary" onclick="toggleOpCostEdit()">修改</button>';
+    }
+  };
+  window.cancelOpCostEdit = function() {
+    Object.keys(opCostBackup).forEach(id => { document.getElementById(id).value = opCostBackup[id]; });
+    toggleOpCostEdit(false);
+  };
+  window.saveOpCost = function() {
+    data.settings.elecPrice = parseFloat(document.getElementById('sElecPrice').value) || 0.538;
+    data.settings.printerPrice = parseFloat(document.getElementById('sPrinterPrice').value) || 2000;
+    data.settings.printerLife = parseInt(document.getElementById('sPrinterLife').value) || 3;
+    data.settings.printerWatt = parseInt(document.getElementById('sPrinterWatt').value) || 20;
+    save(); renderContent(); toast('运营成本已保存');
+  };
+  window.toggleOpCost = function() {
+    const checkbox = document.getElementById('opCostToggle');
+    if (checkbox.checked) {
+      // Opening - confirm
+      if (!confirm('开启后将把电费和打印机折旧计入每张打印成本，影响盈亏分析结果。确定开启？')) {
+        checkbox.checked = false;
+        return;
+      }
+      data.settings.opCostEnabled = true;
+      save(); renderContent(); toast('运营成本已启用，已计入成本分析');
+    } else {
+      data.settings.opCostEnabled = false;
+      save(); renderContent(); toast('运营成本已关闭');
+    }
+  };
+
+  window.resetData = function() {
+    if (!confirm('确定重置所有数据？此操作不可恢复！')) return;
+    data = getDefaultData();
+    save(); renderContent(); toast('数据已重置');
+  };
+  window.exportData = function() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'print-manager-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click(); URL.revokeObjectURL(a.href);
+    toast('数据已导出');
+  };
+  window.importData = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = function() {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported || typeof imported !== 'object') throw new Error('格式错误');
+          if (!confirm('导入将覆盖当前所有数据，确定继续？')) return;
+          data = imported;
+          save();
+          renderContent();
+          toast('数据导入成功');
+        } catch (err) {
+          toast('导入失败：文件格式不正确');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  // ===== Init =====
+  renderContent();
+})();
+</script>
+</body>
+</html>
