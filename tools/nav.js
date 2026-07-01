@@ -12,7 +12,8 @@
     { name: '密码生成器', href: './password-gen.html' },
     { name: 'IP形象生成器', href: './ip-mascot.html' },
     { name: '3D耗材管理', href: './filament-manager.html' },
-    { name: '音标速查', href: './phonetic-chart.html' }
+    { name: '音标速查', href: './phonetic-chart.html' },
+    { name: '打印管理器', href: './print-manager.html' }
   ];
 
   function getCurrentFile() {
