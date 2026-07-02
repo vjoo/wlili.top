@@ -1926,38 +1926,77 @@
     };
 
     // ============================================
+    // 局域网同步存储层
+    // ============================================
+
+    const _syncStorage = {
+        _cache: {},
+        _syncMode: false,
+        async init() {
+            try {
+                const res = await fetch('/api/health');
+                if (res.ok) {
+                    const info = await res.json();
+                    if (info.mode === 'sync') {
+                        this._syncMode = true;
+                        const dataRes = await fetch('/api/data');
+                        if (dataRes.ok) {
+                            this._cache = await dataRes.json() || {};
+                        }
+                        console.log('[Sync] 已连接同步服务器');
+                    }
+                }
+            } catch(e) { this._syncMode = false; }
+        },
+        getItem(key) {
+            if (this._syncMode) return this._cache[key] !== undefined ? this._cache[key] : null;
+            return localStorage.getItem(key);
+        },
+        setItem(key, value) {
+            if (this._syncMode) {
+                this._cache[key] = value;
+                fetch('/api/data', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this._cache) }).catch(() => {});
+                return;
+            }
+            localStorage.setItem(key, value);
+        },
+        removeItem(key) {
+            if (this._syncMode) {
+                delete this._cache[key];
+                fetch('/api/data/' + key, { method: 'DELETE' }).catch(() => {});
+                return;
+            }
+            localStorage.removeItem(key);
+        },
+        isSyncMode() { return this._syncMode; }
+    };
+
+    // ============================================
     // 二、存储服务层
     // ============================================
 
     const StorageService = {
-        // 保存耗材数据
         saveFilaments(data) {
-            localStorage.setItem(STORAGE_KEYS.filaments, JSON.stringify(data));
+            _syncStorage.setItem(STORAGE_KEYS.filaments, JSON.stringify(data));
         },
-        // 加载耗材数据
         loadFilaments() {
-            const data = localStorage.getItem(STORAGE_KEYS.filaments);
+            const data = _syncStorage.getItem(STORAGE_KEYS.filaments);
             return data ? JSON.parse(data) : [];
         },
-        // 保存预设数据
         savePresets(data) {
-            localStorage.setItem(STORAGE_KEYS.presets, JSON.stringify(data));
+            _syncStorage.setItem(STORAGE_KEYS.presets, JSON.stringify(data));
         },
-        // 加载预设数据
         loadPresets() {
-            const data = localStorage.getItem(STORAGE_KEYS.presets);
+            const data = _syncStorage.getItem(STORAGE_KEYS.presets);
             return data ? JSON.parse(data) : [];
         },
-        // 保存知识库数据
         saveKnowledge(data) {
-            localStorage.setItem(STORAGE_KEYS.knowledge, JSON.stringify(data));
+            _syncStorage.setItem(STORAGE_KEYS.knowledge, JSON.stringify(data));
         },
-        // 加载知识库数据
         loadKnowledge() {
-            const data = localStorage.getItem(STORAGE_KEYS.knowledge);
+            const data = _syncStorage.getItem(STORAGE_KEYS.knowledge);
             return data ? JSON.parse(data) : [];
         },
-        // 导出所有数据
         exportAll() {
             return {
                 filaments: this.loadFilaments(),
@@ -1965,18 +2004,16 @@
                 knowledge: this.loadKnowledge()
             };
         },
-        // 导入所有数据（覆盖）
         importAll(data) {
             if (data.filaments) this.saveFilaments(data.filaments);
             if (data.presets) this.savePresets(data.presets);
             if (data.knowledge) this.saveKnowledge(data.knowledge);
         },
-        // 清空所有数据
         clearAll() {
-            localStorage.removeItem(STORAGE_KEYS.filaments);
-            localStorage.removeItem(STORAGE_KEYS.presets);
-            localStorage.removeItem(STORAGE_KEYS.knowledge);
-            localStorage.removeItem('bambu_data_version');
+            _syncStorage.removeItem(STORAGE_KEYS.filaments);
+            _syncStorage.removeItem(STORAGE_KEYS.presets);
+            _syncStorage.removeItem(STORAGE_KEYS.knowledge);
+            _syncStorage.removeItem('bambu_data_version');
         }
     };
 
@@ -2472,10 +2509,10 @@
 
             // 数据版本检测：如果版本不匹配，清空旧数据
             const currentVersion = 'v10-netweight';
-            const storedVersion = localStorage.getItem('bambu_data_version');
+            const storedVersion = _syncStorage.getItem('bambu_data_version');
             if (storedVersion !== currentVersion) {
                 StorageService.clearAll();
-                localStorage.setItem('bambu_data_version', currentVersion);
+                _syncStorage.setItem('bambu_data_version', currentVersion);
                 filaments = [];
                 presets = [];
                 knowledge = [];
@@ -4207,7 +4244,6 @@
                         <div style="display:flex;gap:10px;flex-wrap:wrap;">
                             <button class="btn-secondary" onclick="app.exportData()">导出数据</button>
                             <button class="btn-secondary" onclick="document.getElementById('importInput').click()">导入数据</button>
-                            <input type="file" id="importInput" accept=".json" style="display:none" onchange="app.importData(event)">
                             <button class="btn-danger" onclick="app.clearAllData()">清空所有数据</button>
                             <button class="btn-secondary" onclick="app.loadSampleData()">载入示例数据</button>
                         </div>
@@ -5463,9 +5499,10 @@
     // ============================================
     // 初始化
     // ============================================
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         // Bridge for nav.js hamburger button
         window.toggleSidebar = function() { app.toggleSidebar(); };
+        await _syncStorage.init();
         app.init();
     });
     </script>
