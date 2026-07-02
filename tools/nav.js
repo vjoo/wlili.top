@@ -40,10 +40,15 @@
 
     return `<nav style="background:#f5f5f7;height:48px;position:sticky;top:0;z-index:1000;border-bottom:1px solid #e8e8ed;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue','PingFang SC',sans-serif;">
   <div style="width:100%;padding:0 22px;height:100%;display:flex;align-items:center;justify-content:space-between;">
-    <a href="./index.html" style="color:#2B3041;font-size:17px;font-weight:600;letter-spacing:-0.01em;text-decoration:none;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <div style="width:32px;height:32px;background:#2B3041;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">W.</div>
-      Studio Tools
-    </a>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="window.toggleSidebar && window.toggleSidebar()" aria-label="菜单">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <a href="./index.html" style="color:#2B3041;font-size:17px;font-weight:600;letter-spacing:-0.01em;text-decoration:none;display:flex;align-items:center;gap:10px;">
+        <div style="width:32px;height:32px;background:#2B3041;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">W.</div>
+        Studio Tools
+      </a>
+    </div>
     <div style="display:flex;gap:24px;align-items:center;flex-shrink:0;margin-left:24px;padding-right:10px;">
       <a href="../index.html" style="color:#2B3041;font-size:14px;text-decoration:none;transition:opacity 0.3s;white-space:nowrap;${homeStyle}">Studio</a>
       <a href="./index.html" style="color:#2B3041;font-size:14px;text-decoration:none;transition:opacity 0.3s;white-space:nowrap;${toolsHomeStyle}">Tools</a>

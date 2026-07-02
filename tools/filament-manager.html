@@ -1048,30 +1048,8 @@
             opacity: 1;
         }
 
-        /* 平板端（<= 1024px） */
-        @media (max-width: 1024px) {
-            .dashboard-stats-row {
-                gap: 12px;
-            }
-            .dashboard-stats-row .stat-card {
-                padding: 16px;
-            }
-            .stat-card-value {
-                font-size: 20px;
-            }
-            .dashboard-pair-row {
-                gap: 12px;
-            }
-            .dashboard-rank-row {
-                gap: 12px;
-            }
-            .dash-card {
-                padding: 16px;
-            }
-        }
-
-        /* 移动端（<= 768px） */
-        @media (max-width: 768px) {
+        /* 移动端/平板（<= 900px） */
+        @media (max-width: 900px) {
             /* 侧边栏变为抽屉式 */
             .sidebar {
                 transform: translateX(-100%);
@@ -1086,6 +1064,20 @@
             }
             .mobile-menu-btn {
                 display: flex;
+            }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 99;
+            }
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .stat-card-value {
+                font-size: 20px;
             }
 
             /* 顶部栏调整 */
@@ -1153,15 +1145,25 @@
             .dashboard-stats-row {
                 flex-wrap: wrap;
                 gap: 10px;
+                flex-direction: column;
             }
             .dashboard-stats-row .stat-card {
-                flex: 1 1 calc(50% - 5px);
-                min-width: 140px;
+                flex: 1 1 100%;
+                min-width: 0;
                 padding: 16px;
             }
             .dashboard-pair-row {
-                flex-direction: column;
-                gap: 12px;
+                display: flex;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            .dashboard-pair-row .dash-card {
+                height: auto;
+                min-height: 160px;
+            }
+            .dash-card {
+                padding: 16px;
+                overflow-x: auto;
             }
             .dashboard-rank-row {
                 flex-direction: column;
@@ -5436,6 +5438,8 @@
     // 初始化
     // ============================================
     document.addEventListener('DOMContentLoaded', () => {
+        // Bridge for nav.js hamburger button
+        window.toggleSidebar = function() { app.toggleSidebar(); };
         app.init();
     });
     </script>
