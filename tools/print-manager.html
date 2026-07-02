@@ -628,10 +628,6 @@ body {
       </div>
     </nav>
     <div class="sidebar-footer">
-      <div class="sf-btns">
-        <button class="sf-btn" onclick="importData()">导入</button>
-        <button class="sf-btn" onclick="exportData()">导出</button>
-      </div>
       <div class="sf-copy">© 2025 WLi</div>
     </div>
   </aside>
@@ -768,7 +764,7 @@ body {
   }
   function getDefaultData() {
     return {
-      settings: { bwPrice: 0, colorPrice: 0, bwInkCostPerPage: 0.015, colorInkCostPerPage: 0.08 },
+      settings: { bwPrice: 0, colorPrice: 0, bwInkCostPerPage: 0, colorInkCostPerPage: 0 },
       paperStock: [], inkStock: [], records: []
     };
   }
@@ -847,10 +843,10 @@ body {
     }
 
     // Operating costs: electricity + printer depreciation
-    const elecPrice = (data.settings.elecPrice || 0.538); // 元/度，默认杭州第一档
-    const printerPrice = (data.settings.printerPrice || 2000); // 打印机购入价
-    const printerLife = (data.settings.printerLife || 3); // 折旧年限
-    const printerWatt = (data.settings.printerWatt || 20); // 打印功率W
+    const elecPrice = data.settings.elecPrice ?? 0;
+    const printerPrice = data.settings.printerPrice ?? 0;
+    const printerLife = data.settings.printerLife ?? 0;
+    const printerWatt = data.settings.printerWatt ?? 0;
     // Calculate monthly average pages from all records
     let monthlyAvg = 0;
     if (data.records.length > 0) {
@@ -1548,8 +1544,54 @@ body {
       <div class="panel-body">
         ${renderProfitAnalysis(costs)}
       </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div><div class="panel-title">数据管理</div><div class="panel-subtitle">导入导出备份、清空数据</div></div></div>
+      <div class="panel-body">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-secondary" onclick="exportData()">导出数据</button>
+          <button class="btn-secondary" onclick="document.getElementById('importFile').click()">导入数据</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+          <button class="btn-danger" onclick="resetAllData()">清空所有数据</button>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text-muted);">导出为 JSON 文件备份，导入时覆盖当前数据。清空后不可恢复。</div>
+      </div>
     </div>`;
   }
+
+  window.exportData = function() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'print-manager-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('数据已导出');
+  };
+
+  window.importData = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (!imported.paperStock && !imported.records && !imported.settings) { toast('文件格式不正确'); return; }
+        data = { ...getDefaultData(), ...imported };
+        save(); renderContent(); toast('数据已导入');
+      } catch(err) { toast('导入失败：文件格式错误'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  window.resetAllData = function() {
+    if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
+    data = getDefaultData();
+    save(); renderContent(); toast('数据已清空');
+  };
 
   function initSettingsForm() {
     const bwPriceEl = document.getElementById('sBwPrice');
@@ -1560,8 +1602,8 @@ body {
     colorPriceEl.readOnly = true; colorPriceEl.style.background = 'var(--bg-hover)';
     const bwEl = document.getElementById('sBwCost');
     const colorEl = document.getElementById('sColorCost');
-    bwEl.value = data.settings.bwInkCostPerPage;
-    colorEl.value = data.settings.colorInkCostPerPage;
+    bwEl.value = data.settings.bwInkCostPerPage || '';
+    colorEl.value = data.settings.colorInkCostPerPage || '';
     bwEl.readOnly = true; bwEl.style.background = 'var(--bg-hover)';
     colorEl.readOnly = true; colorEl.style.background = 'var(--bg-hover)';
     // Op cost fields
@@ -1569,10 +1611,10 @@ body {
     const ppEl = document.getElementById('sPrinterPrice');
     const plEl = document.getElementById('sPrinterLife');
     const pwEl = document.getElementById('sPrinterWatt');
-    if (epEl) { epEl.value = data.settings.elecPrice || 0.538; epEl.readOnly = true; epEl.style.background = 'var(--bg-hover)'; }
-    if (ppEl) { ppEl.value = data.settings.printerPrice || 2000; ppEl.readOnly = true; ppEl.style.background = 'var(--bg-hover)'; }
-    if (plEl) { plEl.value = data.settings.printerLife || 3; plEl.readOnly = true; plEl.style.background = 'var(--bg-hover)'; }
-    if (pwEl) { pwEl.value = data.settings.printerWatt || 20; pwEl.readOnly = true; pwEl.style.background = 'var(--bg-hover)'; }
+    if (epEl) { epEl.value = data.settings.elecPrice || ''; epEl.readOnly = true; epEl.style.background = 'var(--bg-hover)'; }
+    if (ppEl) { ppEl.value = data.settings.printerPrice || ''; ppEl.readOnly = true; ppEl.style.background = 'var(--bg-hover)'; }
+    if (plEl) { plEl.value = data.settings.printerLife || ''; ppEl.readOnly = true; ppEl.style.background = 'var(--bg-hover)'; }
+    if (pwEl) { pwEl.value = data.settings.printerWatt || ''; pwEl.readOnly = true; pwEl.style.background = 'var(--bg-hover)'; }
   }
   window.toggleCostEdit = function(inputId, btn) {
     const el = document.getElementById(inputId);
@@ -2323,10 +2365,10 @@ body {
     toggleOpCostEdit(false);
   };
   window.saveOpCost = function() {
-    data.settings.elecPrice = parseFloat(document.getElementById('sElecPrice').value) || 0.538;
-    data.settings.printerPrice = parseFloat(document.getElementById('sPrinterPrice').value) || 2000;
-    data.settings.printerLife = parseInt(document.getElementById('sPrinterLife').value) || 3;
-    data.settings.printerWatt = parseInt(document.getElementById('sPrinterWatt').value) || 20;
+    data.settings.elecPrice = parseFloat(document.getElementById('sElecPrice').value) || 0;
+    data.settings.printerPrice = parseFloat(document.getElementById('sPrinterPrice').value) || 0;
+    data.settings.printerLife = parseInt(document.getElementById('sPrinterLife').value) || 0;
+    data.settings.printerWatt = parseInt(document.getElementById('sPrinterWatt').value) || 0;
     save(); renderContent(); toast('运营成本已保存');
   };
   window.toggleOpCost = function() {
