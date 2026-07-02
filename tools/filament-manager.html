@@ -4975,16 +4975,7 @@
         },
 
         renderDashboardModule() {
-            const filaments = this.data.filaments;
-            if (!filaments || filaments.length === 0) {
-                return `
-                <div class="dashboard-dark">
-                    <div class="dashboard-empty">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                        <p>暂无耗材数据，请先添加耗材后再查看统计</p>
-                    </div>
-                </div>`;
-            }
+            const filaments = this.data.filaments || [];
 
             // 计算统计数据
             const totalCost = filaments.reduce((s, f) => s + (parseFloat(f.price) || 0), 0);
