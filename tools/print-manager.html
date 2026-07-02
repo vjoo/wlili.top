@@ -720,7 +720,7 @@ body {
           <div class="seg-control"><button type="button" class="seg-btn" data-val="bw" onclick="setReColor(this)">黑白</button><button type="button" class="seg-btn" data-val="color" onclick="setReColor(this)">彩色</button></div>
         </div>
         <div class="form-group"><label class="form-label">单价 (元/页)</label><input type="number" class="form-input" id="reUnitPrice" step="0.01" min="0"></div>
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">客户</label><input type="text" class="form-input" id="reCustomer" placeholder="订单客户名"></div>
+        <div class="form-group"><label class="form-label">订单总价 (元)</label><input type="number" class="form-input" id="reTotalPrice" step="0.01" min="0" placeholder="有总价时优先使用"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">备注</label><input type="text" class="form-input" id="reNote" placeholder="可选"></div>
       </div>
     </div>
@@ -1299,30 +1299,30 @@ body {
       <div class="panel">
         <div class="panel-body">
           <form id="ledgerForm" onsubmit="return addRecord(event)">
-            <div class="form-row" id="customerPriceRow">
-              <div class="form-group"><label class="form-label">客户名称</label><input type="text" class="form-input" id="rCustomer" placeholder="客户姓名或备注"></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">类型</label>
+                <div class="radio-group">
+                  <label class="radio-label" id="radioSelf" onclick="setRecType('self')">
+                    <input type="radio" name="recType" value="self"> 自用
+                  </label>
+                  <label class="radio-label active" id="radioOrder" onclick="setRecType('order')">
+                    <input type="radio" name="recType" value="order" checked> 订单
+                  </label>
+                </div>
+              </div>
+              <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="rDate" required></div>
+              <div class="form-group"><label class="form-label">单双面</label>
+                <div class="seg-control"><button type="button" class="seg-btn active" data-val="single" onclick="setDuplex(this)">单面</button><button type="button" class="seg-btn" data-val="duplex" onclick="setDuplex(this)">双面</button></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" id="totalPriceGroup"><label class="form-label">订单总价 (元)</label><input type="number" class="form-input" id="rTotalPrice" step="0.01" min="0" placeholder="输入总价自动算页数"></div>
+              <div class="form-group"><label class="form-label">页数</label><input type="number" class="form-input" id="rPages" min="1" value="1" required></div>
               <div class="form-group"><label class="form-label">单价 (元/页)</label>
                 <div style="display:flex;gap:8px;align-items:center;">
                   <input type="number" class="form-input" id="rUnitPrice" step="0.01" min="0" placeholder="0.50" readonly style="background:var(--bg-hover);color:var(--text-primary);">
                   <button type="button" class="btn-secondary" id="editPriceBtn" onclick="toggleEditUnitPrice()" style="white-space:nowrap;padding:8px 14px;font-size:13px;height:38px;">修改</button>
                 </div>
-              </div>
-              <div class="form-group"><label class="form-label">类型</label>
-                <div class="radio-group">
-                  <label class="radio-label active" id="radioSelf" onclick="setRecType('self')">
-                    <input type="radio" name="recType" value="self" checked> 自用
-                  </label>
-                  <label class="radio-label" id="radioOrder" onclick="setRecType('order')">
-                    <input type="radio" name="recType" value="order"> 订单
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="rDate" required></div>
-              <div class="form-group"><label class="form-label">页数</label><input type="number" class="form-input" id="rPages" min="1" value="1" required></div>
-              <div class="form-group"><label class="form-label">单双面</label>
-                <div class="seg-control"><button type="button" class="seg-btn active" data-val="single" onclick="setDuplex(this)">单面</button><button type="button" class="seg-btn" data-val="duplex" onclick="setDuplex(this)">双面</button></div>
               </div>
             </div>
             <div class="form-row">
@@ -1343,7 +1343,7 @@ body {
     const recordsTableHTML = list.length ? `
       <table class="data-table">
         <thead><tr>
-          <th style="width:100px;">日期</th><th style="width:60px;">类型</th><th style="width:100px;">客户</th><th style="width:50px;">页数</th><th style="width:60px;">单双面</th><th style="width:60px;">颜色</th><th style="width:120px;">纸张</th>
+          <th style="width:100px;">日期</th><th style="width:60px;">类型</th><th style="width:50px;">页数</th><th style="width:60px;">单双面</th><th style="width:60px;">颜色</th><th style="width:120px;">纸张</th>
           <th class="text-right" style="width:90px;">纸张成本</th><th class="text-right" style="width:90px;">墨水成本</th><th class="text-right" style="width:90px;">收入</th><th class="text-right" style="width:90px;">利润</th>
           <th style="width:80px;"></th>
         </tr></thead>
@@ -1582,7 +1582,6 @@ body {
       <tr>
         <td>${r.date}</td>
         <td><span class="badge badge-${r.type==='order'?'green':'gray'}">${r.type==='order'?'订单':'自用'}</span></td>
-        <td>${r.type==='order'?r.customer:'—'}</td>
         <td class="text-mono">${r.pages}</td>
         <td>${r.duplex==='duplex'?'双面':'单面'}</td>
         <td>${r.colorMode==='bw'?'黑白':'彩色'}</td>
@@ -1616,15 +1615,29 @@ body {
   }
 
   // ===== Ledger Form Logic =====
-  let recType = 'self', duplex = 'single', colorMode = 'bw';
+  let recType = 'order', duplex = 'single', colorMode = 'bw';
   window.setRecType = function(val) {
     recType = val;
     document.getElementById('radioSelf').classList.toggle('active', val === 'self');
     document.getElementById('radioOrder').classList.toggle('active', val === 'order');
     document.querySelector('input[name="recType"][value="self"]').checked = val === 'self';
     document.querySelector('input[name="recType"][value="order"]').checked = val === 'order';
-    const cusEl = document.getElementById('rCustomer');
-    if (val === 'order' && cusEl && !cusEl.value.trim()) cusEl.value = '邻居';
+    // Toggle total price field
+    const tpEl = document.getElementById('rTotalPrice');
+    if (tpEl) {
+      if (val === 'order') {
+        tpEl.disabled = false;
+        tpEl.style.background = '';
+        tpEl.style.color = 'var(--text-primary)';
+        tpEl.setAttribute('required', '');
+      } else {
+        tpEl.disabled = true;
+        tpEl.value = '';
+        tpEl.style.background = 'var(--bg-hover)';
+        tpEl.style.color = 'var(--text-muted)';
+        tpEl.removeAttribute('required');
+      }
+    }
     updateCostPreview();
   };
   window.setDuplex = function(btn) {
@@ -1681,7 +1694,18 @@ body {
     refreshPaperSelect();
     document.getElementById('rPages').addEventListener('input', updateCostPreview);
     document.getElementById('rPaper').addEventListener('change', updateCostPreview);
-    document.getElementById('rCustomer').value = '邻居';
+    // Total price input: auto-calculate pages from totalPrice / unitPrice
+    document.getElementById('rTotalPrice').addEventListener('input', function() {
+      const totalPrice = parseFloat(this.value) || 0;
+      const unitPrice = parseFloat(document.getElementById('rUnitPrice').value) || 0;
+      const pagesEl = document.getElementById('rPages');
+      if (totalPrice > 0 && unitPrice > 0) {
+        pagesEl.value = Math.round(totalPrice / unitPrice) || 1;
+      }
+      updateCostPreview();
+    });
+    // Initialize form state as order mode
+    setRecType('order');
     const upEl = document.getElementById('rUnitPrice');
     if (upEl) {
       upEl.readOnly = true;
@@ -1691,7 +1715,7 @@ body {
     }
     const editBtn = document.getElementById('editPriceBtn');
     if (editBtn) editBtn.textContent = '修改';
-    setRecType('self');
+    setRecType('order');
   }
 
   window.switchLedgerTab = function(name) {
@@ -1726,13 +1750,20 @@ body {
     const paperCost = (paper.buyPrice / paper.totalSheets) * sheets;
     const inkCost = (colorMode==='bw'?data.settings.bwInkCostPerPage:data.settings.colorInkCostPerPage) * pages;
     let revenue = 0;
-    if (recType === 'order') revenue = (parseFloat(document.getElementById('rUnitPrice').value) || 0) * pages;
+    let totalPrice = 0;
+    if (recType === 'order') {
+      totalPrice = parseFloat(document.getElementById('rTotalPrice').value) || 0;
+      // If total price entered, use it; otherwise fallback to unitPrice × pages
+      const unitPrice = parseFloat(document.getElementById('rUnitPrice').value) || 0;
+      revenue = totalPrice > 0 ? totalPrice : unitPrice * pages;
+    }
 
     const record = {
       id: uid(), date, type: recType,
-      customer: recType==='order' ? (document.getElementById('rCustomer').value.trim() || '匿名客户') : '',
+      customer: '',
       pages, duplex, colorMode, paperId,
       unitPrice: recType==='order'?(parseFloat(document.getElementById('rUnitPrice').value)||0):0,
+      totalPrice: recType==='order' ? totalPrice : 0,
       revenue, paperCost, inkCost, profit: revenue - paperCost - inkCost,
       note: document.getElementById('rNote').value
     };
@@ -1768,7 +1799,7 @@ body {
     document.getElementById('reDate').value = r.date || '';
     document.getElementById('rePages').value = r.pages || 1;
     document.getElementById('reUnitPrice').value = r.unitPrice || 0;
-    document.getElementById('reCustomer').value = r.customer || '';
+    document.getElementById('reTotalPrice').value = r.totalPrice || 0;
     document.getElementById('reNote').value = r.note || '';
     _editRecordType = r.type || 'self';
     _editRecordDuplex = r.duplex || 'single';
@@ -1792,7 +1823,7 @@ body {
     r.date = document.getElementById('reDate').value;
     r.pages = parseInt(document.getElementById('rePages').value) || 1;
     r.unitPrice = parseFloat(document.getElementById('reUnitPrice').value) || 0;
-    r.customer = document.getElementById('reCustomer').value;
+    r.totalPrice = parseFloat(document.getElementById('reTotalPrice').value) || 0;
     r.note = document.getElementById('reNote').value;
     r.type = _editRecordType;
     r.duplex = _editRecordDuplex;
@@ -1802,7 +1833,7 @@ body {
     const paperCost = r.pages * perPage * (data.paperStock.length ? (data.paperStock[0].buyPrice / data.paperStock[0].totalSheets) : 0);
     r.paperCost = paperCost;
     r.inkCost = inkCost;
-    r.revenue = r.type === 'order' ? (r.pages * perPage * r.unitPrice) : 0;
+    r.revenue = r.type === 'order' ? (r.totalPrice > 0 ? r.totalPrice : r.pages * perPage * r.unitPrice) : 0;
     r.profit = r.revenue - paperCost - inkCost;
     save(); renderContent(); closeModal('recordModal'); switchLedgerTab('list'); toast('记录已更新');
   };
