@@ -134,8 +134,10 @@ body {
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 48px);
+  min-width: 0;
+  overflow: hidden;
 }
-.content-area { flex: 1; padding: 20px 24px; }
+.content-area { flex: 1; padding: 20px 24px; min-width: 0; overflow-wrap: break-word; word-break: break-word; }
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 .page-title { font-size: 20px; font-weight: 700; }
 
@@ -205,10 +207,6 @@ body {
   margin-bottom: 20px;
   transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
-.panel:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
-  transform: translateY(-1px);
-}
 .panel-static,
 .panel-static:hover {
   box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
@@ -269,7 +267,9 @@ body {
 .stat-box-delta.down { color: var(--danger-color); }
 
 /* ===== Table ===== */
-.data-table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+.table-scroll-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; position: relative; }
+.table-scroll-wrap .data-table { min-width: 700px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: auto; }
 .data-table th {
   background: var(--bg-secondary);
   padding: 12px 16px;
@@ -288,10 +288,167 @@ body {
   font-size: 14px;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
+  white-space: nowrap;
 }
 .data-table tr:last-child td { border-bottom: none; }
 .data-table td { transition: background 0.15s ease; }
 .data-table tbody tr:hover td { background: #f5f5f5; }
+
+/* ===== 操作列固定右侧（桌面端表格滚动时始终可见） ===== */
+.data-table th:last-child,
+.data-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+  background-clip: padding-box;
+}
+.data-table th:last-child {
+  background: var(--bg-secondary);
+  z-index: 3;
+  box-shadow: 8px 6px 20px 0px #999999;
+}
+.data-table td:last-child {
+  box-shadow: 0px 19px 20px 0px #9999998f;
+  display: block;
+  padding: 12px 16px;
+  min-height: 48px;
+}
+.data-table tbody tr:hover td:last-child {
+  background: #f5f5f5;
+}
+
+/* 响应式卡片模式下取消 sticky */
+@media (max-width: 768px) {
+  .responsive-table th:last-child,
+  .responsive-table td:last-child {
+    position: static;
+    background: transparent;
+    box-shadow: none;
+  }
+  .responsive-table tbody tr:hover td:last-child {
+    background: transparent;
+  }
+}
+
+/* ===== Mobile: Table → Card Layout ===== */
+@media (max-width: 768px) {
+  /* 只为有 responsive-table 类的表格启用卡片模式 */
+  .responsive-table,
+  .responsive-table thead,
+  .responsive-table tbody,
+  .responsive-table th,
+  .responsive-table td,
+  .responsive-table tr {
+    display: block;
+  }
+  /* 隐藏表头 */
+  .responsive-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+  /* 卡片容器 */
+  .responsive-table tbody tr {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: 10px;
+    padding: 6px 0;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s;
+  }
+  .responsive-table tbody tr:hover {
+    box-shadow: var(--shadow-md);
+  }
+  /* 每个单元格 */
+  .responsive-table td {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 14px;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    text-align: left;
+    gap: 12px;
+    min-height: 36px;
+    white-space: normal;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  /* 桌面端 hover 在卡片模式下的残留 */
+  .responsive-table tr:hover td {
+    background: transparent;
+  }
+  /* 卡片模式下每行都需要描边，覆盖 tr:last-child td 的去线 */
+  .responsive-table tr:last-child td {
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .responsive-table tr:last-child td:last-child {
+    border-bottom: none;
+  }
+  .responsive-table td:last-child {
+    padding-top: 8px;
+    padding-bottom: 10px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-hover);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+  /* data-label 作为左侧标签 */
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  /* 操作按钮行特殊处理 */
+  .responsive-table td:last-child::before {
+    display: none;
+  }
+  .responsive-table td:last-child {
+    justify-content: flex-end;
+  }
+  /* 金额类右对齐保持 */
+  .responsive-table td.text-right {
+    justify-content: space-between;
+  }
+  /* badge 在卡片中变小 */
+  .responsive-table .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+  /* 纸张+墨水信息紧凑显示 */
+  .responsive-table td .text-mono {
+    font-size: 12px;
+  }
+  /* 移除表格滚动包裹的 min-width 限制 */
+  .table-scroll-wrap .responsive-table {
+    min-width: unset;
+  }
+  /* 操作按钮容器 */
+  .responsive-table .btn-icon {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* 小屏进一步优化 */
+@media (max-width: 480px) {
+  .responsive-table td {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .responsive-table td::before {
+    font-size: 10px;
+    max-width: 70px;
+  }
+}
 
 /* ===== Form ===== */
 .form-grid {
@@ -586,22 +743,66 @@ body {
   .main-content { margin-left: 0; }
   .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 99; }
   .sidebar-overlay.active { display: block; }
+  #mobileMenuBtn { display: flex !important; }
   .mobile-menu-btn { display: flex !important; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .form-grid { grid-template-columns: repeat(2, 1fr); }
-  .record-row { grid-template-columns: auto 1fr auto; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .form-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .record-row { grid-template-columns: auto 1fr auto; gap: 8px; padding: 10px 12px; }
+  .record-title { font-size: 13px; }
+  .record-meta { font-size: 11px; gap: 6px; }
   .stock-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  .overview-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .overview-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
   .overview-grid > div[style*="grid-column"] { grid-column: auto !important; grid-row: auto !important; }
   .overview-grid > div.overview-wide { grid-column: 1 / -1 !important; }
+  .content-area { padding: 14px; }
 }
 @media (max-width: 600px) {
-  .stats-grid { grid-template-columns: 1fr; }
-  .form-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+  .form-grid { grid-template-columns: 1fr; gap: 12px; }
   .form-row { flex-direction: column; gap: 12px; }
-  .content-area { padding: 16px; }
-  .chart-wrap { height: 120px; }
+  .form-row .form-group { min-width: 100%; }
+  .content-area { padding: 12px; }
+  .page-header { margin-bottom: 14px; }
+  .page-title { font-size: 18px; }
+  .chart-wrap { height: 120px; padding: 10px 0 20px; }
   .stock-grid { grid-template-columns: 1fr !important; }
+  .data-table { font-size: 12px; }
+  .data-table th, .data-table td { padding: 8px 6px; }
+  .table-scroll-wrap { margin: 0 -12px; padding: 0 12px; }
+  /* panel 内边距优化 */
+  .panel-header { padding: 12px 14px; }
+  .panel-body { padding: 12px 14px; }
+  .panel-title { font-size: 15px; }
+  /* 表单行弹性布局优化 */
+  .set-item-row, .pack-item-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .set-item-row .form-group,
+  .pack-item-row .form-group {
+    min-width: 80px;
+  }
+  /* overview grid 全部单列 */
+  .overview-grid > div {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+  }
+  /* 弹窗适配 */
+  .modal-overlay { padding: 12px; align-items: flex-end; }
+  .modal { max-width: 100%; max-height: 90vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .modal-header { padding: 14px 16px; }
+  .modal-body { padding: 14px; }
+  .modal-footer { padding: 12px 16px; flex-wrap: wrap; }
+  .modal-footer .btn-primary,
+  .modal-footer .btn-secondary { flex: 1; min-width: 80px; justify-content: center; }
+  /* 单选按钮组 */
+  .radio-group { gap: 8px; }
+  .radio-label { padding: 8px 12px; font-size: 13px; }
+  /* 分段控制器 */
+  .seg-btn { font-size: 12px; padding: 6px 4px; }
+  /* sub-tabs */
+  .sub-tabs { width: 100%; }
+  .sub-tab { flex: 1; text-align: center; padding: 7px 10px; font-size: 12px; }
 }
 .mobile-menu-btn { display: none; width: 36px; height: 36px; border: none; background: transparent; border-radius: var(--radius-md); cursor: pointer; align-items: center; justify-content: center; color: var(--text-secondary); flex-shrink: 0; }
 .mobile-menu-btn:hover { background: var(--bg-hover); }
@@ -1123,16 +1324,16 @@ body {
       }).join('')}
     </div>`;
 
-    const tableHTML = `<table class="data-table">
+    const tableHTML = `<div class="table-scroll-wrap"><table class="data-table responsive-table">
       <thead><tr><th>月份</th><th>收入</th><th>成本</th><th>利润</th><th>打印页</th><th>订单数</th></tr></thead>
       <tbody>${labels.map((label,i) => {
         const v = values[i];
-        return `<tr><td>${label}</td><td class="text-mono">${fmtMoney(v.revenue)}</td><td class="text-mono">${fmtMoney(v.cost)}</td><td class="text-mono" style="${v.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${fmtMoney(v.profit)}</td><td class="text-mono">${fmtNum(v.pages)}</td><td>${v.orders}</td></tr>`;
+        return `<tr><td data-label="月份">${label}</td><td data-label="收入" class="text-mono">${fmtMoney(v.revenue)}</td><td data-label="成本" class="text-mono">${fmtMoney(v.cost)}</td><td data-label="利润" class="text-mono" style="${v.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${fmtMoney(v.profit)}</td><td data-label="打印页" class="text-mono">${fmtNum(v.pages)}</td><td data-label="订单数">${v.orders}</td></tr>`;
       }).join('')}</tbody>
-    </table>`;
+    </table></div>`;
 
     const bwPages = recs.filter(r => r.colorMode==='bw').reduce((s,r) => s + r.pages, 0);
-    const colorPages = totalPages - bwPages;
+      const colorPages = totalPages - bwPages;
 
     const totalPaperRemaining = data.paperStock.reduce((s,p) => s + (p.remainingSheets||0), 0);
     const totalInkRemaining = data.inkStock.reduce((s,i) => s + (i.remainingPages||0), 0);
@@ -1246,7 +1447,7 @@ body {
       </div>
       <!-- 订单分析 -->
       <div style="${card}">
-        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">订单分析</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:22px;">订单分析</div>
         <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">自用 vs 订单</div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
           <div style="flex:1;height:10px;background:var(--bg-hover);border-radius:5px;overflow:hidden;display:flex;">
@@ -1261,7 +1462,7 @@ body {
       </div>
       <!-- 打印分析 -->
       <div style="${card}">
-        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">打印分析</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:22px;">打印分析</div>
         <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">黑白 vs 彩色</div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
           <div style="flex:1;height:10px;background:var(--bg-hover);border-radius:5px;overflow:hidden;display:flex;">
@@ -1295,17 +1496,17 @@ body {
       return '<span class="badge badge-' + m[0] + '">' + m[1] + '</span>';
     }
     return `<div class="page-header"><div class="page-title">纸张库存</div>${btn}</div><div class="panel panel-static">
-      <table class="data-table">
+      <div class="table-scroll-wrap"><table class="data-table">
         <thead><tr><th style="width:50px;">序号</th><th>品牌/规格</th><th>克重</th><th>购入价</th><th>总张数</th><th>每包张数</th><th>单张成本</th><th style="width:130px;"></th></tr></thead>
         <tbody>${data.paperStock.map((p, idx) => {
           const totalPacks = p.packs || 1;
           let actionBtns = '';
           if (p.status === 'stock') {
-            actionBtns = '<button class="btn-secondary" style="font-size:12px;padding:4px 8px;height:auto;white-space:nowrap;" onclick="setPaperInUse(\'' + p.id + '\')">设为使用</button>';
+            actionBtns = '<button class="btn-icon" title="设为使用" onclick="setPaperInUse(\'' + p.id + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>';
           } else if (p.status === 'in-use') {
-            actionBtns = '<button class="btn-secondary" style="font-size:12px;padding:4px 8px;height:auto;white-space:nowrap;" onclick="setPaperEmpty(\'' + p.id + '\')">已用完</button>';
+            actionBtns = '<button class="btn-icon" title="已用完" onclick="setPaperEmpty(\'' + p.id + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>';
           } else if (p.status === 'empty') {
-            actionBtns = '<button class="btn-secondary" style="font-size:12px;padding:4px 8px;height:auto;white-space:nowrap;" onclick="setPaperInUse(\'' + p.id + '\')">恢复</button>';
+            actionBtns = '<button class="btn-icon" title="恢复使用" onclick="setPaperInUse(\'' + p.id + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>';
           }
           const actions = '<div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;">' + actionBtns + '<button class="btn-icon" onclick="openModal(\'paperModal\',\'' + p.id + '\')" title="编辑"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon delete" onclick="deletePaper(\'' + p.id + '\')" title="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
           // Parent row
@@ -1327,8 +1528,8 @@ body {
               const packSheets = packsData[n] ? packsData[n].sheets : (p.sheetsPerPack || '-');
               const packBadge = '<span class="badge badge-' + (used?'red':'green') + '" style="font-size:11px;">' + (used?'已用完':'剩余') + '</span>';
               const packActionBtn = used
-                ? '<button class="btn-secondary" style="font-size:11px;padding:2px 6px;height:auto;line-height:1.2;" onclick="setPackRestore(\'' + p.id + '\',' + n + ')">恢复</button>'
-                : '<button class="btn-secondary" style="font-size:11px;padding:2px 6px;height:auto;line-height:1.2;" onclick="setPackEmpty(\'' + p.id + '\',' + n + ')">用完</button>';
+                ? '<button class="btn-icon" title="恢复" onclick="setPackRestore(\'' + p.id + '\',' + n + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>'
+                : '<button class="btn-icon" title="用完" onclick="setPackEmpty(\'' + p.id + '\',' + n + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>';
               rows += '<tr style="background:var(--bg-hover,rgba(0,0,0,0.02));">' +
                 '<td class="text-mono" style="font-size:11px;color:var(--text-muted);">\u251C</td>' +
                 '<td style="padding-left:28px;">' + packBadge + ' 第' + (n+1) + '包</td>' +
@@ -1342,7 +1543,7 @@ body {
           }
           return rows;
         }).join('')}</tbody>
-      </table>
+      </table></div>
     </div>`;
   }
 
@@ -1361,11 +1562,11 @@ body {
     data.inkStock.forEach((i, idx) => {
       let actionBtns = '';
       if (i.status === 'stock') {
-        actionBtns = '<button class="btn-secondary" style="font-size:12px;padding:4px 8px;height:auto;white-space:nowrap;" onclick="setInkInUse(\'' + i.id + '\')">设为使用</button>';
+        actionBtns = '<button class="btn-icon" title="设为使用" onclick="setInkInUse(\'' + i.id + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>';
       } else if (i.status === 'in-use') {
-        actionBtns = '<button class="btn-secondary" style="font-size:12px;padding:4px 8px;height:auto;white-space:nowrap;" onclick="setInkEmpty(\'' + i.id + '\')">已用完</button>';
+        actionBtns = '<button class="btn-icon" title="已用完" onclick="setInkEmpty(\'' + i.id + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>';
       } else if (i.status === 'empty') {
-        actionBtns = '<button class="btn-secondary" style="font-size:12px;padding:4px 8px;height:auto;white-space:nowrap;" onclick="setInkInUse(\'' + i.id + '\')">恢复</button>';
+        actionBtns = '<button class="btn-icon" title="恢复使用" onclick="setInkInUse(\'' + i.id + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>';
       }
       const actions = '<div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;">' + actionBtns + '<button class="btn-icon" onclick="openModal(\'inkModal\',\'' + i.id + '\')" title="编辑"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon delete" onclick="deleteInk(\'' + i.id + '\')" title="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
       if (i.isSet && i.setItems) {
@@ -1423,8 +1624,8 @@ body {
       }
     });
     return '<div class="page-header"><div class="page-title">墨水库存</div>' + btn + '</div><div class="panel panel-static">' +
-      '<table class="data-table"><thead><tr><th style="width:50px;">序号</th><th>类型</th><th>品牌/型号</th><th>购入价</th><th>容量</th><th>预计页数</th><th>余量</th><th>单页成本</th><th style="width:120px;"></th></tr></thead>' +
-      '<tbody>' + tbody + '</tbody></table></div>';
+      '<div class="table-scroll-wrap"><table class="data-table"><thead><tr><th style="width:50px;">序号</th><th>类型</th><th>品牌/型号</th><th>购入价</th><th>容量</th><th>预计页数</th><th>余量</th><th>单页成本</th><th style="width:120px;"></th></tr></thead>' +
+      '<tbody>' + tbody + '</tbody></table></div></div>';
   }
 
   // ===== Ledger =====
@@ -1476,14 +1677,14 @@ body {
       </div>`;
 
     const recordsTableHTML = list.length ? `
-      <table class="data-table">
+      <div class="table-scroll-wrap"><table class="data-table responsive-table">
         <thead><tr>
-          <th style="width:100px;">日期</th><th style="width:60px;">类型</th><th style="width:50px;">页数</th><th style="width:60px;">单双面</th><th style="width:60px;">颜色</th><th style="width:120px;">纸张</th>
-          <th class="text-right" style="width:90px;">纸张成本</th><th class="text-right" style="width:90px;">墨水成本</th><th class="text-right" style="width:90px;">收入</th><th class="text-right" style="width:90px;">利润</th>
+          <th>日期</th><th>类型</th><th>页数</th><th>单双面</th><th>颜色</th><th>纸张</th>
+          <th class="text-right">纸张成本</th><th class="text-right">墨水成本</th><th class="text-right">收入</th><th class="text-right">利润</th>
           <th style="width:80px;"></th>
         </tr></thead>
         <tbody>${list.map(r => recordRowHTML(r)).join('')}</tbody>
-      </table>` :
+      </table></div>` :
       `<div class="empty-state" style="padding:40px;"><div class="empty-state-title">暂无记账记录</div><div class="empty-state-desc">切换到"快速记账"添加第一条记录</div></div>`;
 
     return `
@@ -1548,13 +1749,13 @@ body {
       }).join('')}
     </div>`;
 
-    const tableHTML = `<table class="data-table">
+    const tableHTML = `<div class="table-scroll-wrap"><table class="data-table responsive-table">
       <thead><tr><th>月份</th><th>收入</th><th>成本</th><th>利润</th><th>打印页</th><th>订单数</th></tr></thead>
       <tbody>${labels.map((label,i) => {
         const v = values[i];
-        return `<tr><td>${label}</td><td class="text-mono">${fmtMoney(v.revenue)}</td><td class="text-mono">${fmtMoney(v.cost)}</td><td class="text-mono" style="${v.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${fmtMoney(v.profit)}</td><td class="text-mono">${fmtNum(v.pages)}</td><td>${v.orders}</td></tr>`;
+        return `<tr><td data-label="月份">${label}</td><td data-label="收入" class="text-mono">${fmtMoney(v.revenue)}</td><td data-label="成本" class="text-mono">${fmtMoney(v.cost)}</td><td data-label="利润" class="text-mono" style="${v.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${fmtMoney(v.profit)}</td><td data-label="打印页" class="text-mono">${fmtNum(v.pages)}</td><td data-label="订单数">${v.orders}</td></tr>`;
       }).join('')}</tbody>
-    </table>`;
+    </table></div>`;
 
     const totalPages = records.reduce((s,r) => s + r.pages, 0);
     const selfPages = records.filter(r => r.type==='self').reduce((s,r) => s + r.pages, 0);
@@ -1760,20 +1961,20 @@ body {
   function recordRowHTML(r) {
     const paper = data.paperStock.find(p => p.id === r.paperId);
     const ink = data.inkStock.find(i => i.id === r.inkId);
-    const inkLabel = ink ? (ink.isSet ? ink.model + '套装' : ink.model + ' ' + (ink.colorType==='black'?'黑色':'彩色')) : '—';
+    const colorLabel = ink ? (ink.model + ' ' + (r.colorMode==='bw'?'黑色':'彩色')) : (r.colorMode==='bw'?'黑白':'彩色');
     return `
       <tr>
-        <td>${r.date}</td>
-        <td><span class="badge badge-${r.type==='order'?'green':'gray'}">${r.type==='order'?'订单':'自用'}</span></td>
-        <td class="text-mono">${r.pages}</td>
-        <td>${r.duplex==='duplex'?'双面':'单面'}</td>
-        <td>${r.colorMode==='bw'?'黑白':'彩色'}</td>
-        <td>${paper?paper.brand+' '+paper.spec:'—'}<br><span style="font-size:11px;color:var(--text-muted);">${inkLabel}</span></td>
-        <td class="text-mono text-right">${fmtMoney(r.paperCost)}</td>
-        <td class="text-mono text-right">${fmtMoney(r.inkCost)}</td>
-        <td class="text-mono text-right">${r.type==='order'?fmtMoney(r.revenue):'—'}</td>
-        <td class="text-mono text-right" style="${r.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${r.type==='order'?(r.profit>=0?'+':'')+fmtMoney(r.profit).replace('¥',''):'—'}</td>
-        <td><div style="display:flex;gap:4px;justify-content:flex-end;"><button class="btn-icon" onclick="editRecord('${r.id}')" title="编辑"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon delete" onclick="deleteRecord('${r.id}')" title="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></td>
+        <td data-label="日期">${r.date}</td>
+        <td data-label="类型"><span class="badge badge-${r.type==='order'?'green':'gray'}">${r.type==='order'?'订单':'自用'}</span></td>
+        <td data-label="页数" class="text-mono">${r.pages}</td>
+        <td data-label="单双面">${r.duplex==='duplex'?'双面':'单面'}</td>
+        <td data-label="颜色">${colorLabel}</td>
+        <td data-label="纸张">${paper?paper.brand+' '+paper.spec:'—'}</td>
+        <td data-label="纸张成本" class="text-mono text-right">${fmtMoney(r.paperCost)}</td>
+        <td data-label="墨水成本" class="text-mono text-right">${fmtMoney(r.inkCost)}</td>
+        <td data-label="收入" class="text-mono text-right">${r.type==='order'?fmtMoney(r.revenue):'—'}</td>
+        <td data-label="利润" class="text-mono text-right" style="${r.profit>=0?'color:var(--success-color);':'color:var(--danger-color);'}font-weight:600;">${r.type==='order'?(r.profit>=0?'+':'')+fmtMoney(r.profit).replace('¥',''):'—'}</td>
+        <td data-label="操作"><div style="display:flex;gap:4px;justify-content:flex-end;"><button class="btn-icon" onclick="editRecord('${r.id}')" title="编辑"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon delete" onclick="deleteRecord('${r.id}')" title="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></td>
       </tr>`;
   }
 
