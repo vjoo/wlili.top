@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <!-- Content Security Policy - WLi Tools -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>W.-图片裁切工具</title>
@@ -481,6 +481,7 @@
     .segment-btn { padding: 5px 0; font-size: 11px; }
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="nav.js"></script>
 </head>
 <body>
@@ -499,8 +500,8 @@
     <div class="dropzone" id="dropzone">
       <div class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
       <div class="drop-title">拖拽图片到此处，或 <span>点击选择</span></div>
-      <div class="drop-desc">支持 JPG / PNG / WebP 格式</div>
-      <input type="file" id="fileInput" accept="image/*">
+      <div class="drop-desc">支持 JPG / PNG / WebP / GIF / BMP / SVG / AVIF / PDF 格式</div>
+      <input type="file" id="fileInput" accept="image/*,.pdf,application/pdf">
     </div>
 
     <!-- Editor Area -->
@@ -529,6 +530,11 @@
         </div>
         <div class="setting-group">
           <div style="display:flex;gap:8px;">
+            <select id="exportFormat" style="padding:6px 10px;border:1px solid var(--border-color, #e0e0e0);border-radius:8px;font-size:13px;background:var(--bg-primary,#fff);cursor:pointer;">
+              <option value="png">PNG</option>
+              <option value="jpeg">JPG</option>
+              <option value="webp">WebP</option>
+            </select>
             <button class="btn-filled btn-sm" onclick="downloadCrop()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载裁切</button>
             <button class="btn-outline btn-sm" onclick="resetCrop()">重置</button>
             <button class="btn-outline btn-sm" onclick="changeImage()">更换图片</button>
@@ -695,8 +701,41 @@
   });
 
   function handleFile(file) {
+    if (file.type === 'application/pdf') {
+      // PDF: 用 pdf.js 渲染第一页为图片
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const typedArray = new Uint8Array(e.target.result);
+        pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+          pdf.getPage(1).then(function(page) {
+            const scale = 2;
+            const viewport = page.getViewport({ scale: scale });
+            const pdfCanvas = document.createElement('canvas');
+            pdfCanvas.width = viewport.width;
+            pdfCanvas.height = viewport.height;
+            const pdfCtx = pdfCanvas.getContext('2d');
+            page.render({ canvasContext: pdfCtx, viewport: viewport }).promise.then(function() {
+              const dataURL = pdfCanvas.toDataURL('image/png');
+              currentFile = { name: file.name.replace(/\.pdf$/i, '.png') };
+              sessionStorage.setItem('cropper_image', dataURL);
+              sessionStorage.setItem('cropper_filename', currentFile.name);
+              originalImage = new Image();
+              originalImage.onload = function() { initEditor(); };
+              originalImage.src = dataURL;
+            });
+          });
+        }).catch(function(err) {
+          showToast('PDF 解析失败：' + err.message);
+        });
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
     if (!file.type.startsWith('image/')) {
-      showToast('请选择图片文件');
+      showToast('不支持的文件格式');
       return;
     }
     currentFile = file;
@@ -958,10 +997,14 @@
 
     const link = document.createElement('a');
     const baseName = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'image';
-    link.download = baseName + '_cropped.png';
-    link.href = resultCanvas.toDataURL('image/png');
+    const fmt = document.getElementById('exportFormat').value;
+    const mimeType = fmt === 'jpeg' ? 'image/jpeg' : fmt === 'webp' ? 'image/webp' : 'image/png';
+    const ext = fmt === 'jpeg' ? 'jpg' : fmt;
+    const quality = fmt === 'jpeg' ? 0.92 : undefined;
+    link.download = baseName + '_cropped.' + ext;
+    link.href = resultCanvas.toDataURL(mimeType, quality);
     link.click();
-    showToast('裁切图片已下载');
+    showToast('裁切图片已下载（' + ext.toUpperCase() + '）');
   };
 
   // ─── Mouse Interaction ───────────────────
