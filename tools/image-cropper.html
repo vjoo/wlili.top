@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
 <!-- Content Security Policy - WLi Tools -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
+<link rel="stylesheet" href="common.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>W.-图片裁切工具</title>
@@ -12,181 +13,6 @@
    © 2025 WLi. All rights reserved.
    Developer: WLi
    ============================================ */
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { touch-action: manipulation; }
-
-  :root {
-    --ink: #2B3041;
-    --ink-secondary: #424245;
-    --ink-tertiary: #6e6e73;
-    --ink-quaternary: #86868b;
-    --bg: #f5f5f7;
-    --bg-white: #ffffff;
-    --bg-elevated: #fbfbfd;
-    --border: #d2d2d7;
-    --border-light: #e8e8ed;
-    --link: #6366f1;
-    --link-hover: #0077ed;
-    --fill-black: #2B3041;
-    --fill-gray: #86868b;
-    --fill-gray-light: #d2d2d7;
-    --fill-white: #ffffff;
-    --green: #34c759;
-    --red: #ff3b30;
-    --radius-sm: 8px;
-    --radius-md: 11px;
-    --radius-lg: 18px;
-    --radius-pill: 980px;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
-    background: var(--bg-white);
-    color: var(--ink);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* ===== Global Nav ===== */
-  .global-nav {
-    background: var(--bg);
-    height: 48px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    border-bottom: 1px solid var(--border-light);
-  }
-  .global-nav-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 22px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .nav-logo {
-    color: var(--ink);
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .logo-box {
-    width: 32px;
-    height: 32px;
-    background: var(--fill-black);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--fill-white);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-  .nav-links {
-    display: flex;
-    gap: 24px;
-    align-items: center;
-  }
-  .nav-link {
-    color: var(--ink);
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    opacity: 0.8;
-    transition: opacity 0.3s;
-  }
-  .nav-link:hover { opacity: 1; color: var(--link); }
-
-  /* ===== Page Hero ===== */
-  .page-hero {
-    text-align: center;
-    padding: 48px 22px 32px;
-    background: var(--bg-white);
-  }
-  .page-hero h1 {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-    font-size: 48px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    line-height: 1.08;
-    color: var(--ink);
-    margin-bottom: 8px;
-  }
-  .page-hero p {
-    font-size: 21px;
-    font-weight: 400;
-    color: var(--ink-tertiary);
-    line-height: 1.38;
-    letter-spacing: 0.011em;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-
-  /* ===== Section ===== */
-  .section { padding: 32px 0 64px; }
-  .section-inner {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 0 22px;
-  }
-
-  /* ===== Apple Buttons ===== */
-  .btn-filled {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 20px;
-    background: var(--fill-black);
-    color: var(--fill-white);
-    font-size: 17px;
-    font-weight: 400;
-    line-height: 1.18;
-    letter-spacing: -0.022em;
-    border: 1.5px solid var(--fill-black);
-    border-radius: var(--radius-pill);
-    cursor: pointer;
-    transition: opacity 0.3s;
-    text-decoration: none;
-    white-space: nowrap;
-    touch-action: manipulation;
-  }
-  .btn-filled:hover { opacity: 0.85; }
-  .btn-filled:active { transform: scale(0.98); }
-  .btn-filled:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
-
-  .btn-outline {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 20px;
-    background: transparent;
-    color: var(--ink);
-    font-size: 17px;
-    font-weight: 400;
-    line-height: 1.18;
-    letter-spacing: -0.022em;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-pill);
-    cursor: pointer;
-    transition: all 0.3s;
-    text-decoration: none;
-    white-space: nowrap;
-    touch-action: manipulation;
-  }
-  .btn-outline:hover { border-color: var(--ink); }
-  .btn-outline:active { transform: scale(0.98); }
-  .btn-outline:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
-
-  .btn-sm { font-size: 14px; padding: 6px 14px; letter-spacing: -0.016em; }
-
   /* ===== Toolbar ===== */
   .toolbar {
     background: var(--bg);
@@ -205,7 +31,8 @@
     border-radius: var(--radius-pill);
     padding: 3px;
     border: 1px solid var(--border-light);
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
   }
   .toolbar-ratio button {
     border: none;
@@ -213,7 +40,7 @@
     padding: 0 12px;
     height: 36px;
     border-radius: var(--radius-pill);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--ink-tertiary);
     cursor: pointer;
@@ -231,51 +58,93 @@
     flex-shrink: 0;
   }
   .toolbar-dim {
+    display: none;
+  }
+  .toolbar-format {
     display: flex;
-    align-items: center;
     gap: 4px;
-    flex: 1;
-    min-width: 0;
-  }
-  .toolbar-dim input {
-    flex: 1;
-    min-width: 40px;
-    max-width: 80px;
-    height: 36px;
-    padding: 0 8px;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    text-align: center;
     background: var(--bg-white);
-  }
-  .toolbar-dim span {
-    font-size: 12px;
-    color: var(--ink-quaternary);
-  }
-  .toolbar-spacer { flex: 1; }
-  .toolbar-actions {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-  .icon-btn {
-    width: 34px;
-    height: 34px;
+    border-radius: var(--radius-pill);
+    padding: 3px;
     border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
-    background: var(--bg-white);
-    color: var(--ink-secondary);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
     flex-shrink: 0;
   }
-  .icon-btn:hover { border-color: var(--ink); color: var(--ink); }
-  .icon-btn:active { transform: scale(0.95); }
-  .icon-btn svg { width: 16px; height: 16px; }
+  .toolbar-format button {
+    border: none;
+    background: transparent;
+    padding: 0 12px;
+    height: 36px;
+    border-radius: var(--radius-pill);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-tertiary);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .toolbar-format button.active {
+    background: var(--fill-black);
+    color: var(--fill-white);
+  }
+  .toolbar-format button:not(.active):hover { background: rgba(0,0,0,0.04); }
+
+  .toolbar-quality {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    background: var(--bg-white);
+    border-radius: var(--radius-pill);
+    padding: 3px 12px;
+    border: 1px solid var(--border-light);
+    height: 42px;
+  }
+  .quality-label {
+    font-size: 13px;
+    color: var(--ink-secondary);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .quality-val {
+    color: var(--ink);
+    font-weight: 600;
+    width: 42px;
+    text-align: right;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .quality-slider {
+    width: 80px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border-light);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .quality-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--fill-black);
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .quality-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--fill-black);
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
   .export-select {
     height: 34px;
     padding: 0 8px;
@@ -316,99 +185,38 @@
     margin-bottom: 16px;
   }
   .crop-info .val { color: var(--ink); font-weight: 500; }
-
-  /* Text Input */
-  .text-input {
-    background: var(--bg-white);
+  .crop-info-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .crop-info-input {
+    width: 70px;
+    height: 30px;
     border: 1px solid var(--border-light);
-    color: var(--ink);
-    padding: 6px 14px;
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    font-family: inherit;
-    width: 80px;
-    height: 36px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .text-input:focus { border-color: var(--link); box-shadow: 0 0 0 3px rgba(0,102,204,0.12); }
-  .text-input::placeholder { color: var(--ink-quaternary); }
-
-  /* ===== Drop Zone ===== */
-  .dropzone {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-lg);
-    padding: 48px 32px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
     text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
     background: var(--bg-white);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
-    touch-action: manipulation;
+    outline: none;
+    padding: 0 6px;
   }
-  .dropzone:hover, .dropzone.drag-over { border-color: var(--link); background: var(--bg); }
-  .dropzone:active { transform: scale(0.995); }
-  .dropzone.hidden { display: none; }
-  .drop-icon {
-    margin-bottom: 12px;
+  .crop-info-input:focus { border-color: var(--ink); }
+  .crop-info-reset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
     color: var(--ink-tertiary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
   }
-  .drop-icon svg {
-    width: 48px; height: 48px;
-  }
-  .drop-title {
-    font-size: 21px;
-    font-weight: 600;
-    letter-spacing: 0.011em;
-    margin-bottom: 6px;
-    color: var(--ink);
-  }
-  .drop-desc {
-    font-size: 14px;
-    color: var(--ink-tertiary);
-    line-height: 1.43;
-  }
-  .drop-title span { color: var(--link); cursor: pointer; }
-  .drop-title span:hover { text-decoration: underline; }
-  #fileInput { display: none; }
-
-  /* ===== Stats ===== */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .stat-card {
-    background: var(--bg);
-    border-radius: var(--radius-lg);
-    padding: 16px;
-    text-align: center;
-  }
-  .stat-val {
-    font-family: 'SF Pro Display', -apple-system, sans-serif;
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    color: var(--ink);
-    word-break: break-all;
-  }
-  .stat-val.accent { color: var(--link); }
-  .stat-val.green { color: var(--green); }
-  .stat-val.small {
-    font-size: 16px;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    color: var(--ink-tertiary);
-  }
-  .stat-label {
-    font-size: 12px;
-    color: var(--ink-quaternary);
-    letter-spacing: -0.01em;
-    margin-top: 4px;
-  }
+  .crop-info-reset:hover { background: rgba(0,0,0,0.06); color: var(--ink); }
 
   /* ===== Editor Area ===== */
   .editor-area {
@@ -494,18 +302,6 @@
     height: 1px;
     background: var(--border-light);
   }
-  .side-select {
-    width: 100%;
-    height: 38px;
-    padding: 0 2px;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    text-align: center;
-    background: var(--bg-white);
-    cursor: pointer;
-    box-sizing: border-box;
-  }
   .side-btn-text {
     width: auto;
     padding: 0 12px;
@@ -514,92 +310,63 @@
     white-space: nowrap;
   }
 
-  /* Canvas & Crop Overlay */
-  .actions-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
   /* ===== Canvas ===== */
   .canvas-wrapper {
     position: relative;
     display: inline-block;
     max-width: 100%;
+    max-height: 65vh;
     overflow: hidden;
-    border-radius: var(--radius-md);
     background: #000;
   }
   #canvas {
     display: block;
     max-width: 100%;
+    max-height: 65vh;
+    object-fit: contain;
   }
   .crop-overlay {
     position: absolute;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
     cursor: move;
   }
   .crop-frame {
     fill: none;
-    stroke: var(--link);
+    stroke: #000;
     stroke-width: 2;
   }
   .crop-mask {
     fill: rgba(0, 0, 0, 0.5);
   }
   .crop-handle {
-    fill: var(--link);
-    stroke: white;
-    stroke-width: 2;
+    fill: #fff;
+    stroke: #000;
+    stroke-width: 3;
     cursor: pointer;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+    transition: r 0.15s ease;
+  }
+  .crop-handle:hover {
+    r: 22;
   }
   .crop-handle.nw { cursor: nw-resize; }
   .crop-handle.ne { cursor: ne-resize; }
   .crop-handle.sw { cursor: sw-resize; }
   .crop-handle.se { cursor: se-resize; }
 
-  /* ===== Toast ===== */
-  .toast {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.95);
-    background: var(--fill-black);
-    color: var(--fill-white);
-    border-radius: var(--radius-lg);
-    padding: 16px 28px;
-    font-size: 15px;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
-    opacity: 0;
-    transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
-    z-index: 100;
-    pointer-events: none;
-  }
-  .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-
   /* ===== Responsive ===== */
-  @media (max-width: 1068px) {
-    .page-hero h1 { font-size: 40px; }
-  }
-
   @media (max-width: 734px) {
-    .global-nav-content { padding: 0 16px; }
-    .nav-links { gap: 16px; }
-    .page-hero { padding: 36px 16px 24px; }
-    .page-hero h1 { font-size: 32px; }
-    .page-hero p { font-size: 17px; }
-    .section { padding: 24px 0 48px; }
-    .section-inner { padding: 0 16px; }
     .toolbar { padding: 10px 14px; gap: 8px; }
-    .toolbar-ratio button { padding: 5px 8px; font-size: 12px; }
-    .toolbar-dim input { min-width: 36px; }
+    .toolbar-ratio { width: 100%; flex: none; }
+    .toolbar-ratio button { padding: 5px 8px; font-size: 13px; flex: 1; text-align: center; }
+    .toolbar-format { width: 100%; flex: none; }
+    .toolbar-format button { flex: 1; text-align: center; }
+    .toolbar-quality { width: 100%; flex: none; justify-content: space-between; }
+    .quality-slider { width: 100px; flex: 1; }
     .toolbar-divider { display: none; }
-    .toolbar-actions { gap: 4px; }
     .icon-btn { width: 32px; height: 32px; }
     .canvas-area { flex-direction: column; align-items: center; }
     .canvas-side-tools { flex-direction: row; order: -1; padding: 8px 12px; width: auto; }
@@ -607,25 +374,13 @@
     .side-btn svg { width: 16px; height: 16px; }
     .side-btn-text { width: auto; }
     .side-divider { width: 1px; height: 24px; }
-    .side-select { width: auto; height: 34px; }
-    .dropzone { padding: 36px 16px; }
-    .drop-icon { font-size: 36px; }
-    .drop-title { font-size: 17px; }
-    .drop-desc { font-size: 12px; }
-    .actions-row { gap: 8px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 12px; }
-    .stat-val { font-size: 22px; }
     .crop-info-bar { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 14px; }
-  }
-
-  @media (max-width: 480px) {
-    .nav-links { display: none; }
-    .btn-filled, .btn-outline { font-size: 14px; padding: 7px 16px; }
-    .btn-sm { font-size: 12px; padding: 5px 10px; }
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/dist/gifuct-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="nav.js"></script>
 </head>
 <body>
@@ -662,18 +417,32 @@
           <button data-ratio="9:16">9:16</button>
         </div>
         <div class="toolbar-divider"></div>
-        <div class="toolbar-dim">
-          <input type="number" id="cropWidth" placeholder="W">
-          <span>&times;</span>
-          <input type="number" id="cropHeight" placeholder="H">
+        <div class="toolbar-format" id="formatGroup">
+          <button class="active" data-fmt="png">PNG</button>
+          <button data-fmt="jpeg">JPG</button>
+          <button data-fmt="webp">WebP</button>
+          <button data-fmt="pdf">PDF</button>
+          <button data-fmt="gif">GIF</button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-quality">
+          <span class="quality-label">压缩</span>
+          <span class="quality-val" id="qualityVal">90%</span>
+          <input type="range" id="qualitySlider" min="10" max="100" value="90" step="1" class="quality-slider">
         </div>
       </div>
       <!-- Crop Info -->
-      <div class="crop-info">
+      <div class="crop-info" id="cropInfo">
         <span>裁切尺寸</span>
-        <span class="val" id="cropSizeInfo">0 &times; 0 px</span>
-        <span>/</span>
-        <span class="val" id="cropRatioInfo">--</span>
+        <div class="crop-info-edit" id="cropInfoEdit">
+          <input type="number" id="cropInfoW" class="crop-info-input" placeholder="宽" min="1">
+          <span style="color:var(--ink-quaternary)">&times;</span>
+          <input type="number" id="cropInfoH" class="crop-info-input" placeholder="高" min="1">
+          <span style="color:var(--ink-tertiary);font-size:12px;">px</span>
+        </div>
+        <button class="crop-info-reset" id="cropInfoReset" title="恢复尺寸">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
       </div>
 
       <!-- Canvas Area -->
@@ -684,10 +453,10 @@
             <svg class="crop-overlay" id="cropOverlay">
               <path class="crop-mask" id="cropMask"></path>
               <rect class="crop-frame" id="cropFrame"></rect>
-              <rect class="crop-handle nw" id="handleNW" width="12" height="12"></rect>
-              <rect class="crop-handle ne" id="handleNE" width="12" height="12"></rect>
-              <rect class="crop-handle sw" id="handleSW" width="12" height="12"></rect>
-              <rect class="crop-handle se" id="handleSE" width="12" height="12"></rect>
+              <circle class="crop-handle nw" id="handleNW" r="18"></circle>
+              <circle class="crop-handle ne" id="handleNE" r="18"></circle>
+              <circle class="crop-handle sw" id="handleSW" r="18"></circle>
+              <circle class="crop-handle se" id="handleSE" r="18"></circle>
             </svg>
           </div>
         </div>
@@ -702,11 +471,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           </button>
           <div class="side-divider"></div>
-          <select id="exportFormat" class="side-select">
-            <option value="png">PNG</option>
-            <option value="jpeg">JPG</option>
-            <option value="webp">WebP</option>
-          </select>
           <button class="side-btn side-btn-text" onclick="changeImage()">更换</button>
           <button class="side-btn side-btn-text side-btn-primary" onclick="downloadCrop()">下载</button>
         </div>
@@ -753,6 +517,7 @@
   let ctx = canvas.getContext('2d');
   let cropOverlay = document.getElementById('cropOverlay');
   let cropRect = { x: 0, y: 0, w: 0, h: 0 };
+  let exportFormat = 'png';
   let currentRatio = 'free';
   let isDragging = false;
   let isResizing = false;
@@ -761,6 +526,8 @@
   let cropStart = { x: 0, y: 0, w: 0, h: 0 };
   let rotation = 0;
   let flipH = false;
+  let gifFrames = null;      // parsed GIF frames (null if not animated)
+  let gifDelays = null;      // frame delays in ms
 
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
@@ -878,10 +645,66 @@
       return;
     }
     if (!file.type.startsWith('image/')) {
-      showToast('不支持的文件格式');
-      return;
+      // Check file extension for SVG (some browsers don't set MIME type)
+      if (file.name.match(/\.svg$/i)) {
+        // Treat as SVG
+      } else {
+        showToast('不支持的文件格式');
+        return;
+      }
     }
     currentFile = file;
+    // Reset GIF state
+    gifFrames = null;
+    gifDelays = null;
+
+    // For GIF files, parse animation frames
+    if (file.type === 'image/gif') {
+      const gifReader = new FileReader();
+      gifReader.onload = (abEvent) => {
+        try {
+          const gif = gifuct.parseGIF(abEvent.target.result);
+          const frames = gifuct.decompressFrames(gif, true);
+          if (frames.length > 1) {
+            // Animated GIF - store frames
+            const gifW = gif.lsd.width;
+            const gifH = gif.lsd.height;
+            gifDelays = frames.map(f => (f.delay || 10) * 10); // centiseconds → ms
+            gifFrames = frames.map(f => {
+              const c = document.createElement('canvas');
+              c.width = gifW;
+              c.height = gifH;
+              const ctx = c.getContext('2d');
+              const imgData = ctx.createImageData(gifW, gifH);
+              imgData.data.set(f.patch);
+              ctx.putImageData(imgData, 0, 0);
+              return c;
+            });
+          }
+        } catch(e) {
+          console.warn('GIF parse failed, fallback to static:', e);
+        }
+        // Load first frame as preview image
+        loadGifPreview(file);
+      };
+      gifReader.readAsArrayBuffer(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      sessionStorage.setItem('cropper_image', e.target.result);
+      sessionStorage.setItem('cropper_filename', file.name);
+      originalImage = new Image();
+      originalImage.onload = () => {
+        initEditor();
+      };
+      originalImage.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function loadGifPreview(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
       sessionStorage.setItem('cropper_image', e.target.result);
@@ -934,8 +757,6 @@
 
   function renderCanvas() {
     if (!originalImage) return;
-    const maxWidth = Math.min(900, window.innerWidth - 80);
-    const maxHeight = 600;
 
     let imgWidth = originalImage.width;
     let imgHeight = originalImage.height;
@@ -945,9 +766,9 @@
       [imgWidth, imgHeight] = [imgHeight, imgWidth];
     }
 
-    const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1);
-    canvas.width = imgWidth * scale;
-    canvas.height = imgHeight * scale;
+    // Canvas uses full original resolution — CSS scales it down for display
+    canvas.width = imgWidth;
+    canvas.height = imgHeight;
 
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -957,12 +778,10 @@
     if (flipH) {
       ctx.scale(-1, 1);
     }
-    ctx.drawImage(originalImage, -originalImage.width * scale / 2, -originalImage.height * scale / 2, originalImage.width * scale, originalImage.height * scale);
+    ctx.drawImage(originalImage, -originalImage.width / 2, -originalImage.height / 2);
     ctx.restore();
 
-    // Update overlay size
-    cropOverlay.style.width = canvas.width + 'px';
-    cropOverlay.style.height = canvas.height + 'px';
+    // Update overlay viewBox (SVG scales via CSS width/height: 100%)
     cropOverlay.setAttribute('viewBox', '0 0 ' + canvas.width + ' ' + canvas.height);
 
     // Initialize crop rect
@@ -971,7 +790,7 @@
   }
 
   function initCropRect() {
-    const padding = 40;
+    const padding = 0;
     const maxW = canvas.width - padding * 2;
     const maxH = canvas.height - padding * 2;
 
@@ -994,14 +813,12 @@
         h: h
       };
     }
-    updateDimensionInputs();
   }
 
   function updateOverlay() {
     const { x, y, w, h } = cropRect;
     const cw = canvas.width;
     const ch = canvas.height;
-
     // Mask path
     const maskPath = 'M0,0 L' + cw + ',0 L' + cw + ',' + ch + ' L0,' + ch + ' Z M' + x + ',' + y + ' L' + x + ',' + (y + h) + ' L' + (x + w) + ',' + (y + h) + ' L' + (x + w) + ',' + y + ' Z';
     document.getElementById('cropMask').setAttribute('d', maskPath);
@@ -1012,31 +829,30 @@
     document.getElementById('cropFrame').setAttribute('width', w);
     document.getElementById('cropFrame').setAttribute('height', h);
 
-    // Handles
-    const handleSize = 12;
-    document.getElementById('handleNW').setAttribute('x', x - handleSize / 2);
-    document.getElementById('handleNW').setAttribute('y', y - handleSize / 2);
-    document.getElementById('handleNE').setAttribute('x', x + w - handleSize / 2);
-    document.getElementById('handleNE').setAttribute('y', y - handleSize / 2);
-    document.getElementById('handleSW').setAttribute('x', x - handleSize / 2);
-    document.getElementById('handleSW').setAttribute('y', y + h - handleSize / 2);
-    document.getElementById('handleSE').setAttribute('x', x + w - handleSize / 2);
-    document.getElementById('handleSE').setAttribute('y', y + h - handleSize / 2);
+    // Handles — positioned inside the corners so they never get clipped
+    const handleInset = 24;
+    document.getElementById('handleNW').setAttribute('cx', x + handleInset);
+    document.getElementById('handleNW').setAttribute('cy', y + handleInset);
+    document.getElementById('handleNE').setAttribute('cx', x + w - handleInset);
+    document.getElementById('handleNE').setAttribute('cy', y + handleInset);
+    document.getElementById('handleSW').setAttribute('cx', x + handleInset);
+    document.getElementById('handleSW').setAttribute('cy', y + h - handleInset);
+    document.getElementById('handleSE').setAttribute('cx', x + w - handleInset);
+    document.getElementById('handleSE').setAttribute('cy', y + h - handleInset);
 
-    // Update crop info bar
-    const scale = canvas.width / (rotation % 180 === 0 ? originalImage.width : originalImage.height);
-    const realW = Math.round(w / scale);
-    const realH = Math.round(h / scale);
-    document.getElementById('cropSizeInfo').innerHTML = realW + ' &times; ' + realH + ' px';
-    document.getElementById('cropRatioInfo').textContent = computeAspectRatio(realW, realH);
+    // Update crop info inputs (always visible now)
+    document.getElementById('cropInfoW').value = Math.round(w) || '';
+    document.getElementById('cropInfoH').value = Math.round(h) || '';
   }
 
   // ─── Ratio Selection ─────────────────────
+  let isCustomSize = false;
   document.querySelectorAll('#ratioGroup button').forEach(btn => {
     btn.addEventListener('click', () => {
+      const val = btn.dataset.ratio;
       document.querySelectorAll('#ratioGroup button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const val = btn.dataset.ratio;
+      isCustomSize = false;
       if (val === 'free') {
         currentRatio = 'free';
       } else {
@@ -1057,27 +873,6 @@
       }
     });
     initCropRect();
-    updateOverlay();
-  }
-
-  function updateDimensionInputs() {
-    const scale = canvas.width / (rotation % 180 === 0 ? originalImage.width : originalImage.height);
-    document.getElementById('cropWidth').value = Math.round(cropRect.w / scale);
-    document.getElementById('cropHeight').value = Math.round(cropRect.h / scale);
-  }
-
-  document.getElementById('cropWidth').addEventListener('change', updateCropFromInput);
-  document.getElementById('cropHeight').addEventListener('change', updateCropFromInput);
-
-  function updateCropFromInput() {
-    if (!originalImage) return;
-    const scale = canvas.width / (rotation % 180 === 0 ? originalImage.width : originalImage.height);
-    const w = parseInt(document.getElementById('cropWidth').value) || 100;
-    const h = parseInt(document.getElementById('cropHeight').value) || 100;
-    cropRect.w = w * scale;
-    cropRect.h = h * scale;
-    cropRect.x = Math.max(0, Math.min(cropRect.x, canvas.width - cropRect.w));
-    cropRect.y = Math.max(0, Math.min(cropRect.y, canvas.height - cropRect.h));
     updateOverlay();
   }
 
@@ -1102,12 +897,18 @@
     document.querySelectorAll('#ratioGroup button').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.ratio === 'free');
     });
+    // Exit custom size mode if active
+    if (isCustomSize) {
+      isCustomSize = false;
+    }
     updateImageStats();
     renderCanvas();
     showToast('已重置裁切');
   };
 
   window.changeImage = function() {
+    gifFrames = null;
+    gifDelays = null;
     sessionStorage.removeItem('cropper_image');
     sessionStorage.removeItem('cropper_filename');
     sessionStorage.removeItem('cropper_rotation');
@@ -1115,21 +916,192 @@
     fileInput.click();
   };
 
+  // ─── Format Selection ─────────────────────
+  document.querySelectorAll('#formatGroup button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#formatGroup button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      exportFormat = btn.dataset.fmt;
+    });
+  });
+
+  // ─── Quality Slider ─────────────────────
+  const qualitySlider = document.getElementById('qualitySlider');
+  const qualityVal = document.getElementById('qualityVal');
+  qualitySlider.addEventListener('input', () => {
+    qualityVal.textContent = qualitySlider.value + '%';
+  });
+
+  // ─── Crop Info Input ─────────────────────
+  // When user manually edits the inputs, switch to custom size mode
+  let inputEditing = false;
+  function onCropInfoInput() {
+    if (!inputEditing) {
+      inputEditing = true;
+      // Deselect all ratio buttons (user is now in custom mode)
+      document.querySelectorAll('#ratioGroup button').forEach(b => b.classList.remove('active'));
+      isCustomSize = true;
+    }
+  }
+  function onCropInfoChange() {
+    inputEditing = false;
+    const w = parseInt(document.getElementById('cropInfoW').value);
+    const h = parseInt(document.getElementById('cropInfoH').value);
+    if (!w || !h || w <= 0 || h <= 0) {
+      showToast('请输入有效的宽高数值');
+      return;
+    }
+    isCustomSize = true;
+    currentRatio = w / h;
+    // Resize crop rect to match the requested dimensions (fit within canvas)
+    const maxW = canvas.width;
+    const maxH = canvas.height;
+    let newW = w, newH = h;
+    if (newW > maxW || newH > maxH) {
+      const r = Math.min(maxW / newW, maxH / newH);
+      newW = Math.round(newW * r);
+      newH = Math.round(newH * r);
+    }
+    cropRect = {
+      x: Math.round((canvas.width - newW) / 2),
+      y: Math.round((canvas.height - newH) / 2),
+      w: newW,
+      h: newH
+    };
+    updateOverlay();
+  }
+  document.getElementById('cropInfoW').addEventListener('input', onCropInfoInput);
+  document.getElementById('cropInfoH').addEventListener('input', onCropInfoInput);
+  document.getElementById('cropInfoW').addEventListener('change', onCropInfoChange);
+  document.getElementById('cropInfoH').addEventListener('change', onCropInfoChange);
+  document.getElementById('cropInfoW').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('cropInfoH').focus(); });
+  document.getElementById('cropInfoH').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('cropInfoH').blur(); });
+
+  // Reset button: restore to current ratio's recommended size
+  document.getElementById('cropInfoReset').addEventListener('click', () => {
+    inputEditing = false;
+    isCustomSize = false;
+    // Re-select the last active ratio button (or free)
+    const activeBtn = document.querySelector('#ratioGroup button.active');
+    if (activeBtn) {
+      const val = activeBtn.dataset.ratio;
+      if (val === 'free') {
+        currentRatio = 'free';
+      } else {
+        const parts = val.split(':');
+        currentRatio = parseInt(parts[0]) / parseInt(parts[1]);
+      }
+    } else {
+      currentRatio = 'free';
+      document.querySelector('#ratioGroup button[data-ratio="free"]').classList.add('active');
+    }
+    initCropRect();
+    updateOverlay();
+  });
+
   // ─── Download ─────────────────────────────
   window.downloadCrop = function() {
     if (!originalImage) return;
-    const scale = canvas.width / (rotation % 180 === 0 ? originalImage.width : originalImage.height);
-    const sx = cropRect.x / scale;
-    const sy = cropRect.y / scale;
-    const sw = cropRect.w / scale;
-    const sh = cropRect.h / scale;
+    // cropRect is already in original image pixels
+    const sx = cropRect.x;
+    const sy = cropRect.y;
+    const sw = cropRect.w;
+    const sh = cropRect.h;
+    const baseName = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'image';
 
+    // ── PDF export ──
+    if (exportFormat === 'pdf') {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: sw > sh ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [Math.round(sw), Math.round(sh)]
+      });
+      const tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width = Math.round(sw);
+      tmpCanvas.height = Math.round(sh);
+      const tmpCtx = tmpCanvas.getContext('2d');
+      tmpCtx.save();
+      // White background for PDF (uses JPEG internally, no alpha support)
+      tmpCtx.fillStyle = '#ffffff';
+      tmpCtx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+      tmpCtx.translate(tmpCanvas.width / 2, tmpCanvas.height / 2);
+      tmpCtx.rotate(-rotation * Math.PI / 180);
+      if (flipH) tmpCtx.scale(-1, 1);
+      tmpCtx.drawImage(originalImage, -sx - sw / 2, -sy - sh / 2);
+      tmpCtx.restore();
+      const imgData = tmpCanvas.toDataURL('image/jpeg', parseInt(qualitySlider.value) / 100);
+      pdf.addImage(imgData, 'JPEG', 0, 0, Math.round(sw), Math.round(sh));
+      pdf.save(baseName + '_cropped.pdf');
+      showToast('裁切图片已下载（PDF）');
+      return;
+    }
+
+    // ── Animated GIF export ──
+    if (exportFormat === 'gif' && gifFrames && gifFrames.length > 1) {
+      const gifW = gifFrames[0].width;
+      const gifH = gifFrames[0].height;
+      const scaleX = sw / gifW;
+      const scaleY = sh / gifH;
+      const cropX = sx / scaleX;
+      const cropY = sy / scaleY;
+      const cropW = sw / scaleX;
+      const cropH = sh / scaleY;
+
+      const encoder = new GIF({
+        workers: 2,
+        quality: Math.max(1, Math.round(31 - (parseInt(qualitySlider.value) * 30 / 100))),
+        width: Math.round(cropW),
+        height: Math.round(cropH),
+        transparent: 0x000000,
+        workerURL: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+      });
+
+      // Process each frame
+      let frameCount = 0;
+      gifFrames.forEach((frameCanvas, idx) => {
+        const fc = document.createElement('canvas');
+        fc.width = Math.round(cropW);
+        fc.height = Math.round(cropH);
+        const fctx = fc.getContext('2d');
+        fctx.save();
+        fctx.translate(fc.width / 2, fc.height / 2);
+        fctx.rotate(-rotation * Math.PI / 180);
+        if (flipH) fctx.scale(-1, 1);
+        fctx.drawImage(frameCanvas, -cropX - cropW / 2, -cropY - cropH / 2);
+        fctx.restore();
+        encoder.addFrame(fctx, { delay: gifDelays[idx], copy: true, dispose: 1 });
+        frameCount++;
+        // Safety limit: max 200 frames
+        if (frameCount >= 200) return;
+      });
+
+      encoder.on('progress', p => {
+        if (p < 1) showToast('GIF 编码中… ' + Math.round(p * 100) + '%');
+      });
+      encoder.on('finished', blob => {
+        const link = document.createElement('a');
+        link.download = baseName + '_cropped.gif';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        showToast('动图已下载（' + frameCount + ' 帧）');
+      });
+      encoder.render();
+      return;
+    }
+
+    // ── Static image export (JPEG/PNG/WebP/static GIF) ──
     const resultCanvas = document.createElement('canvas');
     resultCanvas.width = Math.round(sw);
     resultCanvas.height = Math.round(sh);
     const rctx = resultCanvas.getContext('2d');
 
     rctx.save();
+    // White background for JPEG (no alpha support)
+    if (exportFormat === 'jpeg') {
+      rctx.fillStyle = '#ffffff';
+      rctx.fillRect(0, 0, resultCanvas.width, resultCanvas.height);
+    }
     rctx.translate(resultCanvas.width / 2, resultCanvas.height / 2);
     rctx.rotate(-rotation * Math.PI / 180);
     if (flipH) {
@@ -1139,11 +1111,11 @@
     rctx.restore();
 
     const link = document.createElement('a');
-    const baseName = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'image';
-    const fmt = document.getElementById('exportFormat').value;
+    const fmt = exportFormat === 'gif' ? 'png' : exportFormat; // static GIF → PNG
     const mimeType = fmt === 'jpeg' ? 'image/jpeg' : fmt === 'webp' ? 'image/webp' : 'image/png';
     const ext = fmt === 'jpeg' ? 'jpg' : fmt;
-    const quality = fmt === 'jpeg' ? 0.92 : undefined;
+    const qualityVal_pct = parseInt(qualitySlider.value) / 100;
+    const quality = (fmt === 'jpeg' || fmt === 'webp') ? qualityVal_pct : undefined;
     link.download = baseName + '_cropped.' + ext;
     link.href = resultCanvas.toDataURL(mimeType, quality);
     link.click();
@@ -1151,20 +1123,32 @@
   };
 
   // ─── Mouse Interaction ───────────────────
-  cropOverlay.addEventListener('mousedown', (e) => {
+  function getCanvasCoords(clientX, clientY) {
     const rect = cropOverlay.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const { x: cx, y: cy, w: cw, h: ch } = cropRect;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  }
 
-    const handleSize = 20;
-    if (Math.abs(x - cx) < handleSize && Math.abs(y - cy) < handleSize) {
+  cropOverlay.addEventListener('mousedown', (e) => {
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    const { x: cx, y: cy, w: cw, h: ch } = cropRect;
+    const rect = cropOverlay.getBoundingClientRect();
+    const handleSizeCSS = 28;
+    const handleScale = canvas.width / rect.width;
+    const handleSize = handleSizeCSS * handleScale;
+    const handleInset = 24;
+    // Handles are positioned inside the corners at inset distance
+    if (Math.abs(x - (cx + handleInset)) < handleSize && Math.abs(y - (cy + handleInset)) < handleSize) {
       isResizing = true; resizeHandle = 'nw';
-    } else if (Math.abs(x - (cx + cw)) < handleSize && Math.abs(y - cy) < handleSize) {
+    } else if (Math.abs(x - (cx + cw - handleInset)) < handleSize && Math.abs(y - (cy + handleInset)) < handleSize) {
       isResizing = true; resizeHandle = 'ne';
-    } else if (Math.abs(x - cx) < handleSize && Math.abs(y - (cy + ch)) < handleSize) {
+    } else if (Math.abs(x - (cx + handleInset)) < handleSize && Math.abs(y - (cy + ch - handleInset)) < handleSize) {
       isResizing = true; resizeHandle = 'sw';
-    } else if (Math.abs(x - (cx + cw)) < handleSize && Math.abs(y - (cy + ch)) < handleSize) {
+    } else if (Math.abs(x - (cx + cw - handleInset)) < handleSize && Math.abs(y - (cy + ch - handleInset)) < handleSize) {
       isResizing = true; resizeHandle = 'se';
     } else if (x >= cx && x <= cx + cw && y >= cy && y <= cy + ch) {
       isDragging = true;
@@ -1178,9 +1162,7 @@
   document.addEventListener('mousemove', (e) => {
     if (!isDragging && !isResizing) return;
 
-    const rect = cropOverlay.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
     const dx = x - dragStart.x;
     const dy = y - dragStart.y;
 
@@ -1188,27 +1170,28 @@
       cropRect.x = Math.max(0, Math.min(cropStart.x + dx, canvas.width - cropRect.w));
       cropRect.y = Math.max(0, Math.min(cropStart.y + dy, canvas.height - cropRect.h));
     } else if (isResizing) {
+      const minSize = Math.max(10, Math.min(canvas.width, canvas.height) * 0.02);
       let newX = cropStart.x, newY = cropStart.y, newW = cropStart.w, newH = cropStart.h;
 
       switch (resizeHandle) {
         case 'se':
-          newW = Math.max(50, cropStart.w + dx);
-          newH = currentRatio === 'free' ? Math.max(50, cropStart.h + dy) : newW / currentRatio;
+          newW = Math.max(minSize, cropStart.w + dx);
+          newH = currentRatio === 'free' ? Math.max(minSize, cropStart.h + dy) : newW / currentRatio;
           break;
         case 'nw':
-          newW = Math.max(50, cropStart.w - dx);
-          newH = currentRatio === 'free' ? Math.max(50, cropStart.h - dy) : newW / currentRatio;
+          newW = Math.max(minSize, cropStart.w - dx);
+          newH = currentRatio === 'free' ? Math.max(minSize, cropStart.h - dy) : newW / currentRatio;
           newX = cropStart.x + cropStart.w - newW;
           newY = cropStart.y + cropStart.h - newH;
           break;
         case 'ne':
-          newW = Math.max(50, cropStart.w + dx);
-          newH = currentRatio === 'free' ? Math.max(50, cropStart.h - dy) : newW / currentRatio;
+          newW = Math.max(minSize, cropStart.w + dx);
+          newH = currentRatio === 'free' ? Math.max(minSize, cropStart.h - dy) : newW / currentRatio;
           newY = cropStart.y + cropStart.h - newH;
           break;
         case 'sw':
-          newW = Math.max(50, cropStart.w - dx);
-          newH = currentRatio === 'free' ? Math.max(50, cropStart.h + dy) : newW / currentRatio;
+          newW = Math.max(minSize, cropStart.w - dx);
+          newH = currentRatio === 'free' ? Math.max(minSize, cropStart.h + dy) : newW / currentRatio;
           newX = cropStart.x + cropStart.w - newW;
           break;
       }
@@ -1218,14 +1201,23 @@
       if (newX + newW > canvas.width) newW = canvas.width - newX;
       if (newY + newH > canvas.height) newH = canvas.height - newY;
 
-      cropRect = { x: newX, y: newY, w: Math.max(50, newW), h: Math.max(50, newH) };
+      cropRect = { x: newX, y: newY, w: Math.max(minSize, newW), h: Math.max(minSize, newH) };
     }
 
     updateOverlay();
-    updateDimensionInputs();
   });
 
+  function snapToEdges() {
+    const threshold = 12;
+    if (cropRect.x < threshold) cropRect.x = 0;
+    if (cropRect.y < threshold) cropRect.y = 0;
+    if (canvas.width - (cropRect.x + cropRect.w) < threshold) cropRect.x = canvas.width - cropRect.w;
+    if (canvas.height - (cropRect.y + cropRect.h) < threshold) cropRect.y = canvas.height - cropRect.h;
+  }
+
   document.addEventListener('mouseup', () => {
+    if (isDragging || isResizing) snapToEdges();
+    updateOverlay();
     isDragging = false;
     isResizing = false;
     resizeHandle = null;
@@ -1235,19 +1227,20 @@
   cropOverlay.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
       const touch = e.touches[0];
-      const rect = cropOverlay.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
+      const { x, y } = getCanvasCoords(touch.clientX, touch.clientY);
       const { x: cx, y: cy, w: cw, h: ch } = cropRect;
 
-      const handleSize = 20;
-      if (Math.abs(x - cx) < handleSize && Math.abs(y - cy) < handleSize) {
+      const tRect = cropOverlay.getBoundingClientRect();
+      const tHandleScale = canvas.width / tRect.width;
+      const handleSize = 28 * tHandleScale;
+      const handleInset = 24;
+      if (Math.abs(x - (cx + handleInset)) < handleSize && Math.abs(y - (cy + handleInset)) < handleSize) {
         isResizing = true; resizeHandle = 'nw';
-      } else if (Math.abs(x - (cx + cw)) < handleSize && Math.abs(y - cy) < handleSize) {
+      } else if (Math.abs(x - (cx + cw - handleInset)) < handleSize && Math.abs(y - (cy + handleInset)) < handleSize) {
         isResizing = true; resizeHandle = 'ne';
-      } else if (Math.abs(x - cx) < handleSize && Math.abs(y - (cy + ch)) < handleSize) {
+      } else if (Math.abs(x - (cx + handleInset)) < handleSize && Math.abs(y - (cy + ch - handleInset)) < handleSize) {
         isResizing = true; resizeHandle = 'sw';
-      } else if (Math.abs(x - (cx + cw)) < handleSize && Math.abs(y - (cy + ch)) < handleSize) {
+      } else if (Math.abs(x - (cx + cw - handleInset)) < handleSize && Math.abs(y - (cy + ch - handleInset)) < handleSize) {
         isResizing = true; resizeHandle = 'se';
       } else if (x >= cx && x <= cx + cw && y >= cy && y <= cy + ch) {
         isDragging = true;
@@ -1264,9 +1257,7 @@
     if (e.touches.length !== 1) return;
 
     const touch = e.touches[0];
-    const rect = cropOverlay.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const { x, y } = getCanvasCoords(touch.clientX, touch.clientY);
     const dx = x - dragStart.x;
     const dy = y - dragStart.y;
 
@@ -1274,27 +1265,28 @@
       cropRect.x = Math.max(0, Math.min(cropStart.x + dx, canvas.width - cropRect.w));
       cropRect.y = Math.max(0, Math.min(cropStart.y + dy, canvas.height - cropRect.h));
     } else if (isResizing) {
+      const minSize = Math.max(10, Math.min(canvas.width, canvas.height) * 0.02);
       let newX = cropStart.x, newY = cropStart.y, newW = cropStart.w, newH = cropStart.h;
 
       switch (resizeHandle) {
         case 'se':
-          newW = Math.max(50, cropStart.w + dx);
-          newH = currentRatio === 'free' ? Math.max(50, cropStart.h + dy) : newW / currentRatio;
+          newW = Math.max(minSize, cropStart.w + dx);
+          newH = currentRatio === 'free' ? Math.max(minSize, cropStart.h + dy) : newW / currentRatio;
           break;
         case 'nw':
-          newW = Math.max(50, cropStart.w - dx);
-          newH = currentRatio === 'free' ? Math.max(50, cropStart.h - dy) : newW / currentRatio;
+          newW = Math.max(minSize, cropStart.w - dx);
+          newH = currentRatio === 'free' ? Math.max(minSize, cropStart.h - dy) : newW / currentRatio;
           newX = cropStart.x + cropStart.w - newW;
           newY = cropStart.y + cropStart.h - newH;
           break;
         case 'ne':
-          newW = Math.max(50, cropStart.w + dx);
-          newH = currentRatio === 'free' ? Math.max(50, cropStart.h - dy) : newW / currentRatio;
+          newW = Math.max(minSize, cropStart.w + dx);
+          newH = currentRatio === 'free' ? Math.max(minSize, cropStart.h - dy) : newW / currentRatio;
           newY = cropStart.y + cropStart.h - newH;
           break;
         case 'sw':
-          newW = Math.max(50, cropStart.w - dx);
-          newH = currentRatio === 'free' ? Math.max(50, cropStart.h + dy) : newW / currentRatio;
+          newW = Math.max(minSize, cropStart.w - dx);
+          newH = currentRatio === 'free' ? Math.max(minSize, cropStart.h + dy) : newW / currentRatio;
           newX = cropStart.x + cropStart.w - newW;
           break;
       }
@@ -1304,15 +1296,16 @@
       if (newX + newW > canvas.width) newW = canvas.width - newX;
       if (newY + newH > canvas.height) newH = canvas.height - newY;
 
-      cropRect = { x: newX, y: newY, w: Math.max(50, newW), h: Math.max(50, newH) };
+      cropRect = { x: newX, y: newY, w: Math.max(minSize, newW), h: Math.max(minSize, newH) };
     }
 
     updateOverlay();
-    updateDimensionInputs();
     e.preventDefault();
   });
 
   document.addEventListener('touchend', () => {
+    if (isDragging || isResizing) snapToEdges();
+    updateOverlay();
     isDragging = false;
     isResizing = false;
     resizeHandle = null;
