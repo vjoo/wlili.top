@@ -829,8 +829,14 @@
     document.getElementById('cropFrame').setAttribute('width', w);
     document.getElementById('cropFrame').setAttribute('height', h);
 
-    // Handles — positioned inside the corners so they never get clipped
-    const handleInset = 24;
+    // Handles — dynamically sized based on CSS display scale so they look the same on all resolutions
+    const overlayRect = cropOverlay.getBoundingClientRect();
+    const svgScale = canvas.width / overlayRect.width;
+    const handleR = 18 * svgScale;        // 18 CSS px visual radius
+    const handleInset = 24 * svgScale;     // 24 CSS px visual inset from corners
+    ['handleNW','handleNE','handleSW','handleSE'].forEach(id => {
+      document.getElementById(id).setAttribute('r', handleR);
+    });
     document.getElementById('handleNW').setAttribute('cx', x + handleInset);
     document.getElementById('handleNW').setAttribute('cy', y + handleInset);
     document.getElementById('handleNE').setAttribute('cx', x + w - handleInset);
@@ -1140,7 +1146,7 @@
     const handleSizeCSS = 28;
     const handleScale = canvas.width / rect.width;
     const handleSize = handleSizeCSS * handleScale;
-    const handleInset = 24;
+    const handleInset = 24 * handleScale;
     // Handles are positioned inside the corners at inset distance
     if (Math.abs(x - (cx + handleInset)) < handleSize && Math.abs(y - (cy + handleInset)) < handleSize) {
       isResizing = true; resizeHandle = 'nw';
@@ -1233,7 +1239,7 @@
       const tRect = cropOverlay.getBoundingClientRect();
       const tHandleScale = canvas.width / tRect.width;
       const handleSize = 28 * tHandleScale;
-      const handleInset = 24;
+      const handleInset = 24 * tHandleScale;
       if (Math.abs(x - (cx + handleInset)) < handleSize && Math.abs(y - (cy + handleInset)) < handleSize) {
         isResizing = true; resizeHandle = 'nw';
       } else if (Math.abs(x - (cx + cw - handleInset)) < handleSize && Math.abs(y - (cy + handleInset)) < handleSize) {
