@@ -6,110 +6,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>植物特写布局编辑器</title>
+    <link rel="stylesheet" href="common.css">
     <style>
 /* ============================================
    WLi Tools - 在线工具集
    © 2025 WLi. All rights reserved.
    Developer: WLi
    ============================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --ink: #2B3041;
-            --ink-secondary: #424245;
-            --ink-tertiary: #6e6e73;
-            --ink-quaternary: #86868b;
-            --bg: #f5f5f7;
-            --bg-white: #ffffff;
-            --bg-elevated: #fbfbfd;
-            --border: #d2d2d7;
-            --border-light: #e8e8ed;
-            --link: #6366f1;
-            --link-hover: #0077ed;
-            --fill-black: #2B3041;
-            --fill-gray: #86868b;
-            --fill-gray-light: #d2d2d7;
-            --fill-white: #ffffff;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
-            background: var(--bg-white);
-            color: var(--ink);
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        /* ===== Global Nav — 浅灰背景 + 黑色文字（和 apple.com/mac 一致） ===== */
-        .global-nav {
-            background: var(--bg);
-            height: 48px;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .global-nav-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 22px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav-logo {
-            color: var(--ink);
-            font-size: 17px;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-box {
-            width: 32px;
-            height: 32px;
-            background: var(--fill-black);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--fill-white);
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .nav-link {
-            color: var(--ink);
-            font-size: 12px;
-            font-weight: 400;
-            letter-spacing: -0.01em;
-            text-decoration: none;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-
-        .nav-link:hover {
-            opacity: 1;
-            color: var(--link);
-        }
 
         /* ===== Promo Banner ===== */
         .promo-banner {
@@ -130,159 +33,13 @@
             text-decoration: underline;
         }
 
-        /* ===== Page Title — Apple 大标题风格 ===== */
-        .page-hero {
-            text-align: center;
-            padding: 56px 22px 40px;
-            background: var(--bg-white);
-        }
-
-        .page-hero h1 {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-            font-size: 56px;
-            font-weight: 600;
-            letter-spacing: -0.015em;
-            line-height: 1.07;
-            color: var(--ink);
-            margin-bottom: 8px;
-        }
-
-        .page-hero p {
-            font-size: 21px;
-            font-weight: 400;
-            color: var(--ink-tertiary);
-            line-height: 1.38;
-            letter-spacing: 0.011em;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* ===== Apple 按钮：黑色填充 pill + 黑色线框 pill ===== */
-        .btn-filled {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 20px;
-            background: var(--fill-black);
-            color: var(--fill-white);
-            font-size: 17px;
-            font-weight: 400;
-            line-height: 1.18;
-            letter-spacing: -0.022em;
-            border: 1.5px solid var(--fill-black);
-            border-radius: 980px;
-            cursor: pointer;
-            transition: opacity 0.3s;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .btn-filled:hover {
-            opacity: 0.85;
-        }
-
-        .btn-filled:active {
-            transform: scale(0.98);
-        }
-
-        .btn-outline {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 20px;
-            background: transparent;
-            color: var(--ink);
-            font-size: 17px;
-            font-weight: 400;
-            line-height: 1.18;
-            letter-spacing: -0.022em;
-            border: 1.5px solid var(--border);
-            border-radius: 980px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .btn-outline:hover {
-            border-color: var(--ink);
-        }
-
-        .btn-outline:active {
-            transform: scale(0.98);
-        }
-
-        .btn-link {
-            color: var(--link);
-            font-size: 17px;
-            font-weight: 400;
-            text-decoration: none;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            transition: color 0.2s;
-        }
-
-        .btn-link:hover {
-            color: var(--link-hover);
-            text-decoration: underline;
-        }
-
-        .btn-sm {
-            font-size: 14px;
-            padding: 6px 14px;
-            letter-spacing: -0.016em;
-        }
-
-        /* ===== 分段控制器 — 黑色 pill 选中态（和 apple.com/mac 一致） ===== */
-        .segmented-control {
-            display: inline-flex;
-            background: var(--bg);
-            border-radius: 980px;
-            padding: 2px;
-            gap: 2px;
-        }
-
-        .segment-btn {
-            padding: 6px 16px;
-            border: none;
-            border-radius: 980px;
-            font-size: 14px;
-            font-weight: 400;
-            color: var(--ink);
-            background: transparent;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .segment-btn.active {
-            background: var(--fill-black);
-            color: var(--fill-white);
-        }
-
-        .segment-btn:not(.active):hover {
-            background: rgba(0,0,0,0.04);
-        }
-
         /* ===== Section ===== */
-        .section {
-            padding: 64px 0;
-        }
-
         .section-bg {
             background: var(--bg);
         }
 
         .section-white {
             background: var(--bg-white);
-        }
-
-        .section-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 22px;
         }
 
         .section-headline {
@@ -888,29 +645,6 @@
             text-align: center;
         }
 
-        /* ===== Toast ===== */
-        .toast {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            background: var(--fill-black);
-            color: var(--fill-white);
-            padding: 12px 24px;
-            border-radius: 980px;
-            font-size: 15px;
-            font-weight: 400;
-            opacity: 0;
-            transition: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
-            z-index: 2000;
-            pointer-events: none;
-        }
-
-        .toast.show {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-        }
-
         /* ===== Snap Indicator ===== */
         .snap-indicator {
             position: fixed;
@@ -970,10 +704,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .page-hero h1 {
-                font-size: 40px;
-            }
-
             .section-headline {
                 font-size: 32px;
             }
@@ -984,34 +714,6 @@
         }
 
         @media (max-width: 734px) {
-            .global-nav-content {
-                padding: 0 16px;
-            }
-
-            .nav-links {
-                gap: 16px;
-            }
-
-            .page-hero {
-                padding: 40px 16px 28px;
-            }
-
-            .page-hero h1 {
-                font-size: 32px;
-            }
-
-            .page-hero p {
-                font-size: 17px;
-            }
-
-            .section {
-                padding: 40px 0;
-            }
-
-            .section-inner {
-                padding: 0 16px;
-            }
-
             .section-headline {
                 font-size: 28px;
             }
@@ -1046,10 +748,6 @@
         }
 
         @media (max-width: 480px) {
-            .nav-links {
-                display: none;
-            }
-
             .template-grid {
                 grid-template-columns: 1fr;
             }
