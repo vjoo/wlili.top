@@ -260,12 +260,12 @@
           </svg>
         </div>
         <div class="drop-title">拖拽 3D 模型到此处，或 <span class="drop-link">点击选择</span></div>
-        <div class="drop-desc">支持 GLB / GLTF / FBX / OBJ / STL / PLY / STEP / IGES / BREP / 3MF / AMF / DAE / 3DS / XYZ / PCD，最大 200MB</div>
+        <div class="drop-desc">支持 GLB / GLTF / FBX / OBJ / STL / PLY / STEP / IGES / BREP / SVG / 3MF / AMF / DAE / 3DS / XYZ / PCD，最大 200MB</div>
         <div class="format-tags">
-          <span class="format-tag">.glb</span><span class="format-tag">.gltf</span><span class="format-tag">.fbx</span><span class="format-tag">.obj</span><span class="format-tag">.stl</span><span class="format-tag">.ply</span><span class="format-tag">.step</span><span class="format-tag">.stp</span><span class="format-tag">.iges</span><span class="format-tag">.igs</span><span class="format-tag">.brep</span><span class="format-tag">.3mf</span><span class="format-tag">.amf</span><span class="format-tag">.dae</span><span class="format-tag">.3ds</span><span class="format-tag">.xyz</span><span class="format-tag">.pcd</span>
+          <span class="format-tag">.glb</span><span class="format-tag">.gltf</span><span class="format-tag">.fbx</span><span class="format-tag">.obj</span><span class="format-tag">.stl</span><span class="format-tag">.ply</span><span class="format-tag">.step</span><span class="format-tag">.stp</span><span class="format-tag">.iges</span><span class="format-tag">.igs</span><span class="format-tag">.brep</span><span class="format-tag">.svg</span><span class="format-tag">.3mf</span><span class="format-tag">.amf</span><span class="format-tag">.dae</span><span class="format-tag">.3ds</span><span class="format-tag">.xyz</span><span class="format-tag">.pcd</span>
         </div>
         <div style="margin-top:8px;font-size:11px;color:var(--ink-quaternary);">.blend / .skp / .f3d 格式浏览器不支持直接加载，请先在 Blender / SketchUp / Fusion 中导出为 GLB / STEP / DAE 再拖入预览</div>
-        <input type="file" id="fileInput" accept=".glb,.gltf,.fbx,.obj,.stl,.ply,.step,.stp,.iges,.igs,.brep,.3mf,.amf,.dae,.3ds,.xyz,.pcd" hidden>
+        <input type="file" id="fileInput" accept=".glb,.gltf,.fbx,.obj,.stl,.ply,.step,.stp,.iges,.igs,.brep,.svg,.3mf,.amf,.dae,.3ds,.xyz,.pcd" hidden>
       </div>
 
       <!-- 3D Viewport (hidden until model loaded) -->
@@ -369,6 +369,7 @@ import { ThreeMFLoader } from 'three/addons/loaders/3MFLoader.js';
 import { AMFLoader } from 'three/addons/loaders/AMFLoader.js';
 import { XYZLoader } from 'three/addons/loaders/XYZLoader.js';
 import { PCDLoader } from 'three/addons/loaders/PCDLoader.js';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
@@ -1005,6 +1006,50 @@ async function loadFile(file) {
         }
         break;
       }
+      case 'svg': {
+        const loader = new SVGLoader(loadingManager);
+        const svgData = await loader.loadAsync(url);
+        const svgGroup = new THREE.Group();
+        svgData.paths.forEach((path) => {
+          const shapes = SVGLoader.createShapes(path);
+          if (shapes.length === 0) return;
+          const fillMaterial = new THREE.MeshStandardMaterial({
+            color: path.color ? new THREE.Color(path.color) : 0x333333,
+            roughness: 0.4, metalness: 0.1, side: THREE.DoubleSide,
+          });
+          // Extrude shapes to 3D with a subtle depth
+          const depth = 0.05;
+          const extrudeSettings = { depth, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments: 3 };
+          shapes.forEach((shape) => {
+            const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            const mesh = new THREE.Mesh(geometry, fillMaterial);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            svgGroup.add(mesh);
+          });
+          // Add stroke lines for clean edges
+          if (path.userData && path.userData.style && path.userData.style.stroke !== 'none') {
+            const strokeColor = path.userData.style.stroke || '#000000';
+            const points = path.subPaths.flatMap(sub => sub.getPoints(20));
+            if (points.length >= 2) {
+              const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+              const lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(strokeColor) });
+              const line = new THREE.Line(lineGeo, lineMat);
+              line.position.z = depth;
+              svgGroup.add(line);
+            }
+          }
+        });
+        // SVG coordinates are Y-up but may be inverted; normalize
+        const box = new THREE.Box3().setFromObject(svgGroup);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        svgGroup.position.sub(center);
+        svgGroup.position.y -= size.y / 2;
+        svgGroup.position.y += size.y;
+        model = svgGroup;
+        break;
+      }
       case 'step':
       case 'stp': {
         const occt = await getOCCT();
@@ -1291,7 +1336,7 @@ document.addEventListener('paste', (e) => {
     if (item.kind === 'file') {
       const file = item.getAsFile();
       const ext = file.name.split('.').pop()?.toLowerCase();
-      const supported = ['glb','gltf','fbx','obj','stl','ply','step','stp','iges','igs','brep','3mf','amf','dae','3ds','xyz','pcd'];
+      const supported = ['glb','gltf','fbx','obj','stl','ply','step','stp','iges','igs','brep','svg','3mf','amf','dae','3ds','xyz','pcd'];
       if (supported.includes(ext)) {
         e.preventDefault();
         loadFile(file);
