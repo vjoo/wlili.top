@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- Content Security Policy - WLi Tools -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
+<link rel="stylesheet" href="common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>W.- 3D 模型预览</title>
+<style>
+/* ============================================
+   WLi Tools - 在线工具集
+   © 2025 WLi. All rights reserved.
+   Developer: WLi
+   ============================================ */
+
+/* ===== Settings Bar ===== */
+.settings-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 140px;
+}
+.setting-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ===== Viewport ===== */
+.viewport-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 420px;
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 20px;
+  cursor: grab;
+}
+.viewport-wrap:active { cursor: grabbing; }
+.viewport-wrap.grabbing { cursor: grabbing; }
+.viewport-wrap.drag-over { border-color: var(--link); }
+
+/* ===== Viewport Top Toolbar ===== */
+.viewport-toolbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+.viewport-toolbar-left,
+.viewport-toolbar-right {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.viewport-icon-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(8px);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.viewport-icon-btn:hover { background: rgba(255,255,255,1); color: var(--ink); }
+.viewport-icon-btn.close:hover { color: var(--red); }
+
+/* Export dropdown + button group */
+.export-group {
+  display: flex;
+  align-items: stretch;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  height: 32px;
+}
+.export-group select {
+  border: none;
+  background: transparent;
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  height: 100%;
+  border-right: 1px solid rgba(0,0,0,0.08);
+}
+.export-group select:hover { background: rgba(255,255,255,0.5); }
+.export-group button {
+  border: none;
+  background: var(--fill-black);
+  color: var(--fill-white);
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.export-group button:hover { opacity: 0.85; }
+.export-group button svg { width: 14px; height: 14px; }
+
+.viewport-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.viewport-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--ink-tertiary);
+  pointer-events: none;
+  z-index: 1;
+}
+.viewport-empty svg { width: 56px; height: 56px; opacity: 0.4; }
+.viewport-empty .empty-title { font-size: 21px; font-weight: 600; letter-spacing: 0.011em; color: var(--ink); opacity: 0.5; }
+.viewport-empty .empty-desc { font-size: 14px; opacity: 0.6; }
+
+.viewport-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 18px;
+  font-size: 11px;
+  color: var(--ink-quaternary);
+  pointer-events: none;
+  z-index: 2;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(6px);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-light);
+  transition: opacity 0.5s;
+}
+.viewport-hint span { display: flex; align-items: center; gap: 4px; }
+.viewport-hint span svg { width: 12px; height: 12px; opacity: 0.6; }
+
+/* ===== Format Tags in Dropzone ===== */
+.format-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.format-tag {
+  font-size: 11px;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+  color: var(--ink-tertiary);
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  pointer-events: none;
+}
+
+/* ===== Stats Row Override ===== */
+#statFileName {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 734px) {
+  .settings-bar { padding: 16px; gap: 14px; }
+  .setting-group { min-width: 100%; }
+  .viewport-wrap { min-height: 320px; }
+  .viewport-hint { gap: 10px; font-size: 10px; padding: 5px 10px; }
+}
+</style>
+<script src="nav.js"></script>
+</head>
+<body>
+
+<!-- Page Hero -->
+<div class="page-hero">
+  <h1>3D 模型预览</h1>
+  <p>拖入 3D 模型文件，实时预览、旋转查看，支持多格式导出转换</p>
+</div>
+
+<!-- Main Section -->
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Settings Bar -->
+    <div class="settings-bar">
+      <div class="setting-group">
+        <label class="setting-label">显示模式</label>
+        <div class="segmented-control" id="displayGroup">
+          <button class="segment-btn active" data-mode="both">实体+线框</button>
+          <button class="segment-btn" data-mode="solid">实体</button>
+          <button class="segment-btn" data-mode="wireframe">线框</button>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">自动旋转</label>
+        <div class="segmented-control" id="rotateGroup">
+          <button class="segment-btn" data-rot="off">关闭</button>
+          <button class="segment-btn active" data-rot="on">开启</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Model Container: dropzone and viewport swap -->
+    <div class="model-container" id="modelContainer">
+      <!-- Drop Zone -->
+      <div class="dropzone" id="dropzone">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <div class="drop-title">拖拽 3D 模型到此处，或 <span class="drop-link">点击选择</span></div>
+        <div class="drop-desc">支持 GLB / GLTF / FBX / OBJ / STL / PLY / STEP / IGES / BREP / 3MF / AMF / DAE / 3DS / XYZ / PCD，最大 200MB</div>
+        <div class="format-tags">
+          <span class="format-tag">.glb</span><span class="format-tag">.gltf</span><span class="format-tag">.fbx</span><span class="format-tag">.obj</span><span class="format-tag">.stl</span><span class="format-tag">.ply</span><span class="format-tag">.step</span><span class="format-tag">.stp</span><span class="format-tag">.iges</span><span class="format-tag">.igs</span><span class="format-tag">.brep</span><span class="format-tag">.3mf</span><span class="format-tag">.amf</span><span class="format-tag">.dae</span><span class="format-tag">.3ds</span><span class="format-tag">.xyz</span><span class="format-tag">.pcd</span>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--ink-quaternary);">.blend / .skp / .f3d 格式浏览器不支持直接加载，请先在 Blender / SketchUp / Fusion 中导出为 GLB / STEP / DAE 再拖入预览</div>
+        <input type="file" id="fileInput" accept=".glb,.gltf,.fbx,.obj,.stl,.ply,.step,.stp,.iges,.igs,.brep,.3mf,.amf,.dae,.3ds,.xyz,.pcd" hidden>
+      </div>
+
+      <!-- 3D Viewport (hidden until model loaded) -->
+      <div class="viewport-wrap" id="viewport" style="display:none">
+        <div class="viewport-toolbar">
+          <div class="viewport-toolbar-left">
+            <div class="export-group">
+              <select id="exportFormat">
+                <option value="glb">GLB</option>
+                <option value="gltf">GLTF</option>
+                <option value="obj">OBJ</option>
+                <option value="stl">STL</option>
+                <option value="ply">PLY</option>
+                <option value="usdz">USDZ</option>
+              </select>
+              <button id="btnExport">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                导出
+              </button>
+            </div>
+          </div>
+          <div class="viewport-toolbar-right">
+            <button class="viewport-icon-btn" id="btnReset" title="重置视角 (R)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            </button>
+            <button class="viewport-icon-btn close" id="viewportClose" title="关闭并重新导入 (Esc)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="viewport-empty" id="viewportEmpty" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+          </svg>
+          <div class="empty-title">拖入模型开始预览</div>
+          <div class="empty-desc">支持旋转 / 缩放 / 平移查看</div>
+        </div>
+        <div class="viewport-hint" id="viewportHint" style="opacity:0">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 拖拽旋转</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> 滚轮缩放</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/></svg> 右键平移</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat-card">
+        <div class="stat-val" id="statFileName">—</div>
+        <div class="stat-label">文件名称</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val accent" id="statVertices">—</div>
+        <div class="stat-label">顶点数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val accent" id="statTriangles">—</div>
+        <div class="stat-label">三角面数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statFileSize">—</div>
+        <div class="stat-label">文件大小</div>
+      </div>
+    </div>
+
+
+
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<div style="text-align:center;padding:32px 22px;color:#86868b;font-size:12px;">&copy; 2025 WLi</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+/* ============================================
+   WLi Tools - 在线工具集
+   © 2025 WLi. All rights reserved.
+   Developer: WLi
+   ============================================ */
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js';
+import { TDSLoader } from 'three/addons/loaders/TDSLoader.js';
+import { ThreeMFLoader } from 'three/addons/loaders/3MFLoader.js';
+import { AMFLoader } from 'three/addons/loaders/AMFLoader.js';
+import { XYZLoader } from 'three/addons/loaders/XYZLoader.js';
+import { PCDLoader } from 'three/addons/loaders/PCDLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { PLYExporter } from 'three/addons/exporters/PLYExporter.js';
+import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
+
+// ─── IndexedDB persistence ───────────────────
+const DB_NAME = 'wli-3d-viewer';
+const DB_STORE = 'models';
+const DB_KEY = 'current';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbSaveFile(file) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(file, DB_KEY);
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    db.close();
+  } catch (e) { console.warn('[3D Viewer] IndexedDB save failed:', e); }
+}
+
+async function dbGetFile() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(DB_KEY);
+    const result = await new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); });
+    db.close();
+    return result || null;
+  } catch (e) { console.warn('[3D Viewer] IndexedDB get failed:', e); return null; }
+}
+
+async function dbClearFile() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(DB_KEY);
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    db.close();
+  } catch (e) { console.warn('[3D Viewer] IndexedDB clear failed:', e); }
+}
+
+// ─── Shared LoadingManager — suppress missing texture errors ──
+const loadingManager = new THREE.LoadingManager();
+loadingManager.onError = (url) => {
+  // Textures referenced by relative paths can't resolve from blob URLs — expected, not fatal
+  if (/\.(png|jpg|jpeg|bmp|tga|dds|hdr|exr|webp|tif|tiff)$/i.test(url)) {
+    console.debug('Texture not found (expected for single-file upload):', url);
+    return;
+  }
+  console.warn('Asset load error:', url);
+};
+const dropzone    = document.getElementById('dropzone');
+const fileInput   = document.getElementById('fileInput');
+const viewport    = document.getElementById('viewport');
+const viewportEmpty = document.getElementById('viewportEmpty');
+const viewportHint  = document.getElementById('viewportHint');
+const statsRow    = document.getElementById('statsRow');
+const toastEl     = document.getElementById('toast');
+const btnReset    = document.getElementById('btnReset');
+const btnExport   = document.getElementById('btnExport');
+const exportFormat = document.getElementById('exportFormat');
+
+// ─── State ───────────────────────────────────
+let currentModel = null;       // THREE.Group | THREE.Mesh | THREE.Scene-like
+let currentFileName = '';
+let currentFileSize = 0;
+let bgMode = 'gradient';
+let displayMode = 'both';
+let autoRotate = true;
+
+// ─── Three.js Setup ──────────────────────────
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 1000);
+camera.position.set(3, 2, 5);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+viewport.appendChild(renderer.domElement);
+renderer.domElement.style.position = 'absolute';
+renderer.domElement.style.top = '0';
+renderer.domElement.style.left = '0';
+renderer.domElement.style.zIndex = '0';
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.5;
+controls.minDistance = 0.3;
+controls.maxDistance = 50;
+controls.target.set(0, 0, 0);
+controls.update();
+
+// ─── Lighting ────────────────────────────────
+const ambientLight = new THREE.AmbientLight('#ffffff', 1.8);
+scene.add(ambientLight);
+
+const keyLight = new THREE.DirectionalLight('#ffffff', 4.5);
+keyLight.position.set(5, 8, 5);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.width = 1024;
+keyLight.shadow.mapSize.height = 1024;
+keyLight.shadow.camera.near = 0.1;
+keyLight.shadow.camera.far = 50;
+keyLight.shadow.camera.left = -10;
+keyLight.shadow.camera.right = 10;
+keyLight.shadow.camera.top = 10;
+keyLight.shadow.camera.bottom = -10;
+keyLight.shadow.bias = -0.0001;
+scene.add(keyLight);
+
+const fillLight = new THREE.DirectionalLight('#b8c8ff', 1.8);
+fillLight.position.set(-3, 1, -2);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight('#ffffff', 2.0);
+rimLight.position.set(0, -0.5, -5);
+scene.add(rimLight);
+
+// ─── Ground Grid (subtle reference plane) ────
+const gridHelper = new THREE.GridHelper(10, 20, 0xcccccc, 0xe0e0e0);
+gridHelper.material.transparent = true;
+gridHelper.material.opacity = 0.3;
+gridHelper.material.depthWrite = false;
+scene.add(gridHelper);
+
+// ─── Background scene ────────────────────────
+function updateBackground() {
+  const gradColors = {
+    dark:     [0x1a1a2e, 0x16213e],
+    gradient: [0xe8eaf0, 0xc8ccd8],
+    light:    [0xf5f5f7, 0xe8e8ed],
+  };
+  const [c1, c2] = gradColors[bgMode] || gradColors.gradient;
+  scene.background = new THREE.Color(c1);
+  scene.fog = new THREE.Fog(c1, 8, 40);
+
+  // Adjust grid for background
+  if (bgMode === 'dark') {
+    gridHelper.material.color.set(0x444466);
+    gridHelper.material.opacity = 0.2;
+  } else {
+    gridHelper.material.color.set(0xcccccc);
+    gridHelper.material.opacity = 0.3;
+  }
+}
+updateBackground();
+
+// ─── Resize ──────────────────────────────────
+function resizeViewport() {
+  const rect = viewport.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  if (w === 0 || h === 0) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / Math.max(h, 1);
+  camera.updateProjectionMatrix();
+}
+
+const resizeObserver = new ResizeObserver(() => resizeViewport());
+resizeObserver.observe(viewport);
+window.addEventListener('resize', () => resizeViewport());
+resizeViewport();
+
+// ─── Toast ───────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  clearTimeout(toastTimer);
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+// ─── Helpers ─────────────────────────────────
+function formatBytes(bytes) {
+  if (!bytes && bytes !== 0) return '—';
+  if (bytes === 0) return '0 B';
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return mb.toFixed(2) + ' MB';
+  const kb = bytes / 1024;
+  if (kb >= 1) return kb.toFixed(1) + ' KB';
+  return bytes + ' B';
+}
+
+function formatNumber(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return String(n);
+}
+
+function countGeometry(model) {
+  let vertices = 0;
+  let triangles = 0;
+  safeTraverse(model, (child) => {
+    if (!child.isMesh) return;
+    const geom = child.geometry;
+    if (!geom) return;
+    if (geom.index) {
+      triangles += geom.index.count / 3;
+    } else if (geom.attributes.position) {
+      triangles += geom.attributes.position.count / 3;
+    }
+    if (geom.attributes.position) {
+      vertices += geom.attributes.position.count;
+    }
+  });
+  return { vertices: Math.round(vertices), triangles: Math.round(triangles) };
+}
+
+function getMeshBoundingBox(object) {
+  const box = new THREE.Box3();
+  safeTraverse(object, (child) => {
+    if (child.isMesh && child.geometry) {
+      child.geometry.computeBoundingBox();
+      const childBox = child.geometry.boundingBox.clone();
+      childBox.applyMatrix4(child.matrixWorld);
+      box.union(childBox);
+    }
+  });
+  return box;
+}
+
+function centerModel(model) {
+  // Reset transforms before measuring (some loaders apply unexpected offsets)
+  model.position.set(0, 0, 0);
+  model.rotation.set(0, 0, 0);
+  model.scale.set(1, 1, 1);
+  model.updateMatrixWorld(true);
+
+  // Compute bounding box from meshes only (exclude lights/cameras in GLTF scenes)
+  const box = getMeshBoundingBox(model);
+  if (box.isEmpty()) {
+    // Fallback: empty bounding box means no visible mesh; use default
+    box.setFromCenterAndSize(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1));
+  }
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  const maxDim = Math.max(size.x, size.y, size.z, 0.01);
+
+  // Scale to fit in a ~2-unit view volume
+  const targetSize = 2;
+  const scale = targetSize / maxDim;
+  model.scale.setScalar(scale);
+
+  // Center the model: offset = -center * scale so bounding-box center lands at origin
+  model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+
+  // Camera distance based on scaled bounding-sphere radius and FOV
+  const scaledRadius = (size.length() / 2) * scale;
+  const fov = THREE.MathUtils.degToRad(camera.fov);
+  const dist = Math.max((scaledRadius / Math.tan(fov / 2)) * 1.5, 2);
+
+  // Reset camera to a stable front-top view
+  controls.target.set(0, 0, 0);
+  camera.position.set(dist * 0.5, dist * 0.35, dist);
+  camera.lookAt(0, 0, 0);
+  camera.updateProjectionMatrix();
+  controls.minDistance = dist * 0.1;
+  controls.maxDistance = Math.max(dist * 5, 50);
+  controls.update();
+
+  // Expand shadow camera to cover the scaled model
+  const half = targetSize * 1.5;
+  keyLight.shadow.camera.left = -half;
+  keyLight.shadow.camera.right = half;
+  keyLight.shadow.camera.top = half;
+  keyLight.shadow.camera.bottom = -half;
+  keyLight.shadow.camera.updateProjectionMatrix();
+
+  // Position grid just below the model
+  const gridSize = targetSize * 2;
+  gridHelper.scale.setScalar(gridSize / 10);
+  gridHelper.position.y = -targetSize * 0.55;
+}
+
+function applyDisplayMode(model) {
+  safeTraverse(model, (child) => {
+    if (!child.isMesh) return;
+    if (displayMode === 'solid') {
+      child.material.wireframe = false;
+      child.visible = true;
+    } else if (displayMode === 'wireframe') {
+      child.material.wireframe = true;
+      child.visible = true;
+    } else if (displayMode === 'both') {
+      child.material.wireframe = false;
+      child.visible = true;
+      // Clone mesh for wireframe overlay
+      if (!child.userData._wireframeClone) {
+        const clone = new THREE.Mesh(child.geometry, new THREE.MeshBasicMaterial({
+          color: 0x000000,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.15,
+          depthTest: true,
+        }));
+        clone.userData._isWireframeOverlay = true;
+        child.userData._wireframeClone = clone;
+        child.parent.add(clone);
+      }
+      child.userData._wireframeClone.visible = true;
+      child.userData._wireframeClone.position.copy(child.position);
+      child.userData._wireframeClone.rotation.copy(child.rotation);
+      child.userData._wireframeClone.scale.copy(child.scale);
+    }
+  });
+
+  // Clean up wireframe clones when switching away from 'both'
+  if (displayMode !== 'both') {
+    safeTraverse(model, (child) => {
+      if (child.userData._wireframeClone) {
+        child.userData._wireframeClone.parent?.remove(child.userData._wireframeClone);
+        child.userData._wireframeClone.geometry?.dispose();
+        child.userData._wireframeClone.material?.dispose();
+        child.userData._wireframeClone = null;
+      }
+    });
+  }
+}
+
+function updateStats(model) {
+  const { vertices, triangles } = countGeometry(model);
+  document.getElementById('statFileName').textContent = currentFileName || '—';
+  document.getElementById('statFileName').title = currentFileName || '';
+  document.getElementById('statVertices').textContent = formatNumber(vertices);
+  document.getElementById('statTriangles').textContent = formatNumber(triangles);
+  document.getElementById('statFileSize').textContent = formatBytes(currentFileSize);
+  statsRow.style.display = 'grid';
+  // Swap: hide dropzone, show viewport
+  dropzone.style.display = 'none';
+  viewport.style.display = 'block';
+  resizeViewport();
+  viewportHint.style.opacity = '1';
+}
+
+function clearUI() {
+  statsRow.style.display = 'none';
+  // Swap: show dropzone, hide viewport
+  dropzone.style.display = 'block';
+  viewport.style.display = 'none';
+}
+
+// ─── Load Model ──────────────────────────────
+function safeTraverse(object, callback) {
+  if (!object) return;
+  callback(object);
+  if (object.children) {
+    object.children.forEach(child => {
+      if (child) safeTraverse(child, callback);
+    });
+  }
+}
+
+function disposeModel() {
+  if (!currentModel) return;
+  // Remove wireframe clones
+  safeTraverse(currentModel, (child) => {
+    if (child.userData && child.userData._wireframeClone) {
+      child.userData._wireframeClone.parent?.remove(child.userData._wireframeClone);
+      child.userData._wireframeClone.geometry?.dispose();
+      child.userData._wireframeClone.material?.dispose();
+      child.userData._wireframeClone = null;
+    }
+  });
+  // Dispose all resources
+  safeTraverse(currentModel, (child) => {
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material.forEach(m => disposeMaterial(m));
+      } else {
+        disposeMaterial(child.material);
+      }
+    }
+  });
+  scene.remove(currentModel);
+  currentModel = null;
+}
+
+function disposeMaterial(material) {
+  Object.keys(material).forEach(key => {
+    const value = material[key];
+    if (value && value.isTexture) {
+      value.dispose();
+    }
+  });
+  material.dispose();
+}
+
+function setupModel(model) {
+  // Ensure all meshes have visible materials
+  safeTraverse(model, (child) => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      // Fix invisible materials
+      if (child.material && child.material.isMaterial) {
+        child.material.needsUpdate = true;
+        if (child.material.side === undefined || child.material.side === 0) {
+          child.material.side = THREE.FrontSide;
+        }
+      }
+    }
+  });
+
+  // Debug: show model bounding box info (meshes only)
+  const box = getMeshBoundingBox(model);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  console.log(`[3D Viewer] Model bounds: center=(${center.x.toFixed(2)},${center.y.toFixed(2)},${center.z.toFixed(2)}) size=(${size.x.toFixed(2)},${size.y.toFixed(2)},${size.z.toFixed(2)})`);
+
+  currentModel = model;
+  scene.add(model);
+  centerModel(model);
+  applyDisplayMode(model);
+  updateStats(model);
+}
+
+// ─── OCCT (STEP/IGES/BREP) CAD support ──────
+let _occtInstance = null;
+let _occtLoading = null;
+
+async function getOCCT() {
+  if (_occtInstance) return _occtInstance;
+  if (_occtLoading) return _occtLoading;
+  _occtLoading = (async () => {
+    showToast('正在加载 CAD 解析引擎…');
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/occt-import-js@0.0.23/dist/occt-import-js.js';
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('CAD 解析引擎加载失败'));
+      document.head.appendChild(script);
+    });
+    _occtInstance = await occtimportjs({
+      locateFile: (path) => `https://unpkg.com/occt-import-js@0.0.23/dist/${path}`
+    });
+    _occtLoading = null;
+    return _occtInstance;
+  })();
+  return _occtLoading;
+}
+
+function occtResultToThree(result) {
+  if (!result || !result.success) throw new Error('CAD 文件解析失败');
+  const group = new THREE.Group();
+  for (const meshData of result.meshes) {
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(meshData.attributes.position.array);
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    if (meshData.attributes.normal) {
+      const normals = new Float32Array(meshData.attributes.normal.array);
+      geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+    } else {
+      geometry.computeVertexNormals();
+    }
+    if (meshData.index) {
+      const indices = new Uint32Array(meshData.index.array);
+      geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    }
+    let color = 0xcccccc;
+    if (meshData.color && meshData.color.length >= 3) {
+      color = (Math.round(meshData.color[0] * 255) << 16) |
+              (Math.round(meshData.color[1] * 255) << 8) |
+              Math.round(meshData.color[2] * 255);
+    }
+    const material = new THREE.MeshStandardMaterial({
+      color, roughness: 0.5, metalness: 0.1, side: THREE.DoubleSide,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+  }
+  return group;
+}
+
+async function loadFile(file) {
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  const url = URL.createObjectURL(file);
+
+  disposeModel();
+  currentFileName = file.name;
+  currentFileSize = file.size;
+
+  console.log(`[3D Viewer] Loading: "${file.name}" (${formatBytes(file.size)}, .${ext})`);
+
+  try {
+    let model = null;
+
+    switch (ext) {
+      case 'glb':
+      case 'gltf': {
+        const loader = new GLTFLoader(loadingManager);
+        const gltf = await loader.loadAsync(url);
+        model = gltf.scene;
+        break;
+      }
+      case 'fbx': {
+        const loader = new FBXLoader(loadingManager);
+        model = await loader.loadAsync(url);
+        break;
+      }
+      case 'obj': {
+        const objLoader = new OBJLoader(loadingManager);
+        // Don't attempt MTL loading from blob URLs — single-file drag can't resolve relative paths
+        model = await objLoader.loadAsync(url);
+        // OBJ often comes without vertex colors; apply a subtle default material
+        safeTraverse(model, (child) => {
+          if (child.isMesh && (!child.material || (Array.isArray(child.material) && child.material.length === 0))) {
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0xd4d4d8,
+              roughness: 0.45,
+              metalness: 0.05,
+            });
+          }
+        });
+        break;
+      }
+      case 'stl': {
+        const loader = new STLLoader(loadingManager);
+        const geometry = await loader.loadAsync(url);
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xcccccc,
+          roughness: 0.5,
+          metalness: 0.1,
+        });
+        model = new THREE.Mesh(geometry, material);
+        break;
+      }
+      case 'ply': {
+        const loader = new PLYLoader(loadingManager);
+        const geometry = await loader.loadAsync(url);
+        geometry.computeVertexNormals();
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xcccccc,
+          roughness: 0.5,
+          metalness: 0.1,
+          vertexColors: geometry.hasAttribute('color'),
+        });
+        if (geometry.hasAttribute('color')) {
+          material.vertexColors = true;
+        }
+        model = new THREE.Mesh(geometry, material);
+        break;
+      }
+      case 'dae': {
+        const loader = new ColladaLoader(loadingManager);
+        const collada = await loader.loadAsync(url);
+        model = collada.scene;
+        break;
+      }
+      case '3ds': {
+        const loader = new TDSLoader(loadingManager);
+        model = await loader.loadAsync(url);
+        break;
+      }
+      case '3mf': {
+        const loader = new ThreeMFLoader(loadingManager);
+        model = await loader.loadAsync(url);
+        // 3MF models sometimes need material defaults applied
+        safeTraverse(model, (child) => {
+          if (child.isMesh) {
+            if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+              child.material = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, roughness: 0.5, metalness: 0.1 });
+            }
+            if (child.material.isMaterial) {
+              child.material.needsUpdate = true;
+              child.material.side = THREE.FrontSide;
+            }
+          }
+        });
+        break;
+      }
+      case 'amf': {
+        const loader = new AMFLoader(loadingManager);
+        model = await loader.loadAsync(url);
+        safeTraverse(model, (child) => {
+          if (child.isMesh) {
+            if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+              child.material = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, roughness: 0.5, metalness: 0.1 });
+            }
+            if (child.material.isMaterial) {
+              child.material.needsUpdate = true;
+              child.material.side = THREE.FrontSide;
+            }
+          }
+        });
+        break;
+      }
+      case 'xyz': {
+        const loader = new XYZLoader(loadingManager);
+        const geometry = await loader.loadAsync(url);
+        geometry.computeVertexNormals();
+        const xyzMaterial = new THREE.PointsMaterial({
+          color: 0x6366f1,
+          size: 0.02,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        model = new THREE.Points(geometry, xyzMaterial);
+        break;
+      }
+      case 'pcd': {
+        const loader = new PCDLoader(loadingManager);
+        model = await loader.loadAsync(url);
+        // PCDLoader returns Points; ensure material is visible
+        if (model.isPoints && model.material) {
+          model.material.size = 0.02;
+          model.material.color.set(0x6366f1);
+        }
+        break;
+      }
+      case 'step':
+      case 'stp': {
+        const occt = await getOCCT();
+        const buffer = await file.arrayBuffer();
+        const result = occt.ReadStepFile(new Uint8Array(buffer), null);
+        model = occtResultToThree(result);
+        break;
+      }
+      case 'iges':
+      case 'igs': {
+        const occt = await getOCCT();
+        const buffer = await file.arrayBuffer();
+        const result = occt.ReadIgesFile(new Uint8Array(buffer), null);
+        model = occtResultToThree(result);
+        break;
+      }
+      case 'brep': {
+        const occt = await getOCCT();
+        const buffer = await file.arrayBuffer();
+        const result = occt.ReadBrepFile(new Uint8Array(buffer), null);
+        model = occtResultToThree(result);
+        break;
+      }
+      default:
+        throw new Error(`不支持的格式: .${ext}`);
+    }
+
+    URL.revokeObjectURL(url);
+
+    if (!model) throw new Error('解析结果为空');
+
+    console.log(`[3D Viewer] Loaded successfully:`, model);
+    setupModel(model);
+    showToast(`已加载 ${file.name}`);
+    dbSaveFile(file);
+
+  } catch (err) {
+    console.error('[3D Viewer] Load error:', err);
+    console.error('[3D Viewer] Error stack:', err.stack);
+    console.error('[3D Viewer] File:', file.name, file.type, file.size);
+    disposeModel();
+    clearUI();
+    // Show meaningful error — include error type and first line of message
+    const msg = err.message || err.toString();
+    showToast(`加载失败 (.${ext}): ${msg.substring(0, 60)}`);
+  }
+}
+
+// ─── Export ──────────────────────────────────
+
+/** Check if model contains any mesh geometry (required for OBJ/STL export) */
+function hasMeshGeometry(model) {
+  let found = false;
+  safeTraverse(model, (child) => { if (child.isMesh && child.geometry) found = true; });
+  return found;
+}
+
+async function exportGLB() {
+  if (!currentModel) return;
+  const exporter = new GLTFExporter();
+  try {
+    const glb = await new Promise((resolve, reject) => {
+      exporter.parse(currentModel, (result) => {
+        if (result instanceof ArrayBuffer) resolve(result);
+        else reject(new Error('导出为非二进制格式'));
+      }, (err) => reject(err), { binary: true });
+    });
+    const blob = new Blob([glb], { type: 'model/gltf-binary' });
+    downloadBlob(blob, currentFileName.replace(/\.[^.]+$/, '') + '.glb');
+    showToast('GLB 导出成功');
+  } catch (err) {
+    console.error('GLB export error:', err);
+    showToast('GLB 导出失败: ' + (err.message || '未知错误'));
+  }
+}
+
+function exportOBJ() {
+  if (!currentModel) return;
+  if (!hasMeshGeometry(currentModel)) {
+    showToast('OBJ 仅支持导出网格模型（当前模型为点云/非网格）');
+    return;
+  }
+  try {
+    const exporter = new OBJExporter();
+    const text = exporter.parse(currentModel);
+    const blob = new Blob([text], { type: 'text/plain' });
+    downloadBlob(blob, currentFileName.replace(/\.[^.]+$/, '') + '.obj');
+    showToast('OBJ 导出成功');
+  } catch (err) {
+    console.error('OBJ export error:', err);
+    showToast('OBJ 导出失败: ' + (err.message || '未知错误'));
+  }
+}
+
+function exportSTL() {
+  if (!currentModel) return;
+  if (!hasMeshGeometry(currentModel)) {
+    showToast('STL 仅支持导出网格模型（当前模型为点云/非网格）');
+    return;
+  }
+  try {
+    const exporter = new STLExporter();
+    const arrayBuffer = exporter.parse(currentModel, { binary: true });
+    const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+    downloadBlob(blob, currentFileName.replace(/\.[^.]+$/, '') + '.stl');
+    showToast('STL 导出成功');
+  } catch (err) {
+    console.error('STL export error:', err);
+    showToast('STL 导出失败: ' + (err.message || '未知错误'));
+  }
+}
+
+function exportPLY() {
+  if (!currentModel) return;
+  if (!hasMeshGeometry(currentModel)) {
+    showToast('PLY 仅支持导出网格模型（当前模型为点云/非网格）');
+    return;
+  }
+  try {
+    const exporter = new PLYExporter();
+    const arrayBuffer = exporter.parse(currentModel, { binary: true });
+    const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+    downloadBlob(blob, currentFileName.replace(/\.[^.]+$/, '') + '.ply');
+    showToast('PLY 导出成功');
+  } catch (err) {
+    console.error('PLY export error:', err);
+    showToast('PLY 导出失败: ' + (err.message || '未知错误'));
+  }
+}
+
+async function exportGLTF() {
+  if (!currentModel) return;
+  const exporter = new GLTFExporter();
+  try {
+    const result = await new Promise((resolve, reject) => {
+      exporter.parse(currentModel, (output) => {
+        resolve(output);
+      }, (err) => reject(err), { binary: false });
+    });
+    const json = JSON.stringify(result, null, 2);
+    const blob = new Blob([json], { type: 'model/gltf+json' });
+    downloadBlob(blob, currentFileName.replace(/\.[^.]+$/, '') + '.gltf');
+    showToast('GLTF 导出成功');
+  } catch (err) {
+    console.error('GLTF export error:', err);
+    showToast('GLTF 导出失败: ' + (err.message || '未知错误'));
+  }
+}
+
+async function exportUSDZ() {
+  if (!currentModel) return;
+  if (!hasMeshGeometry(currentModel)) {
+    showToast('USDZ 仅支持导出网格模型（当前模型为点云/非网格）');
+    return;
+  }
+  try {
+    const exporter = new USDZExporter();
+    const arrayBuffer = await exporter.parse(currentModel);
+    const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+    downloadBlob(blob, currentFileName.replace(/\.[^.]+$/, '') + '.usdz');
+    showToast('USDZ 导出成功');
+  } catch (err) {
+    console.error('USDZ export error:', err);
+    showToast('USDZ 导出失败: ' + (err.message || '未知错误'));
+  }
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ─── UI Events ───────────────────────────────
+
+// Drop zone
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    const f = files[0];
+    if (f.size > 200 * 1024 * 1024) {
+      showToast('文件过大，最大支持 200MB');
+      return;
+    }
+    loadFile(f);
+  }
+});
+
+// Viewport drag-drop (replace model without going back to dropzone)
+viewport.addEventListener('dragover', e => { e.preventDefault(); viewport.classList.add('drag-over'); });
+viewport.addEventListener('dragleave', () => viewport.classList.remove('drag-over'));
+viewport.addEventListener('drop', e => {
+  e.preventDefault();
+  viewport.classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    const f = files[0];
+    if (f.size > 200 * 1024 * 1024) {
+      showToast('文件过大，最大支持 200MB');
+      return;
+    }
+    loadFile(f);
+  }
+});
+
+// Viewport close button — clears model and shows dropzone
+document.getElementById('viewportClose').addEventListener('click', () => {
+  disposeModel();
+  clearUI();
+  currentFileName = '';
+  currentFileSize = 0;
+  dbClearFile();
+  showToast('已清除，可重新导入模型');
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length > 0) {
+    const f = fileInput.files[0];
+    if (f.size > 200 * 1024 * 1024) {
+      showToast('文件过大，最大支持 200MB');
+      fileInput.value = '';
+      return;
+    }
+    loadFile(f);
+    fileInput.value = '';
+  }
+});
+
+// Display mode toggle
+document.querySelectorAll('#displayGroup .segment-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#displayGroup .segment-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    displayMode = btn.dataset.mode;
+    if (currentModel) applyDisplayMode(currentModel);
+  });
+});
+
+// Auto-rotate toggle
+document.querySelectorAll('#rotateGroup .segment-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#rotateGroup .segment-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    autoRotate = btn.dataset.rot === 'on';
+    controls.autoRotate = autoRotate;
+  });
+});
+
+// Export button
+btnExport.addEventListener('click', () => {
+  const format = exportFormat.value;
+  switch (format) {
+    case 'glb': exportGLB(); break;
+    case 'gltf': exportGLTF(); break;
+    case 'obj': exportOBJ(); break;
+    case 'stl': exportSTL(); break;
+    case 'ply': exportPLY(); break;
+    case 'usdz': exportUSDZ(); break;
+  }
+});
+
+// Reset camera
+btnReset.addEventListener('click', () => {
+  if (!currentModel) return;
+  centerModel(currentModel);
+  showToast('视角已重置');
+});
+
+// ─── Paste from clipboard (Ctrl+V)
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.kind === 'file') {
+      const file = item.getAsFile();
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      const supported = ['glb','gltf','fbx','obj','stl','ply','step','stp','iges','igs','brep','3mf','amf','dae','3ds','xyz','pcd'];
+      if (supported.includes(ext)) {
+        e.preventDefault();
+        loadFile(file);
+        return;
+      }
+    }
+  }
+});
+
+// Touch handling for viewport (prevent scroll when interacting with 3D)
+viewport.addEventListener('touchstart', (e) => {
+  if (e.target === renderer.domElement || viewport.contains(e.target)) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+// ─── Render Loop ─────────────────────────────
+function animate() {
+  requestAnimationFrame(animate);
+
+  controls.update();
+
+  // Sync wireframe clones position
+  if (displayMode === 'both' && currentModel) {
+    safeTraverse(currentModel, (child) => {
+      if (child.isMesh && child.userData._wireframeClone) {
+        child.userData._wireframeClone.position.copy(child.position);
+        child.userData._wireframeClone.rotation.copy(child.rotation);
+        child.userData._wireframeClone.scale.copy(child.scale);
+      }
+    });
+  }
+
+  renderer.render(scene, camera);
+}
+
+animate();
+resizeViewport();
+
+// ─── Restore model from IndexedDB on page load ──
+// sessionStorage survives refresh but is cleared when tab/window is closed
+// New tab → no _wli_alive → clear DB, don't restore
+// Refresh → _wli_alive exists → restore model from IndexedDB
+(async () => {
+  const isNewSession = !sessionStorage.getItem('_wli_alive');
+  sessionStorage.setItem('_wli_alive', '1');
+  if (isNewSession) {
+    await dbClearFile();
+    return;
+  }
+  const savedFile = await dbGetFile();
+  if (savedFile && savedFile.name) {
+    console.log('[3D Viewer] Restoring saved model:', savedFile.name);
+    loadFile(savedFile);
+  }
+})();
+
+// ─── Keyboard shortcuts ──────────────────────
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  switch (e.key.toLowerCase()) {
+    case 'r':
+      if (currentModel) { centerModel(currentModel); showToast('视角已重置 (R)'); }
+      break;
+    case 'f':
+      // Fit view
+      if (currentModel) { centerModel(currentModel); showToast('适配视角 (F)'); }
+      break;
+    case 'escape':
+    case 'delete':
+      if (currentModel) {
+        disposeModel();
+        clearUI();
+        currentFileName = '';
+        currentFileSize = 0;
+        dbClearFile();
+        showToast('模型已清除 (Esc)');
+      }
+      break;
+  }
+});
+
+// ─── Page lifecycle ──────────────────────────
+window.addEventListener('beforeunload', () => {
+  renderer.dispose();
+});
+
+// Pause render loop when tab is hidden to save resources
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    controls.autoRotate = false;
+  } else {
+    controls.autoRotate = autoRotate;
+  }
+});
+</script>
+
+</body>
+</html>
