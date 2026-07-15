@@ -395,42 +395,43 @@
 <section class="section">
   <div class="section-inner">
 
+    <!-- Toolbar (always visible above upload/editor) -->
+    <input type="file" id="fileInput" accept="image/*,.pdf,application/pdf" hidden>
+    <div class="toolbar" id="toolbar">
+      <div class="toolbar-ratio" id="ratioGroup">
+        <button class="active" data-ratio="free">自由</button>
+        <button data-ratio="1:1">1:1</button>
+        <button data-ratio="4:3">4:3</button>
+        <button data-ratio="3:4">3:4</button>
+        <button data-ratio="16:9">16:9</button>
+        <button data-ratio="9:16">9:16</button>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="toolbar-format" id="formatGroup">
+        <button class="active" data-fmt="png">PNG</button>
+        <button data-fmt="jpeg">JPG</button>
+        <button data-fmt="webp">WebP</button>
+        <button data-fmt="pdf">PDF</button>
+        <button data-fmt="gif">GIF</button>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="toolbar-quality">
+        <span class="quality-label">压缩</span>
+        <span class="quality-val" id="qualityVal">90%</span>
+        <input type="range" id="qualitySlider" min="10" max="100" value="90" step="1" class="quality-slider">
+      </div>
+    </div>
+
     <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
       <div class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
       <div class="drop-title">拖拽图片到此处，或 <span>点击选择</span></div>
       <div class="drop-desc">支持 JPG / PNG / WebP / GIF / BMP / SVG / AVIF / PDF 格式</div>
-      <input type="file" id="fileInput" accept="image/*,.pdf,application/pdf">
     </div>
 
-    <!-- Editor Area -->
+    <!-- Editor Area (hidden until image loaded) -->
     <div class="editor-area" id="editorArea">
 
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <div class="toolbar-ratio" id="ratioGroup">
-          <button class="active" data-ratio="free">自由</button>
-          <button data-ratio="1:1">1:1</button>
-          <button data-ratio="4:3">4:3</button>
-          <button data-ratio="3:4">3:4</button>
-          <button data-ratio="16:9">16:9</button>
-          <button data-ratio="9:16">9:16</button>
-        </div>
-        <div class="toolbar-divider"></div>
-        <div class="toolbar-format" id="formatGroup">
-          <button class="active" data-fmt="png">PNG</button>
-          <button data-fmt="jpeg">JPG</button>
-          <button data-fmt="webp">WebP</button>
-          <button data-fmt="pdf">PDF</button>
-          <button data-fmt="gif">GIF</button>
-        </div>
-        <div class="toolbar-divider"></div>
-        <div class="toolbar-quality">
-          <span class="quality-label">压缩</span>
-          <span class="quality-val" id="qualityVal">90%</span>
-          <input type="range" id="qualitySlider" min="10" max="100" value="90" step="1" class="quality-slider">
-        </div>
-      </div>
       <!-- Crop Info -->
       <div class="crop-info" id="cropInfo">
         <span>裁切尺寸</span>
