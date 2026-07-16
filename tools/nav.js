@@ -20,7 +20,7 @@
   var _s = document.createElement('style');
   let css = '@media(max-width:600px){#navBrandText{display:none!important}';
   if (hasSidebar) css += '#mobileMenuBtn{display:flex!important}';
-  css += '}';
+  css += '#privacyNotice{display:none!important}}';
   _s.textContent = css;
   document.head.appendChild(_s);
 
@@ -29,7 +29,7 @@
     { name: '配图排版', href: './image-layout.html' },
     { name: '图片裁切', href: './image-cropper.html' },
     { name: '在线换算', href: './unit-converter.html' },
-    { name: '密码生成器', href: './password-gen.html' },
+    { name: '密码衍生器', href: './password-gen.html' },
     { name: 'IP形象生成器', href: './ip-mascot.html' },
     { name: '3D模型预览', href: './model-viewer.html' },
     { name: '3D耗材管理', href: './filament-manager.html' },
@@ -57,6 +57,7 @@
       <a href="./index.html" style="color:#2B3041;font-size:17px;font-weight:600;letter-spacing:-0.01em;text-decoration:none;display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:#2B3041;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">W.</div>
         <span id="navBrandText">Studio Tools</span>
+        ${privacyTag()}
       </a>
       ${hasSidebar ? `<button id="mobileMenuBtn" style="display:none;width:36px;height:36px;border:none;background:transparent;border-radius:8px;cursor:pointer;align-items:center;justify-content:center;color:#2B3041;flex-shrink:0;" onclick="window.toggleSidebar && window.toggleSidebar()" aria-label="菜单">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
@@ -79,6 +80,15 @@
 </nav>`;
   }
 
+  function privacyTag() {
+    if (localStorage.getItem('privacyNoticeDismissed')) return '';
+    return `<span id="privacyNotice" title="不必担心全部都在本地运算，数据不上传服务器，关闭浏览器页面即自动清除" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#B45F06;background:#FFF5E5;padding:3px 10px;border-radius:100px;margin-left:8px;white-space:nowrap;transition:opacity 0.2s;">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="#FF6B6B" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      本地运算
+      <button id="privacyNoticeClose" style="background:none;border:none;color:#B45F06;cursor:pointer;padding:0 0 0 4px;font-size:13px;line-height:1;" title="不再提示">×</button>
+    </span>`;
+  }
+
   // 全局函数：切换下拉菜单（支持点击和悬停）
   window.toggleNavDropdown = function(e) {
     e.stopPropagation();
@@ -96,6 +106,17 @@
   document.addEventListener('DOMContentLoaded', function() {
     const nav = buildNav();
     document.body.insertAdjacentHTML('afterbegin', nav);
+
+    // 隐私标签关闭逻辑
+    const privacyClose = document.getElementById('privacyNoticeClose');
+    if (privacyClose) {
+      privacyClose.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const tag = document.getElementById('privacyNotice');
+        if (tag) { tag.style.opacity = '0'; setTimeout(function(){ tag.remove(); }, 200); }
+        localStorage.setItem('privacyNoticeDismissed', '1');
+      });
+    }
 
     const wrap = document.getElementById('navDropdownWrap');
     const menu = document.getElementById('navDropdownMenu');
