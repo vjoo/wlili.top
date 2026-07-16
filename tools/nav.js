@@ -5,9 +5,23 @@
  */
 (function() {
 
+  function getCurrentFile() {
+    const path = window.location.pathname;
+    const decoded = decodeURIComponent(path);
+    const parts = decoded.replace(/\\/g, '/').split('/');
+    return parts[parts.length - 1] || '';
+  }
+
+  const currentFile = getCurrentFile();
+  const SIDEBAR_PAGES = ['filament-manager.html', 'print-manager.html'];
+  const hasSidebar = SIDEBAR_PAGES.includes(currentFile);
+
   // 同步注入 head，在页面所有 <style> 之后
   var _s = document.createElement('style');
-  _s.textContent = '@media(max-width:600px){#navBrandText{display:none!important}#mobileMenuBtn{display:flex!important}}';
+  let css = '@media(max-width:600px){#navBrandText{display:none!important}';
+  if (hasSidebar) css += '#mobileMenuBtn{display:flex!important}';
+  css += '}';
+  _s.textContent = css;
   document.head.appendChild(_s);
 
   const TOOLS = [
@@ -23,15 +37,7 @@
     { name: '打印管理器', href: './print-manager.html' }
   ];
 
-  function getCurrentFile() {
-    const path = window.location.pathname;
-    const decoded = decodeURIComponent(path);
-    const parts = decoded.replace(/\\/g, '/').split('/');
-    return parts[parts.length - 1] || '';
-  }
-
   function buildNav() {
-    const currentFile = getCurrentFile();
 
     const toolsDropdown = TOOLS.map(t => {
       const isActive = currentFile === t.href;
@@ -52,9 +58,9 @@
         <div style="width:32px;height:32px;background:#2B3041;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">W.</div>
         <span id="navBrandText">Studio Tools</span>
       </a>
-      <button id="mobileMenuBtn" style="display:none;width:36px;height:36px;border:none;background:transparent;border-radius:8px;cursor:pointer;align-items:center;justify-content:center;color:#2B3041;flex-shrink:0;" onclick="window.toggleSidebar && window.toggleSidebar()" aria-label="菜单">
+      ${hasSidebar ? `<button id="mobileMenuBtn" style="display:none;width:36px;height:36px;border:none;background:transparent;border-radius:8px;cursor:pointer;align-items:center;justify-content:center;color:#2B3041;flex-shrink:0;" onclick="window.toggleSidebar && window.toggleSidebar()" aria-label="菜单">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-      </button>
+      </button>` : ''}
     </div>
     <div id="navDesktopLinks" style="display:flex;gap:24px;align-items:center;flex-shrink:0;margin-left:24px;padding-right:10px;">
       <a href="../index.html" style="color:#2B3041;font-size:14px;text-decoration:none;transition:opacity 0.3s;white-space:nowrap;${homeStyle}">Studio</a>
