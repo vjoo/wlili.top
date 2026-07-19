@@ -1,2 +1,4 @@
+# 统一使用 LF 换行符
+* text=auto eol=lf
 *.npz filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
