@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self';">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>免费代理订阅 - Studio Tools</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .page { max-width: 640px; margin: 0 auto; padding: 32px 22px 80px; }
+
+  /* ===== Card ===== */
+  .sub-card {
+    background: var(--bg-white); border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg); padding: 28px;
+    display: flex; gap: 28px; align-items: flex-start;
+  }
+  @media (max-width: 480px) { .sub-card { flex-direction: column; align-items: center; text-align: center; padding: 24px 20px; } }
+
+  .sub-card-info { flex: 1; min-width: 0; }
+  .sub-card-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .sub-card-label { font-size: 17px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; line-height: 1.29; }
+  .sub-card-note { font-size: 13px; color: var(--ink-tertiary); margin-top: 4px; letter-spacing: 0.011em; line-height: 1.47; }
+  .sub-card-url {
+    font-family: 'SF Mono', SFMono-Regular, Consolas, Menlo, monospace;
+    font-size: 13px; color: var(--ink-secondary); background: var(--bg);
+    padding: 12px 14px; border-radius: var(--radius-sm);
+    word-break: break-all; line-height: 1.47; border: 1px solid var(--border-light); user-select: all;
+  }
+
+  /* QR */
+  .sub-card-qr {
+    flex-shrink: 0; width: 120px; height: 120px;
+    border: 1px solid var(--border-light); overflow: hidden; background: #fff;
+  }
+  .sub-card-qr canvas { display: block; width: 120px; height: 120px; image-rendering: pixelated; }
+  @media (max-width: 480px) { .sub-card-qr { width: 140px; height: 140px; } .sub-card-qr canvas { width: 140px; height: 140px; } }
+
+  /* ===== Steps ===== */
+  .steps {
+    margin-top: 24px; display: flex; gap: 20px;
+    background: var(--bg-white); border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg); padding: 20px 24px;
+  }
+  @media (max-width: 480px) { .steps { flex-direction: column; gap: 12px; } }
+  .step { flex: 1; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink-secondary); line-height: 1.47; }
+  .step-n {
+    flex-shrink: 0; width: 22px; height: 22px; background: var(--bg);
+    border: 1px solid var(--border-light); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500; color: var(--ink-tertiary);
+  }
+  .disc { margin-top: 20px; padding: 12px 16px; background: #FFF5F5; border: 1px solid #FFD6D6; border-radius: var(--radius-md); font-size: 13px; color: var(--ink-tertiary); line-height: 1.47; }
+  .disc b { color: var(--red); }
+  .disc a { color: var(--link); text-decoration: none; }
+  .disc a:hover { text-decoration: underline; }
+
+</style>
+<script src="nav.js"></script>
+</head>
+<body>
+
+<div class="page-hero">
+  <h1>免费代理订阅</h1>
+  <p>复制订阅地址，粘贴到代理客户端即可自动导入全部节点</p>
+</div>
+
+<div class="page">
+  <div class="sub-card">
+    <div class="sub-card-info">
+      <div class="sub-card-label-row">
+        <div>
+          <div class="sub-card-label">订阅地址</div>
+          <div class="sub-card-note">每 6 小时自动测速更新</div>
+        </div>
+        <button class="icon-btn" id="copyBtn" title="复制">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </button>
+      </div>
+      <div class="sub-card-url" id="url1">https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub</div>
+    </div>
+    <div class="sub-card-qr"><canvas id="qr1"></canvas></div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div>复制上方订阅地址</div>
+    <div class="step"><div class="step-n">2</div>打开代理客户端</div>
+    <div class="step"><div class="step-n">3</div>粘贴并更新订阅</div>
+  </div>
+
+  <div class="disc"><b>免责声明：</b>公共免费资源，仅限测试用途。来源：<a href="https://github.com/Pawdroid/Free-servers" target="_blank" rel="noopener">Pawdroid/Free-servers</a>（GitHub）</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+var QR_SIZE = window.innerWidth <= 480 ? 140 : 120;
+function drawQR(id, text) {
+  var c = document.getElementById(id), qr = qrcode(0, 'M');
+  qr.addData(text); qr.make();
+  var s = QR_SIZE, mc = qr.getModuleCount(), cs = s / mc;
+  c.width = s; c.height = s;
+  var x = c.getContext('2d');
+  x.fillStyle = '#ffffff'; x.fillRect(0,0,s,s);
+  x.fillStyle = '#2B3041';
+  for (var r = 0; r < mc; r++) for (var col = 0; col < mc; col++) if (qr.isDark(r, col)) x.fillRect(col*cs, r*cs, cs, cs);
+}
+
+var btn = document.getElementById('copyBtn');
+var origHTML = btn.innerHTML;
+btn.addEventListener('click', function() {
+  var text = document.getElementById('url1').textContent;
+  var ok = function() {
+    btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(function(){ btn.style.borderColor = ''; btn.style.color = ''; btn.innerHTML = origHTML; }, 1500);
+  };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(ok).catch(function(){ fallback(text, ok); });
+  else fallback(text, ok);
+});
+function fallback(text, ok) {
+  var a = document.createElement('textarea'); a.value = text; a.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(a); a.select();
+  try { document.execCommand('copy'); ok(); } catch(e) {}
+  document.body.removeChild(a);
+}
+
+drawQR('qr1', document.getElementById('url1').textContent);
+</script>
+</body>
+</html>
