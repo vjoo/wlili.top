@@ -236,15 +236,21 @@
 .psc-card { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; cursor:pointer; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); position:relative; }
 .psc-card:hover { box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); border-color:var(--accent); }
 .psc-hero { position:relative; padding:14px; }
-.psc-swatches { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.psc-swatch { aspect-ratio:1; border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.psc-swatches { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:8px; aspect-ratio:3/2; }
+.psc-swatch { border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.psc-swatch-empty { border-radius:var(--radius-sm); border:1px dashed rgba(0,0,0,0.08); background:transparent; }
+.psc-swatch-more { border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04); display:grid; gap:1px; padding:3px; overflow:hidden; }
+.psc-swatch-more-cell { border-radius:2px; }
 /* Hover actions — top-right, same pattern as dashboard cards */
-.psc-card-actions { position:absolute; top:8px; right:8px; display:flex; gap:5px; opacity:0; transform:translateY(-4px); transition:opacity 0.25s,transform 0.25s; z-index:2; }
-.psc-card:hover .psc-card-actions { opacity:1; transform:translateY(0); }
-.psc-action-btn { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.9); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:all 0.2s; backdrop-filter:blur(8px); box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+.psc-card-actions { position:absolute; top:8px; right:8px; display:flex; gap:5px; z-index:2; }
+.psc-action-btn { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.9); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:opacity 0.25s,background 0.2s,color 0.2s,transform 0.2s; backdrop-filter:blur(8px); box-shadow:0 2px 8px rgba(0,0,0,0.12); opacity:0; }
+.psc-card:hover .psc-action-btn { opacity:1; }
 .psc-action-btn:hover { background:#fff; color:var(--accent); transform:scale(1.08); }
 .psc-action-btn.danger:hover { color:var(--danger); }
-.psc-badge-default { position:absolute; top:8px; left:8px; font-size:10px; padding:2px 7px; border-radius:10px; background:rgba(124,92,252,0.1); color:var(--accent); font-weight:600; z-index:1; }
+.psc-action-btn.favorite-btn.active { opacity:1; }
+.psc-action-btn.favorite-btn.active svg { fill:#ff4d4f; color:#ff4d4f; }
+.psc-action-btn.favorite-btn:not(.active):hover svg { color:#ff4d4f; }
+.psc-badge-default { display:inline-flex; align-items:center; font-size:10px; padding:1px 6px; border-radius:4px; background:var(--bg-sidebar); color:var(--text-muted); font-weight:500; margin-left:6px; vertical-align:1px; }
 .psc-action-btn svg { width:14px; height:14px; }
 .psc-info { padding:12px 14px; border-top:1px solid var(--border-light); }
 .psc-name { font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
@@ -1899,22 +1905,41 @@
                 // 右上角 hover 操作按钮
                 html += '<div class="psc-card-actions">';
                 html += '<button class="psc-action-btn" title="编辑" onclick="event.stopPropagation();app.openPaletteModal(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+                var isFav = pal.isFavorite || false;
+                html += '<button class="psc-action-btn favorite-btn'+(isFav?' active':'')+'" title="'+(isFav?'取消收藏':'收藏')+'" onclick="event.stopPropagation();app.togglePaletteFavorite(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>';
                 if (!isDefault) {
                     html += '<button class="psc-action-btn danger" title="删除" onclick="event.stopPropagation();app.deletePalette(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
                 }
                 html += '</div>';
-                // 基础色板标记
-                if (isDefault) html += '<span class="psc-badge-default">基础</span>';
-                // 顶部色卡展示区
+                // 顶部色卡展示区：始终 2行3列 = 6 格，高度固定
                 html += '<div class="psc-hero" style="background:'+pal.bgColor+';">';
                 html += '<div class="psc-swatches">';
-                // 色块（数量可变）
-                pal.colors.forEach(function(c){ html += '<div class="psc-swatch" style="background:'+c+';"></div>'; });
+                var cols = pal.colors;
+                var totalCells = 6;
+                for (var ci = 0; ci < totalCells; ci++) {
+                    if (ci < 5 && ci < cols.length) {
+                        // 前5格：正常色块
+                        html += '<div class="psc-swatch" style="background:'+cols[ci]+';"></div>';
+                    } else if (ci === 5 && cols.length > 6) {
+                        // 第6格：超过6色时，显示 mini 多色网格（iPhone 文件夹风格）
+                        var extra = cols.slice(5);
+                        var gridSize = extra.length <= 4 ? 2 : 3;
+                        html += '<div class="psc-swatch-more" style="grid-template-columns:repeat('+gridSize+',1fr);grid-template-rows:repeat('+gridSize+',1fr);">';
+                        extra.forEach(function(ec) { html += '<div class="psc-swatch-more-cell" style="background:'+ec+';"></div>'; });
+                        html += '</div>';
+                    } else if (ci < cols.length) {
+                        // 第6格但总数正好6或更少：正常色块
+                        html += '<div class="psc-swatch" style="background:'+cols[ci]+';"></div>';
+                    } else {
+                        // 空位：虚线占位
+                        html += '<div class="psc-swatch-empty"></div>';
+                    }
+                }
                 html += '</div>';
                 html += '</div>';
                 // 底部信息区
                 html += '<div class="psc-info">';
-                html += '<div class="psc-name">'+escapeHtml(pal.name)+'</div>';
+                html += '<div class="psc-name">'+escapeHtml(pal.name)+(isDefault?'<span class="psc-badge-default">基础</span>':'')+'</div>';
                 html += '<div class="psc-desc">'+escapeHtml(paletteAutoDesc(pal.colors))+'</div>';
                 html += '<div class="psc-meta">';
                 html += '<span class="psc-meta-item"><span class="psc-meta-dot" style="background:'+pal.bgColor+';"></span>'+pal.bgColor+'</span>';
@@ -2549,7 +2574,7 @@
             var palettes = getPalettes();
             var p = id ? palettes.find(function(x){ return x.id === id; }) : null;
             var defaultColors = ['#F8C8CD','#FBE2B9','#F9D3B8','#C9E8D8','#C6E2F2'];
-            var curColors = p ? p.colors : defaultColors;
+            var curColors = p ? p.colors : ['#FFFFFF','#FFFFFF','#FFFFFF'];
 
             var isEditingDefault = p && isDefaultPalette(p.id);
             var titleText = (!p || isEditingDefault) ? (isEditingDefault ? '编辑基础色板' : '新增色板') : '编辑色板';
@@ -2559,7 +2584,7 @@
             html += '<div class="form-group"><label class="form-label">色板名称 <span class="req">*</span></label><input class="form-input" id="pl_name" value="'+escapeHtml(nameVal)+'" placeholder="如：奶油马卡龙"></div>';
 
             // 底色
-            var bgColor = p ? p.bgColor : '#FFF9EF';
+            var bgColor = p ? p.bgColor : '#FFFFFF';
             html += '<div class="form-group"><label class="form-label">底色</label><div class="color-picker-row">';
             html += '<div class="color-swatch" id="pl_bg_swatch" style="background:'+bgColor+';"><input type="color" id="pl_bg_color" value="'+bgColor+'" oninput="app._onColorPick(\'bg\', this.value)"></div>';
             html += '<input class="form-input color-hex-input" id="pl_bg_text" value="'+bgColor+'" placeholder="#FFF9EF" oninput="app._onHexInput(\'bg\', this.value)">';
@@ -2587,7 +2612,7 @@
             html += '</div>';
 
             // 线条色
-            var lineColor = p ? p.lineColor : '#444444';
+            var lineColor = p ? p.lineColor : '#333333';
             html += '<div class="form-group"><label class="form-label">线条色</label><div class="color-picker-row">';
             html += '<div class="color-swatch" id="pl_line_swatch" style="background:'+lineColor+';"><input type="color" id="pl_line_color" value="'+lineColor+'" oninput="app._onColorPick(\'line\', this.value)"></div>';
             html += '<input class="form-input color-hex-input" id="pl_line_text" value="'+lineColor+'" placeholder="#444444" oninput="app._onHexInput(\'line\', this.value)">';
@@ -2730,20 +2755,21 @@
             if (colors.length < 3) { showToast('至少需要3个色值'); return; }
             // asNew=true 或 id 为基础色板时，始终新增
             var effectiveId = (asNew || (id && isDefaultPalette(id))) ? null : id;
+            var palettes = getPalettes();
+            var existingIdx = effectiveId ? palettes.findIndex(function(p){ return p.id === effectiveId; }) : -1;
             var palette = {
                 id: effectiveId || genId('p'),
                 name: name,
                 bgColor: document.getElementById('pl_bg_text').value.trim(),
                 colors: colors,
                 lineColor: document.getElementById('pl_line_text').value.trim(),
-                desc: paletteAutoDesc(colors)
+                desc: paletteAutoDesc(colors),
+                isFavorite: existingIdx >= 0 ? (palettes[existingIdx].isFavorite || false) : false
             };
-            var palettes = getPalettes();
             if (effectiveId) {
-                var idx = palettes.findIndex(function(p){ return p.id === effectiveId; });
-                if (idx >= 0) palettes[idx] = palette;
+                if (existingIdx >= 0) palettes[existingIdx] = palette;
             } else {
-                palettes.push(palette);
+                palettes.unshift(palette);
             }
             saveData(STORAGE_KEYS.palettes, palettes);
             showToast(effectiveId ? '色板已更新' : '新色板已添加');
@@ -2758,6 +2784,17 @@
             saveData(STORAGE_KEYS.palettes, palettes);
             showToast('色板已删除');
             this.render();
+        },
+
+        togglePaletteFavorite: function(id) {
+            var palettes = getPalettes();
+            var idx = palettes.findIndex(function(p) { return p.id === id; });
+            if (idx >= 0) {
+                palettes[idx].isFavorite = !palettes[idx].isFavorite;
+                saveData(STORAGE_KEYS.palettes, palettes);
+                this.render();
+                showToast(palettes[idx].isFavorite ? '已收藏' : '已取消收藏');
+            }
         },
 
         _onPaletteSearch: function(val) {
