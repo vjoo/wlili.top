@@ -1,0 +1,2723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>W.-四方连图素材库</title>
+    <link rel="stylesheet" href="common.css">
+    <script src="nav.js"></script>
+    <style>
+:root {
+    /* Page-specific accent (purple theme) */
+    --accent: #7C5CFC;
+    --accent-hover: #6D4FD6;
+    --accent-light: #f0ebff;
+    /* Aliases to common.css design tokens */
+    --bg-primary: var(--bg-white);
+    --bg-secondary: var(--bg-white);
+    --bg-sidebar: var(--bg);
+    --bg-hover: #f0f0f0;
+    --bg-active: #ececec;
+    --text-primary: var(--ink);
+    --text-secondary: var(--ink-secondary);
+    --text-muted: var(--ink-tertiary);
+    --border-color: var(--border);
+    --danger: var(--red);
+    --success: var(--green);
+    --warning: var(--orange);
+    --info: var(--link);
+    --danger-bg: #ffebee;
+    --success-bg: #e8f5e9;
+    --warning-bg: #fff3e0;
+    --info-bg: #eef2ff;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --sidebar-width: 240px;
+    --radius-xl: var(--radius-lg);
+}
+
+/* Layout */
+.app-container { display:flex; min-height:100vh; }
+.sidebar { width:var(--sidebar-width); background:var(--bg-sidebar); border-right:1px solid var(--border-color); display:flex; flex-direction:column; position:fixed; height:calc(100vh - 48px); left:0; top:48px; z-index:100; }
+.nav-menu { flex:1; padding:8px 0; overflow-y:auto; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 16px; margin:2px 8px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.2s; color:var(--text-secondary); font-size:14px; font-weight:500; }
+.nav-item:hover { background:var(--bg-hover); color:var(--text-primary); }
+.nav-item.active { background:var(--bg-white); color:var(--accent); box-shadow:var(--shadow-sm); }
+.nav-icon { width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.nav-icon svg { width:17px; height:17px; }
+.sidebar-footer { padding:10px 16px; border-top:1px solid var(--border-color); }
+.sidebar-footer-text { text-align:center; color:var(--text-muted); font-size:12px; }
+
+.main-content { flex:1; margin-left:var(--sidebar-width); display:flex; flex-direction:column; min-height:100vh; min-width:0; }
+.top-bar { background:var(--bg-secondary); border-bottom:1px solid var(--border-color); padding:0 20px; height:52px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+.top-bar-left { display:flex; align-items:center; gap:12px; }
+.module-title { font-size:18px; font-weight:700; }
+.top-bar-right { display:flex; align-items:center; gap:10px; }
+.mobile-menu-btn { display:none; width:36px; height:36px; border:none; background:transparent; border-radius:var(--radius-md); cursor:pointer; align-items:center; justify-content:center; color:var(--text-secondary); flex-shrink:0; }
+.mobile-menu-btn:hover { background:var(--bg-hover); }
+.mobile-menu-btn svg { width:22px; height:22px; }
+.sidebar-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:99; opacity:0; transition:opacity 0.3s; }
+.sidebar-overlay.active { display:block; opacity:1; }
+
+.content-area { flex:1; padding:20px; min-width:0; overflow-x:hidden; }
+
+/* Buttons */
+.btn-primary { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--accent); color:var(--fill-white); border:none; border-radius:var(--radius-md); font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.btn-primary:hover { background:var(--accent-hover); }
+.btn-primary:active { transform:scale(0.98); }
+.btn-secondary { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--bg-white); color:var(--text-primary); border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.btn-secondary:hover { background:var(--bg-hover); border-color:var(--text-muted); }
+.btn-secondary:active { transform:scale(0.98); }
+.btn-danger { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--bg-white); color:var(--danger); border:1px solid rgba(255,59,48,0.3); border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.btn-danger:hover { background:var(--danger-bg); border-color:var(--danger); }
+.btn-sm { padding:5px 12px; font-size:13px; }
+.btn-icon { width:30px; height:30px; border:1px solid var(--border-color); border-radius:var(--radius-sm); background:var(--bg-white); color:var(--text-secondary); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; }
+.btn-icon:hover { border-color:var(--text-muted); color:var(--text-primary); }
+.btn-icon svg { width:15px; height:15px; }
+
+/* Search */
+.search-box { position:relative; width:240px; }
+.search-box input { width:100%; padding:7px 12px 7px 34px; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-primary); font-size:14px; outline:none; transition:all 0.2s; }
+.search-box input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,92,252,0.1); }
+.search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-muted); }
+
+/* Filter */
+.filter-bar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+.filter-select { padding:6px 32px 6px 10px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:14px; outline:none; cursor:pointer; min-width:100px; appearance:none; -webkit-appearance:none; background:var(--bg-primary) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; }
+
+/* Stats */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:0; }
+.stat-card { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px; display:flex; flex-direction:column; gap:6px; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); }
+.stat-card:hover { box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); }
+.stat-card-label { font-size:13px; color:var(--text-secondary); font-weight:500; }
+.stat-card-value { font-size:28px; font-weight:700; color:var(--text-primary); line-height:1.2; }
+.stat-card-value.accent { color:var(--accent); }
+.stat-card-value.success { color:var(--success); }
+.stat-card-value.warning { color:var(--warning); }
+.stat-card-value.danger { color:var(--danger); }
+.stat-card-sub { font-size:12px; color:var(--text-muted); }
+
+/* Panel */
+.panel { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); }
+.panel:hover { box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); }
+.panel.panel-static { transition:none; }
+.panel.panel-static:hover { box-shadow:none; transform:none; }
+.panel-header { padding:14px 18px; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; }
+.panel-title { font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; }
+.panel-body { padding:14px; }
+
+/* Table */
+.data-table { width:100%; border-collapse:collapse; font-size:14px; }
+.data-table th { text-align:left; padding:10px 14px; color:var(--text-secondary); font-weight:600; font-size:13px; border-bottom:1px solid var(--border-color); background:var(--bg-sidebar); white-space:nowrap; }
+.data-table td { padding:10px 14px; border-bottom:1px solid var(--border-light); color:var(--text-primary); }
+.data-table tr:last-child td { border-bottom:none; }
+.data-table tr:hover td { background:var(--bg-sidebar); }
+.data-table .col-actions { white-space:nowrap; text-align:right; }
+
+/* Badges */
+.badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap; }
+.badge-draft { background:#f0f0f0; color:#86868b; }
+.badge-available { background:var(--success-bg); color:var(--success); }
+.badge-partial { background:var(--warning-bg); color:var(--warning); }
+.badge-soldout { background:var(--info-bg); color:var(--info); }
+.badge-boughtout { background:var(--danger-bg); color:var(--danger); }
+.badge-buyout { background:var(--danger-bg); color:var(--danger); }
+.badge-exclusive { background:var(--warning-bg); color:var(--warning); }
+.badge-non-exclusive { background:var(--success-bg); color:var(--success); }
+.badge-active { background:var(--success-bg); color:var(--success); }
+.badge-expired { background:#f0f0f0; color:#86868b; }
+.badge-terminated { background:var(--danger-bg); color:var(--danger); }
+
+/* Pattern Grid */
+.pattern-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+
+/* Dashboard two-column layout */
+.dash-layout { display:grid; grid-template-columns:1fr 360px; gap:14px; align-items:start; }
+.dash-left { display:flex; flex-direction:column; gap:14px; min-width:0; }
+.dash-right { min-width:0; }
+.dash-recent-list { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.dash-recent-list .pattern-card { display:flex; flex-direction:column; }
+.dash-recent-list .pattern-thumb { width:100%; aspect-ratio:1; flex-shrink:0; }
+.dash-recent-list .pattern-info { flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
+.dash-recent-list .pattern-card-actions { top:4px; right:4px; }
+.pattern-card { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; cursor:pointer; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); }
+.pattern-card:hover { box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); border-color:var(--accent); }
+.pattern-thumb { width:100%; aspect-ratio:1; background:var(--bg-sidebar); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+.pattern-thumb img { width:100%; height:100%; object-fit:cover; }
+.pattern-thumb-placeholder { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#f0f0f3; }
+.pattern-thumb-placeholder .ph-logo { font-size:32px; font-weight:700; color:#2B3041; line-height:1; letter-spacing:-0.02em; }
+.pattern-thumb-placeholder .ph-text { font-size:11px; color:#999; font-weight:400; }
+.pattern-thumb-badges { position:absolute; top:6px; left:6px; display:flex; gap:4px; flex-wrap:wrap; }
+.pattern-info { padding:10px 12px; }
+.pattern-name { font-size:14px; font-weight:600; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pattern-meta { font-size:12px; color:var(--text-muted); display:flex; gap:6px; flex-wrap:wrap; }
+.pattern-elements { font-size:12px; color:var(--text-secondary); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* Card hover actions — inspired by prompt-library */
+.pattern-card-actions { position:absolute; top:6px; right:6px; display:flex; gap:5px; opacity:0; transform:translateY(-4px); transition:opacity 0.25s,transform 0.25s; z-index:2; }
+.pattern-card:hover .pattern-card-actions { opacity:1; transform:translateY(0); }
+.pattern-card-action-btn { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.9); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:all 0.2s; backdrop-filter:blur(8px); box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+.pattern-card-action-btn:hover { background:#fff; color:var(--accent); transform:scale(1.08); }
+.pattern-card-action-btn.danger:hover { color:var(--danger); }
+.pattern-card-action-btn svg { width:14px; height:14px; }
+
+/* Element Selection */
+.gen-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.gen-toolbar-info { font-size:13px; color:var(--text-muted); flex:1; min-width:200px; }
+.gen-layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:stretch; }
+.gen-col-output { position:sticky; top:70px; display:flex; flex-direction:column; }
+.gen-col-output > .gen-section { flex:1; display:flex; flex-direction:column; }
+.gen-col-output > .gen-section > .gen-section-body { flex:1; display:flex; flex-direction:column; }
+.prompt-output-empty { flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:13px; text-align:center; }
+.gen-section { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; }
+.gen-section-header { padding:12px 16px; min-height:48px; box-sizing:border-box; border-bottom:1px solid var(--border-light); font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; transition:background 0.15s; }
+.gen-section-header:hover { background:var(--bg-sidebar); }
+.gen-section.collapsed .gen-section-header { border-bottom:none; }
+.gen-section.collapsed .gen-section-body { display:none; }
+.gen-section-toggle { margin-left:auto; display:flex; align-items:center; transition:transform 0.2s ease; color:var(--text-muted); }
+.gen-section.collapsed .gen-section-toggle { transform:rotate(-90deg); }
+.gen-section-body { padding:14px 16px; background:var(--bg-elevated); }
+.element-category { margin-bottom:14px; }
+.element-category-title { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+.element-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.element-chip { padding:5px 12px; border:1px solid var(--border-color); border-radius:20px; font-size:13px; cursor:pointer; transition:all 0.15s; background:var(--bg-white); color:var(--text-secondary); user-select:none; }
+.element-chip:hover { border-color:var(--accent); color:var(--accent); }
+.element-chip.selected { background:var(--accent); color:var(--fill-white); border-color:var(--accent); }
+.element-chip-count { font-size:12px; color:var(--text-muted); margin-left:4px; }
+
+/* Smart Match */
+.btn-smart-match { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s cubic-bezier(0.22,0.61,0.36,1); border:none; color:var(--fill-white); background:linear-gradient(135deg, #7C5CFC 0%, #9B7FFF 100%); box-shadow:0 2px 8px rgba(124,92,252,0.3); }
+.btn-smart-match:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(124,92,252,0.4); }
+.btn-smart-match:active { transform:scale(0.98); }
+.btn-smart-match svg { flex-shrink:0; }
+.btn-smart-match-icon { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.2s cubic-bezier(0.22,0.61,0.36,1); border:none; color:var(--fill-white); background:linear-gradient(135deg, #7C5CFC 0%, #9B7FFF 100%); box-shadow:0 2px 8px rgba(124,92,252,0.3); flex-shrink:0; }
+.btn-smart-match-icon:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(124,92,252,0.4); }
+.btn-smart-match-icon:active { transform:scale(0.95); }
+.btn-clear-select { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-color); background:var(--bg-white); color:var(--text-secondary); }
+.btn-clear-select:hover { border-color:var(--danger); color:var(--danger); background:var(--danger-bg); }
+.btn-clear-select:active { transform:scale(0.98); }
+.smart-match-count { font-size:12px; color:var(--text-muted); margin-left:auto; }
+.theme-badge-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; padding:8px 14px; background:var(--accent-light); border-radius:var(--radius-md); border:1px solid rgba(124,92,252,0.15); }
+.theme-badge-bar-empty { display:none; }
+.theme-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:13px; font-weight:600; color:var(--fill-white); background:var(--accent); white-space:nowrap; }
+.theme-badge-desc { font-size:13px; color:var(--text-secondary); }
+@keyframes smartMatchPulse { 0% { transform:scale(1); } 50% { transform:scale(1.03); } 100% { transform:scale(1); } }
+.btn-smart-match.pulsing { animation:smartMatchPulse 0.4s cubic-bezier(0.22,0.61,0.36,1); }
+@keyframes chipSelectIn { 0% { transform:scale(0.85); opacity:0.5; } 100% { transform:scale(1); opacity:1; } }
+.element-chip.selected { animation:chipSelectIn 0.25s cubic-bezier(0.22,0.61,0.36,1); }
+.element-chip.chip-profset { border-style:dashed; border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+.element-chip.chip-profset.selected { border-style:solid; }
+
+/* Palette */
+.palette-list { display:flex; flex-direction:column; gap:10px; }
+.palette-card { border:1px solid var(--border-color); border-radius:var(--radius-md); overflow:hidden; cursor:pointer; transition:all 0.2s; padding:0; }
+.palette-card:hover { border-color:var(--accent); }
+.palette-card.selected { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
+.palette-card-top { padding:8px; }
+.palette-card-swatches { display:grid; grid-template-columns:repeat(5,1fr); gap:3px; }
+.palette-card-swatch { aspect-ratio:1; border-radius:4px; border:1px solid rgba(0,0,0,0.06); }
+.palette-card-body { padding:8px 10px; }
+.palette-name { font-size:13px; font-weight:600; margin-bottom:2px; }
+.palette-colors { display:flex; gap:4px; align-items:center; }
+.palette-color-dot { width:20px; height:20px; border-radius:50%; border:1px solid rgba(0,0,0,0.1); }
+.palette-bg-dot { width:20px; height:20px; border-radius:50%; border:1px solid var(--border-color); margin-right:4px; }
+.palette-desc { font-size:11px; color:var(--text-muted); margin-top:2px; line-height:1.4; }
+
+/* Palette Swatch Card — inspired by Bambu Lab filament color cards */
+.psc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+.psc-card { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; cursor:pointer; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); position:relative; }
+.psc-card:hover { box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); border-color:var(--accent); }
+.psc-hero { position:relative; padding:14px; }
+.psc-swatches { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.psc-swatch { aspect-ratio:1; border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.psc-swatch-actions { grid-column:3; display:flex; gap:4px; align-items:center; justify-content:flex-end; }
+.psc-action-btn { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.9); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:all 0.2s; backdrop-filter:blur(8px); box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+.psc-action-btn:hover { background:#fff; color:var(--accent); transform:scale(1.08); }
+.psc-action-btn.danger:hover { color:var(--danger); }
+.psc-action-btn svg { width:14px; height:14px; }
+.psc-info { padding:12px 14px; border-top:1px solid var(--border-light); }
+.psc-name { font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+.psc-desc { font-size:12px; color:var(--text-muted); margin-bottom:8px; line-height:1.5; }
+.psc-meta { display:flex; gap:10px; align-items:center; font-size:11px; color:var(--text-muted); font-family:ui-monospace,'SF Mono',Consolas,Menlo,monospace; }
+.psc-meta-item { display:flex; align-items:center; gap:4px; }
+.psc-meta-dot { width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,0.1); flex-shrink:0; }
+
+/* Prompt Output */
+.prompt-output { background:#ffffff; color:#424245; border-radius:var(--radius-md); padding:10px; font-size:15px; line-height:1.7; font-family:SF Pro Text; white-space:pre-wrap; word-break:break-all; overflow-y:auto; }
+
+/* Element Tabs */
+.gen-tabs { display:flex; gap:0; border-bottom:1px solid var(--border-light); align-items:stretch; }
+.gen-tab { flex:1; padding:10px 16px; font-size:14px; font-weight:600; color:var(--text-muted); cursor:pointer; text-align:center; border-bottom:2px solid transparent; transition:all 0.15s; user-select:none; }
+.gen-tab:hover { color:var(--text-secondary); background:var(--bg-sidebar); }
+.gen-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.gen-tab-count { font-size:12px; font-weight:500; color:var(--text-muted); margin-left:4px; }
+.gen-tab.active .gen-tab-count { color:var(--accent); }
+.gen-tab-reset { flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0 12px; border:none; background:transparent; cursor:pointer; color:var(--text-muted); transition:all 0.15s; border-bottom:2px solid transparent; }
+.gen-tab-reset:hover { color:var(--danger); }
+.gen-tab-reset:active { transform:scale(0.92); }
+.gen-tab-reset.hidden { visibility:hidden; }
+
+/* Config Panel */
+.config-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+.config-field-label { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
+.palette-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.prompt-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.platform-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; text-decoration:none; border:1px solid var(--border-color); }
+.platform-btn:hover { transform:translateY(-1px); box-shadow:var(--shadow-sm); }
+
+/* Modal */
+.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center; padding:20px; }
+.modal-overlay.active { display:flex; }
+.modal { background:var(--bg-white); border-radius:var(--radius-xl); width:100%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.modal.modal-lg { max-width:720px; }
+.modal-header { padding:16px 20px; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:var(--bg-white); z-index:1; border-radius:var(--radius-xl) var(--radius-xl) 0 0; }
+.modal-title { font-size:16px; font-weight:700; }
+.modal-close { width:30px; height:30px; border:none; background:transparent; font-size:20px; color:var(--text-muted); cursor:pointer; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; }
+.modal-close:hover { background:var(--bg-hover); color:var(--text-primary); }
+.modal-body { padding:20px; }
+.modal-footer { padding:14px 20px; border-top:1px solid var(--border-light); display:flex; justify-content:flex-end; gap:10px; position:sticky; bottom:0; background:var(--bg-white); border-radius:0 0 var(--radius-xl) var(--radius-xl); }
+
+/* Form */
+.form-group { margin-bottom:14px; }
+.form-label { display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:5px; }
+.form-label .req { color:var(--danger); }
+.form-input, .form-select, .form-textarea { width:100%; padding:8px 12px; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:14px; font-family:inherit; outline:none; transition:all 0.2s; background:var(--bg-white); color:var(--text-primary); }
+.form-select { cursor:pointer; appearance:none; -webkit-appearance:none; -moz-appearance:none; padding-right:32px; background:var(--bg-white) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; }
+.form-select[multiple] { background-image:none; padding-right:12px; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,92,252,0.1); }
+.form-textarea { resize:vertical; min-height:80px; line-height:1.5; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-hint { font-size:12px; color:var(--text-muted); margin-top:4px; }
+.form-checkbox-group { display:flex; flex-wrap:wrap; gap:8px; }
+.form-checkbox-item { display:inline-flex; align-items:center; font-size:13px; padding:5px 12px; border:1px solid var(--border-color); border-radius:var(--radius-sm); cursor:pointer; transition:all 0.15s; user-select:none; }
+.form-checkbox-item:hover { border-color:var(--accent); }
+.form-checkbox-item.checked { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+
+/* Color Picker Row */
+.color-picker-row { display:flex; align-items:center; gap:8px; }
+.color-swatch {
+    width:36px; height:36px; border-radius:var(--radius-sm);
+    border:2px solid var(--border-color); cursor:pointer; flex-shrink:0;
+    overflow:hidden; position:relative;
+    transition:border-color 0.2s;
+}
+.color-swatch:hover { border-color:var(--accent); }
+.color-swatch input[type="color"] {
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
+    border:none; padding:0; margin:0;
+    cursor:pointer; background:none;
+    opacity:0; -webkit-appearance:none; appearance:none;
+}
+.color-hex-input { flex:1; min-width:0; font-family:ui-monospace,'SF Mono',Consolas,Menlo,monospace; font-size:13px; }
+.color-name-label {
+    font-size:12px; color:var(--text-muted); white-space:nowrap; flex-shrink:0;
+    min-width:48px; text-align:right;
+}
+.cmyk-warn {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; margin-left:4px; flex-shrink:0;
+    cursor:help; position:relative;
+}
+.cmyk-warn svg { width:14px; height:14px; }
+.cmyk-warn .warn-tooltip {
+    display:none; position:absolute; bottom:calc(100% + 6px); right:0;
+    background:#2B3041; color:#fff; font-size:11px; line-height:1.5;
+    padding:6px 10px; border-radius:6px; white-space:nowrap;
+    z-index:var(--z-tooltip, 600); pointer-events:none;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+}
+.cmyk-warn .warn-tooltip::after {
+    content:''; position:absolute; top:100%; right:8px;
+    border:4px solid transparent; border-top-color:#2B3041;
+}
+.cmyk-warn:hover .warn-tooltip { display:block; }
+
+/* Image Upload */
+.img-upload-area { border:2px dashed var(--border-color); border-radius:var(--radius-md); padding:20px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.img-upload-area:hover { border-color:var(--accent); background:var(--accent-light); }
+.img-preview { width:100%; aspect-ratio:1; max-width:200px; border-radius:var(--radius-md); object-fit:cover; margin:0 auto; display:block; }
+
+/* Detail View (只读详情页) */
+.detail-layout { display:grid; grid-template-columns:380px 1fr; gap:28px; align-items:start; }
+.detail-img-col { position:sticky; top:20px; }
+.detail-img-box { width:100%; aspect-ratio:1; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border-light); background:var(--bg-elevated); cursor:pointer; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); }
+.detail-img-box:hover { box-shadow:0 12px 40px rgba(0,0,0,0.12); transform:translateY(-2px); }
+.detail-img-box img { width:100%; height:100%; object-fit:cover; display:block; }
+.detail-img-empty { width:100%; aspect-ratio:1; border:2px dashed var(--border-color); border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text-muted); }
+.detail-img-empty:hover { border-color:var(--accent); background:var(--accent-light); }
+.detail-img-actions { display:flex; gap:8px; margin-top:12px; }
+.detail-info-col { min-width:0; }
+.detail-info-row { display:grid; grid-template-columns:100px 1fr; gap:0; padding:10px 0; border-bottom:1px solid var(--border-light); align-items:start; }
+.detail-info-row:last-child { border-bottom:none; }
+.detail-info-label { font-size:13px; font-weight:500; color:var(--text-muted); flex-shrink:0; }
+.detail-info-value { font-size:14px; color:var(--text-primary); word-break:break-all; }
+.detail-info-value .badge { margin-right:4px; }
+.detail-tags { display:flex; flex-wrap:wrap; gap:4px; }
+.detail-prompt-box { background:var(--bg-elevated); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:12px 14px; font-size:13px; line-height:1.6; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; max-height:200px; overflow-y:auto; }
+.detail-license-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--border-light); border-radius:var(--radius-md); transition:all 0.2s; }
+.detail-license-item:hover { border-color:var(--accent); background:var(--accent-light); }
+.detail-section-title { font-size:14px; font-weight:600; color:var(--text-primary); margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border-light); }
+.detail-section-title:first-child { margin-top:0; }
+@media (max-width:768px) {
+    .detail-layout { grid-template-columns:1fr; gap:20px; }
+    .detail-img-col { position:static; }
+    .detail-img-box { max-width:280px; margin:0 auto; }
+}
+
+/* Toast — uses common.css .toast */
+
+/* Empty State */
+.empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); }
+.empty-state svg { width:48px; height:48px; opacity:0.3; margin-bottom:12px; }
+.empty-state-text { font-size:14px; }
+
+/* Sub-Page (二级页) */
+.sub-page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; gap:12px; flex-wrap:wrap; }
+.sub-page-back { display:inline-flex; align-items:center; gap:6px; color:var(--text-secondary); font-size:15px; font-weight:500; background:none; border:none; cursor:pointer; padding:6px 12px; border-radius:var(--radius-sm); transition:all 0.2s; font-family:inherit; }
+.sub-page-back:hover { background:var(--bg-hover); color:var(--text-primary); }
+.sub-page-back svg { width:18px; height:18px; }
+.sub-page-title { font-size:20px; font-weight:600; color:var(--text-primary); flex:1; min-width:0; }
+.sub-page-actions { display:flex; gap:10px; align-items:center; flex-shrink:0; }
+.form-page { max-width:720px; }
+.form-page .form-section-title { font-size:14px; font-weight:600; color:var(--text-primary); margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border-light); }
+.form-page .form-section-title:first-child { margin-top:0; }
+@keyframes subPageFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.sub-page-content { animation:subPageFadeIn 0.3s ease-out; }
+
+/* License Card */
+.license-card { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); overflow:hidden; }
+.license-card:hover { box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); }
+.license-card-top { display:flex; align-items:center; gap:10px; padding:14px 16px 10px; }
+.license-card-thumb { width:44px; height:44px; border-radius:var(--radius-md); object-fit:cover; flex-shrink:0; border:1px solid var(--border-light); }
+.license-card-thumb-empty { width:44px; height:44px; border-radius:var(--radius-md); flex-shrink:0; border:1px solid var(--border-light); background:var(--bg-elevated); display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+.license-card-thumb-empty svg { width:20px; height:20px; }
+.license-card-top-info { flex:1; min-width:0; }
+.license-card-title { font-size:14px; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.license-card-licensee { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.license-card-type { flex-shrink:0; }
+.license-card-amount-bar { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; margin:0 16px; background:var(--bg-elevated); border-radius:var(--radius-md); }
+.license-card-amount-group { display:flex; flex-direction:column; }
+.license-card-amount-label { font-size:11px; color:var(--text-muted); }
+.license-card-amount-value { font-size:18px; font-weight:700; color:var(--text-primary); line-height:1.2; }
+.license-card-amount-sub { font-size:12px; color:var(--text-muted); margin-top:1px; }
+.license-card-divider { height:1px; background:var(--border-light); margin:0 16px; }
+.license-card-body { padding:10px 16px; }
+.license-card-row { display:flex; gap:8px; padding:5px 0; font-size:13px; align-items:center; }
+.license-card-label { color:var(--text-muted); min-width:64px; flex-shrink:0; font-size:12px; }
+.license-card-value { color:var(--text-secondary); flex:1; min-width:0; word-break:break-all; }
+.license-card-footer { display:flex; gap:6px; padding:10px 16px 14px; border-top:1px solid var(--border-light); }
+.license-card-extra { display:flex; flex-wrap:wrap; gap:4px; padding:0 16px 8px; }
+
+/* Quick Pay Button */
+.pay-btn { display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:500; font-family:inherit; padding:3px 10px; border-radius:var(--radius-sm); border:1px solid var(--accent); background:var(--accent-light); color:var(--accent); cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.pay-btn:hover { background:var(--accent); color:#fff; }
+.pay-btn-done { border-color:var(--border-color); background:var(--bg-elevated); color:var(--text-muted); cursor:default; }
+.pay-btn-done:hover { background:var(--bg-elevated); color:var(--text-muted); }
+
+/* Warning Box */
+.warning-box { background:var(--warning-bg); border:1px solid rgba(255,149,0,0.3); border-radius:var(--radius-md); padding:10px 14px; font-size:13px; color:#8a5a00; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+
+/* Info Box */
+.info-box { background:var(--info-bg); border:1px solid rgba(99,102,241,0.2); border-radius:var(--radius-md); padding:10px 14px; font-size:13px; color:#4338ca; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+
+/* Responsive */
+@media (max-width:1200px) {
+    .gen-layout { grid-template-columns:1fr; }
+    .gen-col-output { position:static; }
+    .gen-col-output > .gen-section { flex:0 0 auto; }
+    .gen-col-output > .gen-section > .gen-section-body { flex:0 0 auto; }
+    .dash-layout { grid-template-columns:1fr; }
+    .dash-right { order:-1; }
+    .dash-recent-list { grid-template-columns:repeat(3,1fr); }
+}
+@media (max-width:900px) {
+    .sidebar { transform:translateX(-100%); transition:transform 0.3s ease; width:280px; }
+    .sidebar.open { transform:translateX(0); }
+    .main-content { margin-left:0; }
+    .mobile-menu-btn { display:flex; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .gen-layout { grid-template-columns:1fr; }
+    .gen-col-output { position:static; }
+    .form-row { grid-template-columns:1fr; }
+    .search-box { width:auto; flex:1; min-width:0; }
+}
+@media (max-width:734px) {
+    .content-area { padding:14px; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .stat-card-value { font-size:22px; }
+    .pattern-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .panel-header { padding:10px 14px; }
+    .panel-body { padding:14px; }
+    .top-bar { padding:0 14px; }
+    .modal { max-width:100%; }
+    .config-row { grid-template-columns:1fr; }
+    .palette-grid { grid-template-columns:1fr; }
+    .psc-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .psc-hero { padding:10px; }
+    .psc-info { padding:10px 12px; }
+    .dash-recent-list { grid-template-columns:repeat(2,1fr); }
+    .dash-recent-list .pattern-thumb { width:100%; }
+}
+@media (max-width:480px) {
+    .pattern-grid { grid-template-columns:1fr; }
+    .filter-bar { flex-direction:column; align-items:stretch; }
+    .filter-select { width:100%; }
+    .psc-grid { grid-template-columns:1fr; }
+}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="app.toggleSidebar()"></div>
+        <aside class="sidebar" id="sidebar">
+            <nav class="nav-menu">
+                <div class="nav-item active" data-module="dashboard">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+                    <span>仪表盘</span>
+                </div>
+                <div class="nav-item" data-module="assets">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
+                    <span>素材库</span>
+                </div>
+                <div class="nav-item" data-module="generator">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+                    <span>生成提示词</span>
+                </div>
+                <div class="nav-item" data-module="licenses">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg></span>
+                    <span>授权管理</span>
+                </div>
+                <div class="nav-item" data-module="elements">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+                    <span>元素库</span>
+                </div>
+                <div class="nav-item" data-module="palettes">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></span>
+                    <span>色板管理</span>
+                </div>
+                <div class="nav-item" data-module="settings">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                    <span>设置</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-text">© 2025 WLi</div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <div class="content-area" id="contentArea"></div>
+        </main>
+    </div>
+    <div class="modal-overlay" id="modalOverlay" onclick="app.closeModalOnOverlay(event)">
+        <div class="modal" id="modal" onclick="event.stopPropagation()"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+    // ============================================
+    // 常量与配置
+    // ============================================
+    const STORAGE_KEYS = {
+        patterns: 'seamless_patterns',
+        licenses: 'seamless_licenses',
+        elements: 'seamless_elements',
+        palettes: 'seamless_palettes',
+        version: 'seamless_data_version',
+        genState: 'seamless_gen_state'
+    };
+    const DATA_VERSION = 'v5';
+
+    const DEFAULT_ELEMENTS = {
+        subjects: [
+            { category: '动物系列', items: ['软萌坐姿小熊','坐立垂耳白兔','圆脸小白猫咪','小羊崽','小鸡','小鸭','小仓鼠','小鹿','柯基小狗','企鹅','小恐龙','小猪崽','圆头小青蛙','小海豹','小狐狸','小柴犬','小刺猬','小猫头鹰','小水獭','小树懒','小熊猫','小考拉','小松鼠','小乌龟','小鳄鱼'] },
+            { category: '海洋系列', items: ['小鲸鱼','小章鱼','小螃蟹','小海星','小河豚','小贝壳','小水母'] },
+            { category: '昆虫系列', items: ['小蜜蜂','小蝴蝶','小瓢虫','小蜗牛','小蜻蜓'] },
+            { category: '融合角色', items: ['云朵兔','云朵熊','云朵猫','棉花糖小兔','星光小鹿','花瓣猫咪','彩虹小鱼'] },
+            { category: '头像系列', items: ['简约兔子头像','简约小熊头像','简约猫咪头像','简约小狗头像','简约小猪头像'] }
+        ],
+        outfits: [
+            { category: '服装', items: ['穿连帽卫衣','穿围裙','穿背带裤','穿连衣裙','穿毛衣','穿校服','穿和服','穿披风','穿雨衣','穿睡衣','穿西装马甲','穿厨师服','穿医生白大褂','穿飞行员夹克','穿芭蕾舞裙','穿运动套装','穿牛仔外套','穿棉袄','穿泳装','穿魔法师长袍','穿小斗篷'] },
+            { category: '头饰', items: ['戴贝雷帽','戴渔夫帽','戴花环头饰','戴毛线帽','戴皇冠','戴蝴蝶结发夹','戴草帽','戴兔耳发箍','戴礼帽','戴护士帽','戴厨师帽','戴飞行帽','戴猫耳发箍','戴圣诞帽','戴花朵草编帽','戴星星发夹','戴丝带蝴蝶结','戴小蓝帽','戴小蘑菇帽','戴小樱桃发饰'] },
+            { category: '围巾眼镜', items: ['系围巾','架小眼镜','戴墨镜'] },
+            { category: '手持配饰', items: ['背小书包','拿气球','拿冰淇淋','拿小花束','拿咖啡杯','拿小信封','挎斜挎包','推小推车','骑木马','拿魔法棒','拿画笔调色板','拿小铲子','拿听诊器','拿放大镜','拿吉他','拿小相机','拿书本','拿雨伞','拿篮球','捧南瓜灯'] },
+            { category: '表情动作', items: ['闭眼微笑','睁大眼睛好奇','吐舌调皮','歪头卖萌','双手比心','举爪打招呼','捂嘴偷笑','托腮发呆','叉腰自信','蹲坐抱膝','踮脚张望','趴着撑下巴','张开双臂','吹口哨','跳舞旋转','摔倒坐地','挥手打招呼','蹲坐抱蛋'] },
+            { category: '职业套装', items: ['小厨师（厨师帽+围裙+小铲子）','小医生（白大褂+听诊器+护士帽）','小画家（贝雷帽+画笔+调色板）','小飞行员（飞行帽+夹克+护目镜）','小魔法师（魔法帽+长袍+魔法棒）','小音乐家（礼帽+吉他+乐谱）','小探险家（草帽+背包+放大镜）','小芭蕾舞者（花环+芭蕾裙+踮脚）'] }
+        ],
+        decorations: [
+            { category: '水果系列', items: ['草莓','水蜜桃','香蕉','苹果','青提','橙子','樱桃','梨子','芒果'] },
+            { category: '天空星空', items: ['简约云朵','弯月牙','四角闪光星','五角星','星星灯串','小彩虹','流星','星球小环'] },
+            { category: '花草植物', items: ['小雏菊','郁金香','三叶草','简笔画小花','嫩叶','小樱花','小花苞'] },
+            { category: '可爱图形', items: ['爱心','蝴蝶结','气球','糖果','小圆波点','小饼干','冰淇淋'] },
+            { category: '线条挂件', items: ['波浪拉旗','细绳挂饰','小圆珠链条','弧形灯串线','曲线彩带'] },
+            { category: '生活物件', items: ['吐司面包','牛奶盒','小鱼','蘑菇','胡萝卜','信封','小帐篷'] }
+        ]
+    };
+
+    const DEFAULT_PALETTES = [
+        { id:'p1', name:'奶油马卡龙', bgColor:'#FFF9EF', colors:['#F8C8CD','#FBE2B9','#F9D3B8','#C9E8D8','#C6E2F2'], lineColor:'#444444', desc:'浅蜜桃粉、奶杏黄、柔橘、薄荷绿、晴空蓝' },
+        { id:'p2', name:'莫兰迪灰调', bgColor:'#F5F3F0', colors:['#C5B8A5','#D4C5B0','#B5C4B1','#A8B5C4','#C4B5B5'], lineColor:'#555555', desc:'低饱和灰调，温柔高级感' },
+        { id:'p3', name:'森林清新', bgColor:'#F5F9F5', colors:['#A8D5BA','#C5E1A5','#B2DFDB','#DCEDC8','#A5D6A7'], lineColor:'#3E5C3E', desc:'清新自然，绿意盎然' },
+        { id:'p4', name:'蜜桃奶油', bgColor:'#FFF5F0', colors:['#FFD0D0','#FFE0B2','#FFCCBC','#F8BBD0','#FFCDD2'], lineColor:'#5D4037', desc:'甜美柔和，粉嫩可爱' }
+    ];
+
+    const LAYOUTS = [
+        '散点式排列，元素均衡散落于画面各处，疏密有致，预留充足留白',
+        '散点式稀疏排列，大面积留白，元素间距宽敞，清新柔和',
+        '散点式密集排列，元素错落饱满，丰富充实，适合满印',
+        '分层带状排列，多条分段短弧形挂绳横向分层错落排布，其余小元素填充空隙散点分布',
+        '重叠式排列，主体浮纹叠加装饰底纹，层次丰富'
+    ];
+
+    const STYLES = ['治愈绘本卡通平涂','韩系奶油简约简笔风','简约线条几何风','水彩手绘治愈风'];
+
+    // 智能搭配主题包：基于图案设计原理（主次分明、疏密有致、主题统一、色彩协调）
+    // 每个主题定义了元素池、推荐色板、推荐布局、元素数量范围
+    const SMART_THEMES = [
+        { name:'春日花园', emoji:'🌷', desc:'清新春日，花朵与萌宠',
+          subjectPool:['坐立垂耳白兔','圆脸小白猫咪','小羊崽','小鹿','小猪崽','花瓣猫咪','云朵兔'],
+          decorationPool:['小雏菊','郁金香','小樱花','嫩叶','蝴蝶结','小彩虹','简笔画小花','三叶草','曲线彩带','小花苞'],
+          outfitPool:['戴花环头饰','拿小花束','穿连衣裙','戴蝴蝶结发夹','戴小樱桃发饰','系围巾','闭眼微笑','歪头卖萌','跳舞旋转'],
+          paletteId:'p1', layoutIndex:0, subjectRange:[1,3], decoRange:[3,6], outfitRange:[2,4] },
+        { name:'甜蜜派对', emoji:'🎉', desc:'甜美欢庆，糖果气球',
+          subjectPool:['软萌坐姿小熊','小猪崽','小鸡','圆脸小白猫咪'],
+          decorationPool:['草莓','糖果','气球','爱心','冰淇淋','小圆波点','蝴蝶结','小饼干'],
+          outfitPool:['戴皇冠','拿气球','拿冰淇淋','穿连衣裙','戴蝴蝶结发夹','戴小蓝帽','双手比心','吐舌调皮','跳舞旋转'],
+          paletteId:'p4', layoutIndex:2, subjectRange:[1,3], decoRange:[4,6], outfitRange:[2,4] },
+        { name:'星空梦境', emoji:'✨', desc:'梦幻夜空，闪烁星辰',
+          subjectPool:['简约兔子头像','简约小熊头像','简约猫咪头像','小海豹','星光小鹿','云朵猫'],
+          decorationPool:['简约云朵','弯月牙','四角闪光星','五角星','星星灯串','小圆波点','爱心','弧形灯串线','星球小环'],
+          outfitPool:['穿魔法师长袍','穿小斗篷','拿魔法棒','戴星星发夹','架小眼镜','闭眼微笑','托腮发呆'],
+          paletteId:'p1', layoutIndex:3, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
+        { name:'森林童话', emoji:'🌲', desc:'森林动物，自然秘境',
+          subjectPool:['软萌坐姿小熊','小鹿','小恐龙','圆头小青蛙','小狐狸'],
+          decorationPool:['蘑菇','嫩叶','三叶草','简笔画小花','小鱼','胡萝卜','小雏菊'],
+          outfitPool:['穿披风','穿小斗篷','戴草帽','戴小蘑菇帽','背小书包','拿放大镜','穿背带裤','睁大眼睛好奇','踮脚张望','摔倒坐地'],
+          paletteId:'p3', layoutIndex:0, subjectRange:[1,3], decoRange:[3,6], outfitRange:[2,4] },
+        { name:'夏日水果', emoji:'🍓', desc:'清爽果香，活力夏日',
+          subjectPool:['圆脸小白猫咪','小鸭','企鹅','小鸡','彩虹小鱼'],
+          decorationPool:['草莓','水蜜桃','香蕉','苹果','青提','橙子','樱桃','梨子','小圆珠链条'],
+          outfitPool:['穿泳装','戴草帽','戴小蓝帽','拿冰淇淋','戴花朵草编帽','系围巾','睁大眼睛好奇','张开双臂','跳舞旋转'],
+          paletteId:'p1', layoutIndex:1, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
+        { name:'温暖冬日', emoji:'☕', desc:'温馨冬日，暖意融融',
+          subjectPool:['软萌坐姿小熊','坐立垂耳白兔','小仓鼠','小羊崽'],
+          decorationPool:['吐司面包','牛奶盒','冰淇淋','小饼干','波浪拉旗','小圆珠链条','爱心'],
+          outfitPool:['穿毛衣','戴毛线帽','系围巾','拿咖啡杯','穿棉袄','戴圣诞帽','穿小斗篷','托腮发呆','捂嘴偷笑','蹲坐抱蛋'],
+          paletteId:'p4', layoutIndex:2, subjectRange:[1,3], decoRange:[3,5], outfitRange:[2,4] },
+        { name:'简约莫兰迪', emoji:'🎨', desc:'低饱和高级感，极简线条',
+          subjectPool:['简约兔子头像','简约小熊头像','简约猫咪头像','云朵兔','云朵熊'],
+          decorationPool:['爱心','小圆波点','四角闪光星','嫩叶','细绳挂饰','简笔画小花','弧形灯串线'],
+          outfitPool:[],
+          paletteId:'p2', layoutIndex:1, subjectRange:[1,2], decoRange:[2,4], outfitRange:[0,0] },
+        { name:'田园牧歌', emoji:'🌾', desc:'农场田园，质朴自然',
+          subjectPool:['小鸡','小鸭','小猪崽','柯基小狗','小羊崽'],
+          decorationPool:['胡萝卜','蘑菇','小雏菊','嫩叶','信封','小帐篷','三叶草'],
+          outfitPool:['穿围裙','戴草帽','戴小蘑菇帽','拿小铲子','穿背带裤','戴花朵草编帽','蹲坐抱蛋','蹲坐抱膝','吹口哨','摔倒坐地'],
+          paletteId:'p3', layoutIndex:0, subjectRange:[2,3], decoRange:[3,5], outfitRange:[2,3] },
+        { name:'海洋清凉', emoji:'🌊', desc:'海洋蓝调，清凉一夏',
+          subjectPool:['企鹅','小海豹','小鸭','圆头小青蛙'],
+          decorationPool:['小鱼','小彩虹','简约云朵','四角闪光星','冰淇淋','气球'],
+          outfitPool:['穿泳装','戴渔夫帽','戴小蓝帽','拿冰淇淋','拿小相机','架小眼镜','张开双臂','举爪打招呼','挥手打招呼'],
+          paletteId:'p1', layoutIndex:3, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
+        { name:'童趣游乐', emoji:'🎪', desc:'童趣活泼，欢乐游乐',
+          subjectPool:['小恐龙','柯基小狗','圆头小青蛙','小猪崽','小鸡'],
+          decorationPool:['气球','糖果','小帐篷','小彩虹','波浪拉旗','星星灯串','冰淇淋','弧形灯串线'],
+          outfitPool:['穿运动套装','戴兔耳发箍','戴小蓝帽','拿气球','拿篮球','穿校服','穿小斗篷','叉腰自信','举爪打招呼','跳舞旋转','摔倒坐地'],
+          paletteId:'p4', layoutIndex:2, subjectRange:[2,3], decoRange:[4,6], outfitRange:[2,4] },
+        { name:'云端梦境', emoji:'☁️', desc:'融合角色，梦幻漂浮',
+          subjectPool:['云朵兔','云朵熊','云朵猫','棉花糖小兔','星光小鹿','花瓣猫咪','彩虹小鱼'],
+          decorationPool:['简约云朵','四角闪光星','弧形灯串线','曲线彩带','小彩虹','星星灯串','星球小环','弯月牙','小圆波点'],
+          outfitPool:['穿小斗篷','戴星星发夹','拿魔法棒','戴花环头饰','闭眼微笑','托腮发呆','跳舞旋转','张开双臂'],
+          paletteId:'p1', layoutIndex:3, subjectRange:[2,3], decoRange:[4,6], outfitRange:[1,3] }
+    ];
+
+    const PLATFORMS = {
+        jimeng: { name:'即梦AI', url:'https://jimeng.jianying.com/', color:'#FF6B35' },
+        doubao: { name:'豆包AI', url:'https://www.doubao.com/', color:'#4D6BFE' },
+        gemini: { name:'Gemini', url:'https://gemini.google.com/', color:'#1A73E8' }
+    };
+
+    const LICENSE_TYPES = {
+        buyout: { name:'买断', desc:'版权完全转让，不可再授权', badge:'badge-buyout' },
+        exclusive: { name:'独家授权', desc:'指定品类/渠道独家使用', badge:'badge-exclusive' },
+        'non-exclusive': { name:'非独家授权', desc:'可同时授权给多方', badge:'badge-non-exclusive' }
+    };
+
+    const PRODUCT_SCOPES = { 'multi-channel':'多渠道产品', 'single-channel':'单渠道产品' };
+    const PRODUCT_CATEGORIES = ['睡衣','内裤','床品','机车布艺','童装','配饰','包装','其他'];
+
+    // 授权期限类型
+    const DURATION_TYPES = { 'fixed':'固定期限', 'permanent':'永久授权' };
+
+    // 付款状态
+    const PAYMENT_STATUS = { 'unpaid':'待付款', 'partial':'部分付款', 'paid':'已付清' };
+
+    // 授权书状态
+    const CERT_STATUS = { 'not-issued':'未生成', 'issued':'已生成' };
+
+    const PATTERN_STATUS = {
+        draft: { name:'草稿', badge:'badge-draft' },
+        available: { name:'可授权', badge:'badge-available' },
+        'partially-licensed': { name:'部分授权', badge:'badge-partial' },
+        'fully-licensed': { name:'已售罄', badge:'badge-soldout' },
+        'bought-out': { name:'已买断', badge:'badge-boughtout' }
+    };
+
+    // ============================================
+    // 存储层
+    // ============================================
+    function loadData(key) {
+        try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e) { return []; }
+    }
+    function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+    function loadObject(key) {
+        try { return JSON.parse(localStorage.getItem(key)) || null; } catch(e) { return null; }
+    }
+    function saveObject(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
+
+    function initData() {
+        var ver = localStorage.getItem(STORAGE_KEYS.version);
+        if (ver !== DATA_VERSION) {
+            // v5: 新增融合角色系列、线条挂件元素、云端梦境主题，更新智能搭配池
+            saveObject(STORAGE_KEYS.elements, DEFAULT_ELEMENTS);
+            if (!localStorage.getItem(STORAGE_KEYS.palettes)) saveData(STORAGE_KEYS.palettes, DEFAULT_PALETTES);
+            localStorage.setItem(STORAGE_KEYS.version, DATA_VERSION);
+        }
+    }
+
+    // ============================================
+    // 工具函数
+    // ============================================
+    function genId(prefix) { return prefix + '-' + Date.now().toString(36) + Math.random().toString(36).substr(2,4); }
+    function formatDate(d) { if(!d) return '-'; var dt = new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+    function formatMoney(n) { return '¥' + (n||0).toLocaleString('zh-CN'); }
+    function escapeHtml(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function showToast(msg) { var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2000); }
+    // 生成唯一合同编号：HT-年月日-4位随机大写字母+数字
+    function genContractNo() {
+        var d = new Date();
+        var ymd = String(d.getFullYear()) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 去掉易混淆的I/O/0/1
+        var rnd = '';
+        for (var i=0; i<4; i++) rnd += chars.charAt(Math.floor(Math.random()*chars.length));
+        return 'HT-' + ymd + '-' + rnd;
+    }
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    // ===== HEX → 中文色名自动映射 =====
+    // 基于 HSL 色相+饱和度+亮度区间生成色名，色值改变时自动更新
+    function hexToHsl(hex) {
+        var r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
+        var max = Math.max(r,g,b), min = Math.min(r,g,b);
+        var h, s, l = (max+min)/2;
+        if (max === min) { h = 0; s = 0; }
+        else {
+            var d = max - min;
+            s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+            switch(max) {
+                case r: h = (g-b)/d + (g<b?6:0); break;
+                case g: h = (b-r)/d + 2; break;
+                case b: h = (r-g)/d + 4; break;
+            }
+            h /= 6;
+        }
+        return { h: Math.round(h*360), s: Math.round(s*100), l: Math.round(l*100) };
+    }
+    function hexToColorName(hex) {
+        if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return '未知色';
+        var hsl = hexToHsl(hex);
+        var h = hsl.h, s = hsl.s, l = hsl.l;
+        // 无彩色（灰度）
+        if (s < 8) {
+            if (l < 8) return '墨黑';
+            if (l < 20) return '深灰';
+            if (l < 40) return '中灰';
+            if (l < 60) return '浅灰';
+            if (l < 80) return '银灰';
+            if (l < 95) return '米白';
+            return '纯白';
+        }
+        // 有彩色：按色相分段
+        var prefix = '';
+        // 亮度前缀
+        if (l < 20) prefix = '深';
+        else if (l > 80) prefix = '浅';
+        else if (l > 65) prefix = '柔';
+        // 红色系
+        if (h < 12 || h >= 348) {
+            if (s < 30) return prefix+'裸粉';
+            if (l > 75) return '蜜桃粉';
+            if (s > 70 && l < 45) return '猩红';
+            return prefix+'红色';
+        }
+        // 橙色系
+        if (h < 25) {
+            if (l > 80) return '奶杏';
+            if (s > 70 && l < 50) return '橘橙';
+            return prefix+'暖橘';
+        }
+        if (h < 40) {
+            if (l > 75) return '浅杏';
+            if (s > 60 && l < 55) return '焦糖';
+            return prefix+'杏色';
+        }
+        // 黄色系
+        if (h < 55) {
+            if (l > 80) return '奶黄';
+            if (s > 70 && l < 55) return '金黄';
+            return prefix+'鹅黄';
+        }
+        if (h < 65) {
+            if (l > 75) return '米黄';
+            return prefix+'黄色';
+        }
+        // 绿色系
+        if (h < 95) {
+            if (l > 70) return '嫩绿';
+            if (s > 50 && l < 50) return '翠绿';
+            return prefix+'绿色';
+        }
+        if (h < 150) {
+            if (l > 70) return '薄荷绿';
+            if (s > 40 && l < 50) return '森林绿';
+            return prefix+'青绿';
+        }
+        if (h < 175) {
+            if (l > 65) return '浅青';
+            return prefix+'青色';
+        }
+        // 蓝色系
+        if (h < 200) {
+            if (l > 70) return '晴空蓝';
+            if (s > 50 && l < 50) return '湖蓝';
+            return prefix+'天蓝';
+        }
+        if (h < 230) {
+            if (l > 70) return '浅蓝';
+            if (s < 30) return '雾霾蓝';
+            return prefix+'蓝色';
+        }
+        if (h < 260) {
+            if (l > 65) return '藕紫';
+            return prefix+'深蓝';
+        }
+        // 紫色系
+        if (h < 290) {
+            if (l > 70) return '薰衣草紫';
+            if (s > 50 && l < 50) return '深紫';
+            return prefix+'紫色';
+        }
+        // 粉色系
+        if (h < 330) {
+            if (l > 75) return '樱粉';
+            if (s > 50 && l < 55) return '玫粉';
+            return prefix+'粉色';
+        }
+        // 红粉过渡
+        if (h < 348) {
+            if (l > 75) return '浅粉';
+            return '玫红';
+        }
+        return prefix+'彩色';
+    }
+    // 从色板颜色数组自动生成描述
+    function paletteAutoDesc(colors) {
+        if (!colors || !colors.length) return '';
+        return colors.map(function(c){ return hexToColorName(c); }).join('、');
+    }
+
+    // ===== CMYK 色域检查 =====
+    // RGB → CMYK 转换
+    function rgbToCmyk(r, g, b) {
+        r = r/255; g = g/255; b = b/255;
+        var k = 1 - Math.max(r, g, b);
+        if (k >= 1) return { c:0, m:0, y:0, k:100 };
+        var c = (1-r-k)/(1-k);
+        var m = (1-g-k)/(1-k);
+        var y = (1-b-k)/(1-k);
+        return { c:Math.round(c*100), m:Math.round(m*100), y:Math.round(y*100), k:Math.round(k*100) };
+    }
+    // CMYK → RGB 转换
+    function cmykToRgb(c, m, y, k) {
+        var r = Math.round(255 * (1-c/100) * (1-k/100));
+        var g = Math.round(255 * (1-m/100) * (1-k/100));
+        var b = Math.round(255 * (1-y/100) * (1-k/100));
+        return { r:r, g:g, b:b };
+    }
+    function rgbToHex(r, g, b) {
+        return '#' + [r,g,b].map(function(v){
+            var s = v.toString(16);
+            return s.length === 1 ? '0'+s : s;
+        }).join('').toUpperCase();
+    }
+    // RGB → CMYK → RGB 往返，获取最接近的 CMYK 可印刷色
+    function getCmykSafeHex(hex) {
+        var r = parseInt(hex.slice(1,3),16);
+        var g = parseInt(hex.slice(3,5),16);
+        var b = parseInt(hex.slice(5,7),16);
+        var cmyk = rgbToCmyk(r, g, b);
+        var rgb2 = cmykToRgb(cmyk.c, cmyk.m, cmyk.y, cmyk.k);
+        return rgbToHex(rgb2.r, rgb2.g, rgb2.b);
+    }
+    // 判断是否超出 CMYK 色域（往返后任意通道差异 > 8 认为偏色）
+    function isOutOfCmykGamut(hex) {
+        if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return false;
+        var safe = getCmykSafeHex(hex);
+        var r1 = parseInt(hex.slice(1,3),16), g1 = parseInt(hex.slice(3,5),16), b1 = parseInt(hex.slice(5,7),16);
+        var r2 = parseInt(safe.slice(1,3),16), g2 = parseInt(safe.slice(3,5),16), b2 = parseInt(safe.slice(5,7),16);
+        return Math.abs(r1-r2) > 8 || Math.abs(g1-g2) > 8 || Math.abs(b1-b2) > 8;
+    }
+    function pickRandom(arr, count) {
+        var pool = arr.slice();
+        var result = [];
+        count = Math.min(count, pool.length);
+        for (var i = 0; i < count; i++) {
+            var idx = Math.floor(Math.random() * pool.length);
+            result.push(pool.splice(idx, 1)[0]);
+        }
+        return result;
+    }
+    function getElements() { return loadObject(STORAGE_KEYS.elements) || DEFAULT_ELEMENTS; }
+    function getPalettes() { return loadData(STORAGE_KEYS.palettes); }
+    function getPatterns() { return loadData(STORAGE_KEYS.patterns); }
+    function getLicenses() { return loadData(STORAGE_KEYS.licenses); }
+
+    function computeStatus(patternId) {
+        var licenses = getLicenses().filter(function(l){ return l.patternId === patternId && l.status === 'active'; });
+        if (licenses.some(function(l){ return l.licenseType === 'buyout'; })) return 'bought-out';
+        if (licenses.length > 0) {
+            var pattern = getPatterns().find(function(p){ return p.id === patternId; });
+            if (!pattern || !pattern.thumbnail) return 'draft';
+            return 'partially-licensed';
+        }
+        var pattern = getPatterns().find(function(p){ return p.id === patternId; });
+        if (!pattern) return 'draft';
+        if (!pattern.thumbnail) return 'draft';
+        return 'available';
+    }
+
+    function makeFingerprint(subjects, outfits, decorations, paletteId, layout) {
+        var s = (subjects||[]).slice().sort().join(',');
+        var o = (outfits||[]).slice().sort().join(',');
+        var d = (decorations||[]).slice().sort().join(',');
+        return s + '|' + o + '|' + d + '|' + paletteId + '|' + (layout||'').substr(0,8);
+    }
+
+    function checkDuplicate(fingerprint, excludeId) {
+        var patterns = getPatterns();
+        return patterns.find(function(p){
+            return p.id !== excludeId && p.fingerprint === fingerprint;
+        });
+    }
+
+    // ============================================
+    // App 主对象
+    // ============================================
+    var app = {
+        currentModule: 'dashboard',
+        previousModule: null,
+        returnToPatternId: null,
+        searchQuery: '',
+        filterStatus: '',
+        filterPlatform: '',
+        genState: (function() {
+            try {
+                var saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.genState));
+                if (saved && saved.subjects) return saved;
+            } catch(e) {}
+            return { subjects:[], outfits:[], decorations:[], paletteId:'p1', layoutIndex:0, styleIndex:0, smartHistory:[], currentTheme:null, elementTab:'subjects' };
+        })(),
+
+        saveGenState: function() {
+            try { localStorage.setItem(STORAGE_KEYS.genState, JSON.stringify(this.genState)); } catch(e) {}
+        },
+
+        init: function() {
+            initData();
+            this.bindEvents();
+            this.render();
+        },
+
+        bindEvents: function() {
+            var self = this;
+            document.querySelectorAll('.nav-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    self.switchModule(item.dataset.module);
+                    self.closeSidebar();
+                });
+            });
+        },
+
+        toggleSidebar: function() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        },
+        closeSidebar: function() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        },
+
+        switchModule: function(module) {
+            this.currentModule = module;
+            document.querySelectorAll('.nav-item').forEach(function(item) {
+                item.classList.toggle('active', item.dataset.module === module);
+            });
+            this.render();
+        },
+
+        render: function() {
+            var ca = document.getElementById('contentArea');
+            switch(this.currentModule) {
+                case 'dashboard': ca.innerHTML = this.renderDashboard(); break;
+                case 'assets': ca.innerHTML = this.renderAssets(); break;
+                case 'generator': ca.innerHTML = this.renderGenerator(); break;
+                case 'licenses': ca.innerHTML = this.renderLicenses(); break;
+                case 'elements': ca.innerHTML = this.renderElements(); break;
+                case 'palettes': ca.innerHTML = this.renderPalettes(); break;
+                case 'settings': ca.innerHTML = this.renderSettings(); break;
+            }
+        },
+
+        // ===== 概览 =====
+        renderDashboard: function() {
+            var patterns = getPatterns();
+            var licenses = getLicenses().filter(function(l){ return l.status === 'active'; });
+            var totalRevenue = licenses.reduce(function(s,l){ return s + (l.amount||0); },0);
+            var totalReceived = licenses.reduce(function(s,l){ return s + (l.deposit||0) + (l.balance||0); },0);
+            var pendingPayment = totalRevenue - totalReceived;
+            var unpaidCount = licenses.filter(function(l){ return l.paymentStatus !== 'paid'; }).length;
+            var boughtOut = patterns.filter(function(p){ return computeStatus(p.id)==='bought-out'; }).length;
+            var available = patterns.filter(function(p){ var s=computeStatus(p.id); return s==='available'||s==='partially-licensed'; }).length;
+            var drafts = patterns.filter(function(p){ return computeStatus(p.id)==='draft'; }).length;
+
+            var html = '<div class="dash-layout">';
+            // 左栏：数据统计 + 授权概览
+            html += '<div class="dash-left">';
+
+            html += '<div class="stats-grid">';
+            html += '<div class="stat-card"><div class="stat-card-label">素材总数</div><div class="stat-card-value accent">'+patterns.length+'</div><div class="stat-card-sub">含草稿 '+drafts+' 个</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">可授权</div><div class="stat-card-value success">'+available+'</div><div class="stat-card-sub">待授权素材</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">已买断</div><div class="stat-card-value danger">'+boughtOut+'</div><div class="stat-card-sub">不可再授权</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">授权收入</div><div class="stat-card-value warning">'+formatMoney(totalRevenue)+'</div><div class="stat-card-sub">已收 '+formatMoney(totalReceived)+(pendingPayment>0?' · 待收 '+formatMoney(pendingPayment):'')+'</div></div>';
+            html += '</div>';
+
+            // 授权概览
+            html += '<div class="panel"><div class="panel-header"><span class="panel-title">授权概览</span><button class="btn-secondary btn-sm" onclick="app.switchModule(\'licenses\')">管理授权</button></div><div class="panel-body">';
+            if (licenses.length === 0) {
+                html += '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg><div class="empty-state-text">暂无授权记录</div></div>';
+            } else {
+                var byType = { buyout:0, exclusive:0, 'non-exclusive':0 };
+                licenses.forEach(function(l){ byType[l.licenseType] = (byType[l.licenseType]||0)+1; });
+                var paidCount = licenses.filter(function(l){ return l.paymentStatus === 'paid'; }).length;
+                var partialCount = licenses.filter(function(l){ return l.paymentStatus === 'partial'; }).length;
+                var unpaidCount2 = licenses.filter(function(l){ return !l.paymentStatus || l.paymentStatus === 'unpaid'; }).length;
+                var permCount = licenses.filter(function(l){ return l.durationType === 'permanent'; }).length;
+                html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">';
+                html += '<div class="stat-card"><div class="stat-card-label">买断</div><div class="stat-card-value danger">'+byType.buyout+'</div></div>';
+                html += '<div class="stat-card"><div class="stat-card-label">独家授权</div><div class="stat-card-value warning">'+byType.exclusive+'</div></div>';
+                html += '<div class="stat-card"><div class="stat-card-label">非独家授权</div><div class="stat-card-value success">'+byType['non-exclusive']+'</div></div>';
+                html += '</div>';
+                html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">';
+                html += '<div class="stat-card"><div class="stat-card-label">已付清</div><div class="stat-card-value success">'+paidCount+'</div><div class="stat-card-sub">笔</div></div>';
+                html += '<div class="stat-card"><div class="stat-card-label">部分付款</div><div class="stat-card-value warning">'+(partialCount+unpaidCount2)+'</div><div class="stat-card-sub">待收款</div></div>';
+                html += '<div class="stat-card"><div class="stat-card-label">永久授权</div><div class="stat-card-value accent">'+permCount+'</div><div class="stat-card-sub">笔</div></div>';
+                html += '</div>';
+            }
+            html += '</div></div>';
+            html += '</div>'; // end dash-left
+
+            // 右栏：最近素材
+            html += '<div class="dash-right">';
+            html += '<div class="panel"><div class="panel-header"><span class="panel-title">最近素材</span><button class="btn-secondary btn-sm" onclick="app.switchModule(\'assets\')">查看全部</button></div><div class="panel-body">';
+            if (patterns.length === 0) {
+                html += '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="empty-state-text">暂无素材，去生成提示词创建第一个吧</div></div>';
+            } else {
+                var recent = patterns.slice(-6).reverse();
+                html += '<div class="dash-recent-list">';
+                recent.forEach(function(p) {
+                    html += app.renderPatternCard(p);
+                });
+                html += '</div>';
+            }
+            html += '</div></div>';
+            html += '</div>'; // end dash-right
+
+            html += '</div>'; // end dash-layout
+
+            return html;
+        },
+
+        // ===== 素材库 =====
+        renderAssets: function() {
+            var self = this;
+            var patterns = getPatterns();
+            var filtered = patterns.filter(function(p) {
+                if (self.searchQuery && p.name.indexOf(self.searchQuery) < 0 && (!p.elements || !JSON.stringify(p.elements).indexOf(self.searchQuery))) return false;
+                if (self.filterStatus && computeStatus(p.id) !== self.filterStatus) return false;
+                if (self.filterPlatform && p.platform !== self.filterPlatform) return false;
+                return true;
+            });
+
+            var html = '<div class="filter-bar">';
+            html += '<div class="search-box"><span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" placeholder="搜索素材名称或元素..." value="'+escapeHtml(self.searchQuery)+'" oninput="app.onSearch(this.value)"></div>';
+            html += '<select class="filter-select" onchange="app.onFilterStatus(this.value)"><option value="">全部状态</option>';
+            Object.keys(PATTERN_STATUS).forEach(function(k){ html += '<option value="'+k+'" '+(self.filterStatus===k?'selected':'')+'>'+PATTERN_STATUS[k].name+'</option>'; });
+            html += '</select>';
+            html += '<select class="filter-select" onchange="app.onFilterPlatform(this.value)"><option value="">全部平台</option>';
+            Object.keys(PLATFORMS).forEach(function(k){ html += '<option value="'+k+'" '+(self.filterPlatform===k?'selected':'')+'>'+PLATFORMS[k].name+'</option>'; });
+            html += '</select>';
+            html += '<span style="font-size:12px;color:var(--text-muted);margin-left:auto;">共 '+filtered.length+' 个素材</span>';
+            html += '<button class="btn-primary btn-sm" onclick="app.openPatternModal()">+ 新增素材</button>';
+            html += '</div>';
+
+            if (filtered.length === 0) {
+                html += '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="empty-state-text">'+(patterns.length===0?'暂无素材，点击右侧新增':'未找到匹配的素材')+'</div></div>';
+            } else {
+                html += '<div class="pattern-grid">';
+                filtered.forEach(function(p) { html += self.renderPatternCard(p); });
+                html += '</div>';
+            }
+            return html;
+        },
+
+        renderPatternCard: function(p) {
+            var status = computeStatus(p.id);
+            var st = PATTERN_STATUS[status];
+            var html = '<div class="pattern-card" onclick="app.openPatternDetail(\''+p.id+'\')">';
+            html += '<div class="pattern-thumb">';
+            if (p.thumbnail) {
+                html += '<img src="'+p.thumbnail+'" alt="'+escapeHtml(p.name)+'">';
+            } else {
+                html += '<div class="pattern-thumb-placeholder"><span class="ph-logo">W.</span><span class="ph-text">暂无图片</span></div>';
+            }
+            html += '<div class="pattern-thumb-badges"><span class="badge '+st.badge+'">'+st.name+'</span></div>';
+            html += '<div class="pattern-card-actions">';
+            html += '<button class="pattern-card-action-btn" title="复制提示词" onclick="event.stopPropagation();app.copyPatternPrompt(\''+p.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+            html += '<button class="pattern-card-action-btn" title="编辑" onclick="event.stopPropagation();app.openPatternDetail(\''+p.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+            html += '<button class="pattern-card-action-btn danger" title="删除" onclick="event.stopPropagation();app.deletePattern(\''+p.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="pattern-info">';
+            html += '<div class="pattern-name">'+escapeHtml(p.name)+'</div>';
+            html += '<div class="pattern-meta">';
+            if (p.paletteName) html += '<span>'+escapeHtml(p.paletteName)+'</span>';
+            if (p.platform) html += '<span>· '+(PLATFORMS[p.platform]?PLATFORMS[p.platform].name:p.platform)+'</span>';
+            html += '</div>';
+            var allElements = (p.elements&&p.elements.subjects?p.elements.subjects:[]).concat(p.elements&&p.elements.outfits?p.elements.outfits:[]).concat(p.elements&&p.elements.decorations?p.elements.decorations:[]);
+            if (allElements.length) html += '<div class="pattern-elements">'+escapeHtml(allElements.slice(0,4).join('、'))+(allElements.length>4?'...':'')+'</div>';
+            html += '</div></div>';
+            return html;
+        },
+
+        onSearch: function(v) { this.searchQuery = v; this.render(); },
+        onFilterStatus: function(v) { this.filterStatus = v; this.render(); },
+        onFilterPlatform: function(v) { this.filterPlatform = v; this.render(); },
+
+        // ===== 生成提示词 =====
+        renderGenerator: function() {
+            var self = this;
+            var elements = getElements();
+            var palettes = getPalettes();
+            var s = this.genState;
+
+            // 全宽工具栏：智能搭配(icon) + 提示 + 清空
+            var html = '<div class="gen-toolbar">';
+            html += '<button class="btn-smart-match-icon" onclick="app.smartMatch()" title="智能搭配">';
+            html += '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2M15 16V14M8 9H10M20 9H22M17.8 11.8L19 13M17.8 6.2L19 5M3 21l9-9M12.2 6.2L11 5"/></svg>';
+            html += '</button>';
+            html += '<span class="gen-toolbar-info">手动选择或点击左侧「智能搭配」一键生成主题方案，选择色板和布局后自动生成提示词</span>';
+            if (s.subjects.length > 0 || s.decorations.length > 0) {
+                html += '<button class="btn-clear-select" onclick="app.clearSelection()">';
+                html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+                html += '<span>清空</span>';
+                html += '</button>';
+            }
+            html += '</div>';
+
+            // 当前主题标签（始终保留占位，避免布局抖动）
+            html += '<div class="theme-badge-bar'+(s.currentTheme ? '' : ' theme-badge-bar-empty')+'">';
+            if (s.currentTheme) {
+                html += '<span class="theme-badge">'+s.currentTheme.emoji+' '+escapeHtml(s.currentTheme.name)+'</span><span class="theme-badge-desc">'+escapeHtml(s.currentTheme.desc)+'</span>';
+            }
+            html += '</div>';
+
+            // 2列布局
+            html += '<div class="gen-layout">';
+            // ===== 列1：元素选择(Tab) + 参数配置 =====
+            html += '<div>';
+            // 卡片1：元素选择（Tab切换主体/装饰）
+            html += '<div class="gen-section" data-section="elements" style="margin-bottom:16px;">';
+            html += '<div class="gen-tabs">';
+            html += '<div class="gen-tab'+(s.elementTab==='subjects'?' active':'')+'" onclick="app.genState.elementTab=\'subjects\';app.renderGenerator_();">主体元素<span class="gen-tab-count">'+s.subjects.length+'</span></div>';
+            html += '<div class="gen-tab'+(s.elementTab==='outfits'?' active':'')+'" onclick="app.genState.elementTab=\'outfits\';app.renderGenerator_();">拟人配饰<span class="gen-tab-count">'+s.outfits.length+'</span></div>';
+            html += '<div class="gen-tab'+(s.elementTab==='decorations'?' active':'')+'" onclick="app.genState.elementTab=\'decorations\';app.renderGenerator_();">装饰元素<span class="gen-tab-count">'+s.decorations.length+'</span></div>';
+            var resetType = s.elementTab;
+            var resetCount = resetType === 'subjects' ? s.subjects.length : (resetType === 'outfits' ? s.outfits.length : s.decorations.length);
+            html += '<button class="gen-tab-reset'+(resetCount===0?' hidden':'')+'" onclick="app.clearGenElement(\''+resetType+'\')" title="重置'+(resetType==='subjects'?'主体元素':(resetType==='outfits'?'拟人配饰':'装饰元素'))+'">';
+            html += '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
+            html += '</button>';
+            html += '</div>';
+            html += '<div class="gen-section-body">';
+            if (s.elementTab === 'subjects') {
+                elements.subjects.forEach(function(cat) {
+                    html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                    cat.items.forEach(function(item) {
+                        var sel = s.subjects.indexOf(item) >= 0;
+                        html += '<span class="element-chip'+(sel?' selected':'')+'" onclick="app.toggleGenElement(\'subjects\',\''+escapeHtml(item).replace(/'/g,'\\\'')+'\')">'+escapeHtml(item)+'</span>';
+                    });
+                    html += '</div></div>';
+                });
+            } else if (s.elementTab === 'outfits') {
+                if (s.subjects.length === 0) {
+                    html += '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">请先选择主体元素，再为其搭配服装配饰</div>';
+                } else {
+                    html += '<div style="font-size:12px;color:var(--ink-tertiary);padding:6px 0 10px;line-height:1.6;">为动物角色搭配服装配饰，使其拟人化。建议从「服装」「头饰」「手持配饰」各选1~2项，搭配1个表情动作；或直接选择「职业套装」一键搭配完整造型。<br>头饰规则：可同时选择多种头饰，生成时将自动分配给不同角色（每只仅戴一种，不叠加）。<br>互斥规则：职业套装与普通配饰（服装/头饰/手持）互斥，选其一时自动清空另一类；表情动作可自由搭配。</div>';
+                }
+                elements.outfits.forEach(function(cat) {
+                    var isProfSet = cat.category === '职业套装';
+                    html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                    cat.items.forEach(function(item) {
+                        var sel = s.outfits.indexOf(item) >= 0;
+                        var extraClass = isProfSet ? ' chip-profset' : '';
+                        html += '<span class="element-chip'+(sel?' selected':'')+extraClass+'" onclick="app.toggleGenElement(\'outfits\',\''+escapeHtml(item).replace(/'/g,'\\\'')+'\')">'+escapeHtml(item)+'</span>';
+                    });
+                    html += '</div></div>';
+                });
+            } else {
+                elements.decorations.forEach(function(cat) {
+                    html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                    cat.items.forEach(function(item) {
+                        var sel = s.decorations.indexOf(item) >= 0;
+                        html += '<span class="element-chip'+(sel?' selected':'')+'" onclick="app.toggleGenElement(\'decorations\',\''+escapeHtml(item).replace(/'/g,'\\\'')+'\')">'+escapeHtml(item)+'</span>';
+                    });
+                    html += '</div></div>';
+                });
+            }
+            html += '</div></div>';
+            // 卡片2：参数配置（风格+布局并排，色板网格）
+            html += '<div class="gen-section" data-section="config">';
+            html += '<div class="gen-section-header" style="cursor:default;">参数配置</div>';
+            html += '<div class="gen-section-body">';
+            html += '<div class="config-row">';
+            html += '<div><div class="config-field-label">风格</div><select class="form-select" onchange="app.genState.styleIndex=parseInt(this.value);app.renderGenerator_();">';
+            STYLES.forEach(function(st,i) { html += '<option value="'+i+'" '+(s.styleIndex===i?'selected':'')+'>'+escapeHtml(st)+'</option>'; });
+            html += '</select></div>';
+            html += '<div><div class="config-field-label">布局描述</div><select class="form-select" onchange="app.genState.layoutIndex=parseInt(this.value);app.renderGenerator_();">';
+            LAYOUTS.forEach(function(l,i) { html += '<option value="'+i+'" '+(s.layoutIndex===i?'selected':'')+'>'+escapeHtml(l)+'</option>'; });
+            html += '</select></div>';
+            html += '</div>';
+            html += '<div class="config-field-label">色板</div>';
+            html += '<div class="palette-grid">';
+            palettes.forEach(function(pal) {
+                var sel = s.paletteId === pal.id;
+                html += '<div class="palette-card'+(sel?' selected':'')+'" onclick="app.genState.paletteId=\''+pal.id+'\';app.renderGenerator_();">';
+                html += '<div class="palette-card-top" style="background:'+pal.bgColor+';">';
+                html += '<div class="palette-card-swatches">';
+                pal.colors.forEach(function(c){ html += '<span class="palette-card-swatch" style="background:'+c+';"></span>'; });
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="palette-card-body">';
+                html += '<div class="palette-name">'+escapeHtml(pal.name)+'</div>';
+                html += '<div class="palette-desc">'+escapeHtml(paletteAutoDesc(pal.colors))+'</div>';
+                html += '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '</div></div>';
+            html += '</div>';
+
+            // ===== 列2：提示词输出 =====
+            html += '<div class="gen-col-output">';
+            var prompt = this.buildPrompt();
+            if (prompt) {
+                // 重复检查
+                var fp = makeFingerprint(s.subjects, s.outfits, s.decorations, s.paletteId, LAYOUTS[s.layoutIndex]);
+                var dup = checkDuplicate(fp);
+                if (dup) {
+                    html += '<div class="warning-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>存在相同组合的素材：'+escapeHtml(dup.name)+'，建议调整元素组合</div>';
+                }
+                html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出<button class="btn-primary" onclick="app.generatePrompt()" style="margin-left:auto;">生成提示词</button></div><div class="gen-section-body">';
+                html += '<div class="prompt-output" id="promptOutput">'+escapeHtml(prompt)+'</div>';
+                html += '<div class="prompt-actions">';
+                html += '<button class="btn-secondary" onclick="app.copyPrompt()">复制提示词</button>';
+                html += '<button class="btn-primary" onclick="app.savePromptToLibrary()">入库素材</button>';
+                html += '<span style="flex:1"></span>';
+                Object.keys(PLATFORMS).forEach(function(k) {
+                    var pf = PLATFORMS[k];
+                    html += '<a class="platform-btn" href="'+pf.url+'" target="_blank" style="border-color:'+pf.color+';color:'+pf.color+'">'+pf.name+'</a>';
+                });
+                html += '</div></div></div>';
+            } else {
+                html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出<button class="btn-primary" onclick="app.generatePrompt()" style="margin-left:auto;">生成提示词</button></div><div class="gen-section-body">';
+                html += '<div class="prompt-output-empty">选择元素后自动生成提示词</div>';
+                html += '</div></div>';
+            }
+            html += '</div>'; // close output column
+            html += '</div>'; // close gen-layout
+            return html;
+        },
+
+        toggleGenSection: function(name) {
+            var el = document.querySelector('.gen-section[data-section="'+name+'"]');
+            if (el) el.classList.toggle('collapsed');
+        },
+
+        renderGenerator_: function() { this.saveGenState(); document.getElementById('contentArea').innerHTML = this.renderGenerator(); },
+
+        toggleGenElement: function(type, item) {
+            var arr = this.genState[type];
+            var idx = arr.indexOf(item);
+            if (idx >= 0) {
+                // 取消选中
+                arr.splice(idx, 1);
+            } else {
+                // 选中：检查互斥规则
+                var isProfSet = item.indexOf('（') > 0 && item.indexOf('）') > 0;
+                if (type === 'outfits') {
+                    if (isProfSet) {
+                        // 选职业套装：清空已选的普通配饰（服装/头饰/围巾眼镜/手持配饰），保留表情动作
+                        var kept = arr.filter(function(o) {
+                            return o.indexOf('（') > 0 && o.indexOf('）') > 0 || ['闭眼微笑','睁大眼睛好奇','吐舌调皮','歪头卖萌','双手比心','举爪打招呼','捂嘴偷笑','托腮发呆','叉腰自信','蹲坐抱膝','踮脚张望','趴着撑下巴','张开双臂','吹口哨','跳舞旋转','摔倒坐地','挥手打招呼','蹲坐抱蛋'].indexOf(o) >= 0;
+                        });
+                        this.genState.outfits = kept;
+                        arr = this.genState.outfits;
+                    } else {
+                        // 选普通配饰：清空已选的职业套装，保留表情动作和其他普通配饰
+                        arr = arr.filter(function(o) {
+                            return !(o.indexOf('（') > 0 && o.indexOf('）') > 0);
+                        });
+                        this.genState.outfits = arr;
+                    }
+                }
+                arr.push(item);
+            }
+            this.renderGenerator_();
+        },
+
+        // 智能搭配：基于主题包随机生成元素组合
+        // 算法原理：主题统一 + 疏密有致 + 去重避雷 + 色彩协调
+        smartMatch: function() {
+            var self = this;
+            var palettes = getPalettes();
+            var patterns = getPatterns();
+
+            // 过滤掉最近2次使用过的主题，确保每次搭配有新鲜感
+            var recentThemes = this.genState.smartHistory.slice(-2).map(function(h){ return h.themeName; });
+            var availableThemes = SMART_THEMES.filter(function(t){ return recentThemes.indexOf(t.name) < 0; });
+            if (availableThemes.length === 0) availableThemes = SMART_THEMES.slice();
+
+            // 收集已有指纹用于去重
+            var existingFps = {};
+            patterns.forEach(function(p){ if(p.fingerprint) existingFps[p.fingerprint] = true; });
+            this.genState.smartHistory.forEach(function(h){ existingFps[h.fingerprint] = true; });
+
+            var matched = null;
+            for (var attempt = 0; attempt < 8; attempt++) {
+                // 随机选一个主题
+                var theme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+
+                // 从主题池中随机选取主体元素
+                var subjCount = randInt(theme.subjectRange[0], theme.subjectRange[1]);
+                var subjects = pickRandom(theme.subjectPool, subjCount);
+
+                // 从主题池中随机选取装饰元素
+                var decoCount = randInt(theme.decoRange[0], theme.decoRange[1]);
+                var decorations = pickRandom(theme.decorationPool, decoCount);
+
+                // 从主题池中随机选取拟人配饰
+                var outfits = [];
+                if (theme.outfitPool && theme.outfitPool.length > 0 && theme.outfitRange[1] > 0) {
+                    var outfitCount = randInt(theme.outfitRange[0], theme.outfitRange[1]);
+                    outfits = pickRandom(theme.outfitPool, outfitCount);
+                }
+
+                // 70%概率使用主题推荐色板，30%随机
+                var paletteId;
+                if (Math.random() < 0.7) {
+                    paletteId = theme.paletteId;
+                } else {
+                    paletteId = palettes[Math.floor(Math.random() * palettes.length)].id;
+                }
+
+                // 70%概率使用主题推荐布局，30%随机
+                var layoutIndex;
+                if (Math.random() < 0.7) {
+                    layoutIndex = theme.layoutIndex;
+                } else {
+                    layoutIndex = Math.floor(Math.random() * LAYOUTS.length);
+                }
+
+                // 检查指纹是否重复
+                var fp = makeFingerprint(subjects, outfits, decorations, paletteId, LAYOUTS[layoutIndex]);
+                if (existingFps[fp]) continue;
+
+                matched = { theme: theme, subjects: subjects, outfits: outfits, decorations: decorations, paletteId: paletteId, layoutIndex: layoutIndex, fingerprint: fp };
+                break;
+            }
+
+            // 如果8次都重复了（极小概率），强制使用最后一次结果
+            if (!matched) {
+                var theme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+                var subjCount = randInt(theme.subjectRange[0], theme.subjectRange[1]);
+                var decoCount = randInt(theme.decoRange[0], theme.decoRange[1]);
+                var fbSubjects = pickRandom(theme.subjectPool, subjCount);
+                var fbDecorations = pickRandom(theme.decorationPool, decoCount);
+                var fbOutfits = [];
+                if (theme.outfitPool && theme.outfitPool.length > 0 && theme.outfitRange[1] > 0) {
+                    var fbOutfitCount = randInt(theme.outfitRange[0], theme.outfitRange[1]);
+                    fbOutfits = pickRandom(theme.outfitPool, fbOutfitCount);
+                }
+                matched = {
+                    theme: theme,
+                    subjects: fbSubjects,
+                    outfits: fbOutfits,
+                    decorations: fbDecorations,
+                    paletteId: theme.paletteId,
+                    layoutIndex: theme.layoutIndex,
+                    fingerprint: makeFingerprint(fbSubjects, fbOutfits, fbDecorations, theme.paletteId, LAYOUTS[theme.layoutIndex])
+                };
+            }
+
+            // 更新状态
+            this.genState.subjects = matched.subjects;
+            this.genState.outfits = matched.outfits || [];
+            this.genState.decorations = matched.decorations;
+            this.genState.paletteId = matched.paletteId;
+            this.genState.layoutIndex = matched.layoutIndex;
+            this.genState.currentTheme = matched.theme;
+
+            // 记录历史（保留最近10条）
+            this.genState.smartHistory.push({
+                themeName: matched.theme.name,
+                fingerprint: matched.fingerprint,
+                timestamp: Date.now()
+            });
+            if (this.genState.smartHistory.length > 10) {
+                this.genState.smartHistory = this.genState.smartHistory.slice(-10);
+            }
+
+            this.renderGenerator_();
+            showToast('智能搭配：' + matched.theme.emoji + ' ' + matched.theme.name);
+        },
+
+        clearGenElement: function(type) {
+            this.genState[type] = [];
+            if (type === 'subjects') this.genState.currentTheme = null;
+            this.renderGenerator_();
+        },
+
+        clearSelection: function() {
+            this.genState.subjects = [];
+            this.genState.outfits = [];
+            this.genState.decorations = [];
+            this.genState.currentTheme = null;
+            this.renderGenerator_();
+        },
+
+        buildPrompt: function() {
+            var s = this.genState;
+            if (s.subjects.length === 0 && s.decorations.length === 0) return '';
+            var pal = getPalettes().find(function(p){ return p.id === s.paletteId; }) || DEFAULT_PALETTES[0];
+            var colorList = pal.colors.map(function(c){ return hexToColorName(c)+' '+c; }).join('、');
+            var style = STYLES[s.styleIndex];
+            var layout = LAYOUTS[s.layoutIndex];
+
+            var hasOutfits = s.outfits.length > 0 && s.subjects.length > 0;
+
+            // 构建头饰集合（用于冲突检测：头饰不可叠加，需分配给不同角色）
+            var elements = getElements();
+            var headwearSet = {};
+            elements.outfits.forEach(function(cat) {
+                if (cat.category === '头饰') {
+                    cat.items.forEach(function(item) { headwearSet[item] = true; });
+                }
+            });
+
+            // 构建主体元素描述
+            var subjectStr = s.subjects.join('、');
+
+            // 拟人化描述：按类别分组，生成自然语言
+            if (hasOutfits) {
+                // 区分职业套装和普通配饰
+                var professionSets = [];
+                var normalOutfits = [];
+                s.outfits.forEach(function(item) {
+                    if (item.indexOf('（') > 0 && item.indexOf('）') > 0) {
+                        professionSets.push(item);
+                    } else {
+                        normalOutfits.push(item);
+                    }
+                });
+
+                // 职业套装：提取括号内细节，直接展开描述
+                var outfitDescParts = [];
+                professionSets.forEach(function(ps) {
+                    var match = ps.match(/（(.+?)）/);
+                    if (match) {
+                        var setName = ps.substring(0, ps.indexOf('（'));
+                        outfitDescParts.push(setName + '造型（' + match[1] + '）');
+                    }
+                });
+
+                // 普通配饰：按前缀分组
+                var groups = { '穿': [], '戴': [], '系': [], '架': [], '拿': [], '背': [], '挎': [], '推': [], '骑': [], '捧': [], '抱': [] };
+                var exprParts = [];
+                normalOutfits.forEach(function(item) {
+                    var firstChar = item.charAt(0);
+                    if (groups[firstChar]) {
+                        groups[firstChar].push(item.substring(1));
+                    } else {
+                        // 表情动作类（不以穿/戴/拿等开头）
+                        exprParts.push(item);
+                    }
+                });
+
+                // ===== 头饰分配逻辑（核心：每只角色仅佩戴一种主要头饰，不叠加）=====
+                // 从戴类中分离出头饰和非头饰（围巾眼镜等）
+                var headwearSelected = [];
+                var otherWear = [];
+                groups['戴'].forEach(function(itemName) {
+                    var fullItem = '戴' + itemName;
+                    if (headwearSet[fullItem]) {
+                        headwearSelected.push(itemName);
+                    } else {
+                        otherWear.push(itemName);
+                    }
+                });
+
+                if (headwearSelected.length > 0) {
+                    if (headwearSelected.length === 1) {
+                        // 只选了一种头饰：所有角色都戴这种
+                        outfitDescParts.push('头戴' + headwearSelected[0]);
+                    } else {
+                        // 选了多种头饰：分配给不同角色，每只仅戴一种
+                        var distribParts = [];
+                        for (var hi = 0; hi < headwearSelected.length; hi++) {
+                            distribParts.push('一只戴' + headwearSelected[hi]);
+                        }
+                        outfitDescParts.push('各角色佩戴不同头饰互不叠加（' + distribParts.join('，') + '）');
+                    }
+                }
+                // 非头饰戴类（墨镜等）：所有角色可共同佩戴
+                if (otherWear.length > 0) {
+                    outfitDescParts.push('佩戴' + otherWear.join('、'));
+                }
+
+                // 围巾
+                if (groups['系'].length > 0) outfitDescParts.push('系着' + groups['系'].join('、'));
+                // 眼镜
+                if (groups['架'].length > 0) outfitDescParts.push('架着' + groups['架'].join('、'));
+                // 服装
+                if (groups['穿'].length > 0) outfitDescParts.push('身穿' + groups['穿'].join('、'));
+                // 手持
+                if (groups['拿'].length > 0) outfitDescParts.push('手持' + groups['拿'].join('、'));
+                if (groups['背'].length > 0) outfitDescParts.push('背着' + groups['背'].join('、'));
+                if (groups['挎'].length > 0) outfitDescParts.push('挎着' + groups['挎'].join('、'));
+                if (groups['推'].length > 0) outfitDescParts.push('推着' + groups['推'].join('、'));
+                if (groups['骑'].length > 0) outfitDescParts.push('骑着' + groups['骑'].join('、'));
+                if (groups['捧'].length > 0) outfitDescParts.push('捧着' + groups['捧'].join('、'));
+                if (groups['抱'].length > 0) outfitDescParts.push('抱着' + groups['抱'].join('、'));
+
+                var exprStr = '';
+                if (exprParts.length > 0) exprStr = '，表情' + exprParts.join('、');
+
+                subjectStr = s.subjects.join('、') + '（拟人化形象：' + outfitDescParts.join('，') + exprStr + '）';
+            }
+
+            var decoStr = s.decorations.length > 0 ? s.decorations.join('、') : '';
+            var elementsStr = decoStr ? subjectStr + '、' + decoStr : subjectStr;
+
+            var p = '';
+            p += '无缝四方连续插画图案（seamless tileable repeat pattern），'+style+'风格，'+elementsStr+'，'+layout+'。';
+
+            // ===== 主体元素冲突规避规则 =====
+            var subjectCount = s.subjects.length;
+
+            // 检测是否包含融合角色（云朵兔等自带融合属性的角色）
+            var fusionSet = {};
+            elements.subjects.forEach(function(cat) {
+                if (cat.category === '融合角色') {
+                    cat.items.forEach(function(item) { fusionSet[item] = true; });
+                }
+            });
+            var hasFusion = s.subjects.some(function(subj) { return fusionSet[subj]; });
+            var normalSubjects = s.subjects.filter(function(subj) { return !fusionSet[subj]; });
+            var fusionSubjects = s.subjects.filter(function(subj) { return fusionSet[subj]; });
+
+            // 检测是否包含头像系列（仅头部，无身体）
+            var avatarSet = {};
+            elements.subjects.forEach(function(cat) {
+                if (cat.category === '头像系列') {
+                    cat.items.forEach(function(item) { avatarSet[item] = true; });
+                }
+            });
+            var avatarSubjects = s.subjects.filter(function(subj) { return avatarSet[subj]; });
+            var nonAvatarNormal = normalSubjects.filter(function(subj) { return !avatarSet[subj]; });
+
+            // 融合角色描述
+            if (fusionSubjects.length > 0) {
+                p += '融合角色（'+fusionSubjects.join('、')+'）为动物与自然元素结合的创意形象，保留动物头部特征，身体融合云朵/棉花糖/星光等元素，呈现梦幻漂浮感，同一融合角色在不同位置可变换配色。';
+            }
+
+            // 头像系列描述：仅头部，无身体，无肢体动作
+            if (avatarSubjects.length > 0) {
+                p += '头像系列角色（'+avatarSubjects.join('、')+'）仅绘制头部，无身体、无肢体、无站姿动作，仅做轻微镜像和大小变化重复出现，豆豆眼搭配简约弧线小嘴。';
+            }
+
+            // 普通非头像主体冲突规避
+            if (nonAvatarNormal.length > 1) {
+                p += '画面中包含'+nonAvatarNormal.length+'种不同的动物角色，每种角色独立存在，严禁将不同动物的特征融合或拼接为混合生物，每只角色保持自身物种特征清晰可辨。';
+                if (hasOutfits) {
+                    p += '不同角色的服装配饰应有所区别，避免所有角色穿着完全相同，增加画面丰富度。';
+                }
+            } else if (nonAvatarNormal.length === 1 && fusionSubjects.length === 0 && avatarSubjects.length === 0) {
+                p += '主体为单一萌系动物角色，在不同位置以不同姿态重复出现。';
+            }
+
+            if (hasOutfits) {
+                p += '主体角色为拟人化萌系动物，具有人类般的站立姿态和穿着打扮，服装配饰细节简洁可爱，与角色整体风格统一。';
+                // 头饰不叠加规则
+                var hasMultipleHeadwear = false;
+                if (hasOutfits) {
+                    var hwCount = 0;
+                    s.outfits.forEach(function(item) {
+                        if (headwearSet[item]) hwCount++;
+                    });
+                    hasMultipleHeadwear = hwCount > 1;
+                }
+                if (hasMultipleHeadwear) {
+                    p += '重要规则：每只角色仅佩戴一种主要头饰，严禁在同一角色上叠加多种帽子或头饰，不同角色分配不同头饰增加多样性。';
+                }
+                p += '每只动物穿着可略有不同增加变化。';
+            }
+
+            // ===== 弧形结构线描述 =====
+            var structureLines = ['弧形灯串线', '曲线彩带', '波浪拉旗', '细绳挂饰', '小圆珠链条'];
+            var hasStructureLine = s.decorations.some(function(d) { return structureLines.indexOf(d) >= 0; });
+            if (hasStructureLine) {
+                var slNames = s.decorations.filter(function(d) { return structureLines.indexOf(d) >= 0; });
+                p += '多条独立分段短弧形'+slNames.join('、')+'横向分层错落排布，每段挂绳是独立的短弧线，不是一条长贯通曲线横穿画布，挂绳上悬挂五角星与小圆珠装饰，轻盈稀疏，空隙充足。';
+            }
+
+            p += '单位纹样四边边缘无缝对接：超出上边界的元素从下边对应位置完整延续，超出左边界的元素从右边对应位置完整延续，确保任意位置裁切均可无缝拼接。';
+            p += '相同元素在不同位置作旋转和镜像变化，方向多样不统一，避免排列呆板。';
+            p += '底色奶油白 '+pal.bgColor+'，严格限定图案仅使用5种色彩：'+colorList+'，柔和深灰 '+pal.lineColor+' 纤细轮廓线。禁止生成色板以外任何颜色。';
+            p += '三层明度秩序：大面积中间明度色彩，高明度亮色作为主体视觉，少量低明度色彩点缀；饱和度控制20~48，禁止高饱和荧光色。暖色为主，少量薄荷蓝平衡色调。';
+            p += '所有元素造型全部圆润无尖角，平滑曲线，五官简化为豆豆眼加弧线小嘴，幼态软萌。';
+            p += '干净iPad矢量平涂，顺滑闭合线条，无纸张纹理、无笔触噪点、无渐变、无阴影、无肌理杂色，纯色平整色块，适合AI矢量描摹、数码印花应用。';
+            p += '元素间预留充足留白，疏密均衡，轻盈通透，禁止元素过度堆砌拥挤。';
+            p += '画面整洁，不要水印，8K高清，正方形无缝拼接单元。';
+            return p;
+        },
+
+        generatePrompt: function() {
+            var prompt = this.buildPrompt();
+            if (!prompt) { showToast('请至少选择一个元素'); return; }
+            this.renderGenerator_();
+            showToast('提示词已生成');
+        },
+
+        copyPrompt: function() {
+            var el = document.getElementById('promptOutput');
+            if (!el) return;
+            var text = el.textContent;
+            navigator.clipboard.writeText(text).then(function(){ showToast('已复制到剪贴板'); }).catch(function(){ showToast('复制失败，请手动选择复制'); });
+        },
+
+        copyPatternPrompt: function(id) {
+            var p = getPatterns().find(function(x){ return x.id === id; });
+            if (!p || !p.prompt) { showToast('该素材暂无提示词'); return; }
+            navigator.clipboard.writeText(p.prompt).then(function(){ showToast('提示词已复制'); }).catch(function(){ showToast('复制失败，请手动复制'); });
+        },
+
+        savePromptToLibrary: function() {
+            var s = this.genState;
+            var prompt = this.buildPrompt();
+            if (!prompt) { showToast('请先生成提示词'); return; }
+            var pal = getPalettes().find(function(p){ return p.id === s.paletteId; }) || DEFAULT_PALETTES[0];
+            var fp = makeFingerprint(s.subjects, s.outfits, s.decorations, s.paletteId, LAYOUTS[s.layoutIndex]);
+            var dup = checkDuplicate(fp);
+            if (dup) {
+                if (!confirm('已存在相同组合的素材「'+dup.name+'」，确定要继续入库吗？')) return;
+            }
+            var name = s.subjects.slice(0,2).concat(s.outfits.slice(0,1)).concat(s.decorations.slice(0,2)).join('') || '未命名素材';
+            var pattern = {
+                id: genId('PAT'),
+                name: name,
+                prompt: prompt,
+                elements: { subjects: s.subjects.slice(), outfits: s.outfits.slice(), decorations: s.decorations.slice() },
+                paletteId: s.paletteId,
+                paletteName: pal.name,
+                layout: LAYOUTS[s.layoutIndex],
+                style: STYLES[s.styleIndex],
+                platform: '',
+                generatedDate: formatDate(new Date()),
+                thumbnail: '',
+                fingerprint: fp,
+                notes: '',
+                createdAt: new Date().toISOString()
+            };
+            var patterns = getPatterns();
+            patterns.push(pattern);
+            saveData(STORAGE_KEYS.patterns, patterns);
+            showToast('素材已入库：'+name);
+            this.switchModule('assets');
+        },
+
+        // ===== 授权管理 =====
+        renderLicenses: function() {
+            var licenses = getLicenses();
+            if (licenses.length === 0) {
+                return '<div class="filter-bar"><button class="btn-primary btn-sm" onclick="app.openLicenseModal()" style="margin-left:auto;">+ 新增授权</button></div><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg><div class="empty-state-text">暂无授权记录，点击右侧新增</div></div>';
+            }
+            var html = '<div class="filter-bar"><span style="font-size:13px;font-weight:600;color:var(--text-primary);">授权记录</span><button class="btn-primary btn-sm" onclick="app.openLicenseModal()" style="margin-left:auto;">+ 新增授权</button></div>';
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">';
+            licenses.slice().reverse().forEach(function(l) {
+                var lt = LICENSE_TYPES[l.licenseType] || { name:l.licenseType, badge:'badge-draft' };
+                var statusBadge = l.status==='active' ? 'badge-active' : (l.status==='expired'?'badge-expired':'badge-terminated');
+                var statusName = l.status==='active'?'有效':(l.status==='expired'?'已过期':'已终止');
+                var pattern = getPatterns().find(function(p){ return p.id === l.patternId; });
+                // 期限显示
+                var durText = l.durationType === 'permanent' ? '永久授权' : (formatDate(l.startDate)+' ~ '+formatDate(l.endDate));
+                // 已收金额
+                var received = (l.deposit||0) + (l.balance||0);
+                // 修改次数
+                var modText = (l.usedModCount||0)+' / '+(l.freeModCount!=null?l.freeModCount:2);
+                var modOver = (l.usedModCount||0) > (l.freeModCount!=null?l.freeModCount:2);
+
+                html += '<div class="license-card">';
+
+                // 顶部：缩略图 + 素材名 + 被授权方 + 类型badge
+                html += '<div class="license-card-top">';
+                if (pattern && pattern.thumbnail) {
+                    html += '<img class="license-card-thumb" src="'+pattern.thumbnail+'" alt="">';
+                } else {
+                    html += '<div class="license-card-thumb-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>';
+                }
+                html += '<div class="license-card-top-info">';
+                html += '<div class="license-card-title">'+escapeHtml(pattern?pattern.name:'已删除素材')+'</div>';
+                html += '<div class="license-card-licensee">'+escapeHtml(l.licensee||'-')+'</div>';
+                html += '</div>';
+                html += '<div class="license-card-type"><span class="badge '+lt.badge+'">'+lt.name+'</span></div>';
+                html += '</div>';
+
+                // 金额栏：授权总额 + 已收金额 + 付款按钮
+                html += '<div class="license-card-amount-bar">';
+                html += '<div class="license-card-amount-group"><span class="license-card-amount-label">授权总额</span><span class="license-card-amount-value">'+formatMoney(l.amount)+'</span></div>';
+                if (received > 0 && received < l.amount) {
+                    html += '<div class="license-card-amount-group" style="align-items:flex-end;"><span class="license-card-amount-label">已收</span><span class="license-card-amount-sub">'+formatMoney(received)+'</span></div>';
+                }
+                // 付款按钮
+                if (l.paymentStatus !== 'paid') {
+                    var payLabel = (!l.paymentStatus || l.paymentStatus === 'unpaid') ? '标记已付款' : '标记已付清';
+                    html += '<button class="pay-btn" onclick="event.stopPropagation();app.markLicensePaid(\''+l.id+'\')">'+payLabel+'</button>';
+                } else {
+                    html += '<button class="pay-btn pay-btn-done" disabled>已付款</button>';
+                }
+                html += '</div>';
+
+                // 详情区
+                html += '<div class="license-card-body">';
+                if (l.licenseType === 'exclusive' && l.exclusiveScope) {
+                    html += '<div class="license-card-row"><span class="license-card-label">独家范围</span><span class="license-card-value">'+escapeHtml(l.exclusiveScope)+'</span></div>';
+                }
+                html += '<div class="license-card-row"><span class="license-card-label">产品范围</span><span class="license-card-value">'+(PRODUCT_SCOPES[l.productScope]||'-')+'</span></div>';
+                if (l.productCategories && l.productCategories.length) html += '<div class="license-card-row"><span class="license-card-label">产品品类</span><span class="license-card-value">'+l.productCategories.join('、')+'</span></div>';
+                html += '<div class="license-card-row"><span class="license-card-label">授权期限</span><span class="license-card-value">'+durText+'</span></div>';
+                html += '<div class="license-card-row"><span class="license-card-label">修改次数</span><span class="license-card-value">'+modText+' 次'+(modOver?' <span style="color:var(--danger);font-size:12px;">（已超出）</span>':'')+'</span></div>';
+                html += '<div class="license-card-row"><span class="license-card-label">合同状态</span><span class="license-card-value"><span class="badge '+statusBadge+'" style="margin-right:4px;">'+statusName+'</span>'+(l.contractRef?' · '+escapeHtml(l.contractRef):'')+'</span></div>';
+                if (l.notes) html += '<div class="license-card-row"><span class="license-card-label">备注</span><span class="license-card-value" style="color:var(--text-muted);font-size:12px;">'+escapeHtml(l.notes)+'</span></div>';
+                html += '</div>';
+
+                // 附加标签
+                var extraBadges = '';
+                if (l.certStatus === 'issued') extraBadges += '<span class="badge badge-available">授权书已出</span>';
+                if (l.creditRetained !== false) extraBadges += '<span class="badge badge-non-exclusive">保留署名</span>';
+                if (extraBadges) html += '<div class="license-card-extra">'+extraBadges+'</div>';
+
+                // 底部操作
+                html += '<div class="license-card-footer">';
+                html += '<button class="btn-secondary btn-sm" onclick="app.openLicenseModal(\''+l.id+'\')">编辑</button>';
+                html += '<button class="btn-danger btn-sm" onclick="app.deleteLicense(\''+l.id+'\')">删除</button>';
+                html += '</div>';
+
+                html += '</div>';
+            });
+            html += '</div>';
+            return html;
+        },
+
+        // ===== 元素库 =====
+        renderElements: function() {
+            var elements = getElements();
+            var html = '<div class="info-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>元素库分为「主体元素」和「装饰元素」两大类，每类下按分类管理。点击元素可删除，支持新增分类和元素。</div>';
+            html += '<div class="gen-layout">';
+
+            // 主体元素
+            html += '<div class="gen-section"><div class="gen-section-header">主体元素<span style="font-size:11px;color:var(--text-muted);margin-left:auto;">'+elements.subjects.reduce(function(s,c){return s+c.items.length;},0)+' 个</span></div><div class="gen-section-body">';
+            elements.subjects.forEach(function(cat, ci) {
+                html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                cat.items.forEach(function(item, ii) {
+                    html += '<span class="element-chip" style="cursor:default;" onclick="app.removeElement(\'subjects\','+ci+','+ii+')">'+escapeHtml(item)+' <span style="opacity:0.5;margin-left:2px;">×</span></span>';
+                });
+                html += '<span class="element-chip" style="border-style:dashed;color:var(--accent);" onclick="app.addElement(\'subjects\','+ci+')">+ 添加</span>';
+                html += '</div></div>';
+            });
+            html += '<button class="btn-secondary btn-sm" style="margin-top:8px;" onclick="app.addCategory(\'subjects\')">+ 新增分类</button>';
+            html += '</div></div>';
+
+            // 装饰元素
+            html += '<div class="gen-section"><div class="gen-section-header">装饰元素<span style="font-size:11px;color:var(--text-muted);margin-left:auto;">'+elements.decorations.reduce(function(s,c){return s+c.items.length;},0)+' 个</span></div><div class="gen-section-body">';
+            elements.decorations.forEach(function(cat, ci) {
+                html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                cat.items.forEach(function(item, ii) {
+                    html += '<span class="element-chip" style="cursor:default;" onclick="app.removeElement(\'decorations\','+ci+','+ii+')">'+escapeHtml(item)+' <span style="opacity:0.5;margin-left:2px;">×</span></span>';
+                });
+                html += '<span class="element-chip" style="border-style:dashed;color:var(--accent);" onclick="app.addElement(\'decorations\','+ci+')">+ 添加</span>';
+                html += '</div></div>';
+            });
+            html += '<button class="btn-secondary btn-sm" style="margin-top:8px;" onclick="app.addCategory(\'decorations\')">+ 新增分类</button>';
+            html += '</div></div>';
+
+            html += '</div>';
+            return html;
+        },
+
+        // ===== 色板管理 =====
+        renderPalettes: function() {
+            var palettes = getPalettes();
+            var html = '<div class="filter-bar"><span style="font-size:13px;font-weight:600;color:var(--text-primary);">色板管理</span><span style="font-size:12px;color:var(--text-muted);margin-left:auto;">共 '+palettes.length+' 个色板</span><button class="btn-primary btn-sm" onclick="app.openPaletteModal(null)">+ 新增色板</button></div>';
+            if (palettes.length === 0) {
+                return html + '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg><div class="empty-state-text">暂无色板，点击右上角新增</div></div>';
+            }
+            html += '<div class="psc-grid">';
+            palettes.forEach(function(pal) {
+                html += '<div class="psc-card" onclick="app.openPaletteModal(\''+pal.id+'\')">';
+                // 顶部色卡展示区：bgColor 为背景，2行3列网格
+                html += '<div class="psc-hero" style="background:'+pal.bgColor+';">';
+                html += '<div class="psc-swatches">';
+                // 5 个色块
+                pal.colors.forEach(function(c){ html += '<div class="psc-swatch" style="background:'+c+';"></div>'; });
+                // 第6格放操作按钮
+                html += '<div class="psc-swatch-actions">';
+                html += '<button class="psc-action-btn" title="编辑" onclick="event.stopPropagation();app.openPaletteModal(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+                html += '<button class="psc-action-btn danger" title="删除" onclick="event.stopPropagation();app.deletePalette(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                // 底部信息区
+                html += '<div class="psc-info">';
+                html += '<div class="psc-name">'+escapeHtml(pal.name)+'</div>';
+                html += '<div class="psc-desc">'+escapeHtml(paletteAutoDesc(pal.colors))+'</div>';
+                html += '<div class="psc-meta">';
+                html += '<span class="psc-meta-item"><span class="psc-meta-dot" style="background:'+pal.bgColor+';"></span>'+pal.bgColor+'</span>';
+                html += '<span class="psc-meta-item"><span class="psc-meta-dot" style="background:'+pal.lineColor+';"></span>'+pal.lineColor+'</span>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            return html;
+        },
+
+        // ===== 设置 =====
+        renderSettings: function() {
+            var patterns = getPatterns();
+            var licenses = getLicenses();
+            var elements = getElements();
+            var palettes = getPalettes();
+            var totalElements = elements.subjects.reduce(function(s,c){return s+c.items.length;},0) + elements.decorations.reduce(function(s,c){return s+c.items.length;},0);
+
+            var html = '<div class="panel" style="margin-bottom:20px;"><div class="panel-header"><span class="panel-title">数据统计</span></div><div class="panel-body">';
+            html += '<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0;">';
+            html += '<div class="stat-card"><div class="stat-card-label">素材记录</div><div class="stat-card-value accent">'+patterns.length+'</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">授权记录</div><div class="stat-card-value accent">'+licenses.length+'</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">元素总数</div><div class="stat-card-value accent">'+totalElements+'</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">色板数量</div><div class="stat-card-value accent">'+palettes.length+'</div></div>';
+            html += '</div></div></div>';
+
+            html += '<div class="panel panel-static" style="margin-bottom:20px;"><div class="panel-header"><span class="panel-title">数据管理</span></div><div class="panel-body">';
+            html += '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+            html += '<button class="btn-secondary" onclick="app.exportData()">导出全部数据</button>';
+            html += '<button class="btn-secondary" onclick="app.importData()">导入数据</button>';
+            html += '<button class="btn-secondary" onclick="app.loadSampleData()">加载示例数据</button>';
+            html += '<button class="btn-danger" onclick="app.clearAllData()">清空全部数据</button>';
+            html += '</div>';
+            html += '<input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="app.handleImport(event)">';
+            html += '</div></div>';
+
+            html += '<div class="panel panel-static"><div class="panel-header"><span class="panel-title">关于</span></div><div class="panel-body">';
+            html += '<div style="font-size:13px;color:var(--text-secondary);line-height:1.8;">';
+            html += '<div><strong>四方连图素材库</strong> v1.0</div>';
+            html += '<div>用于管理无缝四方连续纺织印花图案的提示词生成、素材入库、版权授权全流程。</div>';
+            html += '<div style="margin-top:8px;color:var(--text-muted);font-size:12px;">所有数据存储在本地浏览器，不会上传服务器。</div>';
+            html += '</div></div></div>';
+
+            return html;
+        },
+
+        // ===== 素材详情（只读） =====
+        openPatternDetail: function(id) {
+            var patterns = getPatterns();
+            var p = patterns.find(function(x){ return x.id === id; });
+            if (!p) return;
+            var status = computeStatus(id);
+            var st = PATTERN_STATUS[status];
+            var licenses = getLicenses().filter(function(l){ return l.patternId === id; });
+            this.previousModule = this.currentModule;
+
+            var html = '<div class="sub-page-content">';
+            // 二级页头
+            html += '<div class="sub-page-header">';
+            html += '<button class="sub-page-back" onclick="app.switchModule(\''+this.previousModule+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>返回</button>';
+            html += '<span class="sub-page-title">'+escapeHtml(p.name)+'</span>';
+            html += '<div class="sub-page-actions">';
+            html += '<button class="btn-icon" title="编辑" onclick="app.openPatternEdit(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+            html += '<button class="btn-icon" title="删除" onclick="app.deletePattern(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--danger);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+            html += '</div></div>';
+
+            // 两栏布局：左图右信息
+            html += '<div class="detail-layout">';
+
+            // === 左栏：大图预览 ===
+            html += '<div class="detail-img-col">';
+            if (p.thumbnail) {
+                html += '<div class="detail-img-box" onclick="app.openImagePreview(\''+id+'\')"><img src="'+p.thumbnail+'" alt="'+escapeHtml(p.name)+'"></div>';
+                html += '<div class="detail-img-actions"><button class="btn-secondary btn-sm" onclick="app.uploadPatternThumb(\''+id+'\')">更换图片</button>';
+                html += '<button class="btn-secondary btn-sm" onclick="app.openImagePreview(\''+id+'\')">查看大图</button></div>';
+            } else {
+                html += '<div class="detail-img-empty" onclick="app.uploadPatternThumb(\''+id+'\')">';
+                html += '<div style="text-align:center;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:6px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><div style="font-size:13px;">点击上传图片</div></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+
+            // === 右栏：信息区 ===
+            html += '<div class="detail-info-col">';
+
+            // 基本信息
+            html += '<div class="detail-section-title">基本信息</div>';
+            html += '<div class="detail-info-row"><span class="detail-info-label">状态</span><span class="detail-info-value"><span class="badge '+st.badge+'">'+st.name+'</span></span></div>';
+            html += '<div class="detail-info-row"><span class="detail-info-label">名称</span><span class="detail-info-value">'+escapeHtml(p.name)+'</span></div>';
+            var platformName = p.platform ? (PLATFORMS[p.platform] ? PLATFORMS[p.platform].name : p.platform) : '未指定';
+            html += '<div class="detail-info-row"><span class="detail-info-label">生成平台</span><span class="detail-info-value">'+escapeHtml(platformName)+'</span></div>';
+            html += '<div class="detail-info-row"><span class="detail-info-label">生成日期</span><span class="detail-info-value">'+(p.generatedDate ? formatDate(p.generatedDate) : '-')+'</span></div>';
+            html += '<div class="detail-info-row"><span class="detail-info-label">色板</span><span class="detail-info-value">'+escapeHtml(p.paletteName||'-')+'</span></div>';
+            html += '<div class="detail-info-row"><span class="detail-info-label">风格</span><span class="detail-info-value">'+escapeHtml(p.style||'-')+'</span></div>';
+
+            // 元素
+            if (p.elements && ((p.elements.subjects&&p.elements.subjects.length) || (p.elements.outfits&&p.elements.outfits.length) || (p.elements.decorations&&p.elements.decorations.length))) {
+                html += '<div class="detail-section-title">设计元素</div>';
+                if (p.elements.subjects && p.elements.subjects.length) {
+                    html += '<div class="detail-info-row"><span class="detail-info-label">主体元素</span><span class="detail-info-value"><div class="detail-tags">';
+                    p.elements.subjects.forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
+                    html += '</div></span></div>';
+                }
+                if (p.elements.outfits && p.elements.outfits.length) {
+                    html += '<div class="detail-info-row"><span class="detail-info-label">拟人配饰</span><span class="detail-info-value"><div class="detail-tags">';
+                    p.elements.outfits.forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
+                    html += '</div></span></div>';
+                }
+                if (p.elements.decorations && p.elements.decorations.length) {
+                    html += '<div class="detail-info-row"><span class="detail-info-label">装饰元素</span><span class="detail-info-value"><div class="detail-tags">';
+                    p.elements.decorations.forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
+                    html += '</div></span></div>';
+                }
+            }
+
+            // 提示词
+            if (p.prompt) {
+                html += '<div class="detail-section-title">AI提示词</div>';
+                html += '<div class="detail-info-row"><span class="detail-info-label">提示词内容</span><span class="detail-info-value"><div class="detail-prompt-box">'+escapeHtml(p.prompt)+'</div></span></div>';
+            }
+
+            // 授权记录
+            html += '<div class="detail-section-title">关联授权';
+            if (licenses.length > 0) html += '（'+licenses.length+' 笔）';
+            html += '</div>';
+            if (licenses.length > 0) {
+                html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+                licenses.forEach(function(l) {
+                    var lt = LICENSE_TYPES[l.licenseType] || {name:l.licenseType,badge:'badge-draft'};
+                    var durText = l.durationType === 'permanent' ? '永久' : (formatDate(l.startDate)+' ~ '+formatDate(l.endDate));
+                    var received = (l.deposit||0) + (l.balance||0);
+                    var payBadge = l.paymentStatus==='paid'?'badge-active':(l.paymentStatus==='partial'?'badge-partial':'badge-expired');
+                    html += '<div class="detail-license-item">';
+                    html += '<span class="badge '+lt.badge+'">'+lt.name+'</span>';
+                    html += '<span style="font-size:13px;flex:1;color:var(--text-secondary);">'+escapeHtml(l.licensee||'-')+' · '+formatMoney(l.amount)+(received>0?'（已收'+formatMoney(received)+'）':'')+' · '+durText+'</span>';
+                    if (l.paymentStatus === 'paid') {
+                        html += '<button class="pay-btn pay-btn-done" disabled>已付款</button>';
+                    } else {
+                        var payLabel = (!l.paymentStatus || l.paymentStatus === 'unpaid') ? '标记已付款' : '标记已付清';
+                        html += '<button class="pay-btn" onclick="app.markLicensePaid(\''+l.id+'\',\''+id+'\')">'+payLabel+'</button>';
+                    }
+                    html += '<button class="btn-icon" title="编辑授权" onclick="app.openLicenseModal(\''+l.id+'\',\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            } else {
+                html += '<div style="font-size:13px;color:var(--text-muted);padding:8px 0;">暂无授权记录</div>';
+            }
+            html += '<div style="margin-top:8px;"><button class="btn-secondary btn-sm" onclick="app.openLicenseModal(null,\''+id+'\')">+ 添加授权</button></div>';
+
+            // 备注
+            if (p.notes) {
+                html += '<div class="detail-section-title">备注</div>';
+                html += '<div class="detail-info-row"><span class="detail-info-label">备注内容</span><span class="detail-info-value" style="white-space:pre-wrap;">'+escapeHtml(p.notes)+'</span></div>';
+            }
+
+            html += '</div>'; // close detail-info-col
+            html += '</div>'; // close detail-layout
+            html += '</div>'; // close sub-page-content
+
+            document.getElementById('contentArea').innerHTML = html;
+            window.scrollTo({ top:0, behavior:'smooth' });
+        },
+
+        // 图片预览（全屏查看）
+        openImagePreview: function(id) {
+            var p = getPatterns().find(function(x){ return x.id === id; });
+            if (!p || !p.thumbnail) return;
+            var overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:3000;display:flex;align-items:center;justify-content:center;padding:40px;cursor:zoom-out;';
+            overlay.innerHTML = '<img src="'+p.thumbnail+'" style="max-width:90%;max-height:90%;border-radius:8px;object-fit:contain;">';
+            overlay.onclick = function() { document.body.removeChild(overlay); };
+            document.body.appendChild(overlay);
+        },
+
+        // 编辑素材（二级页编辑模式）
+        openPatternEdit: function(id) {
+            var patterns = getPatterns();
+            var p = patterns.find(function(x){ return x.id === id; });
+            if (!p) return;
+            var status = computeStatus(id);
+            var st = PATTERN_STATUS[status];
+            this.previousModule = this.currentModule;
+
+            var html = '<div class="sub-page-content">';
+            html += '<div class="sub-page-header">';
+            html += '<button class="sub-page-back" onclick="app.openPatternDetail(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>返回详情</button>';
+            html += '<span class="sub-page-title">编辑素材</span>';
+            html += '<div class="sub-page-actions"><button class="btn-primary" onclick="app.savePatternDetail(\''+id+'\')">保存</button></div>';
+            html += '</div>';
+
+            html += '<div class="form-page">';
+
+            // 图片
+            html += '<div class="form-group"><label class="form-label">素材图片</label>';
+            if (p.thumbnail) {
+                html += '<img src="'+p.thumbnail+'" class="img-preview" style="margin-bottom:8px;max-width:200px;"><button class="btn-secondary btn-sm" onclick="app.uploadPatternThumb(\''+id+'\')">更换图片</button>';
+            } else {
+                html += '<div class="img-upload-area" onclick="app.uploadPatternThumb(\''+id+'\')"><div style="color:var(--text-muted);font-size:13px;">点击上传图片</div></div>';
+            }
+            html += '</div>';
+
+            html += '<div class="form-section-title">基本信息</div>';
+            html += '<div class="form-group"><label class="form-label">名称 <span class="req">*</span></label><input class="form-input" id="pd_name" value="'+escapeHtml(p.name)+'"></div>';
+            html += '<div class="form-row"><div class="form-group"><label class="form-label">状态</label><div style="padding-top:6px;"><span class="badge '+st.badge+'">'+st.name+'</span></div></div>';
+            html += '<div class="form-group"><label class="form-label">生成平台</label><select class="form-select" id="pd_platform">';
+            html += '<option value="">未指定</option>';
+            Object.keys(PLATFORMS).forEach(function(k){ html += '<option value="'+k+'" '+(p.platform===k?'selected':'')+'>'+PLATFORMS[k].name+'</option>'; });
+            html += '</select></div></div>';
+            html += '<div class="form-row"><div class="form-group"><label class="form-label">生成日期</label><input class="form-input" type="date" id="pd_date" value="'+(p.generatedDate||'')+'"></div>';
+            html += '<div class="form-group"><label class="form-label">色板</label><input class="form-input" value="'+escapeHtml(p.paletteName||'')+'" readonly></div></div>';
+            html += '<div class="form-group"><label class="form-label">风格</label><input class="form-input" value="'+escapeHtml(p.style||'')+'" readonly></div>';
+
+            if (p.elements) {
+                html += '<div class="form-group"><label class="form-label">主体元素</label><div style="display:flex;flex-wrap:wrap;gap:4px;">';
+                (p.elements.subjects||[]).forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
+                html += '</div></div>';
+                if (p.elements.outfits && p.elements.outfits.length > 0) {
+                    html += '<div class="form-group"><label class="form-label">拟人配饰</label><div style="display:flex;flex-wrap:wrap;gap:4px;">';
+                    p.elements.outfits.forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
+                    html += '</div></div>';
+                }
+                html += '<div class="form-group"><label class="form-label">装饰元素</label><div style="display:flex;flex-wrap:wrap;gap:4px;">';
+                (p.elements.decorations||[]).forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
+                html += '</div></div>';
+            }
+
+            html += '<div class="form-section-title">提示词与备注</div>';
+            html += '<div class="form-group"><label class="form-label">提示词</label><textarea class="form-textarea" id="pd_prompt" style="min-height:100px;">'+escapeHtml(p.prompt||'')+'</textarea></div>';
+            html += '<div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" id="pd_notes" placeholder="可记录创作思路、买家反馈等">'+escapeHtml(p.notes||'')+'</textarea></div>';
+
+            html += '</div>'; // close form-page
+            html += '</div>'; // close sub-page-content
+
+            document.getElementById('contentArea').innerHTML = html;
+            window.scrollTo({ top:0, behavior:'smooth' });
+        },
+
+        savePatternDetail: function(id) {
+            var patterns = getPatterns();
+            var p = patterns.find(function(x){ return x.id === id; });
+            if (!p) return;
+            p.name = document.getElementById('pd_name').value.trim() || p.name;
+            p.platform = document.getElementById('pd_platform').value;
+            p.generatedDate = document.getElementById('pd_date').value;
+            p.prompt = document.getElementById('pd_prompt').value;
+            p.notes = document.getElementById('pd_notes').value;
+            p.updatedAt = new Date().toISOString();
+            saveData(STORAGE_KEYS.patterns, patterns);
+            showToast('素材已更新');
+            this.openPatternDetail(id);
+        },
+
+        uploadPatternThumb: function(id) {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var patterns = getPatterns();
+                    var p = patterns.find(function(x){ return x.id === id; });
+                    if (p) {
+                        p.thumbnail = ev.target.result;
+                        p.updatedAt = new Date().toISOString();
+                        saveData(STORAGE_KEYS.patterns, patterns);
+                        showToast('图片已上传');
+                        if (document.getElementById('pd_name')) {
+                            app.openPatternEdit(id);
+                        } else {
+                            app.openPatternDetail(id);
+                        }
+                    }
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        },
+
+        deletePattern: function(id) {
+            if (!confirm('确定删除此素材？关联的授权记录不会被删除。')) return;
+            var patterns = getPatterns().filter(function(p){ return p.id !== id; });
+            saveData(STORAGE_KEYS.patterns, patterns);
+            showToast('素材已删除');
+            this.switchModule(this.previousModule || 'assets');
+        },
+
+        openPatternModal: function() {
+            var elements = getElements();
+            var palettes = getPalettes();
+            var html = '<div class="modal-header"><span class="modal-title">新增素材</span><button class="modal-close" onclick="app.closeModal()">×</button></div>';
+            html += '<div class="modal-body">';
+            html += '<div class="form-group"><label class="form-label">名称 <span class="req">*</span></label><input class="form-input" id="np_name" placeholder="给素材起个名字"></div>';
+            html += '<div class="form-row"><div class="form-group"><label class="form-label">生成平台</label><select class="form-select" id="np_platform">';
+            html += '<option value="">未指定</option>';
+            Object.keys(PLATFORMS).forEach(function(k){ html += '<option value="'+k+'">'+PLATFORMS[k].name+'</option>'; });
+            html += '</select></div>';
+            html += '<div class="form-group"><label class="form-label">生成日期</label><input class="form-input" type="date" id="np_date" value="'+formatDate(new Date())+'"></div></div>';
+            html += '<div class="form-group"><label class="form-label">色板</label><select class="form-select" id="np_palette">';
+            palettes.forEach(function(pal){ html += '<option value="'+pal.id+'">'+escapeHtml(pal.name)+'</option>'; });
+            html += '</select></div>';
+            html += '<div class="form-group"><label class="form-label">提示词</label><textarea class="form-textarea" id="np_prompt" placeholder="粘贴AI生图提示词..."></textarea></div>';
+            html += '<div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" id="np_notes" placeholder="可选"></textarea></div>';
+            html += '</div>';
+            html += '<div class="modal-footer"><button class="btn-secondary" onclick="app.closeModal()">取消</button><button class="btn-primary" onclick="app.saveNewPattern()">保存</button></div>';
+            document.getElementById('modal').className = 'modal';
+            document.getElementById('modal').innerHTML = html;
+            document.getElementById('modalOverlay').classList.add('active');
+        },
+
+        saveNewPattern: function() {
+            var name = document.getElementById('np_name').value.trim();
+            if (!name) { showToast('请输入素材名称'); return; }
+            var palId = document.getElementById('np_palette').value;
+            var pal = getPalettes().find(function(p){ return p.id === palId; });
+            var pattern = {
+                id: genId('PAT'),
+                name: name,
+                prompt: document.getElementById('np_prompt').value,
+                elements: { subjects: [], decorations: [] },
+                paletteId: palId,
+                paletteName: pal ? pal.name : '',
+                layout: '',
+                style: '',
+                platform: document.getElementById('np_platform').value,
+                generatedDate: document.getElementById('np_date').value,
+                thumbnail: '',
+                fingerprint: '',
+                notes: document.getElementById('np_notes').value,
+                createdAt: new Date().toISOString()
+            };
+            var patterns = getPatterns();
+            patterns.push(pattern);
+            saveData(STORAGE_KEYS.patterns, patterns);
+            showToast('素材已添加');
+            this.closeModal();
+            this.render();
+        },
+
+        // ===== 授权编辑（二级页） =====
+        openLicenseModal: function(id, fromPatternId) {
+            var licenses = getLicenses();
+            var l = id ? licenses.find(function(x){ return x.id === id; }) : null;
+            var patterns = getPatterns();
+            this.previousModule = this.currentModule;
+            this.returnToPatternId = fromPatternId || null;
+
+            var html = '<div class="sub-page-content">';
+            // 二级页头：返回 + 标题 + 保存按钮
+            var backAction = this.returnToPatternId
+                ? 'app.openPatternDetail(\''+this.returnToPatternId+'\')'
+                : 'app.switchModule(\''+this.previousModule+'\')';
+            html += '<div class="sub-page-header">';
+            html += '<button class="sub-page-back" onclick="'+backAction+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>返回</button>';
+            html += '<span class="sub-page-title">'+(l?'编辑授权':'新增授权')+'</span>';
+            html += '<div class="sub-page-actions"><button class="btn-primary" onclick="app.saveLicense('+(l?"'"+l.id+"'":'null')+')">保存</button></div>';
+            html += '</div>';
+
+            html += '<div class="form-page">';
+
+            // === 基础信息 ===
+            html += '<div class="form-section-title">基础信息</div>';
+
+            // 关联素材
+            html += '<div class="form-group"><label class="form-label">关联素材 <span class="req">*</span></label><select class="form-select" id="lp_patternId">';
+            html += '<option value="">请选择素材</option>';
+            patterns.forEach(function(p) {
+                var status = computeStatus(p.id);
+                var disabled = status === 'bought-out' && (!l || l.patternId !== p.id);
+                html += '<option value="'+p.id+'"'+(l&&l.patternId===p.id?' selected':'')+(disabled?' disabled':'')+'>'+escapeHtml(p.name)+(status==='bought-out'?'（已买断）':'')+'</option>';
+            });
+            html += '</select></div>';
+
+            // 买断警告
+            html += '<div id="buyoutWarning" style="display:none;"><div class="warning-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>买断后该素材将无法再授权给其他方，请确认操作</div></div>';
+
+            // 授权类型
+            html += '<div class="form-group"><label class="form-label">授权类型 <span class="req">*</span></label><select class="form-select" id="lp_type" onchange="app.onLicenseTypeChange()">';
+            Object.keys(LICENSE_TYPES).forEach(function(k){ html += '<option value="'+k+'"'+(l&&l.licenseType===k?' selected':'')+'>'+LICENSE_TYPES[k].name+' — '+LICENSE_TYPES[k].desc+'</option>'; });
+            html += '</select></div>';
+
+            // 独家范围说明（仅独家授权时显示）
+            html += '<div id="exclusiveScopeWrap" style="display:none;"><div class="form-group"><label class="form-label">独家范围说明</label><input class="form-input" id="lp_exclusiveScope" value="'+escapeHtml(l?l.exclusiveScope||'':'')+'" placeholder="如：仅四件套独家，窗帘等非竞争品类可继续授权"><div class="form-hint">明确哪些品类是独家的，哪些品类可继续授权他人</div></div></div>';
+
+            // 被授权方
+            html += '<div class="form-group"><label class="form-label">被授权方 <span class="req">*</span></label><input class="form-input" id="lp_licensee" placeholder="买家/公司名称" value="'+escapeHtml(l?l.licensee:'')+'"></div>';
+
+            // === 授权范围 ===
+            html += '<div class="form-section-title">授权范围</div>';
+
+            // 产品范围
+            html += '<div class="form-group"><label class="form-label">产品范围</label><select class="form-select" id="lp_scope" onchange="app.onProductScopeChange()">';
+            Object.keys(PRODUCT_SCOPES).forEach(function(k){ html += '<option value="'+k+'"'+(l&&l.productScope===k?' selected':'')+'>'+PRODUCT_SCOPES[k]+'</option>'; });
+            html += '</select><div class="form-hint" id="lp_scope_hint"></div></div>';
+
+            // 产品品类（单渠道时单选，多渠道时多选）
+            var scopeIsSingle = l && l.productScope === 'single-channel';
+            html += '<div class="form-group"><label class="form-label">产品品类</label><div class="form-checkbox-group" id="lp_categories">';
+            PRODUCT_CATEGORIES.forEach(function(cat) {
+                var checked = l && l.productCategories && l.productCategories.indexOf(cat) >= 0;
+                html += '<div class="form-checkbox-item'+(checked?' checked':'')+'" data-value="'+cat+'" onclick="app.onCategoryClick(this)">'+cat+'</div>';
+            });
+            html += '</div><div class="form-hint" id="lp_cat_hint">'+(scopeIsSingle?'单渠道产品：仅可选择1个品类':'点击选择，可多选')+'</div></div>';
+
+            // === 期限与费用 ===
+            html += '<div class="form-section-title">期限与费用</div>';
+
+            // 授权金额
+            html += '<div class="form-group"><label class="form-label">授权总额（¥）</label><input class="form-input" type="number" id="lp_amount" value="'+(l?l.amount||'':'')+'" placeholder="0"></div>';
+
+            // 授权期限类型 + 开始日期
+            var durType = (l && l.durationType) ? l.durationType : 'fixed';
+            html += '<div class="form-row"><div class="form-group"><label class="form-label">授权期限</label><select class="form-select" id="lp_durationType" onchange="app.onDurationTypeChange()">';
+            Object.keys(DURATION_TYPES).forEach(function(k){ html += '<option value="'+k+'"'+(durType===k?' selected':'')+'>'+DURATION_TYPES[k]+'</option>'; });
+            html += '</select></div>';
+            html += '<div class="form-group"><label class="form-label">开始日期</label><input class="form-input" type="date" id="lp_start" value="'+(l?l.startDate||'':'')+'"></div></div>';
+            // 结束日期（永久授权时隐藏）
+            html += '<div id="endDateWrap"><div class="form-group"><label class="form-label">结束日期</label><input class="form-input" type="date" id="lp_end" value="'+(l?l.endDate||'':'')+'"></div></div>';
+
+            // 付款信息
+            html += '<div class="form-row"><div class="form-group"><label class="form-label">定金（¥）</label><input class="form-input" type="number" id="lp_deposit" value="'+(l?l.deposit||'':'')+'" placeholder="0"></div>';
+            html += '<div class="form-group"><label class="form-label">尾款（¥）</label><input class="form-input" type="number" id="lp_balance" value="'+(l?l.balance||'':'')+'" placeholder="0"></div></div>';
+            html += '<div class="form-group"><label class="form-label">付款状态</label><select class="form-select" id="lp_paymentStatus">';
+            Object.keys(PAYMENT_STATUS).forEach(function(k){ html += '<option value="'+k+'"'+(l&&l.paymentStatus===k?' selected':'')+'>'+PAYMENT_STATUS[k]+'</option>'; });
+            html += '</select></div>';
+
+            // 修改次数
+            html += '<div class="form-row"><div class="form-group"><label class="form-label">免费修改次数</label><input class="form-input" type="number" id="lp_freeModCount" value="'+(l?l.freeModCount!=null?l.freeModCount:2:2)+'" placeholder="默认2次"></div>';
+            html += '<div class="form-group"><label class="form-label">已用修改次数</label><input class="form-input" type="number" id="lp_usedModCount" value="'+(l?l.usedModCount||0:0)+'" placeholder="0"></div></div>';
+
+            // === 合同与附加 ===
+            html += '<div class="form-section-title">合同与附加</div>';
+
+            // 状态 + 合同编号（自动生成，可手动修改）
+            var contractNo = l && l.contractRef ? l.contractRef : genContractNo();
+            html += '<div class="form-row"><div class="form-group"><label class="form-label">状态</label><select class="form-select" id="lp_status">';
+            var statuses = [['active','有效'],['expired','已过期'],['terminated','已终止']];
+            statuses.forEach(function(s){ html += '<option value="'+s[0]+'"'+(l&&l.status===s[0]?' selected':'')+'>'+s[1]+'</option>'; });
+            html += '</select></div>';
+            html += '<div class="form-group"><label class="form-label">合同编号</label><div style="display:flex;gap:6px;"><input class="form-input" id="lp_contract" value="'+escapeHtml(contractNo)+'" style="flex:1;"><button type="button" class="btn-secondary btn-sm" title="重新生成" onclick="document.getElementById(\'lp_contract\').value=genContractNo()" style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div></div></div>';
+
+            // 授权书状态 + 署名权保留
+            html += '<div class="form-row"><div class="form-group"><label class="form-label">授权书</label><select class="form-select" id="lp_certStatus">';
+            Object.keys(CERT_STATUS).forEach(function(k){ html += '<option value="'+k+'"'+(l&&l.certStatus===k?' selected':'')+'>'+CERT_STATUS[k]+'</option>'; });
+            html += '</select></div>';
+            html += '<div class="form-group"><label class="form-label">署名权保留</label><select class="form-select" id="lp_creditRetained">';
+            html += '<option value="true"'+(l&&l.creditRetained!==false?' selected':'')+'>保留署名权</option>';
+            html += '<option value="false"'+(l&&l.creditRetained===false?' selected':'')+'>不保留</option>';
+            html += '</select></div></div>';
+
+            html += '<div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" id="lp_notes" placeholder="可选">'+escapeHtml(l?l.notes||'':'')+'</textarea></div>';
+
+            html += '</div>'; // close form-page
+            html += '</div>'; // close sub-page-content
+
+            document.getElementById('contentArea').innerHTML = html;
+            window.scrollTo({ top:0, behavior:'smooth' });
+            this.onLicenseTypeChange();
+            this.onDurationTypeChange();
+        },
+
+        onLicenseTypeChange: function() {
+            var type = document.getElementById('lp_type').value;
+            var warn = document.getElementById('buyoutWarning');
+            if (warn) warn.style.display = type === 'buyout' ? 'block' : 'none';
+            var scopeWrap = document.getElementById('exclusiveScopeWrap');
+            if (scopeWrap) scopeWrap.style.display = type === 'exclusive' ? 'block' : 'none';
+        },
+
+        onDurationTypeChange: function() {
+            var durType = document.getElementById('lp_durationType').value;
+            var endWrap = document.getElementById('endDateWrap');
+            if (endWrap) endWrap.style.display = durType === 'permanent' ? 'none' : 'block';
+        },
+
+        onProductScopeChange: function() {
+            var scope = document.getElementById('lp_scope').value;
+            var hint = document.getElementById('lp_cat_hint');
+            if (scope === 'single-channel') {
+                if (hint) hint.textContent = '单渠道产品：仅可选择1个品类';
+                // 如果已选多个，保留第一个
+                var checked = document.querySelectorAll('#lp_categories .form-checkbox-item.checked');
+                if (checked.length > 1) {
+                    for (var i = 1; i < checked.length; i++) checked[i].classList.remove('checked');
+                }
+            } else {
+                if (hint) hint.textContent = '点击选择，可多选';
+            }
+        },
+
+        onCategoryClick: function(el) {
+            var scope = document.getElementById('lp_scope').value;
+            if (scope === 'single-channel') {
+                // 单渠道：先取消所有选中，再选中当前
+                var container = document.getElementById('lp_categories');
+                container.querySelectorAll('.form-checkbox-item.checked').forEach(function(item) {
+                    item.classList.remove('checked');
+                });
+                el.classList.add('checked');
+            } else {
+                el.classList.toggle('checked');
+            }
+        },
+
+        saveLicense: function(id) {
+            var patternId = document.getElementById('lp_patternId').value;
+            if (!patternId) { showToast('请选择关联素材'); return; }
+            var licensee = document.getElementById('lp_licensee').value.trim();
+            if (!licensee) { showToast('请输入被授权方'); return; }
+
+            var productCats = [];
+            var catContainer = document.querySelector('.form-checkbox-group');
+            if (catContainer) {
+                catContainer.querySelectorAll('.form-checkbox-item.checked').forEach(function(el) {
+                    var val = el.getAttribute('data-value');
+                    if (val) productCats.push(val);
+                });
+            }
+
+            var license = {
+                id: id || genId('LIC'),
+                patternId: patternId,
+                licensee: licensee,
+                licenseType: document.getElementById('lp_type').value,
+                exclusiveScope: document.getElementById('lp_exclusiveScope') ? document.getElementById('lp_exclusiveScope').value.trim() : '',
+                productScope: document.getElementById('lp_scope').value,
+                productCategories: productCats,
+                amount: parseFloat(document.getElementById('lp_amount').value) || 0,
+                durationType: document.getElementById('lp_durationType').value,
+                startDate: document.getElementById('lp_start').value,
+                endDate: document.getElementById('lp_end').value,
+                deposit: parseFloat(document.getElementById('lp_deposit').value) || 0,
+                balance: parseFloat(document.getElementById('lp_balance').value) || 0,
+                paymentStatus: document.getElementById('lp_paymentStatus').value,
+                freeModCount: parseInt(document.getElementById('lp_freeModCount').value) || 0,
+                usedModCount: parseInt(document.getElementById('lp_usedModCount').value) || 0,
+                status: document.getElementById('lp_status').value,
+                contractRef: document.getElementById('lp_contract').value.trim(),
+                certStatus: document.getElementById('lp_certStatus').value,
+                creditRetained: document.getElementById('lp_creditRetained').value === 'true',
+                notes: document.getElementById('lp_notes').value,
+                createdAt: id ? (getLicenses().find(function(l){return l.id===id;})||{}).createdAt || new Date().toISOString() : new Date().toISOString()
+            };
+
+            var licenses = getLicenses();
+            if (id) {
+                var idx = licenses.findIndex(function(l){ return l.id === id; });
+                if (idx >= 0) licenses[idx] = license;
+            } else {
+                licenses.push(license);
+            }
+            saveData(STORAGE_KEYS.licenses, licenses);
+            showToast(id ? '授权已更新' : '授权已添加');
+            if (this.returnToPatternId) {
+                var pid = this.returnToPatternId;
+                this.returnToPatternId = null;
+                this.openPatternDetail(pid);
+            } else {
+                this.switchModule(this.previousModule || 'licenses');
+            }
+        },
+
+        deleteLicense: function(id) {
+            if (!confirm('确定删除此授权记录？')) return;
+            var licenses = getLicenses().filter(function(l){ return l.id !== id; });
+            saveData(STORAGE_KEYS.licenses, licenses);
+            showToast('授权已删除');
+            this.render();
+        },
+
+        // 快速标记已付款
+        markLicensePaid: function(id, fromPatternId) {
+            var licenses = getLicenses();
+            var l = licenses.find(function(x){ return x.id === id; });
+            if (!l) return;
+            // 如果有定金/尾款字段但未填，自动补全为总额
+            if (!l.amount) l.amount = 0;
+            if (!l.deposit) l.deposit = 0;
+            if (!l.balance) l.balance = 0;
+            // 自动将尾款补齐
+            var received = l.deposit + l.balance;
+            if (received < l.amount) {
+                l.balance = l.amount - l.deposit;
+            }
+            l.paymentStatus = 'paid';
+            saveData(STORAGE_KEYS.licenses, licenses);
+            showToast('已标记为已付清');
+            if (fromPatternId) {
+                this.openPatternDetail(fromPatternId);
+            } else {
+                this.render();
+            }
+        },
+
+        // ===== 元素管理 =====
+        addElement: function(type, catIndex) {
+            var name = prompt('输入元素名称：');
+            if (!name || !name.trim()) return;
+            var elements = getElements();
+            elements[type][catIndex].items.push(name.trim());
+            saveObject(STORAGE_KEYS.elements, elements);
+            showToast('元素已添加');
+            this.render();
+        },
+
+        removeElement: function(type, catIndex, itemIndex) {
+            if (!confirm('确定删除此元素？')) return;
+            var elements = getElements();
+            elements[type][catIndex].items.splice(itemIndex, 1);
+            saveObject(STORAGE_KEYS.elements, elements);
+            showToast('元素已删除');
+            this.render();
+        },
+
+        addCategory: function(type) {
+            var name = prompt('输入分类名称：');
+            if (!name || !name.trim()) return;
+            var elements = getElements();
+            elements[type].push({ category: name.trim(), items: [] });
+            saveObject(STORAGE_KEYS.elements, elements);
+            showToast('分类已添加');
+            this.render();
+        },
+
+        // ===== 色板管理 =====
+
+        openPaletteModal: function(id) {
+            var palettes = getPalettes();
+            var p = id ? palettes.find(function(x){ return x.id === id; }) : null;
+            var defaultColors = ['#F8C8CD','#FBE2B9','#F9D3B8','#C9E8D8','#C6E2F2'];
+            var curColors = p ? p.colors : defaultColors;
+
+            var html = '<div class="modal-header"><span class="modal-title">'+(p?'编辑色板':'新增色板')+'</span><button class="modal-close" onclick="app.closeModal()">×</button></div>';
+            html += '<div class="modal-body">';
+            html += '<div class="form-group"><label class="form-label">色板名称 <span class="req">*</span></label><input class="form-input" id="pl_name" value="'+escapeHtml(p?p.name:'')+'" placeholder="如：奶油马卡龙"></div>';
+
+            // 底色
+            var bgColor = p ? p.bgColor : '#FFF9EF';
+            html += '<div class="form-group"><label class="form-label">底色</label><div class="color-picker-row">';
+            html += '<div class="color-swatch" id="pl_bg_swatch" style="background:'+bgColor+';"><input type="color" id="pl_bg_color" value="'+bgColor+'" oninput="app._onColorPick(\'bg\', this.value)"></div>';
+            html += '<input class="form-input color-hex-input" id="pl_bg_text" value="'+bgColor+'" placeholder="#FFF9EF" oninput="app._onHexInput(\'bg\', this.value)">';
+            html += '<span class="cmyk-warn" id="pl_bg_cmyk" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="warn-tooltip"></span></span>';
+            html += '</div></div>';
+
+            // 5种色彩
+            html += '<div class="form-group"><label class="form-label">5种色彩（色名自动生成，色值改变时同步更新）</label>';
+            for (var i = 0; i < 5; i++) {
+                var cv = curColors[i] || defaultColors[i];
+                var cn = hexToColorName(cv);
+                html += '<div class="color-picker-row" style="margin-bottom:6px;">';
+                html += '<div class="color-swatch" id="pl_color_swatch_'+i+'" style="background:'+cv+';"><input type="color" id="pl_color_color_'+i+'" value="'+cv+'" oninput="app._onColorPick('+i+', this.value)"></div>';
+                html += '<input class="form-input color-hex-input" id="pl_color_text_'+i+'" value="'+cv+'" placeholder="#000000" oninput="app._onHexInput('+i+', this.value)">';
+                html += '<span class="color-name-label" id="pl_color_name_'+i+'">'+escapeHtml(cn)+'</span>';
+                html += '<span class="cmyk-warn" id="pl_color_cmyk_'+i+'" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="warn-tooltip"></span></span>';
+                html += '</div>';
+            }
+            html += '</div>';
+
+            // 线条色
+            var lineColor = p ? p.lineColor : '#444444';
+            html += '<div class="form-group"><label class="form-label">线条色</label><div class="color-picker-row">';
+            html += '<div class="color-swatch" id="pl_line_swatch" style="background:'+lineColor+';"><input type="color" id="pl_line_color" value="'+lineColor+'" oninput="app._onColorPick(\'line\', this.value)"></div>';
+            html += '<input class="form-input color-hex-input" id="pl_line_text" value="'+lineColor+'" placeholder="#444444" oninput="app._onHexInput(\'line\', this.value)">';
+            html += '<span class="cmyk-warn" id="pl_line_cmyk" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="warn-tooltip"></span></span>';
+            html += '</div></div>';
+
+            html += '</div>';
+            html += '<div class="modal-footer"><button class="btn-secondary" onclick="app.closeModal()">取消</button><button class="btn-primary" onclick="app.savePalette('+(p?"'"+p.id+"'":'null')+')">保存</button></div>';
+            document.getElementById('modal').className = 'modal';
+            document.getElementById('modal').innerHTML = html;
+            document.getElementById('modalOverlay').classList.add('active');
+
+            // 初始化 CMYK 色域警告
+            this._updateCmykWarn('bg', bgColor);
+            for (var k = 0; k < 5; k++) {
+                this._updateCmykWarn(k, curColors[k] || defaultColors[k]);
+            }
+            this._updateCmykWarn('line', lineColor);
+        },
+
+        // 原生 color picker 选色回调
+        _onColorPick: function(index, hex) {
+            if (index === 'bg') {
+                document.getElementById('pl_bg_text').value = hex;
+                document.getElementById('pl_bg_swatch').style.background = hex;
+                this._updateCmykWarn('bg', hex);
+            } else if (index === 'line') {
+                document.getElementById('pl_line_text').value = hex;
+                document.getElementById('pl_line_swatch').style.background = hex;
+                this._updateCmykWarn('line', hex);
+            } else {
+                document.getElementById('pl_color_text_'+index).value = hex;
+                var swatch = document.getElementById('pl_color_swatch_'+index);
+                if (swatch) swatch.style.background = hex;
+                this._updateColorName(index, hex);
+                this._updateCmykWarn(index, hex);
+            }
+        },
+
+        // hex 文本框手动输入回调
+        _onHexInput: function(index, val) {
+            val = val.trim();
+            if (!/^#[0-9a-fA-F]{6}$/.test(val)) return;
+            if (index === 'bg') {
+                document.getElementById('pl_bg_color').value = val;
+                document.getElementById('pl_bg_swatch').style.background = val;
+                this._updateCmykWarn('bg', val);
+            } else if (index === 'line') {
+                document.getElementById('pl_line_color').value = val;
+                document.getElementById('pl_line_swatch').style.background = val;
+                this._updateCmykWarn('line', val);
+            } else {
+                var swatch = document.getElementById('pl_color_swatch_'+index);
+                if (swatch) swatch.style.background = val;
+                var colorInput = document.getElementById('pl_color_color_'+index);
+                if (colorInput) colorInput.value = val;
+                this._updateColorName(index, val);
+                this._updateCmykWarn(index, val);
+            }
+        },
+
+        _updateColorName: function(i, hex) {
+            var nameEl = document.getElementById('pl_color_name_'+i);
+            if (nameEl) nameEl.textContent = hexToColorName(hex);
+        },
+
+        // 更新 CMYK 色域警告
+        _updateCmykWarn: function(index, hex) {
+            var warnId = (index === 'bg' || index === 'line')
+                ? 'pl_'+index+'_cmyk'
+                : 'pl_color_cmyk_'+index;
+            var warnEl = document.getElementById(warnId);
+            if (!warnEl) return;
+            if (isOutOfCmykGamut(hex)) {
+                var safeHex = getCmykSafeHex(hex);
+                var tooltip = warnEl.querySelector('.warn-tooltip');
+                if (tooltip) tooltip.textContent = '此色印刷可能偏色，建议使用 '+safeHex;
+                warnEl.style.display = 'inline-flex';
+            } else {
+                warnEl.style.display = 'none';
+            }
+        },
+
+        closeModal: function() {
+            document.getElementById('modal').className = 'modal hidden';
+            document.getElementById('modalOverlay').classList.remove('active');
+        },
+
+        savePalette: function(id) {
+            var name = document.getElementById('pl_name').value.trim();
+            if (!name) { showToast('请输入色板名称'); return; }
+            var colors = [];
+            for (var i = 0; i < 5; i++) {
+                var v = document.getElementById('pl_color_text_'+i).value.trim();
+                if (v) colors.push(v);
+            }
+            if (colors.length !== 5) { showToast('请填写5个色值'); return; }
+            var palette = {
+                id: id || genId('p'),
+                name: name,
+                bgColor: document.getElementById('pl_bg_text').value.trim(),
+                colors: colors,
+                lineColor: document.getElementById('pl_line_text').value.trim(),
+                desc: paletteAutoDesc(colors)
+            };
+            var palettes = getPalettes();
+            if (id) {
+                var idx = palettes.findIndex(function(p){ return p.id === id; });
+                if (idx >= 0) palettes[idx] = palette;
+            } else {
+                palettes.push(palette);
+            }
+            saveData(STORAGE_KEYS.palettes, palettes);
+            showToast(id ? '色板已更新' : '色板已添加');
+            this.closeModal();
+            this.render();
+        },
+
+        deletePalette: function(id) {
+            if (!confirm('确定删除此色板？')) return;
+            var palettes = getPalettes().filter(function(p){ return p.id !== id; });
+            saveData(STORAGE_KEYS.palettes, palettes);
+            showToast('色板已删除');
+            this.render();
+        },
+
+        // ===== 数据管理 =====
+        exportData: function() {
+            var data = {
+                patterns: getPatterns(),
+                licenses: getLicenses(),
+                elements: getElements(),
+                palettes: getPalettes(),
+                exportDate: new Date().toISOString(),
+                version: DATA_VERSION
+            };
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'seamless-pattern-data-' + formatDate(new Date()) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('数据已导出');
+        },
+
+        importData: function() { document.getElementById('importFileInput').click(); },
+
+        handleImport: function(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var data = JSON.parse(e.target.result);
+                    if (!confirm('导入将覆盖现有数据，确定继续？')) return;
+                    if (data.patterns) saveData(STORAGE_KEYS.patterns, data.patterns);
+                    if (data.licenses) saveData(STORAGE_KEYS.licenses, data.licenses);
+                    if (data.elements) saveObject(STORAGE_KEYS.elements, data.elements);
+                    if (data.palettes) saveData(STORAGE_KEYS.palettes, data.palettes);
+                    showToast('数据已导入');
+                    app.render();
+                } catch(err) {
+                    showToast('导入失败：文件格式错误');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        },
+
+        loadSampleData: function() {
+            if (!confirm('加载示例数据将覆盖现有素材和授权记录（元素库和色板不受影响），确定？')) return;
+            var samplePatterns = [
+                {
+                    id: 'PAT-sample1', name: '小熊草莓云朵', prompt: '无缝四方连续纺织印花图案，治愈绘本卡通平涂风格，软萌坐姿小熊、草莓、简约云朵、爱心，元素散点错位散落排布，疏密均衡，预留充足留白。',
+                    elements: { subjects: ['软萌坐姿小熊'], decorations: ['草莓','简约云朵','爱心'] },
+                    paletteId: 'p1', paletteName: '奶油马卡龙', layout: LAYOUTS[0], style: STYLES[0],
+                    platform: 'doubao', generatedDate: '2026-07-28', thumbnail: '', fingerprint: '',
+                    notes: '首批测试图案', createdAt: '2026-07-28T10:00:00Z'
+                },
+                {
+                    id: 'PAT-sample2', name: '兔子郁金香星星', prompt: '无缝四方连续纺织印花图案，治愈绘本卡通平涂风格，坐立垂耳白兔、郁金香、四角闪光星、小圆波点，简约稀疏排布，大面积留白，清新柔和。',
+                    elements: { subjects: ['坐立垂耳白兔'], decorations: ['郁金香','四角闪光星','小圆波点'] },
+                    paletteId: 'p3', paletteName: '森林清新', layout: LAYOUTS[1], style: STYLES[0],
+                    platform: 'jimeng', generatedDate: '2026-07-30', thumbnail: '', fingerprint: '',
+                    notes: '森林系配色测试', createdAt: '2026-07-30T14:00:00Z'
+                }
+            ];
+            var sampleLicenses = [
+                {
+                    id: 'LIC-sample1', patternId: 'PAT-sample1', licensee: '某某家纺有限公司',
+                    licenseType: 'non-exclusive', productScope: 'multi-channel',
+                    productCategories: ['睡衣','床品'], amount: 3000,
+                    durationType: 'fixed', startDate: '2026-08-01', endDate: '2027-07-31',
+                    deposit: 1500, balance: 1500, paymentStatus: 'paid',
+                    freeModCount: 2, usedModCount: 1,
+                    status: 'active', contractRef: 'HT-2026-001',
+                    certStatus: 'issued', creditRetained: true,
+                    notes: '非独家，可继续授权其他品类', createdAt: '2026-08-01T10:00:00Z'
+                },
+                {
+                    id: 'LIC-sample2', patternId: 'PAT-sample2', licensee: '某服装品牌',
+                    licenseType: 'exclusive', exclusiveScope: '仅童装品类独家，其他品类可继续授权',
+                    productScope: 'single-channel', productCategories: ['童装'], amount: 5000,
+                    durationType: 'permanent', startDate: '2026-07-15', endDate: '',
+                    deposit: 2500, balance: 0, paymentStatus: 'partial',
+                    freeModCount: 3, usedModCount: 3,
+                    status: 'active', contractRef: 'HT-2026-002',
+                    certStatus: 'not-issued', creditRetained: true,
+                    notes: '永久授权，尾款待定稿后支付', createdAt: '2026-07-15T09:00:00Z'
+                }
+            ];
+            saveData(STORAGE_KEYS.patterns, samplePatterns);
+            saveData(STORAGE_KEYS.licenses, sampleLicenses);
+            showToast('示例数据已加载');
+            this.render();
+        },
+
+        clearAllData: function() {
+            if (!confirm('确定清空全部数据？此操作不可恢复！')) return;
+            if (!confirm('再次确认：所有素材、授权、元素库、色板将被清空！')) return;
+            localStorage.removeItem(STORAGE_KEYS.patterns);
+            localStorage.removeItem(STORAGE_KEYS.licenses);
+            localStorage.removeItem(STORAGE_KEYS.elements);
+            localStorage.removeItem(STORAGE_KEYS.palettes);
+            localStorage.removeItem(STORAGE_KEYS.version);
+            localStorage.removeItem(STORAGE_KEYS.genState);
+            this.genState = { subjects:[], outfits:[], decorations:[], paletteId:'p1', layoutIndex:0, styleIndex:0, smartHistory:[], currentTheme:null, elementTab:'subjects' };
+            initData();
+            showToast('全部数据已清空');
+            this.render();
+        },
+
+        // ===== Modal =====
+        closeModal: function() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        },
+        closeModalOnOverlay: function(e) {
+            if (e.target === e.currentTarget) this.closeModal();
+        }
+    };
+
+    window.toggleSidebar = function() { app.toggleSidebar(); };
+    app.init();
+    </script>
+</body>
+</html>

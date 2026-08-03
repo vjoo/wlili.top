@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>设计规范 - W.-Studio Tools</title>
+<link rel="stylesheet" href="common.css">
+<script src="nav.js"></script>
+<style>
+/* ===== Layout ===== */
+.spec-layout { display: flex; min-height: 100vh; }
+.spec-sidebar {
+  width: 220px; flex-shrink: 0;
+  position: sticky; top: 48px;
+  height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-right: 1px solid var(--border-light);
+  background: var(--bg-elevated);
+  padding: 16px 0;
+}
+.spec-sidebar::-webkit-scrollbar { width: 4px; }
+.spec-sidebar::-webkit-scrollbar-thumb { background: var(--fill-gray-light); border-radius: 4px; }
+.spec-nav { display: flex; flex-direction: column; gap: 1px; padding: 0 10px; }
+.spec-nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  font-size: 13px; font-weight: 400;
+  color: var(--ink-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.spec-nav-item:hover { background: var(--bg); color: var(--ink); }
+.spec-nav-item.active { background: var(--fill-black); color: var(--fill-white); font-weight: 500; }
+.spec-nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.7; }
+.spec-nav-item.active svg { opacity: 1; }
+.spec-nav-section {
+  font-size: 10px; font-weight: 600;
+  color: var(--ink-quaternary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 12px 4px;
+}
+
+/* ===== Main ===== */
+.spec-main { flex: 1; min-width: 0; }
+.spec-hero {
+  padding: 16px 28px 12px;
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-white);
+  position: sticky; top: 48px; z-index: var(--z-sticky);
+}
+.spec-hero h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.spec-hero p { font-size: 13px; color: var(--ink-tertiary); margin: 0; }
+.spec-search {
+  position: relative; width: 240px;
+}
+.spec-search svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: var(--ink-quaternary); pointer-events: none;
+}
+.spec-search input {
+  width: 100%; height: 34px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  padding: 0 14px 0 36px;
+  font-size: 13px; font-family: inherit;
+  background: var(--bg-white); color: var(--ink);
+  outline: none; transition: border-color 0.2s;
+}
+.spec-search input:focus { border-color: var(--link); }
+
+/* ===== Content ===== */
+.spec-content { padding: 24px 28px 80px; max-width: 1100px; }
+.spec-section { margin-bottom: 56px; scroll-margin-top: 100px; }
+.spec-section.hidden { display: none; }
+.spec-section-body {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+.spec-section-body > *:last-child { margin-bottom: 0; }
+.spec-section-title {
+  font-size: 17px; font-weight: 600;
+  color: var(--ink); margin: 0 0 4px;
+  letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 8px;
+}
+.spec-section-title .count {
+  font-size: 12px; font-weight: 400;
+  color: var(--ink-quaternary);
+  background: var(--bg);
+  padding: 2px 8px; border-radius: var(--radius-pill);
+}
+.spec-section-desc {
+  font-size: 14px; color: var(--ink-tertiary);
+  margin: 0 0 20px; line-height: 1.4;
+}
+
+/* ===== KPI Cards ===== */
+.kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+.kpi-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.kpi-val { font-size: 24px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.kpi-label { font-size: 13px; color: var(--ink-tertiary); font-weight: 500; }
+
+/* ===== Spec Card ===== */
+.spec-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 14px;
+  transition: border-color 0.2s;
+}
+.spec-card:hover { border-color: var(--border); }
+.spec-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-elevated);
+}
+.spec-card-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.spec-card-source {
+  font-size: 12px; color: var(--ink-tertiary);
+  font-family: ui-monospace, 'SF Mono', monospace;
+  display: flex; align-items: center; gap: 4px;
+}
+.spec-card-source .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--link); flex-shrink: 0; }
+.spec-card-body { padding: 16px; }
+.spec-card-preview {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; flex-wrap: wrap;
+  padding: 20px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  min-height: 60px;
+}
+.spec-props {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 4px;
+  font-size: 13px;
+}
+.spec-prop {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 4px 0;
+}
+.spec-prop-key { color: var(--ink-tertiary); font-family: ui-monospace, 'SF Mono', monospace; font-size: 13px; }
+.spec-prop-val { color: var(--ink); font-family: ui-monospace, 'SF Mono', monospace; font-size: 13px; }
+
+/* ===== Color Swatch ===== */
+.color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 10px; }
+.color-swatch {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.color-swatch:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.color-swatch-chip { height: 56px; width: 100%; }
+.color-swatch-info { padding: 10px 12px; }
+.color-swatch-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+.color-swatch-val { font-size: 13px; color: var(--ink-tertiary); font-family: ui-monospace, monospace; }
+.color-swatch-var { font-size: 12px; color: var(--ink-tertiary); font-family: ui-monospace, monospace; }
+
+/* ===== Typography ===== */
+.type-row {
+  display: flex; align-items: baseline; gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.type-row:last-child { border-bottom: none; }
+.type-sample { flex: 1; min-width: 0; color: var(--ink); }
+.type-meta { font-size: 13px; color: var(--ink-tertiary); font-family: ui-monospace, monospace; white-space: nowrap; text-align: right; }
+
+/* ===== Radius Showcase ===== */
+.radius-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+.radius-item { text-align: center; display: flex; flex-direction: column; align-items: center; }
+.radius-box {
+  width: 72px; height: 72px;
+  background: var(--fill-black);
+  margin-bottom: 8px;
+}
+.radius-item .name { font-size: 14px; font-weight: 500; color: var(--ink); }
+.radius-item .val { font-size: 13px; color: var(--ink-tertiary); font-family: ui-monospace, monospace; }
+
+/* ===== Z-index Bar ===== */
+.zbar-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border-light); }
+.zbar-row:last-child { border-bottom: none; }
+.zbar-label { width: 120px; font-size: 14px; font-weight: 500; color: var(--ink); }
+.zbar-bar { height: 24px; background: var(--link); border-radius: 4px; display: flex; align-items: center; padding-left: 8px; color: #fff; font-size: 13px; font-weight: 600; font-family: ui-monospace, monospace; }
+
+/* ===== Code Block ===== */
+.code-block {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-x: auto;
+  margin-top: 10px;
+  position: relative;
+}
+.code-block .copy-btn {
+  position: absolute; top: 6px; right: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+  color: #cdd6f4;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.code-block .copy-btn:hover { background: rgba(255,255,255,0.12); }
+.code-block .tok-key { color: #f38ba8; }
+.code-block .tok-val { color: #a6e3a1; }
+.code-block .tok-comment { color: #6c7086; }
+
+/* ===== Breakpoint ===== */
+.bp-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.bp-row:last-child { border-bottom: none; }
+.bp-width { font-size: 14px; font-weight: 600; color: var(--link); font-family: ui-monospace, monospace; width: 80px; }
+.bp-label { font-size: 14px; font-weight: 500; color: var(--ink); width: 100px; }
+.bp-desc { font-size: 14px; color: var(--ink-tertiary); flex: 1; }
+
+/* ===== Motion ===== */
+.motion-row { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.motion-row:last-child { border-bottom: none; }
+.motion-name { font-size: 14px; font-weight: 500; color: var(--ink); width: 180px; }
+.motion-preview { width: 48px; height: 48px; border-radius: var(--radius-sm); background: var(--fill-black); }
+.motion-meta { font-size: 13px; color: var(--ink-tertiary); font-family: ui-monospace, monospace; }
+
+/* ===== Page Badge ===== */
+.page-badge {
+  display: inline-block;
+  font-size: 12px; font-weight: 500;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--bg); color: var(--ink-tertiary);
+  margin-right: 4px;
+}
+
+/* ===== Toast ===== */
+.copy-toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--fill-black); color: var(--fill-white);
+  padding: 10px 20px; border-radius: var(--radius-pill);
+  font-size: 13px; font-weight: 400;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  opacity: 0; transition: all 0.3s cubic-bezier(0.22,0.61,0.36,1);
+  z-index: var(--z-toast); pointer-events: none;
+}
+.copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== Responsive ===== */
+@media (max-width: 860px) {
+  .spec-sidebar {
+    position: fixed; left: 0; top: 48px;
+    width: 100%; height: auto;
+    border-right: none; border-bottom: 1px solid var(--border-light);
+    padding: 8px 0; z-index: var(--z-sticky);
+    overflow-x: auto; overflow-y: hidden;
+  }
+  .spec-nav { flex-direction: row; padding: 0 16px; gap: 4px; }
+  .spec-nav-section { display: none; }
+  .spec-nav-item { padding: 6px 12px; }
+  .spec-main { padding-top: 0; }
+  .spec-content { padding: 16px 16px 60px; }
+  .spec-hero { padding: 12px 16px 10px; }
+  .spec-search { width: 160px; }
+  .kpi-row { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 480px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .spec-content { padding: 12px 12px 48px; }
+  .spec-props { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="spec-layout">
+  <!-- Sidebar -->
+  <aside class="spec-sidebar" id="specSidebar">
+    <nav class="spec-nav" id="specNav"></nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="spec-main">
+    <header class="spec-hero">
+      <div style="display:flex;align-items:baseline;gap:10px;flex-shrink:0;">
+        <h1>设计规范</h1>
+        <p>可视化查看所有 Design Token 与组件</p>
+      </div>
+      <div class="spec-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="搜索组件 / 变量 / 属性…">
+      </div>
+    </header>
+
+    <div class="spec-content" id="specContent"></div>
+  </main>
+</div>
+
+<div class="copy-toast" id="copyToast">已复制到剪贴板</div>
+
+<script>
+/* ============================================
+   设计规范数据
+   ============================================ */
+var NAV = [
+  { section: '基础', items: [
+    { id: 'overview', label: '概览', icon: 'grid' },
+    { id: 'colors', label: '颜色系统', icon: 'palette' },
+    { id: 'typography', label: '字体排版', icon: 'type' },
+    { id: 'radius', label: '圆角系统', icon: 'square' },
+    { id: 'zindex', label: '层级系统', icon: 'layers' },
+  ]},
+  { section: '组件', items: [
+    { id: 'buttons', label: '按钮', icon: 'hand-pointer' },
+    { id: 'forms', label: '表单控件', icon: 'edit' },
+    { id: 'layout', label: '布局组件', icon: 'columns' },
+    { id: 'navigation', label: '导航组件', icon: 'menu' },
+    { id: 'feedback', label: '反馈组件', icon: 'bell' },
+  ]},
+  { section: '规范', items: [
+    { id: 'motion', label: '动效规范', icon: 'zap' },
+    { id: 'responsive', label: '响应式断点', icon: 'smartphone' },
+    { id: 'page-components', label: '页面专属组件', icon: 'file' },
+  ]},
+];
+
+var ICONS = {
+  grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+  palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg>',
+  type: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>',
+  square: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>',
+  layers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
+  'hand-pointer': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  columns: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>',
+  menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+  zap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  smartphone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+};
+
+/* 颜色数据 */
+var COLORS = {
+  '墨色（文字）': [
+    { name: 'Ink', val: '#2B3041', var: '--ink', desc: '主文字色' },
+    { name: 'Ink Secondary', val: '#424245', var: '--ink-secondary', desc: '次级文字' },
+    { name: 'Ink Tertiary', val: '#6e6e73', var: '--ink-tertiary', desc: '三级文字' },
+    { name: 'Ink Quaternary', val: '#86868b', var: '--ink-quaternary', desc: '占位符/禁用' },
+  ],
+  '背景': [
+    { name: 'BG', val: '#f5f5f7', var: '--bg', desc: '页面浅灰背景' },
+    { name: 'BG White', val: '#ffffff', var: '--bg-white', desc: '白色卡片背景' },
+    { name: 'BG Elevated', val: '#fbfbfd', desc: '抬升层背景' },
+  ],
+  '边框': [
+    { name: 'Border', val: '#d2d2d7', var: '--border', desc: '标准边框' },
+    { name: 'Border Light', val: '#e8e8ed', var: '--border-light', desc: '浅色边框' },
+  ],
+  '链接/品牌': [
+    { name: 'Link', val: '#6366f1', var: '--link', desc: '靛蓝主色' },
+    { name: 'Link Hover', val: '#0077ed', var: '--link-hover', desc: '链接悬停' },
+  ],
+  '填充': [
+    { name: 'Fill Black', val: '#2B3041', var: '--fill-black', desc: '深色填充' },
+    { name: 'Fill Gray', val: '#86868b', var: '--fill-gray', desc: '灰色填充' },
+    { name: 'Fill Gray Light', val: '#d2d2d7', var: '--fill-gray-light', desc: '浅灰填充' },
+    { name: 'Fill White', val: '#ffffff', var: '--fill-white', desc: '白色填充' },
+  ],
+  '状态色': [
+    { name: 'Green', val: '#34c759', var: '--green', desc: '成功/通过' },
+    { name: 'Red', val: '#ff3b30', var: '--red', desc: '危险/删除' },
+    { name: 'Orange', val: '#ff9500', var: '--orange', desc: '警告' },
+  ],
+  '页面专属色': [
+    { name: '隐私提示橙', val: '#B45F06', desc: 'nav-privacy 文字色', src: 'common.css' },
+    { name: '隐私提示底', val: '#FFF5E5', desc: 'nav-privacy 背景色', src: 'common.css' },
+    { name: 'focus 蓝光晕', val: 'rgba(0,102,204,0.12)', desc: '输入框聚焦光晕', src: 'common.css' },
+  ],
+};
+
+/* 字体数据 */
+var TYPOGRAPHY = [
+  { name: '页面标题 H1', sample: 'Studio Tools', font: 'SF Pro Display', size: '48px', weight: '600', lh: '1.08', ls: '-0.015em', src: 'common.css .page-hero h1' },
+  { name: '标题副文本', sample: '简洁高效的在线工具集合', font: '系统字体', size: '21px', weight: '400', lh: '1.38', ls: '0.011em', src: 'common.css .page-hero p' },
+  { name: '卡片大数字', sample: '1,234', font: '系统字体', size: '26px', weight: '600', lh: '1.3', ls: '—', src: 'common.css .stat-val' },
+  { name: '正文（导航）', sample: '导航链接文字', font: '系统字体', size: '14px', weight: '400', lh: '—', ls: '-0.01em', src: 'common.css .nav-link' },
+  { name: '正文（按钮）', sample: '主要按钮', font: '系统字体', size: '17px', weight: '400', lh: '1.18', ls: '-0.022em', src: 'common.css .btn-filled' },
+  { name: '小按钮', sample: '小按钮', font: '系统字体', size: '14px', weight: '400', lh: '—', ls: '-0.016em', src: 'common.css .btn-sm' },
+  { name: '输入框文字', sample: '输入内容', font: 'inherit', size: '14px', weight: '—', lh: '—', ls: '—', src: 'common.css .text-input' },
+  { name: '标签文字', sample: '统计标签', font: '系统字体', size: '12px', weight: '500', lh: '—', ls: '—', src: 'common.css .stat-label' },
+  { name: '分段控件', sample: '选项一', font: 'inherit', size: '13px', weight: '400', lh: '—', ls: '—', src: 'common.css .segment-btn' },
+  { name: 'Toast', sample: '操作成功', font: '系统字体', size: '15px', weight: '400', lh: '—', ls: '-0.01em', src: 'common.css .toast' },
+  { name: '拖放标题', sample: '拖放文件到此处', font: '系统字体', size: '21px', weight: '600', lh: '—', ls: '0.011em', src: 'common.css .drop-title' },
+];
+
+/* 圆角 */
+var RADIUS = [
+  { name: 'radius-sm', val: '8px', desc: '图标按钮、小元素', src: 'common.css' },
+  { name: 'radius-md', val: '11px', desc: '输入框、卡片、统计卡', src: 'common.css' },
+  { name: 'radius-lg', val: '18px', desc: 'Toast、拖放区域', src: 'common.css' },
+  { name: 'radius-pill', val: '980px', desc: '按钮、分段控件（胶囊形）', src: 'common.css' },
+];
+
+/* Z-index */
+var ZINDEX = [
+  { name: 'z-dropdown', val: 100, desc: '下拉菜单', width: 40 },
+  { name: 'z-sticky', val: 500, desc: '粘性定位元素', width: 100 },
+  { name: 'z-nav', val: 1000, desc: '全局导航栏', width: 160 },
+  { name: 'z-sidebar', val: 1000, desc: '侧边栏', width: 160 },
+  { name: 'z-modal', val: 2000, desc: '模态弹窗', width: 220 },
+  { name: 'z-toast', val: 3000, desc: 'Toast 提示（最高）', width: 280 },
+];
+
+/* 按钮组件 */
+var BUTTONS = [
+  {
+    name: '.btn-filled（实心按钮）', src: 'common.css L234-255',
+    preview: '<button class="btn-filled">主要操作</button>',
+    props: { 'background':'var(--fill-black) #2B3041','color':'var(--fill-white) #fff','padding':'8px 20px','font-size':'17px','font-weight':'400','border':'1.5px solid var(--fill-black)','border-radius':'var(--radius-pill) 980px','transition':'opacity 0.3s',':hover':'opacity: 0.85',':active':'transform: scale(0.98)',':disabled':'opacity: 0.35' }
+  },
+  {
+    name: '.btn-outline（描边按钮）', src: 'common.css L257-278',
+    preview: '<button class="btn-outline">次要操作</button>',
+    props: { 'background':'transparent','color':'var(--ink) #2B3041','padding':'8px 20px','font-size':'17px','border':'1.5px solid var(--border)','border-radius':'var(--radius-pill)','transition':'all 0.3s',':hover':'border-color: var(--ink)',':active':'transform: scale(0.98)' }
+  },
+  {
+    name: '.btn-link（链接按钮）', src: 'common.css L280-291',
+    preview: '<button class="btn-link">文字链接</button>',
+    props: { 'color':'var(--link) #6366f1','font-size':'17px','background':'none','border':'none','padding':'0','transition':'color 0.2s',':hover':'color: var(--link-hover); text-decoration: underline' }
+  },
+  {
+    name: '.btn-danger-outline（危险按钮）', src: 'common.css L295-316',
+    preview: '<button class="btn-danger-outline">删除</button>',
+    props: { 'color':'var(--red) #ff3b30','border':'1.5px solid rgba(255,59,48,0.3)','border-radius':'var(--radius-pill)',':hover':'border-color: var(--red); background: rgba(255,59,48,0.04)' }
+  },
+  {
+    name: '.btn-sm（小尺寸修饰）', src: 'common.css L293',
+    preview: '<button class="btn-filled btn-sm">小按钮</button> <button class="btn-outline btn-sm">小按钮</button>',
+    props: { 'font-size':'14px','padding':'6px 14px','letter-spacing':'-0.016em' }
+  },
+  {
+    name: '.icon-btn（图标按钮）', src: 'common.css L319-335',
+    preview: '<button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>',
+    props: { 'width':'34px','height':'34px','border':'1px solid var(--border-light)','border-radius':'var(--radius-sm) 8px','background':'var(--bg-white)','color':'var(--ink-secondary)','svg':'16×16px',':hover':'border-color: var(--ink); color: var(--ink)',':active':'transform: scale(0.95)' }
+  },
+];
+
+/* 表单控件 */
+var FORMS = [
+  {
+    name: '.text-input（文本输入框）', src: 'common.css L378-392',
+    preview: '<input class="text-input" placeholder="输入…" style="width:140px;">',
+    props: { 'background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'var(--radius-md) 11px','padding':'6px 14px','font-size':'14px','width':'80px','height':'36px',':focus':'border-color: var(--link); box-shadow: 0 0 0 3px rgba(0,102,204,0.12)','::placeholder':'color: var(--ink-quaternary)' }
+  },
+  {
+    name: '.segmented-control（分段控件）', src: 'common.css L338-375',
+    preview: '<div class="segmented-control" style="width:280px;"><button class="segment-btn active">选项一</button><button class="segment-btn">选项二</button><button class="segment-btn">选项三</button></div>',
+    props: { 'display':'flex','background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'var(--radius-pill)','padding':'2px','gap':'2px','height':'36px','.active':'background: var(--fill-black); color: var(--fill-white)' }
+  },
+];
+
+/* 布局组件 */
+var LAYOUT = [
+  {
+    name: '.page-hero（页面标题区）', src: 'common.css L199-223',
+    preview: '<div style="text-align:center;padding:24px;background:var(--bg-white);border-radius:11px;width:100%;"><div style="font-size:28px;font-weight:600;color:var(--ink);margin-bottom:4px;">Studio Tools</div><div style="font-size:14px;color:var(--ink-tertiary);">简洁高效的在线工具集合</div></div>',
+    props: { 'padding':'48px 22px 32px','text-align':'center','h1 font-size':'48px → 40px → 32px','h1 font-weight':'600','p font-size':'21px → 17px','p max-width':'600px','background':'var(--bg-white)' }
+  },
+  {
+    name: '.section / .section-inner（内容区）', src: 'common.css L225-231',
+    preview: '<div style="padding:16px;background:var(--bg);border-radius:8px;width:100%;"><div style="max-width:400px;margin:0 auto;padding:0 22px;background:var(--bg-white);border-radius:4px;padding:12px;text-align:center;font-size:12px;color:var(--ink-tertiary);">max-width: 980px 居中</div></div>',
+    props: { '.section padding':'32px 0 64px','.section-inner max-width':'980px','.section-inner margin':'0 auto','.section-inner padding':'0 22px','移动端 padding':'0 16px' }
+  },
+  {
+    name: '.stats-row / .stat-card（统计行）', src: 'common.css L453-487',
+    preview: '<div class="stats-row" style="margin:0;width:100%;"><div class="stat-card"><div class="stat-label">总数</div><div class="stat-val">42</div></div><div class="stat-card"><div class="stat-label">今日</div><div class="stat-val accent">7</div></div></div>',
+    props: { 'grid-template-columns':'repeat(4, 1fr) → 2列','gap':'12px → 8px','.stat-card padding':'16px → 12px','.stat-val font-size':'26px → 22px','border':'1px solid var(--border-light)','border-radius':'var(--radius-md) 11px' }
+  },
+  {
+    name: '.actions-row（操作按钮行）', src: 'common.css L490-496',
+    preview: '<div class="actions-row"><button class="btn-filled btn-sm">操作一</button><button class="btn-outline btn-sm">操作二</button></div>',
+    props: { 'display':'flex','gap':'12px → 8px','justify-content':'center','flex-wrap':'wrap' }
+  },
+];
+
+/* 导航组件 */
+var NAV_COMPS = [
+  {
+    name: '.global-nav（全局导航栏）', src: 'common.css L53-61',
+    preview: '<div style="display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:48px;background:var(--bg);border-bottom:1px solid var(--border-light);border-radius:6px;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:var(--fill-black);border-radius:5px;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;">W.</div><span style="font-size:14px;font-weight:600;">Studio Tools</span></div><div style="display:flex;gap:16px;font-size:12px;color:var(--ink-tertiary);">Studio Tools ▾</div></div>',
+    props: { 'height':'48px','background':'var(--bg) #f5f5f7','position':'sticky; top: 0','z-index':'var(--z-nav) 1000','border-bottom':'1px solid var(--border-light)','padding':'0 22px → 0 16px' }
+  },
+  {
+    name: '.nav-dropdown-menu（下拉菜单）', src: 'common.css L134-157',
+    preview: '<div style="position:relative;"><div style="background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:6px;min-width:150px;box-shadow:0 8px 30px rgba(0,0,0,0.12);"><div style="padding:8px 16px;font-size:13px;border-radius:8px;background:var(--bg);">图片压缩</div><div style="padding:8px 16px;font-size:13px;">配图排版</div></div></div>',
+    props: { 'position':'absolute; top: 100%; right: 0','background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'12px','padding':'6px','min-width':'150px','box-shadow':'0 8px 30px rgba(0,0,0,0.12)' }
+  },
+];
+
+/* 反馈组件 */
+var FEEDBACK = [
+  {
+    name: '.toast（轻提示）', src: 'common.css L433-451',
+    preview: '<div style="background:var(--fill-black);color:#fff;border-radius:18px;padding:14px 24px;font-size:14px;">操作成功</div>',
+    props: { 'position':'fixed; 居中','background':'var(--fill-black)','color':'var(--fill-white)','border-radius':'var(--radius-lg) 18px','padding':'16px 28px','font-size':'15px','box-shadow':'0 8px 40px rgba(0,0,0,0.2)','transition':'all 0.35s cubic-bezier(0.22,0.61,0.36,1)','z-index':'var(--z-toast) 3000' }
+  },
+  {
+    name: '.dropzone（拖放区域）', src: 'common.css L394-430',
+    preview: '<div style="border:2px dashed var(--border);border-radius:18px;padding:24px;text-align:center;background:var(--bg-white);"><div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:4px;">拖放文件到此处</div><div style="font-size:12px;color:var(--ink-tertiary);">或点击选择文件</div></div>',
+    props: { 'border':'2px dashed var(--border)','border-radius':'var(--radius-lg) 18px','padding':'90px 32px 120px → 36px 16px',':hover':'border-color: var(--link); background: var(--bg)','.drop-title font-size':'21px → 17px','.drop-desc font-size':'14px → 12px' }
+  },
+];
+
+/* 动效规范 */
+var MOTION = [
+  { name: '统一缓动曲线', val: 'cubic-bezier(0.22, 0.61, 0.36, 1)', desc: 'Toast、卡片过渡、弹窗动画', src: 'common.css / 多页', preview: 'ease' },
+  { name: '按钮按压反馈', val: 'transform: scale(0.98)', desc: '所有按钮 :active 状态', src: 'common.css', preview: 'press' },
+  { name: '图标按钮按压', val: 'transform: scale(0.95)', desc: 'icon-btn :active', src: 'common.css', preview: 'press' },
+  { name: '分段控件按压', val: 'transform: scale(0.97)', desc: 'segment-btn :active', src: 'common.css', preview: 'press' },
+  { name: '标准过渡时长', val: '0.2s ~ 0.3s', desc: 'hover/active/focus 过渡', src: 'common.css', preview: 'fade' },
+  { name: 'Toast 弹出', val: '0.35s', desc: 'scale(0.95)→scale(1) + opacity', src: 'common.css .toast', preview: 'toast' },
+  { name: 'cardFadeIn', val: '0.4s ease', desc: '卡片淡入上移动画', src: 'index.html / bookmark-manager', preview: 'fadeUp' },
+  { name: 'shimmer（骨架屏）', val: '1.5s infinite', desc: '加载骨架屏闪烁', src: 'bookmark-manager.html', preview: 'shimmer' },
+  { name: 'pulse（脉冲）', val: '1.2s ease-in-out', desc: '音标播放/状态点呼吸', src: 'phonetic-chart / image-upscale', preview: 'pulse' },
+  { name: 'spin（旋转）', val: '0.8s linear infinite', desc: '加载旋转动画', src: 'image-upscale.html', preview: 'spin' },
+  { name: 'modalSlideUp', val: '弹窗上滑', desc: '模态弹窗入场', src: 'bookmark-manager.html', preview: 'slideUp' },
+  { name: 'fadeUp 错峰入场', val: '0.6s + delay', desc: 'IP形象生成器入场动画', src: 'ip-mascot.html', preview: 'fadeUp' },
+];
+
+/* 响应式断点 */
+var BREAKPOINTS = [
+  { width: '1068px', label: '平板', desc: 'page-hero h1 从 48px 缩至 40px；工具网格 4列→3列', src: 'common.css / index.html' },
+  { width: '860px', label: '小屏', desc: '工具网格 3列→2列；双栏布局开始堆叠', src: 'index.html / 多页' },
+  { width: '734px', label: '手机（主断点）', desc: 'hero padding/字号缩小；section padding 缩小；stats 4列→2列；导航 padding 缩小；dropzone padding 缩小；工具网格→1列', src: 'common.css' },
+  { width: '600px', label: '小手机', desc: '导航品牌文字隐藏；隐私提示隐藏；侧边栏页面显示菜单按钮', src: 'common.css' },
+  { width: '480px', label: '超小屏', desc: '导航链接隐藏；按钮字号 17px→14px；分段控件字号 13px→11px', src: 'common.css' },
+];
+
+/* 页面专属组件 */
+var PAGE_COMPONENTS = [
+  { page: 'bookmark-manager.html', color: 'blue', items: [
+    { name: '弹窗体系', classes: '.modal-overlay / .modal-box / .modal-header / .modal-body / .modal-footer', desc: '完整模态弹窗，含遮罩、关闭按钮、表单区域' },
+    { name: '标签输入芯片', classes: '.modal-tags-input / .modal-tag-chip', desc: '可添加/删除的标签输入组件' },
+    { name: '书签卡片', classes: '.bm-card / .bm-cover / .bm-info', desc: '含截图封面、Favicon占位、标签的卡片' },
+    { name: 'shimmer 骨架屏', classes: '.bm-cover.loading::after', desc: '加载中的闪烁动画占位' },
+    { name: '浮动分类栏', classes: '.floating-cat-bar', desc: '滚动时悬浮的类型筛选栏' },
+  ]},
+  { page: 'filament-manager.html', color: 'purple', items: [
+    { name: '侧边栏应用壳', classes: '.sidebar / .sidebar-header / .sidebar-footer', desc: '完整的侧边栏导航布局，含可折叠' },
+    { name: '颜色色板网格', classes: 'repeat(8,1fr) 色板', desc: '8列耗材颜色选择网格' },
+    { name: '统计卡片', classes: '.stat-card-icon / .stat-card-value', desc: '带图标的统计卡片，含消耗量进度' },
+    { name: '标签徽章', classes: '.tag-badge', desc: '耗材标签徽章组件' },
+  ]},
+  { page: 'print-manager.html', color: 'green', items: [
+    { name: '数据表格', classes: '.data-table', desc: '带排序、操作的打印记录表格' },
+    { name: '柱状图', classes: '.chart-bar / .chart-tip', desc: 'CSS 柱状图 + 悬浮工具提示' },
+    { name: '开关切换', classes: '.op-switch / .slider', desc: '运营成本开关，滑动式切换' },
+    { name: '抽屉式侧栏', classes: 'translateX(-100%)', desc: '移动端侧边栏抽屉动画' },
+  ]},
+  { page: 'prompt-library.html', color: 'orange', items: [
+    { name: '封面图体系', classes: '.card-cover / .card-cover-overlay', desc: '提示词卡片的封面图+渐变叠层+标题' },
+    { name: '10色变量标签', classes: '.var-tag.c0~c9', desc: '10种颜色的变量标签，各有 bg/border/text' },
+    { name: '详情双栏', classes: '1fr 520px', desc: '左侧列表+右侧520px详情面板' },
+    { name: '开关组件', classes: '.toggle-slider', desc: 'iOS风格开关切换' },
+    { name: '按钮组容器', classes: '.button-group', desc: '按钮放入框中，竖线分隔' },
+  ]},
+  { page: 'image-layout.html', color: 'red', items: [
+    { name: '6套拼图模板', classes: 'grid-template 预设', desc: '2fr 1fr 1fr / 1.5fr 1fr 等多种拼图版式' },
+    { name: '工具栏', classes: '.toolbar / .toolbar-ratio-group', desc: '比例选择+操作按钮的工具栏' },
+  ]},
+  { page: 'image-compress.html', color: 'blue', items: [
+    { name: '进度条', classes: '.progress-bar-bg / .progress-bar-fill', desc: '压缩进度条，width 0.3s 动画' },
+    { name: '文件卡片', classes: '.card-thumb / .card-info', desc: '缩略图+信息+操作的内联网格卡片' },
+  ]},
+  { page: 'image-upscale.html', color: 'purple', items: [
+    { name: '进度环', classes: '.progress-ring / .progress-text', desc: 'SVG 环形进度指示器' },
+    { name: '状态点', classes: '.dot.ready / .dot.error', desc: '模型状态指示点，含 pulse 动画' },
+  ]},
+  { page: 'phonetic-chart.html', color: 'green', items: [
+    { name: '三色编码系统', classes: '--vowel红 / --consonant蓝 / --diphthong绿', desc: '元音/辅音/双元音的颜色分类' },
+    { name: '音标卡片', classes: '.card / .card-upper / .card-lower', desc: '上下分层的音标展示卡' },
+  ]},
+  { page: 'ip-mascot.html', color: 'orange', items: [
+    { name: 'Google 字体引入', classes: "Outfit + Noto Sans SC", desc: '唯一引入外部字体的页面' },
+    { name: '发光阴影', classes: '--shadow-glow', desc: '独有发光阴影效果' },
+  ]},
+  { page: 'password-gen.html', color: 'red', items: [
+    { name: '强度徽章', classes: '.badge-red / .badge-blue / .badge-orange', desc: '密码强度三色等级徽章' },
+  ]},
+];
+
+/* 字体族 */
+var FONT_FAMILY = [
+  { name: 'Body（全局）', val: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif", src: 'common.css body' },
+  { name: 'Hero H1', val: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif", src: 'common.css .page-hero h1' },
+];
+
+/* ============================================
+   渲染逻辑
+   ============================================ */
+function renderNav() {
+  var html = '';
+  NAV.forEach(function(group) {
+    html += '<div class="spec-nav-section">' + group.section + '</div>';
+    group.items.forEach(function(item) {
+      html += '<a class="spec-nav-item" data-target="' + item.id + '">' +
+        (ICONS[item.icon] || '') +
+        '<span>' + item.label + '</span></a>';
+    });
+  });
+  document.getElementById('specNav').innerHTML = html;
+}
+
+function renderContent() {
+  var html = '';
+
+  /* 概览 */
+  html += section('overview', '概览', '设计系统总览', '<span class="count">' + '13 个板块</span>', [
+    kpiRow([
+      { val: '17', label: 'CSS 变量' },
+      { val: '6', label: '按钮类型' },
+      { val: '4', label: '圆角档位' },
+      { val: '5', label: '响应式断点' },
+    ]),
+    '<div style="font-size:14px;color:var(--ink-tertiary);line-height:1.6;margin-top:8px;">本页面自动扫描了 <code style="font-family:ui-monospace,monospace;font-size:13px;background:var(--bg);padding:1px 5px;border-radius:3px;">common.css</code> 及 16 个工具页面的内联样式，提取出所有 Design Token 与组件规范。每个组件标注了来源文件，方便定位修改。</div>',
+  ]);
+
+  /* 颜色系统 */
+  var colorHtml = '';
+  for (var group in COLORS) {
+    colorHtml += '<div style="margin-bottom:18px;"><div style="font-size:14px;font-weight:600;color:var(--ink-secondary);margin-bottom:8px;">' + group + '</div><div class="color-grid">';
+    COLORS[group].forEach(function(c) {
+      colorHtml += '<div class="color-swatch" data-copy="' + c.val + '">' +
+        '<div class="color-swatch-chip" style="background:' + (c.val.startsWith('rgba') ? c.val : c.val) + ';' + (c.val === '#ffffff' ? 'border:1px solid var(--border-light);' : '') + '"></div>' +
+        '<div class="color-swatch-info">' +
+          '<div class="color-swatch-name">' + c.name + '</div>' +
+          '<div class="color-swatch-val">' + c.val + '</div>' +
+          (c.var ? '<div class="color-swatch-var">' + c.var + '</div>' : '') +
+          '<div class="color-swatch-var">' + c.desc + '</div>' +
+        '</div></div>';
+    });
+    colorHtml += '</div></div>';
+  }
+  html += section('colors', '颜色系统', 'CSS 变量定义的颜色令牌，点击色块复制色值', '', [colorHtml]);
+
+  /* 字体排版 */
+  var typeHtml = '<div>';
+  FONT_FAMILY.forEach(function(f) {
+    typeHtml += '<div class="type-row"><div class="type-sample" style="font-size:14px;">' + f.name + '</div><div class="type-meta" style="max-width:400px;text-align:right;overflow:hidden;text-overflow:ellipsis;">' + f.val + '</div></div>';
+  });
+  typeHtml += '<div style="margin:16px 0 8px;font-size:14px;font-weight:600;color:var(--ink-secondary);">字号阶梯</div>';
+  TYPOGRAPHY.forEach(function(t) {
+    typeHtml += '<div class="type-row">' +
+      '<div class="type-sample" style="font-size:' + Math.min(parseInt(t.size), 32) + 'px;font-weight:' + t.weight + ';letter-spacing:' + (t.ls === '—' ? 'normal' : t.ls) + ';line-height:' + (t.lh === '—' ? '1.4' : t.lh) + ';">' + t.sample + '</div>' +
+      '<div class="type-meta">' + t.size + ' / ' + t.weight + ' / ' + t.lh + ' / ' + t.ls + '<br><span style="color:var(--ink-tertiary);font-size:12px;">' + t.name + ' · ' + t.src + '</span></div>' +
+    '</div>';
+  });
+  typeHtml += '</div>';
+  html += section('typography', '字体排版', '字体族与字号阶梯，SF Pro 系统字体栈', '', [typeHtml]);
+
+  /* 圆角系统 */
+  var radiusHtml = '<div class="radius-grid">';
+  RADIUS.forEach(function(r) {
+    radiusHtml += '<div class="radius-item"><div class="radius-box" style="border-radius:' + r.val + ';"></div><div class="name">' + r.name + '</div><div class="val">' + r.val + '</div><div style="font-size:13px;color:var(--ink-tertiary);margin-top:2px;">' + r.desc + '</div></div>';
+  });
+  radiusHtml += '</div>';
+  html += section('radius', '圆角系统', '四档圆角令牌，从 8px 到胶囊形', '', [radiusHtml]);
+
+  /* Z-index */
+  var zHtml = '<div>';
+  ZINDEX.forEach(function(z) {
+    zHtml += '<div class="zbar-row"><div class="zbar-label">' + z.name + '</div><div class="zbar-bar" style="width:' + z.width + 'px;">' + z.val + '</div><div style="font-size:14px;color:var(--ink-tertiary);">' + z.desc + '</div></div>';
+  });
+  zHtml += '</div>';
+  html += section('zindex', '层级系统', '语义化 Z-index 层级，避免随意取值', '', [zHtml]);
+
+  /* 按钮组件 */
+  html += section('buttons', '按钮组件', BUTTONS.length + ' 种按钮类型，统一使用胶囊圆角', '<span class="count">' + BUTTONS.length + '</span>', [renderComps(BUTTONS)]);
+
+  /* 表单控件 */
+  html += section('forms', '表单控件', '输入框与分段控件', '<span class="count">' + FORMS.length + '</span>', [renderComps(FORMS)]);
+
+  /* 布局组件 */
+  html += section('layout', '布局组件', '页面级布局容器', '<span class="count">' + LAYOUT.length + '</span>', [renderComps(LAYOUT)]);
+
+  /* 导航组件 */
+  html += section('navigation', '导航组件', '全局导航与下拉菜单', '<span class="count">' + NAV_COMPS.length + '</span>', [renderComps(NAV_COMPS)]);
+
+  /* 反馈组件 */
+  html += section('feedback', '反馈组件', 'Toast 提示与拖放区域', '<span class="count">' + FEEDBACK.length + '</span>', [renderComps(FEEDBACK)]);
+
+  /* 动效规范 */
+  var motionHtml = '<div>';
+  MOTION.forEach(function(m) {
+    motionHtml += '<div class="motion-row">' +
+      '<div class="motion-preview" id="motion-' + m.preview + '"></div>' +
+      '<div class="motion-name">' + m.name + '</div>' +
+      '<div class="motion-meta">' + m.val + '<br><span style="color:var(--ink-tertiary);">' + m.desc + '</span><br><span style="color:var(--ink-tertiary);font-size:12px;">' + m.src + '</span></div>' +
+    '</div>';
+  });
+  motionHtml += '</div>';
+  /* 动效预览动画 */
+  motionHtml += '<style>' +
+    '#motion-fade { animation: specFade 2s ease infinite; }' +
+    '#motion-press { animation: specPress 1.5s ease infinite; }' +
+    '#motion-toast { animation: specToast 2s cubic-bezier(0.22,0.61,0.36,1) infinite; }' +
+    '#motion-fadeUp { animation: specFadeUp 2s ease infinite; }' +
+    '#motion-shimmer { background: linear-gradient(90deg, var(--fill-black), var(--fill-gray), var(--fill-black)); background-size: 200% 100%; animation: specShimmer 1.5s linear infinite; }' +
+    '#motion-pulse { animation: specPulse 1.2s ease-in-out infinite; }' +
+    '#motion-spin { animation: specSpin 0.8s linear infinite; border-radius: 50%; border: 3px solid var(--border-light); border-top-color: var(--link); background: transparent; }' +
+    '#motion-slideUp { animation: specSlideUp 2s ease infinite; }' +
+    '#motion-ease { animation: specEase 2s cubic-bezier(0.22,0.61,0.36,1) infinite; }' +
+    '@keyframes specFade { 0%,100%{opacity:1} 50%{opacity:0.3} }' +
+    '@keyframes specPress { 0%,100%{transform:scale(1)} 50%{transform:scale(0.95)} }' +
+    '@keyframes specToast { 0%,100%{opacity:0;transform:scale(0.9)} 30%,70%{opacity:1;transform:scale(1)} }' +
+    '@keyframes specFadeUp { 0%{opacity:0;transform:translateY(10px)} 30%,100%{opacity:1;transform:translateY(0)} }' +
+    '@keyframes specShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }' +
+    '@keyframes specPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.9)} }' +
+    '@keyframes specSpin { to{transform:rotate(360deg)} }' +
+    '@keyframes specSlideUp { 0%,100%{opacity:0;transform:translateY(20px)} 30%,70%{opacity:1;transform:translateY(0)} }' +
+    '@keyframes specEase { 0%,100%{transform:translateX(0)} 50%{transform:translateX(8px)} }' +
+    '</style>';
+  html += section('motion', '动效规范', '统一缓动曲线与动画时长，' + MOTION.length + ' 种动效模式', '<span class="count">' + MOTION.length + '</span>', [motionHtml]);
+
+  /* 响应式断点 */
+  var bpHtml = '<div>';
+  BREAKPOINTS.forEach(function(bp) {
+    bpHtml += '<div class="bp-row"><div class="bp-width">≤' + bp.width + '</div><div class="bp-label">' + bp.label + '</div><div class="bp-desc">' + bp.desc + '</div></div>';
+  });
+  bpHtml += '</div>';
+  html += section('responsive', '响应式断点', '5 个宽度断点，734px 是主移动断点', '<span class="count">' + BREAKPOINTS.length + '</span>', [bpHtml]);
+
+  /* 页面专属组件 */
+  var pcHtml = '';
+  PAGE_COMPONENTS.forEach(function(pg) {
+    pcHtml += '<div style="margin-bottom:20px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span class="page-badge" style="background:var(--bg);">' + pg.page + '</span></div>';
+    pg.items.forEach(function(item) {
+      pcHtml += '<div class="spec-card"><div class="spec-card-head"><div class="spec-card-name">' + item.name + '</div><div class="spec-card-source"><span class="dot"></span>' + pg.page + '</div></div>' +
+        '<div class="spec-card-body">' +
+          '<div style="font-size:14px;color:var(--ink-tertiary);margin-bottom:8px;">' + item.desc + '</div>' +
+          '<div style="background:#1e1e2e;color:#a6e3a1;padding:8px 12px;border-radius:6px;font-family:ui-monospace,monospace;font-size:13px;overflow-x:auto;">' + item.classes + '</div>' +
+        '</div></div>';
+    });
+    pcHtml += '</div>';
+  });
+  html += section('page-components', '页面专属组件', '各工具页面独有的组件，标注来源文件与类名', '<span class="count">' + PAGE_COMPONENTS.length + ' 页</span>', [pcHtml]);
+
+  document.getElementById('specContent').innerHTML = html;
+}
+
+function renderComps(comps) {
+  var html = '';
+  comps.forEach(function(c) {
+    html += '<div class="spec-card">' +
+      '<div class="spec-card-head"><div class="spec-card-name">' + c.name + '</div><div class="spec-card-source"><span class="dot"></span>' + c.src + '</div></div>' +
+      '<div class="spec-card-body">' +
+        '<div class="spec-card-preview">' + c.preview + '</div>' +
+        '<div class="spec-props">';
+    for (var k in c.props) {
+      html += '<div class="spec-prop"><span class="spec-prop-key">' + k + '</span><span class="spec-prop-val">' + c.props[k] + '</span></div>';
+    }
+    html += '</div></div></div>';
+  });
+  return html;
+}
+
+function section(id, title, desc, count, contents) {
+  var inner = contents.join('');
+  return '<section class="spec-section" id="' + id + '" data-title="' + title + '">' +
+    '<div class="spec-section-body">' +
+      '<h2 class="spec-section-title">' + title + (count || '') + '</h2>' +
+      '<p class="spec-section-desc">' + desc + '</p>' +
+      inner +
+    '</div></section>';
+}
+
+function kpiRow(items) {
+  var html = '<div class="kpi-row">';
+  items.forEach(function(k) {
+    html += '<div class="kpi-card"><div class="kpi-val">' + k.val + '</div><div class="kpi-label">' + k.label + '</div></div>';
+  });
+  return html + '</div>';
+}
+
+/* 搜索过滤 */
+function setupSearch() {
+  var input = document.getElementById('searchInput');
+  var timer;
+  input.addEventListener('input', function() {
+    clearTimeout(timer);
+    timer = setTimeout(function() {
+      var q = input.value.trim().toLowerCase();
+      var sections = document.querySelectorAll('.spec-section');
+      sections.forEach(function(s) {
+        if (!q) { s.classList.remove('hidden'); return; }
+        var text = s.textContent.toLowerCase();
+        s.classList.toggle('hidden', text.indexOf(q) < 0);
+      });
+    }, 150);
+  });
+}
+
+/* 侧边导航点击 */
+function setupNavClick() {
+  document.querySelectorAll('.spec-nav-item').forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      var target = this.dataset.target;
+      var el = document.getElementById(target);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  /* 滚动高亮 */
+  var sections = document.querySelectorAll('.spec-section');
+  var navItems = document.querySelectorAll('.spec-nav-item');
+  window.addEventListener('scroll', function() {
+    var scrollY = window.scrollY + 120;
+    var current = '';
+    sections.forEach(function(s) {
+      if (scrollY >= s.offsetTop) current = s.id;
+    });
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === current);
+    });
+    /* 侧边栏滚动可见 */
+    var active = document.querySelector('.spec-nav-item.active');
+    if (active && window.innerWidth <= 860) {
+      active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  });
+}
+
+/* 复制功能 */
+function setupCopy() {
+  document.addEventListener('click', function(e) {
+    var swatch = e.target.closest('.color-swatch');
+    if (swatch) {
+      var val = swatch.dataset.copy;
+      copyToClipboard(val);
+    }
+  });
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(showCopyToast);
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showCopyToast();
+  }
+}
+
+function showCopyToast() {
+  var toast = document.getElementById('copyToast');
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(function() {
+    toast.classList.remove('show');
+  }, 1800);
+}
+
+/* 初始化 */
+function init() {
+  renderNav();
+  renderContent();
+  setupSearch();
+  setupNavClick();
+  setupCopy();
+  /* 默认激活第一个 */
+  var first = document.querySelector('.spec-nav-item');
+  if (first) first.classList.add('active');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>

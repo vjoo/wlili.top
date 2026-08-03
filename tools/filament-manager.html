@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>拓竹 3D 打印机参数知识库</title>
+    <title>W.-3D耗材管理</title>
     <style>
 /* ============================================
    WLi Tools - 在线工具集
@@ -1514,6 +1514,12 @@
             gap: 16px;
             animation: dashFadeIn 0.4s ease-out forwards;
             opacity: 0;
+            transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        .dashboard-stats-row .stat-card:hover {
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+            transform: translateY(-3px);
         }
 
         .stat-card-icon {
@@ -2236,6 +2242,7 @@
             _syncStorage.removeItem(STORAGE_KEYS.presets);
             _syncStorage.removeItem(STORAGE_KEYS.knowledge);
             _syncStorage.removeItem('bambu_data_version');
+            _syncStorage.removeItem('bambu_default_presets_version');
         }
     };
 
@@ -2300,6 +2307,90 @@
         summary: "首层不粘平台、耗材粘喷嘴的解决方案。清洁打印平台、提高热床温度 5-10℃、降低首层速度、使用胶棒辅助。",
         url: "https://wiki.bambulab.com/en/filament-acc/filament/print-quality/filament-sticks-to-nozzle",
         tags: ["回抽", "PLA", "PETG", "TPU", "X2D"]
+      },
+      {
+        id: "off9",
+        title: "官方：填充设置指南",
+        summary: "填充密度、填充图案（网格、蜂窝、陀螺）、填充速度等参数详解。10-15% 适合一般模型，30%+ 适合受力件，陀螺填充兼顾强度与速度。",
+        url: "https://wiki.bambulab.com/en/software/bambu-studio/infill",
+        tags: ["填充", "infill", "密度", "图案", "网格", "蜂窝", "陀螺", "强度", "Bambu Studio"]
+      },
+      {
+        id: "off10",
+        title: "官方：层高与打印质量",
+        summary: "层高（layer height）对打印质量和速度的影响。0.1mm 精细、0.2mm 标准、0.3mm 快速。首层层高建议 0.2mm 以增强附着力。",
+        url: "https://wiki.bambulab.com/en/software/bambu-studio/parameter/layer-height",
+        tags: ["层高", "layer height", "精度", "质量", "首层", "Bambu Studio", "层纹"]
+      },
+      {
+        id: "off11",
+        title: "官方：打印速度设置",
+        summary: "外层速度、内层速度、填充速度、空驶速度的推荐值。PLA 可达 200mm/s，PETG 建议 100-150mm/s，TPU 建议 30-50mm/s。速度过高会降低质量。",
+        url: "https://wiki.bambulab.com/en/software/bambu-studio/parameter/print-speed",
+        tags: ["速度", "speed", "PLA", "PETG", "TPU", "外层", "内层", "Bambu Studio"]
+      },
+      {
+        id: "off12",
+        title: "官方：打印机校准全流程",
+        summary: "流量校准、冷床补偿、热床补偿、进料校准等完整校准流程。建议更换耗材或喷嘴后重新校准，确保打印精度。",
+        url: "https://wiki.bambulab.com/en/software/bambu-studio/calibration",
+        tags: ["校准", "calibration", "流量", "补偿", "进料", "精度", "Bambu Studio"]
+      },
+      {
+        id: "off13",
+        title: "官方：AMS 多色打印指南",
+        summary: "AMS 自动换料设置、擦拭塔参数、换料回抽优化。多色打印需增加擦拭塔体积，TPU 不建议走 AMS。",
+        url: "https://wiki.bambulab.com/en/filament-acc/ams/multi-color-printing",
+        tags: ["AMS", "多色", "换料", "擦拭塔", "TPU", "Bambu Studio"]
+      },
+      {
+        id: "off14",
+        title: "官方：首层调优指南",
+        summary: "首层是打印成功的关键。热床温度、首层速度（建议 30-50mm/s）、首层层高、Z 偏移、平台清洁度均影响首层质量。",
+        url: "https://wiki.bambulab.com/en/knowledge-sharing/first-layer",
+        tags: ["首层", "first layer", "热床", "Z偏移", "平台附着", "翘边", "速度"]
+      },
+      {
+        id: "off15",
+        title: "官方：PLA 耗材使用指南",
+        summary: "PLA 是最易打印的耗材。推荐喷嘴 190-220℃，热床 35-60℃，无需腔温。冷却风扇 100%。低收缩率，适合新手。",
+        url: "https://wiki.bambulab.com/en/filament/pla",
+        tags: ["PLA", "温度", "热床", "风扇", "冷却", "新手", "收缩率"]
+      },
+      {
+        id: "off16",
+        title: "官方：TPU 柔性耗材指南",
+        summary: "TPU 推荐喷嘴 220-240℃，热床 30-50℃。回抽需大幅减小（0.4-0.6mm），速度降至 30-50mm/s，不建议走 AMS，直接送料更稳定。",
+        url: "https://wiki.bambulab.com/en/filament/tpu",
+        tags: ["TPU", "柔性", "回抽", "速度", "AMS", "温度", "软胶"]
+      },
+      {
+        id: "off17",
+        title: "官方：ABS / ASA 工程耗材指南",
+        summary: "ABS/ASA 需要腔温 40-60℃ 防止翘边开裂。喷嘴 240-270℃，热床 90-110℃。必须通风，建议 enclosure。ASA 抗紫外线适合户外。",
+        url: "https://wiki.bambulab.com/en/filament/abs",
+        tags: ["ABS", "ASA", "腔温", "翘边", "开裂", "工程耗材", "户外", "通风", "enclosure"]
+      },
+      {
+        id: "off18",
+        title: "官方：流量校准与挤出",
+        summary: "过挤出导致表面粗糙、欠挤出导致强度不足。通过流量校准（Flow Rate Calibration）调整挤出量。PLA 流量比通常 0.98-1.02。",
+        url: "https://wiki.bambulab.com/en/software/bambu-studio/flow-calibration",
+        tags: ["流量", "挤出", "过挤出", "欠挤出", "校准", "Flow Rate", "表面粗糙", "强度"]
+      },
+      {
+        id: "off19",
+        title: "官方：桥接与悬垂打印",
+        summary: "桥接（bridging）和悬垂（overhang）无需支撑的最大角度约 45°。降低桥接速度、增加冷却风扇可改善桥接质量。",
+        url: "https://wiki.bambulab.com/en/software/bambu-studio/bridging-overhang",
+        tags: ["桥接", "悬垂", "overhang", "bridging", "支撑", "冷却", "风扇", "角度"]
+      },
+      {
+        id: "off20",
+        title: "官方：喷嘴选择与维护",
+        summary: "0.4mm 标准喷嘴、0.2mm 精细、0.6mm/0.8mm 快速。硬化钢喷嘴适合碳纤维/玻纤耗材。定期清理喷嘴防止堵塞。",
+        url: "https://wiki.bambulab.com/en/filament-acc/nozzle",
+        tags: ["喷嘴", "nozzle", "0.4", "0.2", "0.6", "硬化钢", "碳纤维", "堵塞", "维护"]
       }
     ];
 
@@ -2551,6 +2642,70 @@
                 bedTemp: 40,
                 printSpeed: 40,
                 fanSpeed: 50
+            },
+            {
+                id: 'preset8',
+                name: '专用支撑耗材 - PLA/PETG',
+                createdDate: '2026-08-01',
+                notes: '【官方Wiki参考】使用Bambu Support for PLA/PETG专用支撑耗材。核心要点：Z轴间隙=0mm（专用支撑耗材无需间隙，可获得光滑支撑面，这是与同料支撑的最大区别）。支撑耗材仅用于界面层，主体用主耗材打印以节省时间。机械剥离去除，无需水溶。适用PLA/PLA-CF/PETG/PETG-CF。来源：wiki.bambulab.com/en/software/bambu-studio/support',
+                processParams: [
+                    { name: '层高', value: '0.2mm' },
+                    { name: '首层层高', value: '0.2mm' },
+                    { name: '线宽', value: '0.42mm' },
+                    { name: '墙层数', value: '2' },
+                    { name: '填充密度', value: '15%' },
+                    { name: '填充图案', value: '交叠直线' },
+                    { name: '顶层/底层数', value: '4' },
+                    { name: '打印速度', value: '100mm/s' },
+                    { name: '风扇速度', value: '100%' },
+                    { name: '支撑类型', value: '树(auto)' },
+                    { name: '悬垂阈值', value: '30°' },
+                    { name: 'XY间距', value: '0.8mm' },
+                    { name: 'Z轴间隙', value: '0mm' },
+                    { name: '顶层界面层', value: '3' },
+                    { name: '界面间距', value: '0mm' },
+                    { name: '独立支撑', value: '是' },
+                    { name: '支撑耗材使用范围', value: '仅界面层（官方推荐，节省打印时间和耗材）' },
+                    { name: '去除方式', value: '机械剥离（手动拆解）' }
+                ],
+                filamentParams: [
+                    { name: '耗材类型', value: 'PLA' },
+                    { name: '品牌', value: 'Bambu Lab' },
+                    { name: '喷嘴温度', value: '215℃（PLA）/ 255℃（PETG）' },
+                    { name: '热床温度', value: '45℃（PLA）/ 70℃（PETG）' },
+                    { name: '支撑耗材', value: 'Bambu Support for PLA/PETG' },
+                    { name: '支撑耗材类型', value: '机械剥离型（脆性材料）' },
+                    { name: '支撑耗材兼容性', value: 'PLA / PLA-CF / PETG / PETG-CF' },
+                    { name: '支撑耗材吸湿性', value: '低（不易吸湿，干燥要求低）' }
+                ]
+            },
+            {
+                id: 'preset9',
+                name: '省耗材空心 - PLA',
+                createdDate: '2026-08-01',
+                notes: '【官方Wiki参考】低填充+薄壁省耗材预设。核心思路：降低填充密度至5%、墙层数减至1层、填充图案选螺旋体（Gyroid，无交叉点不易刮蹭）。适用非受力装饰件、手办外壳等。官方建议：非结构件用2层墙+15%填充；结构件用5层墙+25%填充；避免50%+填充率（易翘曲收缩）。若需极致省料可启用花瓶模式（墙层数1、填充0%、顶底层0层）。来源：wiki.bambulab.com/zh/knowledge-sharing/common-print-quality-problem',
+                processParams: [
+                    { name: '层高', value: '0.2mm' },
+                    { name: '首层层高', value: '0.2mm' },
+                    { name: '线宽', value: '0.42mm' },
+                    { name: '墙层数', value: '1（省料模式；需强度时改2）' },
+                    { name: '填充密度', value: '5%（极致省料）；常规省料用10-15%' },
+                    { name: '填充图案', value: '螺旋体（Gyroid，无交叉点，不易刮蹭模型）' },
+                    { name: '顶层/底层数', value: '3（省料）；花瓶模式设0' },
+                    { name: '打印温度', value: '215℃（PLA）' },
+                    { name: '热床温度', value: '45℃（PLA）' },
+                    { name: '打印速度', value: '150mm/s（低填充可提速）' },
+                    { name: '风扇速度', value: '100%' }
+                ],
+                filamentParams: [
+                    { name: '耗材类型', value: 'PLA' },
+                    { name: '品牌', value: 'Bambu Lab' },
+                    { name: '喷嘴温度', value: '215℃（范围190-240℃）' },
+                    { name: '热床温度', value: '45℃（范围35-55℃涂胶/45-60℃PEI）' },
+                    { name: '流量比例', value: '0.98（标准）；花瓶模式建议1.0' },
+                    { name: '回抽距离', value: '0.8mm' },
+                    { name: '回抽速度', value: '30mm/s' }
+                ]
             }
         ],
         knowledge: [
@@ -2723,7 +2878,7 @@
             this.render();
         },
 
-        // 加载数据（首次使用注入示例数据）
+        // 加载数据（首次使用注入示例数据 + 默认预设自动同步）
         loadData() {
             let filaments = StorageService.loadFilaments();
             let presets = StorageService.loadPresets();
@@ -2738,6 +2893,25 @@
                 filaments = [];
                 presets = [];
                 knowledge = [];
+            }
+
+            // 默认预设自动同步：版本变化时，移除旧默认预设并追加最新示例预设
+            const DEFAULT_PRESETS_VERSION = 'v3-20260801';
+            const storedPresetVersion = _syncStorage.getItem('bambu_default_presets_version');
+            if (storedPresetVersion !== DEFAULT_PRESETS_VERSION) {
+                // 移除旧默认预设（ID 匹配 preset + 纯数字 格式）
+                presets = presets.filter(p => !/^preset\d+$/.test(p.id));
+                // 追加最新示例预设（深拷贝避免引用污染）
+                const samplePresets = JSON.parse(JSON.stringify(sampleData.presets));
+                // 避免重复：只添加用户数据中不存在的 ID
+                const existingIds = new Set(presets.map(p => p.id));
+                samplePresets.forEach(sp => {
+                    if (!existingIds.has(sp.id)) {
+                        presets.push(sp);
+                    }
+                });
+                StorageService.savePresets(presets);
+                _syncStorage.setItem('bambu_default_presets_version', DEFAULT_PRESETS_VERSION);
             }
 
             this.data.filaments = filaments;
@@ -4599,13 +4773,16 @@
                 doc.tags.some(t => t.toLowerCase().includes(kw))
             );
 
+            // 官方Wiki搜索跳转按钮（无论有无结果都显示）
+            const wikiSearchBtn = `<div style="margin-top:14px;padding:12px 16px;border:1px dashed var(--border-color);border-radius:var(--radius-md);text-align:center;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent-color)';this.style.background='var(--bg-hover)'" onmouseout="this.style.borderColor='var(--border-color)';this.style.background=''" onclick="app.openOfficialDocLink('https://wiki.bambulab.com/en/search?keyword=' + encodeURIComponent('${keyword.trim()}'))"><span style="font-size:13px;color:var(--accent-color);font-weight:500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>在拓竹官方 Wiki 中搜索"${keyword.trim()}"</span><br><span style="font-size:12px;color:var(--text-muted);margin-top:4px;display:inline-block">本地索引覆盖有限，前往官方 Wiki 可搜索全部文档</span></div>`;
+
             if (results.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-muted)"><div style="display:flex;justify-content:center;margin-bottom:12px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div>未找到匹配的官方文档</div><div style="font-size:13px;margin-top:8px">尝试其他关键词，如"拉丝"、"支撑"、"X2D"</div></div>';
+                container.innerHTML = `<div style="text-align:center;padding:30px 20px;color:var(--text-muted)"><div style="display:flex;justify-content:center;margin-bottom:12px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div>本地索引未找到匹配的官方文档</div><div style="font-size:13px;margin-top:8px">尝试其他关键词，如"拉丝"、"支撑"、"填充"、"X2D"</div></div>${wikiSearchBtn}`;
                 return;
             }
 
             container.innerHTML = `
-                <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">找到 ${results.length} 条官方文档</div>
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">本地索引找到 ${results.length} 条官方文档</div>
                 ${results.map(doc => `
                     <div style="padding:14px 16px;border:1px solid var(--border-color);border-radius:var(--radius-md);margin-bottom:10px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="app.openOfficialDocLink('${doc.url}')">
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
@@ -4617,6 +4794,7 @@
                         <div style="margin-top:8px">${doc.tags.map(t => `<span class="tag-badge">${t}</span>`).join('')}</div>
                     </div>
                 `).join('')}
+                ${wikiSearchBtn}
             `;
         },
 

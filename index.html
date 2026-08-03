@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <!-- Content Security Policy - WLi Studio -->
@@ -17,24 +17,40 @@
 html { touch-action: manipulation; }
 
 :root {
-  --ink: #1d1d1f;
+  --ink: #2B3041;
   --ink-secondary: #424245;
-  --ink-tertiary: #86868b;
-  --bg: #ffffff;
-  --bg-secondary: #f5f5f7;
+  --ink-tertiary: #6e6e73;
+  --ink-quaternary: #86868b;
+  --bg: #f5f5f7;
+  --bg-white: #ffffff;
+  --bg-elevated: #fbfbfd;
   --border: #d2d2d7;
   --border-light: #e8e8ed;
-  --link: #0071e3;
+  --link: #6366f1;
   --link-hover: #0077ed;
+  --fill-black: #2B3041;
+  --fill-gray: #86868b;
+  --fill-gray-light: #d2d2d7;
+  --fill-white: #ffffff;
+  --green: #34c759;
+  --red: #ff3b30;
+  --orange: #ff9500;
   --radius-sm: 8px;
-  --radius-md: 12px;
+  --radius-md: 11px;
   --radius-lg: 18px;
   --radius-pill: 980px;
+  /* Z-index scale (semantic, never arbitrary) */
+  --z-dropdown: 100;
+  --z-sticky: 500;
+  --z-nav: 1000;
+  --z-sidebar: 1000;
+  --z-modal: 2000;
+  --z-toast: 3000;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
-  background: var(--bg);
+  background: var(--bg-white);
   color: var(--ink);
   min-height: 100vh;
   display: flex;
@@ -46,8 +62,47 @@ body {
 /* ===== Hero ===== */
 .hero {
   text-align: center;
-  padding: 120px 22px 60px;
+  padding: 80px 22px 50px;
+  position: relative;
+  z-index: 1;
 }
+
+/* ===== Aurora 光晕流动背景（全屏） ===== */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  will-change: transform, opacity;
+  mix-blend-mode: multiply;
+}
+.blob-1 {
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, rgba(99,102,241,0.45), transparent 70%);
+  top: -8%; left: -6%;
+}
+.blob-2 {
+  width: 620px; height: 620px;
+  background: radial-gradient(circle, rgba(0,119,237,0.34), transparent 70%);
+  top: 12%; right: -8%;
+}
+.blob-3 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(255,143,171,0.30), transparent 70%);
+  bottom: -10%; left: 32%;
+}
+.blob-4 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(52,199,89,0.22), transparent 70%);
+  top: 48%; left: 8%;
+}
+
 .hero-title {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
   font-size: 64px;
@@ -56,6 +111,9 @@ body {
   line-height: 1.1;
   color: var(--ink);
   margin-bottom: 16px;
+  text-wrap: balance;
+  position: relative;
+  z-index: 1;
 }
 .hero-subtitle {
   font-size: 21px;
@@ -63,14 +121,19 @@ body {
   color: var(--ink-tertiary);
   line-height: 1.4;
   letter-spacing: 0.011em;
-  max-width: 480px;
+  max-width: 580px;
   margin: 0 auto;
+  text-wrap: pretty;
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== Section ===== */
 .section {
   flex: 1;
   padding: 20px 0 80px;
+  position: relative;
+  z-index: 1;
 }
 .section-inner {
   max-width: 980px;
@@ -86,7 +149,7 @@ body {
 }
 
 .card {
-  background: var(--bg);
+  background: var(--bg-white);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   padding: 32px 28px;
@@ -95,18 +158,20 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: border-color 0.3s cubic-bezier(0.22, 0.61, 0.36, 1),
+              box-shadow 0.3s cubic-bezier(0.22, 0.61, 0.36, 1),
+              transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  opacity: 1;
+  z-index: 2;
 }
 .card:hover {
   border-color: var(--border);
   box-shadow: 0 12px 40px rgba(0,0,0,0.08);
-  transform: translateY(-3px);
 }
 .card:active {
-  transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
 }
 
@@ -125,7 +190,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--bg-secondary);
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,7 +200,7 @@ body {
 }
 .card:hover .card-arrow {
   background: var(--link);
-  color: #fff;
+  color: var(--fill-white);
   transform: translateX(2px);
 }
 
@@ -150,7 +215,7 @@ body {
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  background: var(--bg-secondary);
+  background: var(--bg);
   border-radius: var(--radius-pill);
   font-size: 11px;
   color: var(--ink-tertiary);
@@ -167,6 +232,8 @@ body {
   color: var(--ink-tertiary);
   letter-spacing: -0.01em;
   border-top: 1px solid var(--border-light);
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== Responsive ===== */
@@ -188,9 +255,26 @@ body {
 @media (max-width: 480px) {
   .hero-title { font-size: 36px; }
 }
+
+/* ===== Reduced Motion (accessibility) ===== */
+/* 仅禁用平滑滚动，保留 hover transition 和 entrance 动画
+   （轻微阴影变化和 3px 位移不会引起前庭不适，与 filament-manager 保持一致） */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+  }
+}
 </style>
 </head>
 <body>
+
+<!-- Aurora 光晕流动背景（全屏） -->
+<div class="aurora" aria-hidden="true">
+  <span class="aurora-blob blob-1"></span>
+  <span class="aurora-blob blob-2"></span>
+  <span class="aurora-blob blob-3"></span>
+  <span class="aurora-blob blob-4"></span>
+</div>
 
 <!-- Hero -->
 <div class="hero">
@@ -207,7 +291,7 @@ body {
         <div class="card-header">
           <div class="card-title">Tools</div>
           <div class="card-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
           </div>
         </div>
         <div class="card-desc">在线工具集，涵盖图像处理、单位换算、密码生成、IP 设计等实用工具，简洁高效，一键直达</div>
@@ -218,7 +302,7 @@ body {
         <div class="card-header">
           <div class="card-title">UI</div>
           <div class="card-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
           </div>
         </div>
         <div class="card-desc">设计作品集，展示界面设计、交互原型与视觉探索，记录创意灵感与实践经验</div>
@@ -229,7 +313,7 @@ body {
         <div class="card-header">
           <div class="card-title">Zhonglele</div>
           <div class="card-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
           </div>
         </div>
         <div class="card-desc">音乐媒体库，整理与分享音乐收藏、歌单推荐与音频相关的内容探索</div>
@@ -244,6 +328,58 @@ body {
 <div class="page-footer">
   &copy; 2025 WLi. All rights reserved.
 </div>
+
+<script src="./js/gsap.min.js"></script>
+<script>
+(function() {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ===== Aurora 光晕流动动画 =====
+     极度温和的背景流动（16-30s 周期），不会引起前庭不适。
+     光晕动画始终保留完整幅度，reduced-motion 不限制。 */
+  gsap.to('.blob-1', {
+    x: 140, y: 90, scale: 1.25, opacity: 0.7,
+    duration: 18, ease: 'sine.inOut', repeat: -1, yoyo: true
+  });
+  gsap.to('.blob-2', {
+    x: -120, y: 70, scale: 1.18, opacity: 0.45,
+    duration: 23, ease: 'sine.inOut', repeat: -1, yoyo: true,
+    delay: -6
+  });
+  gsap.to('.blob-3', {
+    x: 90, y: -100, scale: 1.3, opacity: 0.55,
+    duration: 20, ease: 'sine.inOut', repeat: -1, yoyo: true,
+    delay: -11
+  });
+  gsap.to('.blob-4', {
+    x: -70, y: 60, scale: 1.2, opacity: 0.4,
+    duration: 16, ease: 'sine.inOut', repeat: -1, yoyo: true,
+    delay: -8
+  });
+
+  /* ===== 内容入场动画（reduced-motion 下跳过位移） ===== */
+  if (!reduce) {
+    gsap.from('.hero-title', {
+      y: 24, opacity: 0, duration: 0.9, ease: 'power3.out'
+    });
+    gsap.from('.hero-subtitle', {
+      y: 18, opacity: 0, duration: 0.8, ease: 'power2.out', delay: 0.18
+    });
+    gsap.from('.card', {
+      y: 26, opacity: 0, duration: 0.7, ease: 'power2.out',
+      stagger: 0.13, delay: 0.35
+    });
+    gsap.from('.page-footer', {
+      opacity: 0, duration: 0.8, ease: 'power2.out', delay: 0.8
+    });
+  } else {
+    /* reduced-motion：标题/副标题淡入，卡片直接可见避免 opacity 冲突 */
+    gsap.from('.hero-title, .hero-subtitle', {
+      opacity: 0, duration: 0.5, ease: 'power1.out', stagger: 0.08
+    });
+  }
+})();
+</script>
 
 </body>
 </html>

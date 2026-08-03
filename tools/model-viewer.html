@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="common.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>W.- 3D 模型预览</title>
+<title>W.-3D模型预览</title>
 <style>
 /* ============================================
    WLi Tools - 在线工具集
@@ -358,23 +358,6 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
-import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js';
-import { TDSLoader } from 'three/addons/loaders/TDSLoader.js';
-import { ThreeMFLoader } from 'three/addons/loaders/3MFLoader.js';
-import { AMFLoader } from 'three/addons/loaders/AMFLoader.js';
-import { XYZLoader } from 'three/addons/loaders/XYZLoader.js';
-import { PCDLoader } from 'three/addons/loaders/PCDLoader.js';
-import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
-import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
-import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
-import { STLExporter } from 'three/addons/exporters/STLExporter.js';
-import { PLYExporter } from 'three/addons/exporters/PLYExporter.js';
-import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
 
 // ─── IndexedDB persistence ───────────────────
 const DB_NAME = 'wli-3d-viewer';
@@ -453,67 +436,9 @@ let bgMode = 'gradient';
 let displayMode = 'both';
 let autoRotate = true;
 
-// ─── Three.js Setup ──────────────────────────
-const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 1000);
-camera.position.set(3, 2, 5);
-camera.lookAt(0, 0, 0);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
-viewport.appendChild(renderer.domElement);
-renderer.domElement.style.position = 'absolute';
-renderer.domElement.style.top = '0';
-renderer.domElement.style.left = '0';
-renderer.domElement.style.zIndex = '0';
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 1.5;
-controls.minDistance = 0.3;
-controls.maxDistance = 50;
-controls.target.set(0, 0, 0);
-controls.update();
-
-// ─── Lighting ────────────────────────────────
-const ambientLight = new THREE.AmbientLight('#ffffff', 1.8);
-scene.add(ambientLight);
-
-const keyLight = new THREE.DirectionalLight('#ffffff', 4.5);
-keyLight.position.set(5, 8, 5);
-keyLight.castShadow = true;
-keyLight.shadow.mapSize.width = 1024;
-keyLight.shadow.mapSize.height = 1024;
-keyLight.shadow.camera.near = 0.1;
-keyLight.shadow.camera.far = 50;
-keyLight.shadow.camera.left = -10;
-keyLight.shadow.camera.right = 10;
-keyLight.shadow.camera.top = 10;
-keyLight.shadow.camera.bottom = -10;
-keyLight.shadow.bias = -0.0001;
-scene.add(keyLight);
-
-const fillLight = new THREE.DirectionalLight('#b8c8ff', 1.8);
-fillLight.position.set(-3, 1, -2);
-scene.add(fillLight);
-
-const rimLight = new THREE.DirectionalLight('#ffffff', 2.0);
-rimLight.position.set(0, -0.5, -5);
-scene.add(rimLight);
-
-// ─── Ground Grid (subtle reference plane) ────
-const gridHelper = new THREE.GridHelper(10, 20, 0xcccccc, 0xe0e0e0);
-gridHelper.material.transparent = true;
-gridHelper.material.opacity = 0.3;
-gridHelper.material.depthWrite = false;
-scene.add(gridHelper);
+// ─── Three.js Setup (lazy) ───────────────────
+let scene, camera, renderer, controls;
+let gridHelper;
 
 // ─── Background scene ────────────────────────
 function updateBackground() {
@@ -535,10 +460,10 @@ function updateBackground() {
     gridHelper.material.opacity = 0.3;
   }
 }
-updateBackground();
 
 // ─── Resize ──────────────────────────────────
 function resizeViewport() {
+  if (!renderer || !camera) return;
   const rect = viewport.getBoundingClientRect();
   const w = rect.width;
   const h = rect.height;
@@ -548,10 +473,78 @@ function resizeViewport() {
   camera.updateProjectionMatrix();
 }
 
-const resizeObserver = new ResizeObserver(() => resizeViewport());
-resizeObserver.observe(viewport);
-window.addEventListener('resize', () => resizeViewport());
-resizeViewport();
+function initThreeJS() {
+  if (scene) return; // already initialized
+
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(45, 2, 0.1, 1000);
+  camera.position.set(3, 2, 5);
+  camera.lookAt(0, 0, 0);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  viewport.appendChild(renderer.domElement);
+  renderer.domElement.style.position = 'absolute';
+  renderer.domElement.style.top = '0';
+  renderer.domElement.style.left = '0';
+  renderer.domElement.style.zIndex = '0';
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 1.5;
+  controls.minDistance = 0.3;
+  controls.maxDistance = 50;
+  controls.target.set(0, 0, 0);
+  controls.update();
+
+  // ─── Lighting ────────────────────────────────
+  const ambientLight = new THREE.AmbientLight('#ffffff', 1.8);
+  scene.add(ambientLight);
+
+  const keyLight = new THREE.DirectionalLight('#ffffff', 4.5);
+  keyLight.position.set(5, 8, 5);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.width = 1024;
+  keyLight.shadow.mapSize.height = 1024;
+  keyLight.shadow.camera.near = 0.1;
+  keyLight.shadow.camera.far = 50;
+  keyLight.shadow.camera.left = -10;
+  keyLight.shadow.camera.right = 10;
+  keyLight.shadow.camera.top = 10;
+  keyLight.shadow.camera.bottom = -10;
+  keyLight.shadow.bias = -0.0001;
+  scene.add(keyLight);
+
+  const fillLight = new THREE.DirectionalLight('#b8c8ff', 1.8);
+  fillLight.position.set(-3, 1, -2);
+  scene.add(fillLight);
+
+  const rimLight = new THREE.DirectionalLight('#ffffff', 2.0);
+  rimLight.position.set(0, -0.5, -5);
+  scene.add(rimLight);
+
+  // ─── Ground Grid (subtle reference plane) ────
+  gridHelper = new THREE.GridHelper(10, 20, 0xcccccc, 0xe0e0e0);
+  gridHelper.material.transparent = true;
+  gridHelper.material.opacity = 0.3;
+  gridHelper.material.depthWrite = false;
+  scene.add(gridHelper);
+
+  updateBackground();
+
+  // ─── Resize ──────────────────────────────────
+  const resizeObserver = new ResizeObserver(() => resizeViewport());
+  resizeObserver.observe(viewport);
+  window.addEventListener('resize', () => resizeViewport());
+  resizeViewport();
+}
 
 // ─── Toast ───────────────────────────────────
 let toastTimer;
@@ -871,6 +864,8 @@ function occtResultToThree(result) {
 }
 
 async function loadFile(file) {
+  initThreeJS();
+
   const ext = file.name.split('.').pop()?.toLowerCase();
   const url = URL.createObjectURL(file);
 
@@ -886,17 +881,20 @@ async function loadFile(file) {
     switch (ext) {
       case 'glb':
       case 'gltf': {
+        const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
         const loader = new GLTFLoader(loadingManager);
         const gltf = await loader.loadAsync(url);
         model = gltf.scene;
         break;
       }
       case 'fbx': {
+        const { FBXLoader } = await import('three/addons/loaders/FBXLoader.js');
         const loader = new FBXLoader(loadingManager);
         model = await loader.loadAsync(url);
         break;
       }
       case 'obj': {
+        const { OBJLoader } = await import('three/addons/loaders/OBJLoader.js');
         const objLoader = new OBJLoader(loadingManager);
         // Don't attempt MTL loading from blob URLs — single-file drag can't resolve relative paths
         model = await objLoader.loadAsync(url);
@@ -913,6 +911,7 @@ async function loadFile(file) {
         break;
       }
       case 'stl': {
+        const { STLLoader } = await import('three/addons/loaders/STLLoader.js');
         const loader = new STLLoader(loadingManager);
         const geometry = await loader.loadAsync(url);
         const material = new THREE.MeshStandardMaterial({
@@ -924,6 +923,7 @@ async function loadFile(file) {
         break;
       }
       case 'ply': {
+        const { PLYLoader } = await import('three/addons/loaders/PLYLoader.js');
         const loader = new PLYLoader(loadingManager);
         const geometry = await loader.loadAsync(url);
         geometry.computeVertexNormals();
@@ -940,17 +940,20 @@ async function loadFile(file) {
         break;
       }
       case 'dae': {
+        const { ColladaLoader } = await import('three/addons/loaders/ColladaLoader.js');
         const loader = new ColladaLoader(loadingManager);
         const collada = await loader.loadAsync(url);
         model = collada.scene;
         break;
       }
       case '3ds': {
+        const { TDSLoader } = await import('three/addons/loaders/TDSLoader.js');
         const loader = new TDSLoader(loadingManager);
         model = await loader.loadAsync(url);
         break;
       }
       case '3mf': {
+        const { ThreeMFLoader } = await import('three/addons/loaders/3MFLoader.js');
         const loader = new ThreeMFLoader(loadingManager);
         model = await loader.loadAsync(url);
         // 3MF models sometimes need material defaults applied
@@ -968,6 +971,7 @@ async function loadFile(file) {
         break;
       }
       case 'amf': {
+        const { AMFLoader } = await import('three/addons/loaders/AMFLoader.js');
         const loader = new AMFLoader(loadingManager);
         model = await loader.loadAsync(url);
         safeTraverse(model, (child) => {
@@ -984,6 +988,7 @@ async function loadFile(file) {
         break;
       }
       case 'xyz': {
+        const { XYZLoader } = await import('three/addons/loaders/XYZLoader.js');
         const loader = new XYZLoader(loadingManager);
         const geometry = await loader.loadAsync(url);
         geometry.computeVertexNormals();
@@ -997,6 +1002,7 @@ async function loadFile(file) {
         break;
       }
       case 'pcd': {
+        const { PCDLoader } = await import('three/addons/loaders/PCDLoader.js');
         const loader = new PCDLoader(loadingManager);
         model = await loader.loadAsync(url);
         // PCDLoader returns Points; ensure material is visible
@@ -1007,6 +1013,7 @@ async function loadFile(file) {
         break;
       }
       case 'svg': {
+        const { SVGLoader } = await import('three/addons/loaders/SVGLoader.js');
         const loader = new SVGLoader(loadingManager);
         const svgData = await loader.loadAsync(url);
         const svgGroup = new THREE.Group();
@@ -1083,6 +1090,7 @@ async function loadFile(file) {
 
     console.log(`[3D Viewer] Loaded successfully:`, model);
     setupModel(model);
+    startAnimation();
     showToast(`已加载 ${file.name}`);
     dbSaveFile(file);
 
@@ -1109,6 +1117,7 @@ function hasMeshGeometry(model) {
 
 async function exportGLB() {
   if (!currentModel) return;
+  const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
   const exporter = new GLTFExporter();
   try {
     const glb = await new Promise((resolve, reject) => {
@@ -1126,13 +1135,14 @@ async function exportGLB() {
   }
 }
 
-function exportOBJ() {
+async function exportOBJ() {
   if (!currentModel) return;
   if (!hasMeshGeometry(currentModel)) {
     showToast('OBJ 仅支持导出网格模型（当前模型为点云/非网格）');
     return;
   }
   try {
+    const { OBJExporter } = await import('three/addons/exporters/OBJExporter.js');
     const exporter = new OBJExporter();
     const text = exporter.parse(currentModel);
     const blob = new Blob([text], { type: 'text/plain' });
@@ -1144,13 +1154,14 @@ function exportOBJ() {
   }
 }
 
-function exportSTL() {
+async function exportSTL() {
   if (!currentModel) return;
   if (!hasMeshGeometry(currentModel)) {
     showToast('STL 仅支持导出网格模型（当前模型为点云/非网格）');
     return;
   }
   try {
+    const { STLExporter } = await import('three/addons/exporters/STLExporter.js');
     const exporter = new STLExporter();
     const arrayBuffer = exporter.parse(currentModel, { binary: true });
     const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
@@ -1162,13 +1173,14 @@ function exportSTL() {
   }
 }
 
-function exportPLY() {
+async function exportPLY() {
   if (!currentModel) return;
   if (!hasMeshGeometry(currentModel)) {
     showToast('PLY 仅支持导出网格模型（当前模型为点云/非网格）');
     return;
   }
   try {
+    const { PLYExporter } = await import('three/addons/exporters/PLYExporter.js');
     const exporter = new PLYExporter();
     const arrayBuffer = exporter.parse(currentModel, { binary: true });
     const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
@@ -1182,6 +1194,7 @@ function exportPLY() {
 
 async function exportGLTF() {
   if (!currentModel) return;
+  const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
   const exporter = new GLTFExporter();
   try {
     const result = await new Promise((resolve, reject) => {
@@ -1206,6 +1219,7 @@ async function exportUSDZ() {
     return;
   }
   try {
+    const { USDZExporter } = await import('three/addons/exporters/USDZExporter.js');
     const exporter = new USDZExporter();
     const arrayBuffer = await exporter.parse(currentModel);
     const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
@@ -1348,7 +1362,7 @@ document.addEventListener('paste', (e) => {
 
 // Touch handling for viewport (prevent scroll when interacting with 3D)
 viewport.addEventListener('touchstart', (e) => {
-  if (e.target === renderer.domElement || viewport.contains(e.target)) {
+  if ((renderer && e.target === renderer.domElement) || viewport.contains(e.target)) {
     e.preventDefault();
   }
 }, { passive: false });
@@ -1373,8 +1387,12 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-animate();
-resizeViewport();
+let animationStarted = false;
+function startAnimation() {
+  if (animationStarted) return;
+  animationStarted = true;
+  animate();
+}
 
 // ─── Restore model from IndexedDB on page load ──
 // sessionStorage survives refresh but is cleared when tab/window is closed
@@ -1390,7 +1408,9 @@ resizeViewport();
   const savedFile = await dbGetFile();
   if (savedFile && savedFile.name) {
     console.log('[3D Viewer] Restoring saved model:', savedFile.name);
-    loadFile(savedFile);
+    setTimeout(() => {
+      loadFile(savedFile);
+    }, 500);
   }
 })();
 
@@ -1421,11 +1441,12 @@ document.addEventListener('keydown', (e) => {
 
 // ─── Page lifecycle ──────────────────────────
 window.addEventListener('beforeunload', () => {
-  renderer.dispose();
+  if (renderer) renderer.dispose();
 });
 
 // Pause render loop when tab is hidden to save resources
 document.addEventListener('visibilitychange', () => {
+  if (!controls) return;
   if (document.hidden) {
     controls.autoRotate = false;
   } else {
