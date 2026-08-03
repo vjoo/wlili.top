@@ -73,6 +73,8 @@
 .btn-danger { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--bg-white); color:var(--danger); border:1px solid rgba(255,59,48,0.3); border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
 .btn-danger:hover { background:var(--danger-bg); border-color:var(--danger); }
 .btn-sm { padding:5px 12px; font-size:13px; }
+.btn-icon-sm { width:28px; height:28px; border-radius:6px; border:1px solid var(--border-light); background:var(--fill-white); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); transition:all 0.2s; flex-shrink:0; }
+.btn-icon-sm:hover { background:var(--bg-hover); color:var(--danger); border-color:var(--danger); }
 .btn-icon { width:30px; height:30px; border:1px solid var(--border-color); border-radius:var(--radius-sm); background:var(--bg-white); color:var(--text-secondary); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; }
 .btn-icon:hover { border-color:var(--text-muted); color:var(--text-primary); }
 .btn-icon svg { width:15px; height:15px; }
@@ -167,9 +169,12 @@
 .gen-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
 .gen-toolbar-info { font-size:13px; color:var(--text-muted); flex:1; min-width:200px; }
 .gen-layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:stretch; }
-.gen-col-output { position:sticky; top:70px; display:flex; flex-direction:column; }
-.gen-col-output > .gen-section { flex:1; display:flex; flex-direction:column; }
-.gen-col-output > .gen-section > .gen-section-body { flex:1; display:flex; flex-direction:column; }
+.gen-col-left { display:flex; flex-direction:column; }
+.gen-col-left > .gen-section:first-child { flex:1; display:flex; flex-direction:column; min-height:0; }
+.gen-col-left > .gen-section:first-child > .gen-section-body { flex:1; overflow-y:auto; min-height:0; }
+.gen-col-output { position:sticky; top:70px; max-height:calc(100vh - 90px); display:flex; flex-direction:column; }
+.gen-col-output > .gen-section:last-child { flex:1; display:flex; flex-direction:column; min-height:0; }
+.gen-col-output > .gen-section:last-child > .gen-section-body { flex:1; display:flex; flex-direction:column; min-height:0; }
 .prompt-output-empty { flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:13px; text-align:center; }
 .gen-section { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; }
 .gen-section-header { padding:12px 16px; min-height:48px; box-sizing:border-box; border-bottom:1px solid var(--border-light); font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; transition:background 0.15s; }
@@ -212,12 +217,13 @@
 
 /* Palette */
 .palette-list { display:flex; flex-direction:column; gap:10px; }
+.palette-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-height:280px; overflow-y:auto; }
 .palette-card { border:1px solid var(--border-color); border-radius:var(--radius-md); overflow:hidden; cursor:pointer; transition:all 0.2s; padding:0; }
 .palette-card:hover { border-color:var(--accent); }
 .palette-card.selected { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
 .palette-card-top { padding:8px; }
-.palette-card-swatches { display:grid; grid-template-columns:repeat(5,1fr); gap:3px; }
-.palette-card-swatch { aspect-ratio:1; border-radius:4px; border:1px solid rgba(0,0,0,0.06); }
+.palette-card-swatches { display:flex; gap:3px; }
+.palette-card-swatch { flex:1; aspect-ratio:1; border-radius:4px; border:1px solid rgba(0,0,0,0.06); }
 .palette-card-body { padding:8px 10px; }
 .palette-name { font-size:13px; font-weight:600; margin-bottom:2px; }
 .palette-colors { display:flex; gap:4px; align-items:center; }
@@ -232,10 +238,13 @@
 .psc-hero { position:relative; padding:14px; }
 .psc-swatches { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
 .psc-swatch { aspect-ratio:1; border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04); }
-.psc-swatch-actions { grid-column:3; display:flex; gap:4px; align-items:center; justify-content:flex-end; }
+/* Hover actions — top-right, same pattern as dashboard cards */
+.psc-card-actions { position:absolute; top:8px; right:8px; display:flex; gap:5px; opacity:0; transform:translateY(-4px); transition:opacity 0.25s,transform 0.25s; z-index:2; }
+.psc-card:hover .psc-card-actions { opacity:1; transform:translateY(0); }
 .psc-action-btn { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.9); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:all 0.2s; backdrop-filter:blur(8px); box-shadow:0 2px 8px rgba(0,0,0,0.12); }
 .psc-action-btn:hover { background:#fff; color:var(--accent); transform:scale(1.08); }
 .psc-action-btn.danger:hover { color:var(--danger); }
+.psc-badge-default { position:absolute; top:8px; left:8px; font-size:10px; padding:2px 7px; border-radius:10px; background:rgba(124,92,252,0.1); color:var(--accent); font-weight:600; z-index:1; }
 .psc-action-btn svg { width:14px; height:14px; }
 .psc-info { padding:12px 14px; border-top:1px solid var(--border-light); }
 .psc-name { font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
@@ -262,7 +271,6 @@
 /* Config Panel */
 .config-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
 .config-field-label { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
-.palette-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .prompt-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
 .platform-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; text-decoration:none; border:1px solid var(--border-color); }
 .platform-btn:hover { transform:translateY(-1px); box-shadow:var(--shadow-sm); }
@@ -426,7 +434,10 @@
 /* Responsive */
 @media (max-width:1200px) {
     .gen-layout { grid-template-columns:1fr; }
-    .gen-col-output { position:static; }
+    .gen-col-left { display:block; }
+    .gen-col-left > .gen-section:first-child { flex:0 0 auto; }
+    .gen-col-left > .gen-section:first-child > .gen-section-body { overflow:visible; }
+    .gen-col-output { position:static; max-height:none; }
     .gen-col-output > .gen-section { flex:0 0 auto; }
     .gen-col-output > .gen-section > .gen-section-body { flex:0 0 auto; }
     .dash-layout { grid-template-columns:1fr; }
@@ -528,7 +539,7 @@
         version: 'seamless_data_version',
         genState: 'seamless_gen_state'
     };
-    const DATA_VERSION = 'v5';
+    const DATA_VERSION = 'v6';
 
     const DEFAULT_ELEMENTS = {
         subjects: [
@@ -560,7 +571,38 @@
         { id:'p1', name:'奶油马卡龙', bgColor:'#FFF9EF', colors:['#F8C8CD','#FBE2B9','#F9D3B8','#C9E8D8','#C6E2F2'], lineColor:'#444444', desc:'浅蜜桃粉、奶杏黄、柔橘、薄荷绿、晴空蓝' },
         { id:'p2', name:'莫兰迪灰调', bgColor:'#F5F3F0', colors:['#C5B8A5','#D4C5B0','#B5C4B1','#A8B5C4','#C4B5B5'], lineColor:'#555555', desc:'低饱和灰调，温柔高级感' },
         { id:'p3', name:'森林清新', bgColor:'#F5F9F5', colors:['#A8D5BA','#C5E1A5','#B2DFDB','#DCEDC8','#A5D6A7'], lineColor:'#3E5C3E', desc:'清新自然，绿意盎然' },
-        { id:'p4', name:'蜜桃奶油', bgColor:'#FFF5F0', colors:['#FFD0D0','#FFE0B2','#FFCCBC','#F8BBD0','#FFCDD2'], lineColor:'#5D4037', desc:'甜美柔和，粉嫩可爱' }
+        { id:'p4', name:'蜜桃奶油', bgColor:'#FFF5F0', colors:['#FFD0D0','#FFE0B2','#FFCCBC','#F8BBD0','#FFCDD2'], lineColor:'#5D4037', desc:'甜美柔和，粉嫩可爱' },
+        // p5-p34: 来源于小红书博主「鹅鹅鹅～」的真实色值，非编造数据
+        { id:'p5', name:'莫兰迪色系', bgColor:'#F8F8F8', colors:['#D3C8B5','#B79D81','#E2C87D','#A2A65B','#04416D'], lineColor:'#333333', desc:'' },
+        { id:'p6', name:'暖杏奶油色卡', bgColor:'#F8F8F8', colors:['#F0CDDA','#FBEBCB','#FCE6AC','#FAC484'], lineColor:'#333333', desc:'' },
+        { id:'p7', name:'裸棕渐变色系', bgColor:'#F8F8F8', colors:['#EADDD5','#D2C1B0','#D2B49A','#9D6F57'], lineColor:'#333333', desc:'' },
+        { id:'p8', name:'暖色系氛围感', bgColor:'#F8F8F8', colors:['#DFCBB0','#F2D698','#E0BB52','#B18F6A'], lineColor:'#333333', desc:'' },
+        { id:'p9', name:'夏日海岸色', bgColor:'#F8F8F8', colors:['#D6D0C4','#AFC9D4','#E2B947','#81A4B7'], lineColor:'#333333', desc:'' },
+        { id:'p10', name:'绿野仙踪色系', bgColor:'#F8F8F8', colors:['#E7DED3','#D5BDA5','#AF957A','#6A836E'], lineColor:'#333333', desc:'' },
+        { id:'p11', name:'雾霾蓝调氛围感', bgColor:'#F8F8F8', colors:['#E3EDE8','#C8C1B9','#223D5F','#C1D5E0'], lineColor:'#333333', desc:'' },
+        { id:'p12', name:'紫色系氛围感', bgColor:'#F8F8F8', colors:['#CEC3E5','#AC84B8','#C5AAD5','#9A90B9'], lineColor:'#333333', desc:'' },
+        { id:'p13', name:'橘子海色系', bgColor:'#F8F8F8', colors:['#F4E2CE','#F3C38C','#D46301','#247A90'], lineColor:'#333333', desc:'' },
+        { id:'p14', name:'海盐黄蓝调', bgColor:'#F8F8F8', colors:['#E3DEC5','#8DBCC2','#FDE89E','#F1CC17'], lineColor:'#333333', desc:'' },
+        { id:'p15', name:'奶蓝湖水调', bgColor:'#F8F8F8', colors:['#BACDD3','#92B7CA','#62A5D4','#3D8BAD'], lineColor:'#333333', desc:'' },
+        { id:'p16', name:'松弛感治愈配色', bgColor:'#F8F8F8', colors:['#DDD5C8','#F2D479','#83B7CC','#488299'], lineColor:'#333333', desc:'' },
+        { id:'p17', name:'雾感大地色系·暖棕', bgColor:'#F8F8F8', colors:['#CBC6C2','#B4A393','#D9C37F','#B19780'], lineColor:'#333333', desc:'' },
+        { id:'p18', name:'雾感大地色系·蓝绿', bgColor:'#F8F8F8', colors:['#84CDD6','#8EBACC','#E6C079','#6989A0'], lineColor:'#333333', desc:'' },
+        { id:'p19', name:'雾感大地色系·陶土', bgColor:'#F8F8F8', colors:['#D7C7AF','#D3B684','#DBBA72','#AA7C4B'], lineColor:'#333333', desc:'' },
+        { id:'p20', name:'温柔系神仙配色', bgColor:'#F8F8F8', colors:['#F4CECD','#EED95C','#EAB5B4','#537F9D'], lineColor:'#333333', desc:'' },
+        { id:'p21', name:'雾面高级灰', bgColor:'#F8F8F8', colors:['#D8D2CE','#C6BFB8','#B0A9A2','#8F8882'], lineColor:'#333333', desc:'' },
+        { id:'p22', name:'低饱和莫兰迪', bgColor:'#F8F8F8', colors:['#B8C3D1','#9DB0C5','#8A9FB0','#74859A'], lineColor:'#333333', desc:'' },
+        { id:'p23', name:'耐看莫兰迪色卡', bgColor:'#F8F8F8', colors:['#E3D5CA','#D4C4B8','#C5B3A7','#B5A296'], lineColor:'#333333', desc:'' },
+        { id:'p24', name:'莫兰迪柔色', bgColor:'#F8F8F8', colors:['#D6C6B8','#C7B7A9','#B8A89A','#A9998B'], lineColor:'#333333', desc:'' },
+        { id:'p25', name:'低饱和大地色', bgColor:'#F8F8F8', colors:['#A69484','#8C796A','#725F50'], lineColor:'#333333', desc:'' },
+        { id:'p26', name:'暖棕大地色', bgColor:'#F8F8F8', colors:['#C9B09A','#B09178','#96735A','#7B553C'], lineColor:'#333333', desc:'' },
+        { id:'p27', name:'莫兰迪渐变色', bgColor:'#F8F8F8', colors:['#E5C9C8','#C8909B','#A66773','#7B4449'], lineColor:'#333333', desc:'' },
+        { id:'p28', name:'松弛感治愈指南', bgColor:'#F8F8F8', colors:['#F7E0B9','#F9DE96','#E88F4E','#D15E36'], lineColor:'#333333', desc:'' },
+        { id:'p29', name:'摄影色彩世界', bgColor:'#F8F8F8', colors:['#769C9D','#A36D24','#99150E','#3D6354'], lineColor:'#333333', desc:'' },
+        { id:'p30', name:'海边浪漫色', bgColor:'#F8F8F8', colors:['#DDCABC','#E8BA52','#AED1D7','#87A5AD'], lineColor:'#333333', desc:'' },
+        { id:'p31', name:'插画海报配色', bgColor:'#F8F8F8', colors:['#9ECE9E','#9CC76B','#47B590','#14783A'], lineColor:'#333333', desc:'' },
+        { id:'p32', name:'多巴胺配色', bgColor:'#F8F8F8', colors:['#ADCFAF','#31806C','#CBD693'], lineColor:'#333333', desc:'' },
+        { id:'p33', name:'夏日氛围感', bgColor:'#F8F8F8', colors:['#6298C7','#FFE558','#3B82B2'], lineColor:'#333333', desc:'' },
+        { id:'p34', name:'电影海报撞色', bgColor:'#F8F8F8', colors:['#7CB2A5','#CBD893','#C52526'], lineColor:'#333333', desc:'' }
     ];
 
     const LAYOUTS = [
@@ -590,7 +632,7 @@
           subjectPool:['简约兔子头像','简约小熊头像','简约猫咪头像','小海豹','星光小鹿','云朵猫'],
           decorationPool:['简约云朵','弯月牙','四角闪光星','五角星','星星灯串','小圆波点','爱心','弧形灯串线','星球小环'],
           outfitPool:['穿魔法师长袍','穿小斗篷','拿魔法棒','戴星星发夹','架小眼镜','闭眼微笑','托腮发呆'],
-          paletteId:'p1', layoutIndex:3, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
+          paletteId:'p11', layoutIndex:3, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
         { name:'森林童话', emoji:'🌲', desc:'森林动物，自然秘境',
           subjectPool:['软萌坐姿小熊','小鹿','小恐龙','圆头小青蛙','小狐狸'],
           decorationPool:['蘑菇','嫩叶','三叶草','简笔画小花','小鱼','胡萝卜','小雏菊'],
@@ -600,7 +642,7 @@
           subjectPool:['圆脸小白猫咪','小鸭','企鹅','小鸡','彩虹小鱼'],
           decorationPool:['草莓','水蜜桃','香蕉','苹果','青提','橙子','樱桃','梨子','小圆珠链条'],
           outfitPool:['穿泳装','戴草帽','戴小蓝帽','拿冰淇淋','戴花朵草编帽','系围巾','睁大眼睛好奇','张开双臂','跳舞旋转'],
-          paletteId:'p1', layoutIndex:1, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
+          paletteId:'p14', layoutIndex:1, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
         { name:'温暖冬日', emoji:'☕', desc:'温馨冬日，暖意融融',
           subjectPool:['软萌坐姿小熊','坐立垂耳白兔','小仓鼠','小羊崽'],
           decorationPool:['吐司面包','牛奶盒','冰淇淋','小饼干','波浪拉旗','小圆珠链条','爱心'],
@@ -610,27 +652,27 @@
           subjectPool:['简约兔子头像','简约小熊头像','简约猫咪头像','云朵兔','云朵熊'],
           decorationPool:['爱心','小圆波点','四角闪光星','嫩叶','细绳挂饰','简笔画小花','弧形灯串线'],
           outfitPool:[],
-          paletteId:'p2', layoutIndex:1, subjectRange:[1,2], decoRange:[2,4], outfitRange:[0,0] },
+          paletteId:'p21', layoutIndex:1, subjectRange:[1,2], decoRange:[2,4], outfitRange:[0,0] },
         { name:'田园牧歌', emoji:'🌾', desc:'农场田园，质朴自然',
           subjectPool:['小鸡','小鸭','小猪崽','柯基小狗','小羊崽'],
           decorationPool:['胡萝卜','蘑菇','小雏菊','嫩叶','信封','小帐篷','三叶草'],
           outfitPool:['穿围裙','戴草帽','戴小蘑菇帽','拿小铲子','穿背带裤','戴花朵草编帽','蹲坐抱蛋','蹲坐抱膝','吹口哨','摔倒坐地'],
-          paletteId:'p3', layoutIndex:0, subjectRange:[2,3], decoRange:[3,5], outfitRange:[2,3] },
+          paletteId:'p10', layoutIndex:0, subjectRange:[2,3], decoRange:[3,5], outfitRange:[2,3] },
         { name:'海洋清凉', emoji:'🌊', desc:'海洋蓝调，清凉一夏',
           subjectPool:['企鹅','小海豹','小鸭','圆头小青蛙'],
           decorationPool:['小鱼','小彩虹','简约云朵','四角闪光星','冰淇淋','气球'],
           outfitPool:['穿泳装','戴渔夫帽','戴小蓝帽','拿冰淇淋','拿小相机','架小眼镜','张开双臂','举爪打招呼','挥手打招呼'],
-          paletteId:'p1', layoutIndex:3, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
+          paletteId:'p15', layoutIndex:3, subjectRange:[1,2], decoRange:[3,5], outfitRange:[1,3] },
         { name:'童趣游乐', emoji:'🎪', desc:'童趣活泼，欢乐游乐',
           subjectPool:['小恐龙','柯基小狗','圆头小青蛙','小猪崽','小鸡'],
           decorationPool:['气球','糖果','小帐篷','小彩虹','波浪拉旗','星星灯串','冰淇淋','弧形灯串线'],
           outfitPool:['穿运动套装','戴兔耳发箍','戴小蓝帽','拿气球','拿篮球','穿校服','穿小斗篷','叉腰自信','举爪打招呼','跳舞旋转','摔倒坐地'],
-          paletteId:'p4', layoutIndex:2, subjectRange:[2,3], decoRange:[4,6], outfitRange:[2,4] },
+          paletteId:'p20', layoutIndex:2, subjectRange:[2,3], decoRange:[4,6], outfitRange:[2,4] },
         { name:'云端梦境', emoji:'☁️', desc:'融合角色，梦幻漂浮',
           subjectPool:['云朵兔','云朵熊','云朵猫','棉花糖小兔','星光小鹿','花瓣猫咪','彩虹小鱼'],
           decorationPool:['简约云朵','四角闪光星','弧形灯串线','曲线彩带','小彩虹','星星灯串','星球小环','弯月牙','小圆波点'],
           outfitPool:['穿小斗篷','戴星星发夹','拿魔法棒','戴花环头饰','闭眼微笑','托腮发呆','跳舞旋转','张开双臂'],
-          paletteId:'p1', layoutIndex:3, subjectRange:[2,3], decoRange:[4,6], outfitRange:[1,3] }
+          paletteId:'p12', layoutIndex:3, subjectRange:[2,3], decoRange:[4,6], outfitRange:[1,3] }
     ];
 
     const PLATFORMS = {
@@ -680,17 +722,52 @@
     function initData() {
         var ver = localStorage.getItem(STORAGE_KEYS.version);
         if (ver !== DATA_VERSION) {
-            // v5: 新增融合角色系列、线条挂件元素、云端梦境主题，更新智能搭配池
+            // v6: 替换色板为小红书博主「鹅鹅鹅～」的真实色值数据
             saveObject(STORAGE_KEYS.elements, DEFAULT_ELEMENTS);
-            if (!localStorage.getItem(STORAGE_KEYS.palettes)) saveData(STORAGE_KEYS.palettes, DEFAULT_PALETTES);
+            replaceDefaultPalettes();
             localStorage.setItem(STORAGE_KEYS.version, DATA_VERSION);
         }
+        // 迁移：补充新增的默认色板（已有用户）
+        migratePalettes();
+    }
+
+    // v6: 用新的真实色板数据替换旧的编造色板
+    function replaceDefaultPalettes() {
+        var existing = loadData(STORAGE_KEYS.palettes);
+        if (!existing || existing.length === 0) {
+            saveData(STORAGE_KEYS.palettes, DEFAULT_PALETTES);
+            return;
+        }
+        // 保留用户自建的色板（ID不在DEFAULT_PALETTES中的）
+        var defaultIds = DEFAULT_PALETTES.map(function(p){ return p.id; });
+        var userPalettes = existing.filter(function(p) {
+            return defaultIds.indexOf(p.id) === -1;
+        });
+        // 用新的默认色板替换所有旧默认色板
+        saveData(STORAGE_KEYS.palettes, DEFAULT_PALETTES.concat(userPalettes));
+    }
+
+    // 补充缺失的默认色板
+    function migratePalettes() {
+        var existing = getPalettes();
+        if (!existing) { saveData(STORAGE_KEYS.palettes, DEFAULT_PALETTES); return; }
+        var existingIds = existing.map(function(p){ return p.id; });
+        var changed = false;
+        DEFAULT_PALETTES.forEach(function(dp) {
+            if (existingIds.indexOf(dp.id) === -1) {
+                existing.push(dp);
+                changed = true;
+            }
+        });
+        if (changed) saveData(STORAGE_KEYS.palettes, existing);
     }
 
     // ============================================
     // 工具函数
     // ============================================
     function genId(prefix) { return prefix + '-' + Date.now().toString(36) + Math.random().toString(36).substr(2,4); }
+    // 判断是否为基础色板（DEFAULT_PALETTES 中的，不可删除）
+    function isDefaultPalette(id) { return DEFAULT_PALETTES.some(function(p){ return p.id === id; }); }
     function formatDate(d) { if(!d) return '-'; var dt = new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
     function formatMoney(n) { return '¥' + (n||0).toLocaleString('zh-CN'); }
     function escapeHtml(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1146,7 +1223,7 @@
             // 2列布局
             html += '<div class="gen-layout">';
             // ===== 列1：元素选择(Tab) + 参数配置 =====
-            html += '<div>';
+            html += '<div class="gen-col-left">';
             // 卡片1：元素选择（Tab切换主体/装饰）
             html += '<div class="gen-section" data-section="elements" style="margin-bottom:16px;">';
             html += '<div class="gen-tabs">';
@@ -1196,7 +1273,7 @@
                 });
             }
             html += '</div></div>';
-            // 卡片2：参数配置（风格+布局并排，色板网格）
+            // 卡片2：参数配置（风格+布局）
             html += '<div class="gen-section" data-section="config">';
             html += '<div class="gen-section-header" style="cursor:default;">参数配置</div>';
             html += '<div class="gen-section-body">';
@@ -1208,7 +1285,15 @@
             LAYOUTS.forEach(function(l,i) { html += '<option value="'+i+'" '+(s.layoutIndex===i?'selected':'')+'>'+escapeHtml(l)+'</option>'; });
             html += '</select></div>';
             html += '</div>';
-            html += '<div class="config-field-label">色板</div>';
+            html += '</div></div>';
+            html += '</div>';
+
+            // ===== 列2：色板选择 + 提示词输出 =====
+            html += '<div class="gen-col-output">';
+            // 色板选择
+            html += '<div class="gen-section" data-section="palette" style="margin-bottom:16px;flex-shrink:0;">';
+            html += '<div class="gen-section-header" style="cursor:default;">色板选择</div>';
+            html += '<div class="gen-section-body">';
             html += '<div class="palette-grid">';
             palettes.forEach(function(pal) {
                 var sel = s.paletteId === pal.id;
@@ -1226,10 +1311,6 @@
             });
             html += '</div>';
             html += '</div></div>';
-            html += '</div>';
-
-            // ===== 列2：提示词输出 =====
-            html += '<div class="gen-col-output">';
             var prompt = this.buildPrompt();
             if (prompt) {
                 // 重复检查
@@ -1603,7 +1684,7 @@
 
             p += '单位纹样四边边缘无缝对接：超出上边界的元素从下边对应位置完整延续，超出左边界的元素从右边对应位置完整延续，确保任意位置裁切均可无缝拼接。';
             p += '相同元素在不同位置作旋转和镜像变化，方向多样不统一，避免排列呆板。';
-            p += '底色奶油白 '+pal.bgColor+'，严格限定图案仅使用5种色彩：'+colorList+'，柔和深灰 '+pal.lineColor+' 纤细轮廓线。禁止生成色板以外任何颜色。';
+            p += '底色奶油白 '+pal.bgColor+'，严格限定图案仅使用'+pal.colors.length+'种色彩：'+colorList+'，柔和深灰 '+pal.lineColor+' 纤细轮廓线。禁止生成色板以外任何颜色。';
             p += '三层明度秩序：大面积中间明度色彩，高明度亮色作为主体视觉，少量低明度色彩点缀；饱和度控制20~48，禁止高饱和荧光色。暖色为主，少量薄荷蓝平衡色调。';
             p += '所有元素造型全部圆润无尖角，平滑曲线，五官简化为豆豆眼加弧线小嘴，幼态软萌。';
             p += '干净iPad矢量平涂，顺滑闭合线条，无纸张纹理、无笔触噪点、无渐变、无阴影、无肌理杂色，纯色平整色块，适合AI矢量描摹、数码印花应用。';
@@ -1788,23 +1869,47 @@
         // ===== 色板管理 =====
         renderPalettes: function() {
             var palettes = getPalettes();
-            var html = '<div class="filter-bar"><span style="font-size:13px;font-weight:600;color:var(--text-primary);">色板管理</span><span style="font-size:12px;color:var(--text-muted);margin-left:auto;">共 '+palettes.length+' 个色板</span><button class="btn-primary btn-sm" onclick="app.openPaletteModal(null)">+ 新增色板</button></div>';
+            var searchKw = this._paletteSearch || '';
+            var filtered = palettes;
+            if (searchKw) {
+                var kw = searchKw.toLowerCase();
+                filtered = palettes.filter(function(pal) {
+                    if (pal.name.toLowerCase().indexOf(kw) >= 0) return true;
+                    if (pal.desc && pal.desc.toLowerCase().indexOf(kw) >= 0) return true;
+                    if (pal.bgColor.toLowerCase().indexOf(kw) >= 0) return true;
+                    if (pal.lineColor.toLowerCase().indexOf(kw) >= 0) return true;
+                    return pal.colors.some(function(c){ return c.toLowerCase().indexOf(kw) >= 0; });
+                });
+            }
+            var html = '<div class="filter-bar"><span style="font-size:13px;font-weight:600;color:var(--text-primary);">色板管理</span>';
+            html += '<input class="form-input" id="paletteSearchInput" style="width:200px;height:32px;font-size:13px;" placeholder="搜索色板名称或色值…" value="'+escapeHtml(searchKw)+'" oninput="app._onPaletteSearch(this.value)">';
+            html += '<span style="font-size:12px;color:var(--text-muted);margin-left:auto;">共 '+filtered.length+' 个色板</span>';
+            html += '<button class="btn-primary btn-sm" onclick="app.openPaletteModal(null)">+ 新增色板</button>';
+            html += '</div>';
             if (palettes.length === 0) {
                 return html + '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg><div class="empty-state-text">暂无色板，点击右上角新增</div></div>';
             }
+            if (filtered.length === 0) {
+                return html + '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><div class="empty-state-text">未找到匹配「'+escapeHtml(searchKw)+'」的色板</div></div>';
+            }
             html += '<div class="psc-grid">';
-            palettes.forEach(function(pal) {
+            filtered.forEach(function(pal) {
+                var isDefault = isDefaultPalette(pal.id);
                 html += '<div class="psc-card" onclick="app.openPaletteModal(\''+pal.id+'\')">';
-                // 顶部色卡展示区：bgColor 为背景，2行3列网格
+                // 右上角 hover 操作按钮
+                html += '<div class="psc-card-actions">';
+                html += '<button class="psc-action-btn" title="编辑" onclick="event.stopPropagation();app.openPaletteModal(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+                if (!isDefault) {
+                    html += '<button class="psc-action-btn danger" title="删除" onclick="event.stopPropagation();app.deletePalette(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+                }
+                html += '</div>';
+                // 基础色板标记
+                if (isDefault) html += '<span class="psc-badge-default">基础</span>';
+                // 顶部色卡展示区
                 html += '<div class="psc-hero" style="background:'+pal.bgColor+';">';
                 html += '<div class="psc-swatches">';
-                // 5 个色块
+                // 色块（数量可变）
                 pal.colors.forEach(function(c){ html += '<div class="psc-swatch" style="background:'+c+';"></div>'; });
-                // 第6格放操作按钮
-                html += '<div class="psc-swatch-actions">';
-                html += '<button class="psc-action-btn" title="编辑" onclick="event.stopPropagation();app.openPaletteModal(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
-                html += '<button class="psc-action-btn danger" title="删除" onclick="event.stopPropagation();app.deletePalette(\''+pal.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
-                html += '</div>';
                 html += '</div>';
                 html += '</div>';
                 // 底部信息区
@@ -2446,9 +2551,12 @@
             var defaultColors = ['#F8C8CD','#FBE2B9','#F9D3B8','#C9E8D8','#C6E2F2'];
             var curColors = p ? p.colors : defaultColors;
 
-            var html = '<div class="modal-header"><span class="modal-title">'+(p?'编辑色板':'新增色板')+'</span><button class="modal-close" onclick="app.closeModal()">×</button></div>';
+            var isEditingDefault = p && isDefaultPalette(p.id);
+            var titleText = (!p || isEditingDefault) ? (isEditingDefault ? '编辑基础色板' : '新增色板') : '编辑色板';
+            var nameVal = isEditingDefault ? (p.name + ' 副本') : (p ? p.name : '');
+            var html = '<div class="modal-header"><span class="modal-title">'+titleText+'</span><button class="modal-close" onclick="app.closeModal()">×</button></div>';
             html += '<div class="modal-body">';
-            html += '<div class="form-group"><label class="form-label">色板名称 <span class="req">*</span></label><input class="form-input" id="pl_name" value="'+escapeHtml(p?p.name:'')+'" placeholder="如：奶油马卡龙"></div>';
+            html += '<div class="form-group"><label class="form-label">色板名称 <span class="req">*</span></label><input class="form-input" id="pl_name" value="'+escapeHtml(nameVal)+'" placeholder="如：奶油马卡龙"></div>';
 
             // 底色
             var bgColor = p ? p.bgColor : '#FFF9EF';
@@ -2458,18 +2566,24 @@
             html += '<span class="cmyk-warn" id="pl_bg_cmyk" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="warn-tooltip"></span></span>';
             html += '</div></div>';
 
-            // 5种色彩
-            html += '<div class="form-group"><label class="form-label">5种色彩（色名自动生成，色值改变时同步更新）</label>';
-            for (var i = 0; i < 5; i++) {
-                var cv = curColors[i] || defaultColors[i];
+            // 色彩（支持可变数量，3-8个）
+            var numColors = Math.max(3, Math.min(8, curColors.length || 5));
+            this._numColors = numColors;
+            html += '<div class="form-group"><label class="form-label">色彩 <span style="font-weight:400;color:var(--text-muted);font-size:12px;">（色名自动生成，色值改变时同步更新）</span></label>';
+            html += '<div id="pl_color_list">';
+            for (var i = 0; i < numColors; i++) {
+                var cv = curColors[i] || defaultColors[i % defaultColors.length];
                 var cn = hexToColorName(cv);
-                html += '<div class="color-picker-row" style="margin-bottom:6px;">';
+                html += '<div class="color-picker-row" style="margin-bottom:6px;" id="pl_color_row_'+i+'">';
                 html += '<div class="color-swatch" id="pl_color_swatch_'+i+'" style="background:'+cv+';"><input type="color" id="pl_color_color_'+i+'" value="'+cv+'" oninput="app._onColorPick('+i+', this.value)"></div>';
                 html += '<input class="form-input color-hex-input" id="pl_color_text_'+i+'" value="'+cv+'" placeholder="#000000" oninput="app._onHexInput('+i+', this.value)">';
                 html += '<span class="color-name-label" id="pl_color_name_'+i+'">'+escapeHtml(cn)+'</span>';
                 html += '<span class="cmyk-warn" id="pl_color_cmyk_'+i+'" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="warn-tooltip"></span></span>';
+                html += '<button class="btn-icon-sm" title="删除此色" onclick="app._removeColor('+i+')" style="margin-left:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
                 html += '</div>';
             }
+            html += '</div>';
+            html += '<button class="btn-secondary btn-sm" onclick="app._addColor()" style="margin-top:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加颜色</button>';
             html += '</div>';
 
             // 线条色
@@ -2481,15 +2595,26 @@
             html += '</div></div>';
 
             html += '</div>';
-            html += '<div class="modal-footer"><button class="btn-secondary" onclick="app.closeModal()">取消</button><button class="btn-primary" onclick="app.savePalette('+(p?"'"+p.id+"'":'null')+')">保存</button></div>';
+            // 基础色板：不可覆盖，只能另存为新色板（isEditingDefault 在上方已定义）
+            var footerHtml = '<div class="modal-footer">';
+            if (isEditingDefault) {
+                footerHtml += '<span style="font-size:12px;color:var(--text-muted);margin-right:auto;">基础色板不可修改，修改后将另存为新色板</span>';
+                footerHtml += '<button class="btn-secondary" onclick="app.closeModal()">取消</button>';
+                footerHtml += '<button class="btn-primary" onclick="app.savePalette(null, true)">另存为新色板</button>';
+            } else {
+                footerHtml += '<button class="btn-secondary" onclick="app.closeModal()">取消</button>';
+                footerHtml += '<button class="btn-primary" onclick="app.savePalette('+(p?"'"+p.id+"'":'null')+')">保存</button>';
+            }
+            footerHtml += '</div>';
+            html += footerHtml;
             document.getElementById('modal').className = 'modal';
             document.getElementById('modal').innerHTML = html;
             document.getElementById('modalOverlay').classList.add('active');
 
             // 初始化 CMYK 色域警告
             this._updateCmykWarn('bg', bgColor);
-            for (var k = 0; k < 5; k++) {
-                this._updateCmykWarn(k, curColors[k] || defaultColors[k]);
+            for (var k = 0; k < numColors; k++) {
+                this._updateCmykWarn(k, curColors[k] || defaultColors[k % defaultColors.length]);
             }
             this._updateCmykWarn('line', lineColor);
         },
@@ -2562,17 +2687,51 @@
             document.getElementById('modalOverlay').classList.remove('active');
         },
 
-        savePalette: function(id) {
+        // 添加颜色行
+        _addColor: function() {
+            var list = document.getElementById('pl_color_list');
+            if (!list) return;
+            var rows = list.querySelectorAll('.color-picker-row');
+            var newIndex = rows.length;
+            if (newIndex >= 8) { showToast('最多8个颜色'); return; }
+            var cv = '#CCCCCC';
+            var cn = hexToColorName(cv);
+            var html = '<div class="color-picker-row" style="margin-bottom:6px;" id="pl_color_row_'+newIndex+'">';
+            html += '<div class="color-swatch" id="pl_color_swatch_'+newIndex+'" style="background:'+cv+';"><input type="color" id="pl_color_color_'+newIndex+'" value="'+cv+'" oninput="app._onColorPick('+newIndex+', this.value)"></div>';
+            html += '<input class="form-input color-hex-input" id="pl_color_text_'+newIndex+'" value="'+cv+'" placeholder="#000000" oninput="app._onHexInput('+newIndex+', this.value)">';
+            html += '<span class="color-name-label" id="pl_color_name_'+newIndex+'">'+escapeHtml(cn)+'</span>';
+            html += '<span class="cmyk-warn" id="pl_color_cmyk_'+newIndex+'" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="warn-tooltip"></span></span>';
+            html += '<button class="btn-icon-sm" title="删除此色" onclick="app._removeColor('+newIndex+')" style="margin-left:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+            html += '</div>';
+            list.insertAdjacentHTML('beforeend', html);
+            this._updateCmykWarn(newIndex, cv);
+        },
+
+        // 删除颜色行
+        _removeColor: function(index) {
+            var list = document.getElementById('pl_color_list');
+            if (!list) return;
+            var rows = list.querySelectorAll('.color-picker-row');
+            if (rows.length <= 3) { showToast('至少保留3个颜色'); return; }
+            var row = document.getElementById('pl_color_row_'+index);
+            if (row) row.remove();
+        },
+
+        savePalette: function(id, asNew) {
             var name = document.getElementById('pl_name').value.trim();
             if (!name) { showToast('请输入色板名称'); return; }
             var colors = [];
-            for (var i = 0; i < 5; i++) {
+            var i = 0;
+            while (document.getElementById('pl_color_text_'+i)) {
                 var v = document.getElementById('pl_color_text_'+i).value.trim();
                 if (v) colors.push(v);
+                i++;
             }
-            if (colors.length !== 5) { showToast('请填写5个色值'); return; }
+            if (colors.length < 3) { showToast('至少需要3个色值'); return; }
+            // asNew=true 或 id 为基础色板时，始终新增
+            var effectiveId = (asNew || (id && isDefaultPalette(id))) ? null : id;
             var palette = {
-                id: id || genId('p'),
+                id: effectiveId || genId('p'),
                 name: name,
                 bgColor: document.getElementById('pl_bg_text').value.trim(),
                 colors: colors,
@@ -2580,24 +2739,34 @@
                 desc: paletteAutoDesc(colors)
             };
             var palettes = getPalettes();
-            if (id) {
-                var idx = palettes.findIndex(function(p){ return p.id === id; });
+            if (effectiveId) {
+                var idx = palettes.findIndex(function(p){ return p.id === effectiveId; });
                 if (idx >= 0) palettes[idx] = palette;
             } else {
                 palettes.push(palette);
             }
             saveData(STORAGE_KEYS.palettes, palettes);
-            showToast(id ? '色板已更新' : '色板已添加');
+            showToast(effectiveId ? '色板已更新' : '新色板已添加');
             this.closeModal();
             this.render();
         },
 
         deletePalette: function(id) {
+            if (isDefaultPalette(id)) { showToast('基础色板不可删除'); return; }
             if (!confirm('确定删除此色板？')) return;
             var palettes = getPalettes().filter(function(p){ return p.id !== id; });
             saveData(STORAGE_KEYS.palettes, palettes);
             showToast('色板已删除');
             this.render();
+        },
+
+        _onPaletteSearch: function(val) {
+            this._paletteSearch = val;
+            // 只重渲色板区域，不丢失输入框焦点
+            var ca = document.getElementById('contentArea');
+            if (ca) ca.innerHTML = this.renderPalettes();
+            var input = document.getElementById('paletteSearchInput');
+            if (input) { input.focus(); input.setSelectionRange(val.length, val.length); }
         },
 
         // ===== 数据管理 =====
