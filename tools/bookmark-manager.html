@@ -1,0 +1,2733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data: https://s.wordpress.com https://www.google.com https://icons.duckduckgo.com https://favicon.im https://image.thum.io https://mini.s-shot.ru; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>书签管理器 - W.-Studio Tools</title>
+<link rel="stylesheet" href="common.css">
+<script src="nav.js"></script>
+<style>
+/* ============================================
+   WLi Bookmark Manager - 书签管理器
+   纯前端实现，数据存储在 localStorage
+   ============================================ */
+
+/* ===== Page Hero — Compact Header ===== */
+.page-hero {
+  padding: 16px 22px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.hero-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.page-hero h1 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+  white-space: nowrap;
+}
+.page-hero p {
+  font-size: 13px;
+  color: var(--ink-tertiary);
+  margin: 0;
+  white-space: nowrap;
+}
+.hero-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  max-width: 520px;
+  justify-content: flex-end;
+}
+
+/* ===== Search Box (in hero) ===== */
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+.search-box svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--ink-quaternary);
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  padding: 0 16px 0 42px;
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--bg-white);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-input:focus {
+  border-color: var(--link);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+.search-input::placeholder { color: var(--ink-quaternary); }
+
+/* ===== Buttons ===== */
+.btn-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: var(--fill-black);
+  color: var(--fill-white);
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+  height: 40px;
+  flex-shrink: 0;
+}
+.btn-new:hover { opacity: 0.85; }
+.btn-new:active { transform: scale(0.98); }
+.btn-new svg { width: 16px; height: 16px; }
+.btn-settings, .btn-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
+  color: var(--ink-secondary);
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+.btn-settings:hover, .btn-import:hover { border-color: var(--border); background: var(--bg); }
+.btn-settings:active, .btn-import:active { transform: scale(0.97); }
+.btn-new svg, .btn-settings svg, .btn-import svg { width: 16px; height: 16px; }
+.hero-right .search-box { flex: 1; max-width: 360px; }
+.hero-right .search-input { height: 36px; font-size: 14px; }
+.hero-right .btn-new { height: 36px; padding: 6px 16px; font-size: 13px; }
+.hero-right .btn-settings { width: 36px; height: 36px; }
+.hero-right .btn-import { height: 36px; padding: 6px 16px; font-size: 13px; }
+
+/* ===== Section ===== */
+.section { padding: 16px 0 80px; }
+.section-inner {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 22px;
+}
+
+/* ===== Category Filter — Horizontal Scroll ===== */
+.cat-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.category-filter {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  scroll-behavior: smooth;
+  flex: 1;
+  min-width: 0;
+}
+.category-filter::-webkit-scrollbar { display: none; }
+.cat-scroll-group {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  height: 32px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--bg-white);
+}
+.cat-scroll-btn {
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+.cat-scroll-btn:hover:not(.is-disabled) { color: var(--ink); background: var(--bg); }
+.cat-scroll-btn.is-disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+.cat-scroll-btn svg { width: 14px; height: 14px; }
+.cat-scroll-divider { width: 1px; background: var(--border-light); flex-shrink: 0; }
+.cat-pill {
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.cat-pill:hover { border-color: var(--border); background: var(--bg); }
+.cat-pill:active { transform: scale(0.96); }
+.cat-pill.active {
+  background: var(--fill-black);
+  color: var(--fill-white);
+  border-color: var(--fill-black);
+}
+.cat-pill .cat-count {
+  font-size: 11px;
+  opacity: 0.6;
+  font-weight: 600;
+}
+.cat-pill.is-pinned {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-white);
+  box-shadow: 4px 0 8px -4px rgba(0,0,0,0.06);
+}
+.cat-pill.is-pinned.active {
+  background: var(--fill-black);
+  color: var(--fill-white);
+  border-color: var(--fill-black);
+}
+
+/* ===== Tag Filter Bar ===== */
+.tag-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  min-height: 0;
+}
+.tag-filter-wrap.has-tags { min-height: 36px; }
+.tag-filter-label {
+  font-size: 12px;
+  color: var(--ink-quaternary);
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+.tag-filter-pill {
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
+  color: var(--ink-tertiary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tag-filter-pill:hover { border-color: var(--border); color: var(--ink-secondary); }
+.tag-filter-pill.active {
+  background: var(--link);
+  color: #fff;
+  border-color: var(--link);
+}
+
+/* ===== Bookmark Grid — CSS Grid ===== */
+.bookmark-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.bm-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation: cardFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  position: relative;
+}
+.bm-card:hover {
+  box-shadow: 0 12px 36px rgba(0,0,0,0.12);
+  transform: translateY(-4px);
+}
+.bm-card:active { transform: scale(0.99); }
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Card Cover */
+.bm-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: var(--bg);
+  overflow: hidden;
+}
+.bm-cover img.screenshot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.bm-card:hover .bm-cover img.screenshot { transform: scale(1.04); }
+.bm-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.bm-cover-placeholder img.favicon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: block;
+}
+.bm-cover-placeholder .favicon-text {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.bm-cover-placeholder .domain-text {
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+  font-weight: 500;
+}
+
+/* Loading shimmer */
+.bm-cover.loading::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 1.5s infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Bottom gradient overlay */
+.bm-cover-overlay {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+  padding: 24px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background 0.3s;
+}
+.bm-card:hover .bm-cover-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 60%, transparent 100%);
+}
+.bm-overlay-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bm-overlay-domain {
+  color: rgba(255,255,255,0.75);
+  font-size: 11px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Category badge top-left */
+.bm-cover-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.bm-badge {
+  font-size: 11px;
+  color: #fff;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+/* Action buttons top-right */
+.bm-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 2;
+}
+.bm-card:hover .bm-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+.bm-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-secondary);
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.bm-action-btn:hover { background: #fff; color: var(--link); transform: scale(1.08); }
+.bm-action-btn.is-danger:hover { color: var(--red); }
+.bm-action-btn svg { width: 15px; height: 15px; }
+
+/* Tags row below cover */
+.bm-info {
+  padding: 10px 12px 8px;
+}
+.bm-info-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+.bm-info-domain {
+  font-size: 12px;
+  color: var(--ink-quaternary);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bm-tags {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.bm-tag {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: 80px 22px;
+  color: var(--ink-quaternary);
+}
+.empty-state svg { width: 56px; height: 56px; opacity: 0.3; margin-bottom: 16px; }
+.empty-state h3 { font-size: 18px; font-weight: 600; color: var(--ink-tertiary); margin-bottom: 6px; }
+.empty-state p { font-size: 14px; margin-bottom: 20px; }
+.empty-state .btn-import { display: inline-flex; }
+
+/* ===== Floating Category Bar ===== */
+.floating-cat-bar {
+  position: fixed;
+  top: 48px;
+  left: 0;
+  right: 0;
+  z-index: var(--z-sticky);
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border-light);
+  padding: 8px 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.floating-cat-bar.is-visible { transform: translateY(0); }
+.floating-cat-bar .category-filter { flex: 1; min-width: 0; }
+.floating-cat-bar .cat-scroll-group { flex-shrink: 0; }
+
+/* ===== Back to Top ===== */
+.back-to-top {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(20px) scale(0.8);
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  z-index: var(--z-sticky);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.back-to-top.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.back-to-top:hover {
+  border-color: var(--border);
+  color: var(--ink);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  transform: translateY(-2px) scale(1);
+}
+.back-to-top:active { transform: scale(0.92); }
+.back-to-top svg { width: 20px; height: 20px; }
+
+/* ===== Edit Modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: var(--z-modal);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.is-visible { display: flex; animation: modalFadeIn 0.2s ease-out; }
+@keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-box {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: modalSlideUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 12px;
+}
+.modal-title { font-size: 18px; font-weight: 600; color: var(--ink); }
+.modal-close {
+  width: 30px; height: 30px;
+  border: none; background: transparent;
+  border-radius: 8px; cursor: pointer;
+  color: var(--ink-tertiary);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.modal-close:hover { background: var(--bg); color: var(--ink); }
+.modal-close svg { width: 18px; height: 18px; }
+.modal-body { padding: 0 24px 24px; }
+.modal-field { margin-bottom: 16px; }
+.modal-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.modal-field input, .modal-field textarea, .modal-field select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--bg-white);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.modal-field input:focus, .modal-field textarea:focus, .modal-field select:focus {
+  border-color: var(--link);
+}
+.modal-field textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+.modal-tags-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  min-height: 42px;
+  align-items: center;
+}
+.modal-tags-input:focus-within { border-color: var(--link); }
+.modal-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--bg);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+.modal-tag-chip button {
+  border: none; background: transparent; cursor: pointer;
+  color: var(--ink-quaternary); padding: 0;
+  display: flex; align-items: center;
+}
+.modal-tag-chip button:hover { color: var(--red); }
+.modal-tag-chip button svg { width: 12px; height: 12px; }
+.modal-tag-input {
+  border: none; background: transparent; outline: none;
+  font-size: 13px; font-family: inherit;
+  color: var(--ink); min-width: 80px; flex: 1;
+}
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 0 24px 20px;
+}
+.btn-modal {
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
+  color: var(--ink-secondary);
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-modal:hover { background: var(--bg); }
+.btn-modal.primary {
+  background: var(--fill-black);
+  color: var(--fill-white);
+  border-color: var(--fill-black);
+}
+.btn-modal.primary:hover { opacity: 0.88; }
+.btn-modal.danger {
+  color: var(--red);
+  border-color: rgba(255,59,48,0.3);
+}
+.btn-modal.danger:hover { background: rgba(255,59,48,0.06); border-color: var(--red); }
+
+/* ===== Data Settings Modal ===== */
+.modal-box.data-settings-box {
+  max-width: 440px;
+  text-align: left;
+  padding: 0;
+  overflow: hidden;
+}
+.data-settings-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+.data-settings-body { padding: 16px 24px; }
+.data-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.data-settings-item:last-child { border-bottom: none; }
+.data-settings-item-info { flex: 1; }
+.data-settings-item-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+.data-settings-item-desc { font-size: 12px; color: var(--ink-tertiary); margin-top: 2px; }
+.data-settings-action {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.data-settings-action:hover { background: var(--bg); }
+.data-settings-action.danger { color: var(--red); border-color: rgba(255,59,48,0.3); }
+.data-settings-action.danger:hover { background: rgba(255,59,48,0.06); border-color: var(--red); }
+.data-settings-about {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-light);
+  font-size: 12px;
+  color: var(--ink-quaternary);
+  line-height: 1.6;
+}
+
+/* ===== Import Status ===== */
+.import-status {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  z-index: var(--z-toast);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 90vw;
+}
+.import-status.is-visible { transform: translateX(-50%) translateY(0); }
+.import-status svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ===== Responsive ===== */
+@media (max-width: 1068px) {
+  .bookmark-grid { grid-template-columns: repeat(3, 1fr); }
+  .section-inner { padding: 0 6%; }
+}
+@media (max-width: 860px) {
+  .bookmark-grid { grid-template-columns: repeat(2, 1fr); }
+  .section-inner { padding: 0 4%; }
+  .cat-filter-wrap {
+    margin-left: calc(-4% - 4px);
+    margin-right: calc(-4% - 4px);
+    padding-left: 4%;
+    padding-right: calc(4% - 4px);
+  }
+}
+@media (max-width: 734px) {
+  .page-hero { padding: 12px 16px 0; flex-direction: column; align-items: stretch; gap: 10px; }
+  .page-hero h1 { font-size: 18px; }
+  .page-hero p { font-size: 12px; }
+  .hero-left { justify-content: center; }
+  .hero-right { max-width: 100%; }
+  .hero-right .search-box { max-width: 100%; }
+  .section { padding: 16px 0 48px; }
+  .section-inner { padding: 0 16px; }
+  .cat-filter-wrap {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 12px;
+  }
+  .bookmark-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .bm-card { margin-bottom: 0; }
+  .cat-pill { padding: 5px 12px; font-size: 12px; }
+  .bm-overlay-title { font-size: 13px; }
+  .floating-cat-bar { padding: 8px 16px; }
+  .back-to-top { right: 16px; bottom: 16px; }
+}
+@media (max-width: 480px) {
+  .bookmark-grid { grid-template-columns: 1fr; }
+  .page-hero h1 { font-size: 18px; }
+  .hero-left { flex-direction: column; align-items: center; gap: 2px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Page Hero -->
+<div class="page-hero">
+  <div class="hero-left">
+    <h1>书签管理器</h1>
+    <p>导入浏览器书签，自动分类标签，快速搜索查找</p>
+  </div>
+  <div class="hero-right">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索书签...">
+    </div>
+    <input type="file" id="fileInput" accept=".html,.htm" style="display:none;">
+    <button class="btn-import" id="btnImport">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      导入书签
+    </button>
+    <button class="btn-settings" id="btnDataSettings" title="数据管理">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Main Section -->
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Category Filter -->
+    <div class="cat-filter-wrap">
+      <div class="category-filter" id="categoryFilter"></div>
+      <div class="cat-scroll-group">
+        <button class="cat-scroll-btn is-disabled" id="catScrollLeft" aria-label="向左滚动">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="cat-scroll-divider"></div>
+        <button class="cat-scroll-btn" id="catScrollRight" aria-label="向右滚动">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tag Filter -->
+    <div class="tag-filter-wrap" id="tagFilterWrap"></div>
+
+    <!-- Bookmark Grid -->
+    <div class="bookmark-grid" id="bookmarkGrid"></div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <h3>暂无书签</h3>
+      <p>导入 Chrome 书签文件，或加载示例数据开始体验</p>
+      <button class="btn-import" onclick="document.getElementById('btnImport').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        导入书签
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Floating Category Bar -->
+<div class="floating-cat-bar" id="floatingCatBar">
+  <div class="category-filter" id="floatingCategoryFilter"></div>
+  <div class="cat-scroll-group">
+    <button class="cat-scroll-btn is-disabled" id="floatScrollLeft" aria-label="向左滚动">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="cat-scroll-divider"></div>
+    <button class="cat-scroll-btn" id="floatScrollRight" aria-label="向右滚动">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Back to Top -->
+<button class="back-to-top" id="backToTop" aria-label="返回顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">编辑书签</div>
+      <button class="modal-close" id="editModalClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>标题</label>
+        <input type="text" id="editTitle" placeholder="书签标题">
+      </div>
+      <div class="modal-field">
+        <label>网址</label>
+        <input type="text" id="editUrl" placeholder="https://...">
+      </div>
+      <div class="modal-field">
+        <label>分类</label>
+        <select id="editCategory"></select>
+      </div>
+      <div class="modal-field">
+        <label>备注</label>
+        <textarea id="editNotes" placeholder="添加备注..."></textarea>
+      </div>
+      <div class="modal-field">
+        <label>标签</label>
+        <div class="modal-tags-input" id="editTagsInput">
+          <input type="text" class="modal-tag-input" id="editTagInput" placeholder="输入标签后回车...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal danger" id="btnEditDelete">删除</button>
+      <button class="btn-modal" id="btnEditCancel">取消</button>
+      <button class="btn-modal primary" id="btnEditSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Data Settings Modal -->
+<div class="modal-overlay" id="dataSettingsModal">
+  <div class="modal-box data-settings-box">
+    <div class="data-settings-header">
+      <div class="modal-title">数据管理</div>
+      <button class="modal-close" id="dataSettingsClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="data-settings-body">
+      <div class="data-settings-item">
+        <div class="data-settings-item-info">
+          <div class="data-settings-item-title">导出数据</div>
+          <div class="data-settings-item-desc">导出所有书签为 JSON 备份文件</div>
+        </div>
+        <button class="data-settings-action" id="btnExport">导出</button>
+      </div>
+      <div class="data-settings-item">
+        <div class="data-settings-item-info">
+          <div class="data-settings-item-title">导入 JSON</div>
+          <div class="data-settings-item-desc">从 JSON 备份文件恢复书签数据</div>
+        </div>
+        <button class="data-settings-action" id="btnImportJson">导入</button>
+      </div>
+      <div class="data-settings-item">
+        <div class="data-settings-item-info">
+          <div class="data-settings-item-title">加载示例数据</div>
+          <div class="data-settings-item-desc">加载 20 条示例书签体验功能</div>
+        </div>
+        <button class="data-settings-action" id="btnLoadSample">加载</button>
+      </div>
+      <div class="data-settings-item">
+        <div class="data-settings-item-info">
+          <div class="data-settings-item-title">重新分类</div>
+          <div class="data-settings-item-desc">根据域名规则重新自动分类所有书签</div>
+        </div>
+        <button class="data-settings-action" id="btnReclassify">执行</button>
+      </div>
+      <div class="data-settings-item">
+        <div class="data-settings-item-info">
+          <div class="data-settings-item-title">清空数据</div>
+          <div class="data-settings-item-desc">删除所有书签数据，不可恢复</div>
+        </div>
+        <button class="data-settings-action danger" id="btnClearData">清空</button>
+      </div>
+    </div>
+    <div class="data-settings-about">
+      书签管理器 · 纯前端实现<br>
+      数据存储在浏览器本地，不上传服务器<br>
+      关闭浏览器页面数据仍然保留
+    </div>
+  </div>
+</div>
+
+<!-- Import Status Toast -->
+<div class="import-status" id="importStatus">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="importStatusText">导入成功</span>
+</div>
+
+<input type="file" id="jsonFileInput" accept=".json" style="display:none;">
+
+<script>
+(function() {
+  'use strict';
+
+  /* ============================================
+     配置 & 分类字典
+     ============================================ */
+
+  var STORAGE_KEY = 'bookmarkManager_data';
+
+  var CATEGORIES = [
+    { key: 'all', label: '全部' },
+    { key: 'design', label: '设计资源' },
+    { key: 'dev', label: '开发工具' },
+    { key: 'learn', label: '学习平台' },
+    { key: 'ai', label: 'AI工具' },
+    { key: 'social', label: '社交媒体' },
+    { key: 'entertainment', label: '影音娱乐' },
+    { key: 'productivity', label: '效率工具' },
+    { key: 'shopping', label: '购物消费' },
+    { key: 'news', label: '新闻资讯' },
+    { key: 'cloud', label: '云存储' },
+    { key: 'reference', label: '查询参考' },
+    { key: 'other', label: '其他' }
+  ];
+
+  var CAT_LABELS = {};
+  CATEGORIES.forEach(function(c) { CAT_LABELS[c.key] = c.label; });
+
+  /* 域名分类字典 — 自动识别网站类型 */
+  var DOMAIN_MAP = {
+    /* 设计资源 */
+    'dribbble': { cat: 'design', tags: ['UI设计', '灵感'] },
+    'behance': { cat: 'design', tags: ['UI设计', '作品集'] },
+    'figma': { cat: 'design', tags: ['设计工具', 'UI设计'] },
+    'canva': { cat: 'design', tags: ['设计工具', '排版'] },
+    'pinterest': { cat: 'design', tags: ['灵感', '图片素材'] },
+    'unsplash': { cat: 'design', tags: ['图片素材', '免费'] },
+    'pexels': { cat: 'design', tags: ['图片素材', '免费'] },
+    'iconfont': { cat: 'design', tags: ['图标', '阿里'] },
+    'iconify': { cat: 'design', tags: ['图标'] },
+    'fonts.google': { cat: 'design', tags: ['字体', '免费'] },
+    'coolors': { cat: 'design', tags: ['配色'] },
+    'zhongguose': { cat: 'design', tags: ['配色', '中国色'] },
+    'fontawesome': { cat: 'design', tags: ['图标'] },
+    'zcool': { cat: 'design', tags: ['设计', '中国'] },
+    'uisdc': { cat: 'design', tags: ['设计', '教程'] },
+    'huaban': { cat: 'design', tags: ['灵感', '图片'] },
+    'freepik': { cat: 'design', tags: ['素材', '免费'] },
+    'flaticon': { cat: 'design', tags: ['图标', '素材'] },
+    'pixabay': { cat: 'design', tags: ['图片素材', '免费'] },
+    'moqups': { cat: 'design', tags: ['原型', '设计工具'] },
+    'sketch': { cat: 'design', tags: ['设计工具'] },
+    'fontsquirrel': { cat: 'design', tags: ['字体', '免费'] },
+    'adobe': { cat: 'design', tags: ['设计', '创意'] },
+
+    /* 开发工具 */
+    'github': { cat: 'dev', tags: ['代码仓库', '版本控制'] },
+    'gitlab': { cat: 'dev', tags: ['代码仓库'] },
+    'gitee': { cat: 'dev', tags: ['代码仓库', '中国'] },
+    'stackoverflow': { cat: 'dev', tags: ['问答', '编程'] },
+    'codepen': { cat: 'dev', tags: ['前端', '代码片段'] },
+    'jsfiddle': { cat: 'dev', tags: ['前端', '代码片段'] },
+    'codesandbox': { cat: 'dev', tags: ['前端', '在线IDE'] },
+    'replit': { cat: 'dev', tags: ['在线IDE'] },
+    'npmjs': { cat: 'dev', tags: ['NPM', '包管理'] },
+    'mvnrepository': { cat: 'dev', tags: ['Maven', 'Java'] },
+    'devdocs': { cat: 'dev', tags: ['文档'] },
+    'developer.mozilla': { cat: 'dev', tags: ['文档', 'Web'] },
+    'mdn': { cat: 'dev', tags: ['文档', 'Web'] },
+    'regex101': { cat: 'dev', tags: ['正则', '测试'] },
+    'jsonformatter': { cat: 'dev', tags: ['JSON', '格式化'] },
+    'v2ex': { cat: 'dev', tags: ['社区', '技术'] },
+    'juejin': { cat: 'dev', tags: ['社区', '技术', '中国'] },
+    'segmentfault': { cat: 'dev', tags: ['社区', '技术', '中国'] },
+    'csdn': { cat: 'dev', tags: ['社区', '技术', '中国'] },
+    'cnblogs': { cat: 'dev', tags: ['博客', '技术', '中国'] },
+    'leetcode': { cat: 'dev', tags: ['算法', '面试'] },
+    'hackerrank': { cat: 'dev', tags: ['算法', '面试'] },
+    'docker': { cat: 'dev', tags: ['容器', 'DevOps'] },
+    'kubernetes': { cat: 'dev', tags: ['容器', 'DevOps'] },
+    'vercel': { cat: 'dev', tags: ['部署', '前端'] },
+    'netlify': { cat: 'dev', tags: ['部署', '前端'] },
+    'cloudflare': { cat: 'dev', tags: ['CDN', '安全'] },
+    'postman': { cat: 'dev', tags: ['API', '测试'] },
+    'swagger': { cat: 'dev', tags: ['API', '文档'] },
+
+    /* 学习平台 */
+    'coursera': { cat: 'learn', tags: ['课程', '英文'] },
+    'udemy': { cat: 'learn', tags: ['课程'] },
+    'edx': { cat: 'learn', tags: ['课程', '大学'] },
+    'khanacademy': { cat: 'learn', tags: ['课程', '免费'] },
+    'mooc': { cat: 'learn', tags: ['课程', '中国'] },
+    'icourse': { cat: 'learn', tags: ['课程', '中国'] },
+    'duolingo': { cat: 'learn', tags: ['语言', '免费'] },
+    'w3schools': { cat: 'learn', tags: ['教程', 'Web'] },
+    'runoob': { cat: 'learn', tags: ['教程', '中国'] },
+    'freecodecamp': { cat: 'learn', tags: ['编程', '免费'] },
+    'oi-wiki': { cat: 'learn', tags: ['算法', '竞赛'] },
+    'bilibili': { cat: 'entertainment', tags: ['视频', '中国', '动漫'] },
+    'ted': { cat: 'learn', tags: ['演讲', '英文'] },
+
+    /* AI 工具 */
+    'chat.openai': { cat: 'ai', tags: ['AI', '对话'] },
+    'chatgpt': { cat: 'ai', tags: ['AI', '对话'] },
+    'claude': { cat: 'ai', tags: ['AI', '对话'] },
+    'midjourney': { cat: 'ai', tags: ['AI', '绘画'] },
+    'stable-diffusion': { cat: 'ai', tags: ['AI', '绘画'] },
+    'huggingface': { cat: 'ai', tags: ['AI', '模型'] },
+    'kaggle': { cat: 'ai', tags: ['AI', '数据'] },
+    'replicate': { cat: 'ai', tags: ['AI', '模型'] },
+    'perplexity': { cat: 'ai', tags: ['AI', '搜索'] },
+    'poe': { cat: 'ai', tags: ['AI', '对话'] },
+    'character.ai': { cat: 'ai', tags: ['AI', '角色'] },
+    'beta.doubao': { cat: 'ai', tags: ['AI', '字节'] },
+    'yiyan': { cat: 'ai', tags: ['AI', '百度'] },
+    'tongyi': { cat: 'ai', tags: ['AI', '阿里'] },
+    'kimi': { cat: 'ai', tags: ['AI', '月之暗面'] },
+    'deepseek': { cat: 'ai', tags: ['AI', '深度求索'] },
+    'suno': { cat: 'ai', tags: ['AI', '音乐'] },
+    'sora': { cat: 'ai', tags: ['AI', '视频'] },
+    'runway': { cat: 'ai', tags: ['AI', '视频'] },
+    'elevenlabs': { cat: 'ai', tags: ['AI', '语音'] },
+    'gamma': { cat: 'ai', tags: ['AI', 'PPT'] },
+
+    /* 社交媒体 */
+    'twitter': { cat: 'social', tags: ['社交', '国际'] },
+    'x.com': { cat: 'social', tags: ['社交', '国际'] },
+    'facebook': { cat: 'social', tags: ['社交'] },
+    'instagram': { cat: 'social', tags: ['社交', '图片'] },
+    'linkedin': { cat: 'social', tags: ['社交', '职场'] },
+    'weibo': { cat: 'social', tags: ['社交', '中国'] },
+    'xiaohongshu': { cat: 'social', tags: ['社交', '中国'] },
+    'reddit': { cat: 'social', tags: ['社区', '国际'] },
+    'discord': { cat: 'social', tags: ['社区', '聊天'] },
+    'telegram': { cat: 'social', tags: ['聊天', '通讯'] },
+    'threads': { cat: 'social', tags: ['社交'] },
+    'whatsapp': { cat: 'social', tags: ['聊天', '通讯'] },
+    'weixin': { cat: 'social', tags: ['聊天', '中国'] },
+    'qq.com': { cat: 'social', tags: ['社交', '中国'] },
+
+    /* 影音娱乐 */
+    'youtube': { cat: 'entertainment', tags: ['视频', '国际'] },
+    'netflix': { cat: 'entertainment', tags: ['视频', '流媒体'] },
+    'spotify': { cat: 'entertainment', tags: ['音乐'] },
+    'netease.music': { cat: 'entertainment', tags: ['音乐', '中国'] },
+    'y.qq.com': { cat: 'entertainment', tags: ['音乐', '中国'] },
+    'iqiyi': { cat: 'entertainment', tags: ['视频', '中国'] },
+    'youku': { cat: 'entertainment', tags: ['视频', '中国'] },
+    'twitch': { cat: 'entertainment', tags: ['直播'] },
+    'douyin': { cat: 'entertainment', tags: ['短视频', '中国'] },
+    'tiktok': { cat: 'entertainment', tags: ['短视频'] },
+    'mgtv': { cat: 'entertainment', tags: ['视频', '中国'] },
+    'bajie': { cat: 'entertainment', tags: ['视频', '中国'] },
+
+    /* 效率工具 */
+    'notion': { cat: 'productivity', tags: ['笔记', '协作'] },
+    'obsidian': { cat: 'productivity', tags: ['笔记'] },
+    'evernote': { cat: 'productivity', tags: ['笔记'] },
+    'yuque': { cat: 'productivity', tags: ['文档', '中国'] },
+    'feishu': { cat: 'productivity', tags: ['协作', '中国'] },
+    'dingtalk': { cat: 'productivity', tags: ['协作', '中国'] },
+    'trello': { cat: 'productivity', tags: ['看板', '项目管理'] },
+    'asana': { cat: 'productivity', tags: ['项目管理'] },
+    'linear': { cat: 'productivity', tags: ['项目管理'] },
+    'airtable': { cat: 'productivity', tags: ['数据库', '表格'] },
+    'wolai': { cat: 'productivity', tags: ['笔记', '中国'] },
+    'flowus': { cat: 'productivity', tags: ['笔记', '中国'] },
+    'todoist': { cat: 'productivity', tags: ['待办', '任务管理'] },
+    '滴答清单': { cat: 'productivity', tags: ['待办', '中国'] },
+
+    /* 购物消费 */
+    'taobao': { cat: 'shopping', tags: ['购物', '中国'] },
+    'tmall': { cat: 'shopping', tags: ['购物', '中国'] },
+    'jd.com': { cat: 'shopping', tags: ['购物', '中国'] },
+    'amazon': { cat: 'shopping', tags: ['购物', '国际'] },
+    'pinduoduo': { cat: 'shopping', tags: ['购物', '中国'] },
+    '1688': { cat: 'shopping', tags: ['批发', '中国'] },
+    'ebay': { cat: 'shopping', tags: ['购物', '国际'] },
+    'smzdm': { cat: 'shopping', tags: ['比价', '中国'] },
+    'meituan': { cat: 'shopping', tags: ['外卖', '中国'] },
+    'dianping': { cat: 'shopping', tags: ['点评', '中国'] },
+
+    /* 新闻资讯 */
+    '36kr': { cat: 'news', tags: ['科技', '中国'] },
+    'ithome': { cat: 'news', tags: ['科技', '中国'] },
+    'sspai': { cat: 'news', tags: ['科技', '效率', '中国'] },
+    'news.ycombinator': { cat: 'news', tags: ['科技', '国际'] },
+    'techcrunch': { cat: 'news', tags: ['科技', '国际'] },
+    'theverge': { cat: 'news', tags: ['科技', '国际'] },
+    'zhihu': { cat: 'news', tags: ['问答', '中国'] },
+    'chinaz': { cat: 'news', tags: ['站长', '中国'] },
+    'huxiu': { cat: 'news', tags: ['科技', '中国'] },
+    'tmtpost': { cat: 'news', tags: ['科技', '中国'] },
+
+    /* 云存储 */
+    'drive.google': { cat: 'cloud', tags: ['云盘', 'Google'] },
+    'dropbox': { cat: 'cloud', tags: ['云盘'] },
+    'onedrive': { cat: 'cloud', tags: ['云盘', '微软'] },
+    'aliyundrive': { cat: 'cloud', tags: ['云盘', '阿里'] },
+    'pan.baidu': { cat: 'cloud', tags: ['云盘', '百度'] },
+    '123pan': { cat: 'cloud', tags: ['云盘', '中国'] },
+    'lanzou': { cat: 'cloud', tags: ['云盘', '中国'] },
+    'quark': { cat: 'cloud', tags: ['云盘', '阿里'] },
+
+    /* 查询参考 */
+    'wikipedia': { cat: 'reference', tags: ['百科', '国际'] },
+    'baike.baidu': { cat: 'reference', tags: ['百科', '中国'] },
+    'translate.google': { cat: 'reference', tags: ['翻译', 'Google'] },
+    'fanyi.baidu': { cat: 'reference', tags: ['翻译', '百度'] },
+    'deepl': { cat: 'reference', tags: ['翻译'] },
+    'dict.youdao': { cat: 'reference', tags: ['词典', '中国'] },
+    'iciba': { cat: 'reference', tags: ['词典', '中国'] },
+    'whois': { cat: 'reference', tags: ['域名', '查询'] },
+    'dnschecker': { cat: 'reference', tags: ['DNS', '查询'] },
+
+    /* ===== 扩展：更多开发与设计工具 ===== */
+    'gitea': { cat: 'dev', tags: ['代码仓库', '开源'] },
+    'codeberg': { cat: 'dev', tags: ['代码仓库', '开源'] },
+    'sourcegraph': { cat: 'dev', tags: ['代码搜索'] },
+    'gitpod': { cat: 'dev', tags: ['在线IDE'] },
+    'stackblitz': { cat: 'dev', tags: ['在线IDE', '前端'] },
+    'glitch': { cat: 'dev', tags: ['在线IDE'] },
+    'railway': { cat: 'dev', tags: ['部署'] },
+    'render': { cat: 'dev', tags: ['部署'] },
+    'fly.io': { cat: 'dev', tags: ['部署'] },
+    'supabase': { cat: 'dev', tags: ['后端', '数据库'] },
+    'firebase': { cat: 'dev', tags: ['后端', 'Google'] },
+    'prisma': { cat: 'dev', tags: ['ORM', '数据库'] },
+    'hasura': { cat: 'dev', tags: ['GraphQL', '后端'] },
+    'strapi': { cat: 'dev', tags: ['CMS', '后端'] },
+    'sentry': { cat: 'dev', tags: ['监控', '错误追踪'] },
+    'grafana': { cat: 'dev', tags: ['监控', '可视化'] },
+    'prometheus': { cat: 'dev', tags: ['监控'] },
+    'oschina': { cat: 'dev', tags: ['开源', '中国'] },
+    'imooc': { cat: 'dev', tags: ['教程', '中国'] },
+    'infoq': { cat: 'dev', tags: ['资讯', '中国'] },
+    'aliyun': { cat: 'dev', tags: ['云计算', '阿里'] },
+    'cloud.tencent': { cat: 'dev', tags: ['云计算', '腾讯'] },
+    'huaweicloud': { cat: 'dev', tags: ['云计算', '华为'] },
+    'aws.amazon': { cat: 'dev', tags: ['云计算', 'AWS'] },
+    'jetbrains': { cat: 'dev', tags: ['IDE'] },
+    'code.visualstudio': { cat: 'dev', tags: ['编辑器', 'VSCode'] },
+    'visualstudio': { cat: 'dev', tags: ['IDE', '微软'] },
+    'atom.io': { cat: 'dev', tags: ['编辑器', 'GitHub'] },
+    'eclipse': { cat: 'dev', tags: ['IDE'] },
+    'sublimetext': { cat: 'dev', tags: ['编辑器'] },
+
+    /* ===== 扩展：更多AI工具 ===== */
+    'gemini.google': { cat: 'ai', tags: ['AI', 'Google'] },
+    'bard.google': { cat: 'ai', tags: ['AI', 'Google'] },
+    'copilot.microsoft': { cat: 'ai', tags: ['AI', '微软'] },
+    'copilot.github': { cat: 'ai', tags: ['AI', '编程'] },
+    'cursor': { cat: 'ai', tags: ['AI', '编程'] },
+    'codeium': { cat: 'ai', tags: ['AI', '编程'] },
+    'tabnine': { cat: 'ai', tags: ['AI', '编程'] },
+    'ollama': { cat: 'ai', tags: ['AI', '本地模型'] },
+    'lmstudio': { cat: 'ai', tags: ['AI', '本地模型'] },
+    'jan': { cat: 'ai', tags: ['AI', '本地模型'] },
+    'comfy': { cat: 'ai', tags: ['AI', '绘画'] },
+    'liblib': { cat: 'ai', tags: ['AI', '绘画', '中国'] },
+    'leonardo': { cat: 'ai', tags: ['AI', '绘画'] },
+    'firefly.adobe': { cat: 'ai', tags: ['AI', '绘画'] },
+    'clipdrop': { cat: 'ai', tags: ['AI', '图像处理'] },
+    'heygen': { cat: 'ai', tags: ['AI', '数字人'] },
+    'pika': { cat: 'ai', tags: ['AI', '视频'] },
+    'pixverse': { cat: 'ai', tags: ['AI', '视频'] },
+    'luma': { cat: 'ai', tags: ['AI', '视频'] },
+    'gamma': { cat: 'ai', tags: ['AI', 'PPT'] },
+    'tome': { cat: 'ai', tags: ['AI', 'PPT'] },
+    'writesonic': { cat: 'ai', tags: ['AI', '写作'] },
+    'copy.ai': { cat: 'ai', tags: ['AI', '写作'] },
+    'grammarly': { cat: 'ai', tags: ['AI', '写作'] },
+    'quillbot': { cat: 'ai', tags: ['AI', '写作'] },
+    'perplexity': { cat: 'ai', tags: ['AI', '搜索'] },
+    'phind': { cat: 'ai', tags: ['AI', '搜索'] },
+    'you.com': { cat: 'ai', tags: ['AI', '搜索'] },
+    'mem': { cat: 'ai', tags: ['AI', '笔记'] },
+
+    /* ===== 扩展：更多效率工具 ===== */
+    'clickup': { cat: 'productivity', tags: ['项目管理'] },
+    'monday': { cat: 'productivity', tags: ['项目管理'] },
+    'miro': { cat: 'productivity', tags: ['白板', '协作'] },
+    'excalidraw': { cat: 'productivity', tags: ['白板', '绘图'] },
+    'draw.io': { cat: 'productivity', tags: ['图表', '流程'] },
+    'processon': { cat: 'productivity', tags: ['图表', '中国'] },
+    'ticktick': { cat: 'productivity', tags: ['待办', '中国'] },
+    'any.do': { cat: 'productivity', tags: ['待办'] },
+    'things': { cat: 'productivity', tags: ['待办', '苹果'] },
+    'microsoft.to': { cat: 'productivity', tags: ['待办', '微软'] },
+    'toggl': { cat: 'productivity', tags: ['时间追踪'] },
+    'clockify': { cat: 'productivity', tags: ['时间追踪', '免费'] },
+    'rescuetime': { cat: 'productivity', tags: ['时间追踪'] },
+    'raycast': { cat: 'productivity', tags: ['启动器', 'Mac'] },
+    'alfred': { cat: 'productivity', tags: ['启动器', 'Mac'] },
+    'ueli': { cat: 'productivity', tags: ['启动器', '开源'] },
+    'flowlauncher': { cat: 'productivity', tags: ['启动器', 'Windows'] },
+    'logseq': { cat: 'productivity', tags: ['笔记', '开源'] },
+    'joplin': { cat: 'productivity', tags: ['笔记', '开源'] },
+    'craft': { cat: 'productivity', tags: ['笔记', '文档'] },
+    'bear': { cat: 'productivity', tags: ['笔记', 'Markdown'] },
+    'coda': { cat: 'productivity', tags: ['文档', '协作'] },
+    'roamresearch': { cat: 'productivity', tags: ['笔记', '思维导图'] },
+
+    /* ===== 扩展：更多娱乐 ===== */
+    'vimeo': { cat: 'entertainment', tags: ['视频', '创作'] },
+    'crunchyroll': { cat: 'entertainment', tags: ['动漫'] },
+    'steam': { cat: 'entertainment', tags: ['游戏', '平台'] },
+    'epicgames': { cat: 'entertainment', tags: ['游戏', '平台'] },
+    'itch.io': { cat: 'entertainment', tags: ['游戏', '独立'] },
+    'ign': { cat: 'entertainment', tags: ['游戏', '评测'] },
+    'gamespot': { cat: 'entertainment', tags: ['游戏', '评测'] },
+    'bandcamp': { cat: 'entertainment', tags: ['音乐', '独立'] },
+    'soundcloud': { cat: 'entertainment', tags: ['音乐', '创作'] },
+
+    /* ===== 扩展：更多购物 ===== */
+    'suning': { cat: 'shopping', tags: ['购物', '中国'] },
+    'dangdang': { cat: 'shopping', tags: ['购物', '中国'] },
+    'vip': { cat: 'shopping', tags: ['购物', '中国'] },
+    'yangkeduo': { cat: 'shopping', tags: ['购物', '中国'] },
+    'xiaomiyoupin': { cat: 'shopping', tags: ['购物', '中国'] },
+    'ikea': { cat: 'shopping', tags: ['购物', '家居'] },
+    'uniqlo': { cat: 'shopping', tags: ['购物', '日本'] },
+    'nike': { cat: 'shopping', tags: ['购物', '运动'] },
+    'adidas': { cat: 'shopping', tags: ['购物', '运动'] },
+    'shein': { cat: 'shopping', tags: ['购物', '时尚'] },
+    'sephora': { cat: 'shopping', tags: ['购物', '美妆'] },
+    'bestbuy': { cat: 'shopping', tags: ['购物', '数码'] },
+    'costco': { cat: 'shopping', tags: ['购物', '会员'] },
+    'target': { cat: 'shopping', tags: ['购物', '美国'] },
+    'walmart': { cat: 'shopping', tags: ['购物', '美国'] },
+
+    /* ===== 扩展：更多新闻 ===== */
+    'bbc': { cat: 'news', tags: ['新闻', '国际'] },
+    'nytimes': { cat: 'news', tags: ['新闻', '美国'] },
+    'reuters': { cat: 'news', tags: ['新闻', '国际'] },
+    'forbes': { cat: 'news', tags: ['新闻', '财经'] },
+    'bloomberg': { cat: 'news', tags: ['新闻', '财经'] },
+    'wired': { cat: 'news', tags: ['新闻', '科技'] },
+    'ifanr': { cat: 'news', tags: ['科技', '中国'] },
+    'solidot': { cat: 'news', tags: ['科技', '中国'] },
+    'producthunt': { cat: 'news', tags: ['产品', '科技'] },
+    'indiehackers': { cat: 'news', tags: ['创业', '独立开发'] },
+    'hackernoon': { cat: 'news', tags: ['科技', '博客'] },
+    'dev.to': { cat: 'dev', tags: ['博客', '技术', '社区'] },
+    'lobste.rs': { cat: 'dev', tags: ['社区', '技术'] },
+
+    /* ===== 扩展：更多参考与云存储 ===== */
+    'wolframalpha': { cat: 'reference', tags: ['计算', '知识'] },
+    'douban': { cat: 'reference', tags: ['图书', '电影', '中国'] },
+    'goodreads': { cat: 'reference', tags: ['图书', '社交'] },
+    'archive.org': { cat: 'reference', tags: ['档案', '历史'] },
+    'gutenberg': { cat: 'reference', tags: ['电子书', '免费'] },
+    'mega.nz': { cat: 'cloud', tags: ['云盘', '加密'] },
+    'pcloud': { cat: 'cloud', tags: ['云盘'] },
+    'icloud': { cat: 'cloud', tags: ['云盘', '苹果'] },
+    'nextcloud': { cat: 'cloud', tags: ['云盘', '开源'] },
+    'syncthing': { cat: 'cloud', tags: ['同步', '开源'] },
+
+    /* ===== 扩展：更多社交 ===== */
+    'mastodon': { cat: 'social', tags: ['社交', '去中心化'] },
+    'bsky': { cat: 'social', tags: ['社交', '去中心化'] },
+    'pixiv': { cat: 'social', tags: ['社交', '创作', '日本'] },
+    'artstation': { cat: 'social', tags: ['社交', '创作'] },
+    'deviantart': { cat: 'social', tags: ['社交', '创作'] },
+    'tumblr': { cat: 'social', tags: ['社交', '博客'] },
+    'medium': { cat: 'social', tags: ['阅读', '写作'] },
+    'substack': { cat: 'social', tags: ['阅读', '写作'] },
+    'hashnode': { cat: 'social', tags: ['博客', '技术'] }
+  };
+
+  /* 标题关键词分类 — 域名不在字典时使用 */
+  var TITLE_KEYWORDS = {
+    'design': [
+      '设计', '设计工具', '设计资源', '设计灵感', '设计系统', '设计规范', '设计平台',
+      'design', 'designer', 'design tool',
+      'UI', 'UX', 'UI设计', 'UX设计', '界面设计', '用户体验', '交互设计', '交互',
+      '图标', 'icon', 'icons', '矢量图标', 'iconfont',
+      '配色', 'color', '色彩', '调色', '色板', 'palette', '颜色',
+      '字体', 'font', 'fonts', '字体库', '字库', 'typography', 'typeface',
+      '素材', '素材库', '素材站', '资源', '资源库', 'assets', '素材资源',
+      '灵感', '灵感收集', 'inspiration', 'inspire',
+      '原型', '原型设计', '原型工具', 'mockup', 'mockups', 'wireframe', 'prototype', 'prototyping',
+      'sketch', 'figma', 'adobe', 'photoshop', 'illustrator', 'xd', 'canva', '摹客',
+      '品牌', '品牌设计', 'brand', 'branding', '视觉', '视觉设计', 'vi设计', 'logo',
+      '插画', '插画师', '绘画', '插画素材', 'illustration', 'vector', '矢量',
+      '排版', '版式', '布局', '网格', 'layout', 'grid',
+      '创意', '创意工具', '创作', 'creative', 'creativity',
+      '动效', '动画', '动画设计', 'animation', 'motion', 'motion design',
+      '切图', '标注', '规范', 'handoff', 'zeplin',
+      '模板', '模版', '主题', 'template', 'theme', 'templates',
+      '屏幕', '适配', '分辨率', 'responsive', '响应式',
+      '作品集', 'portfolio', 'showcase', '画廊', 'gallery',
+      '渲染', '建模', '模型', '3D', 'render', 'rendering', 'blender', 'c4d', 'cinema 4d',
+      '图片', '图像', '照片', 'photo', 'image', 'picture', '摄影', 'photography',
+      '背景', '壁纸', 'wallpaper', 'background', 'texture', '纹理', '图案', 'pattern'
+    ],
+    'dev': [
+      '开发', '开发者', '开发工具', '开发平台', '开发框架', '开发环境',
+      '编程', '编程语言', '编程工具', '程序员', 'programming', 'coding', 'code', 'coder',
+      '前端', '前端开发', '前端框架', 'frontend', 'front-end', 'web前端',
+      '后端', '后端开发', '后端框架', 'backend', 'back-end', '服务端', 'server',
+      '全栈', 'fullstack', 'full-stack', 'full stack',
+      '框架', 'framework', '库', '类库', 'library', '工具库',
+      'github', 'gitlab', 'gitee', 'git', '版本控制', 'version control', '代码仓库', 'repo', 'repository',
+      'API', '接口', 'api文档', 'api接口', '开放平台', 'openapi', 'rest', 'graphql', 'swagger',
+      '文档', '文档平台', '文档工具', 'docs', 'documentation', 'sdk',
+      '数据库', '数据存储', 'database', 'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'nosql',
+      'docker', 'kubernetes', 'k8s', '容器', 'container', '容器化',
+      '部署', '发布', '上线', 'deploy', 'deployment', 'hosting', '托管',
+      '云计算', '云服务', 'cloud', '云平台', 'aws', '阿里云', '腾讯云', '华为云', 'serverless',
+      '服务器', 'server', 'vps', '主机', '虚拟主机',
+      'linux', 'unix', 'ubuntu', 'centos', 'debian', '操作系统',
+      '命令行', '终端', 'terminal', 'shell', 'bash', 'cli', 'command',
+      'python', 'javascript', 'java', 'typescript', 'golang', 'rust', 'php', 'ruby', 'c++', 'swift', 'kotlin',
+      'node', 'nodejs', 'node.js', 'deno', 'bun', 'npm', 'yarn', 'pnpm', '包管理', 'package',
+      'react', 'vue', 'angular', 'svelte', 'nextjs', 'next.js', 'nuxt', '组件', 'component',
+      'devops', 'ci/cd', 'ci', 'cd', '持续集成', '持续部署', '自动化', 'automation',
+      '测试', '调试', 'debug', 'debugging', 'testing', 'test', '单元测试', 'e2e', '性能测试',
+      '开源', '开源项目', 'open source', 'opensource', '源码', 'source code',
+      '算法', '数据结构', 'algorithm', 'leetcode', '牛客', '竞赛', '编程竞赛',
+      '编译器', '解释器', 'compiler', 'interpreter', '运行时', 'runtime',
+      '构建', '打包', '编译', 'build', 'bundle', 'webpack', 'vite', 'rollup', 'esbuild',
+      '插件', '扩展', 'plugin', 'extension', 'addon', 'add-on',
+      '编辑器', 'IDE', '代码编辑器', 'vscode', 'visual studio', 'jetbrains', 'intellij', 'sublime', 'vim', 'neovim', 'emacs',
+      '正则', '正则表达式', 'regex', 'regexp',
+      '架构', '系统设计', 'architecture', 'system design', '微服务', 'microservice',
+      '监控', '日志', 'monitoring', 'logging', 'sentry', 'grafana', 'prometheus',
+      '安全', '加密', 'security', 'encryption', 'auth', '认证', '鉴权', 'oauth',
+      '小程序', 'miniapp', 'mini program', '微信小程序', '支付宝小程序',
+      '爬虫', 'scraping', 'spider', 'crawler', '数据采集',
+      '低代码', 'low-code', 'low code', '无代码', 'no-code', 'nocode', '零代码',
+      '负载均衡', '反向代理', 'nginx', 'apache', 'caddy', 'traefik',
+      '区块链', 'blockchain', 'web3', '智能合约', 'solidity', 'crypto', '加密货币'
+    ],
+    'learn': [
+      '教程', '教学', '教程网站', '在线教程', 'tutorial', 'tutorials', 'guide',
+      '课程', '在线课程', '公开课', 'course', 'courses', 'lesson', 'lessons',
+      '学习', '学习平台', '学习资源', '自学', 'learn', 'learning', 'study',
+      '培训', '培训机构', '培训课程', 'training', 'train',
+      '大学', '学院', '学校', 'university', 'college', 'school', 'academy', 'edu',
+      '慕课', 'mooc', '在线教育', '在线学习', '网课', '远程教育',
+      '编程入门', '零基础', '入门教程', '入门指南', 'beginner', 'getting started', '快速入门',
+      '考试', '考试题库', '考试系统', 'exam', 'examination', 'test', 'quiz',
+      '认证', '认证考试', '证书', 'certification', 'certificate', 'credential',
+      '知识', '知识点', '知识库', 'knowledge', 'knowledge base',
+      '技能', '技能提升', '技能培训', 'skill', 'skills', 'upskill',
+      '视频教程', '视频课程', 'video tutorial', 'video course', '教学视频',
+      '文档教程', '文档', 'documentation', '手册', 'manual', 'handbook',
+      '练习', '练习题', 'exercise', 'practice', 'practise', '刷题',
+      '笔记', '学习笔记', 'study notes', 'notebook',
+      '问答', '问答平台', '问答社区', 'Q&A', 'question', 'answer',
+      '阅读', '读书', '阅读平台', 'read', 'reading', 'book', 'books',
+      '论文', '学术', '研究', 'research', 'paper', 'papers', 'scholar', '学术搜索',
+      '英语', '英语学习', 'english', '语言学习', 'language', 'language learning',
+      '启蒙', '教育', '儿童', 'kids', 'education', 'educational'
+    ],
+    'ai': [
+      'AI', '人工智能', 'AI工具', 'AI平台', 'AI生成', 'AI绘画', 'AI写作', 'AI编程', 'AI助手',
+      'artificial intelligence', 'machine learning', 'deep learning', 'neural network',
+      '机器学习', '深度学习', '神经网络', 'neural', 'transformer',
+      'GPT', 'ChatGPT', 'chatgpt', 'Claude', 'claude', 'Gemini', 'gemini',
+      'Midjourney', 'midjourney', 'Stable Diffusion', 'stable diffusion', 'DALL-E', 'dalle',
+      '大模型', '大语言模型', 'LLM', 'llm', '语言模型', 'language model',
+      'openai', 'OpenAI', 'anthropic', 'google ai', 'deepmind',
+      'AI绘画', 'AI绘图', 'AI作画', 'AI生成图片', 'AI图像', 'ai image',
+      'AI写作', 'AI文案', 'AI内容', 'AI创作', 'ai writing', 'ai content',
+      'AI编程', 'AI代码', 'AI辅助编程', 'copilot', 'codeium', 'tabnine', 'cursor',
+      'AI搜索', 'AI问答', 'perplexity', 'phind',
+      'AI视频', 'AI视频生成', 'AI视频编辑', 'sora', 'runway', 'pika',
+      'AI音乐', 'AI音频', 'AI语音', 'AI配音', 'suno', 'elevenlabs', 'tts',
+      'AI数字人', 'AI虚拟人', '数字人', 'heygen', 'avatar',
+      'AI办公', 'AI文档', 'AI PPT', 'AI表格', 'AI会议',
+      'AI模型', '模型训练', '模型部署', 'model', '预训练', 'pretrained', 'fine-tuning',
+      'AI落地', 'AI应用', 'AI产品', 'AI解决方案',
+      'prompt', '提示词', '提示工程', 'prompt engineering', '提示词工程',
+      'RAG', '检索增强', '向量数据库', 'embedding', 'embeddings',
+      'huggingface', 'hugging face', 'kaggle', 'replicate',
+      'AI资讯', 'AI新闻', 'AI日报', 'AI周刊',
+      '计算机视觉', 'CV', 'computer vision', 'NLP', '自然语言处理',
+      'AIGC', '生成式AI', 'generative AI', 'gen AI', 'generative',
+      'AI Agent', 'AI智能体', 'agent', '智能体', 'autonomous agent',
+      '本地模型', 'ollama', 'lm studio', 'local llm', '本地部署'
+    ],
+    'social': [
+      '社交', '社交平台', '社交网络', '社交媒体', 'social', 'social media', 'social network',
+      '微博', 'weibo', '推特', 'twitter', 'x.com', '脸书', 'facebook',
+      'ins', 'instagram', '照片分享', '图片分享',
+      '领英', 'linkedin', '职场社交', '职业社交', '招聘', '求职',
+      '小红书', '红书', 'xiaohongshu', '种草', '生活方式',
+      '社区', '社区平台', '社区论坛', 'community', 'forum', 'forums',
+      '论坛', 'discuz', 'bbs', '讨论区', 'discussion', '话题',
+      '聊天', '即时通讯', '通讯', '通讯工具', 'chat', 'messaging', 'messenger', 'IM',
+      'telegram', 'discord', 'slack', 'whatsapp', 'wechat', '微信', 'line', 'signal',
+      '群组', '群聊', 'group', 'channel', '频道',
+      '个人主页', '个人网站', '主页', 'profile', 'homepage', '个人博客',
+      '博客', 'blog', 'blogger', 'blogging', '写作平台', '创作平台',
+      'medium', 'substack', 'hashnode', 'dev.to', '简书',
+      '动态', '动态分享', 'feed', 'timeline', '状态', 'status',
+      '评论', '留言', 'comment', '评论系统', 'disqus',
+      '关注', '粉丝', 'follow', 'follower', 'following',
+      '私信', '私聊', 'dm', 'direct message', 'pm', 'private message',
+      '语音', '语音通话', '视频通话', 'voice', 'video call', 'voip',
+      '直播', '直播平台', '直播社区', 'live', 'streaming', 'stream',
+      '创作者', '内容创作者', 'creator', 'content creator', 'influencer',
+      '付费社群', '会员社群', '知识星球', 'patreon', '圈子',
+      'reddit', '贴吧', '豆瓣', 'douban', '知乎', 'zhihu',
+      '陌生人社交', '交友', '约会', 'dating', 'match', '婚恋'
+    ],
+    'entertainment': [
+      '视频', '视频网站', '视频平台', '视频播放', 'video', 'videos', '视频分享',
+      '电影', '电影网站', '电影资源', 'movie', 'movies', 'cinema', '影院',
+      '音乐', '音乐播放', '音乐平台', '音乐网站', 'music', '听歌', '歌曲', '歌单',
+      '游戏', '游戏平台', '游戏网站', '游戏社区', 'game', 'games', 'gaming', '游戏攻略',
+      '直播', '直播平台', '直播网站', 'live', 'livestream', 'streaming', '主播',
+      '追剧', '看剧', '电视剧', '综艺', '综艺节目', 'tv show', 'drama', 'series',
+      '番剧', '动漫', '动画', 'anime', 'anime', '二次元', 'bilibili', 'b站', 'acfun', 'a站',
+      '漫画', '漫画网站', '漫画平台', 'manga', 'comic', 'comics', 'webtoon',
+      '小说', '小说网站', '小说平台', '阅读', 'novel', 'novels', 'fiction', '网文',
+      '播客', '播客平台', 'podcast', 'podcasts', '音频节目', '有声书', 'audiobook',
+      '短剧', '短视频', 'short video', 'reels', 'shorts',
+      '娱乐', '休闲', '娱乐资讯', 'entertainment', 'fun', 'amusement',
+      '搞笑', '幽默', '段子', 'meme', 'memes', '趣图', 'gif',
+      '体育', '体育赛事', '体育直播', 'sports', 'sport', '比赛', '竞猜',
+      '电竞', '电子竞技', 'esports', 'e-sports', '电竞比赛',
+      '弹幕', '弹幕视频', 'danmaku', '字幕',
+      '鬼畜', '恶搞', 'parody', '混剪', '剪辑',
+      'K歌', '唱歌', 'karaoke', 'ktv', '翻唱',
+      '星座', '运势', '占卜', '塔罗', 'horoscope', 'astrology',
+      '壁纸', '主题', '铃声', '个性化', 'ringtone', '桌面美化'
+    ],
+    'productivity': [
+      '笔记', '笔记工具', '笔记应用', '笔记软件', 'note', 'notes', 'notetaking', 'note-taking',
+      '待办', '待办事项', '待办清单', 'todo', 'to-do', 'todolist', 'task', 'tasks', '任务管理',
+      '项目管理', '项目', 'project', 'project management', 'pm工具',
+      '协作', '协同', '团队协作', '在线协作', 'collaboration', 'collaborative', 'team', '团队',
+      '看板', '看板工具', 'kanban', 'board', 'board view',
+      '日历', '日程', '日程管理', 'calendar', 'schedule', 'scheduling', '排期',
+      '文档', '文档工具', '文档协作', '在线文档', 'document', 'documents', 'doc', 'docs',
+      '知识库', '知识管理', 'wiki', 'knowledge base', 'knowledge management', '知识管理工具',
+      '效率', '效率工具', '生产力', 'productivity', '高效', 'efficiency',
+      '白板', '在线白板', 'whiteboard', '画板', '绘图', 'drawing', 'draw', 'excalidraw', 'miro',
+      '图表', '流程图', '思维导图', '脑图', 'mindmap', 'mind map', 'diagram', 'chart', 'graph',
+      '启动器', 'launcher', '快速启动', 'alfred', 'raycast', 'utools', 'listary',
+      '剪贴板', '剪贴板管理', 'clipboard', '粘贴', 'copy', 'paste',
+      '时间管理', '时间追踪', 'time tracking', 'time management', '计时', 'timer', 'pomodoro', '番茄',
+      '密码管理', '密码', 'password', '密码管理器', 'password manager', 'bitwarden', '1password', 'lastpass',
+      '文件管理', '文件同步', '文件传输', 'file manager', 'file sync', 'file transfer',
+      '书签', '书签管理', '收藏', 'bookmark', 'bookmarks', '收藏夹',
+      'RSS', '阅读器', 'feed', 'reader', 'rss阅读', '订阅', 'subscribe',
+      '工作流', '自动化', 'workflow', 'automation', 'zapier', 'ifttt', 'n8n', 'make',
+      '邮件', '邮件客户端', 'email', 'mail', '邮箱', '邮件管理',
+      'OCR', '文字识别', '图片识别', '扫描', 'scan', 'scanning',
+      '翻译', '翻译工具', 'translate', 'translation', '翻译器', 'translator',
+      '截图', '截屏', '录屏', 'screenshot', 'screen capture', 'screen recording', 'snipaste',
+      '格式转换', '文件转换', 'converter', 'convert', '转换工具', '格式',
+      '压缩', '解压', 'compress', 'decompress', 'zip', 'rar', 'archive',
+      '下载', '下载工具', 'download', 'downloader', '下载器', 'bt下载', '磁力',
+      '搜索', '搜索引擎', 'search', 'search engine', '检索',
+      'VPN', '代理', 'proxy', '梯子', '翻墙', '科学上网', 'clash', 'v2ray', 'shadowsocks'
+    ],
+    'shopping': [
+      '购物', '购物网站', '购物平台', '在线购物', 'shop', 'shopping', 'store', '商城', '网店',
+      '淘宝', 'taobao', '天猫', 'tmall', '京东', 'jd', '拼多多', 'pinduoduo',
+      '亚马逊', 'amazon', 'ebay', 'wish', 'aliexpress', '速卖通',
+      '电商', '电子商务', 'ecommerce', 'e-commerce', '网购', '在线商城',
+      '比价', '比价网站', '比价工具', '优惠', '优惠券', 'coupon', '折扣', 'discount', 'deal', '促销',
+      '二手', '闲置', '二手交易', '闲鱼', '转转', '二手市场', 'second hand', 'used',
+      '外卖', '外卖平台', '点餐', '订餐', 'food delivery', '外卖订餐', 'meituan', '美团', '饿了么',
+      '团购', '拼团', 'group buy', 'group buying', '团购网站',
+      '品牌', '品牌官网', '旗舰店', '官方商城', 'official store', 'brand',
+      '海淘', '代购', '跨境购物', '海外购', '进口', 'global shopping',
+      '拍卖', '竞拍', 'auction', 'bidding', '竞价',
+      '众筹', 'crowdfunding', 'kickstarter', 'indiegogo', '预售',
+      '数码', '数码产品', '电子产品', 'digital', 'electronics', 'gadget', '3c',
+      '家居', '家装', '家具', 'home', 'furniture', '家居用品', 'ikea', '宜家',
+      '服饰', '服装', '时尚', 'fashion', 'clothing', 'apparel', '穿搭', '美妆', '护肤', 'beauty', 'cosmetics',
+      '运动', '户外', 'sports', 'outdoor', '运动装备', 'nike', 'adidas',
+      '图书', '书店', '买书', 'bookstore', 'books', '图书商城', 'dangdang', '当当',
+      '生鲜', '超市', '日用', 'grocery', 'supermarket', '日用品',
+      '会员', '订阅', 'subscription', 'membership', 'vip', '会员制',
+      '支付', '支付平台', '支付工具', 'payment', 'pay', '钱包', 'wallet', '支付宝', '微信支付',
+      '理财', '投资', '股票', '基金', 'finance', 'invest', 'trading', '炒股', '财经',
+      '保险', 'insurance', '车险', '健康险', '寿险',
+      '信用卡', '贷款', 'credit card', 'loan', '分期', '花呗', '白条',
+      '返利', '返现', 'rebate', 'cashback', '返利网'
+    ],
+    'news': [
+      '新闻', '新闻网站', '新闻资讯', 'news', '资讯', '快讯', '头条', '热点',
+      '科技', '科技新闻', '科技资讯', 'tech', 'technology', 'tech news', '互联网', 'IT',
+      '媒体', '新媒体', '自媒体', 'media', 'press', 'news media',
+      '报道', '报道平台', '深度报道', 'report', 'journalism', '新闻媒体',
+      '评论', '评论文章', '时评', 'review', 'commentary', 'opinion', '观点',
+      '博客', '博客平台', '技术博客', 'blog', 'blogs', 'blogging',
+      '日报', '早报', '晚报', '周报', 'daily', 'weekly', 'newsletter',
+      '杂志', '期刊', 'magazine', 'journal', 'publication',
+      '财经', '财经新闻', '金融', 'finance', 'financial', '经济', 'economy', 'business',
+      '创业', '创投', 'startup', 'startups', 'venture', '创业资讯', '融资',
+      '互联网', '互联网资讯', 'internet', 'web', '网络',
+      '行业', '行业资讯', '行业报告', 'industry', '行业分析', '市场',
+      '分析', '分析报告', '数据', 'data', 'analytics', '统计', 'statistics',
+      '排行', '榜单', '排名', 'ranking', 'rank', 'top', '热门',
+      '产品', '产品动态', 'product', 'products', 'product hunt', '新产品',
+      '开源', '开源资讯', 'open source', '开源项目', 'github trending',
+      '编程', '开发', '开发者', 'developer', 'dev', '技术社区', '技术资讯',
+      '数码', '数码评测', '数码资讯', 'gadget', 'gadgets', 'review',
+      '汽车', '汽车资讯', 'auto', 'car', '汽车新闻', '新能源',
+      '游戏', '游戏资讯', 'game news', 'gaming news', '游戏新闻',
+      '电影', '影视', '电影资讯', 'movie news', 'entertainment news',
+      '体育', '体育新闻', '体育资讯', 'sports news', '赛事',
+      '本地', '本地新闻', 'local news', '城市', '地区',
+      '国际', '国际新闻', 'world', 'global', 'international',
+      '政策', '法规', '政策解读', 'policy', 'regulation', 'gov'
+    ],
+    'cloud': [
+      '云盘', '网盘', '云存储', '网络硬盘', 'cloud', 'storage', 'cloud storage', 'drive',
+      '存储', '存储空间', '文件存储', '数据存储', 'storage', 'data storage',
+      '备份', '备份工具', '数据备份', 'backup', '备份服务', '自动备份',
+      '同步', '同步工具', '文件同步', 'sync', 'syncing', '同步盘', '自动同步',
+      '上传', '下载', 'upload', 'download', '传输', 'transfer',
+      '分享', '文件分享', '链接分享', 'share', 'sharing', '共享',
+      '加密', '加密存储', '安全存储', 'encryption', 'encrypted', '安全',
+      'nas', '私有云', '个人云', '家庭云', 'nas存储', '群晖', 'synology',
+      '对象存储', 'oss', 's3', '块存储', '文件存储', '挂载',
+      'cdn', '加速', '内容分发', 'cdn加速', 'content delivery',
+      '图床', '图片存储', '图片托管', 'image hosting', 'image storage', '图床工具',
+      '大文件', '大文件传输', '大文件分享', 'large file', 'send large',
+      '临时', '临时存储', '临时文件', 'temp', 'temporary', '暂存',
+      '协作', '协作存储', '团队存储', 'team storage', '团队盘',
+      '多端', '多端同步', '跨平台', 'cross platform', 'multi device', '跨设备'
+    ],
+    'reference': [
+      '百科', '百科全书', 'wiki', 'wikipedia', 'encyclopedia', '知识库',
+      '词典', '字典', '辞典', 'dictionary', 'dict', '单词', 'vocabulary',
+      '翻译', '翻译工具', '在线翻译', 'translate', 'translator', 'translation', '翻译器',
+      '查询', '查询工具', '查询平台', 'search', 'lookup', '检索',
+      '参考', '参考资料', 'reference', '参考手册', '参考资料',
+      '手册', '手册文档', 'manual', 'handbook', 'guide', '指南', '指引',
+      '标准', '标准规范', 'standard', 'spec', 'specification', '规范', '协议',
+      '工具', '在线工具', '实用工具', 'tool', 'tools', '工具箱', '实用',
+      '计算', '计算器', '计算工具', 'calculator', 'calc', 'compute',
+      '地图', '地图服务', '导航', 'map', 'maps', 'navigation', '定位', 'GPS',
+      '天气', '天气查询', '天气预报', 'weather', 'forecast', '气象',
+      '快递', '快递查询', '物流', 'express', 'delivery', 'tracking', '包裹',
+      'IP', 'IP查询', 'IP地址', 'IP工具', 'ip lookup', 'ip address', 'whois',
+      '域名', '域名查询', '域名注册', 'domain', 'dns', '域名工具', 'dns查询',
+      '二维码', 'QR', 'qrcode', '条形码', 'barcode', '生成', '识别',
+      '时间', '时间戳', '时区', 'timer', 'timestamp', 'timezone', '世界时间',
+      '单位', '单位换算', '换算', 'converter', 'conversion', '进制', '编码',
+      '颜色', '颜色工具', '颜色选择', 'color picker', 'color tool', '取色',
+      'JSON', '格式化', 'json工具', 'json formatter', 'xml', 'yaml', '格式化工具',
+      '正则', '正则测试', 'regex', 'regexp tester', '正则表达式',
+      '密码', '密码生成', '密码工具', 'password generator', '随机', '生成器',
+      '文字', '文本工具', '文字处理', 'text', '文本处理', '文本编辑', '字符串',
+      '图片', '图片工具', '图片处理', 'image tool', '图片压缩', '图片编辑',
+      '音视频', '音频工具', '视频工具', 'audio', 'video tool', '格式转换',
+      'PDF', 'pdf工具', 'pdf转换', 'pdf editor', 'pdf处理',
+      '开发', '开发工具', 'dev tool', 'developer tool', '开发辅助',
+      '测试', '测试工具', '在线测试', 'test', 'testing', '调试', 'debug',
+      'API', 'api测试', 'api工具', 'api tester', '接口测试', 'postman替代',
+      '网络', '网络工具', '网络测试', 'network', 'ping', '测速', 'speedtest',
+      '站长', '站长工具', 'seo', '站长之家', 'webmaster', '网站工具',
+      '代码', '代码工具', '代码生成', 'code tool', '代码格式化', 'diff', '对比',
+      '生成器', '生成工具', 'generator', '在线生成', '自动生成'
+    ]
+  };
+
+  /* ============================================
+     状态
+     ============================================ */
+  var bookmarks = [];
+  var currentCategory = 'all';
+  var currentTag = null;
+  var searchQuery = '';
+  var editingId = null;
+  var editingTags = [];
+
+  /* ============================================
+     存储
+     ============================================ */
+  function loadData() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        bookmarks = JSON.parse(raw);
+      }
+    } catch(e) {
+      bookmarks = [];
+    }
+  }
+
+  function saveData() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+    } catch(e) {
+      showImportStatus('存储空间不足，请删除部分书签', true);
+    }
+  }
+
+  /* ============================================
+     书签解析 & 自动分类
+     ============================================ */
+
+  function getDomain(url) {
+    try {
+      var u = new URL(url);
+      return u.hostname.replace(/^www\./, '').toLowerCase();
+    } catch(e) {
+      return '';
+    }
+  }
+
+  function classifyBookmark(url, title, folder) {
+    var domain = getDomain(url);
+    var result = { cat: 'other', tags: [] };
+
+    /* 1. 精确域名匹配 */
+    for (var dkey in DOMAIN_MAP) {
+      if (domain.indexOf(dkey) >= 0) {
+        result.cat = DOMAIN_MAP[dkey].cat;
+        result.tags = DOMAIN_MAP[dkey].tags.slice();
+        break;
+      }
+    }
+
+    /* 2. URL 路径分析（域名未命中时） */
+    if (result.cat === 'other') {
+      try {
+        var urlObj = new URL(url);
+        var path = urlObj.pathname.toLowerCase();
+        var pathMap = {
+          'dev': ['/docs', '/api', '/sdk', '/git', '/repo', '/code', '/developer', '/dev', '/npm', '/package', '/plugin', '/extension', '/source', '/binary', '/release', '/download', '/install', '/setup', '/deploy', '/ci', '/cd', '/build', '/debug', '/console', '/dashboard', '/admin', '/panel', '/config', '/settings', '/configure', '/docker', '/kubernetes', '/container', '/serverless', '/function', '/lambda', '/webhook', '/hook', '/endpoint', '/endpoints', '/service', '/services', '/status', '/health', '/monitor', '/log', '/logs', '/trace', '/tracing', '/metric', '/metrics', '/analytics', '/pipeline', '/pipeline', '/workflow', '/automation', '/orchestration', '/cluster', '/node', '/instance', '/experiment', '/sandbox', '/playground', '/repl', '/editor', '/ide', '/workspace', '/terminal', '/notebook', '/dataset', '/datasets', '/model', '/models', '/benchmark', '/changelog', '/contributing'],
+          'design': ['/design', '/icon', '/icons', '/font', '/fonts', '/color', '/colors', '/palette', '/template', '/templates', '/mockup', '/mockups', '/ui', '/ux', '/brand', '/branding', '/logo', '/logos', '/illustration', '/illustrations', '/vector', '/vectors', '/stock', '/photo', '/photos', '/image', '/images', '/gallery', '/showcase', '/portfolio', '/pattern', '/patterns', '/texture', '/textures', '/wallpaper', '/wallpapers', '/background', '/backgrounds', '/preset', '/presets', '/asset', '/assets', '/resource', '/resources', '/sketch', '/figma', '/photoshop', '/adobe', '/creative', '/inspiration', '/inspire', '/mood', '/moodboard', '/style', '/styleguide', '/typography', '/layout', '/grid', '/component', '/components', '/library', '/libraries', '/collection', '/collections'],
+          'ai': ['/ai', '/gpt', '/llm', '/model', '/models', '/generate', '/generation', '/prompt', '/prompts', '/stable-diffusion', '/midjourney', '/chat', '/chatbot', '/assistant', '/copilot', '/completion', '/completions', '/embedding', '/embeddings', '/fine-tuning', '/finetune', '/training', '/inference', '/predict', '/prediction', '/classify', '/classification', '/detect', '/detection', '/recognize', '/recognition', '/segment', '/segmentation', '/synthesize', '/synthesis', '/text-to-image', '/text-to-video', '/text-to-speech', '/image-to-image', '/image-to-text', '/speech-to-text', '/transcribe', '/transcription', '/translate', '/translation', '/summarize', '/summarization', '/extract', '/extraction', '/analyze', '/analysis'],
+          'shopping': ['/shop', '/store', '/product', '/products', '/item', '/items', '/buy', '/cart', '/order', '/orders', '/checkout', '/payment', '/pay', '/price', '/pricing', '/sale', '/sales', '/deal', '/deals', '/offer', '/offers', '/coupon', '/coupons', '/discount', '/discounts', '/promotion', '/promotions', '/bargain', '/clearance', '/outlet', '/catalog', '/category', '/categories', '/collection', '/collections', '/brand', '/brands', '/new-arrivals', '/trending', '/bestseller', '/bestsellers', '/featured', '/popular', '/recommended', '/wishlist', '/favorite', '/favorites', '/review', '/reviews', '/rating', '/ratings', '/compare', '/comparison'],
+          'news': ['/news', '/article', '/articles', '/blog', '/blogs', '/post', '/posts', '/story', '/stories', '/press', '/media', '/release', '/releases', '/update', '/updates', '/announcement', '/announcements', '/bulletin', '/feed', '/rss', '/newsletter', '/digest', '/daily', '/weekly', '/monthly', '/report', '/reports', '/analysis', '/insight', '/insights', '/opinion', '/opinions', '/editorial', '/column', '/columns', '/feature', '/features', '/trending', '/popular', '/latest', '/breaking', '/headline', '/headlines', '/top', '/highlight', '/highlights'],
+          'cloud': ['/drive', '/storage', '/sync', '/backup', '/cloud', '/dropbox', '/download', '/downloads', '/upload', '/uploads', '/file', '/files', '/folder', '/folders', '/share', '/shared', '/sharing', '/transfer', '/transfers', '/send', '/receive', '/restore', '/recover', '/recovery', '/snapshot', '/snapshots', '/version', '/versions', '/history', '/archive', '/archives', '/trash', '/bin', '/recycle', '/disk', '/space', '/quota', '/plan', '/plans', '/pricing', '/upgrade', '/premium', '/pro', '/business', '/enterprise', '/team', '/teams', '/cdn', '/cdn', '/delivery', '/distribution', '/edge', '/node', '/nodes', '/region', '/regions', '/bucket', '/buckets', '/object', '/objects', '/container', '/containers', '/blob', '/blobs', '/asset', '/assets', '/media', '/static', '/public', '/upload', '/download'],
+          'learn': ['/learn', '/learning', '/course', '/courses', '/lesson', '/lessons', '/tutorial', '/tutorials', '/class', '/classes', '/training', '/teach', '/teaching', '/education', '/educational', '/academy', '/school', '/university', '/college', '/student', '/students', '/teacher', '/teachers', '/instructor', '/instructors', '/lecture', '/lectures', '/workshop', '/workshops', '/webinar', '/webinars', '/bootcamp', '/bootcamps', '/certification', '/certifications', '/certificate', '/certificates', '/exam', '/exams', '/quiz', '/quizzes', '/test', '/tests', '/exercise', '/exercises', '/practice', '/assignment', '/assignments', '/homework', '/project', '/projects', '/curriculum', '/syllabus', '/path', '/paths', '/track', '/tracks', '/skill', '/skills', '/topic', '/topics', '/subject', '/subjects', '/library', '/libraries', '/resource', '/resources', '/reference', '/references', '/guide', '/guides', '/book', '/books', '/ebook', '/ebooks', '/reading', '/read', '/wiki', '/knowledge', '/knowledge-base', '/faq', '/help', '/support', '/documentation', '/docs'],
+          'productivity': ['/note', '/notes', '/todo', '/todos', '/task', '/tasks', '/project', '/projects', '/board', '/boards', '/kanban', '/calendar', '/schedule', '/planner', '/plan', '/plans', '/goal', '/goals', '/habit', '/habits', '/tracker', '/tracking', '/timer', '/pomodoro', '/focus', '/workspace', '/workspaces', '/team', '/teams', '/collaborate', '/collaboration', '/share', '/shared', '/sharing', '/doc', '/docs', '/document', '/documents', '/wiki', '/knowledge', '/database', '/databases', '/table', '/tables', '/spreadsheet', '/spreadsheets', '/form', '/forms', '/survey', '/surveys', '/poll', '/polls', '/whiteboard', '/canvas', '/draw', '/drawing', '/diagram', '/diagrams', '/flowchart', '/flowcharts', '/mindmap', '/mindmaps', '/outline', '/outlines', '/draft', '/drafts', '/template', '/templates', '/workflow', '/workflows', '/automation', '/automations', '/integration', '/integrations', '/connect', '/connections', '/import', '/export', '/migrate', '/migration', '/backup', '/restore', '/archive', '/archives', '/inbox', '/clipboard', '/snippet', '/snippets', '/bookmark', '/bookmarks', '/collection', '/collections', '/save', '/saved', '/favorite', '/favorites', '/star', '/starred', '/pin', '/pinned', '/recent', '/history', '/activity', '/timeline', '/feed', '/notification', '/notifications', '/reminder', '/reminders', '/alert', '/alerts', '/search', '/filter', '/sort', '/view', '/views', '/setting', '/settings', '/preference', '/preferences', '/profile', '/account', '/billing', '/subscription', '/subscriptions', '/pricing', '/upgrade', '/premium', '/pro', '/business', '/enterprise', '/team', '/teams', '/member', '/members', '/invite', '/invites', '/permission', '/permissions', '/role', '/roles', '/access', '/security', '/privacy', '/api', '/webhook', '/webhooks', '/developer', '/developers', '/sdk', '/widget', '/widgets', '/embed', '/publish', '/publishing', '/version', '/versions', '/changelog', '/release', '/releases', '/roadmap', '/feedback', '/suggestion', '/suggestions', '/feature', '/features', '/request', '/requests', '/vote', '/voting', '/community', '/forum', '/forums', '/help', '/support', '/guide', '/guides', '/tutorial', '/tutorials', '/onboarding', '/welcome', '/getting-started', '/quickstart', '/demo', '/demo']
+        };
+        for (var pcat in pathMap) {
+          var pkeys = pathMap[pcat];
+          for (var pi = 0; pi < pkeys.length; pi++) {
+            if (path.indexOf(pkeys[pi]) >= 0) {
+              result.cat = pcat;
+              break;
+            }
+          }
+          if (result.cat !== 'other') break;
+        }
+      } catch(e) {}
+    }
+
+    /* 3. 域名后缀/模式匹配 */
+    if (result.cat === 'other') {
+      /* 部署平台 → 开发 */
+      if (domain.endsWith('.github.io') || domain.endsWith('.vercel.app') ||
+          domain.endsWith('.netlify.app') || domain.endsWith('.gitlab.io') ||
+          domain.endsWith('.surge.sh') || domain.endsWith('.herokuapp.com') ||
+          domain.endsWith('.now.sh') || domain.endsWith('.firebaseapp.com') ||
+          domain.endsWith('.pages.dev') || domain.endsWith('.workers.dev') ||
+          domain.endsWith('.fly.dev') || domain.endsWith('.deno.dev') ||
+          domain.endsWith('.onrender.com') || domain.endsWith('.railway.app') ||
+          domain.endsWith('.glitch.me') || domain.endsWith('.replit.dev') ||
+          domain.endsWith('.stackblitz.io') || domain.endsWith('.codepen.io') ||
+          domain.endsWith('.codesandbox.io') || domain.endsWith('.jsfiddle.net') ||
+          domain.endsWith('.runkit.com') || domain.endsWith('.repl.co') ||
+          domain.endsWith('.ngrok.io') || domain.endsWith('.trycloudflare.com') ||
+          domain.endsWith('.azurewebsites.net') || domain.endsWith('.azurestaticapps.net') ||
+          domain.endsWith('.awsapprunner.com') || domain.endsWith('.amplifyapp.com') ||
+          domain.endsWith('.appspot.com') || domain.endsWith('.web.app') ||
+          domain.endsWith('.ts.net') || domain.endsWith('.tailscale.net') ||
+          domain.endsWith('.loca.lt') || domain.endsWith('.serveo.net') ||
+          domain.endsWith('.pagekite.me') || domain.endsWith('.tunnelto.dev')) {
+        result.cat = 'dev';
+        if (result.tags.indexOf('前端') < 0) result.tags.push('前端');
+      /* 博客/写作平台 → 社交 */
+      } else if (domain.endsWith('.medium.com') || domain.endsWith('.substack.com') ||
+                 domain.endsWith('.hashnode.dev') || domain.endsWith('.dev.to') ||
+                 domain.endsWith('.blog') || domain.endsWith('.blogspot.com') ||
+                 domain.endsWith('.wordpress.com') || domain.endsWith('.typepad.com') ||
+                 domain.endsWith('.tumblr.com') || domain.endsWith('.wixsite.com') ||
+                 domain.endsWith('.weebly.com') || domain.endsWith('.webflow.io') ||
+                 domain.endsWith('.ghost.io') || domain.endsWith('.bearblog.dev') ||
+                 domain.endsWith('.write.as') || domain.endsWith('.telegra.ph') ||
+                 domain.endsWith('.mirror.xyz') || domain.endsWith('.mirror.xyz') ||
+                 domain.endsWith('.notion.site') || domain.endsWith('.super.site') ||
+                 domain.endsWith('.carrd.co') || domain.endsWith('.strikingly.com') ||
+                 domain.endsWith('.linktr.ee') || domain.endsWith('.bio.link') ||
+                 domain.endsWith('.about.me') || domain.endsWith('.campsite.bio') ||
+                 domain.endsWith('.journoportfolio.com') || domain.endsWith('.contently.com') ||
+                 domain.endsWith('.mystrikingly.com') || domain.endsWith('.site123.me') ||
+                 domain.endsWith('.simdif.com') || domain.endsWith('.site.pro') ||
+                 domain.endsWith('.ucraft.com') || domain.endsWith('.strikingly.com') ||
+                 domain.endsWith('.jimdosite.com') || domain.endsWith('.webnode.page') ||
+                 domain.endsWith('.site123.com') || domain.endsWith('.wix.com') ||
+                 domain.endsWith('.squarespace.com') || domain.endsWith('.weebly.com') ||
+                 domain.endsWith('.webflow.com') || domain.endsWith('.framer.website') ||
+                 domain.endsWith('.framer.ai') || domain.endsWith('.readymag.com') ||
+                 domain.endsWith('.carbonmade.com') || domain.endsWith('.crevado.com') ||
+                 domain.endsWith('.portfoliobox.net') || domain.endsWith('.dunked.com') ||
+                 domain.endsWith('.format.com') || domain.endsWith('.cargo.site') ||
+                 domain.endsWith('.siteleaf.com') || domain.endsWith('.statamic.com')) {
+        result.cat = 'social';
+        if (result.tags.indexOf('博客') < 0) result.tags.push('博客');
+      /* 个人网站/主页 → 社交 */
+      } else if (domain.endsWith('.me') || domain.endsWith('.name') ||
+                 domain.endsWith('.xyz') || domain.endsWith('.site') ||
+                 domain.endsWith('.online') || domain.endsWith('.live') ||
+                 domain.endsWith('.digital') || domain.endsWith('.studio') ||
+                 domain.endsWith('.design') || domain.endsWith('.art') ||
+                 domain.endsWith('.gallery') || domain.endsWith('.photos') ||
+                 domain.endsWith('.pictures') || domain.endsWith('.photo') ||
+                 domain.endsWith('.photography') || domain.endsWith('.graphics') ||
+                 domain.endsWith('.agency') || domain.endsWith('.consulting') ||
+                 domain.endsWith('.ventures') || domain.endsWith('.capital') ||
+                 domain.endsWith('.fund') || domain.endsWith('.foundation') ||
+                 domain.endsWith('.institute') || domain.endsWith('.academy') ||
+                 domain.endsWith('.education') || domain.endsWith('.training') ||
+                 domain.endsWith('.media') || domain.endsWith('.press') ||
+                 domain.endsWith('.news') || domain.endsWith('.today') ||
+                 domain.endsWith('.center') || domain.endsWith('.company') ||
+                 domain.endsWith('.solutions') || domain.endsWith('.services') ||
+                 domain.endsWith('.technology') || domain.endsWith('.systems') ||
+                 domain.endsWith('.software') || domain.endsWith('.network') ||
+                 domain.endsWith('.group') || domain.endsWith('.team') ||
+                 domain.endsWith('.works') || domain.endsWith('.work') ||
+                 domain.endsWith('.careers') || domain.endsWith('.jobs') ||
+                 domain.endsWith('.life') || domain.endsWith('.world') ||
+                 domain.endsWith('.global') || domain.endsWith('.international') ||
+                 domain.endsWith('.club') || domain.endsWith('.community') ||
+                 domain.endsWith('.social') || domain.endsWith('.chat') ||
+                 domain.endsWith('.expert') || domain.endsWith('.guru') ||
+                 domain.endsWith('.ninja') || domain.endsWith('.pro') ||
+                 domain.endsWith('.plus') || domain.endsWith('.zone') ||
+                 domain.endsWith('.space') || domain.endsWith('.place') ||
+                 domain.endsWith('.land') || domain.endsWith('.house') ||
+                 domain.endsWith('.page') || domain.endsWith('.link') ||
+                 domain.endsWith('.click') || domain.endsWith('.email') ||
+                 domain.endsWith('.tools') || domain.endsWith('.kitchen') ||
+                 domain.endsWith('.market') || domain.endsWith('.shop') ||
+                 domain.endsWith('.store') || domain.endsWith('.boutique') ||
+                 domain.endsWith('.fashion') || domain.endsWith('.style') ||
+                 domain.endsWith('.beauty') || domain.endsWith('.health') ||
+                 domain.endsWith('.fitness') || domain.endsWith('.care') ||
+                 domain.endsWith('.coach') || domain.endsWith('.therapy') ||
+                 domain.endsWith('.legal') || domain.endsWith('.law') ||
+                 domain.endsWith('.tax') || domain.endsWith('.finance') ||
+                 domain.endsWith('.money') || domain.endsWith('.cash') ||
+                 domain.endsWith('.credit') || domain.endsWith('.loan') ||
+                 domain.endsWith('.insurance') || domain.endsWith('.claims') ||
+                 domain.endsWith('.travel') || domain.endsWith('.tours') ||
+                 domain.endsWith('.holiday') || domain.endsWith('.vacations') ||
+                 domain.endsWith('.flights') || domain.endsWith('.hotels') ||
+                 domain.endsWith('.rentals') || domain.endsWith('.properties') ||
+                 domain.endsWith('.realty') || domain.endsWith('.estate') ||
+                 domain.endsWith('.auto') || domain.endsWith('.cars') ||
+                 domain.endsWith('.motorcycles') || domain.endsWith('.bike') ||
+                 domain.endsWith('.energy') || domain.endsWith('.solar') ||
+                 domain.endsWith('.green') || domain.endsWith('.eco') ||
+                 domain.endsWith('.organic') || domain.endsWith('.bio') ||
+                 domain.endsWith('.farm') || domain.endsWith('.garden') ||
+                 domain.endsWith('.flowers') || domain.endsWith('.plants') ||
+                 domain.endsWith('.pizza') || domain.endsWith('.restaurant') ||
+                 domain.endsWith('.cafe') || domain.endsWith('.bar') ||
+                 domain.endsWith('.pub') || domain.endsWith('.beer') ||
+                 domain.endsWith('.wine') || domain.endsWith('.coffee') ||
+                 domain.endsWith('.recipes') || domain.endsWith('.food') ||
+                 domain.endsWith('.cooking') || domain.endsWith('.kitchen') ||
+                 domain.endsWith('.menu') || domain.endsWith('.delivery') ||
+                 domain.endsWith('.events') || domain.endsWith('.tickets') ||
+                 domain.endsWith('.show') || domain.endsWith('.theater') ||
+                 domain.endsWith('.film') || domain.endsWith('.movie') ||
+                 domain.endsWith('.music') || domain.endsWith('.audio') ||
+                 domain.endsWith('.radio') || domain.endsWith('.fm') ||
+                 domain.endsWith('.tv') || domain.endsWith('.video') ||
+                 domain.endsWith('.live') || domain.endsWith('.stream') ||
+                 domain.endsWith('.game') || domain.endsWith('.games') ||
+                 domain.endsWith('.fun') || domain.endsWith('.cool') ||
+                 domain.endsWith('.rocks') || domain.endsWith('.band')) {
+        result.cat = 'social';
+        if (result.tags.indexOf('个人网站') < 0) result.tags.push('个人网站');
+      }
+    }
+
+    /* 4. 标题关键词匹配（带权重机制） */
+    if (result.cat === 'other') {
+      var lowerTitle = (title || '').toLowerCase();
+      var titleScores = {};
+      var matchedTags = [];
+      for (var catKey in TITLE_KEYWORDS) {
+        titleScores[catKey] = 0;
+        var keywords = TITLE_KEYWORDS[catKey];
+        for (var i = 0; i < keywords.length; i++) {
+          var kw = keywords[i].toLowerCase();
+          if (lowerTitle.indexOf(kw) >= 0) {
+            /* 2字及以上关键词即权重2分，确保中文短词（如"设计"、"开发"）能通过阈值 */
+            titleScores[catKey] += kw.length >= 2 ? 2 : 1;
+            if (matchedTags.indexOf(keywords[i]) < 0) {
+              matchedTags.push(keywords[i]);
+            }
+          }
+        }
+      }
+      /* 选择得分最高的分类，需至少2分避免偶然匹配 */
+      var bestCat = 'other';
+      var bestScore = 0;
+      for (var scat in titleScores) {
+        if (titleScores[scat] > bestScore) {
+          bestScore = titleScores[scat];
+          bestCat = scat;
+        }
+      }
+      if (bestScore >= 2) {
+        result.cat = bestCat;
+        matchedTags.forEach(function(t) {
+          if (result.tags.indexOf(t) < 0) result.tags.push(t);
+        });
+      }
+    }
+
+    /* 5. 文件夹名提示 */
+    if (folder && result.cat === 'other') {
+      var lowerFolder = folder.toLowerCase();
+      for (var fcat in TITLE_KEYWORDS) {
+        var fkeys = TITLE_KEYWORDS[fcat];
+        for (var j = 0; j < fkeys.length; j++) {
+          if (lowerFolder.indexOf(fkeys[j].toLowerCase()) >= 0) {
+            result.cat = fcat;
+            break;
+          }
+        }
+        if (result.cat !== 'other') break;
+      }
+    }
+
+    /* 6. 补充标签：TLD & 模式 */
+    if (domain) {
+      if (domain.endsWith('.cn') || domain.endsWith('.com.cn')) {
+        if (result.tags.indexOf('中国') < 0) result.tags.push('中国');
+      }
+      if (domain.endsWith('.io')) {
+        if (result.tags.indexOf('技术') < 0) result.tags.push('技术');
+      }
+      if (domain.endsWith('.dev') || domain.endsWith('.app')) {
+        if (result.tags.indexOf('开发') < 0) result.tags.push('开发');
+      }
+      if (domain.endsWith('.edu') || domain.endsWith('.edu.cn')) {
+        if (result.tags.indexOf('教育') < 0) result.tags.push('教育');
+      }
+      if (domain.endsWith('.gov') || domain.endsWith('.gov.cn')) {
+        if (result.tags.indexOf('政府') < 0) result.tags.push('政府');
+      }
+      if (domain.endsWith('.org')) {
+        if (result.tags.indexOf('非营利') < 0) result.tags.push('非营利');
+      }
+    }
+
+    /* 去重标签 */
+    result.tags = result.tags.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+    return result;
+  }
+
+  function parseBookmarkHTML(html) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, 'text/html');
+    var results = [];
+    var existingUrls = {};
+    bookmarks.forEach(function(b) { existingUrls[b.url] = true; });
+
+    function walkDL(dl, folderName) {
+      var items = dl.children;
+      for (var i = 0; i < items.length; i++) {
+        var el = items[i];
+        if (el.tagName === 'DT') {
+          var a = el.querySelector(':scope > a');
+          if (a) {
+            var href = a.getAttribute('href') || '';
+            if (href && href !== '#' && !href.startsWith('javascript:') &&
+                !href.startsWith('place:') && !existingUrls[href]) {
+              var title = a.textContent.trim() || href;
+              var addDate = a.getAttribute('add_date');
+              var classified = classifyBookmark(href, title, folderName);
+              results.push({
+                id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                url: href,
+                title: title,
+                domain: getDomain(href),
+                category: classified.cat,
+                tags: classified.tags,
+                notes: '',
+                folder: folderName || '',
+                addDate: addDate || '',
+                createdAt: Date.now()
+              });
+              existingUrls[href] = true;
+            }
+          }
+          /* 递归处理子文件夹 */
+          var subDL = el.querySelector(':scope > dl');
+          if (subDL) {
+            var h3 = el.querySelector(':scope > h3');
+            var subFolder = h3 ? h3.textContent.trim() : folderName;
+            walkDL(subDL, subFolder);
+          }
+        }
+      }
+    }
+
+    var rootDL = doc.querySelector('dl');
+    if (rootDL) {
+      walkDL(rootDL, '');
+    }
+
+    return results;
+  }
+
+  /* ============================================
+     图片 URL 生成
+     ============================================ */
+  function getScreenshotUrls(url) {
+    var encoded = encodeURIComponent(url);
+    return [
+      'https://s.wordpress.com/mshots/v1/' + encoded + '?w=400&h=250',
+      'https://image.thum.io/get/width/400/crop/800/allowJPG/wait/20/noanimate/' + url
+    ];
+  }
+
+  function getFaviconUrl(url) {
+    var domain = getDomain(url);
+    if (!domain) return '';
+    return 'https://icons.duckduckgo.com/ip3/' + domain + '.ico';
+  }
+
+  function getColorFromDomain(domain) {
+    var hash = 0;
+    for (var i = 0; i < domain.length; i++) {
+      hash = domain.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    var h = Math.abs(hash) % 360;
+    return 'hsl(' + h + ', 45%, 55%)';
+  }
+
+  function getDomainLabel(domain) {
+    if (!domain) return '';
+    var parts = domain.split('.');
+    if (parts.length >= 2) {
+      var name = parts[parts.length - 2];
+      if (name.length > 12) return name.substring(0, 10) + '...';
+      return name;
+    }
+    return domain;
+  }
+
+  /* ============================================
+     渲染
+     ============================================ */
+
+  function renderCategories() {
+    var counts = {};
+    bookmarks.forEach(function(b) {
+      counts[b.category] = (counts[b.category] || 0) + 1;
+    });
+    counts['all'] = bookmarks.length;
+
+    var html = '';
+    CATEGORIES.forEach(function(cat, idx) {
+      var count = counts[cat.key] || 0;
+      if (cat.key !== 'all' && count === 0) return;
+      var isActive = currentCategory === cat.key;
+      var isPinned = idx === 0 ? ' is-pinned' : '';
+      html += '<button class="cat-pill' + (isActive ? ' active' : '') + isPinned + '" data-cat="' + cat.key + '">' +
+              cat.label + (count > 0 ? ' <span class="cat-count">' + count + '</span>' : '') +
+              '</button>';
+    });
+
+    var filterEl = document.getElementById('categoryFilter');
+    var floatEl = document.getElementById('floatingCategoryFilter');
+    filterEl.innerHTML = html;
+    floatEl.innerHTML = html;
+
+    filterEl.querySelectorAll('.cat-pill').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        currentCategory = this.dataset.cat;
+        currentTag = null;
+        renderAll();
+      });
+    });
+    floatEl.querySelectorAll('.cat-pill').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        currentCategory = this.dataset.cat;
+        currentTag = null;
+        renderAll();
+      });
+    });
+  }
+
+  function renderTagFilter() {
+    var filtered = getFilteredBookmarks(true);
+    var tagCounts = {};
+    filtered.forEach(function(b) {
+      (b.tags || []).forEach(function(t) {
+        tagCounts[t] = (tagCounts[t] || 0) + 1;
+      });
+    });
+
+    var tags = Object.keys(tagCounts).sort(function(a, b) {
+      return tagCounts[b] - tagCounts[a];
+    }).slice(0, 20);
+
+    var wrap = document.getElementById('tagFilterWrap');
+    if (tags.length === 0) {
+      wrap.innerHTML = '';
+      wrap.classList.remove('has-tags');
+      return;
+    }
+
+    wrap.classList.add('has-tags');
+    var html = '<span class="tag-filter-label">标签：</span>';
+    tags.forEach(function(t) {
+      var isActive = currentTag === t;
+      html += '<button class="tag-filter-pill' + (isActive ? ' active' : '') + '" data-tag="' + escapeAttr(t) + '">' +
+              escapeHtml(t) + ' (' + tagCounts[t] + ')' +
+              '</button>';
+    });
+    if (currentTag) {
+      html += '<button class="tag-filter-pill active" data-tag="" style="background:var(--red);border-color:var(--red)">清除筛选</button>';
+    }
+
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.tag-filter-pill').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var tag = this.dataset.tag;
+        currentTag = (tag && tag !== '') ? tag : null;
+        renderGrid();
+        renderTagFilter();
+      });
+    });
+  }
+
+  function getFilteredBookmarks(skipTag) {
+    return bookmarks.filter(function(b) {
+      if (currentCategory !== 'all' && b.category !== currentCategory) return false;
+      if (!skipTag && currentTag && (b.tags || []).indexOf(currentTag) < 0) return false;
+      if (searchQuery) {
+        var q = searchQuery.toLowerCase();
+        var haystack = (b.title + ' ' + b.url + ' ' + (b.domain || '') + ' ' + (b.tags || []).join(' ') + ' ' + (b.notes || '')).toLowerCase();
+        if (haystack.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderGrid() {
+    var filtered = getFilteredBookmarks();
+    var grid = document.getElementById('bookmarkGrid');
+    var empty = document.getElementById('emptyState');
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '';
+      if (bookmarks.length === 0) {
+        empty.style.display = 'block';
+        empty.querySelector('h3').textContent = '暂无书签';
+        empty.querySelector('p').textContent = '导入 Chrome 书签文件，或加载示例数据开始体验';
+      } else {
+        empty.style.display = 'block';
+        empty.querySelector('h3').textContent = '未找到匹配书签';
+        empty.querySelector('p').textContent = '尝试更换分类或搜索关键词';
+      }
+      return;
+    }
+
+    empty.style.display = 'none';
+
+    var html = '';
+    filtered.forEach(function(b, idx) {
+      html += renderCard(b, idx);
+    });
+    grid.innerHTML = html;
+
+    /* 绑定卡片事件 */
+    grid.querySelectorAll('.bm-card').forEach(function(card) {
+      var id = card.dataset.id;
+
+      /* 点击打开链接 */
+      card.addEventListener('click', function(e) {
+        if (e.target.closest('.bm-action-btn')) return;
+        var b = bookmarks.find(function(x) { return x.id === id; });
+        if (b) window.open(b.url, '_blank', 'noopener,noreferrer');
+      });
+
+      /* 编辑按钮 */
+      var editBtn = card.querySelector('.bm-action-edit');
+      if (editBtn) {
+        editBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          openEditModal(id);
+        });
+      }
+
+      /* 删除按钮 */
+      var delBtn = card.querySelector('.bm-action-delete');
+      if (delBtn) {
+        delBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (confirm('确定删除此书签？')) {
+            bookmarks = bookmarks.filter(function(x) { return x.id !== id; });
+            saveData();
+            renderAll();
+          }
+        });
+      }
+    });
+
+    /* 懒加载截图 */
+    lazyLoadScreenshots();
+  }
+
+  function renderCard(b, idx) {
+    var domain = b.domain || getDomain(b.url);
+    var catLabel = CAT_LABELS[b.category] || '其他';
+    var bg = getColorFromDomain(domain);
+    var faviconUrl = getFaviconUrl(b.url);
+    var screenshotUrls = getScreenshotUrls(b.url);
+    var screenshotPrimary = screenshotUrls[0];
+    var screenshotBackup = screenshotUrls[1] || '';
+    var domainLabel = getDomainLabel(domain);
+
+    var tagsHtml = '';
+    if (b.tags && b.tags.length > 0) {
+      tagsHtml = '<div class="bm-tags">';
+      b.tags.slice(0, 4).forEach(function(t) {
+        tagsHtml += '<span class="bm-tag">' + escapeHtml(t) + '</span>';
+      });
+      if (b.tags.length > 4) {
+        tagsHtml += '<span class="bm-tag">+' + (b.tags.length - 4) + '</span>';
+      }
+      tagsHtml += '</div>';
+    }
+
+    var notesBadge = '';
+    if (b.notes) {
+      notesBadge = '<span class="bm-badge" style="background:rgba(99,102,241,0.7)">备注</span>';
+    }
+
+    return '<a class="bm-card" data-id="' + b.id + '" style="animation-delay:' + (idx * 0.03) + 's">' +
+      '<div class="bm-cover loading" data-screenshot="' + escapeAttr(screenshotPrimary) + '" data-screenshot-backup="' + escapeAttr(screenshotBackup) + '" data-favicon="' + escapeAttr(faviconUrl) + '">' +
+        '<div class="bm-cover-placeholder" style="background:' + bg + '">' +
+          (faviconUrl ? '<img class="favicon" src="' + faviconUrl + '" onerror="this.style.display=\'none\';var t=this.parentElement.querySelector(\'.favicon-text\');if(t)t.style.display=\'block\'" alt="">' : '') +
+          '<span class="favicon-text" style="display:none">' + escapeHtml(domainLabel.charAt(0).toUpperCase()) + '</span>' +
+          '<span class="domain-text">' + escapeHtml(domainLabel) + '</span>' +
+        '</div>' +
+        '<img class="screenshot" src="" alt="" style="display:none" ' +
+          'onload="this.style.display=\'block\';this.parentElement.classList.remove(\'loading\');this.previousElementSibling.style.display=\'none\'" ' +
+          'onerror="var self=this;var cover=self.parentElement;var backup=cover.dataset.screenshotBackup;if(backup&&self.src!==backup){self.src=backup;return;}self.style.display=\'none\';cover.classList.remove(\'loading\')">' +
+        '<div class="bm-cover-badge">' +
+          '<span class="bm-badge">' + escapeHtml(catLabel) + '</span>' +
+          notesBadge +
+        '</div>' +
+        '<div class="bm-actions">' +
+          '<button class="bm-action-btn bm-action-edit" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+          '<button class="bm-action-btn is-danger bm-action-delete" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bm-info">' +
+        '<div class="bm-info-title">' + escapeHtml(b.title || b.url) + '</div>' +
+        '<div class="bm-info-domain">' + escapeHtml(domain) + '</div>' +
+      '</div>' +
+      tagsHtml +
+    '</a>';
+  }
+
+  /* 懒加载截图 */
+  function lazyLoadScreenshots() {
+    if (!('IntersectionObserver' in window)) {
+      loadAllScreenshots();
+      return;
+    }
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var cover = entry.target;
+          var screenshotImg = cover.querySelector('img.screenshot');
+          var screenshotUrl = cover.dataset.screenshot;
+          if (screenshotImg && screenshotUrl && !screenshotImg.src) {
+            screenshotImg.src = screenshotUrl;
+          }
+          observer.unobserve(cover);
+        }
+      });
+    }, { rootMargin: '200px' });
+
+    document.querySelectorAll('.bm-cover[data-screenshot]').forEach(function(cover) {
+      observer.observe(cover);
+    });
+  }
+
+  function loadAllScreenshots() {
+    document.querySelectorAll('.bm-cover[data-screenshot]').forEach(function(cover) {
+      var screenshotImg = cover.querySelector('img.screenshot');
+      var screenshotUrl = cover.dataset.screenshot;
+      if (screenshotImg && screenshotUrl && !screenshotImg.src) {
+        screenshotImg.src = screenshotUrl;
+      }
+    });
+  }
+
+  function renderAll() {
+    renderCategories();
+    renderTagFilter();
+    renderGrid();
+    updateScrollButtons();
+  }
+
+  /* ============================================
+     编辑弹窗
+     ============================================ */
+  function openEditModal(id) {
+    var b = bookmarks.find(function(x) { return x.id === id; });
+    if (!b) return;
+    editingId = id;
+    editingTags = (b.tags || []).slice();
+
+    document.getElementById('editTitle').value = b.title || '';
+    document.getElementById('editUrl').value = b.url || '';
+    document.getElementById('editNotes').value = b.notes || '';
+
+    var catSelect = document.getElementById('editCategory');
+    catSelect.innerHTML = CATEGORIES.filter(function(c) { return c.key !== 'all'; }).map(function(c) {
+      return '<option value="' + c.key + '"' + (c.key === b.category ? ' selected' : '') + '>' + c.label + '</option>';
+    }).join('');
+
+    renderEditTags();
+    document.getElementById('editModal').classList.add('is-visible');
+  }
+
+  function renderEditTags() {
+    var container = document.getElementById('editTagsInput');
+    var input = document.getElementById('editTagInput');
+    var html = '';
+    editingTags.forEach(function(t, idx) {
+      html += '<span class="modal-tag-chip">' + escapeHtml(t) +
+              '<button data-idx="' + idx + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
+              '</span>';
+    });
+    container.innerHTML = html + '<input type="text" class="modal-tag-input" id="editTagInput" placeholder="输入标签后回车...">';
+    var newInput = document.getElementById('editTagInput');
+    newInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var val = newInput.value.trim();
+        if (val && editingTags.indexOf(val) < 0) {
+          editingTags.push(val);
+          renderEditTags();
+          document.getElementById('editTagInput').focus();
+        } else {
+          newInput.value = '';
+        }
+      }
+      if (e.key === 'Backspace' && !newInput.value && editingTags.length > 0) {
+        editingTags.pop();
+        renderEditTags();
+        document.getElementById('editTagInput').focus();
+      }
+    });
+    container.querySelectorAll('.modal-tag-chip button').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.idx);
+        editingTags.splice(idx, 1);
+        renderEditTags();
+      });
+    });
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('is-visible');
+    editingId = null;
+  }
+
+  function saveEdit() {
+    if (!editingId) return;
+    var b = bookmarks.find(function(x) { return x.id === editingId; });
+    if (!b) return;
+    b.title = document.getElementById('editTitle').value.trim() || b.url;
+    b.url = document.getElementById('editUrl').value.trim();
+    b.domain = getDomain(b.url);
+    b.category = document.getElementById('editCategory').value;
+    b.notes = document.getElementById('editNotes').value.trim();
+    b.tags = editingTags.slice();
+    saveData();
+    closeEditModal();
+    renderAll();
+  }
+
+  function deleteFromEdit() {
+    if (!editingId) return;
+    if (!confirm('确定删除此书签？')) return;
+    bookmarks = bookmarks.filter(function(x) { return x.id !== editingId; });
+    saveData();
+    closeEditModal();
+    renderAll();
+  }
+
+  /* ============================================
+     导入/导出/示例数据
+     ============================================ */
+  function handleImportFile(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var html = e.target.result;
+      var imported = parseBookmarkHTML(html);
+      if (imported.length === 0) {
+        showImportStatus('未在文件中找到书签', true);
+        return;
+      }
+      bookmarks = bookmarks.concat(imported);
+      saveData();
+      renderAll();
+      showImportStatus('成功导入 ' + imported.length + ' 条书签');
+    };
+    reader.onerror = function() {
+      showImportStatus('文件读取失败', true);
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function exportData() {
+    var data = JSON.stringify(bookmarks, null, 2);
+    var blob = new Blob([data], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'bookmarks-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showImportStatus('已导出 ' + bookmarks.length + ' 条书签');
+  }
+
+  function handleImportJson(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        if (!Array.isArray(data)) throw new Error('Invalid format');
+        bookmarks = data;
+        saveData();
+        renderAll();
+        showImportStatus('已恢复 ' + bookmarks.length + ' 条书签');
+      } catch(err) {
+        showImportStatus('JSON 文件格式错误', true);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function clearData() {
+    if (!confirm('确定清空所有书签数据？此操作不可恢复！')) return;
+    bookmarks = [];
+    saveData();
+    renderAll();
+    hideModal('dataSettingsModal');
+    showImportStatus('已清空所有数据');
+  }
+
+  function reclassifyAll() {
+    bookmarks.forEach(function(b) {
+      var classified = classifyBookmark(b.url, b.title, b.folder);
+      b.category = classified.cat;
+      /* 合并已有标签和新标签，保留用户手动添加的 */
+      b.tags = b.tags.filter(function(t) { return true; });
+      classified.tags.forEach(function(t) {
+        if (b.tags.indexOf(t) < 0) b.tags.push(t);
+      });
+    });
+    saveData();
+    renderAll();
+    showImportStatus('已重新分类 ' + bookmarks.length + ' 条书签');
+  }
+
+  function loadSampleData() {
+    if (bookmarks.length > 0 && !confirm('已有书签数据，加载示例数据将合并。继续？')) return;
+    var sample = getSampleBookmarks();
+    var existingUrls = {};
+    bookmarks.forEach(function(b) { existingUrls[b.url] = true; });
+    var newOnes = sample.filter(function(b) { return !existingUrls[b.url]; });
+    bookmarks = bookmarks.concat(newOnes);
+    saveData();
+    renderAll();
+    hideModal('dataSettingsModal');
+    showImportStatus('已加载 ' + newOnes.length + ' 条示例书签');
+  }
+
+  /* ============================================
+     示例数据
+     ============================================ */
+  function getSampleBookmarks() {
+    var samples = [
+      { url: 'https://github.com', title: 'GitHub: Where the world builds software', folder: '开发工具' },
+      { url: 'https://www.figma.com', title: 'Figma: The collaborative interface design tool', folder: '设计资源' },
+      { url: 'https://dribbble.com', title: 'Dribbble - Discover the world\'s top designers', folder: '设计灵感' },
+      { url: 'https://stackoverflow.com', title: 'Stack Overflow - Where Developers Learn & Share', folder: '开发工具' },
+      { url: 'https://www.youtube.com', title: 'YouTube', folder: '视频' },
+      { url: 'https://chat.openai.com', title: 'ChatGPT', folder: 'AI工具' },
+      { url: 'https://www.notion.so', title: 'Notion - The all-in-one workspace', folder: '效率工具' },
+      { url: 'https://codepen.io', title: 'CodePen - Front-end code editor', folder: '开发工具' },
+      { url: 'https://unsplash.com', title: 'Unsplash - Free Stock Photos', folder: '图片素材' },
+      { url: 'https://claude.ai', title: 'Claude AI', folder: 'AI工具' },
+      { url: 'https://www.behance.net', title: 'Behance - Creative portfolios', folder: '设计灵感' },
+      { url: 'https://developer.mozilla.org', title: 'MDN Web Docs', folder: '开发文档' },
+      { url: 'https://www.taobao.com', title: '淘宝网 - 淘！我喜欢', folder: '购物' },
+      { url: 'https://www.bilibili.com', title: '哔哩哔哩 - 你感兴趣的视频', folder: '视频' },
+      { url: 'https://runoob.com', title: '菜鸟教程 - 学的不仅是技术', folder: '学习' },
+      { url: 'https://coolors.co', title: 'Coolors - The super fast color palette generator', folder: '设计工具' },
+      { url: 'https://leetcode.cn', title: '力扣 - 助你找到好工作', folder: '编程练习' },
+      { url: 'https://www.zhihu.com', title: '知乎 - 有问题，就会有答案', folder: '社区' },
+      { url: 'https://vercel.com', title: 'Vercel - Build and deploy web apps', folder: '开发部署' },
+      { url: 'https://midjourney.com', title: 'Midjourney - AI Image Generation', folder: 'AI工具' },
+      { url: 'https://pan.baidu.com', title: '百度网盘 - 你的数据，永远在', folder: '云存储' },
+      { url: 'https://www.iconfont.cn', title: 'iconfont - 阿里巴巴矢量图标库', folder: '设计资源' },
+      { url: 'https://www.36kr.com', title: '36氪 - 创业资讯', folder: '新闻资讯' },
+      { url: 'https://deepseek.com', title: 'DeepSeek - 深度求索', folder: 'AI工具' }
+    ];
+
+    return samples.map(function(s) {
+      var classified = classifyBookmark(s.url, s.title, s.folder);
+      return {
+        id: 'bm_sample_' + Math.random().toString(36).substr(2, 9),
+        url: s.url,
+        title: s.title,
+        domain: getDomain(s.url),
+        category: classified.cat,
+        tags: classified.tags,
+        notes: '',
+        folder: s.folder || '',
+        addDate: '',
+        createdAt: Date.now()
+      };
+    });
+  }
+
+  /* ============================================
+     UI 辅助
+     ============================================ */
+  function showImportStatus(msg, isError) {
+    var el = document.getElementById('importStatus');
+    var text = document.getElementById('importStatusText');
+    text.textContent = msg;
+    el.style.background = isError ? '#ff3b30' : 'var(--ink)';
+    el.classList.add('is-visible');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(function() {
+      el.classList.remove('is-visible');
+    }, 3000);
+  }
+
+  function showModal(id) {
+    document.getElementById(id).classList.add('is-visible');
+  }
+
+  function hideModal(id) {
+    document.getElementById(id).classList.remove('is-visible');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function escapeAttr(str) {
+    if (!str) return '';
+    return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* ============================================
+     滚动控制
+     ============================================ */
+  function updateScrollButtons() {
+    var filters = [document.getElementById('categoryFilter'), document.getElementById('floatingCategoryFilter')];
+    var lefts = [document.getElementById('catScrollLeft'), document.getElementById('floatScrollLeft')];
+    var rights = [document.getElementById('catScrollRight'), document.getElementById('floatScrollRight')];
+
+    filters.forEach(function(filter, i) {
+      if (!filter) return;
+      var maxScroll = filter.scrollWidth - filter.clientWidth;
+      var scrolled = filter.scrollLeft;
+      if (lefts[i]) lefts[i].classList.toggle('is-disabled', scrolled <= 2);
+      if (rights[i]) rights[i].classList.toggle('is-disabled', scrolled >= maxScroll - 2);
+    });
+  }
+
+  var SCROLL_AMOUNT = 200;
+
+  function setupScroll() {
+    var pairs = [
+      { filter: 'categoryFilter', left: 'catScrollLeft', right: 'catScrollRight' },
+      { filter: 'floatingCategoryFilter', left: 'floatScrollLeft', right: 'floatScrollRight' }
+    ];
+
+    pairs.forEach(function(p) {
+      var filter = document.getElementById(p.filter);
+      var leftBtn = document.getElementById(p.left);
+      var rightBtn = document.getElementById(p.right);
+      if (!filter) return;
+
+      if (leftBtn) leftBtn.addEventListener('click', function() {
+        filter.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
+      });
+      if (rightBtn) rightBtn.addEventListener('click', function() {
+        filter.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
+      });
+      filter.addEventListener('scroll', updateScrollButtons);
+    });
+  }
+
+  function setupFloatingBar() {
+    var floatingBar = document.getElementById('floatingCatBar');
+    var categoryFilter = document.getElementById('categoryFilter');
+    var heroEl = document.querySelector('.page-hero');
+    var backToTop = document.getElementById('backToTop');
+
+    window.addEventListener('scroll', function() {
+      var heroBottom = heroEl ? heroEl.offsetTop + heroEl.offsetHeight : 200;
+      var catBottom = categoryFilter ? categoryFilter.offsetTop + categoryFilter.offsetHeight : 300;
+
+      /* 浮动分类栏：滚过原始分类栏时显示 */
+      if (window.scrollY > catBottom - 48) {
+        floatingBar.classList.add('is-visible');
+      } else {
+        floatingBar.classList.remove('is-visible');
+      }
+
+      /* 返回顶部：滚动 3 屏后显示 */
+      if (window.scrollY > window.innerHeight * 2.5) {
+        backToTop.classList.add('is-visible');
+      } else {
+        backToTop.classList.remove('is-visible');
+      }
+    });
+
+    backToTop.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  /* ============================================
+     初始化
+     ============================================ */
+  function init() {
+    loadData();
+
+    /* 搜索 */
+    var searchInput = document.getElementById('searchInput');
+    var searchTimer;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function() {
+        searchQuery = searchInput.value.trim();
+        renderGrid();
+        renderTagFilter();
+      }, 200);
+    });
+
+    /* 导入书签 */
+    var fileInput = document.getElementById('fileInput');
+    document.getElementById('btnImport').addEventListener('click', function() {
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        handleImportFile(this.files[0]);
+        this.value = '';
+      }
+    });
+
+    /* 数据管理 */
+    document.getElementById('btnDataSettings').addEventListener('click', function() {
+      showModal('dataSettingsModal');
+    });
+    document.getElementById('dataSettingsClose').addEventListener('click', function() {
+      hideModal('dataSettingsModal');
+    });
+    document.getElementById('btnExport').addEventListener('click', exportData);
+    document.getElementById('btnLoadSample').addEventListener('click', loadSampleData);
+    document.getElementById('btnReclassify').addEventListener('click', reclassifyAll);
+    document.getElementById('btnClearData').addEventListener('click', clearData);
+
+    /* JSON 导入 */
+    var jsonInput = document.getElementById('jsonFileInput');
+    document.getElementById('btnImportJson').addEventListener('click', function() {
+      jsonInput.click();
+    });
+    jsonInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        handleImportJson(this.files[0]);
+        this.value = '';
+      }
+    });
+
+    /* 编辑弹窗 */
+    document.getElementById('editModalClose').addEventListener('click', closeEditModal);
+    document.getElementById('btnEditCancel').addEventListener('click', closeEditModal);
+    document.getElementById('btnEditSave').addEventListener('click', saveEdit);
+    document.getElementById('btnEditDelete').addEventListener('click', deleteFromEdit);
+
+    /* 点击遮罩关闭弹窗 */
+    document.getElementById('editModal').addEventListener('click', function(e) {
+      if (e.target === this) closeEditModal();
+    });
+    document.getElementById('dataSettingsModal').addEventListener('click', function(e) {
+      if (e.target === this) hideModal('dataSettingsModal');
+    });
+
+    /* ESC 关闭弹窗 */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeEditModal();
+        hideModal('dataSettingsModal');
+      }
+    });
+
+    /* 滚动 & 浮动栏 */
+    setupScroll();
+    setupFloatingBar();
+
+    /* 渲染 */
+    renderAll();
+
+    /* 首次访问自动加载示例数据 */
+    if (bookmarks.length === 0) {
+      bookmarks = getSampleBookmarks();
+      saveData();
+      renderAll();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

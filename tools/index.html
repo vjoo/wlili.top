@@ -5,130 +5,25 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Studio Tools - 工具聚合首页</title>
+<title>W.-Studio Tools</title>
+<link rel="stylesheet" href="common.css">
+<script src="nav.js"></script>
 <style>
 /* ============================================
    WLi Tools - 在线工具集
    © 2025 WLi. All rights reserved.
    Developer: WLi
    ============================================ */
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { touch-action: manipulation; }
 
-  :root {
-    --ink: #2B3041;
-    --ink-secondary: #424245;
-    --ink-tertiary: #6e6e73;
-    --ink-quaternary: #86868b;
-    --bg: #f5f5f7;
-    --bg-white: #ffffff;
-    --bg-elevated: #fbfbfd;
-    --border: #d2d2d7;
-    --border-light: #e8e8ed;
-    --link: #6366f1;
-    --link-hover: #0077ed;
-    --fill-black: #2B3041;
-    --fill-gray: #86868b;
-    --fill-gray-light: #d2d2d7;
-    --fill-white: #ffffff;
-    --green: #34c759;
-    --red: #ff3b30;
-    --orange: #ff9500;
-    --purple: #7B61FF;
-    --radius-sm: 8px;
-    --radius-md: 11px;
-    --radius-lg: 18px;
-    --radius-pill: 980px;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* ===== Global Nav ===== */
-  .global-nav {
-    background: var(--bg-white);
-    height: 48px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    border-bottom: 1px solid var(--border-light);
-  }
-  .global-nav-content {
-    width: 100%;
-    padding: 0 22px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .nav-logo {
-    color: var(--ink);
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .logo-box {
-    width: 32px;
-    height: 32px;
-    background: var(--fill-black);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--fill-white);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-  .nav-links {
-    display: flex;
-    gap: 24px;
-    align-items: center;
-  }
-  .nav-link {
-    color: var(--ink);
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    opacity: 0.8;
-    transition: opacity 0.3s;
-  }
-  .nav-link:hover { opacity: 1; color: var(--link); }
-  .nav-link.active { opacity: 1; color: var(--link); font-weight: 500; }
-
-  /* ===== Page Hero ===== */
+  /* ===== Page Hero 覆盖（h1 更大） ===== */
   .page-hero {
-    text-align: center;
     padding: 50px 22px 30px;
   }
   .page-hero h1 {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
     font-size: 56px;
-    font-weight: 600;
     letter-spacing: -0.02em;
-    line-height: 1.08;
-    color: var(--ink);
     margin-bottom: 12px;
-  }
-  .page-hero p {
-    font-size: 21px;
-    font-weight: 400;
-    color: var(--ink-tertiary);
-    line-height: 1.38;
-    letter-spacing: 0.011em;
-    max-width: 600px;
-    margin: 0 auto;
+    text-wrap: balance;
   }
 
   /* ===== Section ===== */
@@ -160,6 +55,7 @@
     white-space: nowrap;
   }
   .category-tab:hover { border-color: var(--border); background: var(--bg); }
+  .category-tab:active { transform: scale(0.96); }
   .category-tab.active {
     background: var(--fill-black);
     color: var(--fill-white);
@@ -182,13 +78,17 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     cursor: pointer;
+    animation: cardFadeIn 0.4s ease-out forwards;
+    opacity: 0;
   }
   .tool-card:hover {
     border-color: var(--border);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+  }
+  .tool-card:active {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
   }
   .tool-icon {
     width: 44px;
@@ -202,14 +102,9 @@
   }
   .tool-icon.red { background: #FFEBEE; color: #C62828; }
   .tool-icon.orange { background: #FFF3E0; color: #E65100; }
-  .tool-icon.yellow { background: #FFF8E1; color: #EF8C00; }
   .tool-icon.green { background: #E8F5E9; color: #2E7D32; }
-  .tool-icon.teal { background: #E0F2F1; color: #00695C; }
-  .tool-icon.cyan { background: #E0F7FA; color: #00838F; }
   .tool-icon.blue { background: #EDF4FF; color: #2D6BC7; }
-  .tool-icon.indigo { background: #E8EAF6; color: #303F9F; }
   .tool-icon.purple { background: #F3E5F5; color: #7B1FA2; }
-  .tool-icon.pink { background: #FCE4EC; color: #C2185B; }
   .tool-name {
     font-size: 17px;
     font-weight: 600;
@@ -244,15 +139,23 @@
     letter-spacing: -0.01em;
   }
 
+  /* ===== Card Entrance Animation ===== */
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   /* ===== Responsive ===== */
   @media (max-width: 1068px) {
     .page-hero h1 { font-size: 48px; }
+    .tool-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 860px) {
     .tool-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 734px) {
-    .global-nav-content { padding: 0 16px; }
-    .nav-links { gap: 16px; }
     .page-hero { padding: 48px 16px 32px; }
     .page-hero h1 { font-size: 36px; }
     .page-hero p { font-size: 17px; }
@@ -264,26 +167,11 @@
   }
 
   @media (max-width: 480px) {
-    .nav-links { display: none; }
     .page-hero h1 { font-size: 32px; }
   }
 </style>
 </head>
 <body>
-
-<!-- Global Nav -->
-<nav class="global-nav">
-  <div class="global-nav-content">
-    <a href="index.html" class="nav-logo">
-      <div class="logo-box">W.</div>
-      <span id="navBrandText">Studio Tools</span>
-    </a>
-    <div class="nav-links">
-      <a href="../index.html" class="nav-link">首页</a>
-      <a href="index.html" class="nav-link active">全部工具</a>
-    </div>
-  </div>
-</nav>
 
 <!-- Page Hero -->
 <div class="page-hero">
@@ -327,11 +215,20 @@
       </a>
 
       <a class="tool-card" href="./image-cropper.html" data-cat="image" data-name="图片裁切">
-        <div class="tool-icon yellow">
+        <div class="tool-icon orange">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
         </div>
         <div class="tool-name">图片裁切</div>
         <div class="tool-desc">上传图片，自由裁切，支持多种预设比例与自定义尺寸，一键下载裁切结果</div>
+        <span class="tool-tag">图像处理</span>
+      </a>
+
+      <a class="tool-card" href="./image-upscale.html" data-cat="image" data-name="AI 图片放大">
+        <div class="tool-icon blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><path d="M21 3l-7 7"/><polyline points="9 21 3 21 3 15"/><path d="M3 21l7-7"/></svg>
+        </div>
+        <div class="tool-name">AI 图片放大</div>
+        <div class="tool-desc">基于 ESRGAN 模型浏览器端 AI 超分辨率放大，图片不上传服务器，支持 2x/4x 放大</div>
         <span class="tool-tag">图像处理</span>
       </a>
 
@@ -345,7 +242,7 @@
       </a>
 
       <a class="tool-card" href="./password-gen.html" data-cat="security" data-name="密码衍生器">
-        <div class="tool-icon teal">
+        <div class="tool-icon green">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </div>
         <div class="tool-name">密码衍生器</div>
@@ -354,7 +251,7 @@
       </a>
 
       <a class="tool-card" href="./ip-mascot.html" data-cat="creative" data-name="IP形象生成器">
-        <div class="tool-icon cyan">
+        <div class="tool-icon blue">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
         <div class="tool-name">IP形象生成器</div>
@@ -372,7 +269,7 @@
       </a>
 
       <a class="tool-card" href="./model-viewer.html" data-cat="reference" data-name="3D模型预览">
-        <div class="tool-icon indigo">
+        <div class="tool-icon purple">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         </div>
         <div class="tool-name">3D 模型预览</div>
@@ -390,7 +287,7 @@
       </a>
 
       <a class="tool-card" href="./phonetic-chart.html" data-cat="reference" data-name="音标速查">
-        <div class="tool-icon pink">
+        <div class="tool-icon red">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         </div>
         <div class="tool-name">48 音标速查表</div>
@@ -407,6 +304,24 @@
         <span class="tool-tag">效率管理</span>
       </a>
 
+      <a class="tool-card" href="./prompt-library.html" data-cat="creative" data-name="AI提示词库">
+        <div class="tool-icon purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <div class="tool-name">AI 提示词库</div>
+        <div class="tool-desc">管理 AI 绘画提示词模板，变量自定义提取，智能解析，效果图管理</div>
+        <span class="tool-tag">创意生成</span>
+      </a>
+
+      <a class="tool-card" href="./seamless-pattern.html" data-cat="creative" data-name="四方连图素材库">
+        <div class="tool-icon pink">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <div class="tool-name">四方连图素材库</div>
+        <div class="tool-desc">无缝四方连续图案提示词生成、素材入库、版权授权全流程管理</div>
+        <span class="tool-tag">创意生成</span>
+      </a>
+
       <a class="tool-card" href="./proxy-sub.html" data-cat="network" data-name="免费代理订阅">
         <div class="tool-icon orange">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
@@ -414,6 +329,24 @@
         <div class="tool-name">免费代理订阅</div>
         <div class="tool-desc">获取公共免费代理节点，支持一键复制和扫码导入手机 VPN 客户端</div>
         <span class="tool-tag">网络工具</span>
+      </a>
+
+      <a class="tool-card" href="./bookmark-manager.html" data-cat="manage" data-name="书签管理器">
+        <div class="tool-icon blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="tool-name">书签管理器</div>
+        <div class="tool-desc">导入浏览器书签，自动分类标签，网站截图预览，搜索查找不再迷路</div>
+        <span class="tool-tag">效率管理</span>
+      </a>
+
+      <a class="tool-card" href="./design-spec.html" data-cat="reference" data-name="设计规范">
+        <div class="tool-icon purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <div class="tool-name">设计规范</div>
+        <div class="tool-desc">可视化查看所有 Design Token 与组件规范，快速定位样式来源，点击复制色值</div>
+        <span class="tool-tag">查询参考</span>
       </a>
     </div>
 
@@ -436,10 +369,31 @@
   const toolCards = document.querySelectorAll('.tool-card');
   let currentCategory = 'all';
 
+  /* 初次加载：重置动画后设置错开入场延迟，确保延迟生效 */
+  toolCards.forEach((card, i) => {
+    card.style.animation = 'none';
+    card.style.opacity = '0';
+    void card.offsetWidth; /* 强制重排，确保动画重置 */
+    card.style.animation = 'cardFadeIn 0.4s ease-out forwards';
+    card.style.animationDelay = (i * 0.05) + 's';
+  });
+
   function filterTools() {
+    let visIdx = 0;
     toolCards.forEach(card => {
       const cat = card.dataset.cat;
-      card.style.display = currentCategory === 'all' || cat === currentCategory ? '' : 'none';
+      const show = currentCategory === 'all' || cat === currentCategory;
+      if (show) {
+        card.style.display = '';
+        card.style.animation = 'none';
+        card.style.opacity = '0';
+        void card.offsetWidth; /* 强制重排，重置动画 */
+        card.style.animation = 'cardFadeIn 0.4s ease-out forwards';
+        card.style.animationDelay = (visIdx * 0.05) + 's';
+        visIdx++;
+      } else {
+        card.style.display = 'none';
+      }
     });
   }
 

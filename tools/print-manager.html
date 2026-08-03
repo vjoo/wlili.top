@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>纸墨耗材管理</title>
+<title>W.-打印管理器</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { touch-action: manipulation; }
@@ -205,17 +205,37 @@ body {
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   margin-bottom: 20px;
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .panel-static,
 .panel-static:hover {
   box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
   transform: none !important;
 }
-.stock-grid > div:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04) !important;
-  transform: translateY(-1px);
+.panel:not(.panel-static):hover {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+  transform: translateY(-3px);
 }
+.stock-grid > div:hover {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.08) !important;
+  transform: translateY(-3px);
+}
+
+/* ===== Overview Card Entrance Animation (与 filament-manager 一致) ===== */
+@keyframes dashFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.overview-grid > div {
+  animation: dashFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* ===== Overview Card Hover (阴影 only，无位移) ===== */
+.overview-grid > div:hover {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.08) !important;
+}
+
 .panel-header {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
@@ -1258,6 +1278,20 @@ body {
     }
     if (currentModule === 'ledger') initLedgerForm();
     if (currentModule === 'settings') initSettingsForm();
+    /* 概览卡片错开入场动画（与 filament-manager 一致） */
+    if (currentModule === 'overview') {
+      var ovCards = document.querySelectorAll('.overview-grid > div');
+      ovCards.forEach((el, i) => {
+        el.style.animationDelay = (i * 0.05) + 's';
+      });
+      /* 月度收支 panel 也加入入场动画，延迟在概览卡片之后 */
+      var chartPanel = document.querySelector('#contentArea > .panel');
+      if (chartPanel) {
+        chartPanel.style.animation = 'dashFadeIn 0.4s ease-out forwards';
+        chartPanel.style.opacity = '0';
+        chartPanel.style.animationDelay = (ovCards.length * 0.05) + 's';
+      }
+    }
   }
 
   // ===== Overview =====
@@ -1382,7 +1416,7 @@ body {
     const iInk = icon('#EC4899','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>');
     const iPalette = icon('#8B5CF6','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>');
     const iBox = icon('#6B7280','<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>');
-    const card = `background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);transition:box-shadow 0.25s ease,transform 0.25s ease;cursor:default;`;
+    const card = `background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);transition:all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);cursor:default;`;
     const cardLabel = `font-size:13px;color:var(--text-muted);margin-bottom:4px;`;
     const cardValue = `font-size:26px;font-weight:700;color:var(--text-primary);line-height:1.2;`;
     const cardUnit = `font-size:13px;color:var(--text-muted);margin-left:3px;font-weight:400;`;

@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- Content Security Policy - WLi Tools -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data: https://unpkg.com https://cdn.jsdelivr.net; connect-src 'self' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; base-uri 'self';">
+<link rel="stylesheet" href="common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>W.-AI图片放大</title>
+<script src="nav.js"></script>
+<style>
+/* ============================================
+   WLi Tools - AI 图片放大
+   © 2025 WLi. All rights reserved.
+   Developer: WLi
+   ============================================ */
+
+/* ===== Settings Bar ===== */
+.settings-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 140px;
+}
+.setting-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.setting-label .val {
+  color: var(--link);
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+/* ===== Model Status Box (与 segmented-control 等高 36px) ===== */
+.model-status-group { flex: 0 0 168px; }
+.model-status-box {
+  height: 36px;
+  width: 100%;
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.model-status-fill {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 0%;
+  background: rgba(99,102,241,0.18);
+  transition: width 0.3s ease;
+}
+.model-status-fill.loading {
+  background: rgba(99,102,241,0.22);
+}
+.model-status-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-secondary);
+  font-weight: 500;
+}
+.model-status-content .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--link);
+  flex-shrink: 0;
+}
+.model-status-content .dot.loading { display: none; }
+.model-status-content .dot.ready { background: var(--green); animation: none; }
+.model-status-content .dot.error { background: var(--red); animation: none; }
+.model-status-content .pct {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  color: var(--ink-primary);
+  display: none;
+}
+.model-status-content .pct.loading { display: inline; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* ===== Preview Area ===== */
+.preview-area { margin-bottom: 20px; }
+.preview-compare { display: none; }
+.preview-compare.active { display: block; }
+.preview-panel {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+.preview-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-elevated);
+}
+.preview-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  letter-spacing: -0.01em;
+}
+.preview-panel-info {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.preview-body {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px;
+  position: relative;
+  max-height: 75vh;
+  overflow: auto;
+}
+.preview-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+/* ===== Compare Slider ===== */
+.compare-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: var(--radius-sm);
+  user-select: none;
+  -webkit-user-select: none;
+  line-height: 0;
+  cursor: ew-resize;
+}
+.compare-wrap > img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-sm);
+}
+.compare-before-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  clip-path: inset(0 50% 0 0);
+  pointer-events: none;
+}
+
+.compare-before-layer img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-sm);
+}
+.compare-divider {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 3px;
+  background: var(--fill-white);
+  box-shadow: 0 0 8px rgba(0,0,0,0.25);
+  cursor: ew-resize;
+  z-index: 10;
+  transform: translateX(-50%);
+  touch-action: none;
+}
+.compare-handle {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--fill-white);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.compare-handle svg {
+  width: 14px; height: 14px;
+  color: var(--ink-secondary);
+  flex-shrink: 0;
+}
+.compare-labels {
+  position: absolute;
+  bottom: 12px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
+  pointer-events: none;
+  z-index: 5;
+}
+.compare-label {
+  padding: 3px 10px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 11px;
+  border-radius: var(--radius-pill);
+  font-weight: 500;
+}
+
+/* ===== Progress Overlay ===== */
+.progress-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 10;
+  border-radius: var(--radius-lg);
+}
+.progress-overlay.active { display: flex; }
+.progress-ring {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 3px solid var(--border-light);
+  border-top-color: var(--link);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-text {
+  font-size: 14px;
+  color: var(--ink-secondary);
+  font-weight: 500;
+}
+.progress-sub {
+  font-size: 12px;
+  color: var(--ink-quaternary);
+}
+.progress-bar-wrap {
+  width: 180px;
+  height: 4px;
+  background: var(--border-light);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--link);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ===== Tip ===== */
+.tip-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--ink-tertiary);
+  line-height: 1.5;
+}
+.tip-box svg {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  color: var(--ink-quaternary);
+  margin-top: 2px;
+}
+
+/* ===== Footer ===== */
+.page-footer {
+  text-align: center;
+  padding: 32px 22px 48px;
+  font-size: 12px;
+  color: var(--ink-quaternary);
+  letter-spacing: -0.01em;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 734px) {
+  .settings-bar { padding: 16px; gap: 14px; }
+  .setting-group { min-width: 100%; }
+  .preview-area { grid-template-columns: 1fr; }
+  .preview-body { min-height: 200px; }
+  .preview-body img { max-height: 300px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Page Hero -->
+<div class="page-hero">
+  <h1>AI 图片放大</h1>
+  <p>基于 ESRGAN 模型，浏览器端本地放大，图片不上传服务器，完全免费</p>
+</div>
+
+<!-- Main Section -->
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Settings -->
+    <div class="settings-bar">
+      <div class="setting-group model-status-group">
+        <label class="setting-label">模型状态</label>
+        <div class="model-status-box" id="modelBadge">
+          <div class="model-status-fill" id="modelProgressBar"></div>
+          <div class="model-status-content">
+            <span class="dot loading" id="modelDot"></span>
+            <span class="pct" id="modelPct">0%</span>
+            <span id="modelText">等待加载</span>
+          </div>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">放大模型</label>
+        <div class="segmented-control" id="modelGroup">
+          <button class="segment-btn active" data-model="esrgan-thick" data-scale="2">ESRGAN 2x</button>
+          <button class="segment-btn" data-model="esrgan-thick" data-scale="4">ESRGAN 4x</button>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">输出格式</label>
+        <div class="segmented-control" id="formatGroup">
+          <button class="segment-btn active" data-fmt="png">PNG</button>
+          <button class="segment-btn" data-fmt="jpeg">JPEG</button>
+          <button class="segment-btn" data-fmt="webp">WebP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tip -->
+    <div class="tip-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <span>所有 AI 推理均在你的浏览器本地完成，图片不会上传到任何服务器。首次使用需下载模型（约 16MB），之后自动缓存。大图处理可能需要数十秒，请耐心等待。</span>
+    </div>
+
+    <!-- Upload Dropzone -->
+    <div class="dropzone" id="dropzone">
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+      </div>
+      <div class="drop-title">拖拽图片到此处，或 <span class="drop-link">点击选择</span></div>
+      <div class="drop-desc">支持 JPG / PNG / WebP，建议输入图片不超过 1000px 以获得最佳处理速度</div>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
+    </div>
+
+    <!-- Preview Area (hidden until image loaded) -->
+    <div class="preview-area" id="previewArea" style="display:none">
+      <!-- 原图模式（处理前） -->
+      <div class="preview-panel" id="previewSingle">
+        <div class="preview-panel-header">
+          <span class="preview-panel-title">原图</span>
+          <span class="preview-panel-info" id="origInfo"></span>
+        </div>
+        <div class="preview-body">
+          <img id="origImg" src="" alt="原图">
+          <div class="progress-overlay" id="progressOverlay">
+            <div class="progress-ring"></div>
+            <div class="progress-text" id="progressText">正在处理...</div>
+            <div class="progress-sub" id="progressSub">0%</div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 对比模式（放大完成后） -->
+      <div class="preview-compare" id="previewCompare">
+        <div class="preview-panel">
+          <div class="preview-panel-header">
+            <span class="preview-panel-title">对比预览</span>
+            <span class="preview-panel-info" id="compareInfo"></span>
+          </div>
+          <div class="preview-body">
+            <div class="compare-wrap" id="compareWrap">
+              <img id="compareAfter" src="" alt="放大结果">
+              <div class="compare-before-layer" id="compareBeforeLayer">
+                <img id="compareBefore" src="" alt="原图">
+              </div>
+              <div class="compare-divider" id="compareDivider">
+                <div class="compare-handle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+              <div class="compare-labels">
+                <span class="compare-label">原图</span>
+                <span class="compare-label" id="compareLabelModel">AI 放大</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-row" id="actionsRow" style="display:none">
+      <button class="btn-filled" id="btnUpscale" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><path d="M21 3l-7 7"/><polyline points="9 21 3 21 3 15"/><path d="M3 21l7-7"/></svg>
+        开始放大
+      </button>
+      <button class="btn-outline" id="btnDownload" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        下载结果
+      </button>
+      <button class="btn-outline" id="btnReupload">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        重新上传
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat-card">
+        <div class="stat-val" id="statOrigSize">—</div>
+        <div class="stat-label">原图尺寸</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val accent" id="statNewSize">—</div>
+        <div class="stat-label">放大后尺寸</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statModel">—</div>
+        <div class="stat-label">使用模型</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statTime">—</div>
+        <div class="stat-label">处理耗时</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<div class="page-footer">&copy; 2025 WLi</div>
+
+<!-- TF.js + UpscalerJS + ESRGAN models via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-thick@latest/dist/umd/2x.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-thick@latest/dist/umd/4x.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ===== DOM ===== */
+  var dropzone    = document.getElementById('dropzone');
+  var fileInput   = document.getElementById('fileInput');
+  var previewArea = document.getElementById('previewArea');
+  var actionsRow  = document.getElementById('actionsRow');
+  var statsRow    = document.getElementById('statsRow');
+  var origImg     = document.getElementById('origImg');
+  var btnUpscale  = document.getElementById('btnUpscale');
+  var btnDownload = document.getElementById('btnDownload');
+  var btnReupload = document.getElementById('btnReupload');
+  var progressOvl = document.getElementById('progressOverlay');
+  var progressText= document.getElementById('progressText');
+  var progressSub = document.getElementById('progressSub');
+  var progressBar= document.getElementById('progressBar');
+  var modelDot    = document.getElementById('modelDot');
+  var modelText   = document.getElementById('modelText');
+  var modelProgBar= document.getElementById('modelProgressBar');
+  var origInfo    = document.getElementById('origInfo');
+
+  /* Compare slider DOM */
+  var previewSingle = document.getElementById('previewSingle');
+  var previewCompare= document.getElementById('previewCompare');
+  var compareAfter  = document.getElementById('compareAfter');
+  var compareBefore = document.getElementById('compareBefore');
+  var compareBeforeLayer = document.getElementById('compareBeforeLayer');
+  var compareDivider = document.getElementById('compareDivider');
+  var compareWrap   = document.getElementById('compareWrap');
+  var compareInfo   = document.getElementById('compareInfo');
+
+  /* ===== State ===== */
+  var currentFile  = null;    // File object
+  var currentImage = null;    // Image element (for re-upscale)
+  var resultBlob   = null;    // Upscaled blob
+  var resultDataURL= null;    // Upscaled data URL
+  var upscaler     = null;    // UpscalerJS instance
+  var modelReady   = false;
+  var currentModel = 'esrgan-thick';
+  var currentScale = 2;
+  var currentFormat= 'png';
+  var processing   = false;
+
+  /* 同步模型按钮选中状态 */
+  function syncModelButtons() {
+    var modelGroup = document.getElementById('modelGroup');
+    if (!modelGroup) return;
+    modelGroup.querySelectorAll('.segment-btn').forEach(function(b) {
+      b.classList.remove('active');
+      if (b.dataset.model === currentModel && parseInt(b.dataset.scale, 10) === currentScale) {
+        b.classList.add('active');
+      }
+    });
+  }
+  /* 同步对比标签文字 */
+  function syncCompareLabel() {
+    var label = document.getElementById('compareLabelModel');
+    if (label) label.textContent = 'ESRGAN ' + currentScale + 'x';
+  }
+
+  /* 恢复上次选择的模型配置（在 waitForTF 之前执行，确保加载正确的模型） */
+  try {
+    var cfg = sessionStorage.getItem('upscale_modelCfg');
+    if (cfg) {
+      var parsed = JSON.parse(cfg);
+      if (parsed.model && parsed.scale) {
+        currentModel = parsed.model;
+        currentScale = parseInt(parsed.scale, 10) || 2;
+        syncModelButtons();
+      }
+    }
+  } catch(e) {}
+
+  /* ===== Toast ===== */
+  var toastTimer = null;
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+  }
+
+  /* ===== Model Loading ===== */
+  var modelProgTimer = null;
+  var modelVerifyTimer = null;
+  var modelProgVal   = 0;
+  var modelPct       = document.getElementById('modelPct');
+
+  function startModelProgress() {
+    modelProgVal = 0;
+    modelProgBar.style.width = '0%';
+    modelProgBar.classList.add('loading');
+    modelPct.textContent = '0%';
+    modelPct.classList.add('loading');
+    modelText.textContent = '下载中';
+    clearInterval(modelProgTimer);
+    clearInterval(modelVerifyTimer);
+    modelProgTimer = setInterval(function() {
+      if (modelProgVal < 85) {
+        modelProgVal += Math.random() * 4 + 1;
+        if (modelProgVal > 85) modelProgVal = 85;
+        modelProgBar.style.width = modelProgVal.toFixed(1) + '%';
+        modelPct.textContent = Math.round(modelProgVal) + '%';
+      }
+    }, 300);
+  }
+
+  function startVerifyProgress() {
+    clearInterval(modelProgTimer);
+    clearInterval(modelVerifyTimer);
+    modelText.textContent = '加载请稍等';
+    modelProgVal = 90;
+    modelProgBar.style.width = '90%';
+    modelPct.textContent = '90%';
+    modelVerifyTimer = setInterval(function() {
+      if (modelProgVal < 99) {
+        modelProgVal += Math.random() * 0.6 + 0.2;
+        if (modelProgVal > 99) modelProgVal = 99;
+        modelProgBar.style.width = modelProgVal.toFixed(1) + '%';
+        modelPct.textContent = Math.round(modelProgVal) + '%';
+      }
+    }, 500);
+  }
+
+  function stopModelProgress(done) {
+    clearInterval(modelProgTimer);
+    clearInterval(modelVerifyTimer);
+    modelPct.classList.remove('loading');
+    modelProgBar.classList.remove('loading');
+    if (done) {
+      modelProgBar.style.width = '100%';
+      modelPct.textContent = '100%';
+    }
+  }
+
+  function getModelInstance(modelName, scale) {
+    if (modelName === 'esrgan-thick' && scale === 4) return ESRGANThick4x;
+    return ESRGANThick2x;
+  }
+
+  function loadModel() {
+    modelDot.className = 'dot loading';
+    modelText.textContent = '下载中';
+    startModelProgress();
+    
+    /* 确保 TF.js 后端已初始化 */
+    tf.ready().then(function() {
+      try {
+        var backend = tf.getBackend();
+        console.log('TF.js backend:', backend);
+        var model = getModelInstance(currentModel, currentScale);
+        upscaler = new Upscaler({ model: model });
+        
+        /* 预加载模型权重：运行一次微小推理确保权重已下载成功 */
+        startVerifyProgress();
+        
+        var warmup = document.createElement('canvas');
+        warmup.width = 16; warmup.height = 16;
+        var wctx = warmup.getContext('2d');
+        wctx.fillStyle = '#808080';
+        wctx.fillRect(0, 0, 16, 16);
+        
+        upscaler.upscale(warmup, { output: 'src' }).then(function() {
+          modelReady = true;
+          modelDot.className = 'dot ready';
+          modelText.textContent = '就绪';
+          stopModelProgress(true);
+          btnUpscale.disabled = !currentImage;
+          syncModelButtons(); /* 确保按钮状态与当前模型一致 */
+        }).catch(function(e) {
+          modelDot.className = 'dot error';
+          modelText.textContent = '加载失败，点击重试';
+          stopModelProgress(false);
+          console.error('Model verification failed:', e);
+          upscaler = null;
+        });
+      } catch (e) {
+        modelDot.className = 'dot error';
+        modelText.textContent = '加载失败，点击重试';
+        stopModelProgress(false);
+        console.error('UpscalerJS init error:', e);
+      }
+    }).catch(function(e) {
+      modelDot.className = 'dot error';
+      modelText.textContent = '加载失败，点击重试';
+      stopModelProgress(false);
+      console.error('TF.js backend error:', e);
+    });
+  }
+
+  /* Wait for all scripts to be ready, then init model */
+  function waitForTF() {
+    if (typeof tf !== 'undefined' && typeof Upscaler !== 'undefined' &&
+        typeof ESRGANThick2x !== 'undefined' && typeof ESRGANThick4x !== 'undefined') {
+      modelText.textContent = '库已加载，初始化模型...';
+      loadModel();
+    } else {
+      setTimeout(waitForTF, 200);
+    }
+  }
+  waitForTF();
+  
+  /* 模型加载失败时点击重试 */
+  document.getElementById('modelBadge').addEventListener('click', function() {
+    if (modelDot.classList.contains('error')) {
+      modelReady = false;
+      btnUpscale.disabled = true;
+      loadModel();
+    }
+  });
+
+  /* ===== 恢复刷新前的状态 ===== */
+  function restoreState() {
+    try {
+      /* 先恢复模型配置 */
+      var cfg = sessionStorage.getItem('upscale_modelCfg');
+      if (cfg) {
+        var parsed = JSON.parse(cfg);
+        if (parsed.model && parsed.scale) {
+          currentModel = parsed.model;
+          currentScale = parseInt(parsed.scale, 10) || 2;
+          syncModelButtons();
+        }
+      }
+    } catch(e) {}
+
+    try {
+      var origSrc = sessionStorage.getItem('upscale_origSrc');
+      if (!origSrc) return;
+
+      var origName = sessionStorage.getItem('upscale_origName') || 'image.png';
+      var origSize = parseInt(sessionStorage.getItem('upscale_origSize') || '0', 10);
+      var origW = parseInt(sessionStorage.getItem('upscale_origW') || '0', 10);
+      var origH = parseInt(sessionStorage.getItem('upscale_origH') || '0', 10);
+
+      /* 恢复原图 */
+      var img = new Image();
+      img.onload = function() {
+        currentImage = img;
+        currentFile = { name: origName, size: origSize, type: 'image/png' };
+
+        origImg.src = img.src;
+        origInfo.textContent = origW + ' × ' + origH + ' · ' + formatBytes(origSize);
+        dropzone.style.display = 'none';
+        previewArea.style.display = '';
+        previewSingle.style.display = '';
+        previewCompare.classList.remove('active');
+        actionsRow.style.display = '';
+        statsRow.style.display = 'none';
+        document.getElementById('statOrigSize').textContent = origW + '×' + origH;
+        document.getElementById('statNewSize').textContent = '—';
+        document.getElementById('statModel').textContent = '—';
+        document.getElementById('statTime').textContent = '—';
+        btnDownload.style.display = 'none';
+
+        /* 检查是否有放大结果 */
+        var resultSrc = sessionStorage.getItem('upscale_resultSrc');
+        if (resultSrc) {
+          var resultW = parseInt(sessionStorage.getItem('upscale_resultW') || '0', 10);
+          var resultH = parseInt(sessionStorage.getItem('upscale_resultH') || '0', 10);
+          var resultSize = parseInt(sessionStorage.getItem('upscale_resultSize') || '0', 10);
+          var elapsed = sessionStorage.getItem('upscale_elapsed') || '0';
+          var modelName = sessionStorage.getItem('upscale_model') || '';
+
+          resultDataURL = resultSrc;
+          resultBlob = null; /* blob 无法从 sessionStorage 恢复，下载时用 dataURL */
+
+          compareAfter.src = resultSrc;
+          compareBefore.src = origSrc;  /* 左侧直接用原图，拉伸后显示模糊，对比效果更明显 */
+          compareInfo.textContent = resultW + ' × ' + resultH + ' · ' + formatBytes(resultSize);
+          /* 限制对比区域宽度不超过放大结果的原始宽度 */
+          compareWrap.style.maxWidth = resultW + 'px';
+          previewSingle.style.display = 'none';
+          previewCompare.classList.add('active');
+          setComparePosition(50);
+          syncCompareLabel();
+
+          statsRow.style.display = '';
+          document.getElementById('statNewSize').textContent = resultW + '×' + resultH;
+          document.getElementById('statModel').textContent = modelName;
+          document.getElementById('statTime').textContent = elapsed + 's';
+          btnDownload.style.display = '';
+        } else {
+          /* 只有原图，没有结果，等待模型就绪后启用按钮 */
+          btnUpscale.disabled = !modelReady;
+        }
+      };
+      img.src = origSrc;
+    } catch(e) {
+      /* 恢复失败，静默忽略 */
+    }
+  }
+  restoreState();
+
+  /* ===== File Handling ===== */
+  dropzone.addEventListener('click', function() { fileInput.click(); });
+  dropzone.addEventListener('dragover', function(e) { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', function() { dropzone.classList.remove('drag-over'); });
+  dropzone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
+      showToast('仅支持 JPG / PNG / WebP 格式');
+      return;
+    }
+    currentFile = file;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        currentImage = img;
+        showPreview(img);
+        /* 保存到 sessionStorage（刷新不丢失） */
+        try {
+          sessionStorage.setItem('upscale_origSrc', img.src);
+          sessionStorage.setItem('upscale_origName', file.name);
+          sessionStorage.setItem('upscale_origSize', String(file.size));
+          sessionStorage.setItem('upscale_origW', String(img.naturalWidth));
+          sessionStorage.setItem('upscale_origH', String(img.naturalHeight));
+        } catch(storageErr) {
+          /* 图片太大存不下就跳过 */
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showPreview(img) {
+    origImg.src = img.src;
+    origInfo.textContent = img.naturalWidth + ' × ' + img.naturalHeight + ' · ' + formatBytes(currentFile.size);
+    btnDownload.style.display = 'none';
+    resultBlob = null;
+    resultDataURL = null;
+
+    dropzone.style.display = 'none';
+    previewArea.style.display = '';
+    previewSingle.style.display = '';
+    previewCompare.classList.remove('active');
+    actionsRow.style.display = '';
+    statsRow.style.display = 'none';
+
+    document.getElementById('statOrigSize').textContent = img.naturalWidth + '×' + img.naturalHeight;
+    document.getElementById('statNewSize').textContent = '—';
+    document.getElementById('statModel').textContent = '—';
+    document.getElementById('statTime').textContent = '—';
+
+    btnUpscale.disabled = !modelReady;
+  }
+
+  /* ===== Upscale ===== */
+  btnUpscale.addEventListener('click', startUpscale);
+
+  async function startUpscale() {
+    if (!modelReady || !currentImage || processing) return;
+    processing = true;
+    btnUpscale.disabled = true;
+    progressOvl.classList.add('active');
+    progressBar.style.width = '0%';
+    progressSub.textContent = '准备中...';
+
+    var startTime = Date.now();
+
+    try {
+      /* Warm up: first inference is slow, run a tiny dummy */
+      progressText.textContent = '预热模型...';
+      progressSub.textContent = '';
+
+      /* Upscale with progress */
+      progressText.textContent = 'AI 放大中...';
+
+      var warmup = document.createElement('canvas');
+      warmup.width = 32; warmup.height = 32;
+      var wctx = warmup.getContext('2d');
+      wctx.fillStyle = '#808080';
+      wctx.fillRect(0, 0, 32, 32);
+
+      try {
+        await upscaler.upscale(warmup, { output: 'src' });
+      } catch(warmErr) {
+        /* warmup may fail on tiny images, ignore */
+        console.warn('Warmup skip:', warmErr);
+      }
+
+      /* Actual upscale - 不使用 patchSize 避免分割问题 */
+      var upscaleOpts = { output: 'src' };
+      if (currentImage.naturalWidth > 256 || currentImage.naturalHeight > 256) {
+        upscaleOpts.patchSize = 128;
+        upscaleOpts.padding = 8;
+      }
+      var srcUrl = await upscaler.upscale(currentImage, upscaleOpts);
+
+      /* Load into canvas for format conversion */
+      var exportImg = new Image();
+      exportImg.src = srcUrl;
+      await new Promise(function(resolve, reject) {
+        exportImg.onload = resolve;
+        exportImg.onerror = function() { reject(new Error('放大结果加载失败')); };
+      });
+
+      var canvas = document.createElement('canvas');
+      canvas.width = exportImg.naturalWidth;
+      canvas.height = exportImg.naturalHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(exportImg, 0, 0);
+
+      /* Convert to desired format */
+      var mimeMap = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' };
+      var mime = mimeMap[currentFormat] || 'image/png';
+      var quality = currentFormat === 'jpeg' ? 0.92 : undefined;
+
+      resultBlob = await new Promise(function(resolve) {
+        canvas.toBlob(function(b) { resolve(b); }, mime, quality);
+      });
+
+      resultDataURL = canvas.toDataURL(mime, quality);
+
+      var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+      /* Switch to compare slider mode: 左侧显示原图（拉伸后显得模糊），右侧显示AI放大结果（清晰） */
+      compareAfter.src = resultDataURL;
+      compareBefore.src = currentImage.src;
+      compareInfo.textContent = canvas.width + ' × ' + canvas.height + ' · ' + formatBytes(resultBlob.size);
+      /* 限制对比区域宽度不超过放大结果的原始宽度，避免放大图也被拉伸变模糊 */
+      compareWrap.style.maxWidth = canvas.width + 'px';
+      previewSingle.style.display = 'none';
+      previewCompare.classList.add('active');
+      setComparePosition(50);
+      syncCompareLabel();
+
+      /* Stats */
+      statsRow.style.display = '';
+      document.getElementById('statOrigSize').textContent = currentImage.naturalWidth + '×' + currentImage.naturalHeight;
+      document.getElementById('statNewSize').textContent = canvas.width + '×' + canvas.height;
+      document.getElementById('statModel').textContent = currentModel + ' ' + currentScale + 'x';
+      document.getElementById('statTime').textContent = elapsed + 's';
+
+      btnDownload.style.display = '';
+      showToast('放大完成，耗时 ' + elapsed + ' 秒');
+
+      /* 保存放大结果到 sessionStorage（原图 src 已在 handleFile 中保存为 upscale_origSrc） */
+      try {
+        sessionStorage.setItem('upscale_resultSrc', resultDataURL);
+        sessionStorage.setItem('upscale_resultW', String(canvas.width));
+        sessionStorage.setItem('upscale_resultH', String(canvas.height));
+        sessionStorage.setItem('upscale_resultSize', String(resultBlob.size));
+        sessionStorage.setItem('upscale_elapsed', elapsed);
+        sessionStorage.setItem('upscale_model', currentModel + ' ' + currentScale + 'x');
+      } catch(storageErr) {
+        /* 结果太大存不下就跳过 */
+      }
+
+    } catch (err) {
+      console.error('Upscale error:', err);
+      showToast('处理失败：' + (err.message || '未知错误'));
+    }
+
+    progressOvl.classList.remove('active');
+    processing = false;
+    btnUpscale.disabled = false;
+  }
+
+  /* ===== Download ===== */
+  btnDownload.addEventListener('click', function() {
+    if (!resultBlob && !resultDataURL) return;
+    var extMap = { png: 'png', jpeg: 'jpg', webp: 'webp' };
+    var ext = extMap[currentFormat] || 'png';
+    var name = currentFile.name.replace(/\.[^.]+$/, '') + '_' + currentScale + 'x.' + ext;
+    var a = document.createElement('a');
+    if (resultBlob) {
+      var url = URL.createObjectURL(resultBlob);
+      a.href = url; a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      /* 从 sessionStorage 恢复的情况，用 dataURL 下载 */
+      a.href = resultDataURL; a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    showToast('已下载 ' + name);
+  });
+
+  /* ===== Reupload ===== */
+  btnReupload.addEventListener('click', function() {
+    currentFile = null;
+    currentImage = null;
+    resultBlob = null;
+    resultDataURL = null;
+    previewArea.style.display = 'none';
+    previewSingle.style.display = '';
+    previewCompare.classList.remove('active');
+    compareWrap.style.maxWidth = '';
+    actionsRow.style.display = 'none';
+    statsRow.style.display = 'none';
+    dropzone.style.display = '';
+    fileInput.value = '';
+    /* 清除 sessionStorage */
+    try {
+      sessionStorage.removeItem('upscale_origSrc');
+      sessionStorage.removeItem('upscale_origName');
+      sessionStorage.removeItem('upscale_origSize');
+      sessionStorage.removeItem('upscale_origW');
+      sessionStorage.removeItem('upscale_origH');
+      sessionStorage.removeItem('upscale_resultSrc');
+      sessionStorage.removeItem('upscale_resultW');
+      sessionStorage.removeItem('upscale_resultH');
+      sessionStorage.removeItem('upscale_resultSize');
+      sessionStorage.removeItem('upscale_elapsed');
+      sessionStorage.removeItem('upscale_model');
+    } catch(e) {}
+  });
+
+  /* ===== Compare Slider ===== */
+  var isCompareDragging = false;
+
+  function setComparePosition(pct) {
+    pct = Math.max(2, Math.min(98, pct));
+    compareBeforeLayer.style.clipPath = 'inset(0 ' + (100 - pct) + '% 0 0)';
+    compareDivider.style.left = pct + '%';
+  }
+
+  function onCompareMove(clientX) {
+    var rect = compareWrap.getBoundingClientRect();
+    var x = clientX - rect.left;
+    var pct = (x / rect.width) * 100;
+    setComparePosition(pct);
+  }
+
+  /* 整个对比区域都可以拖动 */
+  compareWrap.addEventListener('mousedown', function(e) {
+    isCompareDragging = true;
+    onCompareMove(e.clientX);
+    e.preventDefault();
+  });
+  compareWrap.addEventListener('touchstart', function(e) {
+    isCompareDragging = true;
+    onCompareMove(e.touches[0].clientX);
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isCompareDragging) return;
+    onCompareMove(e.clientX);
+  });
+  document.addEventListener('touchmove', function(e) {
+    if (!isCompareDragging) return;
+    onCompareMove(e.touches[0].clientX);
+  }, { passive: false });
+
+  document.addEventListener('mouseup', function() { isCompareDragging = false; });
+  document.addEventListener('touchend', function() { isCompareDragging = false; });
+
+  /* ===== Segmented Controls ===== */
+  document.getElementById('modelGroup').addEventListener('click', function(e) {
+    var btn = e.target.closest('.segment-btn');
+    if (!btn) return;
+    var newModel = btn.dataset.model;
+    var newScale = parseInt(btn.dataset.scale, 10) || 2;
+    if (newModel === currentModel && newScale === currentScale) return;
+
+    currentModel = newModel;
+    currentScale = newScale;
+    syncModelButtons();
+    
+    /* 切换模型时清除上一次的放大结果 */
+    resultBlob = null;
+    resultDataURL = null;
+    btnDownload.style.display = 'none';
+    previewCompare.classList.remove('active');
+    previewSingle.style.display = '';
+    compareWrap.style.maxWidth = '';
+    statsRow.style.display = 'none';
+    
+    /* 保存当前模型配置 */
+    try {
+      sessionStorage.setItem('upscale_modelCfg', JSON.stringify({ model: currentModel, scale: currentScale }));
+    } catch(e) {}
+    
+    /* 清除 sessionStorage 中的放大结果 */
+    try {
+      sessionStorage.removeItem('upscale_resultSrc');
+      sessionStorage.removeItem('upscale_resultW');
+      sessionStorage.removeItem('upscale_resultH');
+      sessionStorage.removeItem('upscale_resultSize');
+      sessionStorage.removeItem('upscale_elapsed');
+      sessionStorage.removeItem('upscale_model');
+    } catch(e) {}
+    
+    /* 重新加载模型 */
+    modelReady = false;
+    btnUpscale.disabled = true;
+    loadModel();
+  });
+
+  document.getElementById('formatGroup').addEventListener('click', function(e) {
+    var btn = e.target.closest('.segment-btn');
+    if (!btn) return;
+    this.querySelectorAll('.segment-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentFormat = btn.dataset.fmt;
+  });
+
+  /* ===== Helpers ===== */
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+})();
+</script>
+</body>
+</html>
