@@ -25,7 +25,6 @@ wlili.top/
     ├── password-gen.html       # 密码衍生器
     ├── ip-mascot.html          # IP形象生成器
     ├── model-viewer.html       # 3D模型预览
-    ├── face-editor/            # 3D头部编辑器（子目录）
     ├── filament-manager.html   # 3D耗材管理（复杂页-侧边栏）
     ├── phonetic-chart.html     # 音标速查
     ├── print-manager.html      # 打印管理器（复杂页-侧边栏）
@@ -194,3 +193,4 @@ const TOOLS = [
 - 纯静态站点，推送至 GitHub 仓库即可自动部署
 - 域名：`https://wlili.top`
 - 所有运算在浏览器本地执行，不依赖后端
+- **EdgeOne Pages 单文件上限 25 MB**——引入大文件资源前必须告知用户，由用户决定是否采纳；禁止使用 Git LFS 绕过

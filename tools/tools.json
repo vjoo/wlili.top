@@ -93,17 +93,6 @@
       "enabled": true
     },
     {
-      "id": "face-editor",
-      "name": "3D头部编辑器",
-      "file": "face-editor/index.html",
-      "category": "creative",
-      "icon": "cube-face",
-      "iconColor": "pink",
-      "description": "基于 GNM 的 3D 头部编辑器，实时调整面部参数，支持多维度精细捏脸",
-      "keywords": ["捏脸", "face", "3D", "头部", "编辑器", "GNM", "角色"],
-      "enabled": true
-    },
-    {
       "id": "3d-filament",
       "name": "3D 耗材及预设管理",
       "file": "filament-manager.html",

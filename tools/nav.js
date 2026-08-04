@@ -44,7 +44,6 @@
       label: '创意生成',
       tools: [
         { name: 'IP形象生成器', href: './ip-mascot.html' },
-        { name: '3D头部编辑器', href: './face-editor/index.html' },
         { name: 'AI提示词库', href: './prompt-library.html' },
         { name: '四方连图素材库', href: './seamless-pattern.html' }
       ]
