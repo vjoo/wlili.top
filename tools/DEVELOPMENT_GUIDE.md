@@ -41,7 +41,6 @@ wlili.top/
     ├── seamless-pattern.html   # 四方连图素材库（复杂页-侧边栏）
     ├── proxy-sub.html          # 免费代理订阅（简单页）
     ├── model-viewer.html       # 3D模型预览
-    └── face-editor/            # 3D头部编辑器（子目录）
 ```
 
 ---
@@ -493,7 +492,6 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | unit-converter | 在线换算 | `unit-converter.html` | convert | orange | 标准工具页 |
 | password-generator | 密码生成器 | `password-gen.html` | security | purple | 标准工具页 |
 | ip-mascot | IP形象生成器 | `ip-mascot.html` | creative | pink | 标准工具页 |
-| face-editor | 3D头部编辑器 | `face-editor/index.html` | creative | pink | 子目录 |
 | 3d-filament | 3D 耗材及预设管理 | `filament-manager.html` | reference | teal | 复杂工具页 |
 | phonetic-chart | 48 音标速查表 | `phonetic-chart.html` | reference | red | 简单页 |
 | print-manager | 打印管理器 | `print-manager.html` | manage | cyan | 复杂工具页 |
@@ -670,6 +668,16 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
   1. 在 EdgeOne 控制台启用 HTTPS 强制跳转
   2. 配置自定义域名时添加 HSTS（可选，需了解其不可逆性）
   3. 定期审查第三方 CDN 脚本版本
+
+### 10.1 文件大小限制（强制规范）
+
+- **EdgeOne Pages 单文件上限：25 MB**，超过此大小的文件会导致部署失败
+- 开发新工具时，**必须**检查所有引入的资源文件（模型、图片、视频、数据文件等）大小
+- 如需引入大文件（如 `.npz`、`.pth`、`.onnx`、`.wasm` 等模型权重或二进制资源）：
+  1. 优先考虑通过 CDN 或对象存储（如腾讯云 COS）外部加载
+  2. 若必须放入仓库，需提前告知用户文件大小及部署风险，**由用户决定是否采纳**
+  3. 禁止使用 Git LFS 绕过限制——EdgeOne Pages 部署时会拉取实际文件，LFS 无法规避单文件大小检查
+- `.gitattributes` 中不应配置 `filter=lfs` 规则，避免引入 LFS 依赖
 
 ---
 
