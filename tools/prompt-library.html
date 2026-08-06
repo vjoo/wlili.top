@@ -318,6 +318,52 @@
   column-count: 4;
   column-gap: 5px;
 }
+/* ===== Loading Skeleton ===== */
+.skeleton-grid {
+  column-count: 4;
+  column-gap: 5px;
+}
+.skeleton-card {
+  break-inside: avoid;
+  margin-bottom: 5px;
+  background: var(--bg-white);
+  border-radius: 0;
+  overflow: hidden;
+}
+.skeleton-cover {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #e8e8ed;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.skeleton-bar {
+  height: 14px;
+  border-radius: 4px;
+  background: #e8e8ed;
+  margin: 10px 12px;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
 .prompt-card {
   break-inside: avoid;
   margin-bottom: 5px;
@@ -743,6 +789,40 @@
 }
 .detail-info-row span { display: inline-flex; align-items: center; gap: 4px; }
 .detail-info-row svg { width: 14px; height: 14px; }
+
+/* ===== Detail Info Grid (right column) ===== */
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+}
+.detail-info-grid .info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detail-info-grid .info-item-full {
+  grid-column: 1 / -1;
+}
+.detail-info-grid .info-label {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  font-weight: 500;
+}
+.detail-info-grid .info-value {
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* ===== Detail Section Title (full-width below) ===== */
+.detail-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
 
 /* ===== Prompt Display ===== */
 .prompt-section {
@@ -1584,6 +1664,16 @@
           </button>
         </div>
       </div>
+      <div class="skeleton-grid" id="skeletonGrid">
+        <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+        <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+        <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+        <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+        <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+        <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+        <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+        <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+      </div>
       <div class="prompt-grid" id="promptGrid"></div>
       <div class="empty-state" id="emptyState" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
@@ -1600,7 +1690,6 @@
           返回
         </button>
         <h2 class="detail-title" id="detailTitle"></h2>
-        <div class="detail-info-row" id="detailInfo"></div>
       </div>
       <div class="detail-layout">
         <div class="detail-left">
@@ -1624,53 +1713,60 @@
           <div class="gallery-thumbs" id="galleryThumbs"></div>
         </div>
         <div class="detail-right">
-          <!-- Block 1: Original Prompt Template -->
-          <div class="prompt-section">
-            <div class="prompt-section-header">
-              <div class="prompt-section-title">原始提示词</div>
-              <div class="prompt-section-actions">
-                <div class="button-group">
-                <button class="btn-copy-inline icon-only" id="btnTranslate" title="中英互译">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg>
-                </button>
-                <button class="btn-copy-inline icon-only" id="btnCopyTemplate" title="复制原始模板">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
-                <button class="btn-copy-inline icon-only" id="detailEdit" title="编辑">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-                <button class="btn-copy-inline icon-only is-danger" id="detailDelete" title="删除">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-                </div>
-              </div>
-            </div>
-            <div class="prompt-text" id="detailPromptText"></div>
-          </div>
-          <!-- Block 2: Variable Definitions -->
-          <div class="prompt-section" id="varPanelSection" style="display:none;">
-            <div class="prompt-section-title">变量定义</div>
-            <div class="var-panel" id="varPanel"></div>
-          </div>
-          <!-- Block 3: Generated Preview (hidden until variables are modified) -->
-          <div class="prompt-section" id="previewSection" style="display:none;">
-            <div class="prompt-section-header">
-              <div class="prompt-section-title">生成预览</div>
-              <div class="prompt-section-actions">
-                <button class="btn-copy-inline icon-only" id="btnTranslatePreview" title="中英互译">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg>
-                </button>
-                <button class="btn-copy-inline icon-only" id="btnCopyPrompt" title="复制生成预览">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
-                <button class="btn-copy-inline icon-only" id="btnSaveAsNew" title="另存为新提示词">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="preview-box" id="previewBox"></div>
+          <!-- Basic Info Section -->
+          <div class="prompt-section" style="flex:1;">
+            <div class="prompt-section-title">基本信息</div>
+            <div class="detail-info-grid" id="detailInfo"></div>
           </div>
         </div>
+      </div>
+      <!-- Full-width prompt sections below -->
+      <div class="detail-section-title" style="margin-top:20px;">AI提示词</div>
+      <!-- Block 1: Original Prompt Template -->
+      <div class="prompt-section">
+        <div class="prompt-section-header">
+          <div class="prompt-section-title">原始提示词</div>
+          <div class="prompt-section-actions">
+            <div class="button-group">
+            <button class="btn-copy-inline icon-only" id="btnTranslate" title="中英互译">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg>
+            </button>
+            <button class="btn-copy-inline icon-only" id="btnCopyTemplate" title="复制原始模板">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button class="btn-copy-inline icon-only" id="detailEdit" title="编辑">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn-copy-inline icon-only is-danger" id="detailDelete" title="删除">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+            </div>
+          </div>
+        </div>
+        <div class="prompt-text" id="detailPromptText"></div>
+      </div>
+      <!-- Block 2: Variable Definitions -->
+      <div class="prompt-section" id="varPanelSection" style="display:none;margin-top:16px;">
+        <div class="prompt-section-title">变量定义</div>
+        <div class="var-panel" id="varPanel"></div>
+      </div>
+      <!-- Block 3: Generated Preview (hidden until variables are modified) -->
+      <div class="prompt-section" id="previewSection" style="display:none;margin-top:16px;">
+        <div class="prompt-section-header">
+          <div class="prompt-section-title">生成预览</div>
+          <div class="prompt-section-actions">
+            <button class="btn-copy-inline icon-only" id="btnTranslatePreview" title="中英互译">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg>
+            </button>
+            <button class="btn-copy-inline icon-only" id="btnCopyPrompt" title="复制生成预览">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button class="btn-copy-inline icon-only" id="btnSaveAsNew" title="另存为新提示词">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" id="previewBox"></div>
       </div>
     </div>
 
@@ -1787,6 +1883,13 @@
           <div class="data-settings-desc">手动将当前数据备份到浏览器本地存储</div>
         </div>
         <button class="btn-action secondary" id="btnBackupNow">备份</button>
+      </div>
+      <div class="data-settings-row">
+        <div class="data-settings-info">
+          <div class="data-settings-label">压缩现有图片</div>
+          <div class="data-settings-desc">把存量超长边图片压缩到 2048px 内，可显著加快加载速度（视觉无损）</div>
+        </div>
+        <button class="btn-action secondary" id="btnCompressImages">压缩</button>
       </div>
       <div class="data-settings-row">
         <div class="data-settings-info">
@@ -2278,6 +2381,7 @@
   var viewEdit = document.getElementById('viewEdit');
   var promptGrid = document.getElementById('promptGrid');
   var emptyState = document.getElementById('emptyState');
+  var skeletonGrid = document.getElementById('skeletonGrid');
   var searchInput = document.getElementById('searchInput');
   var categoryFilter = document.getElementById('categoryFilter');
 
@@ -2680,6 +2784,7 @@
 
     promptGrid.innerHTML = '';
     if (filtered.length === 0) {
+      if (skeletonGrid) skeletonGrid.style.display = 'none';
       emptyState.style.display = 'block';
       promptGrid.style.display = 'none';
       return;
@@ -2687,64 +2792,77 @@
     emptyState.style.display = 'none';
     promptGrid.style.display = 'block';
 
-    filtered.forEach(function(p, i) {
-      var card = document.createElement('div');
-      card.className = 'prompt-card';
-      card.style.animationDelay = (i * 0.04) + 's';
+    /* 分批渲染，避免一次性创建大量 DOM 阻塞主线程 */
+    var BATCH = 8;
+    var idx = 0;
+    function renderBatch() {
+      var end = Math.min(idx + BATCH, filtered.length);
+      for (; idx < end; idx++) {
+        var p = filtered[idx];
+        var card = document.createElement('div');
+        card.className = 'prompt-card';
+        card.style.animationDelay = (idx * 0.04) + 's';
 
-      var coverImg = '';
-      var cover = (p.images && p.images.length > 0) ? p.images[p.coverIndex || 0] : null;
-      if (cover) {
-        coverImg = '<img src="' + cover + '" alt="' + escapeHtml(p.title) + '">';
-      } else {
-        coverImg = '<div class="card-cover-placeholder"><span class="ph-logo">W.</span><span class="ph-text">默认提示词图片</span></div>';
-      }
+        var coverImg = '';
+        var cover = (p.images && p.images.length > 0) ? p.images[p.coverIndex || 0] : null;
+        if (cover) {
+          coverImg = '<img src="' + cover + '" alt="' + escapeHtml(p.title) + '">';
+        } else {
+          coverImg = '<div class="card-cover-placeholder"><span class="ph-logo">W.</span><span class="ph-text">默认提示词图片</span></div>';
+        }
 
-      var imgCount = (p.images && p.images.length) || 0;
-      var varCount = extractVars(p.template).length;
+        var imgCount = (p.images && p.images.length) || 0;
+        var varCount = extractVars(p.template).length;
 
-      var tagsHtml = '';
-      if (p.tags && p.tags.length) {
-        p.tags.slice(0, 2).forEach(function(t) {
-          tagsHtml += '<span class="card-tag">' + escapeHtml(t) + '</span>';
-        });
-      }
+        var tagsHtml = '';
+        if (p.tags && p.tags.length) {
+          p.tags.slice(0, 2).forEach(function(t) {
+            tagsHtml += '<span class="card-tag">' + escapeHtml(t) + '</span>';
+          });
+        }
 
-      card.innerHTML =
-        '<div class="card-cover">' + coverImg +
-          (tagsHtml ? '<div class="card-cover-tags">' + tagsHtml + '</div>' : '') +
-          '<div class="card-actions">' +
-            '<button class="card-action-btn" data-action="copy" title="复制提示词"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
-            '<button class="card-action-btn" data-action="edit" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
-          '</div>' +
-          '<div class="card-cover-overlay">' +
-            '<div class="card-overlay-title">' + escapeHtml(p.title || '未命名') + '</div>' +
-            '<div class="card-overlay-meta">' +
-              (imgCount > 0 ? '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' + imgCount + ' 张</span>' : '') +
-              (varCount > 0 ? '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>' + varCount + ' 变量</span>' : '') +
+        card.innerHTML =
+          '<div class="card-cover">' + coverImg +
+            (tagsHtml ? '<div class="card-cover-tags">' + tagsHtml + '</div>' : '') +
+            '<div class="card-actions">' +
+              '<button class="card-action-btn" data-action="copy" title="复制提示词"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
+              '<button class="card-action-btn" data-action="edit" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
             '</div>' +
-          '</div>' +
-        '</div>';
+            '<div class="card-cover-overlay">' +
+              '<div class="card-overlay-title">' + escapeHtml(p.title || '未命名') + '</div>' +
+              '<div class="card-overlay-meta">' +
+                (imgCount > 0 ? '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' + imgCount + ' 张</span>' : '') +
+                (varCount > 0 ? '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>' + varCount + ' 变量</span>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>';
 
-      /* Quick action button handlers */
-      card.querySelector('[data-action="copy"]').addEventListener('click', function(e) {
-        e.stopPropagation();
-        var filled = fillTemplate(p.template, p.variables || {});
-        filled = filled.replace(/\{\{[^}]+\}\}/g, '');
-        filled = filled.replace(/[，,\s]*[，,][，,\s]*/g, '，').replace(/^[，,\s]+|[，,\s]+$/g, '').trim();
-        navigator.clipboard.writeText(filled).then(function() {
-          showToast('已复制提示词');
+        /* Quick action button handlers */
+        card.querySelector('[data-action="copy"]').addEventListener('click', function(e) {
+          e.stopPropagation();
+          var filled = fillTemplate(p.template, p.variables || {});
+          filled = filled.replace(/\{\{[^}]+\}\}/g, '');
+          filled = filled.replace(/[，,\s]*[，,][，,\s]*/g, '，').replace(/^[，,\s]+|[，,\s]+$/g, '').trim();
+          navigator.clipboard.writeText(filled).then(function() {
+            showToast('已复制提示词');
+          });
         });
-      });
-      card.querySelector('[data-action="edit"]').addEventListener('click', function(e) {
-        e.stopPropagation();
-        document.getElementById('editTitle').dataset.new = '0';
-        goToEdit(p);
-      });
+        card.querySelector('[data-action="edit"]').addEventListener('click', function(e) {
+          e.stopPropagation();
+          document.getElementById('editTitle').dataset.new = '0';
+          goToEdit(p);
+        });
 
-      card.addEventListener('click', function() { goToDetail(p.id); });
-      promptGrid.appendChild(card);
-    });
+        card.addEventListener('click', function() { goToDetail(p.id); });
+        promptGrid.appendChild(card);
+      }
+      if (idx < filtered.length) {
+        requestAnimationFrame(renderBatch);
+      } else {
+        if (skeletonGrid) skeletonGrid.style.display = 'none';
+      }
+    }
+    requestAnimationFrame(renderBatch);
   }
 
   /* ============================================
@@ -2783,10 +2901,10 @@
     var dateStr = date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate());
     var tagsStr = (p.tags && p.tags.length) ? p.tags.join(' · ') : '';
 
-    var infoHtml = '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>' + dateStr + '</span>' +
-      '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' + imgCount + ' 张效果图</span>' +
-      (varCount > 0 ? '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>' + varCount + ' 个变量</span>' : '');
-    if (tagsStr) infoHtml += '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>' + escapeHtml(tagsStr) + '</span>';
+    var infoHtml = '<div class="info-item"><span class="info-label">创建日期</span><span class="info-value">' + dateStr + '</span></div>' +
+      '<div class="info-item"><span class="info-label">效果图</span><span class="info-value">' + imgCount + ' 张</span></div>';
+    if (varCount > 0) infoHtml += '<div class="info-item"><span class="info-label">变量数</span><span class="info-value">' + varCount + ' 个</span></div>';
+    if (tagsStr) infoHtml += '<div class="info-item info-item-full"><span class="info-label">标签</span><span class="info-value">' + escapeHtml(tagsStr) + '</span></div>';
     document.getElementById('detailInfo').innerHTML = infoHtml;
 
     /* Prompt text */
@@ -3518,6 +3636,143 @@
   }
 
   /* ============================================
+     Image Auto-Compress — 上传/粘贴时自动压缩大图
+     - 仅压缩最长边 > MAX_EDGE 的图（视觉无损）
+     - 透明 PNG 保留原格式，其余转 JPEG quality 0.85
+     ============================================ */
+  var MAX_EDGE = 2048;          /* 最长边像素上限 */
+  var JPEG_QUALITY = 0.85;      /* JPEG 质量 */
+
+  /* 核心压缩：把一张已解码的图压到 MAX_EDGE 内 */
+  function compressImageToDataURL(img, keepAlpha) {
+    var w = img.naturalWidth, h = img.naturalHeight;
+    var scale = 1;
+    if (w > MAX_EDGE || h > MAX_EDGE) {
+      scale = Math.min(MAX_EDGE / w, MAX_EDGE / h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
+    var canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    if (keepAlpha) {
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      return canvas.toDataURL('image/png');
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+  }
+
+  /* 压缩已有 dataURL（用于存量图片优化） */
+  function compressDataURL(src) {
+    return new Promise(function(resolve, reject) {
+      /* GIF 动图跳过，避免丢失动画帧 */
+      if (src.indexOf('data:image/gif') === 0) { resolve(src); return; }
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var keepAlpha = (src.indexOf('data:image/png') === 0 ||
+                           src.indexOf('data:image/webp') === 0);
+          resolve(compressImageToDataURL(img, keepAlpha));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = function() { reject(new Error('图片解码失败')); };
+      img.src = src;
+    });
+  }
+
+  function compressImageFile(file) {
+    return new Promise(function(resolve, reject) {
+      if (!file.type || file.type.indexOf('image/') !== 0) {
+        reject(new Error('不是图片文件'));
+        return;
+      }
+      /* GIF 动图跳过，避免丢失动画帧 */
+      if (file.type === 'image/gif') {
+        fileToDataURL(file).then(resolve, reject);
+        return;
+      }
+      /* 小文件（<500KB）直接走原图，避免无谓开销 */
+      if (file.size < 500 * 1024) {
+        fileToDataURL(file).then(resolve, reject);
+        return;
+      }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function() {
+        URL.revokeObjectURL(url);
+        try {
+          var keepAlpha = (file.type === 'image/png' || file.type === 'image/webp');
+          resolve(compressImageToDataURL(img, keepAlpha));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = function() {
+        URL.revokeObjectURL(url);
+        reject(new Error('图片解码失败'));
+      };
+      img.src = url;
+    });
+  }
+
+  /* 编辑视图图片处理：压缩后入列 */
+  function addEditImage(file) {
+    compressImageFile(file).then(function(dataURL) {
+      editImages.push({ dataURL: dataURL, isCover: editImages.length === 0 });
+      renderEditImages();
+    }).catch(function(err) {
+      showToast('图片处理失败：' + (err.message || '未知错误'));
+    });
+  }
+
+  /* 存量图片一键压缩：遍历所有记录，压缩超限大图并回写 */
+  function compressAllImages() {
+    showToast('正在压缩现有图片…');
+    var wasAuto = isAutoBackupEnabled();
+    if (wasAuto) setAutoBackupEnabled(false); /* 临时关闭，避免逐条备份拖慢 */
+    dbGetAll().then(function(list) {
+      var total = 0, changed = 0;
+      var promises = list.map(function(record) {
+        if (!record.images || !record.images.length) return Promise.resolve();
+        var imgPromises = record.images.map(function(src) {
+          total++;
+          return compressDataURL(src).then(function(compressed) {
+            if (compressed && compressed.length < src.length) {
+              changed++;
+              return compressed;
+            }
+            return src;
+          }).catch(function() { return src; });
+        });
+        return Promise.all(imgPromises).then(function(newImages) {
+          record.images = newImages;
+          return dbPut(record);
+        });
+      });
+      return Promise.all(promises).then(function() {
+        loadAll().then(function() {
+          if (wasAuto) {
+            setAutoBackupEnabled(true);
+            triggerAutoBackup(); /* 压缩完成后统一备份一次 */
+          }
+          renderList();
+          showToast('图片优化完成：' + changed + '/' + total + ' 张已压缩');
+        });
+      });
+    }).catch(function(err) {
+      if (wasAuto) setAutoBackupEnabled(true);
+      showToast('图片优化失败：' + (err.message || '未知错误'));
+    });
+  }
+
+  /* ============================================
      Dev Self-Check — catches bugs at dev stage
      Run via console: __devCheck() or auto on ?dev=1
      ============================================ */
@@ -4116,14 +4371,8 @@
   document.getElementById('fileInput').addEventListener('change', function() {
     var files = Array.prototype.slice.call(this.files);
     if (files.length === 0) return;
-    var promises = files.map(function(f) { return fileToDataURL(f); });
-    Promise.all(promises).then(function(dataURLs) {
-      dataURLs.forEach(function(url) {
-        editImages.push({ dataURL: url, isCover: editImages.length === 0 });
-      });
-      renderEditImages();
-      document.getElementById('fileInput').value = '';
-    });
+    files.forEach(function(f) { addEditImage(f); });
+    document.getElementById('fileInput').value = '';
   });
 
   /* Paste images — works when edit view is active */
@@ -4137,10 +4386,7 @@
         hasImage = true;
         var file = items[i].getAsFile();
         if (!file) continue;
-        fileToDataURL(file).then(function(url) {
-          editImages.push({ dataURL: url, isCover: editImages.length === 0 });
-          renderEditImages();
-        });
+        addEditImage(file);
       }
     }
     if (hasImage) {
@@ -4228,6 +4474,9 @@
       showToast('备份失败：' + (err.message || '未知错误'));
     });
   });
+
+  /* Compress existing images */
+  document.getElementById('btnCompressImages').addEventListener('click', compressAllImages);
 
   /* Auto backup toggle */
   var autoBackupToggle = document.getElementById('autoBackupToggle');

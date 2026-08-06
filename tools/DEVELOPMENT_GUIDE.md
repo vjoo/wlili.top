@@ -299,6 +299,69 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 > **注意**：`ph-logo` 字号在 dashboard 小卡片中用 `32px`，在 gallery 大图中用 `48px`（参考 `prompt-library.html` 的 `.card-cover-placeholder`）。背景色统一 `#f0f0f3`，禁止使用 `var(--bg-sidebar)` 等页面变量。
 
+### 3.8 骨架屏（Skeleton Loading）
+
+数据加载期间禁止出现空白区域，必须显示骨架屏（shimmer 闪烁占位），替代传统 loading 文字或 spinner。适用于列表页、详情页等任何异步读取本地存储 / IndexedDB 数据的场景。
+
+**HTML 结构**（数量与数据条数预期一致，通常 4~8 个占位卡片）：
+```html
+<div class="skeleton-grid" id="skeletonGrid">
+  <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+  <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-bar"></div></div>
+  <!-- 更多 skeleton-card -->
+</div>
+```
+
+**CSS 规范**（参考 `prompt-library.html`）：
+```css
+.skeleton-grid { column-count: 4; column-gap: 5px; }   /* 与内容网格一致 */
+.skeleton-card { break-inside: avoid; margin-bottom: 5px; background: var(--bg-white); border-radius: 0; overflow: hidden; }
+.skeleton-cover { width: 100%; aspect-ratio: 1; background: #e8e8ed; position: relative; overflow: hidden; }
+.skeleton-cover::after, .skeleton-bar::after {
+  content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.skeleton-bar { height: 14px; border-radius: 4px; background: #e8e8ed; margin: 10px 12px; position: relative; overflow: hidden; }
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+```
+
+**显隐控制**（JS）：
+- 页面初始化、数据读取完成前：`skeletonGrid` 保持可见（默认 display）
+- 数据就绪渲染完成后：`skeletonGrid.style.display = 'none'` 隐藏，同时显示真实内容网格
+- 空数据时：隐藏骨架屏 + 显示空状态（`.empty-state`），骨架屏与空状态互斥
+- 参考实现：`prompt-library.html` 的 `skeletonGrid` + `renderList()` 分批渲染
+
+### 3.9 图片存储与自动压缩规范（强制）
+
+图片以 base64 dataURL 存于 localStorage / IndexedDB 的工具页面，**必须在上传/粘贴时自动压缩**，禁止原图直存，否则数据量过大导致页面加载卡顿。
+
+**压缩规则**：
+| 规则 | 值 |
+|------|-----|
+| 最长边上限 | `MAX_EDGE = 2048`px，超限等比缩小 |
+| JPEG 质量 | `JPEG_QUALITY = 0.85` |
+| 小图阈值 | `< 500KB` 直接走原图，避免无谓解码开销 |
+| 透明图（PNG/WebP） | 保留原格式 `image/png`，不清除透明通道 |
+| GIF 动图 | **跳过不压**（canvas 会丢失动画帧） |
+| JPEG/BMP 等不透明图 | 转 `image/jpeg`，绘制前白底填充（`fillStyle='#fff'`）避免透明变黑 |
+
+**核心函数签名**（参考 `prompt-library.html`）：
+- `compressImageFile(file)`：上传文件 → 压缩 → dataURL（Promise）
+- `compressDataURL(src)`：存量 dataURL 压缩（用于"一键压缩现有图片"功能）
+- `compressImageToDataURL(img, keepAlpha)`：核心压缩逻辑（canvas drawImage）
+
+**实现要点**：
+- 用 `<canvas>` + `drawImage` 压缩：`URL.createObjectURL(file)` 载入图片 → 按 `MAX_EDGE` 等比缩放 → `canvas.toDataURL(...)`
+- 压缩后 dataURL 必须短于原图才回写，否则保留原图（`compressed.length < src.length` 判断）
+- 批量压缩存量图片时，临时关闭自动备份（`setAutoBackupEnabled(false)`），完成后统一备份一次，避免逐条写 localStorage 拖慢
+- 数据安全面板提供"压缩现有图片"按钮，一键遍历所有记录压缩超限大图并回写
+
+**性能规范**（大数据量列表页）：
+- 列表渲染必须**分批渲染**：每帧（`requestAnimationFrame`）渲染 8 条左右，避免一次性创建大量 DOM 阻塞主线程
+- 配合骨架屏（§3.8）：数据加载完成前显示骨架屏，渲染完成后再隐藏
+- 参考实现：`prompt-library.html` 的 `renderList()` 分批渲染 + 骨架屏
+
 ---
 
 ## 四、页面结构规范
@@ -478,6 +541,17 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - 背景色统一 `#f0f0f3`，禁止使用页面变量
     - `ph-logo` 字号：dashboard 小卡片 `32px`，gallery 大图 `48px`
     - 参考实现：`seamless-pattern.html`（小卡片）、`prompt-library.html`（`.card-cover-placeholder`，大图）
+25. **骨架屏规范**（强制，所有异步读取数据的页面）：
+    - 数据加载期间禁止空白区域，必须显示骨架屏（详见 §3.8），禁止使用纯 loading 文字
+    - 骨架屏与空状态互斥：有数据前显示骨架屏，空数据显示 `.empty-state`，就绪后隐藏骨架屏
+    - 骨架屏网格列数必须与真实内容网格一致，避免布局跳动
+    - 参考实现：`prompt-library.html` 的 `skeletonGrid`
+26. **图片自动压缩规范**（强制，所有图片以 base64 存储的页面）：
+    - 上传/粘贴图片必须经 canvas 自动压缩（详见 §3.9），禁止原图直存 localStorage / IndexedDB
+    - 压缩参数：最长边 `2048px`、JPEG `0.85`、`<500KB` 小图跳过、透明 PNG/WebP 保留格式、GIF 动图跳过
+    - 大数据量列表必须分批渲染（`requestAnimationFrame` 每帧 8 条），配合骨架屏
+    - 存量数据提供"一键压缩现有图片"入口，批量压缩时临时关闭自动备份，完成统一备份
+    - 参考实现：`prompt-library.html` 的 `compressImageFile()` / `compressAllImages()` / `renderList()`
 
 ---
 
@@ -557,6 +631,9 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | 详情双栏 | `1fr 520px` | 左侧列表+右侧 520px 详情面板 |
 | 开关组件 | `.toggle-slider` | iOS 风格开关切换 |
 | 按钮组容器 | `.button-group` | 按钮放入框中，竖线分隔 |
+| 骨架屏 | `.skeleton-grid / .skeleton-card / .skeleton-cover / .skeleton-bar` | 数据加载期间的 shimmer 占位（详见 §3.8） |
+| 图片自动压缩 | `compressImageFile() / compressDataURL() / compressAllImages()` | 上传/粘贴/存量图片 canvas 压缩（详见 §3.9） |
+| 分批渲染 | `renderList()` + `requestAnimationFrame` | 每帧 8 条渲染卡片，避免阻塞主线程 |
 
 ### image-layout.html
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self' https://translate.googleapis.com https://api.mymemory.translated.net; frame-ancestors 'none'; base-uri 'self';">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>W.-四方连图素材库</title>
@@ -100,6 +100,14 @@
 .stat-card-value.warning { color:var(--warning); }
 .stat-card-value.danger { color:var(--danger); }
 .stat-card-sub { font-size:12px; color:var(--text-muted); }
+/* 仪表台带图标统计卡（filament 风格：图标块 + 信息区） */
+.stat-card.stat-card-row { flex-direction:row; align-items:center; justify-content:center; gap:14px; padding:18px 16px; }
+.stat-card-icon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; }
+.stat-card-icon svg { width:22px; height:22px; }
+.stat-card-info { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.stat-card-info .stat-card-label { font-size:12px; }
+.stat-card-info .stat-card-value { font-size:24px; }
+.stat-card-badge { align-self:flex-start; font-size:11px; color:var(--text-muted); background:var(--bg-hover); padding:2px 8px; border-radius:10px; white-space:nowrap; margin-top:1px; }
 
 /* Panel */
 .panel { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); }
@@ -134,11 +142,17 @@
 
 /* Pattern Grid */
 .pattern-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+/* 素材库骨架屏 */
+.pattern-skeleton-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+.pattern-skeleton-card { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; }
+.pattern-skeleton-cover { width:100%; aspect-ratio:1; background:#e8e8ed; position:relative; overflow:hidden; }
+.pattern-skeleton-bar { height:14px; border-radius:4px; background:#e8e8ed; margin:12px 14px; position:relative; overflow:hidden; }
+.pattern-skeleton-cover::after, .pattern-skeleton-bar::after { content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent); animation:shimmer 1.5s infinite; }
+@keyframes shimmer { 100% { transform:translateX(100%); } }
 
 /* Dashboard two-column layout */
-.dash-layout { display:grid; grid-template-columns:1fr 360px; gap:14px; align-items:start; }
+.dash-layout { display:flex; flex-direction:column; gap:14px; }
 .dash-left { display:flex; flex-direction:column; gap:14px; min-width:0; }
-.dash-right { min-width:0; }
 .dash-recent-list { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
 .dash-recent-list .pattern-card { display:flex; flex-direction:column; }
 .dash-recent-list .pattern-thumb { width:100%; aspect-ratio:1; flex-shrink:0; }
@@ -168,11 +182,18 @@
 /* Element Selection */
 .gen-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
 .gen-toolbar-info { font-size:13px; color:var(--text-muted); flex:1; min-width:200px; }
-.gen-layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:stretch; }
+.gen-layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+.elements-stack { display:flex; flex-direction:column; gap:20px; }
 .gen-col-left { display:flex; flex-direction:column; }
-.gen-col-left > .gen-section:first-child { flex:1; display:flex; flex-direction:column; min-height:0; }
-.gen-col-left > .gen-section:first-child > .gen-section-body { flex:1; overflow-y:auto; min-height:0; }
-.gen-col-output { position:sticky; top:70px; max-height:calc(100vh - 90px); display:flex; flex-direction:column; }
+.gen-col-left > .gen-section:first-child { flex:0 1 auto; display:flex; flex-direction:column; min-height:0; }
+.gen-col-left > .gen-section:first-child > .gen-section-body { overflow-y:auto; min-height:0; max-height:60vh; }
+.gen-col-output {
+    position: sticky;
+    /* top: 70px; */
+    max-height: calc(100vh - 90px);
+    display: flex;
+    flex-direction: column;
+}
 .gen-col-output > .gen-section:last-child { flex:1; display:flex; flex-direction:column; min-height:0; }
 .gen-col-output > .gen-section:last-child > .gen-section-body { flex:1; display:flex; flex-direction:column; min-height:0; }
 .prompt-output-empty { flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:13px; text-align:center; }
@@ -212,8 +233,6 @@
 .btn-smart-match.pulsing { animation:smartMatchPulse 0.4s cubic-bezier(0.22,0.61,0.36,1); }
 @keyframes chipSelectIn { 0% { transform:scale(0.85); opacity:0.5; } 100% { transform:scale(1); opacity:1; } }
 .element-chip.selected { animation:chipSelectIn 0.25s cubic-bezier(0.22,0.61,0.36,1); }
-.element-chip.chip-profset { border-style:dashed; border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
-.element-chip.chip-profset.selected { border-style:solid; }
 
 /* Palette */
 .palette-list { display:flex; flex-direction:column; gap:10px; }
@@ -277,9 +296,35 @@
 /* Config Panel */
 .config-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
 .config-field-label { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
+.toggle-switch { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:var(--border-color); border-radius:22px; transition:0.3s; }
+.toggle-slider:before { content:""; position:absolute; height:16px; width:16px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; }
+.toggle-switch input:checked + .toggle-slider { background:var(--accent); }
+.toggle-switch input:checked + .toggle-slider:before { transform:translateX(18px); }
 .prompt-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
 .platform-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; text-decoration:none; border:1px solid var(--border-color); }
 .platform-btn:hover { transform:translateY(-1px); box-shadow:var(--shadow-sm); }
+
+/* ===== Prompt Display (matches prompt-library.html style) ===== */
+.prompt-display-section { background:var(--bg-white); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px 20px; }
+.prompt-display-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; flex-wrap:wrap; }
+.prompt-display-title { font-size:14px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; }
+.prompt-display-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.prompt-display-text { font-size:15px; line-height:1.7; color:var(--text-secondary); word-break:break-word; white-space:pre-wrap; }
+.btn-tool { display:inline-flex; align-items:center; gap:4px; padding:6px 8px; font-size:13px; font-weight:500; border:1px solid var(--border-light); border-radius:var(--radius-pill); background:var(--bg-white); color:var(--text-secondary); cursor:pointer; transition:all 0.2s; font-family:inherit; }
+.btn-tool:hover { border-color:var(--accent); color:var(--accent); }
+.btn-tool:active { transform:scale(0.97); }
+.btn-tool:disabled { opacity:0.5; cursor:wait; }
+.btn-tool svg { width:14px; height:14px; }
+.btn-tool.is-danger { color:var(--danger); border-color:rgba(255,59,48,0.3); }
+.btn-tool.is-danger:hover { border-color:var(--danger); color:var(--danger); background:rgba(255,59,48,0.04); }
+.btn-tool.icon-only { padding:6px 8px; gap:0; }
+.tool-group { display:inline-flex; border:1px solid var(--border-light); border-radius:var(--radius-pill); overflow:hidden; }
+.tool-group .btn-tool { border-radius:0; border:none; border-right:1px solid var(--border-light); margin:0; }
+.tool-group .btn-tool:last-child { border-right:none; }
+.tool-group .btn-tool:hover { background:var(--bg-sidebar); border-color:var(--border-light); color:var(--accent); }
+.tool-group .btn-tool.is-danger:hover { background:rgba(255,59,48,0.06); color:var(--danger); border-color:var(--border-light); }
 
 /* Modal */
 .modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center; padding:20px; }
@@ -355,7 +400,7 @@
 .img-preview { width:100%; aspect-ratio:1; max-width:200px; border-radius:var(--radius-md); object-fit:cover; margin:0 auto; display:block; }
 
 /* Detail View (只读详情页) */
-.detail-layout { display:grid; grid-template-columns:380px 1fr; gap:28px; align-items:start; }
+.detail-main { display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start; }
 .detail-img-col { position:sticky; top:20px; }
 .detail-img-box { width:100%; aspect-ratio:1; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border-light); background:var(--bg-elevated); cursor:pointer; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); }
 .detail-img-box:hover { box-shadow:0 12px 40px rgba(0,0,0,0.12); transform:translateY(-2px); }
@@ -363,22 +408,89 @@
 .detail-img-empty { width:100%; aspect-ratio:1; border:2px dashed var(--border-color); border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text-muted); }
 .detail-img-empty:hover { border-color:var(--accent); background:var(--accent-light); }
 .detail-img-actions { display:flex; gap:8px; margin-top:12px; }
-.detail-info-col { min-width:0; }
-.detail-info-row { display:grid; grid-template-columns:100px 1fr; gap:0; padding:10px 0; border-bottom:1px solid var(--border-light); align-items:start; }
-.detail-info-row:last-child { border-bottom:none; }
-.detail-info-label { font-size:13px; font-weight:500; color:var(--text-muted); flex-shrink:0; }
-.detail-info-value { font-size:14px; color:var(--text-primary); word-break:break-all; }
-.detail-info-value .badge { margin-right:4px; }
+.detail-prompt-col { min-width:0; display:flex; flex-direction:column; gap:20px; }
+.detail-prompt-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.detail-prompt-header .detail-section-title { margin:0; border:none; padding:0; }
+.detail-prompt-box { background:var(--bg-elevated); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:14px 16px; font-size:13px; line-height:1.7; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; max-height:520px; overflow-y:auto; flex:1; }
+.detail-info-table { width:100%; border-collapse:collapse; font-size:13px; }
+.detail-info-table th { text-align:left; font-weight:500; color:var(--text-muted); padding:7px 12px 7px 0; white-space:nowrap; width:80px; vertical-align:top; border-bottom:1px solid var(--border-light); }
+.detail-info-table td { color:var(--text-primary); padding:7px 12px 7px 0; word-break:break-all; vertical-align:top; border-bottom:1px solid var(--border-light); }
+.detail-info-table tr:last-child th, .detail-info-table tr:last-child td { border-bottom:none; }
+.detail-info-table td .badge { margin-right:4px; }
 .detail-tags { display:flex; flex-wrap:wrap; gap:4px; }
-.detail-prompt-box { background:var(--bg-elevated); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:12px 14px; font-size:13px; line-height:1.6; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; max-height:200px; overflow-y:auto; }
 .detail-license-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--border-light); border-radius:var(--radius-md); transition:all 0.2s; }
 .detail-license-item:hover { border-color:var(--accent); background:var(--accent-light); }
 .detail-section-title { font-size:14px; font-weight:600; color:var(--text-primary); margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border-light); }
 .detail-section-title:first-child { margin-top:0; }
 @media (max-width:768px) {
-    .detail-layout { grid-template-columns:1fr; gap:20px; }
+    .detail-main { grid-template-columns:1fr; gap:20px; }
     .detail-img-col { position:static; }
-    .detail-img-box { max-width:280px; margin:0 auto; }
+    .detail-img-box { max-width:300px; margin:0 auto; }
+    .detail-prompt-box { max-height:300px; }
+}
+
+/* Edit Table (编辑页表格内嵌input/select) */
+.edit-info-table .form-input,
+.edit-info-table .form-select { padding:5px 8px; font-size:13px; height:30px; border-radius:var(--radius-sm); }
+.edit-info-table .form-input:focus,
+.edit-info-table .form-select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-light); }
+.edit-info-table td .badge { margin-right:4px; }
+
+/* ===== Image Gallery (详情页多图画廊) ===== */
+.gallery-main { position:relative; width:100%; aspect-ratio:1/1; background:var(--bg-elevated); border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border-light); }
+.gallery-main img { width:100%; height:100%; object-fit:cover; display:block; }
+.gallery-empty { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--text-muted); }
+.gallery-empty svg { width:48px; height:48px; opacity:0.3; }
+.gallery-empty p { font-size:13px; }
+.gallery-nav { position:absolute; top:50%; transform:translateY(-50%); width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.9); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-primary); transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.12); backdrop-filter:blur(4px); }
+.gallery-nav:hover { background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.16); }
+.gallery-nav:active { transform:translateY(-50%) scale(0.92); }
+.gallery-nav.prev { left:12px; }
+.gallery-nav.next { right:12px; }
+.gallery-nav svg { width:18px; height:18px; }
+.gallery-nav:disabled { opacity:0.3; cursor:default; }
+.gallery-counter { position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.55); color:#fff; font-size:12px; font-weight:500; padding:3px 10px; border-radius:var(--radius-pill); backdrop-filter:blur(4px); }
+.gallery-cover-btn { position:absolute; bottom:12px; left:12px; background:rgba(0,0,0,0.55); color:#fff; border:none; font-size:12px; font-weight:500; padding:4px 10px; border-radius:var(--radius-pill); cursor:pointer; display:inline-flex; align-items:center; gap:4px; backdrop-filter:blur(4px); transition:background 0.2s; font-family:inherit; }
+.gallery-cover-btn:hover { background:rgba(0,0,0,0.7); }
+.gallery-cover-btn svg { width:12px; height:12px; }
+.gallery-cover-btn.is-cover { background:var(--accent); }
+.gallery-cover-btn.is-cover:hover { background:var(--accent); opacity:0.9; }
+.gallery-thumbs { display:flex; gap:8px; overflow-x:auto; padding-top:10px; scrollbar-width:thin; }
+.gallery-thumbs::-webkit-scrollbar { height:4px; }
+.gallery-thumbs::-webkit-scrollbar-thumb { background:var(--border-color); border-radius:2px; }
+.gallery-thumb { width:56px; height:56px; border-radius:var(--radius-sm); overflow:hidden; flex-shrink:0; cursor:pointer; border:2px solid transparent; transition:border-color 0.2s; position:relative; }
+.gallery-thumb img { width:100%; height:100%; object-fit:cover; }
+.gallery-thumb.active { border-color:var(--accent); }
+.gallery-thumb:hover { border-color:var(--border-color); }
+.gallery-thumb-cover-mark { position:absolute; top:2px; right:2px; width:16px; height:16px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.gallery-thumb-cover-mark svg { width:10px; height:10px; color:#fff; }
+
+/* ===== Image Lightbox ===== */
+.lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.92); display:none; align-items:center; justify-content:center; z-index:9999; cursor:zoom-out; animation:lightboxFadeIn 0.2s ease-out; }
+.lightbox.active { display:flex; }
+@keyframes lightboxFadeIn { from { opacity:0; } to { opacity:1; } }
+.lightbox img { max-width:92%; max-height:92%; object-fit:contain; border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+.lightbox-close { position:absolute; top:20px; right:20px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.15); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; }
+.lightbox-close:hover { background:rgba(255,255,255,0.3); }
+.lightbox-close svg { width:20px; height:20px; }
+
+/* ===== Upload Grid (编辑页多图上传) ===== */
+.upload-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:10px; }
+.upload-item { position:relative; aspect-ratio:1/1; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-light); }
+.upload-item img { width:100%; height:100%; object-fit:cover; }
+.upload-item-cover { position:absolute; top:6px; left:6px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,0.5); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; transition:background 0.2s; }
+.upload-item-cover svg { width:12px; height:12px; }
+.upload-item-cover:hover { background:rgba(0,0,0,0.7); }
+.upload-item-cover.is-cover { background:var(--accent); }
+.upload-item-del { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,0.5); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; transition:background 0.2s; }
+.upload-item-del svg { width:12px; height:12px; }
+.upload-item-del:hover { background:var(--danger); }
+.upload-add { aspect-ratio:1/1; border:2px dashed var(--border-color); border-radius:var(--radius-md); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; color:var(--text-muted); transition:all 0.2s; }
+.upload-add:hover { border-color:var(--accent); background:var(--accent-light); color:var(--accent); }
+.upload-add svg { width:24px; height:24px; }
+.upload-add span { font-size:12px; }
+@media (max-width:768px) {
+    .gallery-thumb { width:48px; height:48px; }
 }
 
 /* Toast — uses common.css .toast */
@@ -442,12 +554,10 @@
     .gen-layout { grid-template-columns:1fr; }
     .gen-col-left { display:block; }
     .gen-col-left > .gen-section:first-child { flex:0 0 auto; }
-    .gen-col-left > .gen-section:first-child > .gen-section-body { overflow:visible; }
+    .gen-col-left > .gen-section:first-child > .gen-section-body { overflow:visible; max-height:none; }
     .gen-col-output { position:static; max-height:none; }
     .gen-col-output > .gen-section { flex:0 0 auto; }
     .gen-col-output > .gen-section > .gen-section-body { flex:0 0 auto; }
-    .dash-layout { grid-template-columns:1fr; }
-    .dash-right { order:-1; }
     .dash-recent-list { grid-template-columns:repeat(3,1fr); }
 }
 @media (max-width:900px) {
@@ -492,23 +602,31 @@
         <aside class="sidebar" id="sidebar">
             <nav class="nav-menu">
                 <div class="nav-item active" data-module="dashboard">
-                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
-                    <span>仪表盘</span>
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
+                    <span>仪表台</span>
                 </div>
-                <div class="nav-item" data-module="assets">
-                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
-                    <span>素材库</span>
+                <div class="nav-item" data-module="patternAssets">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg></span>
+                    <span>四方图素材库</span>
                 </div>
                 <div class="nav-item" data-module="generator">
-                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
-                    <span>生成提示词</span>
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><path d="M17.5 14.5l.85 1.9 1.9.85-1.9.85-.85 1.9-.85-1.9-1.9-.85 1.9-.85z"/></svg></span>
+                    <span>四方图生成器</span>
+                </div>
+                <div class="nav-item" data-module="charAssets">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="9.5" r="3"/><path d="M6.5 19a5.5 5.5 0 0 1 11 0"/></svg></span>
+                    <span>人物素材库</span>
+                </div>
+                <div class="nav-item" data-module="character">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M18.5 2.5l.75 1.75 1.75.75-1.75.75-.75 1.75-.75-1.75-1.75-.75 1.75-.75z"/></svg></span>
+                    <span>人物生成器</span>
                 </div>
                 <div class="nav-item" data-module="licenses">
                     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg></span>
                     <span>授权管理</span>
                 </div>
                 <div class="nav-item" data-module="elements">
-                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span>
                     <span>元素库</span>
                 </div>
                 <div class="nav-item" data-module="palettes">
@@ -532,6 +650,14 @@
         <div class="modal" id="modal" onclick="event.stopPropagation()"></div>
     </div>
     <div class="toast" id="toast"></div>
+
+    <!-- Image Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightboxClose">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <img id="lightboxImg" src="" alt="">
+    </div>
 
     <script>
     // ============================================
@@ -569,7 +695,8 @@
             { category: '花草植物', items: ['小雏菊','郁金香','三叶草','简笔画小花','嫩叶','小樱花','小花苞'] },
             { category: '可爱图形', items: ['爱心','蝴蝶结','气球','糖果','小圆波点','小饼干','冰淇淋'] },
             { category: '线条挂件', items: ['波浪拉旗','细绳挂饰','小圆珠链条','弧形灯串线','曲线彩带'] },
-            { category: '生活物件', items: ['吐司面包','牛奶盒','小鱼','蘑菇','胡萝卜','信封','小帐篷'] }
+            { category: '生活物件', items: ['吐司面包','牛奶盒','小鱼','蘑菇','胡萝卜','信封','小帐篷'] },
+            { category: '英文单词', items: ['happy','luck','nice','sweet','love','joy','dream','smile','star','sun','cute','hello','honey','fun','bloom'] }
         ]
     };
 
@@ -612,14 +739,21 @@
     ];
 
     const LAYOUTS = [
-        '散点式排列，元素均衡散落于画面各处，疏密有致，预留充足留白',
-        '散点式稀疏排列，大面积留白，元素间距宽敞，清新柔和',
-        '散点式密集排列，元素错落饱满，丰富充实，适合满印',
-        '分层带状排列，多条分段短弧形挂绳横向分层错落排布，其余小元素填充空隙散点分布',
-        '重叠式排列，主体浮纹叠加装饰底纹，层次丰富'
+        '斜角构图',
+        '三角构图',
+        '中心构图',
+        '散点式满铺'
     ];
 
     const STYLES = ['治愈绘本卡通平涂','韩系奶油简约简笔风','简约线条几何风','水彩手绘治愈风'];
+
+    // 英文单词文字样式（用于装饰元素中的英文单词）
+    const WORD_STYLES = [
+        { name: '气球膨胀体', desc: '圆润膨胀的气球立体字母，充气感饱满，带有微妙的3D体积和高光，字形圆润无尖角，可爱俏皮' },
+        { name: '粗描边贴纸体', desc: '粗黑描边+纯色平涂填充的贴纸字母，扁平无立体感，线条干净利落，轮廓清晰醒目，简洁大方' },
+        { name: '手写马克笔体', desc: '手写马克笔风格字母，笔触略带随性不规则感，圆润手写体，有小尾巴和连笔，自然活泼有温度' },
+        { name: '虚线缝线体', desc: '虚线缝线描边字母，模仿刺绣缝纫质感，沿字母轮廓排列短虚线，布艺手工感，温暖治愈' }
+    ];
 
     // 智能搭配主题包：基于图案设计原理（主次分明、疏密有致、主题统一、色彩协调）
     // 每个主题定义了元素池、推荐色板、推荐布局、元素数量范围
@@ -633,7 +767,7 @@
           subjectPool:['软萌坐姿小熊','小猪崽','小鸡','圆脸小白猫咪'],
           decorationPool:['草莓','糖果','气球','爱心','冰淇淋','小圆波点','蝴蝶结','小饼干'],
           outfitPool:['戴皇冠','拿气球','拿冰淇淋','穿连衣裙','戴蝴蝶结发夹','戴小蓝帽','双手比心','吐舌调皮','跳舞旋转'],
-          paletteId:'p4', layoutIndex:2, subjectRange:[1,3], decoRange:[4,6], outfitRange:[2,4] },
+          paletteId:'p4', layoutIndex:3, subjectRange:[1,3], decoRange:[4,6], outfitRange:[2,4] },
         { name:'星空梦境', emoji:'✨', desc:'梦幻夜空，闪烁星辰',
           subjectPool:['简约兔子头像','简约小熊头像','简约猫咪头像','小海豹','星光小鹿','云朵猫'],
           decorationPool:['简约云朵','弯月牙','四角闪光星','五角星','星星灯串','小圆波点','爱心','弧形灯串线','星球小环'],
@@ -735,6 +869,27 @@
         }
         // 迁移：补充新增的默认色板（已有用户）
         migratePalettes();
+        // 迁移：补充新增的装饰元素分类（英文单词等）
+        migrateElements();
+    }
+
+    // 迁移：将新增的默认装饰元素分类补充到已有数据中（不覆盖用户自定义）
+    function migrateElements() {
+        var existing = loadObject(STORAGE_KEYS.elements);
+        if (!existing) { saveObject(STORAGE_KEYS.elements, DEFAULT_ELEMENTS); return; }
+        var changed = false;
+        // 检查每个分类组，补充缺失的分类
+        ['subjects','outfits','decorations'].forEach(function(group) {
+            if (!existing[group]) { existing[group] = DEFAULT_ELEMENTS[group]; changed = true; return; }
+            DEFAULT_ELEMENTS[group].forEach(function(defCat) {
+                var found = existing[group].some(function(exCat) { return exCat.category === defCat.category; });
+                if (!found) {
+                    existing[group].push({ category: defCat.category, items: defCat.items.slice() });
+                    changed = true;
+                }
+            });
+        });
+        if (changed) saveObject(STORAGE_KEYS.elements, existing);
     }
 
     // v6: 用新的真实色板数据替换旧的编造色板
@@ -788,6 +943,53 @@
         return 'HT-' + ymd + '-' + rnd;
     }
     function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    // ===== 多源翻译（MyMemory优先 → Google备用） =====
+    var translatedGenPrompt = null;
+    var showingTranslatedGen = false;
+    var translatedDetailPrompt = null;
+    var showingTranslatedDetail = false;
+
+    function fetchWithTimeout(url, options, timeoutMs) {
+        var controller = new AbortController();
+        var timer = setTimeout(function() { controller.abort(); }, timeoutMs || 8000);
+        var opts = Object.assign({}, options || {}, { signal: controller.signal });
+        return fetch(url, opts).then(function(res) { clearTimeout(timer); return res; }).catch(function(err) { clearTimeout(timer); throw err; });
+    }
+    function decodeHtmlEntities(text) { var ta = document.createElement('textarea'); ta.innerHTML = text; return ta.value; }
+    function translateText(text, targetLang) {
+        return tryMyMemory(text, targetLang).catch(function(mmErr) {
+            console.warn('[translate] MyMemory failed, trying Google:', mmErr.message);
+            return tryGoogleTranslate(text, targetLang);
+        });
+    }
+    function tryMyMemory(text, targetLang) {
+        var chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+        var sourceLang = chineseChars > text.length * 0.3 ? 'zh-CN' : 'en';
+        var mmTarget = targetLang === 'zh-CN' ? 'zh-CN' : 'en';
+        var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + sourceLang + '|' + mmTarget;
+        return fetchWithTimeout(url, {}, 8000).then(function(res) {
+            if (!res.ok) throw new Error('MyMemory HTTP ' + res.status);
+            return res.json();
+        }).then(function(data) {
+            if (!data.responseData || data.responseStatus !== 200) throw new Error('MyMemory: ' + (data.responseDetails || 'unknown error'));
+            var translated = decodeHtmlEntities(data.responseData.translatedText);
+            if (!translated) throw new Error('MyMemory empty result');
+            return translated;
+        });
+    }
+    function tryGoogleTranslate(text, targetLang) {
+        var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text);
+        return fetchWithTimeout(url, {}, 5000).then(function(res) {
+            if (!res.ok) throw new Error('Google HTTP ' + res.status);
+            return res.json();
+        }).then(function(data) {
+            var translated = '';
+            if (data && data[0]) { data[0].forEach(function(seg) { if (seg[0]) translated += seg[0]; }); }
+            if (!translated) throw new Error('Google empty result');
+            return translated;
+        });
+    }
 
     // ===== HEX → 中文色名自动映射 =====
     // 基于 HSL 色相+饱和度+亮度区间生成色名，色值改变时自动更新
@@ -972,13 +1174,36 @@
         if (licenses.some(function(l){ return l.licenseType === 'buyout'; })) return 'bought-out';
         if (licenses.length > 0) {
             var pattern = getPatterns().find(function(p){ return p.id === patternId; });
-            if (!pattern || !pattern.thumbnail) return 'draft';
+            if (!pattern || !hasImages(pattern)) return 'draft';
             return 'partially-licensed';
         }
         var pattern = getPatterns().find(function(p){ return p.id === patternId; });
         if (!pattern) return 'draft';
-        if (!pattern.thumbnail) return 'draft';
+        if (!hasImages(pattern)) return 'draft';
         return 'available';
+    }
+
+    // 兼容旧数据：thumbnail → images + coverIndex
+    function getPatternImages(p) {
+        if (!p) return [];
+        if (p.images && p.images.length > 0) return p.images;
+        if (p.thumbnail) return [p.thumbnail];
+        return [];
+    }
+    function getCoverIndex(p) {
+        if (!p) return 0;
+        var idx = p.coverIndex || 0;
+        var imgs = getPatternImages(p);
+        if (idx >= imgs.length) idx = 0;
+        return idx;
+    }
+    function hasImages(p) {
+        return getPatternImages(p).length > 0;
+    }
+    function getCoverImage(p) {
+        var imgs = getPatternImages(p);
+        if (imgs.length === 0) return null;
+        return imgs[getCoverIndex(p)];
     }
 
     function makeFingerprint(subjects, outfits, decorations, paletteId, layout) {
@@ -1008,13 +1233,29 @@
         genState: (function() {
             try {
                 var saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.genState));
+                if (saved && saved.subjects) {
+                    if (saved.wordStyleIndex === undefined) saved.wordStyleIndex = 0;
+                    if (saved.humanize === undefined) saved.humanize = true;
+                    return saved;
+                }
+            } catch(e) {}
+            return { subjects:[], outfits:[], decorations:[], paletteId:'p1', layoutIndex:0, styleIndex:0, wordStyleIndex:0, humanize:true, smartHistory:[], currentTheme:null, elementTab:'subjects' };
+        })(),
+
+        charState: (function() {
+            try {
+                var saved = JSON.parse(localStorage.getItem('seamless_char_state'));
                 if (saved && saved.subjects) return saved;
             } catch(e) {}
-            return { subjects:[], outfits:[], decorations:[], paletteId:'p1', layoutIndex:0, styleIndex:0, smartHistory:[], currentTheme:null, elementTab:'subjects' };
+            return { subjects:[], outfits:[], props:[], paletteId:'p1', styleIndex:0, wordStyleIndex:0, elementTab:'subjects', humanize:true };
         })(),
 
         saveGenState: function() {
             try { localStorage.setItem(STORAGE_KEYS.genState, JSON.stringify(this.genState)); } catch(e) {}
+        },
+
+        saveCharState: function() {
+            try { localStorage.setItem('seamless_char_state', JSON.stringify(this.charState)); } catch(e) {}
         },
 
         init: function() {
@@ -1044,9 +1285,15 @@
 
         switchModule: function(module) {
             this.currentModule = module;
+            this._pasteTargetId = null;
+            this._galleryId = null;
+            // 关闭 lightbox（如果打开）
+            var lb = document.getElementById('lightbox');
+            if (lb) lb.classList.remove('active');
             document.querySelectorAll('.nav-item').forEach(function(item) {
                 item.classList.toggle('active', item.dataset.module === module);
             });
+            this.closeSidebar();
             this.render();
         },
 
@@ -1054,8 +1301,10 @@
             var ca = document.getElementById('contentArea');
             switch(this.currentModule) {
                 case 'dashboard': ca.innerHTML = this.renderDashboard(); break;
-                case 'assets': ca.innerHTML = this.renderAssets(); break;
+                case 'patternAssets': ca.innerHTML = this.renderAssets('pattern'); break;
+                case 'charAssets': ca.innerHTML = this.renderAssets('character'); break;
                 case 'generator': ca.innerHTML = this.renderGenerator(); break;
+                case 'character': ca.innerHTML = this.renderCharacter(); break;
                 case 'licenses': ca.innerHTML = this.renderLicenses(); break;
                 case 'elements': ca.innerHTML = this.renderElements(); break;
                 case 'palettes': ca.innerHTML = this.renderPalettes(); break;
@@ -1063,69 +1312,84 @@
             }
         },
 
-        // ===== 概览 =====
+        // ===== 仪表台 =====
         renderDashboard: function() {
             var patterns = getPatterns();
             var licenses = getLicenses().filter(function(l){ return l.status === 'active'; });
             var totalRevenue = licenses.reduce(function(s,l){ return s + (l.amount||0); },0);
-            var totalReceived = licenses.reduce(function(s,l){ return s + (l.deposit||0) + (l.balance||0); },0);
-            var pendingPayment = totalRevenue - totalReceived;
-            var unpaidCount = licenses.filter(function(l){ return l.paymentStatus !== 'paid'; }).length;
             var boughtOut = patterns.filter(function(p){ return computeStatus(p.id)==='bought-out'; }).length;
             var available = patterns.filter(function(p){ var s=computeStatus(p.id); return s==='available'||s==='partially-licensed'; }).length;
-            var drafts = patterns.filter(function(p){ return computeStatus(p.id)==='draft'; }).length;
+            // 类型统计
+            var patternCount = patterns.filter(function(p){ return p.type !== 'character'; }).length;
+            var charCount = patterns.filter(function(p){ return p.type === 'character'; }).length;
+            // 元素库统计
+            var elements = getElements();
+            var elementCount = (elements.subjects||[]).reduce(function(s,c){return s+(c.items?c.items.length:0);},0)
+                + (elements.outfits||[]).reduce(function(s,c){return s+(c.items?c.items.length:0);},0)
+                + (elements.decorations||[]).reduce(function(s,c){return s+(c.items?c.items.length:0);},0);
+            // 色板统计
+            var paletteCount = (getPalettes()||[]).length;
+
+            // 图标辅助（filament 风格：线性图标 + 彩色圆角背景块）
+            var icons = {
+                box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+                check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+                lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+                dollar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+                grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>',
+                user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>',
+                shapes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg>',
+                palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>'
+            };
+            function iconCard(bg, iconKey, label, value, valueCls, badge) {
+                return '<div class="stat-card stat-card-row">' +
+                    '<div class="stat-card-icon" style="background:'+bg+';">'+icons[iconKey]+'</div>' +
+                    '<div class="stat-card-info">' +
+                    '<div class="stat-card-label">'+label+'</div>' +
+                    '<div class="stat-card-value '+(valueCls||'')+'">'+value+'</div>' +
+                    (badge ? '<div class="stat-card-badge">'+badge+'</div>' : '') +
+                    '</div></div>';
+            }
 
             var html = '<div class="dash-layout">';
             // 左栏：数据统计 + 授权概览
             html += '<div class="dash-left">';
 
             html += '<div class="stats-grid">';
-            html += '<div class="stat-card"><div class="stat-card-label">素材总数</div><div class="stat-card-value accent">'+patterns.length+'</div><div class="stat-card-sub">含草稿 '+drafts+' 个</div></div>';
-            html += '<div class="stat-card"><div class="stat-card-label">可授权</div><div class="stat-card-value success">'+available+'</div><div class="stat-card-sub">待授权素材</div></div>';
-            html += '<div class="stat-card"><div class="stat-card-label">已买断</div><div class="stat-card-value danger">'+boughtOut+'</div><div class="stat-card-sub">不可再授权</div></div>';
-            html += '<div class="stat-card"><div class="stat-card-label">授权收入</div><div class="stat-card-value warning">'+formatMoney(totalRevenue)+'</div><div class="stat-card-sub">已收 '+formatMoney(totalReceived)+(pendingPayment>0?' · 待收 '+formatMoney(pendingPayment):'')+'</div></div>';
+            html += iconCard('#7C5CFC', 'box', '素材总数', patterns.length, 'accent');
+            html += iconCard('#38a169', 'check', '可授权', available, 'success');
+            html += iconCard('#e53e3e', 'lock', '已买断', boughtOut, 'danger');
+            html += iconCard('#dd6b20', 'dollar', '授权收入', formatMoney(totalRevenue), 'warning');
+            html += '</div>';
+
+            // 第二行：类型 / 元素 / 色板统计
+            html += '<div class="stats-grid">';
+            html += iconCard('#6366f1', 'grid', '四方图素材', patternCount);
+            html += iconCard('#805ad5', 'user', '人物素材', charCount);
+            html += iconCard('#00b5d8', 'shapes', '元素库', elementCount);
+            html += iconCard('#d69e2e', 'palette', '色板', paletteCount);
             html += '</div>';
 
             // 授权概览
             html += '<div class="panel"><div class="panel-header"><span class="panel-title">授权概览</span><button class="btn-secondary btn-sm" onclick="app.switchModule(\'licenses\')">管理授权</button></div><div class="panel-body">';
-            if (licenses.length === 0) {
-                html += '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg><div class="empty-state-text">暂无授权记录</div></div>';
-            } else {
-                var byType = { buyout:0, exclusive:0, 'non-exclusive':0 };
-                licenses.forEach(function(l){ byType[l.licenseType] = (byType[l.licenseType]||0)+1; });
-                var paidCount = licenses.filter(function(l){ return l.paymentStatus === 'paid'; }).length;
-                var partialCount = licenses.filter(function(l){ return l.paymentStatus === 'partial'; }).length;
-                var unpaidCount2 = licenses.filter(function(l){ return !l.paymentStatus || l.paymentStatus === 'unpaid'; }).length;
-                var permCount = licenses.filter(function(l){ return l.durationType === 'permanent'; }).length;
-                html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">';
-                html += '<div class="stat-card"><div class="stat-card-label">买断</div><div class="stat-card-value danger">'+byType.buyout+'</div></div>';
-                html += '<div class="stat-card"><div class="stat-card-label">独家授权</div><div class="stat-card-value warning">'+byType.exclusive+'</div></div>';
-                html += '<div class="stat-card"><div class="stat-card-label">非独家授权</div><div class="stat-card-value success">'+byType['non-exclusive']+'</div></div>';
-                html += '</div>';
-                html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">';
-                html += '<div class="stat-card"><div class="stat-card-label">已付清</div><div class="stat-card-value success">'+paidCount+'</div><div class="stat-card-sub">笔</div></div>';
-                html += '<div class="stat-card"><div class="stat-card-label">部分付款</div><div class="stat-card-value warning">'+(partialCount+unpaidCount2)+'</div><div class="stat-card-sub">待收款</div></div>';
-                html += '<div class="stat-card"><div class="stat-card-label">永久授权</div><div class="stat-card-value accent">'+permCount+'</div><div class="stat-card-sub">笔</div></div>';
-                html += '</div>';
-            }
+            var byType = { buyout:0, exclusive:0, 'non-exclusive':0 };
+            licenses.forEach(function(l){ byType[l.licenseType] = (byType[l.licenseType]||0)+1; });
+            var paidCount = licenses.filter(function(l){ return l.paymentStatus === 'paid'; }).length;
+            var partialCount = licenses.filter(function(l){ return l.paymentStatus === 'partial'; }).length;
+            var unpaidCount2 = licenses.filter(function(l){ return !l.paymentStatus || l.paymentStatus === 'unpaid'; }).length;
+            var permCount = licenses.filter(function(l){ return l.durationType === 'permanent'; }).length;
+            html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">';
+            html += '<div class="stat-card"><div class="stat-card-label">买断</div><div class="stat-card-value danger">'+byType.buyout+'</div><div class="stat-card-sub">笔</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">独家授权</div><div class="stat-card-value warning">'+byType.exclusive+'</div><div class="stat-card-sub">笔</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">非独家授权</div><div class="stat-card-value success">'+byType['non-exclusive']+'</div><div class="stat-card-sub">笔</div></div>';
+            html += '</div>';
+            html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">';
+            html += '<div class="stat-card"><div class="stat-card-label">已付清</div><div class="stat-card-value success">'+paidCount+'</div><div class="stat-card-sub">笔</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">部分付款</div><div class="stat-card-value warning">'+(partialCount+unpaidCount2)+'</div><div class="stat-card-sub">待收款</div></div>';
+            html += '<div class="stat-card"><div class="stat-card-label">永久授权</div><div class="stat-card-value accent">'+permCount+'</div><div class="stat-card-sub">笔</div></div>';
+            html += '</div>';
             html += '</div></div>';
             html += '</div>'; // end dash-left
-
-            // 右栏：最近素材
-            html += '<div class="dash-right">';
-            html += '<div class="panel"><div class="panel-header"><span class="panel-title">最近素材</span><button class="btn-secondary btn-sm" onclick="app.switchModule(\'assets\')">查看全部</button></div><div class="panel-body">';
-            if (patterns.length === 0) {
-                html += '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="empty-state-text">暂无素材，去生成提示词创建第一个吧</div></div>';
-            } else {
-                var recent = patterns.slice(-6).reverse();
-                html += '<div class="dash-recent-list">';
-                recent.forEach(function(p) {
-                    html += app.renderPatternCard(p);
-                });
-                html += '</div>';
-            }
-            html += '</div></div>';
-            html += '</div>'; // end dash-right
 
             html += '</div>'; // end dash-layout
 
@@ -1136,7 +1400,15 @@
         renderAssets: function() {
             var self = this;
             var patterns = getPatterns();
-            var filtered = patterns.filter(function(p) {
+            var isChar = this.currentModule === 'charAssets';
+
+            // 按类型筛选
+            var typeFiltered = patterns.filter(function(p) {
+                if (isChar) return p.type === 'character';
+                return p.type !== 'character';
+            });
+
+            var filtered = typeFiltered.filter(function(p) {
                 if (self.searchQuery && p.name.indexOf(self.searchQuery) < 0 && (!p.elements || !JSON.stringify(p.elements).indexOf(self.searchQuery))) return false;
                 if (self.filterStatus && computeStatus(p.id) !== self.filterStatus) return false;
                 if (self.filterPlatform && p.platform !== self.filterPlatform) return false;
@@ -1145,22 +1417,48 @@
 
             var html = '<div class="filter-bar">';
             html += '<div class="search-box"><span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" placeholder="搜索素材名称或元素..." value="'+escapeHtml(self.searchQuery)+'" oninput="app.onSearch(this.value)"></div>';
-            html += '<select class="filter-select" onchange="app.onFilterStatus(this.value)"><option value="">全部状态</option>';
-            Object.keys(PATTERN_STATUS).forEach(function(k){ html += '<option value="'+k+'" '+(self.filterStatus===k?'selected':'')+'>'+PATTERN_STATUS[k].name+'</option>'; });
-            html += '</select>';
+            if (!isChar) {
+                html += '<select class="filter-select" onchange="app.onFilterStatus(this.value)"><option value="">全部状态</option>';
+                Object.keys(PATTERN_STATUS).forEach(function(k){ html += '<option value="'+k+'" '+(self.filterStatus===k?'selected':'')+'>'+PATTERN_STATUS[k].name+'</option>'; });
+                html += '</select>';
+            }
             html += '<select class="filter-select" onchange="app.onFilterPlatform(this.value)"><option value="">全部平台</option>';
             Object.keys(PLATFORMS).forEach(function(k){ html += '<option value="'+k+'" '+(self.filterPlatform===k?'selected':'')+'>'+PLATFORMS[k].name+'</option>'; });
             html += '</select>';
             html += '<span style="font-size:12px;color:var(--text-muted);margin-left:auto;">共 '+filtered.length+' 个素材</span>';
-            html += '<button class="btn-primary btn-sm" onclick="app.openPatternModal()">+ 新增素材</button>';
+            html += '<button class="btn-primary btn-sm" onclick="app.openPatternModal(\''+(isChar?'character':'pattern')+'\')">+ 新增素材</button>';
             html += '</div>';
 
             if (filtered.length === 0) {
-                html += '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="empty-state-text">'+(patterns.length===0?'暂无素材，点击右侧新增':'未找到匹配的素材')+'</div></div>';
+                var emptyMsg = typeFiltered.length === 0 ? (isChar ? '暂无人物素材，去人物生成器生成一个吧' : '暂无四方图素材，去四方图生成器生成一个吧') : '未找到匹配的素材';
+                html += '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><div class="empty-state-text">'+emptyMsg+'</div></div>';
             } else {
-                html += '<div class="pattern-grid">';
-                filtered.forEach(function(p) { html += self.renderPatternCard(p); });
+                /* 骨架屏占位：先渲染骨架屏，再分批渲染真实卡片，避免一次性创建大量带 base64 图片的 DOM 阻塞主线程 */
+                html += '<div class="pattern-skeleton-grid" id="patternSkeleton">';
+                for (var sk = 0; sk < 8; sk++) {
+                    html += '<div class="pattern-skeleton-card"><div class="pattern-skeleton-cover"></div><div class="pattern-skeleton-bar"></div><div class="pattern-skeleton-bar" style="width:55%;"></div></div>';
+                }
                 html += '</div>';
+                html += '<div class="pattern-grid" id="patternGrid" style="display:none;"></div>';
+
+                var renderIdx = 0;
+                var BATCH = 6;
+                setTimeout(function renderNextBatch() {
+                    var end = Math.min(renderIdx + BATCH, filtered.length);
+                    var cardsHtml = '';
+                    for (; renderIdx < end; renderIdx++) {
+                        cardsHtml += self.renderPatternCard(filtered[renderIdx]);
+                    }
+                    var grid = document.getElementById('patternGrid');
+                    if (grid) grid.insertAdjacentHTML('beforeend', cardsHtml);
+                    if (renderIdx < filtered.length) {
+                        setTimeout(renderNextBatch, 30);
+                    } else {
+                        var skel = document.getElementById('patternSkeleton');
+                        if (skel) skel.style.display = 'none';
+                        if (grid) grid.style.display = 'grid';
+                    }
+                }, 30);
             }
             return html;
         },
@@ -1168,17 +1466,26 @@
         renderPatternCard: function(p) {
             var status = computeStatus(p.id);
             var st = PATTERN_STATUS[status];
+            var coverImg = getCoverImage(p);
+            var imgCount = getPatternImages(p).length;
             var html = '<div class="pattern-card" onclick="app.openPatternDetail(\''+p.id+'\')">';
             html += '<div class="pattern-thumb">';
-            if (p.thumbnail) {
-                html += '<img src="'+p.thumbnail+'" alt="'+escapeHtml(p.name)+'">';
+            if (coverImg) {
+                html += '<img src="'+coverImg+'" alt="'+escapeHtml(p.name)+'">';
             } else {
                 html += '<div class="pattern-thumb-placeholder"><span class="ph-logo">W.</span><span class="ph-text">暂无图片</span></div>';
             }
-            html += '<div class="pattern-thumb-badges"><span class="badge '+st.badge+'">'+st.name+'</span></div>';
+            html += '<div class="pattern-thumb-badges">';
+            if (p.type !== 'character') {
+                html += '<span class="badge '+st.badge+'">'+st.name+'</span>';
+            }
+            if (imgCount > 1) {
+                html += '<span class="badge badge-active" style="margin-left:4px;">'+imgCount+'张</span>';
+            }
+            html += '</div>';
             html += '<div class="pattern-card-actions">';
             html += '<button class="pattern-card-action-btn" title="复制提示词" onclick="event.stopPropagation();app.copyPatternPrompt(\''+p.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
-            html += '<button class="pattern-card-action-btn" title="编辑" onclick="event.stopPropagation();app.openPatternDetail(\''+p.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+            html += '<button class="pattern-card-action-btn" title="编辑" onclick="event.stopPropagation();app.openPatternEdit(\''+p.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
             html += '<button class="pattern-card-action-btn danger" title="删除" onclick="event.stopPropagation();app.deletePattern(\''+p.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
             html += '</div>';
             html += '</div>';
@@ -1188,7 +1495,7 @@
             if (p.paletteName) html += '<span>'+escapeHtml(p.paletteName)+'</span>';
             if (p.platform) html += '<span>· '+(PLATFORMS[p.platform]?PLATFORMS[p.platform].name:p.platform)+'</span>';
             html += '</div>';
-            var allElements = (p.elements&&p.elements.subjects?p.elements.subjects:[]).concat(p.elements&&p.elements.outfits?p.elements.outfits:[]).concat(p.elements&&p.elements.decorations?p.elements.decorations:[]);
+            var allElements = (p.elements&&p.elements.subjects?p.elements.subjects:[]).concat(p.elements&&p.elements.outfits?p.elements.outfits:[]).concat(p.elements&&p.elements.decorations?p.elements.decorations:[]).concat(p.elements&&p.elements.props?p.elements.props:[]);
             if (allElements.length) html += '<div class="pattern-elements">'+escapeHtml(allElements.slice(0,4).join('、'))+(allElements.length>4?'...':'')+'</div>';
             html += '</div></div>';
             return html;
@@ -1253,18 +1560,23 @@
                     html += '</div></div>';
                 });
             } else if (s.elementTab === 'outfits') {
-                if (s.subjects.length === 0) {
+                if (s.humanize === false) {
+                    html += '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;line-height:1.6;">当前为「原生体态」模式，服装配饰不可选。开启拟人化开关后可搭配服装。</div>';
+                } else if (s.subjects.length === 0) {
                     html += '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">请先选择主体元素，再为其搭配服装配饰</div>';
                 } else {
                     html += '<div style="font-size:12px;color:var(--ink-tertiary);padding:6px 0 10px;line-height:1.6;">为动物角色搭配服装配饰，使其拟人化。建议从「服装」「头饰」「手持配饰」各选1~2项，搭配1个表情动作；或直接选择「职业套装」一键搭配完整造型。<br>头饰规则：可同时选择多种头饰，生成时将自动分配给不同角色（每只仅戴一种，不叠加）。<br>互斥规则：职业套装与普通配饰（服装/头饰/手持）互斥，选其一时自动清空另一类；表情动作可自由搭配。</div>';
                 }
+                var outfitDisabled = s.humanize === false;
                 elements.outfits.forEach(function(cat) {
-                    var isProfSet = cat.category === '职业套装';
-                    html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                    html += '<div class="element-category" style="'+(outfitDisabled?'opacity:0.4;':'')+'"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
                     cat.items.forEach(function(item) {
                         var sel = s.outfits.indexOf(item) >= 0;
-                        var extraClass = isProfSet ? ' chip-profset' : '';
-                        html += '<span class="element-chip'+(sel?' selected':'')+extraClass+'" onclick="app.toggleGenElement(\'outfits\',\''+escapeHtml(item).replace(/'/g,'\\\'')+'\')">'+escapeHtml(item)+'</span>';
+                        if (outfitDisabled) {
+                            html += '<span class="element-chip'+(sel?' selected':'')+'" style="pointer-events:none;opacity:0.5;">'+escapeHtml(item)+'</span>';
+                        } else {
+                            html += '<span class="element-chip'+(sel?' selected':'')+'" onclick="app.toggleGenElement(\'outfits\',\''+escapeHtml(item).replace(/'/g,'\\\'')+'\')">'+escapeHtml(item)+'</span>';
+                        }
                     });
                     html += '</div></div>';
                 });
@@ -1283,14 +1595,35 @@
             html += '<div class="gen-section" data-section="config">';
             html += '<div class="gen-section-header" style="cursor:default;">参数配置</div>';
             html += '<div class="gen-section-body">';
+            // 拟人化开关
+            html += '<div class="config-row" style="margin-bottom:10px;">';
+            html += '<div style="flex:1;display:flex;align-items:center;gap:10px;">';
+            html += '<div class="config-field-label" style="margin-bottom:0;white-space:nowrap;">拟人化</div>';
+            html += '<label class="toggle-switch">';
+            html += '<input type="checkbox" '+(s.humanize!==false?'checked':'')+' onchange="app.toggleGenHumanize(this.checked)">';
+            html += '<span class="toggle-slider"></span>';
+            html += '</label>';
+            html += '<span style="font-size:12px;color:var(--text-muted);">'+(s.humanize!==false?'拟人站立·可穿服装':'原生体态·不可穿服装')+'</span>';
+            html += '</div>';
+            html += '</div>';
             html += '<div class="config-row">';
             html += '<div><div class="config-field-label">风格</div><select class="form-select" onchange="app.genState.styleIndex=parseInt(this.value);app.renderGenerator_();">';
             STYLES.forEach(function(st,i) { html += '<option value="'+i+'" '+(s.styleIndex===i?'selected':'')+'>'+escapeHtml(st)+'</option>'; });
             html += '</select></div>';
-            html += '<div><div class="config-field-label">布局描述</div><select class="form-select" onchange="app.genState.layoutIndex=parseInt(this.value);app.renderGenerator_();">';
+            html += '<div><div class="config-field-label">构图布局</div><select class="form-select" onchange="app.genState.layoutIndex=parseInt(this.value);app.renderGenerator_();">';
             LAYOUTS.forEach(function(l,i) { html += '<option value="'+i+'" '+(s.layoutIndex===i?'selected':'')+'>'+escapeHtml(l)+'</option>'; });
             html += '</select></div>';
             html += '</div>';
+            // 英文单词文字样式（仅当选中了英文单词时显示）
+            var wordList = ['happy','luck','nice','sweet','love','joy','dream','smile','star','sun','cute','hello','honey','fun','bloom'];
+            var hasWord = s.decorations.some(function(d) { return wordList.indexOf(d) >= 0; });
+            if (hasWord) {
+                html += '<div class="config-row" style="margin-top:10px;">';
+                html += '<div style="flex:1;"><div class="config-field-label">英文文字样式</div><select class="form-select" onchange="app.genState.wordStyleIndex=parseInt(this.value);app.renderGenerator_();">';
+                WORD_STYLES.forEach(function(ws,i) { html += '<option value="'+i+'" '+(s.wordStyleIndex===i?'selected':'')+'>'+escapeHtml(ws.name)+'</option>'; });
+                html += '</select></div>';
+                html += '</div>';
+            }
             html += '</div></div>';
             html += '</div>';
 
@@ -1325,10 +1658,23 @@
                 if (dup) {
                     html += '<div class="warning-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>存在相同组合的素材：'+escapeHtml(dup.name)+'，建议调整元素组合</div>';
                 }
-                html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出<button class="btn-primary" onclick="app.generatePrompt()" style="margin-left:auto;">生成提示词</button></div><div class="gen-section-body">';
-                html += '<div class="prompt-output" id="promptOutput">'+escapeHtml(prompt)+'</div>';
+                html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出</div><div class="gen-section-body">';
+                html += '<div class="prompt-display-section">';
+                html += '<div class="prompt-display-header">';
+                html += '<span class="prompt-display-title">AI提示词</span>';
+                html += '<div class="prompt-display-actions">';
+                html += '<div class="tool-group">';
+                html += '<button class="btn-tool icon-only" id="btnTranslateGen" title="中英互译" onclick="app.toggleTranslateGen()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg></button>';
+                html += '<button class="btn-tool icon-only" title="复制" onclick="app.copyPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+                html += '<button class="btn-tool icon-only" id="btnEditGen" title="编辑" onclick="app.toggleEditGen()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+                html += '<button class="btn-tool icon-only is-danger" title="清除" onclick="app.clearGenPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="prompt-display-text" id="promptOutput">'+escapeHtml(prompt)+'</div>';
+                html += '<textarea class="form-textarea" id="promptOutputEdit" style="display:none;min-height:120px;font-size:15px;line-height:1.7;border-color:var(--border-light);" placeholder="编辑提示词...">'+escapeHtml(prompt)+'</textarea>';
+                html += '</div>';
                 html += '<div class="prompt-actions">';
-                html += '<button class="btn-secondary" onclick="app.copyPrompt()">复制提示词</button>';
                 html += '<button class="btn-primary" onclick="app.savePromptToLibrary()">入库素材</button>';
                 html += '<span style="flex:1"></span>';
                 Object.keys(PLATFORMS).forEach(function(k) {
@@ -1337,7 +1683,7 @@
                 });
                 html += '</div></div></div>';
             } else {
-                html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出<button class="btn-primary" onclick="app.generatePrompt()" style="margin-left:auto;">生成提示词</button></div><div class="gen-section-body">';
+                html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出</div><div class="gen-section-body">';
                 html += '<div class="prompt-output-empty">选择元素后自动生成提示词</div>';
                 html += '</div></div>';
             }
@@ -1351,7 +1697,373 @@
             if (el) el.classList.toggle('collapsed');
         },
 
-        renderGenerator_: function() { this.saveGenState(); document.getElementById('contentArea').innerHTML = this.renderGenerator(); },
+        renderGenerator_: function() { this.saveGenState(); showingTranslatedGen = false; document.getElementById('contentArea').innerHTML = this.renderGenerator(); },
+
+        // ===== 人物提示词（角色IP设计）=====
+        renderCharacter: function() {
+            var self = this;
+            var elements = getElements();
+            var palettes = getPalettes();
+            var s = this.charState;
+
+            var html = '<div class="gen-toolbar">';
+            html += '<span class="gen-toolbar-info">选择1个主体角色，为其搭配服装配饰和手持道具，所有元素合并到角色身上生成人物IP设计提示词</span>';
+            if (s.subjects.length > 0 || s.outfits.length > 0 || s.props.length > 0) {
+                html += '<button class="btn-clear-select" onclick="app.clearCharSelection()">';
+                html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+                html += '<span>清空</span>';
+                html += '</button>';
+            }
+            html += '</div>';
+
+            html += '<div class="gen-layout">';
+            // ===== 列1：元素选择 + 参数配置 =====
+            html += '<div class="gen-col-left">';
+            html += '<div class="gen-section" data-section="elements" style="margin-bottom:16px;">';
+            html += '<div class="gen-tabs">';
+            html += '<div class="gen-tab'+(s.elementTab==='subjects'?' active':'')+'" onclick="app.charState.elementTab=\'subjects\';app.renderCharacter_();">主体角色<span class="gen-tab-count">'+s.subjects.length+'</span></div>';
+            html += '<div class="gen-tab'+(s.elementTab==='outfits'?' active':'')+'" onclick="app.charState.elementTab=\'outfits\';app.renderCharacter_();">服装配饰<span class="gen-tab-count">'+s.outfits.length+'</span></div>';
+            html += '<div class="gen-tab'+(s.elementTab==='props'?' active':'')+'" onclick="app.charState.elementTab=\'props\';app.renderCharacter_();">手持道具<span class="gen-tab-count">'+s.props.length+'</span></div>';
+            var resetType = s.elementTab;
+            var resetCount = resetType === 'subjects' ? s.subjects.length : (resetType === 'outfits' ? s.outfits.length : s.props.length);
+            html += '<button class="gen-tab-reset'+(resetCount===0?' hidden':'')+'" onclick="app.clearCharElement(\''+resetType+'\')" title="重置">';
+            html += '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
+            html += '</button>';
+            html += '</div>';
+            html += '<div class="gen-section-body">';
+            if (s.elementTab === 'subjects') {
+                html += '<div style="font-size:12px;color:var(--ink-tertiary);padding:6px 0 10px;line-height:1.6;">选择1个主体角色，所有服装配饰和道具将合并到该角色身上。仅选1个效果最佳。</div>';
+                elements.subjects.forEach(function(cat) {
+                    html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                    cat.items.forEach(function(item) {
+                        var sel = s.subjects.indexOf(item) >= 0;
+                        html += '<span class="element-chip'+(sel?' selected':'')+'" onclick="app.toggleCharElement(\'subjects\',\''+escapeHtml(item).replace(/'/g,'\\\'')+'\')">'+escapeHtml(item)+'</span>';
+                    });
+                    html += '</div></div>';
+                });
+            } else if (s.elementTab === 'outfits') {
+                if (s.humanize === false) {
+                    html += '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;line-height:1.6;">当前为「原生体态」模式，服装配饰不可选。开启拟人化开关后可搭配服装。</div>';
+                } else if (s.subjects.length === 0) {
+                    html += '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">请先选择主体角色，再为其搭配服装配饰</div>';
+                } else {
+                    html += '<div style="font-size:12px;color:var(--ink-tertiary);padding:6px 0 10px;line-height:1.6;">为角色搭配服装配饰，使其拟人化。所有选中元素将合并到角色身上。</div>';
+                }
+                var outfitDisabled = s.humanize === false;
+                elements.outfits.forEach(function(cat) {
+                    html += '<div class="element-category'+(outfitDisabled?' opacity:0.4;':'')+'"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                    cat.items.forEach(function(item) {
+                        var sel = s.outfits.indexOf(item) >= 0;
+                        if (outfitDisabled) {
+                            html += '<span class="element-chip'+(sel?' selected':'')+'" style="pointer-events:none;opacity:0.5;">'+escapeHtml(item)+'</span>';
+                        } else {
+                            html += '<span class="element-chip'+(sel?' selected':'')+'" onclick="app.toggleCharElement(\'outfits\',\''+escapeHtml(item).replace(/'/g,'\\\'')+'\')">'+escapeHtml(item)+'</span>';
+                        }
+                    });
+                    html += '</div></div>';
+                });
+            } else {
+                // 手持道具：从装饰元素中选取适合手持/搭配的
+                if (s.subjects.length === 0) {
+                    html += '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">请先选择主体角色</div>';
+                } else {
+                    html += '<div style="font-size:12px;color:var(--ink-tertiary);padding:6px 0 10px;line-height:1.6;">选择角色手持或周围的道具装饰，所有道具将合并到角色身上或周围。</div>';
+                }
+                elements.decorations.forEach(function(cat) {
+                    html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                    cat.items.forEach(function(item) {
+                        var sel = s.props.indexOf(item) >= 0;
+                        html += '<span class="element-chip'+(sel?' selected':'')+'" onclick="app.toggleCharElement(\'props\',\''+escapeHtml(item).replace(/'/g,'\\\'')+'\')">'+escapeHtml(item)+'</span>';
+                    });
+                    html += '</div></div>';
+                });
+            }
+            html += '</div></div>';
+            // 参数配置（风格 only，无布局）
+            html += '<div class="gen-section" data-section="config">';
+            html += '<div class="gen-section-header" style="cursor:default;">参数配置</div>';
+            html += '<div class="gen-section-body">';
+            // 拟人化开关
+            html += '<div class="config-row" style="margin-bottom:10px;">';
+            html += '<div style="flex:1;display:flex;align-items:center;gap:10px;">';
+            html += '<div class="config-field-label" style="margin-bottom:0;white-space:nowrap;">拟人化</div>';
+            html += '<label class="toggle-switch">';
+            html += '<input type="checkbox" '+(s.humanize!==false?'checked':'')+' onchange="app.toggleHumanize(this.checked)">';
+            html += '<span class="toggle-slider"></span>';
+            html += '</label>';
+            html += '<span style="font-size:12px;color:var(--text-muted);">'+(s.humanize!==false?'拟人站立·可穿服装':'原生体态·不可穿服装')+'</span>';
+            html += '</div>';
+            html += '</div>';
+            // 英文单词文字样式（与风格同一行）
+            var wordList = ['happy','luck','nice','sweet','love','joy','dream','smile','star','sun','cute','hello','honey','fun','bloom'];
+            var hasWord = s.props.some(function(d) { return wordList.indexOf(d) >= 0; });
+            html += '<div class="config-row">';
+            html += '<div'+(hasWord?'':' style="grid-column:1/-1;"')+'><div class="config-field-label">风格</div><select class="form-select" onchange="app.charState.styleIndex=parseInt(this.value);app.renderCharacter_();">';
+            STYLES.forEach(function(st,i) { html += '<option value="'+i+'" '+(s.styleIndex===i?'selected':'')+'>'+escapeHtml(st)+'</option>'; });
+            html += '</select></div>';
+            if (hasWord) {
+                html += '<div><div class="config-field-label">英文文字样式</div><select class="form-select" onchange="app.charState.wordStyleIndex=parseInt(this.value);app.renderCharacter_();">';
+                WORD_STYLES.forEach(function(ws,i) { html += '<option value="'+i+'" '+(s.wordStyleIndex===i?'selected':'')+'>'+escapeHtml(ws.name)+'</option>'; });
+                html += '</select></div>';
+            }
+            html += '</div>';
+            html += '</div></div>';
+            html += '</div>';
+
+            // ===== 列2：色板 + 提示词输出 =====
+            html += '<div class="gen-col-output">';
+            html += '<div class="gen-section" data-section="palette" style="margin-bottom:16px;flex-shrink:0;">';
+            html += '<div class="gen-section-header" style="cursor:default;">色板选择</div>';
+            html += '<div class="gen-section-body">';
+            html += '<div class="palette-grid">';
+            palettes.forEach(function(pal) {
+                var sel = s.paletteId === pal.id;
+                html += '<div class="palette-card'+(sel?' selected':'')+'" onclick="app.charState.paletteId=\''+pal.id+'\';app.renderCharacter_();">';
+                html += '<div class="palette-card-top" style="background:'+pal.bgColor+';">';
+                html += '<div class="palette-card-swatches">';
+                pal.colors.forEach(function(c){ html += '<span class="palette-card-swatch" style="background:'+c+';"></span>'; });
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="palette-card-body">';
+                html += '<div class="palette-name">'+escapeHtml(pal.name)+'</div>';
+                html += '<div class="palette-desc">'+escapeHtml(paletteAutoDesc(pal.colors))+'</div>';
+                html += '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '</div></div>';
+            var prompt = this.buildCharacterPrompt();
+            if (prompt) {
+                html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出</div><div class="gen-section-body">';
+                html += '<div class="prompt-display-section">';
+                html += '<div class="prompt-display-header">';
+                html += '<span class="prompt-display-title">AI提示词</span>';
+                html += '<div class="prompt-display-actions">';
+                html += '<div class="tool-group">';
+                html += '<button class="btn-tool icon-only" id="btnTranslateChar" title="中英互译" onclick="app.toggleTranslateChar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg></button>';
+                html += '<button class="btn-tool icon-only" title="复制" onclick="app.copyPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+                html += '<button class="btn-tool icon-only" id="btnEditChar" title="编辑" onclick="app.toggleEditChar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+                html += '<button class="btn-tool icon-only is-danger" title="清除" onclick="app.clearCharPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="prompt-display-text" id="promptOutput">'+escapeHtml(prompt)+'</div>';
+                html += '<textarea class="form-textarea" id="promptOutputEdit" style="display:none;min-height:120px;font-size:15px;line-height:1.7;border-color:var(--border-light);" placeholder="编辑提示词...">'+escapeHtml(prompt)+'</textarea>';
+                html += '</div>';
+                html += '<div class="prompt-actions">';
+                html += '<button class="btn-primary" onclick="app.saveCharToLibrary()">入库素材</button>';
+                html += '<span style="flex:1"></span>';
+                Object.keys(PLATFORMS).forEach(function(k) {
+                    var pf = PLATFORMS[k];
+                    html += '<a class="platform-btn" href="'+pf.url+'" target="_blank" style="border-color:'+pf.color+';color:'+pf.color+'">'+pf.name+'</a>';
+                });
+                html += '</div></div></div>';
+            } else {
+                html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出</div><div class="gen-section-body">';
+                html += '<div class="prompt-output-empty">选择主体角色后自动生成提示词</div>';
+                html += '</div></div>';
+            }
+            html += '</div>';
+            html += '</div>';
+            return html;
+        },
+
+        renderCharacter_: function() { this.saveCharState(); showingTranslatedGen = false; document.getElementById('contentArea').innerHTML = this.renderCharacter(); },
+
+        toggleCharElement: function(type, item) {
+            var arr = this.charState[type];
+            var idx = arr.indexOf(item);
+            if (idx >= 0) {
+                arr.splice(idx, 1);
+            } else {
+                if (type === 'subjects' && this.charState.subjects.length >= 1) {
+                    this.charState.subjects = [item];
+                    this.renderCharacter_();
+                    return;
+                }
+                if (type === 'outfits') {
+                    var isProfSet = item.indexOf('（') > 0 && item.indexOf('）') > 0;
+                    if (isProfSet) {
+                        // 选职业套装：清空已选的普通配饰，保留表情动作
+                        var kept = arr.filter(function(o) {
+                            return o.indexOf('（') > 0 && o.indexOf('）') > 0 || ['闭眼微笑','睁大眼睛好奇','吐舌调皮','歪头卖萌','双手比心','举爪打招呼','捂嘴偷笑','托腮发呆','叉腰自信','蹲坐抱膝','踮脚张望','趴着撑下巴','张开双臂','吹口哨','跳舞旋转','摔倒坐地','挥手打招呼','蹲坐抱蛋'].indexOf(o) >= 0;
+                        });
+                        this.charState.outfits = kept;
+                        arr = this.charState.outfits;
+                    } else {
+                        // 选普通配饰：清空已选的职业套装，保留表情动作和其他普通配饰
+                        arr = arr.filter(function(o) {
+                            return !(o.indexOf('（') > 0 && o.indexOf('）') > 0);
+                        });
+                        this.charState.outfits = arr;
+                    }
+                }
+                arr.push(item);
+            }
+            this.renderCharacter_();
+        },
+
+        toggleHumanize: function(on) {
+            this.charState.humanize = on;
+            if (!on) {
+                // 关闭拟人化时清空已选服装配饰
+                this.charState.outfits = [];
+            }
+            this.renderCharacter_();
+        },
+
+        clearCharElement: function(type) {
+            this.charState[type] = [];
+            this.renderCharacter_();
+        },
+
+        clearCharSelection: function() {
+            this.charState.subjects = [];
+            this.charState.outfits = [];
+            this.charState.props = [];
+            this.renderCharacter_();
+        },
+
+        generateCharPrompt: function() {
+            var prompt = this.buildCharacterPrompt();
+            if (!prompt) { showToast('请至少选择一个主体角色'); return; }
+            this.renderCharacter_();
+            showToast('提示词已生成');
+        },
+
+        buildCharacterPrompt: function() {
+            var s = this.charState;
+            if (s.subjects.length === 0) return '';
+            var pal = getPalettes().find(function(p){ return p.id === s.paletteId; }) || DEFAULT_PALETTES[0];
+            var style = STYLES[s.styleIndex];
+
+            // 色名去重
+            var _nameCount = {};
+            var colorList = pal.colors.map(function(c){
+                var name = hexToColorName(c);
+                if (_nameCount[name] !== undefined) {
+                    _nameCount[name]++;
+                    name = name + _nameCount[name];
+                } else {
+                    _nameCount[name] = 0;
+                }
+                return name + ' ' + c;
+            }).join('、');
+
+            var subjectStr = s.subjects[0];
+            var humanize = s.humanize !== false;
+
+            // 处理道具装饰
+            var propStr = '';
+            if (s.props.length > 0) {
+                propStr = '，周围点缀' + s.props.join('、');
+            }
+
+            var p = '';
+
+            if (humanize) {
+                // ===== 拟人化模式 =====
+                var exprParts = [];
+                var groups = { '穿': [], '戴': [], '系': [], '架': [], '拿': [], '背': [], '挎': [], '推': [], '骑': [], '捧': [], '抱': [] };
+                s.outfits.forEach(function(item) {
+                    var firstChar = item.charAt(0);
+                    if (groups[firstChar]) {
+                        groups[firstChar].push(item.substring(1));
+                    } else {
+                        exprParts.push(item);
+                    }
+                });
+
+                var outfitParts = [];
+                if (groups['穿'].length > 0) outfitParts.push('身穿' + groups['穿'].join('、'));
+                if (groups['戴'].length > 0) outfitParts.push('头戴' + groups['戴'].join('、'));
+                if (groups['系'].length > 0) outfitParts.push('系着' + groups['系'].join('、'));
+                if (groups['架'].length > 0) outfitParts.push('架着' + groups['架'].join('、'));
+                if (groups['拿'].length > 0) outfitParts.push('手持' + groups['拿'].join('、'));
+                if (groups['背'].length > 0) outfitParts.push('背着' + groups['背'].join('、'));
+                if (groups['挎'].length > 0) outfitParts.push('挎着' + groups['挎'].join('、'));
+                if (groups['推'].length > 0) outfitParts.push('推着' + groups['推'].join('、'));
+                if (groups['骑'].length > 0) outfitParts.push('骑着' + groups['骑'].join('、'));
+                if (groups['捧'].length > 0) outfitParts.push('捧着' + groups['捧'].join('、'));
+                if (groups['抱'].length > 0) outfitParts.push('抱着' + groups['抱'].join('、'));
+
+                var exprStr = '';
+                if (exprParts.length > 0) exprStr = '，表情' + exprParts.join('、');
+
+                var charDesc = '';
+                if (outfitParts.length > 0) {
+                    charDesc = '（拟人化形象：' + outfitParts.join('，') + exprStr + propStr + '）';
+                } else if (propStr || exprStr) {
+                    charDesc = '（拟人化形象：' + exprStr.substring(1) + propStr + '）';
+                }
+
+                p += '拟人化角色设计（character IP design），'+style+'风格，'+subjectStr + charDesc + '。';
+                p += '角色居中构图，正面站立姿态，全身可见，角色为画面唯一主体。';
+                p += '主体角色为拟人化萌系动物，具有人类般的站立姿态和穿着打扮，服装配饰细节简洁可爱，与角色整体风格统一。';
+                p += '所有配饰和道具自然地融入角色造型，不堆砌不杂乱，视觉焦点集中于角色本身。';
+            } else {
+                // ===== 原生体态模式 =====
+                p += '卡通IP设计（character IP design），'+style+'风格，萌系'+subjectStr+'，原生动物体态，自然趴卧正面视角，完整展现角色全身特征。';
+                p += '角色居中构图，正面平视视角，自然趴卧体态，角色为画面唯一主体。';
+                p += '主体角色保留原生动物体态特征，不直立不行走，保持自然四肢着地或趴卧姿态。';
+                p += '禁止拟人直立，不要人形身体，不要人类四肢结构，不添加任何服饰服装，保持动物原始体态。';
+                if (propStr) {
+                    p += '角色周围可点缀装饰元素' + propStr.substring(1) + '，装饰元素不穿戴在角色身上。';
+                }
+            }
+
+            // 文字元素
+            var _wordList = ['happy','luck','nice','sweet','love','joy','dream','smile','star','sun','cute','hello','honey','fun','bloom'];
+            var selectedWords = s.props.filter(function(d) { return _wordList.indexOf(d) >= 0; });
+            if (selectedWords.length > 0) {
+                var ws = WORD_STYLES[s.wordStyleIndex] || WORD_STYLES[0];
+                p += '文字元素：画面中的英文单词（' + selectedWords.join('、') + '）作为独立文字装饰元素出现，采用' + ws.name + '：' + ws.desc + '。文字元素专属约束：去除所有外轮廓描边、无白色包边、无贴纸白光晕、无剪贴贴纸效果，字母无外圈边框；纯粹色块构成字体，字体边缘柔和融合底色，仅依靠形体膨胀塑造体积，不依靠线条描边区分边界。重要约束：字体全程不添加任何外轮廓线条，不存在任何粗细的描边（黑/灰/白描边全部禁止），不要白边、不要轮廓框；依靠色块自身形态与微弱高光表现充气膨胀感，字母边界平滑，无分割线条。单词作为小型装饰点缀，大小约为角色头部的1/4，各单词有不同的轻微旋转角度，颜色使用色板内色彩。';
+            }
+
+            p += '底色奶油白 '+pal.bgColor+'，严格限定图案仅使用'+pal.colors.length+'种色彩：'+colorList+'，柔和深灰 '+pal.lineColor+' 纤细轮廓线。禁止生成色板以外任何颜色。';
+            p += '三层明度秩序：大面积中间明度色彩，高明度亮色作为主体视觉，少量低明度色彩点缀；饱和度控制20~48，禁止高饱和荧光色。暖色为主，少量薄荷蓝平衡色调。';
+            p += '所有元素造型全部圆润无尖角，平滑曲线，五官简化为豆豆眼加弧线小嘴，幼态软萌。';
+            p += '干净iPad矢量平涂，顺滑闭合线条，无纸张纹理、无笔触噪点、无渐变、无阴影、无肌理杂色，纯色平整色块，适合AI矢量描摹、数码印花应用。';
+            p += '画面整洁，不要水印，8K高清，正方形画布。';
+            return p;
+        },
+
+        saveCharToLibrary: function() {
+            var s = this.charState;
+            var edit = document.getElementById('promptOutputEdit');
+            var prompt = (edit && edit.style.display !== 'none') ? edit.value : this.buildCharacterPrompt();
+            if (!prompt) { showToast('请先生成提示词'); return; }
+            var pal = getPalettes().find(function(p){ return p.id === s.paletteId; }) || DEFAULT_PALETTES[0];
+            var name = s.subjects.slice(0,1).concat(s.outfits.slice(0,1)).concat(s.props.slice(0,1)).join('') || '未命名角色';
+            var pattern = {
+                id: genId('CHAR'),
+                name: name,
+                prompt: prompt,
+                elements: { subjects: s.subjects.slice(), outfits: s.outfits.slice(), props: s.props.slice() },
+                paletteId: s.paletteId,
+                paletteName: pal.name,
+                style: STYLES[s.styleIndex],
+                type: 'character',
+                platform: '',
+                generatedDate: formatDate(new Date()),
+                thumbnail: '',
+                notes: '',
+                createdAt: new Date().toISOString()
+            };
+            var patterns = getPatterns();
+            patterns.push(pattern);
+            saveData(STORAGE_KEYS.patterns, patterns);
+            showToast('角色素材已入库：'+name);
+            this.switchModule('charAssets');
+        },
+
+        toggleGenHumanize: function(on) {
+            this.genState.humanize = on;
+            if (!on) {
+                this.genState.outfits = [];
+            }
+            this.renderGenerator_();
+        },
 
         toggleGenElement: function(type, item) {
             var arr = this.genState[type];
@@ -1507,9 +2219,19 @@
             var s = this.genState;
             if (s.subjects.length === 0 && s.decorations.length === 0) return '';
             var pal = getPalettes().find(function(p){ return p.id === s.paletteId; }) || DEFAULT_PALETTES[0];
-            var colorList = pal.colors.map(function(c){ return hexToColorName(c)+' '+c; }).join('、');
+            // 色名去重：同一色名出现多次时追加序号区分（如"浅杏1"、"浅杏2"）
+            var _nameCount = {};
+            var colorList = pal.colors.map(function(c){
+                var name = hexToColorName(c);
+                if (_nameCount[name] !== undefined) {
+                    _nameCount[name]++;
+                    name = name + _nameCount[name];
+                } else {
+                    _nameCount[name] = 0;
+                }
+                return name + ' ' + c;
+            }).join('、');
             var style = STYLES[s.styleIndex];
-            var layout = LAYOUTS[s.layoutIndex];
 
             var hasOutfits = s.outfits.length > 0 && s.subjects.length > 0;
 
@@ -1519,6 +2241,13 @@
             elements.outfits.forEach(function(cat) {
                 if (cat.category === '头饰') {
                     cat.items.forEach(function(item) { headwearSet[item] = true; });
+                }
+            });
+            // 构建表情动作集合（用于单主体重复时分配不同表情）
+            var expressionSet = {};
+            elements.outfits.forEach(function(cat) {
+                if (cat.category === '表情动作') {
+                    cat.items.forEach(function(item) { expressionSet[item] = true; });
                 }
             });
 
@@ -1614,10 +2343,92 @@
             }
 
             var decoStr = s.decorations.length > 0 ? s.decorations.join('、') : '';
-            var elementsStr = decoStr ? subjectStr + '、' + decoStr : subjectStr;
+            // 单一主体重复时在元素描述中标注
+            var repeatNote = '';
+            if (s.subjects.length === 1) {
+                repeatNote = '（该角色以3种不同姿态重复出现3次）';
+            } else if (s.subjects.length === 2) {
+                repeatNote = '（每只角色以不同姿态重复出现2次）';
+            }
+            var elementsStr = decoStr ? subjectStr + repeatNote + '、' + decoStr : subjectStr + repeatNote;
 
             var p = '';
-            p += '无缝四方连续插画图案（seamless tileable repeat pattern），'+style+'风格，'+elementsStr+'，'+layout+'。';
+            // ===== 构图布局描述（根据构图方式 + 实际元素数量动态生成）=====
+            var layoutDesc = '';
+            // 单一主体自动重复以填充构图：1个主体×3姿态，2个主体×2姿态
+            var uniqueSubjectCount = s.subjects.length;
+            var isSingleSubjectRepeat = false;
+            var repeatCount = 1;
+            if (uniqueSubjectCount === 1) {
+                repeatCount = 3;
+                isSingleSubjectRepeat = true;
+            } else if (uniqueSubjectCount === 2) {
+                repeatCount = 2;
+                isSingleSubjectRepeat = true;
+            }
+            var mainCount = uniqueSubjectCount * repeatCount;
+            var auxCount = s.decorations.length;
+            // 无主体时，装饰元素充当主体
+            if (mainCount === 0 && auxCount > 0) { mainCount = auxCount; auxCount = 0; }
+            // 辅助元素拆分为中等 + 小型
+            var medCount = 0, smlCount = 0;
+            if (auxCount > 0) {
+                if (auxCount <= 2) { medCount = auxCount; }
+                else { medCount = Math.ceil(auxCount * 0.6); smlCount = auxCount - medCount; }
+            }
+            // 元素层级大小描述（量化比例，确保主次分明）
+            var sizeRule = '元素大小层级严格分明且整体偏小：主元素最大（仅占画面约1/10面积，小巧精致），中等辅助元素约为主元素的1/4大小，小型点缀元素约为主元素的1/8大小，所有元素都画得偏小，三层大小差异显著，辅助元素极其小巧不抢主元素视觉焦点';
+            // 完整性规则：主体完整，只有小型装饰可半截
+            var integrityRule = '所有主元素（角色）必须完整绘制，不可被画面边缘裁切，主体角色整体位于画面内部；仅小型点缀元素可在四角半截以保证拼接无缝';
+            // 间距呼吸感规则：元素间保持充足空隙，疏密得当
+            var spacingRule = '元素间距严格控制且留白充足：任意两个元素之间至少留出三个小元素宽度的空白间距，元素互不贴靠不挤压，四周元素与主元素之间留有大于主元素本身宽度的空隙，整体错落有致，疏密得当，大面积留白，元素之间有充足呼吸空间，画面松弛通透，久看不累';
+            // 构建辅助元素描述片段
+            var auxStr = '';
+            if (auxCount > 0) {
+                if (smlCount > 0) {
+                    auxStr = medCount + '个中等大小辅助元素填充空隙，' + smlCount + '个小型点缀元素散布增加细节';
+                } else {
+                    auxStr = medCount + '个辅助元素填充空隙';
+                }
+            }
+
+            if (s.layoutIndex === 0) {
+                // 斜角构图：所有主元素沿对角线排列，数量动态
+                layoutDesc = '斜对角线构图布局（diagonal arrangement）：' + mainCount + '个主元素沿同一条对角线对角放置' +
+                    (auxStr ? '，' + auxStr : '') +
+                    '，小型点缀元素随机散布于画面各处空白区域（四角半截锚定以保证拼接无缝），点缀元素分布自然有节奏感，不扎堆不偏聚，不沿边缘整齐排列，所有元素有轻微旋转和方向变化（不是全部朝同一个方向）。' + sizeRule + '。' + integrityRule + '。' + spacingRule + '。强调对角线排列（diagonal placement），不要中心构图（centered composition）';
+            } else if (s.layoutIndex === 1) {
+                // 三角构图：所有主元素呈三角形分布，数量动态
+                layoutDesc = '三角形构图布局（triangle composition）：' + mainCount + '个主元素呈三角形分布排列' +
+                    (mainCount === 3 ? '（上方一个+左下一个+右下一个）' : '，以三角形三个顶点为核心沿边延伸分布') +
+                    (auxStr ? '，' + auxStr : '') +
+                    '，小型点缀元素随机散布于画面各处空白区域（角落半截锚定以保证拼接无缝），点缀元素分布自然有节奏感，不沿边缘整齐排列，元素有轻微大小和旋转变化，视觉重量分布稳定，节奏均衡。' + sizeRule + '。' + integrityRule + '。' + spacingRule + '。不要居中对称，不要杂乱';
+            } else if (s.layoutIndex === 2) {
+                // 中心构图：1主居中 + 其余环绕，数量动态
+                var centerStr = mainCount === 1 ? '1个大型主元素放在正中心位置' : '1个大型主元素放在正中心位置为主视觉焦点，其余' + (mainCount - 1) + '个主元素紧邻中心环绕分布';
+                layoutDesc = '中心构图布局（central focal composition）：' + centerStr +
+                    (auxStr ? '，' + auxStr : '') +
+                    '，多个小型点缀元素向外辐射随机散布于画面各处空白区域（四角半截锚定以保证拼接无缝），点缀元素分布自然不扎堆，不沿边缘整齐排列，放射状分布规律，中心有强烈视觉焦点，元素从中心向外逐渐变小，基本对称但有轻微自然变化。' + sizeRule + '。' + integrityRule + '。' + spacingRule + '。不要对角线排列，不要偏中心';
+            } else {
+                // 散点式满铺：所有元素均匀散布
+                var totalCount = mainCount + auxCount;
+                layoutDesc = '散点式满铺构图（scatter pattern）：' + totalCount + '个元素大小不一、均匀散布在整个画面，没有单一视觉焦点，随机但和谐地分布，大小元素混合搭配，元素有不同的旋转角度、方向和位置，密集但不拥挤，视觉肌理一致，视觉重量分布均匀，没有空白处也没有扎堆的地方，四个角落仅有小型点缀元素半截以保证拼接无缝，有机随机排布，活泼随意的感觉。' + sizeRule + '。' + spacingRule + '。主元素完整不被裁切，仅小型点缀元素可半截。不要对角线排列，不要中心对称，不要三角形布局';
+            }
+
+            p += '无缝四方连续插画图案（seamless tileable repeat pattern），'+style+'风格，'+elementsStr+'，'+layoutDesc+'。';
+
+            // ===== 文字元素（英文单词）专属描述 =====
+            var _wordList = ['happy','luck','nice','sweet','love','joy','dream','smile','star','sun','cute','hello','honey','fun','bloom'];
+            var selectedWords = s.decorations.filter(function(d) { return _wordList.indexOf(d) >= 0; });
+            if (selectedWords.length > 0) {
+                var ws = WORD_STYLES[s.wordStyleIndex] || WORD_STYLES[0];
+                p += '文字元素：画面中的英文单词（' + selectedWords.join('、') + '）作为独立文字装饰元素出现，采用' + ws.name + '：' + ws.desc + '。文字元素专属约束：去除所有外轮廓描边、无白色包边、无贴纸白光晕、无剪贴贴纸效果，字母无外圈边框；纯粹色块构成字体，字体边缘柔和融合底色，仅依靠形体膨胀塑造体积，不依靠线条描边区分边界。重要约束：字体全程不添加任何外轮廓线条，不存在任何粗细的描边（黑/灰/白描边全部禁止），不要白边、不要轮廓框；依靠色块自身形态与微弱高光表现充气膨胀感，字母边界平滑，无分割线条。单词整体作为小型点缀装饰，大小约为主元素的1/8，各单词有不同的轻微旋转角度，颜色使用色板内色彩，与整体画面风格统一。';
+            }
+
+            // ===== 点缀元素样式约束 =====
+            if (s.decorations.indexOf('小圆波点') >= 0) {
+                p += '点缀元素样式：小圆波点统一为实心纯色圆形色块，严禁出现空心圆环、描边圆圈、渐变圆或双层圆等不一致形态，波点大小随机有大有小增加层次感，颜色使用色板内色彩，散布位置均匀自然不扎堆。';
+            }
 
             // ===== 主体元素冲突规避规则 =====
             var subjectCount = s.subjects.length;
@@ -1660,7 +2471,28 @@
                     p += '不同角色的服装配饰应有所区别，避免所有角色穿着完全相同，增加画面丰富度。';
                 }
             } else if (nonAvatarNormal.length === 1 && fusionSubjects.length === 0 && avatarSubjects.length === 0) {
-                p += '主体为单一萌系动物角色，在不同位置以不同姿态重复出现。';
+                // 单一主体重复描述
+                var exprItems = [];
+                s.outfits.forEach(function(item) {
+                    if (expressionSet[item]) exprItems.push(item);
+                });
+                if (isSingleSubjectRepeat && repeatCount > 1) {
+                    p += '画面中同一只'+nonAvatarNormal[0]+'以'+repeatCount+'种不同姿态重复出现'+repeatCount+'次，每次姿态、表情、动作各不相同';
+                    if (exprItems.length >= repeatCount) {
+                        // 将表情分配到各重复实例
+                        var exprAssign = [];
+                        for (var ri = 0; ri < repeatCount; ri++) {
+                            exprAssign.push('第'+(ri+1)+'只'+exprItems[ri % exprItems.length]);
+                        }
+                        p += '（'+exprAssign.join('、')+'）';
+                    }
+                    p += '，服装配饰可略有变化增加丰富度，但角色物种特征保持完全一致，严禁变为其他动物。各重复实例之间有充足间距不重叠。';
+                } else {
+                    p += '主体为单一萌系动物角色，在不同位置以不同姿态重复出现。';
+                }
+            } else if (nonAvatarNormal.length === 2 && isSingleSubjectRepeat) {
+                // 两个主体各重复2次
+                p += '画面中'+nonAvatarNormal[0]+'和'+nonAvatarNormal[1]+'各以不同姿态重复出现2次（共4个角色实例），每种角色保持物种特征一致，不同角色之间严禁特征融合。';
             }
 
             if (hasOutfits) {
@@ -1688,13 +2520,17 @@
                 p += '多条独立分段短弧形'+slNames.join('、')+'横向分层错落排布，每段挂绳是独立的短弧线，不是一条长贯通曲线横穿画布，挂绳上悬挂五角星与小圆珠装饰，轻盈稀疏，空隙充足。';
             }
 
-            p += '单位纹样四边边缘无缝对接：超出上边界的元素从下边对应位置完整延续，超出左边界的元素从右边对应位置完整延续，确保任意位置裁切均可无缝拼接。';
+            p += '单位纹样四边边缘无缝对接：仅小型点缀元素超出边界从对侧延续，主元素和中等辅助元素完整位于画面内部不被裁切，确保任意位置裁切均可无缝拼接。';
             p += '相同元素在不同位置作旋转和镜像变化，方向多样不统一，避免排列呆板。';
             p += '底色奶油白 '+pal.bgColor+'，严格限定图案仅使用'+pal.colors.length+'种色彩：'+colorList+'，柔和深灰 '+pal.lineColor+' 纤细轮廓线。禁止生成色板以外任何颜色。';
             p += '三层明度秩序：大面积中间明度色彩，高明度亮色作为主体视觉，少量低明度色彩点缀；饱和度控制20~48，禁止高饱和荧光色。暖色为主，少量薄荷蓝平衡色调。';
             p += '所有元素造型全部圆润无尖角，平滑曲线，五官简化为豆豆眼加弧线小嘴，幼态软萌。';
             p += '干净iPad矢量平涂，顺滑闭合线条，无纸张纹理、无笔触噪点、无渐变、无阴影、无肌理杂色，纯色平整色块，适合AI矢量描摹、数码印花应用。';
-            p += '元素间预留充足留白，疏密均衡，轻盈通透，禁止元素过度堆砌拥挤。';
+            if (s.layoutIndex === 3) {
+                p += '画面密集但不拥挤，视觉肌理一致，视觉重量分布均匀，禁止元素扎堆。';
+            } else {
+                p += '元素间预留充足留白，疏密均衡，轻盈通透，禁止元素过度堆砌拥挤。';
+            }
             p += '画面整洁，不要水印，8K高清，正方形无缝拼接单元。';
             return p;
         },
@@ -1707,6 +2543,12 @@
         },
 
         copyPrompt: function() {
+            var edit = document.getElementById('promptOutputEdit');
+            if (edit && edit.style.display !== 'none') {
+                var text = edit.value;
+                navigator.clipboard.writeText(text).then(function(){ showToast('已复制到剪贴板'); }).catch(function(){ showToast('复制失败，请手动选择复制'); });
+                return;
+            }
             var el = document.getElementById('promptOutput');
             if (!el) return;
             var text = el.textContent;
@@ -1719,9 +2561,193 @@
             navigator.clipboard.writeText(p.prompt).then(function(){ showToast('提示词已复制'); }).catch(function(){ showToast('复制失败，请手动复制'); });
         },
 
+        copyEditPrompt: function(id) {
+            var ta = document.getElementById('pd_prompt');
+            if (!ta) return;
+            var text = ta.value;
+            if (!text) { showToast('暂无提示词'); return; }
+            navigator.clipboard.writeText(text).then(function(){ showToast('提示词已复制'); }).catch(function(){ showToast('复制失败，请手动复制'); });
+        },
+
+        // ===== 生成页：翻译/编辑/清除 =====
+        toggleTranslateGen: function() {
+            var el = document.getElementById('promptOutput');
+            if (!el) return;
+            var btn = document.getElementById('btnTranslateGen');
+            if (showingTranslatedGen) {
+                el.textContent = this.buildPrompt();
+                showingTranslatedGen = false;
+                if (btn) btn.title = '中英互译';
+                showToast('已切回原文');
+                return;
+            }
+            var text = el.textContent;
+            if (!text) return;
+            var self = this;
+            var chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+            var targetLang = chineseChars > text.length * 0.3 ? 'en' : 'zh-CN';
+            if (btn) { btn.disabled = true; btn.title = '翻译中...'; }
+            translateText(text, targetLang).then(function(translated) {
+                translatedGenPrompt = translated;
+                showingTranslatedGen = true;
+                el.textContent = translated;
+                if (btn) { btn.disabled = false; btn.title = '切回原文'; }
+                showToast(targetLang === 'en' ? '已翻译为英文' : '已翻译为中文');
+            }).catch(function(err) {
+                if (btn) { btn.disabled = false; btn.title = '中英互译'; }
+                showToast('翻译失败：' + (err.message || '所有翻译服务均不可用'));
+            });
+        },
+
+        toggleEditGen: function() {
+            var display = document.getElementById('promptOutput');
+            var edit = document.getElementById('promptOutputEdit');
+            var btn = document.getElementById('btnEditGen');
+            if (!display || !edit) return;
+            if (edit.style.display === 'none') {
+                edit.value = display.textContent;
+                edit.style.display = '';
+                display.style.display = 'none';
+                if (btn) btn.title = '完成编辑';
+                edit.focus();
+            } else {
+                display.textContent = edit.value;
+                edit.style.display = 'none';
+                display.style.display = '';
+                if (btn) btn.title = '编辑';
+                showingTranslatedGen = false;
+                showToast('已更新提示词');
+            }
+        },
+
+        clearGenPrompt: function() {
+            this.genState.subjects = [];
+            this.genState.outfits = [];
+            this.genState.decorations = [];
+            this.genState.words = [];
+            showingTranslatedGen = false;
+            translatedGenPrompt = null;
+            this.renderGenerator_();
+            showToast('已清除选择');
+        },
+
+        // ===== 人物提示词页：翻译/编辑/清除 =====
+        toggleTranslateChar: function() {
+            var el = document.getElementById('promptOutput');
+            if (!el) return;
+            var btn = document.getElementById('btnTranslateChar');
+            if (showingTranslatedGen) {
+                el.textContent = this.buildCharacterPrompt();
+                showingTranslatedGen = false;
+                if (btn) btn.title = '中英互译';
+                showToast('已切回原文');
+                return;
+            }
+            var text = el.textContent;
+            if (!text) return;
+            var self = this;
+            var chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+            var targetLang = chineseChars > text.length * 0.3 ? 'en' : 'zh-CN';
+            if (btn) { btn.disabled = true; btn.title = '翻译中...'; }
+            translateText(text, targetLang).then(function(translated) {
+                translatedGenPrompt = translated;
+                showingTranslatedGen = true;
+                el.textContent = translated;
+                if (btn) { btn.disabled = false; btn.title = '切回原文'; }
+                showToast(targetLang === 'en' ? '已翻译为英文' : '已翻译为中文');
+            }).catch(function(err) {
+                if (btn) { btn.disabled = false; btn.title = '中英互译'; }
+                showToast('翻译失败：' + (err.message || '所有翻译服务均不可用'));
+            });
+        },
+
+        toggleEditChar: function() {
+            var display = document.getElementById('promptOutput');
+            var edit = document.getElementById('promptOutputEdit');
+            var btn = document.getElementById('btnEditChar');
+            if (!display || !edit) return;
+            if (edit.style.display === 'none') {
+                edit.value = display.textContent;
+                edit.style.display = '';
+                display.style.display = 'none';
+                if (btn) btn.title = '完成编辑';
+                edit.focus();
+            } else {
+                display.textContent = edit.value;
+                edit.style.display = 'none';
+                display.style.display = '';
+                if (btn) btn.title = '编辑';
+                showingTranslatedGen = false;
+                showToast('已更新提示词');
+            }
+        },
+
+        clearCharPrompt: function() {
+            this.charState.subjects = [];
+            this.charState.outfits = [];
+            this.charState.hats = [];
+            this.charState.props = [];
+            this.charState.expressions = [];
+            showingTranslatedGen = false;
+            translatedGenPrompt = null;
+            this.renderCharacter_();
+            showToast('已清除选择');
+        },
+
+        // ===== 详情页：翻译 =====
+        toggleTranslateDetail: function(id) {
+            var el = document.getElementById('detailPromptText');
+            if (!el) return;
+            var btn = document.getElementById('btnTranslateDetail');
+            var p = getPatterns().find(function(x){ return x.id === id; });
+            if (!p || !p.prompt) return;
+            if (showingTranslatedDetail) {
+                el.textContent = p.prompt;
+                showingTranslatedDetail = false;
+                if (btn) btn.title = '中英互译';
+                showToast('已切回原文');
+                return;
+            }
+            var text = p.prompt;
+            var chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+            var targetLang = chineseChars > text.length * 0.3 ? 'en' : 'zh-CN';
+            if (btn) { btn.disabled = true; btn.title = '翻译中...'; }
+            translateText(text, targetLang).then(function(translated) {
+                translatedDetailPrompt = translated;
+                showingTranslatedDetail = true;
+                el.textContent = translated;
+                if (btn) { btn.disabled = false; btn.title = '切回原文'; }
+                showToast(targetLang === 'en' ? '已翻译为英文' : '已翻译为中文');
+            }).catch(function(err) {
+                if (btn) { btn.disabled = false; btn.title = '中英互译'; }
+                showToast('翻译失败：' + (err.message || '所有翻译服务均不可用'));
+            });
+        },
+
+        // ===== 编辑页：翻译 =====
+        toggleTranslateEdit: function(id) {
+            var ta = document.getElementById('pd_prompt');
+            if (!ta) return;
+            var btn = document.getElementById('btnTranslateEdit');
+            var text = ta.value;
+            if (!text) { showToast('暂无提示词'); return; }
+            var chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+            var targetLang = chineseChars > text.length * 0.3 ? 'en' : 'zh-CN';
+            if (btn) { btn.disabled = true; btn.title = '翻译中...'; }
+            translateText(text, targetLang).then(function(translated) {
+                ta.value = translated;
+                if (btn) { btn.disabled = false; btn.title = '中英互译'; }
+                showToast(targetLang === 'en' ? '已翻译为英文' : '已翻译为中文');
+            }).catch(function(err) {
+                if (btn) { btn.disabled = false; btn.title = '中英互译'; }
+                showToast('翻译失败：' + (err.message || '所有翻译服务均不可用'));
+            });
+        },
+
         savePromptToLibrary: function() {
             var s = this.genState;
-            var prompt = this.buildPrompt();
+            var edit = document.getElementById('promptOutputEdit');
+            var prompt = (edit && edit.style.display !== 'none') ? edit.value : this.buildPrompt();
             if (!prompt) { showToast('请先生成提示词'); return; }
             var pal = getPalettes().find(function(p){ return p.id === s.paletteId; }) || DEFAULT_PALETTES[0];
             var fp = makeFingerprint(s.subjects, s.outfits, s.decorations, s.paletteId, LAYOUTS[s.layoutIndex]);
@@ -1750,7 +2776,7 @@
             patterns.push(pattern);
             saveData(STORAGE_KEYS.patterns, patterns);
             showToast('素材已入库：'+name);
-            this.switchModule('assets');
+            this.switchModule('patternAssets');
         },
 
         // ===== 授权管理 =====
@@ -1778,8 +2804,9 @@
 
                 // 顶部：缩略图 + 素材名 + 被授权方 + 类型badge
                 html += '<div class="license-card-top">';
-                if (pattern && pattern.thumbnail) {
-                    html += '<img class="license-card-thumb" src="'+pattern.thumbnail+'" alt="">';
+                var coverImg = pattern ? getCoverImage(pattern) : null;
+                if (coverImg) {
+                    html += '<img class="license-card-thumb" src="'+coverImg+'" alt="">';
                 } else {
                     html += '<div class="license-card-thumb-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>';
                 }
@@ -1838,37 +2865,36 @@
 
         // ===== 元素库 =====
         renderElements: function() {
+            var self = this;
             var elements = getElements();
-            var html = '<div class="info-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>元素库分为「主体元素」和「装饰元素」两大类，每类下按分类管理。点击元素可删除，支持新增分类和元素。</div>';
-            html += '<div class="gen-layout">';
+            var tab = this._elementsTab || 'subjects';
+            var subjectCount = elements.subjects.reduce(function(s,c){return s+c.items.length;},0);
+            var outfitCount = elements.outfits.reduce(function(s,c){return s+c.items.length;},0);
+            var decoCount = elements.decorations.reduce(function(s,c){return s+c.items.length;},0);
 
-            // 主体元素
-            html += '<div class="gen-section"><div class="gen-section-header">主体元素<span style="font-size:11px;color:var(--text-muted);margin-left:auto;">'+elements.subjects.reduce(function(s,c){return s+c.items.length;},0)+' 个</span></div><div class="gen-section-body">';
-            elements.subjects.forEach(function(cat, ci) {
-                html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
-                cat.items.forEach(function(item, ii) {
-                    html += '<span class="element-chip" style="cursor:default;" onclick="app.removeElement(\'subjects\','+ci+','+ii+')">'+escapeHtml(item)+' <span style="opacity:0.5;margin-left:2px;">×</span></span>';
-                });
-                html += '<span class="element-chip" style="border-style:dashed;color:var(--accent);" onclick="app.addElement(\'subjects\','+ci+')">+ 添加</span>';
-                html += '</div></div>';
-            });
-            html += '<button class="btn-secondary btn-sm" style="margin-top:8px;" onclick="app.addCategory(\'subjects\')">+ 新增分类</button>';
-            html += '</div></div>';
-
-            // 装饰元素
-            html += '<div class="gen-section"><div class="gen-section-header">装饰元素<span style="font-size:11px;color:var(--text-muted);margin-left:auto;">'+elements.decorations.reduce(function(s,c){return s+c.items.length;},0)+' 个</span></div><div class="gen-section-body">';
-            elements.decorations.forEach(function(cat, ci) {
-                html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
-                cat.items.forEach(function(item, ii) {
-                    html += '<span class="element-chip" style="cursor:default;" onclick="app.removeElement(\'decorations\','+ci+','+ii+')">'+escapeHtml(item)+' <span style="opacity:0.5;margin-left:2px;">×</span></span>';
-                });
-                html += '<span class="element-chip" style="border-style:dashed;color:var(--accent);" onclick="app.addElement(\'decorations\','+ci+')">+ 添加</span>';
-                html += '</div></div>';
-            });
-            html += '<button class="btn-secondary btn-sm" style="margin-top:8px;" onclick="app.addCategory(\'decorations\')">+ 新增分类</button>';
-            html += '</div></div>';
-
+            var html = '<div class="gen-tabs" style="margin-bottom:16px;">';
+            html += '<div class="gen-tab'+(tab==='subjects'?' active':'')+'" onclick="app._elementsTab=\'subjects\';app.render();">主体元素<span class="gen-tab-count">'+subjectCount+'</span></div>';
+            html += '<div class="gen-tab'+(tab==='outfits'?' active':'')+'" onclick="app._elementsTab=\'outfits\';app.render();">服装配饰<span class="gen-tab-count">'+outfitCount+'</span></div>';
+            html += '<div class="gen-tab'+(tab==='decorations'?' active':'')+'" onclick="app._elementsTab=\'decorations\';app.render();">装饰元素<span class="gen-tab-count">'+decoCount+'</span></div>';
             html += '</div>';
+
+            var groups = { subjects: elements.subjects, outfits: elements.outfits, decorations: elements.decorations };
+            var labels = { subjects: '主体元素', outfits: '服装配饰', decorations: '装饰元素' };
+            var list = groups[tab];
+            var count = list.reduce(function(s,c){return s+c.items.length;},0);
+
+            html += '<div class="gen-section"><div class="gen-section-header" style="cursor:default;">'+labels[tab]+'<span style="font-size:11px;color:var(--text-muted);margin-left:auto;">'+count+' 个</span></div><div class="gen-section-body">';
+            list.forEach(function(cat, ci) {
+                html += '<div class="element-category"><div class="element-category-title">'+escapeHtml(cat.category)+'</div><div class="element-chips">';
+                cat.items.forEach(function(item, ii) {
+                    html += '<span class="element-chip" style="cursor:default;" onclick="app.removeElement(\''+tab+'\','+ci+','+ii+')">'+escapeHtml(item)+' <span style="opacity:0.5;margin-left:2px;">×</span></span>';
+                });
+                html += '<span class="element-chip" style="border-style:dashed;color:var(--accent);" onclick="app.addElement(\''+tab+'\','+ci+')">+ 添加</span>';
+                html += '</div></div>';
+            });
+            html += '<button class="btn-secondary btn-sm" style="margin-top:8px;" onclick="app.addCategory(\''+tab+'\')">+ 新增分类</button>';
+            html += '</div></div>';
+
             return html;
         },
 
@@ -1972,6 +2998,7 @@
             html += '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
             html += '<button class="btn-secondary" onclick="app.exportData()">导出全部数据</button>';
             html += '<button class="btn-secondary" onclick="app.importData()">导入数据</button>';
+            html += '<button class="btn-secondary" onclick="app.compressAllImages()">压缩现有图片</button>';
             html += '<button class="btn-secondary" onclick="app.loadSampleData()">加载示例数据</button>';
             html += '<button class="btn-danger" onclick="app.clearAllData()">清空全部数据</button>';
             html += '</div>';
@@ -1993,80 +3020,123 @@
             var patterns = getPatterns();
             var p = patterns.find(function(x){ return x.id === id; });
             if (!p) return;
+            showingTranslatedDetail = false;
             var status = computeStatus(id);
             var st = PATTERN_STATUS[status];
             var licenses = getLicenses().filter(function(l){ return l.patternId === id; });
             this.previousModule = this.currentModule;
+            this._pasteTargetId = id;
 
             var html = '<div class="sub-page-content">';
             // 二级页头
             html += '<div class="sub-page-header">';
             html += '<button class="sub-page-back" onclick="app.switchModule(\''+this.previousModule+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>返回</button>';
             html += '<span class="sub-page-title">'+escapeHtml(p.name)+'</span>';
-            html += '<div class="sub-page-actions">';
-            html += '<button class="btn-icon" title="编辑" onclick="app.openPatternEdit(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
-            html += '<button class="btn-icon" title="删除" onclick="app.deletePattern(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--danger);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
-            html += '</div></div>';
+            html += '</div>';
 
-            // 两栏布局：左图右信息
-            html += '<div class="detail-layout">';
+            // === 主区域：图片画廊 + 基本信息并排 ===
+            this._galleryId = id;
+            this._galleryIndex = 0;
+            var imgs = getPatternImages(p);
+            var coverIdx = getCoverIndex(p);
 
-            // === 左栏：大图预览 ===
+            html += '<div class="detail-main">';
+
+            // 左：多图画廊
             html += '<div class="detail-img-col">';
-            if (p.thumbnail) {
-                html += '<div class="detail-img-box" onclick="app.openImagePreview(\''+id+'\')"><img src="'+p.thumbnail+'" alt="'+escapeHtml(p.name)+'"></div>';
-                html += '<div class="detail-img-actions"><button class="btn-secondary btn-sm" onclick="app.uploadPatternThumb(\''+id+'\')">更换图片</button>';
-                html += '<button class="btn-secondary btn-sm" onclick="app.openImagePreview(\''+id+'\')">查看大图</button></div>';
+            html += '<div class="gallery-main" id="detailGalleryMain">';
+            if (imgs.length > 0) {
+                html += '<img src="'+imgs[0]+'" alt="'+escapeHtml(p.name)+'" style="cursor:zoom-in" onclick="app.openImagePreview(\''+id+'\')">';
+                if (imgs.length > 1) {
+                    html += '<button class="gallery-nav prev" id="detailGalleryPrev" onclick="app.galleryNav(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>';
+                    html += '<button class="gallery-nav next" id="detailGalleryNext" onclick="app.galleryNav(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>';
+                    html += '<div class="gallery-counter" id="detailGalleryCounter">1 / '+imgs.length+'</div>';
+                }
+                html += '<button class="gallery-cover-btn'+(coverIdx===0?' is-cover':'')+'" id="detailGalleryCoverBtn" onclick="app.setCoverFromGallery()">';
+                if (coverIdx === 0) {
+                    html += '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>当前封面';
+                } else {
+                    html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>设为封面';
+                }
+                html += '</button>';
             } else {
-                html += '<div class="detail-img-empty" onclick="app.uploadPatternThumb(\''+id+'\')">';
-                html += '<div style="text-align:center;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:6px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><div style="font-size:13px;">点击上传图片</div></div>';
+                html += '<div class="gallery-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><p>暂无图片</p></div>';
+            }
+            html += '</div>';
+            // 缩略图条
+            if (imgs.length > 1) {
+                html += '<div class="gallery-thumbs" id="detailGalleryThumbs">';
+                imgs.forEach(function(src, i) {
+                    html += '<div class="gallery-thumb'+(i===0?' active':'')+'" onclick="app.galleryGoTo('+i+')">';
+                    html += '<img src="'+src+'">';
+                    if (i === coverIdx) {
+                        html += '<div class="gallery-thumb-cover-mark"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>';
+                    }
+                    html += '</div>';
+                });
                 html += '</div>';
             }
             html += '</div>';
 
-            // === 右栏：信息区 ===
-            html += '<div class="detail-info-col">';
-
-            // 基本信息
-            html += '<div class="detail-section-title">基本信息</div>';
-            html += '<div class="detail-info-row"><span class="detail-info-label">状态</span><span class="detail-info-value"><span class="badge '+st.badge+'">'+st.name+'</span></span></div>';
-            html += '<div class="detail-info-row"><span class="detail-info-label">名称</span><span class="detail-info-value">'+escapeHtml(p.name)+'</span></div>';
+            // 右：基本信息
+            html += '<div class="detail-prompt-col">';
+            html += '<div class="prompt-display-section">';
+            html += '<div class="prompt-display-header"><span class="prompt-display-title">基本信息</span></div>';
+            html += '<div>';
+            html += '<table class="detail-info-table">';
+            if (p.type !== 'character') {
+                html += '<tr><th>状态</th><td><span class="badge '+st.badge+'">'+st.name+'</span></td><th>名称</th><td>'+escapeHtml(p.name)+'</td></tr>';
+            } else {
+                html += '<tr><th>名称</th><td>'+escapeHtml(p.name)+'</td><th>风格</th><td>'+escapeHtml(p.style||'-')+'</td></tr>';
+            }
             var platformName = p.platform ? (PLATFORMS[p.platform] ? PLATFORMS[p.platform].name : p.platform) : '未指定';
-            html += '<div class="detail-info-row"><span class="detail-info-label">生成平台</span><span class="detail-info-value">'+escapeHtml(platformName)+'</span></div>';
-            html += '<div class="detail-info-row"><span class="detail-info-label">生成日期</span><span class="detail-info-value">'+(p.generatedDate ? formatDate(p.generatedDate) : '-')+'</span></div>';
-            html += '<div class="detail-info-row"><span class="detail-info-label">色板</span><span class="detail-info-value">'+escapeHtml(p.paletteName||'-')+'</span></div>';
-            html += '<div class="detail-info-row"><span class="detail-info-label">风格</span><span class="detail-info-value">'+escapeHtml(p.style||'-')+'</span></div>';
-
-            // 元素
-            if (p.elements && ((p.elements.subjects&&p.elements.subjects.length) || (p.elements.outfits&&p.elements.outfits.length) || (p.elements.decorations&&p.elements.decorations.length))) {
-                html += '<div class="detail-section-title">设计元素</div>';
-                if (p.elements.subjects && p.elements.subjects.length) {
-                    html += '<div class="detail-info-row"><span class="detail-info-label">主体元素</span><span class="detail-info-value"><div class="detail-tags">';
-                    p.elements.subjects.forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
-                    html += '</div></span></div>';
-                }
-                if (p.elements.outfits && p.elements.outfits.length) {
-                    html += '<div class="detail-info-row"><span class="detail-info-label">拟人配饰</span><span class="detail-info-value"><div class="detail-tags">';
-                    p.elements.outfits.forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
-                    html += '</div></span></div>';
-                }
-                if (p.elements.decorations && p.elements.decorations.length) {
-                    html += '<div class="detail-info-row"><span class="detail-info-label">装饰元素</span><span class="detail-info-value"><div class="detail-tags">';
-                    p.elements.decorations.forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
-                    html += '</div></span></div>';
-                }
+            html += '<tr><th>生成平台</th><td>'+escapeHtml(platformName)+'</td><th>生成日期</th><td>'+(p.generatedDate ? formatDate(p.generatedDate) : '-')+'</td></tr>';
+            html += '<tr><th>色板</th><td>'+escapeHtml(p.paletteName||'-')+'</td><th>风格</th><td>'+escapeHtml(p.style||'-')+'</td></tr>';
+            var allElements = [];
+            if (p.elements) {
+                if (p.elements.subjects && p.elements.subjects.length) allElements = allElements.concat(p.elements.subjects);
+                if (p.elements.outfits && p.elements.outfits.length) allElements = allElements.concat(p.elements.outfits);
+                if (p.elements.decorations && p.elements.decorations.length) allElements = allElements.concat(p.elements.decorations);
+                if (p.elements.props && p.elements.props.length) allElements = allElements.concat(p.elements.props);
             }
-
-            // 提示词
-            if (p.prompt) {
-                html += '<div class="detail-section-title">AI提示词</div>';
-                html += '<div class="detail-info-row"><span class="detail-info-label">提示词内容</span><span class="detail-info-value"><div class="detail-prompt-box">'+escapeHtml(p.prompt)+'</div></span></div>';
+            if (allElements.length) {
+                html += '<tr><th>设计元素</th><td colspan="3"><div class="detail-tags">'+allElements.map(function(e){ return '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; }).join('')+'</div></td></tr>';
             }
-
-            // 授权记录
-            html += '<div class="detail-section-title">关联授权';
-            if (licenses.length > 0) html += '（'+licenses.length+' 笔）';
+            html += '</table>';
             html += '</div>';
+            html += '</div>';
+
+            // === AI提示词（右侧列内，带工具按钮组） ===
+            if (p.prompt) {
+                html += '<div class="prompt-display-section" style="display:flex;flex-direction:column;">';
+                html += '<div class="prompt-display-header">';
+                html += '<span class="prompt-display-title">AI提示词</span>';
+                html += '<div class="prompt-display-actions">';
+                html += '<div class="tool-group">';
+                html += '<button class="btn-tool icon-only" id="btnTranslateDetail" title="中英互译" onclick="app.toggleTranslateDetail(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg></button>';
+                html += '<button class="btn-tool icon-only" title="复制" onclick="app.copyPatternPrompt(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+                html += '<button class="btn-tool icon-only" title="编辑" onclick="app.openPatternEdit(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+                html += '<button class="btn-tool icon-only is-danger" title="删除" onclick="app.deletePattern(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="prompt-display-text" id="detailPromptText" style="overflow-y:auto;max-height:520px;">'+escapeHtml(p.prompt)+'</div>';
+                html += '</div>';
+            } else {
+                html += '<div class="prompt-display-section" style="display:flex;flex-direction:column;">';
+                html += '<div class="prompt-display-header">';
+                html += '<span class="prompt-display-title">AI提示词</span>';
+                html += '</div>';
+                html += '<div class="prompt-display-text" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);min-height:120px;">暂无提示词</div>';
+                html += '</div>';
+            }
+
+            // === 授权记录（右侧列内，仅四方图素材） ===
+            if (p.type !== 'character') {
+            html += '<div class="prompt-display-section">';
+            html += '<div class="prompt-display-header"><span class="prompt-display-title">关联授权';
+            if (licenses.length > 0) html += '（'+licenses.length+' 笔）';
+            html += '</span></div>';
             if (licenses.length > 0) {
                 html += '<div style="display:flex;flex-direction:column;gap:8px;">';
                 licenses.forEach(function(l) {
@@ -2091,30 +3161,171 @@
                 html += '<div style="font-size:13px;color:var(--text-muted);padding:8px 0;">暂无授权记录</div>';
             }
             html += '<div style="margin-top:8px;"><button class="btn-secondary btn-sm" onclick="app.openLicenseModal(null,\''+id+'\')">+ 添加授权</button></div>';
-
-            // 备注
-            if (p.notes) {
-                html += '<div class="detail-section-title">备注</div>';
-                html += '<div class="detail-info-row"><span class="detail-info-label">备注内容</span><span class="detail-info-value" style="white-space:pre-wrap;">'+escapeHtml(p.notes)+'</span></div>';
+            html += '</div>'; // end 授权卡片
             }
 
-            html += '</div>'; // close detail-info-col
-            html += '</div>'; // close detail-layout
+            // 备注（右侧列内）
+            if (p.notes) {
+                html += '<div class="prompt-display-section">';
+                html += '<div class="prompt-display-header"><span class="prompt-display-title">备注</span></div>';
+                html += '<div style="font-size:13px;line-height:1.7;color:var(--text-secondary);white-space:pre-wrap;word-break:break-word;">'+escapeHtml(p.notes)+'</div>';
+                html += '</div>';
+            }
+
+            html += '</div>'; // end detail-prompt-col
+            html += '</div>'; // end detail-main
+
             html += '</div>'; // close sub-page-content
 
             document.getElementById('contentArea').innerHTML = html;
+            this.renderEditImages();
             window.scrollTo({ top:0, behavior:'smooth' });
         },
 
-        // 图片预览（全屏查看）
+        // 渲染编辑页图片网格
+        renderEditImages: function() {
+            var grid = document.getElementById('editUploadGrid');
+            if (!grid) return;
+            // 清除已有 upload-item
+            grid.querySelectorAll('.upload-item').forEach(function(el){ el.remove(); });
+            var addBtn = grid.querySelector('.upload-add');
+            this._editImages.forEach(function(img, i) {
+                var item = document.createElement('div');
+                item.className = 'upload-item';
+                item.innerHTML =
+                    '<img src="' + img.dataURL + '">' +
+                    '<button class="upload-item-cover' + (img.isCover ? ' is-cover' : '') + '" data-idx="' + i + '" title="设为封面">' +
+                        (img.isCover
+                            ? '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+                            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>') +
+                    '</button>' +
+                    '<button class="upload-item-del" data-idx="' + i + '" title="删除">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                    '</button>';
+                item.querySelector('.upload-item-cover').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    app._editImages.forEach(function(im){ im.isCover = false; });
+                    app._editImages[i].isCover = true;
+                    app.renderEditImages();
+                });
+                item.querySelector('.upload-item-del').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var wasCover = app._editImages[i].isCover;
+                    app._editImages.splice(i, 1);
+                    if (wasCover && app._editImages.length > 0) app._editImages[0].isCover = true;
+                    app.renderEditImages();
+                });
+                grid.insertBefore(item, addBtn);
+            });
+        },
+
+        // 画廊导航
+        galleryNav: function(dir) {
+            var p = getPatterns().find(function(x){ return x.id === app._galleryId; });
+            if (!p) return;
+            var imgs = getPatternImages(p);
+            if (imgs.length <= 1) return;
+            app._galleryIndex += dir;
+            if (app._galleryIndex < 0) app._galleryIndex = 0;
+            if (app._galleryIndex >= imgs.length) app._galleryIndex = imgs.length - 1;
+            app._renderGallery();
+        },
+
+        galleryGoTo: function(idx) {
+            app._galleryIndex = idx;
+            app._renderGallery();
+        },
+
+        _renderGallery: function() {
+            var p = getPatterns().find(function(x){ return x.id === app._galleryId; });
+            if (!p) return;
+            var imgs = getPatternImages(p);
+            var coverIdx = getCoverIndex(p);
+            var idx = app._galleryIndex;
+            var main = document.getElementById('detailGalleryMain');
+            if (!main) return;
+            var mainImg = main.querySelector('img');
+            if (mainImg) mainImg.src = imgs[idx];
+            // counter
+            var counter = document.getElementById('detailGalleryCounter');
+            if (counter) counter.textContent = (idx+1) + ' / ' + imgs.length;
+            // nav buttons
+            var prev = document.getElementById('detailGalleryPrev');
+            var next = document.getElementById('detailGalleryNext');
+            if (prev) prev.disabled = idx === 0;
+            if (next) next.disabled = idx === imgs.length - 1;
+            // cover button
+            var coverBtn = document.getElementById('detailGalleryCoverBtn');
+            if (coverBtn) {
+                if (idx === coverIdx) {
+                    coverBtn.classList.add('is-cover');
+                    coverBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>当前封面';
+                } else {
+                    coverBtn.classList.remove('is-cover');
+                    coverBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>设为封面';
+                }
+            }
+            // thumbs
+            var thumbs = document.getElementById('detailGalleryThumbs');
+            if (thumbs) {
+                thumbs.querySelectorAll('.gallery-thumb').forEach(function(t, i) {
+                    t.classList.toggle('active', i === idx);
+                });
+            }
+            // 同步更新 lightbox 图片（如果 lightbox 处于打开状态）
+            var lb = document.getElementById('lightbox');
+            if (lb && lb.classList.contains('active')) {
+                var lbImg = document.getElementById('lightboxImg');
+                if (lbImg) lbImg.src = imgs[idx];
+            }
+        },
+
+        setCoverFromGallery: function() {
+            var id = app._galleryId;
+            var idx = app._galleryIndex;
+            var patterns = getPatterns();
+            var p = patterns.find(function(x){ return x.id === id; });
+            if (!p) return;
+            // 确保 images 数组存在
+            if (!p.images || p.images.length === 0) {
+                if (p.thumbnail) { p.images = [p.thumbnail]; p.thumbnail = null; }
+                else return;
+            }
+            p.coverIndex = idx;
+            p.updatedAt = new Date().toISOString();
+            saveData(STORAGE_KEYS.patterns, patterns);
+            showToast('已设为封面');
+            app._renderGallery();
+            // 更新缩略图上的封面标记
+            var thumbs = document.getElementById('detailGalleryThumbs');
+            if (thumbs) {
+                thumbs.querySelectorAll('.gallery-thumb').forEach(function(t, i) {
+                    var mark = t.querySelector('.gallery-thumb-cover-mark');
+                    if (i === idx) {
+                        if (!mark) {
+                            mark = document.createElement('div');
+                            mark.className = 'gallery-thumb-cover-mark';
+                            mark.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+                            t.appendChild(mark);
+                        }
+                    } else {
+                        if (mark) mark.remove();
+                    }
+                });
+            }
+        },
+
+        // 图片预览（全屏查看，使用lightbox）
         openImagePreview: function(id) {
             var p = getPatterns().find(function(x){ return x.id === id; });
-            if (!p || !p.thumbnail) return;
-            var overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:3000;display:flex;align-items:center;justify-content:center;padding:40px;cursor:zoom-out;';
-            overlay.innerHTML = '<img src="'+p.thumbnail+'" style="max-width:90%;max-height:90%;border-radius:8px;object-fit:contain;">';
-            overlay.onclick = function() { document.body.removeChild(overlay); };
-            document.body.appendChild(overlay);
+            var imgs = getPatternImages(p);
+            if (imgs.length === 0) return;
+            var idx = (app._galleryId === id) ? (app._galleryIndex || 0) : getCoverIndex(p);
+            if (idx >= imgs.length) idx = 0;
+            var lb = document.getElementById('lightbox');
+            var lbImg = document.getElementById('lightboxImg');
+            lbImg.src = imgs[idx];
+            lb.classList.add('active');
         },
 
         // 编辑素材（二级页编辑模式）
@@ -2125,6 +3336,7 @@
             var status = computeStatus(id);
             var st = PATTERN_STATUS[status];
             this.previousModule = this.currentModule;
+            this._pasteTargetId = id;
 
             var html = '<div class="sub-page-content">';
             html += '<div class="sub-page-header">';
@@ -2133,51 +3345,80 @@
             html += '<div class="sub-page-actions"><button class="btn-primary" onclick="app.savePatternDetail(\''+id+'\')">保存</button></div>';
             html += '</div>';
 
-            html += '<div class="form-page">';
-
-            // 图片
-            html += '<div class="form-group"><label class="form-label">素材图片</label>';
-            if (p.thumbnail) {
-                html += '<img src="'+p.thumbnail+'" class="img-preview" style="margin-bottom:8px;max-width:200px;"><button class="btn-secondary btn-sm" onclick="app.uploadPatternThumb(\''+id+'\')">更换图片</button>';
-            } else {
-                html += '<div class="img-upload-area" onclick="app.uploadPatternThumb(\''+id+'\')"><div style="color:var(--text-muted);font-size:13px;">点击上传图片</div></div>';
+            // === 主区域：图片上传网格 + 提示词编辑框并排 ===
+            this._editImages = getPatternImages(p).map(function(src, i) {
+                return { dataURL: src, isCover: i === getCoverIndex(p) };
+            });
+            if (this._editImages.length > 0 && !this._editImages.some(function(img){ return img.isCover; })) {
+                this._editImages[0].isCover = true;
             }
+            html += '<div class="detail-main">';
+
+            // 左：多图上传网格
+            html += '<div class="detail-img-col">';
+            html += '<div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px;">效果图（点击星标设为封面，也可粘贴图片）</div>';
+            html += '<div class="upload-grid" id="editUploadGrid">';
+            html += '<div class="upload-add" onclick="app.uploadPatternThumb(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>上传图片</span></div>';
+            html += '</div>';
+            html += '<div style="font-size:12px;color:var(--text-muted);margin-top:8px;">支持 Ctrl+V 粘贴 · 多张图可标记封面</div>';
             html += '</div>';
 
-            html += '<div class="form-section-title">基本信息</div>';
-            html += '<div class="form-group"><label class="form-label">名称 <span class="req">*</span></label><input class="form-input" id="pd_name" value="'+escapeHtml(p.name)+'"></div>';
-            html += '<div class="form-row"><div class="form-group"><label class="form-label">状态</label><div style="padding-top:6px;"><span class="badge '+st.badge+'">'+st.name+'</span></div></div>';
-            html += '<div class="form-group"><label class="form-label">生成平台</label><select class="form-select" id="pd_platform">';
-            html += '<option value="">未指定</option>';
-            Object.keys(PLATFORMS).forEach(function(k){ html += '<option value="'+k+'" '+(p.platform===k?'selected':'')+'>'+PLATFORMS[k].name+'</option>'; });
-            html += '</select></div></div>';
-            html += '<div class="form-row"><div class="form-group"><label class="form-label">生成日期</label><input class="form-input" type="date" id="pd_date" value="'+(p.generatedDate||'')+'"></div>';
-            html += '<div class="form-group"><label class="form-label">色板</label><input class="form-input" value="'+escapeHtml(p.paletteName||'')+'" readonly></div></div>';
-            html += '<div class="form-group"><label class="form-label">风格</label><input class="form-input" value="'+escapeHtml(p.style||'')+'" readonly></div>';
+            // 右：提示词编辑（带工具按钮组）
+            html += '<div class="detail-prompt-col">';
+            html += '<div class="prompt-display-section" style="flex:1;display:flex;flex-direction:column;">';
+            html += '<div class="prompt-display-header">';
+            html += '<span class="prompt-display-title">AI提示词</span>';
+            html += '<div class="prompt-display-actions">';
+            html += '<div class="tool-group">';
+            html += '<button class="btn-tool icon-only" id="btnTranslateEdit" title="中英互译" onclick="app.toggleTranslateEdit(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg></button>';
+            html += '<button class="btn-tool icon-only" title="复制" onclick="app.copyEditPrompt(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+            html += '<button class="btn-tool icon-only" title="编辑" onclick="document.getElementById(\'pd_prompt\').focus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+            html += '<button class="btn-tool icon-only is-danger" title="删除" onclick="app.deletePattern(\''+id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '<textarea class="form-textarea" id="pd_prompt" style="min-height:200px;max-height:520px;flex:1;font-size:14px;line-height:1.7;border-color:var(--border-light);background:var(--bg-elevated);color:var(--text-secondary);" placeholder="输入或编辑AI提示词">'+escapeHtml(p.prompt||'')+'</textarea>';
+            html += '</div>';
+            html += '</div>'; // end detail-main
 
-            if (p.elements) {
-                html += '<div class="form-group"><label class="form-label">主体元素</label><div style="display:flex;flex-wrap:wrap;gap:4px;">';
-                (p.elements.subjects||[]).forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
-                html += '</div></div>';
-                if (p.elements.outfits && p.elements.outfits.length > 0) {
-                    html += '<div class="form-group"><label class="form-label">拟人配饰</label><div style="display:flex;flex-wrap:wrap;gap:4px;">';
-                    p.elements.outfits.forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
-                    html += '</div></div>';
-                }
-                html += '<div class="form-group"><label class="form-label">装饰元素</label><div style="display:flex;flex-wrap:wrap;gap:4px;">';
-                (p.elements.decorations||[]).forEach(function(e){ html += '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; });
-                html += '</div></div>';
+            // === 下方：基本信息（可编辑表格） ===
+            html += '<div class="detail-section-title" style="margin-top:20px;">基本信息</div>';
+            html += '<table class="detail-info-table edit-info-table">';
+            if (p.type !== 'character') {
+                html += '<tr><th>状态</th><td><span class="badge '+st.badge+'">'+st.name+'</span></td><th>名称 <span class="req">*</span></th><td><input class="form-input" id="pd_name" value="'+escapeHtml(p.name)+'" style="width:auto;max-width:240px;"></td></tr>';
+            } else {
+                html += '<tr><th>名称 <span class="req">*</span></th><td><input class="form-input" id="pd_name" value="'+escapeHtml(p.name)+'" style="width:auto;max-width:240px;"></td><th>风格</th><td>'+escapeHtml(p.style||'-')+'</td></tr>';
             }
+            var platformOpts = '<option value="">未指定</option>';
+            Object.keys(PLATFORMS).forEach(function(k){ platformOpts += '<option value="'+k+'" '+(p.platform===k?'selected':'')+'>'+PLATFORMS[k].name+'</option>'; });
+            html += '<tr><th>生成平台</th><td><select class="form-select" id="pd_platform" style="width:auto;min-width:120px;">'+platformOpts+'</select></td><th>生成日期</th><td><input class="form-input" type="date" id="pd_date" value="'+(p.generatedDate||'')+'" style="width:auto;max-width:160px;"></td></tr>';
+            if (p.type !== 'character') {
+                html += '<tr><th>色板</th><td>'+escapeHtml(p.paletteName||'-')+'</td><th>风格</th><td>'+escapeHtml(p.style||'-')+'</td></tr>';
+            } else {
+                html += '<tr><th>色板</th><td>'+escapeHtml(p.paletteName||'-')+'</td><th></th><td></td></tr>';
+            }
+            var allElements = [];
+            if (p.elements) {
+                if (p.elements.subjects && p.elements.subjects.length) allElements = allElements.concat(p.elements.subjects);
+                if (p.elements.outfits && p.elements.outfits.length) allElements = allElements.concat(p.elements.outfits);
+                if (p.elements.decorations && p.elements.decorations.length) allElements = allElements.concat(p.elements.decorations);
+                if (p.elements.props && p.elements.props.length) allElements = allElements.concat(p.elements.props);
+            }
+            if (allElements.length) {
+                html += '<tr><th>设计元素</th><td colspan="3"><div class="detail-tags">'+allElements.map(function(e){ return '<span class="badge badge-available">'+escapeHtml(e)+'</span>'; }).join('')+'</div></td></tr>';
+            }
+            html += '</table>';
 
-            html += '<div class="form-section-title">提示词与备注</div>';
-            html += '<div class="form-group"><label class="form-label">提示词</label><textarea class="form-textarea" id="pd_prompt" style="min-height:100px;">'+escapeHtml(p.prompt||'')+'</textarea></div>';
-            html += '<div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" id="pd_notes" placeholder="可记录创作思路、买家反馈等">'+escapeHtml(p.notes||'')+'</textarea></div>';
+            // === 备注 ===
+            html += '<div class="detail-section-title" style="margin-top:20px;">备注</div>';
+            html += '<textarea class="form-textarea" id="pd_notes" style="min-height:80px;" placeholder="可记录创作思路、买家反馈等">'+escapeHtml(p.notes||'')+'</textarea>';
 
-            html += '</div>'; // close form-page
             html += '</div>'; // close sub-page-content
 
             document.getElementById('contentArea').innerHTML = html;
             window.scrollTo({ top:0, behavior:'smooth' });
+            // 渲染编辑页已有图片
+            this.renderEditImages();
         },
 
         savePatternDetail: function(id) {
@@ -2189,6 +3430,14 @@
             p.generatedDate = document.getElementById('pd_date').value;
             p.prompt = document.getElementById('pd_prompt').value;
             p.notes = document.getElementById('pd_notes').value;
+            // 保存编辑页的图片列表
+            if (this._editImages) {
+                p.images = this._editImages.map(function(img){ return img.dataURL; });
+                var coverIdx = this._editImages.findIndex(function(img){ return img.isCover; });
+                p.coverIndex = coverIdx >= 0 ? coverIdx : 0;
+                // 清除旧 thumbnail 字段
+                p.thumbnail = null;
+            }
             p.updatedAt = new Date().toISOString();
             saveData(STORAGE_KEYS.patterns, patterns);
             showToast('素材已更新');
@@ -2196,45 +3445,111 @@
         },
 
         uploadPatternThumb: function(id) {
+            var self = this;
+            self._pasteTargetId = id;
+            // 清理上次可能残留的 input
+            var old = document.getElementById('_thumbFileInput');
+            if (old) document.body.removeChild(old);
             var input = document.createElement('input');
+            input.id = '_thumbFileInput';
             input.type = 'file';
             input.accept = 'image/*';
+            input.multiple = true; // 支持多选
+            input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
             input.onchange = function(e) {
-                var file = e.target.files[0];
-                if (!file) return;
-                var reader = new FileReader();
-                reader.onload = function(ev) {
-                    var patterns = getPatterns();
-                    var p = patterns.find(function(x){ return x.id === id; });
-                    if (p) {
-                        p.thumbnail = ev.target.result;
-                        p.updatedAt = new Date().toISOString();
-                        saveData(STORAGE_KEYS.patterns, patterns);
-                        showToast('图片已上传');
-                        if (document.getElementById('pd_name')) {
-                            app.openPatternEdit(id);
-                        } else {
-                            app.openPatternDetail(id);
-                        }
-                    }
-                };
-                reader.readAsDataURL(file);
+                var files = Array.from(e.target.files);
+                files.forEach(function(file) {
+                    self.savePatternThumb(id, file);
+                });
+                if (input.parentNode) document.body.removeChild(input);
             };
+            document.body.appendChild(input);
             input.click();
         },
 
+        savePatternThumb: function(id, blob) {
+            var self = this;
+            // 先用 FileReader 读取为 dataURL，再通过 canvas 压缩
+            var fr = new FileReader();
+            fr.onload = function(ev) {
+                var img = new Image();
+                img.onload = function() {
+                    // 压缩到最大 800px，JPEG 0.85 质量
+                    var maxW = 800, maxH = 800;
+                    var w = img.width, h = img.height;
+                    if (w > maxW || h > maxH) {
+                        var scale = Math.min(maxW / w, maxH / h);
+                        w = Math.round(w * scale);
+                        h = Math.round(h * scale);
+                    }
+                    var canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    var compressed = canvas.toDataURL('image/jpeg', 0.85);
+                    self._doSaveThumb(id, compressed);
+                };
+                img.onerror = function() {
+                    // 压缩失败，直接用原图
+                    self._doSaveThumb(id, ev.target.result);
+                };
+                img.src = ev.target.result;
+            };
+            fr.onerror = function() {
+                showToast('图片读取失败');
+            };
+            fr.readAsDataURL(blob);
+        },
+
+        _doSaveThumb: function(id, dataURL) {
+            var self = this;
+            // 编辑模式：添加到编辑图片列表，不直接写存储
+            if (document.getElementById('editUploadGrid')) {
+                if (!self._editImages) self._editImages = [];
+                self._editImages.push({ dataURL: dataURL, isCover: self._editImages.length === 0 });
+                self.renderEditImages();
+                showToast('图片已添加，记得保存');
+                return;
+            }
+            // 详情模式：直接添加到图片数组并保存
+            var patterns = getPatterns();
+            var p = patterns.find(function(x){ return x.id === id; });
+            if (!p) { showToast('未找到素材'); return; }
+            if (!p.images) p.images = [];
+            // 迁移旧 thumbnail
+            if (p.thumbnail && p.images.length === 0) {
+                p.images.push(p.thumbnail);
+                p.thumbnail = null;
+            }
+            p.images.push(dataURL);
+            if (p.images.length === 1) p.coverIndex = 0;
+            p.updatedAt = new Date().toISOString();
+            try {
+                saveData(STORAGE_KEYS.patterns, patterns);
+                showToast('图片已添加');
+                self.openPatternDetail(id);
+            } catch(e) {
+                showToast('保存失败，可能图片过大');
+            }
+        },
+
         deletePattern: function(id) {
-            if (!confirm('确定删除此素材？关联的授权记录不会被删除。')) return;
+            var p = getPatterns().find(function(x){ return x.id === id; });
+            var msg = (p && p.type === 'character') ? '确定删除此素材？' : '确定删除此素材？关联的授权记录不会被删除。';
+            if (!confirm(msg)) return;
             var patterns = getPatterns().filter(function(p){ return p.id !== id; });
             saveData(STORAGE_KEYS.patterns, patterns);
             showToast('素材已删除');
-            this.switchModule(this.previousModule || 'assets');
+            this.switchModule(this.previousModule || 'patternAssets');
         },
 
-        openPatternModal: function() {
+        openPatternModal: function(type) {
+            this._newPatternType = type || 'pattern';
             var elements = getElements();
             var palettes = getPalettes();
-            var html = '<div class="modal-header"><span class="modal-title">新增素材</span><button class="modal-close" onclick="app.closeModal()">×</button></div>';
+            var title = this._newPatternType === 'character' ? '新增人物素材' : '新增四方图素材';
+            var html = '<div class="modal-header"><span class="modal-title">'+title+'</span><button class="modal-close" onclick="app.closeModal()">×</button></div>';
             html += '<div class="modal-body">';
             html += '<div class="form-group"><label class="form-label">名称 <span class="req">*</span></label><input class="form-input" id="np_name" placeholder="给素材起个名字"></div>';
             html += '<div class="form-row"><div class="form-group"><label class="form-label">生成平台</label><select class="form-select" id="np_platform">';
@@ -2260,7 +3575,7 @@
             var palId = document.getElementById('np_palette').value;
             var pal = getPalettes().find(function(p){ return p.id === palId; });
             var pattern = {
-                id: genId('PAT'),
+                id: genId(this._newPatternType === 'character' ? 'CHAR' : 'PAT'),
                 name: name,
                 prompt: document.getElementById('np_prompt').value,
                 elements: { subjects: [], decorations: [] },
@@ -2268,6 +3583,7 @@
                 paletteName: pal ? pal.name : '',
                 layout: '',
                 style: '',
+                type: this._newPatternType,
                 platform: document.getElementById('np_platform').value,
                 generatedDate: document.getElementById('np_date').value,
                 thumbnail: '',
@@ -2280,7 +3596,7 @@
             saveData(STORAGE_KEYS.patterns, patterns);
             showToast('素材已添加');
             this.closeModal();
-            this.render();
+            this.switchModule(this._newPatternType === 'character' ? 'charAssets' : 'patternAssets');
         },
 
         // ===== 授权编辑（二级页） =====
@@ -2807,6 +4123,64 @@
         },
 
         // ===== 数据管理 =====
+        compressAllImages: function() {
+            var self = this;
+            var patterns = getPatterns();
+            var total = 0, changed = 0;
+            var maxEdge = 1200; // 与上传压缩保持一致，视觉无损
+            var tasks = [];
+
+            function compressOne(src) {
+                return new Promise(function(resolve) {
+                    var img = new Image();
+                    img.onload = function() {
+                        var w = img.width, h = img.height;
+                        if (w <= maxEdge && h <= maxEdge && src.indexOf('data:image/jpeg') === 0) {
+                            resolve(src); return; // 已经达标
+                        }
+                        var scale = Math.min(maxEdge / w, maxEdge / h);
+                        if (scale >= 1) scale = 1;
+                        var cw = Math.round(w * scale), ch = Math.round(h * scale);
+                        var canvas = document.createElement('canvas');
+                        canvas.width = cw; canvas.height = ch;
+                        var ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, cw, ch);
+                        ctx.drawImage(img, 0, 0, cw, ch);
+                        var out = canvas.toDataURL('image/jpeg', 0.85);
+                        resolve(out.length < src.length ? out : src);
+                    };
+                    img.onerror = function() { resolve(src); };
+                    img.src = src;
+                });
+            }
+
+            patterns.forEach(function(p) {
+                var imgs = getPatternImages(p);
+                if (!imgs.length) return;
+                imgs.forEach(function(src, i) {
+                    total++;
+                    (function(p_, i_) {
+                        tasks.push(compressOne(src).then(function(newSrc) {
+                            if (newSrc !== src) { changed++; p_.images[i_] = newSrc; }
+                        }));
+                    })(p, i);
+                });
+            });
+
+            if (total === 0) { showToast('没有可压缩的图片'); return; }
+            showToast('正在压缩 ' + total + ' 张图片…');
+            Promise.all(tasks).then(function() {
+                try {
+                    saveData(STORAGE_KEYS.patterns, patterns);
+                    showToast('图片优化完成：' + changed + '/' + total + ' 张已压缩');
+                } catch(e) {
+                    showToast('保存失败，图片可能过大');
+                }
+                app.render();
+            });
+        },
+
         exportData: function() {
             var data = {
                 patterns: getPatterns(),
@@ -2904,10 +4278,13 @@
             localStorage.removeItem(STORAGE_KEYS.patterns);
             localStorage.removeItem(STORAGE_KEYS.licenses);
             localStorage.removeItem(STORAGE_KEYS.elements);
+            localStorage.removeItem('seamless_char_elements');
+            localStorage.removeItem('seamless_char_state');
             localStorage.removeItem(STORAGE_KEYS.palettes);
             localStorage.removeItem(STORAGE_KEYS.version);
             localStorage.removeItem(STORAGE_KEYS.genState);
             this.genState = { subjects:[], outfits:[], decorations:[], paletteId:'p1', layoutIndex:0, styleIndex:0, smartHistory:[], currentTheme:null, elementTab:'subjects' };
+            this.charState = { subjects:[], outfits:[], props:[], paletteId:'p1', styleIndex:0, wordStyleIndex:0, elementTab:'subjects' };
             initData();
             showToast('全部数据已清空');
             this.render();
@@ -2924,6 +4301,59 @@
 
     window.toggleSidebar = function() { app.toggleSidebar(); };
     app.init();
+
+    // 全局粘贴图片监听 — 与 prompt-library.html 相同的交互模式
+    // 在素材详情页/编辑页时，直接 Ctrl+V 粘贴图片到当前素材
+    document.addEventListener('paste', function(e) {
+        if (!app._pasteTargetId) return;
+        var items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image/') === 0) {
+                var file = items[i].getAsFile();
+                if (!file) continue;
+                e.preventDefault();
+                showToast('正在处理图片...');
+                app.savePatternThumb(app._pasteTargetId, file);
+                return;
+            }
+        }
+    });
+
+    // Lightbox 关闭：点击关闭按钮
+    document.getElementById('lightboxClose').addEventListener('click', function() {
+        document.getElementById('lightbox').classList.remove('active');
+    });
+    // Lightbox 关闭：点击背景（非图片区域）
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('active');
+    });
+
+    // 键盘导航：方向键切换画廊，Esc 关闭 Lightbox — 与 prompt-library.html 一致
+    document.addEventListener('keydown', function(e) {
+        // Esc 关闭 Lightbox
+        if (e.key === 'Escape') {
+            var lb = document.getElementById('lightbox');
+            if (lb.classList.contains('active')) {
+                lb.classList.remove('active');
+                return;
+            }
+        }
+        // 方向键仅在详情页且不在输入框中时生效
+        if (!app._galleryId) return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        var p = getPatterns().find(function(x){ return x.id === app._galleryId; });
+        if (!p) return;
+        var imgs = getPatternImages(p);
+        if (imgs.length <= 1) return;
+        if (e.key === 'ArrowLeft' && app._galleryIndex > 0) {
+            app._galleryIndex--;
+            app._renderGallery();
+        } else if (e.key === 'ArrowRight' && app._galleryIndex < imgs.length - 1) {
+            app._galleryIndex++;
+            app._renderGallery();
+        }
+    });
     </script>
 </body>
 </html>
