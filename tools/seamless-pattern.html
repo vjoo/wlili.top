@@ -101,13 +101,39 @@
 .stat-card-value.danger { color:var(--danger); }
 .stat-card-sub { font-size:12px; color:var(--text-muted); }
 /* 仪表台带图标统计卡（filament 风格：图标块 + 信息区） */
-.stat-card.stat-card-row { flex-direction:row; align-items:center; justify-content:center; gap:14px; padding:18px 16px; }
-.stat-card-icon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; }
+.stat-card.stat-card-row { flex-direction:row; align-items:center; justify-content:center; gap:14px; padding:20px 16px; background:linear-gradient(180deg,#FFFFFF 0%,#FCFBFF 100%); box-shadow:0 2px 10px rgba(96,74,200,0.06); }
+.stat-card-icon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.12); }
 .stat-card-icon svg { width:22px; height:22px; }
 .stat-card-info { display:flex; flex-direction:column; gap:3px; min-width:0; }
 .stat-card-info .stat-card-label { font-size:12px; }
 .stat-card-info .stat-card-value { font-size:24px; }
 .stat-card-badge { align-self:flex-start; font-size:11px; color:var(--text-muted); background:var(--bg-hover); padding:2px 8px; border-radius:10px; white-space:nowrap; margin-top:1px; }
+/* 仪表台 Hero 欢迎横幅 */
+.dash-hero { position:relative; overflow:hidden; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:26px 30px; border-radius:var(--radius-lg); background:linear-gradient(135deg,#8B5CF6 0%,#7C5CFC 48%,#A78BFA 100%); color:#fff; box-shadow:0 12px 32px rgba(124,92,252,0.30); }
+.dash-hero::before { content:''; position:absolute; top:-70px; right:-30px; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,0.12); }
+.dash-hero::after { content:''; position:absolute; bottom:-90px; right:90px; width:170px; height:170px; border-radius:50%; background:rgba(255,255,255,0.08); }
+.dash-hero-info { position:relative; z-index:1; min-width:0; }
+.dash-hero-title { font-size:22px; font-weight:700; letter-spacing:0.02em; display:flex; align-items:center; gap:10px; }
+.dash-hero-title svg { width:22px; height:22px; opacity:0.9; }
+.dash-hero-sub { font-size:13px; opacity:0.88; margin-top:7px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.dash-hero-stat { position:relative; z-index:1; text-align:right; flex-shrink:0; padding-left:24px; border-left:1px solid rgba(255,255,255,0.28); }
+.dash-hero-num { font-size:36px; font-weight:800; line-height:1; }
+.dash-hero-num-label { font-size:12px; opacity:0.85; margin-top:5px; }
+/* 授权概览面板 */
+.dash-license-panel .panel-header { background:linear-gradient(90deg,#F6F3FF 0%,rgba(246,243,255,0) 65%); }
+.dash-license-panel .panel-title svg { width:16px; height:16px; color:var(--accent); }
+/* 授权概览小卡（带浅色图标） */
+.stat-card-mini { flex-direction:row; align-items:center; gap:10px; padding:12px 14px; }
+.stat-card-mini-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.stat-card-mini-icon svg { width:18px; height:18px; }
+.stat-card-mini .stat-card-label { font-size:12px; }
+.stat-card-mini .stat-card-value { font-size:22px; }
+.stat-card-mini .stat-card-sub { font-size:11px; }
+/* 仪表台入场动画（错落上浮） */
+@keyframes dashUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+.dash-hero, .stat-card-row { animation:dashUp 0.45s cubic-bezier(0.22,0.61,0.36,1) backwards; }
+.dash-license-panel { animation:dashUp 0.45s cubic-bezier(0.22,0.61,0.36,1) backwards; }
+.stat-card-mini { animation:dashUp 0.4s cubic-bezier(0.22,0.61,0.36,1) backwards; }
 
 /* Panel */
 .panel { background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); }
@@ -587,6 +613,12 @@
     .psc-info { padding:10px 12px; }
     .dash-recent-list { grid-template-columns:repeat(2,1fr); }
     .dash-recent-list .pattern-thumb { width:100%; }
+    /* 仪表台 Hero 窄屏适配 */
+    .dash-hero { padding:20px 22px; }
+    .dash-hero-title { font-size:19px; }
+    .dash-hero-num { font-size:30px; }
+    .dash-hero-stat { padding-left:16px; }
+    .stat-card-mini { padding:10px 12px; }
 }
 @media (max-width:480px) {
     .pattern-grid { grid-template-columns:1fr; }
@@ -1339,39 +1371,61 @@
                 grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>',
                 user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>',
                 shapes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg>',
-                palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>'
+                palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>',
+                star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+                clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+                doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
             };
-            function iconCard(bg, iconKey, label, value, valueCls, badge) {
-                return '<div class="stat-card stat-card-row">' +
+            function iconCard(bg, iconKey, label, value, valueCls, delay) {
+                return '<div class="stat-card stat-card-row" style="animation-delay:'+delay+'s">' +
                     '<div class="stat-card-icon" style="background:'+bg+';">'+icons[iconKey]+'</div>' +
                     '<div class="stat-card-info">' +
                     '<div class="stat-card-label">'+label+'</div>' +
                     '<div class="stat-card-value '+(valueCls||'')+'">'+value+'</div>' +
-                    (badge ? '<div class="stat-card-badge">'+badge+'</div>' : '') +
+                    '</div></div>';
+            }
+            function miniCard(color, iconKey, label, value, valueCls, sub) {
+                return '<div class="stat-card stat-card-mini">' +
+                    '<div class="stat-card-mini-icon" style="background:'+color+'1a;color:'+color+';">'+icons[iconKey]+'</div>' +
+                    '<div class="stat-card-info">' +
+                    '<div class="stat-card-label">'+label+'</div>' +
+                    '<div class="stat-card-value '+(valueCls||'')+'">'+value+'</div>' +
                     '</div></div>';
             }
 
+            var now = new Date();
+            var dateStr = now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+
             var html = '<div class="dash-layout">';
+            // 顶部欢迎横幅
+            html += '<div class="dash-hero">';
+            html += '<div class="dash-hero-info">';
+            html += '<div class="dash-hero-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/></svg>仪表台</div>';
+            html += '<div class="dash-hero-sub">'+dateStr+' · 素材 '+patterns.length+' 个 · 授权收入 '+formatMoney(totalRevenue)+'</div>';
+            html += '</div>';
+            html += '<div class="dash-hero-stat"><div class="dash-hero-num">'+patterns.length+'</div><div class="dash-hero-num-label">素材总数</div></div>';
+            html += '</div>';
+
             // 左栏：数据统计 + 授权概览
             html += '<div class="dash-left">';
 
             html += '<div class="stats-grid">';
-            html += iconCard('#7C5CFC', 'box', '素材总数', patterns.length, 'accent');
-            html += iconCard('#38a169', 'check', '可授权', available, 'success');
-            html += iconCard('#e53e3e', 'lock', '已买断', boughtOut, 'danger');
-            html += iconCard('#dd6b20', 'dollar', '授权收入', formatMoney(totalRevenue), 'warning');
+            html += iconCard('linear-gradient(135deg,#8B5CF6,#6D28D9)', 'box', '素材总数', patterns.length, 'accent', 0.06);
+            html += iconCard('linear-gradient(135deg,#34D399,#059669)', 'check', '可授权', available, 'success', 0.12);
+            html += iconCard('linear-gradient(135deg,#F87171,#DC2626)', 'lock', '已买断', boughtOut, 'danger', 0.18);
+            html += iconCard('linear-gradient(135deg,#FBBF24,#D97706)', 'dollar', '授权收入', formatMoney(totalRevenue), 'warning', 0.24);
             html += '</div>';
 
             // 第二行：类型 / 元素 / 色板统计
             html += '<div class="stats-grid">';
-            html += iconCard('#6366f1', 'grid', '四方图素材', patternCount);
-            html += iconCard('#805ad5', 'user', '人物素材', charCount);
-            html += iconCard('#00b5d8', 'shapes', '元素库', elementCount);
-            html += iconCard('#d69e2e', 'palette', '色板', paletteCount);
+            html += iconCard('linear-gradient(135deg,#818CF8,#4F46E5)', 'grid', '四方图素材', patternCount, '', 0.30);
+            html += iconCard('linear-gradient(135deg,#A78BFA,#7C3AED)', 'user', '人物素材', charCount, '', 0.36);
+            html += iconCard('linear-gradient(135deg,#22D3EE,#0891B2)', 'shapes', '元素库', elementCount, '', 0.42);
+            html += iconCard('linear-gradient(135deg,#FCD34D,#D97706)', 'palette', '色板', paletteCount, '', 0.48);
             html += '</div>';
 
             // 授权概览
-            html += '<div class="panel"><div class="panel-header"><span class="panel-title">授权概览</span><button class="btn-secondary btn-sm" onclick="app.switchModule(\'licenses\')">管理授权</button></div><div class="panel-body">';
+            html += '<div class="panel dash-license-panel"><div class="panel-header"><span class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>授权概览</span><button class="btn-secondary btn-sm" onclick="app.switchModule(\'licenses\')">管理授权</button></div><div class="panel-body">';
             var byType = { buyout:0, exclusive:0, 'non-exclusive':0 };
             licenses.forEach(function(l){ byType[l.licenseType] = (byType[l.licenseType]||0)+1; });
             var paidCount = licenses.filter(function(l){ return l.paymentStatus === 'paid'; }).length;
@@ -1379,14 +1433,14 @@
             var unpaidCount2 = licenses.filter(function(l){ return !l.paymentStatus || l.paymentStatus === 'unpaid'; }).length;
             var permCount = licenses.filter(function(l){ return l.durationType === 'permanent'; }).length;
             html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">';
-            html += '<div class="stat-card"><div class="stat-card-label">买断</div><div class="stat-card-value danger">'+byType.buyout+'</div><div class="stat-card-sub">笔</div></div>';
-            html += '<div class="stat-card"><div class="stat-card-label">独家授权</div><div class="stat-card-value warning">'+byType.exclusive+'</div><div class="stat-card-sub">笔</div></div>';
-            html += '<div class="stat-card"><div class="stat-card-label">非独家授权</div><div class="stat-card-value success">'+byType['non-exclusive']+'</div><div class="stat-card-sub">笔</div></div>';
+            html += miniCard('#DC2626', 'lock', '买断', byType.buyout, 'danger');
+            html += miniCard('#D97706', 'star', '独家授权', byType.exclusive, 'warning');
+            html += miniCard('#059669', 'doc', '非独家授权', byType['non-exclusive'], 'success');
             html += '</div>';
             html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">';
-            html += '<div class="stat-card"><div class="stat-card-label">已付清</div><div class="stat-card-value success">'+paidCount+'</div><div class="stat-card-sub">笔</div></div>';
-            html += '<div class="stat-card"><div class="stat-card-label">部分付款</div><div class="stat-card-value warning">'+(partialCount+unpaidCount2)+'</div><div class="stat-card-sub">待收款</div></div>';
-            html += '<div class="stat-card"><div class="stat-card-label">永久授权</div><div class="stat-card-value accent">'+permCount+'</div><div class="stat-card-sub">笔</div></div>';
+            html += miniCard('#059669', 'check', '已付清', paidCount, 'success');
+            html += miniCard('#D97706', 'clock', '部分付款', partialCount+unpaidCount2, 'warning');
+            html += miniCard('#7C5CFC', 'grid', '永久授权', permCount, 'accent');
             html += '</div>';
             html += '</div></div>';
             html += '</div>'; // end dash-left
