@@ -1,7 +1,7 @@
 {
   "hero": {
-    "type": "image",
-    "src": "./works/images/BG_compressed.jpg"
+    "type": "video",
+    "src": "./works/images/BG_compressed.mp4"
   },
   "cards": [
     {
