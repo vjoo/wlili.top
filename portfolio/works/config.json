@@ -1,0 +1,103 @@
+{
+  "hero": {
+    "type": "image",
+    "src": "./works/images/BG_compressed.jpg"
+  },
+  "cards": [
+    {
+      "id": "item-1",
+      "cover": "./works/images/cards/card-new-1786091768302.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-2",
+      "cover": "./works/images/cards/card-new-1786091768689.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-3",
+      "cover": "./works/images/cards/card-new-1786091768941.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-4",
+      "cover": "./works/images/cards/card-new-1786091769068.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-6",
+      "cover": "./works/images/cards/card-new-1786091769449.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-7",
+      "cover": "./works/images/cards/card-new-1786091769704.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-8",
+      "cover": "./works/images/cards/card-new-1786091769835.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-5",
+      "cover": "./works/images/cards/card-new-1786091769327.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-9",
+      "cover": "./works/images/cards/card-new-1786091770093.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-10",
+      "cover": "./works/images/cards/card-new-1786091770224.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-11",
+      "cover": "./works/images/cards/card-new-1786091770482.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-18",
+      "cover": "./works/images/cards/card-new-1786091771789.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-12",
+      "cover": "./works/images/cards/card-new-1786091770620.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-13",
+      "cover": "./works/images/cards/card-new-1786091770860.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-14",
+      "cover": "./works/images/cards/card-new-1786091771011.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-16",
+      "cover": "./works/images/cards/card-new-1786091771396.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-17",
+      "cover": "./works/images/cards/card-new-1786091771626.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-15",
+      "cover": "./works/images/cards/card-new-1786091771246.jpg",
+      "enabled": true
+    },
+    {
+      "id": "item-19",
+      "cover": "./works/images/cards/card-new-1786095283638.jpg",
+      "enabled": true
+    }
+  ]
+}

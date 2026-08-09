@@ -159,7 +159,7 @@
     return '<nav class="global-nav">' +
   '<div class="global-nav-content">' +
     '<div class="nav-brand-group">' +
-      '<a href="./index.html" class="nav-logo">' +
+      '<a href="../index.html" class="nav-logo">' +
         '<div class="logo-box">W.</div>' +
         '<span id="navBrandText">Studio Tools</span>' +
         privacyTag() +
