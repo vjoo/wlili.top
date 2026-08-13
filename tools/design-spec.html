@@ -332,6 +332,7 @@ var NAV = [
     { id: 'typography', label: '字体排版', icon: 'type' },
     { id: 'radius', label: '圆角系统', icon: 'square' },
     { id: 'zindex', label: '层级系统', icon: 'layers' },
+    { id: 'scales', label: '刻度体系', icon: 'ruler' },
   ]},
   { section: '组件', items: [
     { id: 'buttons', label: '按钮', icon: 'hand-pointer' },
@@ -361,6 +362,7 @@ var ICONS = {
   zap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
   smartphone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
   file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  ruler: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="20" height="8" rx="1"/><line x1="6" y1="8" x2="6" y2="11"/><line x1="10" y1="8" x2="10" y2="11"/><line x1="14" y1="8" x2="14" y2="11"/><line x1="18" y1="8" x2="18" y2="11"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
 };
 
 /* 颜色数据 */
@@ -435,35 +437,67 @@ var ZINDEX = [
   { name: 'z-toast', val: 3000, desc: 'Toast 提示（最高）', width: 280 },
 ];
 
+/* 刻度体系（4px 基数间距 + 字号 + 阴影，common.css :root） */
+var SCALES = {
+  space: [
+    { var: '--space-1', val: '4px' },
+    { var: '--space-2', val: '8px' },
+    { var: '--space-3', val: '12px' },
+    { var: '--space-4', val: '16px' },
+    { var: '--space-5', val: '20px' },
+    { var: '--space-6', val: '24px' },
+    { var: '--space-8', val: '32px' },
+    { var: '--space-10', val: '40px' },
+    { var: '--space-12', val: '48px' },
+    { var: '--space-16', val: '64px' },
+  ],
+  fs: [
+    { var: '--fs-xs', val: '12px' },
+    { var: '--fs-sm', val: '13px' },
+    { var: '--fs-base', val: '14px' },
+    { var: '--fs-md', val: '16px' },
+    { var: '--fs-lg', val: '18px' },
+    { var: '--fs-xl', val: '20px' },
+    { var: '--fs-2xl', val: '24px' },
+    { var: '--fs-3xl', val: '32px' },
+    { var: '--fs-4xl', val: '40px' },
+  ],
+  shadow: [
+    { var: '--shadow-sm', val: '0 1px 2px rgba(0,0,0,0.05)', desc: '轻微悬浮' },
+    { var: '--shadow-md', val: '0 4px 12px rgba(0,0,0,0.08)', desc: '卡片/浮层' },
+    { var: '--shadow-lg', val: '0 12px 40px rgba(0,0,0,0.12)', desc: '弹窗/大面积浮层' },
+  ],
+};
+
 /* 按钮组件 */
 var BUTTONS = [
   {
-    name: '.btn-filled（实心按钮）', src: 'common.css L234-255',
+    name: '.btn-filled（实心按钮）', src: 'common.css L332-353',
     preview: '<button class="btn-filled">主要操作</button>',
     props: { 'background':'var(--fill-black) #2B3041','color':'var(--fill-white) #fff','padding':'8px 20px','font-size':'17px','font-weight':'400','border':'1.5px solid var(--fill-black)','border-radius':'var(--radius-pill) 980px','transition':'opacity 0.3s',':hover':'opacity: 0.85',':active':'transform: scale(0.98)',':disabled':'opacity: 0.35' }
   },
   {
-    name: '.btn-outline（描边按钮）', src: 'common.css L257-278',
+    name: '.btn-outline（描边按钮）', src: 'common.css L355-376',
     preview: '<button class="btn-outline">次要操作</button>',
     props: { 'background':'transparent','color':'var(--ink) #2B3041','padding':'8px 20px','font-size':'17px','border':'1.5px solid var(--border)','border-radius':'var(--radius-pill)','transition':'all 0.3s',':hover':'border-color: var(--ink)',':active':'transform: scale(0.98)' }
   },
   {
-    name: '.btn-link（链接按钮）', src: 'common.css L280-291',
+    name: '.btn-link（链接按钮）', src: 'common.css L378-389',
     preview: '<button class="btn-link">文字链接</button>',
     props: { 'color':'var(--link) #6366f1','font-size':'17px','background':'none','border':'none','padding':'0','transition':'color 0.2s',':hover':'color: var(--link-hover); text-decoration: underline' }
   },
   {
-    name: '.btn-danger-outline（危险按钮）', src: 'common.css L295-316',
+    name: '.btn-danger-outline（危险按钮）', src: 'common.css L393-416',
     preview: '<button class="btn-danger-outline">删除</button>',
     props: { 'color':'var(--red) #ff3b30','border':'1.5px solid rgba(255,59,48,0.3)','border-radius':'var(--radius-pill)',':hover':'border-color: var(--red); background: rgba(255,59,48,0.04)' }
   },
   {
-    name: '.btn-sm（小尺寸修饰）', src: 'common.css L293',
+    name: '.btn-sm（小尺寸修饰）', src: 'common.css L391',
     preview: '<button class="btn-filled btn-sm">小按钮</button> <button class="btn-outline btn-sm">小按钮</button>',
-    props: { 'font-size':'14px','padding':'6px 14px','letter-spacing':'-0.016em' }
+    props: { 'font-size':'14px','padding':'8px 16px','letter-spacing':'-0.016em' }
   },
   {
-    name: '.icon-btn（图标按钮）', src: 'common.css L319-335',
+    name: '.icon-btn（图标按钮）', src: 'common.css L417-433',
     preview: '<button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>',
     props: { 'width':'34px','height':'34px','border':'1px solid var(--border-light)','border-radius':'var(--radius-sm) 8px','background':'var(--bg-white)','color':'var(--ink-secondary)','svg':'16×16px',':hover':'border-color: var(--ink); color: var(--ink)',':active':'transform: scale(0.95)' }
   },
@@ -472,36 +506,36 @@ var BUTTONS = [
 /* 表单控件 */
 var FORMS = [
   {
-    name: '.text-input（文本输入框）', src: 'common.css L378-392',
+    name: '.text-input（文本输入框）', src: 'common.css L476-490',
     preview: '<input class="text-input" placeholder="输入…" style="width:140px;">',
-    props: { 'background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'var(--radius-md) 11px','padding':'6px 14px','font-size':'14px','width':'80px','height':'36px',':focus':'border-color: var(--link); box-shadow: 0 0 0 3px rgba(0,102,204,0.12)','::placeholder':'color: var(--ink-quaternary)' }
+    props: { 'background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'var(--radius-md) 11px','padding':'8px 16px','font-size':'14px','width':'80px','height':'36px',':focus':'border-color: var(--link); box-shadow: 0 0 0 3px rgba(0,102,204,0.12)','::placeholder':'color: var(--ink-quaternary)' }
   },
   {
-    name: '.segmented-control（分段控件）', src: 'common.css L338-375',
+    name: '.segmented-control（分段控件）', src: 'common.css L436-473',
     preview: '<div class="segmented-control" style="width:280px;"><button class="segment-btn active">选项一</button><button class="segment-btn">选项二</button><button class="segment-btn">选项三</button></div>',
-    props: { 'display':'flex','background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'var(--radius-pill)','padding':'2px','gap':'2px','height':'36px','.active':'background: var(--fill-black); color: var(--fill-white)' }
+    props: { 'display':'flex','background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'var(--radius-pill)','padding':'4px','gap':'4px','height':'36px','.active':'background: var(--fill-black); color: var(--fill-white)' }
   },
 ];
 
 /* 布局组件 */
 var LAYOUT = [
   {
-    name: '.page-hero（页面标题区）', src: 'common.css L199-223',
+    name: '.page-hero（页面标题区）', src: 'common.css L298-321',
     preview: '<div style="text-align:center;padding:24px;background:var(--bg-white);border-radius:11px;width:100%;"><div style="font-size:28px;font-weight:600;color:var(--ink);margin-bottom:4px;">Studio Tools</div><div style="font-size:14px;color:var(--ink-tertiary);">简洁高效的在线工具集合</div></div>',
-    props: { 'padding':'48px 22px 32px','text-align':'center','h1 font-size':'48px → 40px → 32px','h1 font-weight':'600','p font-size':'21px → 17px','p max-width':'600px','background':'var(--bg-white)' }
+    props: { 'padding':'48px 24px 32px','text-align':'center','h1 font-size':'48px → 40px → 32px','h1 font-weight':'600','p font-size':'21px → 17px','p max-width':'600px','background':'var(--bg-white)' }
   },
   {
-    name: '.section / .section-inner（内容区）', src: 'common.css L225-231',
-    preview: '<div style="padding:16px;background:var(--bg);border-radius:8px;width:100%;"><div style="max-width:400px;margin:0 auto;padding:0 22px;background:var(--bg-white);border-radius:4px;padding:12px;text-align:center;font-size:12px;color:var(--ink-tertiary);">max-width: 980px 居中</div></div>',
-    props: { '.section padding':'32px 0 64px','.section-inner max-width':'980px','.section-inner margin':'0 auto','.section-inner padding':'0 22px','移动端 padding':'0 16px' }
+    name: '.section / .section-inner（内容区）', src: 'common.css L324-329',
+    preview: '<div style="padding:16px;background:var(--bg);border-radius:8px;width:100%;"><div style="max-width:400px;margin:0 auto;padding:0 24px;background:var(--bg-white);border-radius:4px;padding:12px;text-align:center;font-size:12px;color:var(--ink-tertiary);">max-width: 980px 居中</div></div>',
+    props: { '.section padding':'32px 0 64px','.section-inner max-width':'980px','.section-inner margin':'0 auto','.section-inner padding':'0 24px','移动端 padding':'0 16px' }
   },
   {
-    name: '.stats-row / .stat-card（统计行）', src: 'common.css L453-487',
+    name: '.stats-row / .stat-card（统计行）', src: 'common.css L552-586',
     preview: '<div class="stats-row" style="margin:0;width:100%;"><div class="stat-card"><div class="stat-label">总数</div><div class="stat-val">42</div></div><div class="stat-card"><div class="stat-label">今日</div><div class="stat-val accent">7</div></div></div>',
     props: { 'grid-template-columns':'repeat(4, 1fr) → 2列','gap':'12px → 8px','.stat-card padding':'16px → 12px','.stat-val font-size':'26px → 22px','border':'1px solid var(--border-light)','border-radius':'var(--radius-md) 11px' }
   },
   {
-    name: '.actions-row（操作按钮行）', src: 'common.css L490-496',
+    name: '.actions-row（操作按钮行）', src: 'common.css L588-593',
     preview: '<div class="actions-row"><button class="btn-filled btn-sm">操作一</button><button class="btn-outline btn-sm">操作二</button></div>',
     props: { 'display':'flex','gap':'12px → 8px','justify-content':'center','flex-wrap':'wrap' }
   },
@@ -510,28 +544,28 @@ var LAYOUT = [
 /* 导航组件 */
 var NAV_COMPS = [
   {
-    name: '.global-nav（全局导航栏）', src: 'common.css L53-61',
-    preview: '<div style="display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:48px;background:var(--bg);border-bottom:1px solid var(--border-light);border-radius:6px;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:var(--fill-black);border-radius:5px;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;">W.</div><span style="font-size:14px;font-weight:600;">Studio Tools</span></div><div style="display:flex;gap:16px;font-size:12px;color:var(--ink-tertiary);">Studio Tools ▾</div></div>',
-    props: { 'height':'48px','background':'var(--bg) #f5f5f7','position':'sticky; top: 0','z-index':'var(--z-nav) 1000','border-bottom':'1px solid var(--border-light)','padding':'0 22px → 0 16px' }
+    name: '.global-nav（全局导航栏）', src: 'common.css L81-88',
+    preview: '<div style="display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:48px;background:var(--bg);border-bottom:1px solid var(--border-light);border-radius:6px;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:var(--fill-black);border-radius:5px;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;">W.</div><span style="font-size:14px;font-weight:600;">Studio Tools</span></div><div style="display:flex;gap:16px;font-size:12px;color:var(--ink-tertiary);">Studio Tools ▾</div></div>',
+    props: { 'height':'48px','background':'var(--bg) #f5f5f7','position':'sticky; top: 0','z-index':'var(--z-nav) 1000','border-bottom':'1px solid var(--border-light)','padding':'0 24px → 0 16px' }
   },
   {
-    name: '.nav-dropdown-menu（下拉菜单）', src: 'common.css L134-157',
-    preview: '<div style="position:relative;"><div style="background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:6px;min-width:150px;box-shadow:0 8px 30px rgba(0,0,0,0.12);"><div style="padding:8px 16px;font-size:13px;border-radius:8px;background:var(--bg);">图片压缩</div><div style="padding:8px 16px;font-size:13px;">配图排版</div></div></div>',
-    props: { 'position':'absolute; top: 100%; right: 0','background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'12px','padding':'6px','min-width':'150px','box-shadow':'0 8px 30px rgba(0,0,0,0.12)' }
+    name: '.nav-mega-menu（Mega Menu）', src: 'common.css L163-177',
+    preview: '<div style="position:relative;"><div style="background:#fff;border:1px solid var(--border-light);border-radius:11px;padding:8px 12px;width:280px;box-shadow:0 8px 30px rgba(0,0,0,0.12);"><div style="background:var(--bg);border-radius:8px;padding:8px 12px 8px 32px;font-size:13px;color:var(--ink-quaternary);position:relative;">搜索工具...</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 0;margin-top:8px;"><div style="font-size:12px;font-weight:600;color:var(--ink-secondary);padding:8px;border-bottom:1px solid var(--border-light);">图像处理</div><div style="font-size:12px;font-weight:600;color:var(--ink-secondary);padding:8px;border-bottom:1px solid var(--border-light);">换算/安全</div><div style="padding:8px;font-size:13px;">图片压缩</div><div style="padding:8px;font-size:13px;">在线换算</div></div></div></div>',
+    props: { 'position':'absolute; top: 100%; right: 0','background':'var(--bg-white)','border':'1px solid var(--border-light)','border-radius':'var(--radius-md) 11px','padding':'0','width':'520px','box-shadow':'0 8px 30px rgba(0,0,0,0.12)','.nav-mega-search padding':'8px 12px','.nav-mega-item padding':'8px 8px' }
   },
 ];
 
 /* 反馈组件 */
 var FEEDBACK = [
   {
-    name: '.toast（轻提示）', src: 'common.css L433-451',
+    name: '.toast（轻提示）', src: 'common.css L531-549',
     preview: '<div style="background:var(--fill-black);color:#fff;border-radius:18px;padding:14px 24px;font-size:14px;">操作成功</div>',
-    props: { 'position':'fixed; 居中','background':'var(--fill-black)','color':'var(--fill-white)','border-radius':'var(--radius-lg) 18px','padding':'16px 28px','font-size':'15px','box-shadow':'0 8px 40px rgba(0,0,0,0.2)','transition':'all 0.35s cubic-bezier(0.22,0.61,0.36,1)','z-index':'var(--z-toast) 3000' }
+    props: { 'position':'fixed; 居中','background':'var(--fill-black)','color':'var(--fill-white)','border-radius':'var(--radius-lg) 18px','padding':'16px 32px','font-size':'15px','box-shadow':'0 8px 40px rgba(0,0,0,0.2)','transition':'all 0.35s cubic-bezier(0.22,0.61,0.36,1)','z-index':'var(--z-toast) 3000' }
   },
   {
-    name: '.dropzone（拖放区域）', src: 'common.css L394-430',
+    name: '.dropzone（拖放区域）', src: 'common.css L493-508',
     preview: '<div style="border:2px dashed var(--border);border-radius:18px;padding:24px;text-align:center;background:var(--bg-white);"><div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:4px;">拖放文件到此处</div><div style="font-size:12px;color:var(--ink-tertiary);">或点击选择文件</div></div>',
-    props: { 'border':'2px dashed var(--border)','border-radius':'var(--radius-lg) 18px','padding':'90px 32px 120px → 36px 16px',':hover':'border-color: var(--link); background: var(--bg)','.drop-title font-size':'21px → 17px','.drop-desc font-size':'14px → 12px' }
+    props: { 'border':'2px dashed var(--border)','border-radius':'var(--radius-lg) 18px','padding':'96px 32px 128px → 32px 16px',':hover':'border-color: var(--link); background: var(--bg)','.drop-title font-size':'21px → 17px','.drop-desc font-size':'14px → 12px' }
   },
 ];
 
@@ -554,7 +588,8 @@ var MOTION = [
 /* 响应式断点 */
 var BREAKPOINTS = [
   { width: '1068px', label: '平板', desc: 'page-hero h1 从 48px 缩至 40px；工具网格 4列→3列', src: 'common.css / index.html' },
-  { width: '860px', label: '小屏', desc: '工具网格 3列→2列；双栏布局开始堆叠', src: 'index.html / 多页' },
+  { width: '900px', label: '侧边栏专用', desc: '侧边栏页面（filament/print/seamless）显示菜单按钮', src: 'nav.js fallback' },
+  { width: '860px', label: '小屏（页面私有）', desc: '工具网格 3列→2列；双栏布局开始堆叠', src: 'index.html / 多页' },
   { width: '734px', label: '手机（主断点）', desc: 'hero padding/字号缩小；section padding 缩小；stats 4列→2列；导航 padding 缩小；dropzone padding 缩小；工具网格→1列', src: 'common.css' },
   { width: '600px', label: '小手机', desc: '导航品牌文字隐藏；隐私提示隐藏；侧边栏页面显示菜单按钮', src: 'common.css' },
   { width: '480px', label: '超小屏', desc: '导航链接隐藏；按钮字号 17px→14px；分段控件字号 13px→11px', src: 'common.css' },
@@ -639,14 +674,14 @@ function renderContent() {
   var html = '';
 
   /* 概览 */
-  html += section('overview', '概览', '设计系统总览', '<span class="count">' + '13 个板块</span>', [
+  html += section('overview', '概览', '设计系统总览', '<span class="count">' + '14 个板块</span>', [
     kpiRow([
-      { val: '17', label: 'CSS 变量' },
+      { val: '52', label: '设计令牌' },
       { val: '6', label: '按钮类型' },
       { val: '4', label: '圆角档位' },
       { val: '5', label: '响应式断点' },
     ]),
-    '<div style="font-size:14px;color:var(--ink-tertiary);line-height:1.6;margin-top:8px;">本页面自动扫描了 <code style="font-family:ui-monospace,monospace;font-size:13px;background:var(--bg);padding:1px 5px;border-radius:3px;">common.css</code> 及 16 个工具页面的内联样式，提取出所有 Design Token 与组件规范。每个组件标注了来源文件，方便定位修改。</div>',
+    '<div style="font-size:14px;color:var(--ink-tertiary);line-height:1.6;margin-top:8px;">本页面扫描了 <code style="font-family:ui-monospace,monospace;font-size:13px;background:var(--bg);padding:1px 5px;border-radius:3px;">common.css</code> 及工具页面的内联样式，提取 Design Token 与组件规范。除颜色/圆角/层级外，已纳入新框架的<b>刻度体系</b>（4px 基数间距刻度、字号刻度、阴影刻度）与吸附规则。每个组件标注了来源文件与行号，方便定位修改。</div>',
   ]);
 
   /* 颜色系统 */
@@ -697,6 +732,35 @@ function renderContent() {
   });
   zHtml += '</div>';
   html += section('zindex', '层级系统', '语义化 Z-index 层级，避免随意取值', '', [zHtml]);
+
+  /* 刻度体系 */
+  var scaleHtml = '<div>';
+  scaleHtml += '<div style="font-size:14px;font-weight:600;color:var(--ink-secondary);margin-bottom:10px;">间距刻度（4px 基数，padding/margin/gap 只允许取刻度值）</div>';
+  scaleHtml += '<div style="padding:4px 0;">';
+  SCALES.space.forEach(function(s) {
+    scaleHtml += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+      '<span style="width:92px;font-family:ui-monospace,monospace;font-size:13px;color:var(--ink-secondary);flex-shrink:0;">' + s.var + '</span>' +
+      '<span style="width:52px;font-size:13px;color:var(--ink-quaternary);flex-shrink:0;">' + s.val + '</span>' +
+      '<div style="height:16px;background:var(--link);border-radius:4px;width:' + s.val + ';"></div></div>';
+  });
+  scaleHtml += '</div>';
+  scaleHtml += '<div style="font-size:13px;color:var(--ink-tertiary);margin:12px 0 4px;line-height:1.7;">页面级流式间距：<code style="font-family:ui-monospace,monospace;font-size:12px;background:var(--bg);padding:1px 6px;border-radius:4px;">--space-page: clamp(16px, 4vw, 48px)</code>（Section 上下留白用它，随视口平滑缩放）。<br>吸附规则：6→8、7→8、9→8、10→8、14→16、22→24、28→32、30→32、36→32/40、45→48、90→96、120→128；<b>禁止</b> 2/3/5/6/7/9/10/13/14/15/17/18/21/22/23/25~31/33~39/42/45/50/90/120 等非刻度间距。</div>';
+  scaleHtml += '<div style="font-size:14px;font-weight:600;color:var(--ink-secondary);margin:24px 0 10px;">字号刻度</div>';
+  SCALES.fs.forEach(function(s) {
+    scaleHtml += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+      '<span style="width:92px;font-family:ui-monospace,monospace;font-size:13px;color:var(--ink-secondary);flex-shrink:0;">' + s.var + '</span>' +
+      '<span style="width:52px;font-size:13px;color:var(--ink-quaternary);flex-shrink:0;">' + s.val + '</span>' +
+      '<span style="font-weight:600;color:var(--ink);font-size:' + s.val + ';">Aa 示例</span></div>';
+  });
+  scaleHtml += '<div style="font-size:14px;font-weight:600;color:var(--ink-secondary);margin:24px 0 10px;">阴影刻度</div>';
+  SCALES.shadow.forEach(function(s) {
+    scaleHtml += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">' +
+      '<span style="width:92px;font-family:ui-monospace,monospace;font-size:13px;color:var(--ink-secondary);flex-shrink:0;">' + s.var + '</span>' +
+      '<span style="width:150px;font-size:13px;color:var(--ink-quaternary);flex-shrink:0;">' + s.val + '</span>' +
+      '<span style="box-shadow:var(' + s.var + ');padding:10px 16px;border-radius:8px;background:var(--bg-white);font-size:13px;color:var(--ink);">' + s.desc + '</span></div>';
+  });
+  scaleHtml += '</div>';
+  html += section('scales', '刻度体系', '4px 基数间距刻度、字号刻度与阴影刻度（common.css :root 新增），规范所有间距值', '', [scaleHtml]);
 
   /* 按钮组件 */
   html += section('buttons', '按钮组件', BUTTONS.length + ' 种按钮类型，统一使用胶囊圆角', '<span class="count">' + BUTTONS.length + '</span>', [renderComps(BUTTONS)]);
@@ -752,7 +816,7 @@ function renderContent() {
     bpHtml += '<div class="bp-row"><div class="bp-width">≤' + bp.width + '</div><div class="bp-label">' + bp.label + '</div><div class="bp-desc">' + bp.desc + '</div></div>';
   });
   bpHtml += '</div>';
-  html += section('responsive', '响应式断点', '5 个宽度断点，734px 是主移动断点', '<span class="count">' + BREAKPOINTS.length + '</span>', [bpHtml]);
+  html += section('responsive', '响应式断点', '5 个公共断点（1068/900/734/600/480px，900 为侧边栏专用）+ 页面私有断点，734px 是主移动断点', '<span class="count">' + BREAKPOINTS.length + '</span>', [bpHtml]);
 
   /* 页面专属组件 */
   var pcHtml = '';

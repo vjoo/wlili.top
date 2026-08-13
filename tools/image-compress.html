@@ -7,11 +7,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>W.-图片压缩工具</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/dist/gifuct-js.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ============================================
    WLi Tools - 在线工具集
@@ -50,46 +45,6 @@
     font-size: 12px;
     margin-left: 4px;
   }
-
-  /* Segmented Control */
-  .segmented-control {
-    display: flex;
-    flex-wrap: nowrap;
-    background: var(--bg-white);
-    border-radius: var(--radius-pill);
-    padding: 2px;
-    gap: 2px;
-    border: 1px solid var(--border-light);
-    height: 36px;
-    width: 100%;
-    overflow: hidden;
-  }
-  .segment-btn {
-    padding: 6px 0;
-    border: none;
-    border-radius: var(--radius-pill);
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--ink);
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    touch-action: manipulation;
-    font-family: inherit;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1 1 0;
-    min-width: 0;
-  }
-  .segment-btn.active {
-    background: var(--fill-black);
-    color: var(--fill-white);
-  }
-  .segment-btn:not(.active):hover { background: rgba(0,0,0,0.04); }
-  .segment-btn:active { transform: scale(0.97); }
 
   /* Range Input */
   input[type="range"] {
@@ -220,6 +175,39 @@
   .card-btn:hover { border-color: var(--link); color: var(--link); background: rgba(0,102,204,0.04); }
   .card-btn.danger:hover { border-color: var(--ink); color: var(--ink); background: rgba(0,0,0,0.04); }
 
+  /* ===== Loader Overlay ===== */
+  .loader-overlay {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.86);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 9999;
+  }
+  .loader-overlay.visible { display: flex; }
+  .loader-box { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .loader-spin {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border-light);
+    border-top-color: var(--link);
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+  }
+  .loader-text { font-size: 13px; color: var(--ink-secondary); letter-spacing: -0.01em; }
+  @keyframes loaderSpin { to { transform: rotate(360deg); } }
+
+  /* Mini spinner (inline, for cards) */
+  .mini-spin {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid var(--border-light);
+    border-top-color: var(--link);
+    border-radius: 50%;
+    animation: loaderSpin 0.8s linear infinite;
+    vertical-align: -2px;
+    margin-right: 5px;
+  }
+  .card-loading { color: var(--link); font-size: 12px; display: inline-flex; align-items: center; }
+
   /* ===== Responsive ===== */
   @media (max-width: 734px) {
     .settings-bar { padding: 16px; gap: 14px; }
@@ -322,6 +310,14 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Loader Overlay -->
+<div class="loader-overlay" id="loaderOverlay">
+  <div class="loader-box">
+    <div class="loader-spin"></div>
+    <div class="loader-text" id="loaderText">加载中…</div>
+  </div>
+</div>
+
 <script>
 /* ============================================
    WLi Tools - 在线工具集
@@ -340,6 +336,8 @@
   const progressText = document.getElementById('progressText');
   const statsRow   = document.getElementById('statsRow');
   const toastEl    = document.getElementById('toast');
+  const loaderOverlay = document.getElementById('loaderOverlay');
+  const loaderText = document.getElementById('loaderText');
   const btnCompressAll = document.getElementById('btnCompressAll');
   const btnDownloadAll = document.getElementById('btnDownloadAll');
   const btnClear    = document.getElementById('btnClear');
@@ -375,6 +373,40 @@
   }
   function getExt(fmt) {
     return { 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/avif':'avif','image/svg+xml':'svg','application/pdf':'pdf','image/gif':'gif' }[fmt] || 'jpg';
+  }
+
+  // ─── Lazy Script Loader ───────────────────
+  // 按需加载第三方库，避免页面打开时阻塞渲染
+  const LIBS = {
+    jszip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+    pdf:   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+    gifuct:'https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/dist/gifuct-js.min.js',
+    gifjs: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js',
+    jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+  };
+  const _scriptCache = {};
+  function loadScript(src) {
+    if (_scriptCache[src]) return _scriptCache[src];
+    _scriptCache[src] = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => { _scriptCache[src] = null; reject(new Error('脚本加载失败: ' + src)); };
+      document.head.appendChild(s);
+    });
+    return _scriptCache[src];
+  }
+
+  // ─── Loader Overlay ───────────────────────
+  let _loaderTimer;
+  function showLoader(msg) {
+    clearTimeout(_loaderTimer);
+    loaderText.textContent = msg || '加载中…';
+    loaderOverlay.classList.add('visible');
+  }
+  function hideLoader(delay) {
+    if (delay) { _loaderTimer = setTimeout(() => loaderOverlay.classList.remove('visible'), delay); }
+    else { loaderOverlay.classList.remove('visible'); }
   }
 
   // ─── Settings ─────────────────────────────
@@ -435,66 +467,60 @@
     else { showToast('未识别到有效图片文件'); }
   }
 
-  // Pre-process PDF: render first page as image
-  function processPdfFile(imgObj) {
-    if (typeof pdfjsLib !== 'undefined') {
+  // Pre-process PDF: render first page as image (lazy-loads pdf.js)
+  async function processPdfFile(imgObj) {
+    imgObj.status = 'loading'; renderCard(imgObj);
+    try {
+      await loadScript(LIBS.pdf);
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const arrayBuffer = await imgObj.file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 2 });
+      const pdfCanvas = document.createElement('canvas');
+      pdfCanvas.width = viewport.width;
+      pdfCanvas.height = viewport.height;
+      const pdfCtx = pdfCanvas.getContext('2d');
+      await page.render({ canvasContext: pdfCtx, viewport }).promise;
+      const blob = await new Promise(res => pdfCanvas.toBlob(res, 'image/png'));
+      imgObj._pdfBlob = blob;
+      imgObj._pdfName = imgObj.file.name.replace(/\.pdf$/i, '.png');
+      imgObj.status = 'pending';
+    } catch(err) {
+      imgObj.status = 'error';
+      imgObj.compressError = 'PDF 解析失败';
     }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const typedArray = new Uint8Array(e.target.result);
-      pdfjsLib.getDocument({ data: typedArray }).promise.then(function(pdf) {
-        pdf.getPage(1).then(function(page) {
-          const scale = 2;
-          const viewport = page.getViewport({ scale: scale });
-          const pdfCanvas = document.createElement('canvas');
-          pdfCanvas.width = viewport.width;
-          pdfCanvas.height = viewport.height;
-          const pdfCtx = pdfCanvas.getContext('2d');
-          page.render({ canvasContext: pdfCtx, viewport: viewport }).promise.then(function() {
-            pdfCanvas.toBlob(function(blob) {
-              imgObj._pdfBlob = blob;
-              imgObj._pdfName = imgObj.file.name.replace(/\.pdf$/i, '.png');
-              renderCard(imgObj);
-            }, 'image/png');
-          });
-        });
-      }).catch(function(err) {
-        imgObj.status = 'error';
-        imgObj.compressError = 'PDF 解析失败';
-        renderCard(imgObj);
-      });
-    };
-    reader.readAsArrayBuffer(imgObj.file);
+    renderCard(imgObj);
   }
 
-  // Pre-process GIF: parse animation frames
-  function processGifFile(imgObj) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const gif = gifuct.parseGIF(e.target.result);
-        const frames = gifuct.decompressFrames(gif, true);
-        if (frames.length > 1) {
-          const gifW = gif.lsd.width;
-          const gifH = gif.lsd.height;
-          imgObj.isAnimated = true;
-          imgObj.delays = frames.map(f => (f.delay || 10) * 10);
-          imgObj.frames = frames.map(f => {
-            const c = document.createElement('canvas');
-            c.width = gifW; c.height = gifH;
-            const ctx = c.getContext('2d');
-            const imgData = ctx.createImageData(gifW, gifH);
-            imgData.data.set(f.patch);
-            ctx.putImageData(imgData, 0, 0);
-            return c;
-          });
-        }
-      } catch(err) {
-        console.warn('GIF parse failed:', err);
+  // Pre-process GIF: parse animation frames (lazy-loads gifuct-js)
+  async function processGifFile(imgObj) {
+    imgObj.status = 'loading'; renderCard(imgObj);
+    try {
+      await loadScript(LIBS.gifuct);
+      const arrayBuffer = await imgObj.file.arrayBuffer();
+      const gif = gifuct.parseGIF(arrayBuffer);
+      const frames = gifuct.decompressFrames(gif, true);
+      if (frames.length > 1) {
+        const gifW = gif.lsd.width, gifH = gif.lsd.height;
+        imgObj.isAnimated = true;
+        imgObj.delays = frames.map(f => (f.delay || 10) * 10);
+        imgObj.frames = frames.map(f => {
+          const c = document.createElement('canvas');
+          c.width = gifW; c.height = gifH;
+          const ctx = c.getContext('2d');
+          const imgData = ctx.createImageData(gifW, gifH);
+          imgData.data.set(f.patch);
+          ctx.putImageData(imgData, 0, 0);
+          return c;
+        });
       }
-    };
-    reader.readAsArrayBuffer(imgObj.file);
+      imgObj.status = 'pending';
+    } catch(err) {
+      console.warn('GIF parse failed:', err);
+      imgObj.status = 'pending';
+    }
+    renderCard(imgObj);
   }
 
   function removeImage(id) {
@@ -514,8 +540,12 @@
     // ── Source blob: use PDF pre-rendered image if available ──
     const sourceBlob = imgObj._pdfBlob || imgObj.file;
 
+    // ── Lazy-load jspdf for PDF output ──
+    if (outFmt === 'application/pdf') await loadScript(LIBS.jspdf);
+
     // ── Animated GIF → GIF output ──
     if (imgObj.isAnimated && outFmt === 'image/gif' && imgObj.frames) {
+      await loadScript(LIBS.gifjs);
       return new Promise((resolve, reject) => {
         const origW = imgObj.frames[0].width;
         const origH = imgObj.frames[0].height;
@@ -621,15 +651,16 @@
     const thumbSource = im._pdfBlob || im.file;
     im._thumbUrl = URL.createObjectURL(thumbSource);
     const origSize = im.file.size, compSize = im.compressedSize;
-    const done = im.status === 'done', processing = im.status === 'processing', error = im.status === 'error';
+    const done = im.status === 'done', processing = im.status === 'processing', loading = im.status === 'loading', error = im.status === 'error';
     let sizeHTML = '';
     if (done) {
       const pct = ((1 - compSize / origSize) * 100).toFixed(1), bigger = compSize >= origSize;
       sizeHTML = `<span class="card-size original">${formatBytesCompact(origSize)}</span><span class="card-size arrow">→</span><span class="card-size compressed">${formatBytesCompact(compSize)}</span><span style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap">${bigger?'+'+(pct*-1):+pct}%</span>`;
-    } else if (processing) { sizeHTML = `<span style="color:var(--link);font-size:12px">压缩中…</span>`; }
+    } else if (loading) { sizeHTML = `<span class="card-loading"><span class="mini-spin"></span>解析中</span>`; }
+    else if (processing) { sizeHTML = `<span class="card-loading"><span class="mini-spin"></span>压缩中</span>`; }
     else if (error) { sizeHTML = `<span style="color:var(--red);font-size:12px">失败</span>`; }
     else { sizeHTML = `<span class="card-size original">${formatBytesCompact(origSize)}</span>`; }
-    const cls = done ? 'done' : (processing ? 'processing' : '');
+    const cls = done ? 'done' : ((processing || loading) ? 'processing' : '');
     const dlBtn = done ? `<button class="card-btn" onclick="event.stopPropagation();downloadSingle(${im.id})" title="下载"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>` : '';
     const srcLabel = im.file.type === 'application/pdf' ? 'PDF' : (im.file.type.replace('image/','').toUpperCase() || im.file.name.split('.').pop().toUpperCase());
     return `<div class="image-card ${cls}" data-id="${im.id}"><img class="card-thumb" src="${im._thumbUrl}" alt="" loading="lazy"><div class="card-info"><div class="card-name" title="${im.file.name}">${im.file.name}</div><div class="card-meta"><span>${srcLabel}</span>${done?`<span class="reduced">→ ${getExt(selectedFormat).toUpperCase()}</span>`:''}</div></div><div class="card-size-group">${sizeHTML}</div><div class="card-actions">${dlBtn}<button class="card-btn danger" onclick="event.stopPropagation();removeImage(${im.id})" title="移除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>`;
@@ -661,10 +692,15 @@
   }
   async function downloadAll() {
     const doneList = images.filter(im => im.status === 'done' && im.compressedBlob); if (!doneList.length) return;
-    const ext = getExt(selectedFormat), zip = new JSZip();
-    showToast('正在打包 ZIP...');
+    const ext = getExt(selectedFormat);
+    showLoader('正在加载打包模块…');
+    try { await loadScript(LIBS.jszip); }
+    catch (err) { hideLoader(); showToast('打包模块加载失败，请重试'); return; }
+    showLoader('正在打包 ZIP…');
+    const zip = new JSZip();
     for (const im of doneList) zip.file(im.file.name.replace(/\.[^.]+$/, '') + '_compressed.' + ext, im.compressedBlob);
     const zipBlob = await zip.generateAsync({ type: 'blob' });
+    hideLoader();
     const url = URL.createObjectURL(zipBlob); const a = document.createElement('a'); a.href = url; a.download = 'compressed_images.zip'; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 2000); showToast('ZIP 下载已开始！');
   }

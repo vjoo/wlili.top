@@ -1,0 +1,187 @@
+{
+  "version": 2,
+  "sections": [
+    {
+      "id": "hero-banner-demo",
+      "type": "hero-banner",
+      "title": "Premium Digital Agency for Startups, SaaS & Brands",
+      "labels": [
+        {
+          "text": "50+ employees"
+        },
+        {
+          "text": "6 countries"
+        },
+        {
+          "text": "Founded in 2010"
+        }
+      ],
+      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
+      "videoType": "image",
+      "image": "/portfolio/cases/mybilist/uploads/1786451753906.jpg",
+      "videoUrl": ""
+    },
+    {
+      "id": "test-stats",
+      "subtitle": "Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.",
+      "heading": "We design for results – helping your business meet its goals.",
+      "videoType": "image",
+      "type": "stats",
+      "items": [
+        {
+          "title": "Successful projects completed",
+          "suffix": "+",
+          "value": "600",
+          "desc": "We've helped launch over 600 digital products and experiences that make brands stand out and feel human."
+        },
+        {
+          "title": "UpWork rating",
+          "suffix": "%",
+          "value": "100",
+          "desc": "Consistently rated 100% job success and top-rated talent."
+        }
+      ],
+      "videoUrl": "/portfolio/cases/mybilist/uploads/1786449011594.jpg",
+      "label": "Why choose us"
+    },
+    {
+      "label": "Join our mission",
+      "heading": "Our team,",
+      "subheading": "your vision",
+      "desc1": "If you're ready to create and collaborate, we'd love to hear from you.",
+      "desc2": "We thrive on teamwork, turning individual strengths into shared success. Together, we turn ideas into digital products that solve real problems for real people.",
+      "buttonText": "Apply now",
+      "items": [
+        {
+          "photo": "",
+          "name": "Bogdan"
+        },
+        {
+          "photo": "",
+          "name": "Alina"
+        },
+        {
+          "photo": "",
+          "name": "Dmitry"
+        },
+        {
+          "photo": "",
+          "name": "Kate"
+        }
+      ],
+      "id": "test-team",
+      "type": "team"
+    },
+    {
+      "label": "Our clients",
+      "heading": "",
+      "logos": [
+        {
+          "name": "",
+          "image": "/portfolio/cases/mybilist/uploads/1786449149628.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/mybilist/uploads/1786449155928.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/mybilist/uploads/1786449169470.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/mybilist/uploads/1786449174281.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/mybilist/uploads/1786449181591.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/mybilist/uploads/1786449189217.jpg"
+        }
+      ],
+      "id": "test-clients",
+      "type": "clients"
+    },
+    {
+      "id": "smson26d4kmz8",
+      "type": "next-projects",
+      "groups": [
+        {
+          "cards": [
+            {
+              "name": "Xefag1",
+              "year": "2025/09/11",
+              "href": "",
+              "linkPage": "",
+              "image1": "/portfolio/cases/mybilist/uploads/1786451465853.jpg",
+              "image2": "/portfolio/cases/mybilist/uploads/1786451471534.jpg"
+            },
+            {
+              "name": "Xefag2",
+              "year": "2025/09/11",
+              "href": "",
+              "linkPage": "",
+              "image1": "/portfolio/cases/mybilist/uploads/1786451479380.jpg",
+              "image2": "/portfolio/cases/mybilist/uploads/1786451486207.jpg"
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "name": "Linkmatch3",
+              "year": "2025/09/11",
+              "href": "",
+              "linkPage": "",
+              "image1": "/portfolio/cases/mybilist/uploads/1786452821236.jpg",
+              "image2": "/portfolio/cases/mybilist/uploads/1786452829552.jpg"
+            },
+            {
+              "name": "Linkmatch4",
+              "year": "2025/09/11",
+              "href": "",
+              "linkPage": "",
+              "image1": "/portfolio/cases/mybilist/uploads/1786452845018.jpg",
+              "image2": "/portfolio/cases/mybilist/uploads/1786452857666.png"
+            }
+          ]
+        }
+      ],
+      "title": "",
+      "copyright": "",
+      "allProjectsText": ""
+    }
+  ],
+  "letsTalk": {
+    "title": "Let's talk",
+    "subtitleEn": "Have a project in mind? Let's create something meaningful together.",
+    "subtitleZh": "有项目想法？我们一起把它变成有价值的设计。",
+    "slogan": "合作咨询 / 约稿商单 / 作品集交流",
+    "tags": "Product Design ｜ Mobile & Touch ｜ B2B / B2C / To G",
+    "tagsZh": "面向产品、移动端、触控设备，覆盖消费、企业、政企多类型项目",
+    "qrCodes": [
+      {
+        "label": "微信好友",
+        "labelEn": "WeChat",
+        "url": "/portfolio/cases/mybilist/uploads/1786518922396.png"
+      },
+      {
+        "label": "公众号",
+        "labelEn": "Official Account",
+        "url": ""
+      },
+      {
+        "label": "小红书",
+        "labelEn": "Xiaohongshu",
+        "url": "/portfolio/cases/mybilist/uploads/1786518929142.png"
+      },
+      {
+        "label": "抖音号",
+        "labelEn": "Douyin",
+        "url": "/portfolio/cases/mybilist/uploads/1786518933287.png"
+      }
+    ]
+  }
+}

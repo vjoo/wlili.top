@@ -1,0 +1,418 @@
+{
+  "version": 2,
+  "sections": [
+    {
+      "id": "s1-title",
+      "type": "title",
+      "title": "ZenHaven",
+      "copyright": "",
+      "description": ""
+    },
+    {
+      "id": "s1",
+      "type": "hero",
+      "videoUrl": "/portfolio/cases/vjooProject/uploads/1786414664376.mp4",
+      "videoType": "video",
+      "image": "/portfolio/cases/vjooProject/uploads/1786381079414.jpg"
+    },
+    {
+      "id": "s2",
+      "type": "intro",
+      "rows": [
+        {
+          "id": "r_smsnguv2u9gsv",
+          "type": "text",
+          "label": "Year",
+          "value": "2025"
+        },
+        {
+          "id": "r_smsnguv2ukeqe",
+          "type": "text",
+          "label": "Industry",
+          "value": "长租公寓与智能门锁"
+        },
+        {
+          "id": "r_smsnguv2u36qx",
+          "type": "tags",
+          "label": "Scope of work",
+          "value": [
+            "App 产品设计",
+            "房东端与租客端设计",
+            "智能锁 IoT 联调",
+            "运营商城设计",
+            "品牌视觉",
+            "动效设计"
+          ]
+        },
+        {
+          "id": "r_smsnguv2uypro",
+          "type": "text",
+          "label": "Timeline",
+          "value": "12 周"
+        }
+      ],
+      "label": "Introduction",
+      "heading": "一款让房东与租客在同一 App 内完成智能开锁、抄表缴费与租期管理的出租房运营平台。"
+    },
+    {
+      "id": "smso4dsxot58z",
+      "type": "brand-logo",
+      "logoUrl": "/portfolio/cases/vjooProject/uploads/1786423947022.jpg"
+    },
+    {
+      "id": "s3",
+      "type": "parallax",
+      "baseImage": "/portfolio/cases/vjooProject/uploads/1786414574330.jpg",
+      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786438894756.png"
+    },
+    {
+      "id": "s4",
+      "type": "text",
+      "label": "Challenges",
+      "heading": "客户希望做一款面向城市出租房市场的 App, 用智能锁替代传统钥匙交接，让房东远程发钥匙、租客手机开门，同时把燃气、电、水三表抄读与缴费搬到线上，告别线下跑腿与手工记账。",
+      "body": "项目从移动端起步，已有初步原型待深化设计。唯一的风格要求是明亮的暖橙色，面向年轻租客与中小房东 —— 习惯用手机处理一切、追求高效、对运营红包和积分商城敏感的人群。完成初始范围后，项目进一步扩展出房东端房源管理、租客端续租退租，以及领红包、商城积分抵扣的运营板块，完整案例可继续往下浏览。",
+      "linkUrl": "",
+      "linkText": "Live Project"
+    },
+    {
+      "id": "s5",
+      "type": "parallax",
+      "baseImage": "/portfolio/cases/vjooProject/uploads/1786414706002.jpg",
+      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786438976074.png"
+    },
+    {
+      "id": "s6",
+      "type": "showcase",
+      "label": "Landing Page",
+      "desc": "围绕客户需求设计的落地页，突出核心功能，同时直观预览房东与租客两端的使用旅程。",
+      "image": "/portfolio/cases/vjooProject/uploads/1786427235245.jpg",
+      "videoUrl": "",
+      "videoType": "image"
+    },
+    {
+      "id": "s7",
+      "type": "gallery",
+      "label": "Mobile Landing Page",
+      "heading": "信息密度高、节奏紧凑的移动端落地页：一屏讲清 \"一把智能锁，管一整套房\"。",
+      "screens": [
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg"
+      ],
+      "colCount": "3",
+      "columns": [
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smso7mlpr2hbe",
+              "src": "/portfolio/cases/vjooProject/uploads/1786429094235.png"
+            },
+            {
+              "id": "smso7mszdxodh",
+              "src": "/portfolio/cases/vjooProject/uploads/1786425525016.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 8,
+          "images": [
+            {
+              "id": "smsnfq9x1s932",
+              "src": "../_shared/placeholder.svg"
+            },
+            {
+              "id": "smsnfq9x1clr0",
+              "src": "../_shared/placeholder.svg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smso7n6mdd5zl",
+              "src": "/portfolio/cases/vjooProject/uploads/1786429914598.png"
+            },
+            {
+              "id": "smso7na2ubq9l",
+              "src": "/portfolio/cases/vjooProject/uploads/1786425547191.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s8",
+      "type": "parallax",
+      "baseImage": "/portfolio/cases/vjooProject/uploads/1786414765214.jpg",
+      "overlayImage": "../_shared/placeholder.svg"
+    },
+    {
+      "id": "s9",
+      "type": "showcase",
+      "label": "Platform Page",
+      "desc": "出租管理，从未如此简单！远程发钥匙、电子合同、在线抄表缴费，一个 App 全搞定。",
+      "image": "/portfolio/cases/vjooProject/uploads/1786414819636.jpg",
+      "videoUrl": "",
+      "videoType": "image"
+    },
+    {
+      "id": "s10",
+      "type": "gallery",
+      "label": "",
+      "heading": "",
+      "screens": [
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg"
+      ],
+      "colCount": "2",
+      "columns": [
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smsnfsqx0fejh",
+              "src": "../_shared/placeholder.svg"
+            },
+            {
+              "id": "smsnfsqx0nqpl",
+              "src": "../_shared/placeholder.svg"
+            },
+            {
+              "id": "smsnfv7mm9enx",
+              "src": "/portfolio/cases/vjooProject/uploads/1786378888025.webp"
+            },
+            {
+              "id": "smsnfvc0pg3u6",
+              "src": "/portfolio/cases/vjooProject/uploads/1786378893714.webp"
+            }
+          ]
+        },
+        {
+          "offsetRem": 5,
+          "images": [
+            {
+              "id": "smsnfsqx0rrww",
+              "src": "../_shared/placeholder.svg"
+            },
+            {
+              "id": "smsnfsqx04rmb",
+              "src": "../_shared/placeholder.svg"
+            },
+            {
+              "id": "smsnfvpsq229n",
+              "src": "/portfolio/cases/vjooProject/uploads/1786378911569.webp"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s11",
+      "type": "single-image",
+      "image": "../_shared/placeholder.svg"
+    },
+    {
+      "id": "s12",
+      "type": "gallery",
+      "label": "",
+      "heading": "",
+      "screens": [
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg"
+      ],
+      "colCount": "3",
+      "columns": [
+        {
+          "offsetRem": 5,
+          "images": [
+            {
+              "id": "smsnfqtl0v6x4",
+              "src": "../_shared/placeholder.svg"
+            },
+            {
+              "id": "smso1at4ce0m0",
+              "src": "/portfolio/cases/vjooProject/uploads/1786414887648.webp"
+            },
+            {
+              "id": "smso1b0mec24z",
+              "src": "/portfolio/cases/vjooProject/uploads/1786414897378.webp"
+            }
+          ]
+        },
+        {
+          "offsetRem": 13,
+          "images": [
+            {
+              "id": "smso1bisicb9n",
+              "src": "/portfolio/cases/vjooProject/uploads/1786414920923.webp"
+            },
+            {
+              "id": "smso1bmzemkg4",
+              "src": "/portfolio/cases/vjooProject/uploads/1786414926357.webp"
+            }
+          ]
+        },
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smso1c0opm9ig",
+              "src": "/portfolio/cases/vjooProject/uploads/1786414944108.webp"
+            },
+            {
+              "id": "smso1cbddebjl",
+              "src": "/portfolio/cases/vjooProject/uploads/1786414957964.webp"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s13",
+      "type": "showcase",
+      "label": "Social Part",
+      "desc": "在注册即收邮件的时代，我们不让锁寓 ZenHaven 的通知淹没在收件箱里。钥匙到期、账单生成、续租提醒，每一封都精心设计，贴合品牌视觉。",
+      "image": "/portfolio/cases/vjooProject/uploads/1786415006246.jpg",
+      "icons": [
+        "FB",
+        "IG",
+        "LI",
+        "X",
+        "YT"
+      ],
+      "videoType": "image"
+    },
+    {
+      "id": "s14",
+      "type": "single-image",
+      "image": "../_shared/placeholder.svg"
+    },
+    {
+      "id": "s15",
+      "type": "video",
+      "videos": [
+        {
+          "url": "",
+          "label": "Video 1",
+          "type": "placeholder"
+        },
+        {
+          "url": "",
+          "label": "Video 2",
+          "type": "placeholder"
+        }
+      ]
+    },
+    {
+      "id": "s16",
+      "type": "showcase",
+      "label": "Advertising Part",
+      "desc": "我们打造了完整的品牌视觉体系，让锁寓 ZenHaven 即使在没有手机的线下场景 —— 楼宇海报、电梯广告、名片、周边 —— 也能被一眼认出。",
+      "image": "../_shared/placeholder.svg",
+      "videoType": "image"
+    },
+    {
+      "id": "s17",
+      "type": "single-image",
+      "image": "../_shared/placeholder.svg"
+    },
+    {
+      "id": "s18",
+      "type": "double-image",
+      "image1": "../_shared/placeholder.svg",
+      "image2": "../_shared/placeholder.svg"
+    },
+    {
+      "id": "s19",
+      "type": "single-image",
+      "image": "../_shared/placeholder.svg"
+    },
+    {
+      "id": "s20",
+      "type": "double-image",
+      "image1": "../_shared/placeholder.svg",
+      "image2": "../_shared/placeholder.svg"
+    },
+    {
+      "id": "s21",
+      "type": "testimonial",
+      "title": "Clients Testimonials",
+      "avatarInitials": "W",
+      "name": "VJOO",
+      "role": "UI/UX Designer",
+      "quote": "锁寓 ZenHaven 团队是把我们的想法变成产品的关键伙伴。他们出色的设计能力，把 \"智能锁 + 出租管理\" 的构想变成了一个美观又好用的 App。清爽直观的界面不仅让房东上手更快，也显著提升了租客的使用体验。我们对结果非常满意，强烈推荐给任何需要高质量产品设计的团队。"
+    },
+    {
+      "id": "s22",
+      "type": "next-projects",
+      "groups": [
+        {
+          "cards": [
+            {
+              "name": "Xefag",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            },
+            {
+              "name": "Xefag",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "letsTalk": {
+    "title": "Let's talk",
+    "subtitleEn": "Have a project in mind? Let's create something meaningful together.",
+    "subtitleZh": "有项目想法？我们一起把它变成有价值的设计。",
+    "slogan": "合作咨询 / 约稿商单 / 作品集交流",
+    "tags": "Product Design ｜ Mobile & Touch ｜ B2B / B2C / To G",
+    "tagsZh": "面向产品、移动端、触控设备，覆盖消费、企业、政企多类型项目",
+    "qrCodes": [
+      {
+        "label": "微信好友",
+        "labelEn": "WeChat",
+        "url": "/portfolio/cases/_shared/assets/qr-wechat.png"
+      },
+      {
+        "label": "公众号",
+        "labelEn": "Official Account",
+        "url": "/portfolio/cases/_shared/assets/qr-official.png"
+      },
+      {
+        "label": "小红书",
+        "labelEn": "Xiaohongshu",
+        "url": "/portfolio/cases/_shared/assets/qr-xiaohongshu.png"
+      },
+      {
+        "label": "抖音号",
+        "labelEn": "Douyin",
+        "url": "/portfolio/cases/_shared/assets/qr-douyin.png"
+      }
+    ]
+  }
+}

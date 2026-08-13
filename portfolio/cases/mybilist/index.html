@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大屏案例 — W. Portfolio</title>
+
+  <!-- ============================================================
+       【第一优先级】滚动修复：必须在任何其他脚本/CSS/资源之前执行
+       浏览器的 scroll restoration（恢复上次滚动位置）发生得极早，
+       如果等 body 末尾的 site-shell.js 加载完再设置就太晚了。
+       ============================================================ -->
+  <script>
+    (function () {
+      // 1. 关闭浏览器自动恢复滚动位置（自己在 site-shell.js 里用 sessionStorage 管理）
+      try {
+        if ('scrollRestoration' in window.history) {
+          window.history.scrollRestoration = 'manual';
+        }
+      } catch (e) { /* ignore */ }
+
+      // 2. 立即抢跑：把滚动位置置 0（防止刷新瞬间看到底部 Let's talk）
+      try {
+        window.scrollTo(0, 0);
+      } catch (e) { /* ignore */ }
+
+      // 3. 过渡遮罩期间锁定滚动
+      var lock = function () {
+        try {
+          document.documentElement.classList.add('scroll-lock');
+          document.body && document.body.classList.add('scroll-lock');
+        } catch (e) { /* ignore */ }
+      };
+      if (document.documentElement) lock();
+      else if (document.addEventListener) {
+        document.addEventListener('DOMContentLoaded', lock, { once: true });
+      }
+
+      // 4. 保存滚动位置到 sessionStorage（防抖 150ms）
+      //    刷新前保存 → 内容渲染完毕后恢复 → 恢复完清除
+      var saveTimer = null;
+      window.addEventListener('scroll', function () {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(function () {
+          try {
+            sessionStorage.setItem('case_scroll_y', String(window.scrollY));
+            sessionStorage.setItem('case_scroll_t', String(Date.now()));
+          } catch (e) { /* ignore */ }
+        }, 150);
+      }, { passive: true });
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- 1. 共享外壳样式（设计令牌/头部/底部/火箭/按钮/容器/进场动画/响应式） -->
+  <link rel="stylesheet" href="../_shared/site-shell.css">
+  <!-- 2. 共享组件样式（内容板块组件，所有页面共用，迭代只改这一处） -->
+  <link rel="stylesheet" href="../_shared/components.css">
+</head>
+<body>
+  <!-- 头部导航 / 移动端菜单 / 底部 Let's Talk / 回到顶部火箭 / 过渡遮罩
+       由 site-shell.js 自动注入，无需在此手写 -->
+
+  <main>
+    <!-- Page Wrapper -->
+    <div class="page-wrapper" id="pageWrapper">
+      <!-- 动态渲染容器：render.js 按 content.json 的 sections 数组遍历渲染 -->
+      <div id="case-content" class="case-content"></div>
+    </div>
+  </main>
+
+  <script>
+    window.CASE_KEY = 'mybilist';
+    // hover-effect 统一初始化见 ../_shared/hover-effects.js（cover 等比裁切，不拉伸变形）
+  </script>
+  <script src="../_shared/assets/lib-three.min.js"></script>
+  <script src="../_shared/assets/lib-gsap.min.js"></script>
+  <script src="../_shared/assets/lib-hover-effect.umd.js"></script>
+  <script src="../_shared/hover-effects.js"></script>
+  <!-- 板块渲染器（共享版，全站唯一一份） -->
+  <script src="../_shared/render.js"></script>
+  <!-- 共享外壳脚本（注入壳 + 交互 + 进场动画观察器），必须在 render.js 之后 -->
+  <script src="../_shared/site-shell.js"></script>
+</body>
+</html>
