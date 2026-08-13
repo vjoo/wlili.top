@@ -1,0 +1,73 @@
+{
+  "version": 3,
+  "pages": [
+    {
+      "key": "vjooProject",
+      "title": "ZenHaven案例详情",
+      "type": "detail",
+      "level": 2,
+      "parent": null,
+      "year": "2026",
+      "category": "网页设计",
+      "nav": false,
+      "cover": "",
+      "createdAt": "2026-08-10T00:00:00"
+    },
+    {
+      "key": "mybilist",
+      "title": "大屏案例",
+      "type": "detail",
+      "level": 2,
+      "parent": null,
+      "year": "2026",
+      "category": "网页设计",
+      "nav": false,
+      "cover": "",
+      "createdAt": "2026-08-11T19:35:26"
+    },
+    {
+      "key": "pjlist",
+      "title": "作品集列表",
+      "type": "list",
+      "level": 2,
+      "parent": null,
+      "year": "2026",
+      "category": "网页设计",
+      "nav": false,
+      "cover": "",
+      "createdAt": "2026-08-12T15:33:21"
+    },
+    {
+      "key": "home",
+      "title": "首页",
+      "type": "home",
+      "level": 1,
+      "parent": null,
+      "nav": false,
+      "cover": "",
+      "createdAt": "2026-08-12T21:31:34"
+    }
+  ],
+  "navMenu": [
+    {
+      "label": "首页",
+      "href": "../home/index.html",
+      "target": false
+    },
+    {
+      "label": "作品集",
+      "href": "../pjlist/index.html",
+      "target": false
+    },
+    {
+      "label": "项目设计",
+      "href": "../vjooProject/index.html",
+      "target": false
+    },
+    {
+      "label": "数字大屏",
+      "href": "../mybilist/index.html",
+      "target": false
+    }
+  ]
+}

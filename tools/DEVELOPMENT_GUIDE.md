@@ -5,6 +5,27 @@
 
 ---
 
+## 〇、给 AI 的第一指令（新 AI 上手必读）
+
+> 用户只会说"先读指南"。读到本节后，请**自行按下方流程执行**，无需再向用户询问任何读取范围。
+
+**上手顺序（只读必要部分，勿全文通读页面文件）：**
+
+| 顺序 | 文件 | 读取方式 |
+|------|------|---------|
+| 1 | 本指南全文 | 全局规范/组件库/规则，读完长期复用 |
+| 2 | `common.css` | 只 Grep `:root` 看设计令牌（间距/字号/阴影/圆角）；组件按需读（如 `.btn-filled`） |
+| 3 | `design-spec.html` | 可视化规范；间距/字号/阴影刻度看"刻度体系"板块 |
+| 4 | 目标页面 | Grep 锚点定位，只读与任务相关的常量/函数块（复杂页另有专属备忘，如第十二章） |
+
+**省 Token 铁律：**
+1. **用 Grep 定位锚点，不靠行号**：行号会漂移，先 `Grep 锚点` 再 Read 最小范围
+2. **不贴大段代码**：回复用户时只贴改动行及其上下文（≤10 行），改动位置用「文件 + 锚点」描述，如"image-compress.html 的 `renderList` 函数内"而非行号
+3. **一次一个任务**：避免多任务混合导致上下文膨胀
+4. **改完必自查**：间距用 §2.6 刻度值；改元素/数据对照对应章节必做清单
+
+---
+
 ## 一、项目概述
 
 | 项目 | 说明 |
@@ -189,6 +210,36 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 > **无障碍**：`@media (prefers-reduced-motion: reduce)` 仅禁用平滑滚动，保留 hover transition。
 
+### 2.6 间距刻度（4px 基数，硬规则）
+
+**所有 padding / margin / gap 只允许取刻度值**，随手值必须就近吸附，禁止新造数值。
+
+**刻度表**（`common.css :root` 已定义 `--space-1` ~ `--space-16`）：
+
+| 变量 | 值 | | 变量 | 值 |
+|------|-----|---|------|-----|
+| `--space-1` | 4px | | `--space-6` | 24px |
+| `--space-2` | 8px | | `--space-8` | 32px |
+| `--space-3` | 12px | | `--space-10` | 40px |
+| `--space-4` | 16px | | `--space-12` | 48px |
+| `--space-5` | 20px | | `--space-16` | 64px |
+
+**吸附规则**（随手值 → 刻度）：`2→4、3→4、5→4、6→8、7→8、9→8、10→8、14→16、22→24、28→32、30→32、36→32/40、45→48、90→96、120→128`
+**禁止出现**：`2/3/5/6/7/9/10/11/13/14/15/17/18/21/22/23/25/26/27/28/29/30/31/33/34/35/36/37/38/39/42/45/50/90/120` 等非刻度间距。
+
+**页面级流式间距**：Section 上下留白统一用 `var(--space-page)`（`clamp(16px, 4vw, 48px)`），随视口平滑缩放，不写死值、不散写断点。组件内部间距用固定刻度值（不随屏幕变）。
+
+**单位规则**：间距/边框用 px（刻度值）；字号用 px；流式/视口自适应用 `clamp()` / `vw`。
+
+**字号/阴影刻度**（`common.css :root` 新增）：
+
+| 类型 | 变量 |
+|------|------|
+| 字号刻度 | `--fs-xs 12 / --fs-sm 13 / --fs-base 14 / --fs-md 16 / --fs-lg 18 / --fs-xl 20 / --fs-2xl 24 / --fs-3xl 32 / --fs-4xl 40` |
+| 阴影 | `--shadow-sm 0 1px 2px / --shadow-md 0 4px 12px / --shadow-lg 0 12px 40px` |
+
+> **与 §2.4 的关系**：§2.4 是"场景字号表"（按组件定：H1 48px、正文 17px…），本节的 `--fs-*` 是"通用刻度"（抽象级别）。二者不冲突：**先查 §2.4 场景表，取不到再按本节刻度取中间值**（如小标签 12px、中标签 14px、大标题 24/32px）。
+
 ---
 
 ## 三、组件库（common.css）
@@ -201,7 +252,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | `.btn-outline` | 次按钮（白底描边） | `pill` 形，`17px`，支持 `.btn-sm` |
 | `.btn-danger-outline` | 危险操作（红色描边） | `pill` 形，hover 红色背景 |
 | `.btn-link` | 文字链接按钮 | 无边框，用 `--link` 色 |
-| `.btn-sm` | 小号修饰符 | `14px`，`padding: 6px 14px` |
+| `.btn-sm` | 小号修饰符 | `14px`，`padding: 8px 16px` |
 | `.icon-btn` | 图标按钮 | `34×34px`，内含 `svg 16×16` |
 
 > 按钮统一 `:active { transform: scale(0.98) }`，`.icon-btn` 为 `scale(0.95)`。
@@ -211,7 +262,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | 类名 | 用途 | 关键属性 |
 |------|------|---------|
 | `.text-input` | 文本输入框 | `36px` 高，`--radius-md`，`80px` 宽 |
-| `.form-select` | 下拉选择框 | `appearance:none` + 自定义 SVG 箭头 `right 12px center`，`padding-right:32px`（详见规则 20） |
+| `.form-select` | 下拉选择框（**页面私有**，未入 common.css） | `appearance:none` + 自定义 SVG 箭头 `right 12px center`，`padding-right:32px`。仅存在于 `filament-manager.html` / `print-manager.html` 页面样式且两页实现略有差异；如需全站使用，先统一实现并提升进 common.css（详见规则 20） |
 | `.segmented-control` | 分段控件容器 | `flex`，`36px` 高，`pill` 形 |
 | `.segment-btn` | 分段按钮 | `.active` 为黑底白字 |
 
@@ -219,7 +270,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 | 类名 | 用途 | 关键属性 |
 |------|------|---------|
-| `.page-hero` | 页面标题区（h1 + p） | `48px 22px 32px`，居中 |
+| `.page-hero` | 页面标题区（h1 + p） | `48px 24px 32px`，居中 |
 | `.section` / `.section-inner` | 内容区容器 | `max-width: 980px`，居中 |
 | `.stats-row` | 4 列统计网格 | 内含 `.stat-card/.stat-label/.stat-val` |
 | `.stat-val.accent` | 强调色数值 | 用 `--link` 色 |
@@ -284,7 +335,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
   width: 100%; height: 100%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 6px;
+  gap: 8px;
   background: #f0f0f3;
 }
 .pattern-thumb-placeholder .ph-logo {
@@ -298,6 +349,8 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 ```
 
 > **注意**：`ph-logo` 字号在 dashboard 小卡片中用 `32px`，在 gallery 大图中用 `48px`（参考 `prompt-library.html` 的 `.card-cover-placeholder`）。背景色统一 `#f0f0f3`，禁止使用 `var(--bg-sidebar)` 等页面变量。
+
+> **示例值均已按 §2.6 吸附为刻度值**；既有页面如仍存在非刻度残留值，迁移时一并吸附即可。
 
 ### 3.8 骨架屏（Skeleton Loading）
 
@@ -314,15 +367,15 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 **CSS 规范**（参考 `prompt-library.html`）：
 ```css
-.skeleton-grid { column-count: 4; column-gap: 5px; }   /* 与内容网格一致 */
-.skeleton-card { break-inside: avoid; margin-bottom: 5px; background: var(--bg-white); border-radius: 0; overflow: hidden; }
+.skeleton-grid { column-count: 4; column-gap: 4px; }   /* 与内容网格列距一致（刻度 4px） */
+.skeleton-card { break-inside: avoid; margin-bottom: 4px; background: var(--bg-white); border-radius: 0; overflow: hidden; }
 .skeleton-cover { width: 100%; aspect-ratio: 1; background: #e8e8ed; position: relative; overflow: hidden; }
 .skeleton-cover::after, .skeleton-bar::after {
   content: ''; position: absolute; inset: 0; transform: translateX(-100%);
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
   animation: shimmer 1.5s infinite;
 }
-.skeleton-bar { height: 14px; border-radius: 4px; background: #e8e8ed; margin: 10px 12px; position: relative; overflow: hidden; }
+.skeleton-bar { height: 14px; border-radius: 4px; background: #e8e8ed; margin: 8px 12px; position: relative; overflow: hidden; }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 ```
 
@@ -441,7 +494,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 ---
 
-## 五、响应式断点（6 档）
+## 五、响应式断点（5 档，含侧边栏专用断点）
 
 | 断点 | 标签 | 变化 |
 |------|------|------|
@@ -518,7 +571,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - **必须分层次设计**，卡片结构按以下四层组织（按需取舍）：
       - **顶部识别区**：缩略图（40~48px 圆角方块）+ 主标题（素材/项目名，14px 600）+ 副标题（关联方/日期，12px muted）+ 类型徽章（右上角）
       - **核心数据栏**：灰底（`var(--bg-elevated)`）圆角区块，大字突出关键金额/数值（18px 700），右侧放操作按钮（如付款/确认），让最重要的数字一眼可见
-      - **详情信息区**：label-value 行，标签 12px muted `min-width:64px`，值 13px secondary，行间距 `padding:5px 0`，紧凑但清晰
+      - **详情信息区**：label-value 行，标签 12px muted `min-width:64px`，值 13px secondary，行间距 `padding:4px 0`，紧凑但清晰
       - **底部操作栏**：用 `border-top` 分隔，按钮独立于内容区
     - **卡片容器**：`padding:0` + `overflow:hidden`，内部分区自带 padding，避免整体 padding 导致分区边界模糊
     - **字段合并原则**：相关性高的字段合并到同一行（如"合同状态"badge + "合同编号"文本），减少总行数
@@ -857,23 +910,67 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | 修改布局 | LAYOUTS 数组 | 分层带状 ≠ 连缀式，措辞影响 AI 排布逻辑 |
 | 修改色板 | DEFAULT_PALETTES | 5 色限制，lineColor 为轮廓色 |
 
-### 12.5 AI 交接省 Token 指南
+### 12.5 AI 交接省 Token 指南（自引导版）
 
-**新 AI 上手只需读 3 处代码：**
-1. `DEVELOPMENT_GUIDE.md`（本文件）— 了解全局规范
-2. `DEFAULT_ELEMENTS`（约 25 行）— 了解可用元素
-3. `buildPrompt`（约 200 行）— 了解提示词生成逻辑
+> **给接手本页面的新 AI**：用户只会对你说"先读 DEVELOPMENT_GUIDE.md"。
+> 读到本节后，请**自行按下方流程执行**，无需用户再补充任何指示。
+> 原则：**不全文通读 seamless-pattern.html**，只按"代码地图"用 Grep 定位锚点、读取最小必要范围。
 
-**下任务时用行号定位，不贴完整代码：**
-- 说"修改第 482 行 STYLES" 而不是贴整个 STYLES 数组
-- 说"参考第 1264 行融合角色检测逻辑" 让 AI 自己读上下文
-- 一次只给一个任务，避免多任务混在一起导致 AI 上下文膨胀
+**第一步 建立全局认知（只读一次，长期复用）：**
 
-**指明改动范围，让 AI 只读必要部分：**
-```
-请先读取第1145-1340行buildPrompt函数，然后修改第1322行的结构线描述，
-把"多条独立分段短弧形"改为"分3层横向排列的短弧形挂绳"
-```
+| 顺序 | 文件 | 读取方式 |
+|------|------|---------|
+| 1 | `DEVELOPMENT_GUIDE.md`（本文件） | 全文读完，掌握规范/组件库/规则 |
+| 2 | `common.css` | 只 Grep `:root` 看设计令牌；组件按需读（如 `.btn-filled`） |
+| 3 | `design-spec.html` | 可视化规范；间距/字号/阴影刻度看"刻度体系"板块 |
+
+**第二步 读 seamless-pattern.html 代码（上手只读这 3 处）：**
+
+| 代码块 | Grep 定位锚点 | 读取范围 |
+|--------|--------------|---------|
+| 元素库 | `const DEFAULT_ELEMENTS` | 该常量完整定义（约 30 行，含主体/配饰/装饰） |
+| 提示词生成 | `buildPrompt: function` | 该方法完整块（到下一个方法定义止，约 200 行） |
+| 智能搭配 | `smartMatch: function` | 该方法完整块（约 60 行，涉及主题/搭配时才读） |
+
+> 行号会随代码变动漂移，**永远先用 Grep 锚点定位再 Read 最小范围**，不要用行号硬读。
+
+**第三步 按任务选最小读取路径（改哪读哪，不读无关代码）：**
+
+| 你的任务 | 需要读 | 必须同步 |
+|---------|--------|---------|
+| 新增/修改元素 | `DEFAULT_ELEMENTS` | §12.3 清单 5 项（升 DATA_VERSION 等） |
+| 修改提示词规则 | `buildPrompt` | §12.2 三类主体/配饰/结构线规则 |
+| 修改布局/画风/色板 | `LAYOUTS` / `STYLES` / `DEFAULT_PALETTES` | 措辞影响 AI 输出，参照 §12.4 备注 |
+| 修改智能搭配主题 | `SMART_THEMES` + `smartMatch` | 元素名必须与 DEFAULT_ELEMENTS 完全一致 |
+| 修改交互/持久化 | `saveGenState` / `initData` / `genState` | 版本不匹配会强制注入默认数据 |
+| 改页面 UI 样式 | 页面 `<style>` 内对应类 + common.css | 间距必须用 §2.6 刻度值，先查 design-spec |
+
+**省 Token 铁律：**
+1. **用 Grep 定位，不靠行号**：行号会漂移，先 `Grep 锚点` 再 Read 最小范围
+2. **不贴大段代码**：回复用户时只贴改动行及其上下文（≤10 行），改动位置用「文件 + 锚点」描述，如"seamless-pattern.html 的 `function buildPrompt` 内结构线描述"而不是行号
+3. **一次一个任务**：避免多任务混在一起导致上下文膨胀
+4. **改完必自查**：§12.3 必做清单（尤其 DATA_VERSION 升版），并在回复中说明已同步哪些项
+
+---
+
+## 十三、图片处理统一选型与已有实现索引
+
+> 本项目已有多套成熟图片处理实现。**后续开发遇到图片需求先查本表，能复用绝不新写**；
+> 实现已存在时直接读对应文件借鉴/调用，禁止重新发明或引入新库。
+
+| 需求 | 统一方案 | 已有实现 | 关键锚点 |
+|------|---------|---------|---------|
+| 服务端压缩（上传/批处理） | Python Pillow：JPEG quality=90、长边≤2560、LANCZOS、optimize；透明 PNG 保持 PNG；动图/apng 原样保存；bmp/tiff/ico 等位图自动转 JPEG/PNG；svg 矢量原样保存 | `../server.py` | `pf_optimize_image` / `pf_compress_to_jpg` |
+| 客户端压缩/转格式 | 浏览器 Canvas（toBlob），品质 10–100 可调，JPG/WebP/PNG/AVIF/SVG 互转、GIF/PDF 支持 | `image-compress.html` | `compressImage()` / `compressAll()` |
+| 客户端放大（AI 超分） | TensorFlow.js + UpscalerJS + ESRGAN（2x/4x，CDN 模型） | `image-upscale.html` | `loadModel()` |
+| 客户端裁剪/导出 | Canvas + 品质滑块，JPG/WebP/PNG | `image-cropper.html` | `qualitySlider` |
+| 客户端排版/网格编辑 | Canvas 导出 JPG/PNG | `image-grid-editor.html` | `exportFormat` |
+
+**选型铁律：**
+1. **运行环境决定技术，不要跨端混用**：服务端一律 Pillow 系（server.py），浏览器端一律 Canvas 系（image-*.html）。不要为了"统一"把服务端压缩搬进浏览器或反之——两套由环境锁死，各有适用场景
+2. **默认参数全站统一**：质量 90、长边 ≤2560、LANCZOS 插值、动图（gif/apng/动图 webp）不做有损压缩原样保存、透明 PNG 保留透明度（Pillow 系已内置，Canvas 系按此作为默认值）
+3. **已有实现先引用，不重写**：新页面要压缩 → 复用 `image-compress.html` 的 `compressImage()` 或服务端上传接口的内置压缩；要放大 → 复用 upscaler 方案
+4. **效果参考**：同参数下 Pillow（LANCZOS + optimize）在"缩小大图"场景画质/体积略优于浏览器默认 drawImage；两套在有损质量上肉眼差异很小
 
 ---
 

@@ -1,3 +1,11 @@
 # 局域网同步服务器相关（不上传到 GitHub）
 server.py
 server_data.json
+
+# 本地工具与运行时缓存
+_restart_server.py
+__pycache__/
+*.pyc
+
+# 本地 AI 配置
+.trae/

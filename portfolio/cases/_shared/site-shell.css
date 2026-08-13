@@ -1,0 +1,868 @@
+/* ============================================
+   Case Site Shell — 共享外壳样式
+   ─────────────────────────────────────────
+   所有案例页统一引用（勿在每个案例里重复拷贝）：
+     <link rel="stylesheet" href="../_shared/site-shell.css">
+   包含（规则来源：vjooProject 案例页 / Nixtio 复刻）：
+     · 设计令牌 :root（颜色 / 字体 / 间距 / 过渡 / z-index / 动效）
+     · Reset & Base、滚动锁定
+     · 页面过渡遮罩（page-transition-overlay）
+     · 头部导航（header-overlay / nav / logo / 联系我按钮 / 汉堡）
+     · 按钮体系（btn-primary 双文本动效 / btn-outline / btn-small / btn-submit）
+     · 移动端菜单（mobile-menu）
+     · 内容容器（.container）
+     · 底部 Let's Talk（footer / 表单 / 验证码 / 社交链接 / 版权）
+     · 回到顶部火箭（back-to-top-btn）
+     · 进场动画系统（.reveal / .char-animate 特例 / 延迟类）
+     · 以上全部组件的响应式规则
+   ⚠️ 页面专属板块样式（hero/intro/challenges/screens/testimonials/next-projects…）
+     写在各案例自己的 style.css，不要在本文重复定义。
+   ⚠️ 严禁重新添加 @media (prefers-reduced-motion: reduce) 压制进场动画——
+     用户系统开启"减少动态效果"时会导致 .reveal 进场动画全部失效（历史教训）。
+   ============================================ */
+
+/* ---- CSS Custom Properties ---- */
+:root {
+  /* Colors */
+  --color-primary: #000;
+  --color-black: #0a0a0a;
+  --color-white: #fff;
+  --color-background: #f5f5f5;
+  --color-background-dark: #0a0a0a;
+  --color-text: #0a0a0a;
+  --color-text-secondary: rgba(10, 10, 10, 0.6);
+  --color-text-tertiary: rgba(255, 255, 255, 0.6);
+  --color-gray-border: rgba(255, 255, 255, 0.16);
+  --color-gray-ultra-light: rgba(10, 10, 10, 0.04);
+  --color-green: #40a53c;
+
+  /* Typography */
+  --font-family: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+
+  /* Spacing */
+  --padding-xl: 190px;
+  --padding-lg: 160px;
+  --padding-md: 120px;
+  --padding-sm: 36px;
+
+  /* Transitions */
+  --transition-base: 0.3s ease-in-out;
+  --transition-fast: 0.15s ease-in-out;
+  --transition-slow: 0.5s ease-in-out;
+
+  /* Z-index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  /* Motion tokens */
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-slow: 500ms;
+  --motion-easing-enter: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --motion-easing-exit: cubic-bezier(0.4, 0.0, 1, 1);
+  --motion-easing-emphasized: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* ---- Reset & Base ---- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   页面打开/刷新时的滚动锁定：防止浏览器 scroll restoration
+   把页面带到中间/底部（否则遮罩滑走后用户看到的是 footer）。
+   由 <head> 内联脚本添加，site-shell.js 在遮罩滑走时移除。
+   ============================================================ */
+html.scroll-lock,
+body.scroll-lock {
+  overflow: hidden !important;
+  /* 额外保险：强制 height 让页面无法产生滚动条 */
+  height: 100% !important;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--color-background);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.32px;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ---- Page Transition ---- */
+.page-transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-black);
+  z-index: var(--z-modal);
+  transform: translateY(0);
+  transition: transform 0.8s var(--motion-easing-emphasized);
+  pointer-events: none;
+}
+
+.page-transition-overlay.idle {
+  transform: translateY(-100%);
+}
+
+/* ---- Header / Navbar ---- */
+.header-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-fixed);
+  padding: 0;
+  background-color: transparent;
+  transition: background-color var(--transition-base), backdrop-filter var(--transition-base);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 1.8rem 1.75rem 0.75rem 2.2rem;
+  transition: padding var(--transition-base);
+}
+
+/* 滚动后：content padding 收紧（原版 1.25rem 1.625rem = 20px 26px） */
+.header-overlay.scrolled .header-content {
+  padding: 1.25rem 1.625rem;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  z-index: calc(var(--z-fixed) + 1);
+}
+
+.logo-link svg {
+  transition: transform var(--transition-fast);
+}
+
+.logo-link:hover svg {
+  transform: scale(1.05);
+}
+
+/* Nav 链接组：未滚动透明占满（链接分散），滚动后白底胶囊居中
+ * 统一过渡属性：max-width / background-color / border-color
+ * ⚠️ 初始就给 margin-inline: auto：初始 max-width 很大时 auto 不产生位移
+ *    避免 scrolled 时"突然加 margin-inline:auto"引起的跳变（auto 无法用 transition 过渡）
+ */
+.header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-around; /* 原版：链接分散在整个 nav 宽度内 */
+  gap: 2.5rem; /* 40px，原版 */
+  height: 2.5rem; /* 40px，原版 */
+  padding: 0 2rem; /* 0 32px，原版 */
+  border-radius: 1.875rem; /* 30px，原版 */
+  width: 100%; /* 原版：占满可用空间 */
+  max-width: 51rem; /* 原版内联：max-width: 51rem = 816px，滚动后收缩上限 */
+  background: transparent;
+  border: 1px solid transparent;
+  margin-inline: auto;
+  transition:
+    max-width var(--transition-base),
+    width var(--transition-base),
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    padding var(--transition-base);
+}
+
+.header-overlay.scrolled .header-nav {
+  background-color: var(--color-white);
+  border-color: rgba(10, 10, 10, 0.05);
+  max-width: 27.8125rem; /* 原版滚动后内联 max-width: 445px（4 个链接的紧凑宽度） */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.nav-link {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.32px;
+  color: #616161; /* 胶囊导航链接色（用户指定） */
+  position: relative;
+  padding: 0.25rem 0;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  min-height: 1px;
+  opacity: 0;
+  background: rgba(10, 10, 10, 0.32);
+  transition: width var(--transition-base), opacity 0.2s ease-in-out;
+}
+
+.nav-link:hover::after {
+  opacity: 1;
+  width: 100%;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* ---- Button Primary ---- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-radius: 100px;
+  padding: 0 1.125rem 0 1.5rem;
+  height: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+  font-family: var(--font-family);
+  letter-spacing: -0.28px;
+}
+
+.btn-primary:hover {
+  transform: scale(1.02);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* 按钮文字 wrapper：内层 overflow hidden 让双文本在其中上下滑动 */
+.btn-wrapper {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* 两层文本：默认 text 在原位，duplicate 藏在下方（100%），hover 时两者一起上滑 100% */
+.btn-text,
+.btn-text.btn-duplicate {
+  display: block;
+  transition: transform var(--transition-base);
+  transform: translateY(0);
+}
+
+.btn-text.btn-duplicate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translateY(100%);
+}
+
+.btn-primary:hover .btn-text {
+  transform: translateY(-100%);
+}
+
+.btn-primary:hover .btn-text.btn-duplicate {
+  transform: translateY(0);
+}
+
+/* 右侧小圆圈 icon */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-black);
+  border: 1px solid var(--color-black);
+  transition: background var(--transition-base), color var(--transition-base), transform var(--transition-fast);
+}
+
+.btn-outline:hover {
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+/* btn-outline 的圆圈 icon 颜色：未 hover 时是黑色 */
+.btn-outline .btn-icon svg rect {
+  fill: var(--color-black);
+  transition: fill var(--transition-base);
+}
+.btn-outline:hover .btn-icon svg rect {
+  fill: var(--color-white);
+}
+
+.btn-small {
+  height: 32px;
+  padding: 0 0.875rem 0 1.125rem;
+  font-size: 12px;
+  gap: 8px;
+}
+
+.btn-small .btn-icon {
+  width: 6px;
+  height: 6px;
+}
+
+.btn-submit {
+  /* 表单提交按钮：不需要双文本和图标 */
+  width: 100%;
+  height: 48px;
+  padding: 0 1.5rem !important;
+  font-size: 16px;
+  margin-top: 1rem;
+  gap: 0 !important;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.btn-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---- Menu Toggle (Mobile) ---- */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: calc(var(--z-fixed) + 1);
+  padding: 0.5rem;
+}
+
+.menu-bar {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--color-black);
+  border-radius: 2px;
+  transition: transform var(--transition-base), opacity var(--transition-base);
+}
+
+.menu-toggle.active .menu-bar:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.menu-toggle.active .menu-bar:nth-child(2) {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+/* ---- Mobile Menu ---- */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  background: var(--color-background);
+  z-index: calc(var(--z-fixed) - 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-base);
+}
+
+.mobile-menu.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.mobile-menu-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.mobile-nav-link {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.48px;
+  color: var(--color-black);
+}
+
+/* ---- Container (wrapper) ----
+   原版：默认 max-width 1208px，视口 ≥1500px 时 max-width 95rem(1520px)
+   所有尺寸用 rem（根 font-size 16px），随视口响应变化 */
+.container {
+  max-width: 75.5rem; /* 1208px */
+  margin: 0 auto;
+  padding: 0 2.25rem; /* 36px */
+}
+
+@media (min-width: 1500px) {
+  .container {
+    max-width: 95rem; /* 1520px */
+  }
+}
+
+/* ========== FOOTER（Let's talk 底部联系 CTA） ========== */
+/* 纯黑 #0A0A0A、无渐变、白字、左文案 + 右四张白底圆角二维码卡，nixtio 极简风 */
+.footer {
+  background: #0a0a0a;
+  padding: 8rem 0 0; /* 上方大量留白；底部间距由 footer-bottom 提供 */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.footer-inner {
+  display: grid;
+  grid-template-columns: 7fr 3fr; /* 左文案 70% / 右二维码 30% */
+  gap: 96px;
+  align-items: center;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ---- 左栏：文案（全部左对齐） ---- */
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 32px;   /* 组与组之间拉开留白（组内贴紧由 .lt-pair 控制） */
+}
+
+.lets-talk-title {
+  font-size: 144px;
+  font-weight: 600;
+  line-height: 0.95;   /* 两行排版：行距收紧 */
+  letter-spacing: -7.2px;
+  color: #fff;
+  margin-bottom: 1.5rem;
+}
+
+.lt-title-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.lt-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;   /* 组内两行贴紧 */
+}
+
+/* 前两行（英文/中文副标题）：样式、颜色、字号完全一致，上下贴紧 */
+.lt-subtitle,
+.lt-subtitle-zh {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #fff;
+  max-width: 620px;
+}
+
+/* 合作咨询行：比副标题更大一号，突出业务范围 */
+.lt-slogan {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 底部标签对：Product Design 行白色；中文说明行细而小、灰色辅助 */
+.lt-tags {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #fff;
+  max-width: 560px;
+}
+
+.lt-tags-zh {
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 560px;
+}
+
+/* ---- 右栏：2×2 田字形白色卡片（每张 150px，二维码 + 双语标签同在白框内） ---- */
+.footer-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 150px);
+  gap: 16px;
+  width: auto;
+}
+
+.qr-card {
+  width: 150px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 0.875rem;
+  box-sizing: border-box;
+}
+
+.qr-frame {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* 未上传二维码时：占位纹理降低透明度，暗示待配置 */
+.qr-card.is-empty .qr-frame img {
+  opacity: 0.5;
+}
+
+.qr-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.qr-label-zh {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0a0a0a;
+  line-height: 1.4;
+}
+
+.qr-label-en {
+  font-size: 11px;
+  color: rgba(10, 10, 10, 0.55);
+  line-height: 1.4;
+  letter-spacing: 0.2px;
+}
+
+/* ---- 底部版权条 ---- */
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1440px;
+  margin: auto auto 0; /* 内容不足一屏时贴底，保持高级留白 */
+  padding: 3rem 2rem 1.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  box-sizing: border-box;
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition-base);
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+/* ========== BACK-TO-TOP ROCKET BUTTON ========== */
+.back-to-top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: var(--z-fixed);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-black);
+  color: var(--color-white);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px) scale(0.8);
+  transition: opacity var(--transition-base), transform var(--transition-base), visibility var(--transition-base), box-shadow var(--transition-fast);
+}
+
+.back-to-top-btn.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.back-to-top-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+}
+
+.back-to-top-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.back-to-top-btn .rocket-icon {
+  transition: transform var(--transition-base);
+}
+
+.back-to-top-btn:hover .rocket-icon {
+  transform: translateY(-2px) rotate(-8deg);
+}
+
+/* ========== SCROLL REVEAL ANIMATIONS ========== */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.6s var(--motion-easing-enter), transform 0.6s var(--motion-easing-enter);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ⚠️ Hero Title 特殊处理：不使用标准 reveal 淡入，改为只由内部 char-animate 控制显示 */
+/*    否则父元素的 opacity 过渡会覆盖字符逐个弹出的 stagger 效果 */
+.hero-title.reveal {
+  opacity: 1;           /* 父元素永远不透明（不参与 reveal 的整体淡入） */
+  transform: none;
+  transition: none;
+}
+.hero-title.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* ========== RESPONSIVE（共享组件） ========== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .footer {
+    padding-top: 6rem;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+
+  .footer-right {
+    justify-content: flex-start;
+  }
+
+  .lets-talk-title {
+    font-size: 96px;
+    letter-spacing: -4.8px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .nav-links,
+  .header-nav {
+    display: none;
+  }
+
+  /* 移动端导航精确对齐原版 nixtio（375px 实测） */
+  .header-content {
+    /* 原版 padding: 14.4px 24px 8px —— 顶 / 左右 / 下 */
+    padding: 0.875rem 1rem 0.5rem;
+  }
+
+  .header-overlay.scrolled .header-content {
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* 动作区：联系我按钮 + 汉堡按钮并排 gap 8px */
+  .header-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 联系我按钮：原版黑色胶囊
+   * 实测：height 40px / padding 0 20px / border-radius 100px /
+   *       font 14px 600 / 黑底白字 / box-shadow inset rgba(255,255,255,.5) 0 0 2px 0
+   */
+  .header-actions .btn-primary {
+    height: 40px;
+    padding: 0 1.25rem;
+    border-radius: 100px;
+    background: var(--color-black);
+    color: var(--color-white);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.28px;
+    box-shadow: rgba(255, 255, 255, 0.5) 0 0 2px 0 inset;
+  }
+
+  /* 汉堡按钮：黑色圆形（原版 40x40 黑圆 + 三条 20x1px 白线） */
+  .menu-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--color-black);
+    border: 0;
+  }
+
+  .menu-bar {
+    /* 原版三条 20x1px 白线，border-radius 1px */
+    display: block;
+    width: 20px;
+    height: 1px;
+    background: var(--color-white);
+    border-radius: 1px;
+  }
+
+  /* 激活态：三条线变成 X */
+  .menu-toggle.active .menu-bar:nth-child(1) {
+    transform: rotate(45deg) translate(4px, 4px);
+  }
+  .menu-toggle.active .menu-bar:nth-child(2) {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  .menu-toggle.active .menu-bar:nth-child(3) {
+    transform: rotate(-45deg) translate(4px, -4px);
+  }
+
+  /* logo 保持 44x44 方形 */
+  .logo-link {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  .footer {
+    padding: 5rem 0 0;
+    min-height: auto;
+  }
+
+  .footer-inner {
+    padding: 0 1rem;
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+
+  .footer-right {
+    justify-content: flex-start;
+  }
+
+  .lets-talk-title {
+    font-size: 56px;
+    letter-spacing: -2.8px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 2rem 1rem 1.25rem;
+    text-align: left;
+  }
+
+  .back-to-top-btn {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .lets-talk-title {
+    font-size: 40px;
+    letter-spacing: -2px;
+  }
+}

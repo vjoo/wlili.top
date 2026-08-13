@@ -1,0 +1,155 @@
+{
+  "version": 2,
+  "sections": [
+    {
+      "id": "smsprw2m3jq96",
+      "type": "hero-banner",
+      "title": "Premium Digital Agency for Startups, SaaS & Brands",
+      "labels": [
+        {
+          "text": "50+ employees"
+        },
+        {
+          "text": "6 countries"
+        },
+        {
+          "text": "Founded in 2010"
+        }
+      ],
+      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
+      "videoType": "video",
+      "image": "/portfolio/cases/pjlist/uploads/1786536992715.png",
+      "videoUrl": ""
+    },
+    {
+      "id": "smspt62o385co-title",
+      "type": "title",
+      "title": "Projects",
+      "copyright": "2010-2026©",
+      "description": "We've helped businesses across industries achieve\ntheir goals. Here are some of our recent projects."
+    },
+    {
+      "id": "smspt62o385co",
+      "type": "hero",
+      "videoUrl": "",
+      "videoType": "placeholder"
+    },
+    {
+      "id": "smsprwcl5kz27",
+      "type": "next-projects",
+      "groups": [
+        {
+          "cards": [
+            {
+              "name": "",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            },
+            {
+              "name": "",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "name": "",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            },
+            {
+              "name": "",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "name": "",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            },
+            {
+              "name": "",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "name": "",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "",
+              "image2": ""
+            },
+            {
+              "name": "",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "displacement": "",
+              "image1": "",
+              "image2": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "letsTalk": {
+    "title": "Let's talk",
+    "subtitleEn": "Have a project in mind? Let's create something meaningful together.",
+    "subtitleZh": "有项目想法？我们一起把它变成有价值的设计。",
+    "slogan": "合作咨询 / 约稿商单 / 作品集交流",
+    "tags": "Product Design ｜ Mobile & Interactive ｜ B2C / B2B / B2G",
+    "tagsZh": "面向产品、移动与交互终端，覆盖消费、企业、政企数字化项目",
+    "qrCodes": [
+      {
+        "label": "微信好友",
+        "labelEn": "WeChat",
+        "url": "/portfolio/cases/_shared/assets/qr-wechat.png"
+      },
+      {
+        "label": "公众号",
+        "labelEn": "Official Account",
+        "url": "/portfolio/cases/_shared/assets/qr-official.png"
+      },
+      {
+        "label": "小红书",
+        "labelEn": "Xiaohongshu",
+        "url": "/portfolio/cases/_shared/assets/qr-xiaohongshu.png"
+      },
+      {
+        "label": "抖音号",
+        "labelEn": "Douyin",
+        "url": "/portfolio/cases/_shared/assets/qr-douyin.png"
+      }
+    ]
+  }
+}
