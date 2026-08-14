@@ -20,6 +20,36 @@
       "videoType": "image",
       "image": "",
       "videoUrl": ""
+    },
+    {
+      "id": "smsqyvwfa8zr8",
+      "type": "gallery",
+      "label": "",
+      "heading": "",
+      "colCount": "3",
+      "columns": [
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smsqznv3582ye",
+              "src": "/portfolio/cases/home/uploads/1786593536029.jpg"
+            },
+            {
+              "id": "smsr02qti0evu",
+              "src": "/portfolio/cases/home/uploads/1786594230338.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 0,
+          "images": []
+        },
+        {
+          "offsetRem": 0,
+          "images": []
+        }
+      ]
     }
   ],
   "letsTalk": {

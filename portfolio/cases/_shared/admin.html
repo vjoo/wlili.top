@@ -459,6 +459,12 @@ body {
   min-width: 0;
   flex: 1;
 }
+/* 单次上传格式选择（紧邻上传控件/直链输入框，仅对本次上传生效） */
+.fmt-pick-wrap { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; white-space: nowrap; }
+.fmt-pick-wrap label { font-size: 12px; color: var(--text-muted); }
+.fmt-pick { width: auto !important; min-width: 0 !important; padding: 6px 8px; font-size: 12px; height: auto; }
+/* legacy 图片控件（列表项内）的包裹层：dropzone + 格式行 */
+.dz-ctl { display: flex; flex-direction: column; width: 100%; min-width: 0; }
 
 /* 直链输入框：给更长的可用宽度，避免长地址被截断（仅在编辑器里生效） */
 #editorFormContainer .dz-url-input .form-input {
@@ -2040,10 +2046,18 @@ const TYPE_ICONS = {
 /* ===== Type Field Definitions ===== */
 const TYPE_FIELDS = {
   'hero': [
-    { key: 'videoType', label: '首屏媒体类型', type: 'select', options: ['placeholder', 'video', 'image'],
-      hint: 'placeholder=占位纯色/背景图；video=播放视频；image=显示静态底图' },
+    { key: 'videoType', label: '首屏媒体类型', type: 'select', options: ['placeholder', 'video', 'image', 'carousel'],
+      hint: 'placeholder=占位纯色；video=播放视频；image=显示静态底图；carousel=多图自动轮播（1张时显示静态图）' },
     { key: 'videoUrl', label: '视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
-    { key: 'image', label: '图片（videoType=image时用）', type: 'image', dependsOn: { field: 'videoType', value: 'image' } }
+    { key: 'image', label: '图片（videoType=image时用）', type: 'image', dependsOn: { field: 'videoType', value: 'image' } },
+    { key: 'effect', label: '轮播切换效果', type: 'select', options: ['slide', 'fade', 'cube', 'coverflow', 'flip', 'creative'],
+      hint: 'slide=滑动；fade=淡入；cube=立方体；coverflow=封面流；flip=翻转；creative=创意', dependsOn: { field: 'videoType', value: 'carousel' } },
+    { key: 'autoplayDelay', label: '自动播放间隔（毫秒）', type: 'text', placeholder: '4000',
+      hint: '默认 4000（4秒）。填 0 则关闭自动播放', dependsOn: { field: 'videoType', value: 'carousel' } },
+    { key: 'images', label: '轮播图列表（1张=静态图，多张=自动轮播）', type: 'items-list', itemLabel: '轮播图',
+      dependsOn: { field: 'videoType', value: 'carousel' }, itemFields: [
+        { key: 'image', label: '图片', type: 'image' }
+      ] }
   ],
   'hero-banner': [
     { key: 'title', label: '主标题 H1（叠加在大图左上，粗体大字）', type: 'textarea', rows: 2, placeholder: 'Premium Digital Agency for Startups, SaaS & Brands' },
@@ -2051,10 +2065,21 @@ const TYPE_FIELDS = {
     { key: 'buttonText', label: '按钮文字', type: 'text', placeholder: 'Start a project' },
     { key: 'linkPage', label: '站内页面跳转', type: 'text', hint: '填页面 key（如 works），渲染为 ../works/index.html；优先于链接URL' },
     { key: 'linkUrl', label: '按钮链接URL（外链，新窗口）', type: 'text' },
-    { key: 'videoType', label: '背景媒体类型', type: 'select', options: ['image', 'video', 'placeholder'],
-      hint: 'image=静态背景大图；video=背景视频；placeholder=占位色块' },
+    { key: 'videoType', label: '背景媒体类型', type: 'select', options: ['image', 'video', 'placeholder', 'carousel'],
+      hint: 'image=静态背景大图；video=背景视频；placeholder=占位色块；carousel=多图自动轮播（每张图配独立文案）' },
     { key: 'image', label: '背景大图', type: 'image', hint: '建议偏暗/主体偏下的图，保证左上文字可读', dependsOn: { field: 'videoType', value: 'image' } },
-    { key: 'videoUrl', label: '背景视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } }
+    { key: 'videoUrl', label: '背景视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
+    { key: 'effect', label: '轮播切换效果', type: 'select', options: ['slide', 'fade', 'cube', 'coverflow', 'flip', 'creative'],
+      hint: 'slide=滑动；fade=淡入；cube=立方体；coverflow=封面流；flip=翻转；creative=创意', dependsOn: { field: 'videoType', value: 'carousel' } },
+    { key: 'autoplayDelay', label: '自动播放间隔（毫秒）', type: 'text', placeholder: '4000',
+      hint: '默认 4000（4秒）。填 0 则关闭自动播放', dependsOn: { field: 'videoType', value: 'carousel' } },
+    { key: 'images', label: '轮播图列表（每张图可配独立标题/标签/描述，切图时文案一起切换）', type: 'items-list', itemLabel: '轮播图',
+      dependsOn: { field: 'videoType', value: 'carousel' }, itemFields: [
+        { key: 'image', label: '图片', type: 'image' },
+        { key: 'title', label: '本图主标题（选填）', type: 'text', placeholder: '本张图的标题' },
+        { key: 'labels', label: '本图标签（英文逗号分隔）', type: 'tags', placeholder: '如 50+ employees' },
+        { key: 'subtitle', label: '本图描述（选填）', type: 'textarea', placeholder: '本张图的描述文字' }
+      ] }
   ],
   'intro': [
     { key: 'label',   label: '板块标题（左栏小字，如 Introduction）', type: 'text', placeholder: 'Introduction' },
@@ -2168,7 +2193,7 @@ function getDefaultSection(type) {
   const base = { id: genId(), type };
   switch(type) {
     case 'hero': return { ...base, videoUrl: '', videoType: 'video' };
-    case 'hero-banner': return { ...base, title: 'Premium Digital Agency for Startups, SaaS & Brands', labels: [ { text: '50+ employees' }, { text: '6 countries' }, { text: 'Founded in 2010' } ], description: 'We craft digital experiences that help ambitious companies grow and stand out in a crowded market.', videoType: 'image', image: '', videoUrl: '' };
+    case 'hero-banner': return { ...base, title: 'Premium Digital Agency for Startups, SaaS & Brands', labels: [ { text: '50+ employees' }, { text: '6 countries' }, { text: 'Founded in 2010' } ], description: 'We craft digital experiences that help ambitious companies grow and stand out in a crowded market.', videoType: 'image', image: '', videoUrl: '', effect: 'slide', autoplayDelay: '4000', images: [] };
     case 'intro': return { ...base, label: '', heading: '', year: '2025', industry: '', scopeTags: [], timeline: '' };
     case 'brand-logo': return { ...base, logoUrl: '' };
     case 'parallax': return { ...base, baseImage: '', overlayImage: '' };
@@ -2337,20 +2362,71 @@ function genId() {
 const MEDIA_EXT_ALL = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'bmp', 'tiff', 'tif', 'ico', 'apng', 'svg', 'mp4', 'webm', 'mov', 'm4v', 'ogv', 'ogg'];
 const MEDIA_ACCEPT = '.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp,.tiff,.tif,.ico,.apng,.svg,.mp4,.webm,.mov,.m4v,.ogv,.ogg';
 
-async function uploadMedia(file) {
+/* 单次上传格式选择（放在每个上传控件旁，仅对本次上传生效，不做全局记忆）：
+   jpg  → 转 JPG（透明填白底，体积最小，默认）
+   png  → 保留 PNG 透明通道（适合重叠层/logo）
+   auto → 无透明转 JPG、有透明保留 PNG（智能） */
+function fmtPickHtml(selected) {
+  selected = selected || 'jpg';
+  const opts = [
+    ['jpg', 'JPG（体积小）'],
+    ['png', 'PNG（留透明）'],
+    ['auto', '自动']
+  ].map(([v, t]) => `<option value="${v}"${v === selected ? ' selected' : ''}>${t}</option>`).join('');
+  return `<span class="fmt-pick-wrap" title="本次上传的压缩格式：JPG 体积最小（透明填白底）；PNG 保留透明通道（适合重叠图/logo）；自动（无透明转 JPG、有透明留 PNG）"><label>格式</label><select class="form-select fmt-pick">${opts}</select></span>`;
+}
+function getFmtPick(scope) {
+  const el = scope && scope.querySelector ? scope.querySelector('.fmt-pick') : null;
+  return el && el.value ? el.value : 'jpg';
+}
+
+async function uploadMedia(file, fmt) {
   if (!file) return '';
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   if (MEDIA_EXT_ALL.indexOf(ext) < 0) {
     throw new Error('不支持的格式：.' + ext + '（支持图片 jpg/png/webp/gif/avif/bmp/tiff/ico/apng/svg 与视频 mp4/webm/mov/m4v/ogv/ogg）');
   }
+  // PNG 上传前先量化（libimagequant/pngquant 同源技术，TinyPNG 同款）：
+  // 保留 alpha 透明通道 + 抖动补偿，比 canvas/后端无损重编码压缩率高出数倍。
+  // 仅对"PNG 源 + 非强制 JPG"生效；量化失败自动回退原文件上传。
+  if ((file.type === 'image/png' || ext === 'png') && fmt !== 'jpg') {
+    try {
+      const q = await pngQuantizeUpload(file);
+      if (q && q.size > 0 && q.size < file.size) file = q;
+    } catch (e) { /* 量化不可用/失败 → 用原文件 */ }
+  }
   const b64 = await fileToBase64(file);
-  const data = await api('/upload', 'POST', { ext, dataBase64: b64 });
+  const data = await api('/upload', 'POST', { ext, dataBase64: b64, format: fmt || 'jpg' });
   return data.url || '';
 }
 
-// 兼容旧调用点：图片/视频字段统一走 uploadMedia
-async function uploadImage(file) { return uploadMedia(file); }
-async function uploadVideo(file) { return uploadMedia(file); }
+// PNG 量化引擎（libimagequant WASM，懒加载，仅 PNG 上传时触发）
+let _liqPromise = null;
+function loadLibImageQuant() {
+  if (_liqPromise) return _liqPromise;
+  // admin.html 位于 _shared/ 下，资源用相对路径 assets/libimagequant/...
+  _liqPromise = import('./assets/libimagequant/index.mjs').then((m) => {
+    const LibImageQuant = m.default;
+    return new LibImageQuant({
+      workerUrl: new URL('./assets/libimagequant/worker.mjs', location.href).href
+    });
+  }).catch((err) => { _liqPromise = null; throw err; });
+  return _liqPromise;
+}
+// 用 libimagequant 量化 PNG 文件（保留透明通道），返回量化后的 File
+async function pngQuantizeUpload(file) {
+  const liq = await loadLibImageQuant();
+  const r = await liq.quantizePng(file, { maxColors: 256, speed: 3, dithering: 1.0 });
+  if (r && r.pngBytes && r.pngBytes.length) {
+    const name = file.name.replace(/\.png$/i, '') + '.png';
+    return new File([r.pngBytes], name, { type: 'image/png' });
+  }
+  throw new Error('量化产出为空');
+}
+
+// 兼容旧调用点：图片/视频字段统一走 uploadMedia（fmt 为单次上传格式，默认 jpg）
+async function uploadImage(file, fmt) { return uploadMedia(file, fmt); }
+async function uploadVideo(file, fmt) { return uploadMedia(file, fmt); }
 
 // 公共二维码上传：覆盖 _shared/assets/qr-<slot>.png，全站底部二维码统一（改一次全站生效）
 // slot: wechat / official / xiaohongshu / douyin
@@ -2537,16 +2613,19 @@ function buildCardThumbnail(s) {
   try {
     switch (s.type) {
       case 'hero': {
-        const media = s.videoType === 'video' ? '视频' : (s.videoType === 'image' ? '图片' : '占位符');
+        const media = s.videoType === 'video' ? '视频' : (s.videoType === 'carousel' ? '轮播图' : (s.videoType === 'image' ? '图片' : '占位符'));
+        const count = (s.videoType === 'carousel' && Array.isArray(s.images)) ? s.images.filter(x => x && x.image).length : 0;
         return `<div class="ct-hero">
           <div class="hero-play-icon"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></div>
-          <div class="hero-title-overlay">媒体：${esc(media)}</div>
+          <div class="hero-title-overlay">媒体：${esc(media)}${count ? ' · ' + count + '张' : ''}</div>
         </div>`;
       }
       case 'hero-banner': {
-        return `<div class="ct-hero"${s.image ? ` style="background-image:url('${esc(s.image)}');background-size:cover;background-position:center;"` : ''}>
+        const carouselImg = (s.videoType === 'carousel' && Array.isArray(s.images)) ? (s.images.find(x => x && x.image) || {}).image : '';
+        const bg = s.videoType === 'carousel' ? carouselImg : s.image;
+        return `<div class="ct-hero"${bg ? ` style="background-image:url('${esc(bg)}');background-size:cover;background-position:center;"` : ''}>
           <div class="hero-play-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="18" height="16" rx="2.5"/><polygon points="10 8.5 16 12 10 15.5 10 8.5"/></svg></div>
-          <div class="hero-title-overlay">${esc(s.title || 'Hero Banner')}</div>
+          <div class="hero-title-overlay">${esc(s.title || 'Hero Banner')}${s.videoType === 'carousel' ? ' · 轮播' : ''}</div>
         </div>`;
       }
       case 'intro': {
@@ -2703,8 +2782,8 @@ function buildCardThumbnail(s) {
 function buildCardPreviewText(s) {
   let text = '';
   switch (s.type) {
-    case 'hero': text = '媒体：' + (s.videoType === 'video' ? '视频' : (s.videoType === 'image' ? '图片' : '占位符')); break;
-    case 'hero-banner': text = s.title ? s.title : '（未设置标题）'; break;
+    case 'hero': text = '媒体：' + (s.videoType === 'video' ? '视频' : (s.videoType === 'carousel' ? '轮播图·' + (Array.isArray(s.images) ? s.images.filter(x => x && x.image).length : 0) + '张' : (s.videoType === 'image' ? '图片' : '占位符'))); break;
+    case 'hero-banner': text = (s.title ? s.title : '（未设置标题）') + (s.videoType === 'carousel' ? ' · 轮播' : ''); break;
     case 'intro': text = s.heading ? s.heading : (s.label || '（未设置标题）'); break;
     case 'brand-logo': text = s.logoUrl ? '（已上传 Logo）' : '（未上传 Logo）'; break;
     case 'parallax': text = (s.baseImage || s.overlayImage) ? '视差图对' : '（未上传图片）'; break;
@@ -2967,10 +3046,10 @@ function renderEditorForm(section) {
       }
       // 需要重建表单的情况：
       //  1) colCount 改变 → 重排 columns → 重建（刷新 gallery-columns Tab 数）
-      //  2) videoType 改变（Hero/Showcase）→ 重建（切换 image / videoUrl 字段）
+      //  2) videoType 改变（Hero/Hero Banner/Showcase）→ 重建（切换 image / videoUrl / carousel 字段）
       const needsRebuild = willRebuild ||
         (k === 'colCount' && section.type === 'gallery') ||
-        (k === 'videoType' && (section.type === 'hero' || section.type === 'showcase'));
+        (k === 'videoType' && (section.type === 'hero' || section.type === 'hero-banner' || section.type === 'showcase'));
       if (needsRebuild) {
         onSectionChanged();
         setTimeout(() => renderEditorForm(section), 0);
@@ -3012,6 +3091,7 @@ function renderImageFieldWithUrl(key, url, uid, options) {
   const urlId = 'url_' + key + '_' + uid;
   const sepLabel = options.sepLabel || '';
   const sepHtml = sepLabel ? ('<span class="dz-url-sep">' + sepLabel + '</span>') : '';
+  const fmtHtml = options.hideFmt ? '' : fmtPickHtml();
   return `
     <div class="dropzone${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-uid="${esc(uid)}" id="${dzId}" data-ftype="image">
       <input type="hidden" data-bind-key="${esc(key)}" data-ftype="image-value" value="${esc(url)}">
@@ -3026,6 +3106,7 @@ function renderImageFieldWithUrl(key, url, uid, options) {
     </div>
     <div class="dz-url-input">
       ${sepHtml}
+      ${fmtHtml}
       <input class="form-input" type="text" placeholder="https://... 图片 URL" value="${esc(url && url.startsWith('http') ? url : '')}" data-url-key="${esc(key)}" data-url-uid="${esc(uid)}" id="${urlId}">
     </div>`;
 }
@@ -3037,7 +3118,9 @@ function bindImageField(key, uid, writeFn, sharedSlot) {
     if (!file) return;
     const prog = toastProgress('正在上传图片...');
     try {
-      const url = sharedSlot ? await uploadSharedQr(sharedSlot, file) : await uploadImage(file);
+      // 单次上传格式：读取本字段旁的格式下拉（默认 jpg），不影响其他上传控件
+      const fmt = getFmtPick(dz.parentElement);
+      const url = sharedSlot ? await uploadSharedQr(sharedSlot, file) : await uploadImage(file, fmt);
       if (!url) throw new Error('服务器未返回 URL');
       setImageValue(key, uid, url, writeFn);
       prog.close('图片已上传', 'success');
@@ -3085,17 +3168,17 @@ function setImageValue(key, uid, url, writeFn) {
   const dz = document.querySelector(`.dropzone[data-dz="${key}"][data-uid="${uid}"]`);
   if (!dz) return;
   const wrap = dz.parentElement;
-  const container = wrap.parentElement;
   const newHtml = renderImageFieldWithUrl(key, url, uid);
   const tmp = document.createElement('div');
   tmp.innerHTML = newHtml;
   const newDz = tmp.firstElementChild;
   const urlInput = tmp.children[1];
   wrap.replaceChild(newDz, dz);
-  // Replace URL input too
-  const oldUrlInp = container.querySelector(`input[data-url-key="${key}"][data-url-uid="${uid}"]`);
-  if (oldUrlInp && urlInput) {
-    oldUrlInp.parentElement.replaceChild(urlInput, oldUrlInp);
+  // 用新的整个 .dz-url-input（含格式下拉 + URL 输入框）替换旧的整个 .dz-url-input，
+  // 避免只替换输入框导致旧格式下拉残留堆积（堆积后 getFmtPick 会读到旧值，PNG/JPG 选择失效）
+  const oldUrlWrap = wrap.querySelector('.dz-url-input');
+  if (oldUrlWrap && urlInput) {
+    oldUrlWrap.parentElement.replaceChild(urlInput, oldUrlWrap);
   }
   bindImageField(key, uid, writeFn);
   // Update state（提供 writeFn 时由调用方写入自定义位置，如 letsTalk.qrCodes[i].url）
@@ -3193,16 +3276,16 @@ function setVideoValue(key, uid, url) {
   const dz = document.querySelector(`.dropzone.dropzone-video[data-dz="${key}"][data-uid="${uid}"]`);
   if (!dz) return;
   const wrap = dz.parentElement;
-  const container = wrap.parentElement;
   const newHtml = renderVideoFieldWithUrl(key, url, uid);
   const tmp = document.createElement('div');
   tmp.innerHTML = newHtml;
   const newDz = tmp.firstElementChild;
   const urlInput = tmp.children[1];
   wrap.replaceChild(newDz, dz);
-  const oldUrlInp = container.querySelector(`input[data-url-key="${key}"][data-url-uid="${uid}"]`);
-  if (oldUrlInp && urlInput) {
-    oldUrlInp.parentElement.replaceChild(urlInput, oldUrlInp);
+  // 整块替换 .dz-url-input，避免嵌套累积
+  const oldUrlWrap = wrap.querySelector('.dz-url-input');
+  if (oldUrlWrap && urlInput) {
+    oldUrlWrap.parentElement.replaceChild(urlInput, oldUrlWrap);
   }
   bindVideoField(key, uid);
   if (selectedIndex >= 0) {
@@ -3524,6 +3607,7 @@ function renderGalleryColumnsEditor(key, columns, sectionId, colCount) {
       </div>
       <div class="gc-add-row">
         <button type="button" class="btn-secondary gc-add-url" data-gc-addurl="${gid}" data-gc-col="${ci}">+ 新增（填直链）</button>
+        ${fmtPickHtml()}
         <div class="dropzone gc-add-dropzone" data-gc-dz="${gid}" data-gc-col="${ci}" data-ftype="image">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
           <span>+ 点选 / 拖拽图片上传（本列末尾）</span>
@@ -3617,7 +3701,9 @@ function bindGalleryColumnsEditor(key, sectionId) {
             if (!file) return;
             var prog = toastProgress('上传新图片...');
             try {
-              var url = await uploadImage(file);
+              // 单次上传格式：读取本列「新增上传」旁的格式下拉（同一列的图片格式保持一致）
+              var fmtEl = wrap.querySelector(`.gc-panel[data-gc-col="${ci}"] .fmt-pick`);
+              var url = await uploadImage(file, fmtEl ? fmtEl.value : 'jpg');
               if (!url) throw new Error('服务器未返回 URL');
               if (section.columns && section.columns[ci] && section.columns[ci].images[idx]) {
                 section.columns[ci].images[idx].src = url;
@@ -3653,7 +3739,7 @@ function bindGalleryColumnsEditor(key, sectionId) {
       if (!file) return;
       var prog = toastProgress('上传图片...');
       try {
-        var url = await uploadImage(file);
+        var url = await uploadImage(file, getFmtPick(dz.parentElement));
         if (!url) throw new Error('服务器未返回 URL');
         if (!section.columns[ci]) section.columns[ci] = { offsetRem: 0, images: [] };
         section.columns[ci].images.push({ id: genId(), src: url });
@@ -3734,6 +3820,7 @@ function bindGalleryColumnsEditor(key, sectionId) {
 function renderImageField(key, url) {
   const has = !!url;
   return `
+    <div class="dz-ctl">
     <div class="dropzone${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-ftype="image">
       <input type="hidden" data-key="${esc(key)}" data-ftype="image-value" value="${esc(url)}">
       <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
@@ -3744,6 +3831,8 @@ function renderImageField(key, url) {
         <button type="button" class="dz-clear" data-clear="${esc(key)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         <div class="dz-replace">点击替换图片</div>
       </div>` : ''}
+    </div>
+    <div class="dz-url-input">${fmtPickHtml()}</div>
     </div>`;
 }
 
@@ -3754,7 +3843,7 @@ function bindImageFieldLegacy(key, onUpdate) {
     if (!file) return;
     const prog = toastProgress('正在上传图片...');
     try {
-      const url = await uploadImage(file);
+      const url = await uploadImage(file, getFmtPick(dz.parentElement));
       if (!url) throw new Error('服务器未返回 URL');
       const wrap = dz.parentElement;
       const tmp = document.createElement('div');
@@ -3835,6 +3924,7 @@ function renderItemImageControl(fkey, url, idx) {
       ${has ? `<div class="il-image-preview"><img src="${esc(url)}" alt="" loading="lazy"></div>` : ''}
       <div class="il-image-actions">
         <button type="button" class="btn-secondary il-img-upload" style="justify-content:center;">上传图片</button>
+        ${fmtPickHtml()}
         ${has ? `<button type="button" class="btn-secondary il-img-clear" style="justify-content:center;">清除</button>` : ''}
         <input class="form-input il-img-url" type="text" placeholder="https://... 图片 URL" value="${esc(url && url.startsWith('http') ? url : '')}">
       </div>
@@ -3904,7 +3994,7 @@ function bindItemsListField(field, uid) {
         if (!file) return;
         const prog = toastProgress('正在上传图片...');
         try {
-          const url = await uploadImage(file);
+          const url = await uploadImage(file, getFmtPick(imgWrap));
           if (!url) throw new Error('服务器未返回 URL');
           setUrl(url);
           prog.close('图片已上传', 'success');
@@ -4519,7 +4609,7 @@ function renderLetsTalkEditor(right) {
     const uid = 'lt_qr' + i;
     html += `<div class="lt-qr-box">
       <div class="lt-qr-title">${esc(qr.label + ' / ' + qr.labelEn)}</div>
-      ${renderImageFieldWithUrl('qr' + i, qr.url || '', uid, { sepLabel: '' })}
+      ${renderImageFieldWithUrl('qr' + i, qr.url || '', uid, { sepLabel: '', hideFmt: true })}
     </div>`;
   });
   html += '</div>';
