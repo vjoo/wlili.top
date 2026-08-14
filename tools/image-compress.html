@@ -397,6 +397,57 @@
     return _scriptCache[src];
   }
 
+  // ─── PNG 量化引擎（libimagequant / pngquant 同源技术，TinyPNG 同款） ───
+  // 懒加载共享 WASM（_shared/assets/libimagequant/，与后台组件库同一份，无重复），
+  // 首次用到 PNG 输出时才加载。
+  // libimagequant 是「有损量化」：把 24/32 位图降为 ≤256 色调色板（每像素 1 字节），
+  // 保留 alpha 透明通道 + 抖动补偿，压缩率远超 canvas 无损重编码。
+  let _liqPromise = null;
+  function loadLibImageQuant() {
+    if (_liqPromise) return _liqPromise;
+    _liqPromise = import('../portfolio/cases/_shared/assets/libimagequant/index.mjs').then((m) => {
+      const LibImageQuant = m.default;
+      // 用本地 module worker（CSP worker-src 'self' 放行），wasm 相对路径自动解析
+      return new LibImageQuant({
+        workerUrl: new URL('../portfolio/cases/_shared/assets/libimagequant/worker.mjs', location.href).href
+      });
+    }).catch((err) => { _liqPromise = null; throw err; });
+    return _liqPromise;
+  }
+  // 压缩比控制：quality 滑杆（10-100）→ 调色板色数（2~256），色越少体积越小
+  function pngQuantizeOptions() {
+    const q = parseInt(qualityInp.value) || 90;
+    return { maxColors: Math.max(2, Math.round(256 * (q / 100))), speed: 3, dithering: 1.0 };
+  }
+  // 用 libimagequant 量化 PNG（保留 alpha 透明通道）。
+  // 优先对源 PNG 字节直接量化（不经过 canvas，避免调色板被展开成 RGBA 反而变大）；
+  // 需要缩放或源非 PNG 时，先绘制到 canvas 拿 ImageData 再量化。
+  async function quantizePngWithLiq(img, sourceBlob, w, h) {
+    const liq = await loadLibImageQuant();
+    const isPngSrc = sourceBlob.type === 'image/png' || /\.png$/i.test(sourceBlob.name || '');
+    const noResize = !img || (w === img.naturalWidth && h === img.naturalHeight);
+    // 路径 A：源本身就是 PNG 且未缩放 → 直接量化源字节（最佳保真 + 保留透明）
+    if (isPngSrc && noResize) {
+      const r = await liq.quantizePng(sourceBlob, pngQuantizeOptions());
+      if (r && r.pngBytes && r.pngBytes.length) {
+        return { blob: new Blob([r.pngBytes], { type: 'image/png' }), size: r.pngBytes.length };
+      }
+      throw new Error('量化产出为空');
+    }
+    // 路径 B：缩放过或非 PNG 源 → canvas → ImageData → 量化（同样保留 alpha）
+    const cv2 = document.createElement('canvas');
+    cv2.width = w; cv2.height = h;
+    const ctx2 = cv2.getContext('2d', { willReadFrequently: true });
+    ctx2.imageSmoothingEnabled = true; ctx2.imageSmoothingQuality = 'high';
+    ctx2.drawImage(img, 0, 0, w, h);
+    const imageData = ctx2.getImageData(0, 0, w, h);
+    const r = await liq.quantizeImageData(imageData, pngQuantizeOptions());
+    if (r && r.pngBytes && r.pngBytes.length) {
+      return { blob: new Blob([r.pngBytes], { type: 'image/png' }), size: r.pngBytes.length };
+    }
+    throw new Error('量化产出为空');
+  }
+
   // ─── Loader Overlay ───────────────────────
   let _loaderTimer;
   function showLoader(msg) {
@@ -611,7 +662,30 @@
         }
 
         // ── Static image output ──
-        cv.toBlob(blob => { blob ? resolve({ blob, size: blob.size }) : reject(new Error('toBlob 返回空')); }, outFmt, (outFmt === 'image/png' || outFmt === 'image/svg+xml') ? undefined : quality);
+        // PNG：优先用 libimagequant 量化（保留 alpha 透明通道，TinyPNG 同源技术）；
+        // 量化库加载失败或产出异常时回退 canvas 无损重编码
+        if (outFmt === 'image/png') {
+          quantizePngWithLiq(img, sourceBlob, w, h, quality).then((r) => {
+            // PNG 量化/重编码 ≥ 原图 → 保留原文件，避免"压缩反而变大"
+            if (r.size >= sourceBlob.size) resolve({ blob: sourceBlob, size: sourceBlob.size });
+            else resolve(r);
+          }).catch(() => {
+            cv.toBlob(blob => {
+              if (!blob) { reject(new Error('toBlob 返回空')); return; }
+              if (blob.size >= sourceBlob.size) resolve({ blob: sourceBlob, size: sourceBlob.size });
+              else resolve({ blob, size: blob.size });
+            }, outFmt, quality);
+          });
+          return;
+        }
+        cv.toBlob(blob => {
+          if (!blob) { reject(new Error('toBlob 返回空')); return; }
+          if (outFmt === 'image/png' && blob.size >= sourceBlob.size) {
+            resolve({ blob: sourceBlob, size: sourceBlob.size });
+          } else {
+            resolve({ blob, size: blob.size });
+          }
+        }, outFmt, (outFmt === 'image/png' || outFmt === 'image/svg+xml') ? undefined : quality);
       };
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('图片加载失败')); };
       img.src = url;
@@ -654,8 +728,13 @@
     const done = im.status === 'done', processing = im.status === 'processing', loading = im.status === 'loading', error = im.status === 'error';
     let sizeHTML = '';
     if (done) {
-      const pct = ((1 - compSize / origSize) * 100).toFixed(1), bigger = compSize >= origSize;
-      sizeHTML = `<span class="card-size original">${formatBytesCompact(origSize)}</span><span class="card-size arrow">→</span><span class="card-size compressed">${formatBytesCompact(compSize)}</span><span style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap">${bigger?'+'+(pct*-1):+pct}%</span>`;
+      // 三种情况：变小（绿，减号省略）、变大（红，+xx%）、保护生效返回原文件（大小相等，显示「原图已最优」）
+      const pct = ((1 - compSize / origSize) * 100).toFixed(1);
+      let pctLabel, pctColor;
+      if (compSize > origSize) { pctLabel = '+' + (pct * -1) + '%'; pctColor = 'var(--red)'; }
+      else if (compSize === origSize) { pctLabel = '原图已最优'; pctColor = 'var(--ink-tertiary)'; }
+      else { pctLabel = pct + '%'; pctColor = 'var(--green)'; }
+      sizeHTML = `<span class="card-size original">${formatBytesCompact(origSize)}</span><span class="card-size arrow">→</span><span class="card-size compressed">${formatBytesCompact(compSize)}</span><span style="font-size:14px;font-weight:600;color:${pctColor};white-space:nowrap">${pctLabel}</span>`;
     } else if (loading) { sizeHTML = `<span class="card-loading"><span class="mini-spin"></span>解析中</span>`; }
     else if (processing) { sizeHTML = `<span class="card-loading"><span class="mini-spin"></span>压缩中</span>`; }
     else if (error) { sizeHTML = `<span style="color:var(--red);font-size:12px">失败</span>`; }
@@ -667,11 +746,14 @@
   }
 
   function updateStats() {
-    const total = images.length, original = images.reduce((s, im) => s + im.file.size, 0);
-    const doneList = images.filter(im => im.status === 'done'), compressed = doneList.reduce((s, im) => s + (im.compressedSize || 0), 0);
+    const total = images.length, doneList = images.filter(im => im.status === 'done');
+    // 原始大小显示全部图片；节省百分比只基于「已完成」图片，避免 pending/error 干扰口径
+    const originalAll = images.reduce((s, im) => s + im.file.size, 0);
+    const original = doneList.reduce((s, im) => s + im.file.size, 0);
+    const compressed = doneList.reduce((s, im) => s + (im.compressedSize || 0), 0);
     const pct = original > 0 ? ((1 - compressed / original) * 100).toFixed(1) : '0', saved = compressed > 0 ? pct : '—';
     document.getElementById('statTotal').textContent = total;
-    document.getElementById('statOriginal').textContent = formatBytes(original);
+    document.getElementById('statOriginal').textContent = formatBytes(originalAll);
     document.getElementById('statCompressed').textContent = formatBytes(compressed || 0);
     document.getElementById('statSaved').textContent = saved === '—' ? '—' : saved + '%';
     document.getElementById('statSaved').style.color = parseFloat(saved) > 0 ? 'var(--green)' : (parseFloat(saved) < 0 ? 'var(--red)' : 'var(--ink)');

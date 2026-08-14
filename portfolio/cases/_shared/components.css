@@ -1971,3 +1971,106 @@
     margin-top: 1rem;
   }
 }
+
+/* ========== HERO CAROUSEL（小Banner/大Banner 轮播模式，Swiper 驱动） ========== */
+/* 小Banner 轮播容器：与 .hero-video-embed 同尺寸（圆角 + 16:9 比例） */
+.hero-carousel.swiper {
+  width: 100%;
+  aspect-ratio: 1136 / 608;
+  border-radius: 1.5625rem;
+  overflow: hidden;
+  position: relative;
+}
+.hero-carousel .swiper-wrapper {
+  height: 100%;
+}
+.hero-carousel .swiper-slide {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.hero-carousel .swiper-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 大Banner 轮播容器：铺满 .hero-banner-frame（圆角已被 frame overflow:hidden 裁剪） */
+.hero-banner-carousel.swiper {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  height: 100%;
+  width: 100%;
+}
+.hero-banner-carousel .swiper-wrapper {
+  height: 100%;
+}
+.hero-banner-slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.hero-banner-slide-media {
+  position: absolute;
+  inset: 0;
+}
+.hero-banner-slide-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* 大Banner 轮播文字层：每张图独立的左下信息块，复用 .hero-banner-content 视觉 */
+.hero-banner-slide .hero-banner-content {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 6rem 5rem 2.5rem;
+}
+/* 切图文案进场动画：Swiper 切到该 slide 时文字从下往上+渐入（slide 级 reveal，不依赖全站观察器） */
+.hero-banner-slide .hero-banner-title,
+.hero-banner-slide .hero-banner-stats,
+.hero-banner-slide .hero-banner-description {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.hero-banner-carousel .swiper-slide-active .hero-banner-title {
+  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) forwards;
+  animation-delay: 0.1s;
+}
+.hero-banner-carousel .swiper-slide-active .hero-banner-stats {
+  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) forwards;
+  animation-delay: 0.25s;
+}
+.hero-banner-carousel .swiper-slide-active .hero-banner-description {
+  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) forwards;
+  animation-delay: 0.35s;
+}
+/* 非激活 slide 文字立即隐藏（避免 cube/flip/coverflow 把背面文字透出来） */
+.hero-banner-carousel .swiper-slide:not(.swiper-slide-active) .hero-banner-title,
+.hero-banner-carousel .swiper-slide:not(.swiper-slide-active) .hero-banner-stats,
+.hero-banner-carousel .swiper-slide:not(.swiper-slide-active) .hero-banner-description {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: none;
+}
+
+/* HERO CAROUSEL 移动端 */
+@media (max-width: 1024px) {
+  .hero-carousel.swiper {
+    aspect-ratio: 4 / 3; /* 移动端小Banner 轮播改用偏方形比例，避免高度过大 */
+  }
+  /* 大Banner 轮播在移动端与 .hero-banner-frame 同策略：定高容器，文字贴底 */
+  .hero-banner-carousel.swiper {
+    position: relative;     /* 参与文档流，frame 高度由内容决定 */
+    height: 62vh;
+    min-height: 420px;
+  }
+  .hero-banner-slide .hero-banner-content {
+    padding: 3.5rem 2rem 2.5rem;
+  }
+}

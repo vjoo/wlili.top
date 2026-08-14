@@ -1,7 +1,6 @@
 # WLi Studio / Studio Tools — AI 开发指南
 
 > 本文件是 AI 辅助开发的统一规范，所有工具页面的结构、样式、交互、适配均以此为准。
-> 对应可视化规范页：`tools/design-spec.html`
 
 ---
 
@@ -15,8 +14,7 @@
 |------|------|---------|
 | 1 | 本指南全文 | 全局规范/组件库/规则，读完长期复用 |
 | 2 | `common.css` | 只 Grep `:root` 看设计令牌（间距/字号/阴影/圆角）；组件按需读（如 `.btn-filled`） |
-| 3 | `design-spec.html` | 可视化规范；间距/字号/阴影刻度看"刻度体系"板块 |
-| 4 | 目标页面 | Grep 锚点定位，只读与任务相关的常量/函数块（复杂页另有专属备忘，如第十二章） |
+| 3 | 目标页面 | Grep 锚点定位，只读与任务相关的常量/函数块（复杂页另有专属备忘，如第十一章） |
 
 **省 Token 铁律：**
 1. **用 Grep 定位锚点，不靠行号**：行号会漂移，先 `Grep 锚点` 再 Read 最小范围
@@ -45,7 +43,6 @@ wlili.top/
     ├── nav.js                  # 统一导航栏（自动注入）
     ├── tools.json              # 工具配置（分类、图标、关键词）
     ├── index.html              # 工具卡片列表页
-    ├── design-spec.html        # 设计规范可视化页
     ├── bookmark-manager.html   # 书签管理器（复杂页-侧边栏）
     ├── image-compress.html     # 图片压缩（标准工具页）
     ├── image-cropper.html      # 图片裁切
@@ -625,7 +622,6 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | prompt-library | AI 提示词库 | `prompt-library.html` | creative | purple | 复杂工具页 |
 | seamless-pattern | 四方连图素材库 | `seamless-pattern.html` | creative | pink | 复杂工具页 |
 | bookmark-manager | 书签管理器 | `bookmark-manager.html` | manage | blue | 复杂工具页 |
-| design-spec | 设计规范 | `design-spec.html` | reference | indigo | 复杂工具页 |
 
 ### 图标色板（9 色）
 
@@ -811,29 +807,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 ---
 
-## 十一、设计规范可视化
-
-完整的 Design Token 与组件规范已可视化于 `tools/design-spec.html`，包含 13 个板块：
-
-1. **概览** — KPI 卡片总览
-2. **颜色系统** — 17 个 CSS 变量 + 页面专属色，点击复制
-3. **字体排版** — 字体族 + 11 级字号阶梯
-4. **圆角系统** — 4 档圆角令牌可视化
-5. **层级系统** — 6 级 Z-index 条形图
-6. **按钮组件** — 6 种按钮预览 + CSS 属性
-7. **表单控件** — 输入框与分段控件
-8. **布局组件** — 页面级布局容器
-9. **导航组件** — 全局导航与下拉菜单
-10. **反馈组件** — Toast 与拖放区域
-11. **动效规范** — 12 种动效模式实时演示
-12. **响应式断点** — 5 档断点说明
-13. **页面专属组件** — 10 个页面独有组件索引
-
-> 修改任何组件或样式前，建议先查看 `design-spec.html` 确认当前规范值。
-
----
-
-## 十二、seamless-pattern.html 专属开发备忘
+## 十一、seamless-pattern.html 专属开发备忘
 
 > 本章节供 AI 交接使用，包含关键代码索引、提示词生成规则、改元素必做清单。
 > **行号会随代码变动偏移，使用时请先 Grep 确认实际位置。**
@@ -922,7 +896,6 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 |------|------|---------|
 | 1 | `DEVELOPMENT_GUIDE.md`（本文件） | 全文读完，掌握规范/组件库/规则 |
 | 2 | `common.css` | 只 Grep `:root` 看设计令牌；组件按需读（如 `.btn-filled`） |
-| 3 | `design-spec.html` | 可视化规范；间距/字号/阴影刻度看"刻度体系"板块 |
 
 **第二步 读 seamless-pattern.html 代码（上手只读这 3 处）：**
 
@@ -943,7 +916,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | 修改布局/画风/色板 | `LAYOUTS` / `STYLES` / `DEFAULT_PALETTES` | 措辞影响 AI 输出，参照 §12.4 备注 |
 | 修改智能搭配主题 | `SMART_THEMES` + `smartMatch` | 元素名必须与 DEFAULT_ELEMENTS 完全一致 |
 | 修改交互/持久化 | `saveGenState` / `initData` / `genState` | 版本不匹配会强制注入默认数据 |
-| 改页面 UI 样式 | 页面 `<style>` 内对应类 + common.css | 间距必须用 §2.6 刻度值，先查 design-spec |
+| 改页面 UI 样式 | 页面 `<style>` 内对应类 + common.css | 间距必须用 §2.6 刻度值 |
 
 **省 Token 铁律：**
 1. **用 Grep 定位，不靠行号**：行号会漂移，先 `Grep 锚点` 再 Read 最小范围
@@ -953,7 +926,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 ---
 
-## 十三、图片处理统一选型与已有实现索引
+## 十二、图片处理统一选型与已有实现索引
 
 > 本项目已有多套成熟图片处理实现。**后续开发遇到图片需求先查本表，能复用绝不新写**；
 > 实现已存在时直接读对应文件借鉴/调用，禁止重新发明或引入新库。

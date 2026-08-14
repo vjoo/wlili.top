@@ -188,6 +188,8 @@ var CaseRenderer = (function () {
     if (typeof window.initHoverEffects === 'function') window.initHoverEffects();
     // hero-banner 滚动视差（scroll scrub + 平滑插值；prefers-reduced-motion 时自动跳过）
     initHeroBannerParallax(container);
+    // 轮播图（carousel）：懒加载 Swiper 并初始化（无轮播板块时零开销）
+    initCarousels(container);
     // 把新插入的所有板块注册进场动画（site-shell.js 暴露的接口）
     if (typeof window.registerRevealElements === 'function') {
       window.registerRevealElements(container);
@@ -230,31 +232,99 @@ var CaseRenderer = (function () {
     });
   }
 
-  // ===== 1. Hero Section（小Banner首屏）— 只含媒体（视频/图片/占位），无标题文字 =====
+  // ===== 1. Hero Section（小Banner首屏）— 只含媒体（视频/图片/占位/轮播），无标题文字 =====
   // 标题请用独立「标题栏」组件（type: title）承载
   function renderHero(s) {
     var section = sec('hero-section');
     // 按 videoType 选择对应的媒体源字段：
     //   - 'image' → s.image（用户上传/填的静态底图）
     //   - 'video' → s.videoUrl
+    //   - 'carousel' → s.images（多图自动轮播，1 张时退化为静态图）
     //   - 'placeholder' → 空，显示占位色
     var heroType = s.videoType || 'placeholder';
     var heroMedia = '';
     if (heroType === 'image') heroMedia = s.image || '';
     else if (heroType === 'video') heroMedia = s.videoUrl || '';
     // 只有用户没显式选类型（videoType 缺失/不是合法值）时，才根据已有字段自动回退兜底
-    if (heroType !== 'placeholder' && heroType !== 'image' && heroType !== 'video') {
+    if (heroType !== 'placeholder' && heroType !== 'image' && heroType !== 'video' && heroType !== 'carousel') {
       if (s.videoUrl) { heroMedia = s.videoUrl; heroType = 'video'; }
       else if (s.image) { heroMedia = s.image; heroType = 'image'; }
       else { heroType = 'placeholder'; }
     }
     // placeholder = 不渲染任何媒体区
     var mediaHtml = '';
-    if (heroType !== 'placeholder') {
+    if (heroType === 'carousel') {
+      mediaHtml = carouselMediaHtml(s, false);
+    } else if (heroType !== 'placeholder') {
       mediaHtml = '<div class="hero-video-embed">' + videoPlaceholder(heroType, heroMedia, 'Hero Banner') + '</div>';
     }
     section.innerHTML = mediaHtml;
     return section;
+  }
+
+  // ===== 1.4 轮播图（carousel）媒体区 =====
+  // 结构：.swiper > .swiper-wrapper > .swiper-slide（每张一张图）
+  //   - images 数组 1 张 → 静态图片（等价 videoType=image 单图）
+  //   - images 数组 ≥2 张 → Swiper 自动无缝轮播（移动端触摸滑动）
+  //   - 大Banner 模式（isBanner=true）：每张图配独立文案（标题/标签/描述），切图文案一起切换
+  function carouselMediaHtml(s, isBanner) {
+    var imgs = Array.isArray(s.images) ? s.images : [];
+    var items = imgs.filter(function (x) { return x && x.image; });
+    if (!items.length) {
+      return '<div class="video-placeholder warm-shot"><div class="placeholder-icon">' +
+        '<svg width="60" height="60" viewBox="0 0 60 60" fill="none">' +
+          '<circle cx="30" cy="30" r="28" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>' +
+          '<polygon points="25,18 25,42 43,30" fill="rgba(255,255,255,0.6)"/>' +
+        '</svg></div></div>';
+    }
+    // 单张：退化为静态图（等价 image 模式，兼容视觉与性能）
+    if (items.length === 1) {
+      var only = items[0];
+      if (isBanner) {
+        return heroBannerStaticMedia(only);
+      }
+      return '<div class="hero-video-embed"><img src="' + esc(only.image) + '" alt="' + esc(only.title || '') + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>';
+    }
+    var effect = s.effect || 'slide';
+    var delay = Number(s.autoplayDelay) > 0 ? Number(s.autoplayDelay) : 4000;
+    var slides = items.map(function (x, i) {
+      var img = '<img src="' + esc(x.image) + '" alt="' + esc(x.title || ('Slide ' + (i + 1))) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">';
+      if (isBanner) {
+        // 大Banner：每张图配独立文案层（复用 hero-banner-content 视觉）
+        var content = heroBannerSlideContent(x);
+        return '<div class="swiper-slide hero-banner-slide"><div class="hero-banner-slide-media">' + img + '</div>' + content + '</div>';
+      }
+      return '<div class="swiper-slide">' + img + '</div>';
+    }).join('');
+    var wrap = isBanner ? 'hero-banner-carousel' : 'hero-carousel';
+     var sw = '<div class="swiper ' + wrap + '" data-effect="' + esc(effect) + '" data-delay="' + delay + '">' +
+       '<div class="swiper-wrapper">' + slides + '</div></div>';
+     // 大Banner 轮播也要包在 .hero-banner-frame 内（圆角裁剪 + absolute 定位基准，与单图同款）
+     return isBanner ? '<div class="hero-banner-frame">' + sw + '</div>' : sw;
+   }
+
+  // 大Banner 轮播：单张静态（media + 左下信息块，与 videoType=image 同款结构）
+  function heroBannerStaticMedia(x) {
+    var content = heroBannerSlideContent(x);
+    var media = '<div class="hero-banner-media"><img src="' + esc(x.image) + '" alt="' + esc(x.title || '') + '" loading="lazy"></div>';
+    return '<div class="hero-banner-frame">' + media + content + '</div>';
+  }
+
+  // 大Banner 轮播：某张图的左下信息块（标题/标签/描述），每张图独立
+  function heroBannerSlideContent(x) {
+    var titleHtml = x.title ? '<h1 class="hero-banner-title">' + esc(x.title) + '</h1>' : '';
+    var statsHtml = '';
+    if (Array.isArray(x.labels) && x.labels.length) {
+      statsHtml = '<div class="hero-banner-stats">' + x.labels.map(function (lb) {
+        var t = (lb && typeof lb === 'object') ? lb.text : lb;
+        return '<span class="hero-banner-stat">' + esc(t || '') + '</span>';
+      }).join('') + '</div>';
+    }
+    var desc = x.description || x.subtitle || '';
+    var descHtml = desc ? '<p class="hero-banner-description">' + esc(desc) + '</p>' : '';
+    var inner = titleHtml + statsHtml + descHtml;
+    if (!inner) return '';
+    return '<div class="hero-banner-content">' + inner + '</div>';
   }
 
   // ===== 1.5 Hero Banner（nixtio 首屏 Hero：圆角相框大图 + 左下信息块 + 滚动视差） =====
@@ -264,18 +334,24 @@ var CaseRenderer = (function () {
   //   - 组内不放按钮（nixtio 原版 Hero 无按钮）
   function renderHeroBanner(s) {
     var section = sec('hero-banner-section');
-    // 媒体源：videoType 决定 image / video / placeholder
+    // 媒体源：videoType 决定 image / video / carousel / placeholder
     var mediaType = s.videoType || 'image';
     var mediaSrc = '';
     if (mediaType === 'image') mediaSrc = s.image || '';
     else if (mediaType === 'video') mediaSrc = s.videoUrl || '';
-    if (mediaType !== 'placeholder' && mediaType !== 'image' && mediaType !== 'video') {
+    if (mediaType !== 'placeholder' && mediaType !== 'image' && mediaType !== 'video' && mediaType !== 'carousel') {
       if (s.videoUrl) { mediaSrc = s.videoUrl; mediaType = 'video'; }
       else if (s.image) { mediaSrc = s.image; mediaType = 'image'; }
       else { mediaType = 'placeholder'; }
     }
     if ((mediaType === 'image' || mediaType === 'video') && !mediaSrc) mediaType = 'placeholder';
-    var mediaHtml = '<div class="hero-banner-media">' + videoPlaceholder(mediaType, mediaSrc, 'Hero Banner') + '</div>';
+    var mediaHtml;
+    if (mediaType === 'carousel') {
+      // 轮播：整帧（media + 每图文案）由 carouselMediaHtml 输出，不再走下方单图文案
+      section.innerHTML = carouselMediaHtml(s, true);
+      return section;
+    }
+    mediaHtml = '<div class="hero-banner-media">' + videoPlaceholder(mediaType, mediaSrc, 'Hero Banner') + '</div>';
     // 文字层：①主标题（整体从下往上+渐入 reveal，标题长也不再逐字）→ ②信息标签行 → ③描述段落（旧数据 subtitle 自动映射为描述）
     var titleHtml = s.title ? '<h1 class="hero-banner-title">' + esc(s.title) + '</h1>' : '';
     var statsHtml = '';
@@ -342,6 +418,75 @@ var CaseRenderer = (function () {
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
       onScroll();
+    });
+  }
+
+  // ===== 1.7 轮播图初始化（Swiper 懒加载） =====
+  // 页面默认不引入 Swiper（避免全站体积）；仅当渲染结果中出现轮播容器时才动态注入
+  // swiper-bundle.min.css/.js（已放 _shared/assets/），加载完成后初始化。
+  // 1 张图时不会生成 .swiper 容器（见 carouselMediaHtml 单张退化），故此处天然跳过。
+  var swiperPromise = null;
+  function loadSwiperLib() {
+    if (swiperPromise) return swiperPromise;
+    swiperPromise = new Promise(function (resolve, reject) {
+      // 相对页面（case 根目录）定位共享资源：../_shared/assets/
+      var base = '../_shared/assets/';
+      if (!document.querySelector('link[href*="swiper-bundle.min.css"]')) {
+        var lk = document.createElement('link');
+        lk.rel = 'stylesheet';
+        lk.href = base + 'swiper-bundle.min.css';
+        document.head.appendChild(lk);
+      }
+      if (typeof window.Swiper === 'function') { resolve(); return; }
+      if (document.querySelector('script[src*="swiper-bundle.min.js"]')) {
+        // 已在加载中：等待其 onload
+        var existing = document.querySelector('script[src*="swiper-bundle.min.js"]');
+        existing.addEventListener('load', resolve);
+        existing.addEventListener('error', function () { reject(new Error('Swiper 资源加载失败')); });
+        return;
+      }
+      var js = document.createElement('script');
+      js.src = base + 'swiper-bundle.min.js';
+      js.onload = function () { resolve(); };
+      js.onerror = function () { reject(new Error('Swiper 资源加载失败')); };
+      document.head.appendChild(js);
+    });
+    return swiperPromise;
+  }
+
+  function initCarousels(root) {
+    var boxes = (root || document).querySelectorAll('.swiper.hero-carousel, .swiper.hero-banner-carousel');
+    if (!boxes.length) return;
+    loadSwiperLib().then(function () {
+      boxes.forEach(function (box) {
+        if (box.dataset.swiperInited) return;
+        box.dataset.swiperInited = '1';
+        var slideCount = box.querySelectorAll('.swiper-slide').length;
+        var effect = box.getAttribute('data-effect') || 'slide';
+        var delay = parseInt(box.getAttribute('data-delay') || '4000', 10);
+        var cfg = {
+          effect: effect,
+          speed: 700,
+          loop: slideCount > 1,          // ≥2 张才循环
+          autoplay: slideCount > 1 ? { delay: delay, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
+          grabCursor: slideCount > 1,
+          resistance: true,
+          // 移动端触摸滑动、禁止页面滚动冲突
+          touchStartPreventDefault: false
+        };
+        // 各 effect 所需的额外参数
+        if (effect === 'cube') cfg.cubeEffect = { shadow: false, slideShadows: false };
+        if (effect === 'coverflow') cfg.coverflowEffect = { rotate: 30, stretch: 0, depth: 100, modifier: 1, slideShadows: false };
+        if (effect === 'flip') cfg.flipEffect = { slideShadows: false };
+        if (effect === 'creative') cfg.creativeEffect = { prev: { translate: ['-20%', 0, -1] }, next: { translate: ['100%', 0, 0] } };
+        try {
+          new window.Swiper(box, cfg);
+        } catch (e) {
+          console.warn('轮播初始化失败:', e);
+        }
+      });
+    }).catch(function (e) {
+      console.warn('Swiper 懒加载失败，轮播降级为静态首图:', e);
     });
   }
 

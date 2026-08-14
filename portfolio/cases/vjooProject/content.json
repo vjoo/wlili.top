@@ -12,8 +12,8 @@
       "id": "s1",
       "type": "hero",
       "videoUrl": "/portfolio/cases/vjooProject/uploads/1786414664376.mp4",
-      "videoType": "video",
-      "image": "/portfolio/cases/vjooProject/uploads/1786381079414.jpg"
+      "videoType": "image",
+      "image": "/portfolio/cases/vjooProject/uploads/1786697696037.jpg"
     },
     {
       "id": "s2",
@@ -122,11 +122,11 @@
           "images": [
             {
               "id": "smsnfq9x1s932",
-              "src": "../_shared/placeholder.svg"
+              "src": "/portfolio/cases/vjooProject/uploads/1786620604745.jpg"
             },
             {
               "id": "smsnfq9x1clr0",
-              "src": "../_shared/placeholder.svg"
+              "src": "/portfolio/cases/vjooProject/uploads/1786620613262.jpg"
             }
           ]
         },
@@ -138,8 +138,8 @@
               "src": "/portfolio/cases/vjooProject/uploads/1786429914598.png"
             },
             {
-              "id": "smso7na2ubq9l",
-              "src": "/portfolio/cases/vjooProject/uploads/1786425547191.jpg"
+              "id": "smsqyfp003093",
+              "src": "/portfolio/cases/vjooProject/uploads/1786591475274.png"
             }
           ]
         }
@@ -149,7 +149,7 @@
       "id": "s8",
       "type": "parallax",
       "baseImage": "/portfolio/cases/vjooProject/uploads/1786414765214.jpg",
-      "overlayImage": "../_shared/placeholder.svg"
+      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786696307903.png"
     },
     {
       "id": "s9",
@@ -215,11 +215,6 @@
           ]
         }
       ]
-    },
-    {
-      "id": "s11",
-      "type": "single-image",
-      "image": "../_shared/placeholder.svg"
     },
     {
       "id": "s12",
@@ -299,27 +294,6 @@
       "videoType": "image"
     },
     {
-      "id": "s14",
-      "type": "single-image",
-      "image": "../_shared/placeholder.svg"
-    },
-    {
-      "id": "s15",
-      "type": "video",
-      "videos": [
-        {
-          "url": "",
-          "label": "Video 1",
-          "type": "placeholder"
-        },
-        {
-          "url": "",
-          "label": "Video 2",
-          "type": "placeholder"
-        }
-      ]
-    },
-    {
       "id": "s16",
       "type": "showcase",
       "label": "Advertising Part",
@@ -339,24 +313,21 @@
       "image2": "../_shared/placeholder.svg"
     },
     {
-      "id": "s19",
-      "type": "single-image",
-      "image": "../_shared/placeholder.svg"
-    },
-    {
-      "id": "s20",
-      "type": "double-image",
-      "image1": "../_shared/placeholder.svg",
-      "image2": "../_shared/placeholder.svg"
-    },
-    {
       "id": "s21",
       "type": "testimonial",
       "title": "Clients Testimonials",
       "avatarInitials": "W",
-      "name": "VJOO",
-      "role": "UI/UX Designer",
-      "quote": "锁寓 ZenHaven 团队是把我们的想法变成产品的关键伙伴。他们出色的设计能力，把 \"智能锁 + 出租管理\" 的构想变成了一个美观又好用的 App。清爽直观的界面不仅让房东上手更快，也显著提升了租客的使用体验。我们对结果非常满意，强烈推荐给任何需要高质量产品设计的团队。"
+      "name": "",
+      "role": "",
+      "quote": "锁寓 ZenHaven 设计团队是把我们的想法变成产品的关键伙伴。他们出色的设计能力，把 \"智能锁 + 出租管理\" 的构想变成了一个美观又好用的 App。清爽直观的界面不仅让房东上手更快，也显著提升了租客的使用体验。我们对结果非常满意。"
+    },
+    {
+      "id": "smsspxm9aireo",
+      "type": "title",
+      "title": "Projects",
+      "copyright": "2010-26©",
+      "description": "We've helped businesses across industries achieve their goals. Here are some of our recent projects.",
+      "size": "148"
     },
     {
       "id": "s22",

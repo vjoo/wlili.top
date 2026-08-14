@@ -198,7 +198,7 @@ portfolio/
     copyright: '© 2020-2026 W. All rights reserved.',
     footerLinks: [
       { label: '返回首页', href: '../home/index.html' },
-      { label: 'W. Block', href: '../pjlist/admin.html', target: true },
+      { label: 'W. Block', href: '../_shared/admin.html', target: true },
       { label: 'W. Studio', href: '../../../index.html' }
     ],
     backToTopThreshold: 400,            // 火箭出现阈值(px)
