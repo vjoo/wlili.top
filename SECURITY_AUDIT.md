@@ -1,7 +1,7 @@
 # WLi Tools 安全审计报告
 
-**审计日期**: 2026-06-20
-**审计范围**: WLi-tools 全站 8 个 HTML 页面 + 1 个 JS 配置文件
+**审计日期**: 2026-08-15
+**审计范围**: WLi-tools 全站 16 个 HTML 页面 + 1 个 JS 配置文件（nav.js）
 **审计标准**: OWASP DOM Based XSS Prevention / MDN Web Security Guidelines
 
 ---
@@ -26,6 +26,13 @@ WLi Tools 是一个纯前端静态工具集，无后端服务、无用户认证�
 - `filament-manager.html` — 多处动态内容渲染
 - `image-compress.html` — 图片列表渲染
 - `image-layout.html` — 布局编辑器渲染
+- `image-cropper.html` — 裁剪参数 / 预览渲染
+- `image-upscale.html` — 放大结果渲染
+- `prompt-library.html` — 提示词模板渲染
+- `bookmark-manager.html` — 收藏条目渲染
+- `seamless-pattern.html` — 素材卡片渲染
+- `model-viewer.html` — 模型信息渲染
+- `proxy-sub.html` — 订阅解析结果渲染
 - `nav.js` — 导航栏注入
 - `phonetic-chart.html` — 音标卡片渲染
 
@@ -66,9 +73,14 @@ WLi Tools 是一个纯前端静态工具集，无后端服务、无用户认证�
 **状态**: 可接受 ✅
 
 **涉及文件**:
-- `ip-mascot.html` — `https://unpkg.com/pinyin-pro`
-- `image-compress.html` — `https://cdn.jsdelivr.net/npm/jszip`
-- `password-gen.html` — Google Fonts
+- `ip-mascot.html`、`password-gen.html` — `https://unpkg.com/pinyin-pro`
+- `image-compress.html` — `https://cdn.jsdelivr.net/npm/jszip`、gifuct-js
+- `image-cropper.html` — pdf.js / gif.js / jspdf（`cdnjs.cloudflare.com`）、gifuct-js（`cdn.jsdelivr.net`）
+- `image-upscale.html` — TensorFlow.js + UpscalerJS ESRGAN 模型（`cdn.jsdelivr.net`）
+- `model-viewer.html` — three.js、occt-import-js（`unpkg.com`）
+- `proxy-sub.html` — qrcode-generator（`cdn.jsdelivr.net`）
+- `prompt-library.html` — 翻译接口（`translate.googleapis.com` / `api.mymemory.translated.net`）
+- 多页 — Google Fonts（`fonts.googleapis.com` / `fonts.gstatic.com`）
 
 **分析**:
 - 第三方脚本来自可信 CDN（unpkg、jsdelivr、Google Fonts）

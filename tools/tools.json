@@ -12,7 +12,8 @@
     { "id": "security",  "label": "安全隐私" },
     { "id": "creative",  "label": "创意生成" },
     { "id": "reference", "label": "查询参考" },
-    { "id": "manage",   "label": "效率管理" }
+    { "id": "manage",   "label": "效率管理" },
+    { "id": "network",  "label": "网络工具" }
   ],
   "tools": [
     {
@@ -146,6 +147,39 @@
       "description": "无缝四方连续图案提示词生成、素材入库、版权授权全流程管理",
       "keywords": ["四方连图", "无缝", "图案", "印花", "纺织", "素材", "授权", "版权", "pattern", "seamless"],
       "enabled": true
+    },
+    {
+      "id": "proxy-sub",
+      "name": "免费代理订阅",
+      "file": "proxy-sub.html",
+      "category": "network",
+      "icon": "globe",
+      "iconColor": "cyan",
+      "description": "公共免费代理订阅源解析，扫码 / 链接一键复制，仅限测试用途",
+      "keywords": ["代理", "订阅", "proxy", "v2ray", "clash", "节点", "二维码", "翻墙"],
+      "enabled": true
+    },
+    {
+      "id": "bookmark-manager",
+      "name": "精选收藏夹",
+      "file": "bookmark-manager.html",
+      "category": "manage",
+      "icon": "bookmark",
+      "iconColor": "blue",
+      "description": "公开分享的精选链接收藏夹，分类标签、搜索过滤一站式管理",
+      "keywords": ["收藏夹", "书签", "bookmark", "链接", "收藏", "精选", "导航"],
+      "enabled": true
+    },
+    {
+      "id": "model-viewer",
+      "name": "3D模型预览",
+      "file": "model-viewer.html",
+      "category": "reference",
+      "icon": "cube-face",
+      "iconColor": "teal",
+      "description": "浏览器端 3D 模型在线预览，支持 STL / OBJ / GLTF / STEP 等多格式导入查看",
+      "keywords": ["3D", "模型", "预览", "viewer", "STL", "OBJ", "GLTF", "STEP", "three"],
+      "enabled": true
     }
   ],
   "iconColors": {
@@ -172,6 +206,8 @@
     "printer": "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"6 9 6 2 18 2 18 9\"/><path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\"/></svg>",
     "face":    "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"4.5\"/><path d=\"M4 21c0-3.5 3.6-6.5 8-6.5s8 3 8 6.5\"/></svg>",
     "cube-face": "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 3L5 3a2 2 0 0 0-2 2v3\"/><path d=\"M16 3l3 0a2 2 0 0 1 2 2v3\"/><path d=\"M8 21H5a2 2 0 0 1-2-2v-3\"/><path d=\"M16 21h3a2 2 0 0 0 2-2v-3\"/><circle cx=\"9\" cy=\"10\" r=\"1\"/><circle cx=\"15\" cy=\"10\" r=\"1\"/><path d=\"M9.5 14c1 1 4 1 5 0\"/></svg>",
-    "grid": "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>"
+    "grid": "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>",
+    "globe": "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"2\" y1=\"12\" x2=\"22\" y2=\"12\"/><path d=\"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z\"/></svg>",
+    "bookmark": "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z\"/></svg>"
   }
 }
