@@ -2,23 +2,18 @@
   "version": 2,
   "sections": [
     {
-      "id": "smsu6iw78hhz0",
+      "id": "smsucu0qwd5zj",
       "type": "fullscreen-slider",
       "slides": [
         {
-          "image": "/portfolio/cases/mybilist/uploads/1786786473850.jpg",
+          "image": "",
           "title": "Full screen",
           "subtitle": "页面锁定，滚轮 / 触摸 / 方向键逐屏切换，右侧圆点指示第几张"
         },
         {
-          "image": "/portfolio/cases/mybilist/uploads/1786786477321.jpg",
+          "image": "",
           "title": "Swipe to explore",
           "subtitle": "标题逐字上翻动画，到尾不循环"
-        },
-        {
-          "image": "/portfolio/cases/mybilist/uploads/1786786481880.jpg",
-          "title": "",
-          "subtitle": ""
         }
       ]
     }
