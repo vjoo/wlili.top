@@ -87,6 +87,7 @@ portfolio/
   <script> window.CASE_KEY = '你的key'; </script>
   <script src="../_shared/assets/lib-three.min.js"></script>
   <script src="../_shared/assets/lib-gsap.min.js"></script>
+  <script src="../_shared/assets/lib-scrolltrigger.min.js"></script>  <!-- 全屏滑动轮播 pin 用；两文件必须分文件加载（合并在同一文件会导致 GSAP 时钟停摆、动画不播放） -->
   <script src="../_shared/assets/lib-hover-effect.umd.js"></script>
   <script src="../_shared/hover-effects.js"></script>  <!-- 特效双图统一初始化（cover 等比裁切，勿再内联定义） -->
   <script src="../_shared/render.js"></script>  <!-- 板块渲染器（共享版） -->
@@ -284,6 +285,8 @@ portfolio/
 |---|---|---|---|
 | `hero`（小Banner首屏） | `.hero-section` | `.hero-video-embed`（仅媒体） | **纯媒体组件，无标题文字**（标题请用 `title` 组件承载）；padding-top 2rem（移动 1rem）；媒体 1136/608；旧数据里的 `title` 字段自动迁移为独立 `title` 组件 |
 | `hero-banner` | `.hero-banner-section` | `.hero-banner-frame`(圆角相框) > `.hero-banner-media`(底层大图) + `.hero-banner-content`(①`h1.hero-banner-title` 超大标题 → ②`.hero-banner-stats`>`.hero-banner-stat` 信息标签行 → ③`p.hero-banner-description` 描述段落) | **height 100vh 与第一屏同高，顶部延伸到视口顶、被悬浮导航覆盖（与导航重叠）**；**`.container.hero-banner-section { max-width:100% }` 覆盖 `.container` 的 1208/1520px 上限**，frame 随视口贴边扩展（max-width:none、height 100%=100vh-24px）；**四周小边距统一 12px**（移动：height auto、padding 3rem 16px、frame 62vh）、25px 圆角；文字块整体位于大图**左下**（`left:0; bottom:0`，flex 列 + align-items:flex-start，padding 6rem 5rem 2.5rem / 移动 3.5rem 2rem 1.5rem），组内不放按钮；标题 clamp(42px,5.5vw,84px)/700 白（移动 36px）、标签行 flex wrap gap 40px（移动 20px）18px/500 白 88%（移动 15px）、描述 16px 行高 1.8 白 78%（移动 14px/1.7）；**滚动视差**：media translateY 慢(×48)＋scale 缩小、content translateY 快(×110)、进度 40% 后 opacity 衰减；rAF+lerp 平滑、`prefers-reduced-motion` 时自动禁用（initHeroBannerParallax） |
+| `swipe-slider` | `.swipe-slider-section` | `.swipe-slide`×n（绝对堆叠）> `.swipe-outer` > `.swipe-inner` > `.swipe-bg`(cover 背景+渐变遮罩) > `.swipe-content`(`.swipe-heading` 标题 + `.swipe-subtitle` 副标题) | **全屏 100vh（100svh）通栏**（`.container.swipe-slider-section { max-width:100%; padding:0 }`），垂直堆叠、`overflow:hidden`；**滚动模型对标 GSAP Horizontal Scrolling Gallery：`ScrollTrigger pin` + `scrub` 把「逐屏切换时间线」直接绑到滚动进度（不拦截滚轮/触摸、无 preventDefault），每滚一格画面连续跟进（无虚空等待），滚完最后一屏自动释放 pin 自然进入下一板块**；pin = (n-1) 屏滚动量，每屏滚动量 = 一个过渡段；反向滚动时间线自然回放；**`.pin-spacer` 深色底**（与板块一致，避免滚回时顶部闪白条）；切换动画：新屏 `.outer/.inner` 反向滑入（裁剪效果）+ 背景图 **scale 放大缩放**（新屏 1.3→1、旧屏→1.15，制造纵深；⚠️ 勿用 yPercent 位移——背景偏移会露出板块深色底，过渡期视口中出现"黑色遮罩"黑条）+ 标题**逐字上翻**（`stagger random`，无 SplitText 插件手动拆 `.char`）+ 副标题淡入；首屏静态展示（不进场动画）；交互实现于 `initSwipeSliders`（依赖分文件加载的 `lib-gsap.min.js` + `lib-scrolltrigger.min.js`，代码兼容 `gsap.ScrollTrigger` / `window.ScrollTrigger`）；数据 `s.slides[] = { image, title, subtitle }`；**图片建议 16:9 横图、内容居中留安全边**（全屏 cover 会裁边缘）。唯一模式 = 到尾衔接。1 屏时不做 pin 退化为静态全屏图 |
+| `fullscreen-slider` | `.fullscreen-slider-section` | `.fs-slide`×n（绝对堆叠）> `.fs-outer` > `.fs-inner` > `.fs-bg`(cover 背景+渐变遮罩) > `.fs-content`(`.fs-heading` 标题 + `.fs-subtitle` 副标题) + `.fs-dots`(右侧竖排圆点×n) | **全屏 100vh（100svh）通栏**、`overflow:hidden`、`touch-action:none`；**页面锁定全屏切换**（对标官方 Observer「Animated Continuous Sections」demo）：`Observer`（type:`wheel,touch,pointer`）+ `preventDefault` 拦截滚轮/触摸/拖拽，方向键/空格/PageUp/PageDown 同样拦截并触发切换——**页面不滚动，只在板块内逐屏切换**；**到尾不循环**（第一张/最后一张时继续滚动无反应，用户不喜回跳）；切换动画：旧屏保持不透明由新屏覆盖后再隐藏（`.set` 到动画末尾，避免透出深色底成"黑罩"）、新屏 `.fs-outer/.fs-inner` 反向裁剪滑入（direction ±1，**背景静止不缩放**）+ 标题逐字上翻（手写拆 `.char`，`stagger random`）+ 副标题淡入；**右侧垂直居中竖排圆点指示器**（`.fs-dots`：白色圆点 10px、hover 放大、当前屏变 10×26px 白色胶囊竖条，点击跳转，自动随切换更新）；首屏静态展示（不进场动画，不进 REVEAL_SECTIONS）；交互实现于 `initFullscreenSliders`——**复用 ScrollTrigger 内嵌 Observer（`ScrollTrigger.observe()` 与 `Observer.create()` 完全等价，官方明确说明无需单独加载 Observer 插件文件），依赖仅 `lib-gsap.min.js` + `lib-scrolltrigger.min.js` 两份共享脚本**；数据 `s.slides[] = { image, title, subtitle }`；**图片建议 16:9 横图、内容居中留安全边**；1 屏时静态展示。⚠️ 该板块会拦截页面滚动：建议作为独立全屏页使用（页面只有一个该板块），如与其他板块混排将无法滚动到板块后的内容 |
 | `intro` | `.intro-section` | `.project-info`(grid 1fr 1fr) > `.section-label` + `.intro-heading` + `.info-main`(.info-row × n) | margin 4rem（移动 3.5rem）；信息行上边框 1px #e2e2e2 |
 | `brand-logo` | `.brand-logo-section` | `.container > .brand-logo-wrap > img/svg` | PC 高 60px 居中 / 移动 40px 居左 |
 | `parallax` | `.image-section` | `.parallax-overlay-image`(data-parallax) > `.pio-base` + `.pio-overlay` | 1448/905，25px 圆角 |
@@ -383,6 +386,8 @@ portfolio/
 16. **works 旧作品集体系已删除（2026-08-13）**：`portfolio/works` 目录与 server.py 的旧 works API（`/api/config`、`/api/cards/files`、`/api/hero/type`、`/api/upload/hero`、`/api/upload/card`、`/api/delete/media`、`/api/upload/qrcode`）已全部裁剪。看到这些旧端点或目录名一律视为已废弃，**不要恢复、不要迁移逻辑**
 17. **同区域按钮样式必须统一（主动自查，不等用户指出）**：改 UI 时先观察同一条导航栏 / 同一操作区 / 同一卡片内的按钮，若存在多种尺寸/圆角/背景/边框/字重组合，直接统一为同一款（以页面既有主按钮款式为准）；「肉眼可见的不一致」属于必须主动修复项，不需要用户逐项汇报
 18. **后台 admin.html 已共享化（2026-08-13）**：后台编辑器收敛为 `_shared/admin.html` **唯一一份**，页面目录不再持有副本；默认编辑页由 URL `?case=<key>` 指定（无则进页面管理视图）。**不要在页面目录重建 admin.html 副本**——那会回到"每新建一页复制一份框架"的老路；新页面由 server.py 生成时自动不带 admin.html（`pf_init_page_files` 只处理 index.html）
+19. **"悬停显示"类元素勿用 `:focus-within` 维持显隐**（2026-08-14，轮播箭头）：`.swiper:hover, .swiper:focus-within .swiper-nav { … }` 会导致用户**点击过箭头后按钮持有焦点**，鼠标移开时 `:hover` 消失但 `:focus-within` 仍匹配 → 箭头卡住不隐藏。显隐只由 `:hover` 控制；交互类改动交付前务必在浏览器实测「触发 → 结束」全流程
+20. **轮播 slide 文案会被全站 reveal 系统强加 `.reveal`/`.visible`，与 slide 级切换动画抢 opacity**（2026-08-14，大Banner轮播标题）：`registerRevealElements` 按 `REVEAL_CHILDREN` 选择器给所有 `.hero-banner-title/.hero-banner-stat/.hero-banner-description` 加 `.reveal`，其中 `.hero-banner-title.reveal.visible { opacity:1 }` 优先级高于轮播的 `opacity:0` → 标题先闪现全亮、动画延迟期后再掉回 0 淡入，进入/切换都不自然。**slide 内文案的显隐必须完全交给 `.swiper-slide-active` 规则**，用独立选择器（如 `.hero-banner-carousel .hero-banner-title.reveal`）中和 reveal 影响；进场动画统一 `fill-mode: both` 让延迟期停在 from 帧。**注意区分"有 slide 级动画的元素"和"没有的元素"**：标题/描述/标签容器（`.hero-banner-stats`）有自己的动画，中和规则应设 `opacity:0`；而单个标签 `.hero-banner-stat` 没有动画（动画在容器上），中和规则必须设 `opacity:1`，否则会被锁成 0 不显示
 
 ---
 
@@ -440,4 +445,38 @@ XXX 板块类型（参照现有 text/challenges 板块的写法）。
 1. index.html 是否用 window.CASE_KEY = 'xxx'（严禁 const CASE_KEY，见指南二节）
 2. content.json 资源路径是否带 /portfolio 前缀
 3. 服务端改过 API 是否重启 server.py（8080）——服务端只有这一份代码
+```
+
+### 角色加强模板（交互类改动 / 要求一次做对）
+
+> 适用：涉及**交互行为**的改动（轮播、hover、动画、点击、响应式、表单），或用户明确说"一次做对、别让我自己测"。
+> 说明：角色提示词能显著提升完成度（更认真、更愿意主动补细节），但它补不了"只能靠运行时才能发现的交互细节"（如点击后按钮持有焦点导致状态卡住）。所以本模板同时强制两件事：**交付前在浏览器实测** + **按验收清单逐条自查**。两类都要，缺一不可。
+
+```
+你现在同时扮演三个角色，按各自职责完成任务：
+1. 专业前端工程师 —— 按 _shared/DEVELOPMENT_GUIDE.md 规范实现：复用既有结构/设计令牌，间距用 padding 不用 margin，单位用 rem，只改 _shared/*，不复制副本。
+2. 专业 UI/UX 设计师 —— 对照参考站（nixtio.com 等）逐项核对间距/字号/层级/hover 反馈；肉眼可见的不一致（按钮形态、对齐、留白）主动修复，不等用户指出。
+3. 专业前端测试工程师 —— 交付前必须用浏览器（DevTools 实测）走完交互，逐条验收：
+   □ 初始状态：该隐藏的元素是否隐藏（如轮播左右箭头默认不可见）
+   □ 交互触发：hover / 点击 / 聚焦后，状态是否按预期出现
+   □ 交互结束：鼠标移开 / 失焦后，是否恢复到初始状态（重点自查：点击过按钮后移开鼠标，状态不能因焦点残留而卡住）
+   □ 移动端断点：无多余横向滚动条、无错位、无空数据时残留滚动
+   □ 全部通过后再交付，不要只改完代码就声称完成
+```
+
+### 需求讨论模板（产品经理视角 / 定需求、页面结构时用）
+
+> 适用：**动手写代码之前**的需求/产品讨论——新建页面、重构栏目、定义交互逻辑、定内容结构。
+> 说明：实现阶段不需要它（实现用上面的「角色加强模板」）；只在"要做什么、做成什么样"还没定清楚时用。保持轻量，不跟实现模板合并。
+
+```
+你现在同时扮演两个角色：
+1. 资深产品经理 —— 动手前先把需求问清楚、定清楚：
+   □ 目标用户是谁、页面/功能要解决什么问题
+   □ 核心内容或交互是什么，怎么算"做完"（验收标准）
+   □ 哪些明确不做（主动砍需求，防止范围膨胀）
+   □ 内容从哪来、谁维护（是否需要在 admin 后台可编辑）
+2. 专业前端工程师 —— 确认需求可落地：用 _shared/DEVELOPMENT_GUIDE.md 的既有板块/组件能否实现，还是需要新增板块类型；说明成本与风险。
+
+先给出需求分析 + 方案（用哪个板块/什么结构），用户确认后再动手实现，不要边猜边写。
 ```

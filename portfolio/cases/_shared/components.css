@@ -729,9 +729,13 @@
 
 /* ========== TITLE（独立标题组件）========== */
 /* Projects 头部：左超大标题，右「版权小字 + 内容描述」，底部对齐 */
+/* 上下边距档位：后台 title.padding 可选 紧凑/标准/宽松（默认标准），PC 与移动端分别取 --title-pad / --title-pad-mobile */
 .title-section {
-  padding: 5rem 0 0; /* 上方留白由自身控制；下方交给下一板块（通常为特效双图） */
+  padding: var(--title-pad, 5rem) 0 0; /* 上方留白由自身控制；下方交给下一板块（通常为特效双图） */
 }
+.title-section.ts-pad-compact { --title-pad: 3rem; --title-pad-mobile: 2rem; }
+.title-section.ts-pad-default { --title-pad: 5rem; --title-pad-mobile: 3rem; }
+.title-section.ts-pad-spacious { --title-pad: 8rem; --title-pad-mobile: 4rem; }
 
 .title-row {
   display: flex;
@@ -763,12 +767,13 @@
   animation-delay: calc(0.08s * var(--char-index));
 }
 
-/* 字号档位：后台 title.size 可选 96/124/148/176（默认 148），移动端统一 52px */
+/* 字号档位：后台 title.size 可选 80/96/124/148/176（默认 148），移动端统一 52px */
 .title-big .char-animate {
   font-size: var(--title-size, 148px);
   line-height: 1.1;
   letter-spacing: -0.05em;
 }
+.title-big.ts-80  { --title-size: 80px; }
 .title-big.ts-96  { --title-size: 96px; }
 .title-big.ts-124 { --title-size: 124px; }
 .title-big.ts-148 { --title-size: 148px; }
@@ -1106,7 +1111,7 @@
 
   /* 标题组件移动端：单列（标题在上，版权+描述在下，左对齐） */
   .title-section {
-    padding: 3rem 0 0; /* 48px */
+    padding: var(--title-pad-mobile, 3rem) 0 0; /* 48px */
   }
 
   .title-row {
@@ -1901,7 +1906,8 @@
   transform: none;
 }
 .hero-banner-title.visible {
-  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) forwards;
+  /* fill-mode: both —— 延迟期即停在 from 帧（opacity 0），避免 base opacity:1 先闪现全亮再掉回 0 淡入 */
+  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) both;
   animation-delay: 0.15s; /* 略晚于板块淡入，节奏更分明 */
 }
 @keyframes heroBannerTitleReveal {
@@ -1996,6 +2002,43 @@
   display: block;
 }
 
+/* 轮播左右切换按钮：默认隐藏，鼠标悬停轮播图时显现（配套 pauseOnMouseEnter 暂停自动播放的交互） */
+.swiper-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3; /* 高于轮播图及大Banner文案层(z-index:2) */
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1c1c22;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.3s ease;
+}
+.swiper-nav svg {
+  width: 20px;
+  height: 20px;
+}
+.swiper-nav-prev { left: 18px; }
+.swiper-nav-next { right: 18px; }
+/* 仅鼠标悬停时显现：不用 :focus-within，否则点击箭头后按钮持有焦点，移开鼠标箭头仍不隐藏 */
+.swiper:hover .swiper-nav {
+  opacity: 1;
+  visibility: visible;
+}
+.swiper-nav:hover {
+  background: #ffffff;
+}
+
 /* 大Banner 轮播容器：铺满 .hero-banner-frame（圆角已被 frame overflow:hidden 裁剪） */
 .hero-banner-carousel.swiper {
   position: absolute;
@@ -2031,23 +2074,44 @@
   z-index: 2;
   padding: 6rem 5rem 2.5rem;
 }
-/* 切图文案进场动画：Swiper 切到该 slide 时文字从下往上+渐入（slide 级 reveal，不依赖全站观察器） */
+/* 切图文案进场动画：Swiper 切到该 slide 时文字从下往上+渐入（slide 级 reveal，不依赖全站观察器）
+   fill-mode: both —— 延迟期停在 from 帧（opacity 0），避免被其他规则顶成全亮后再掉回 0 的闪现 */
 .hero-banner-slide .hero-banner-title,
 .hero-banner-slide .hero-banner-stats,
 .hero-banner-slide .hero-banner-description {
   opacity: 0;
   transform: translateY(24px);
 }
+/* ⚠️ 轮播 slide 文案不参与全站 .reveal/.visible 显隐（registerRevealElements 会按选择器给它们加 .reveal）：
+   .hero-banner-title.reveal.visible 会强制 opacity:1 并覆盖上面的 opacity:0，
+   导致标题"先闪现全亮、动画延迟期后再掉回 0 淡入"的不自然进场。
+   slide 文案的显隐完全交给 .swiper-slide-active 规则控制 */
+.hero-banner-carousel .hero-banner-title.reveal,
+.hero-banner-carousel .hero-banner-title.reveal.visible,
+.hero-banner-carousel .hero-banner-description.reveal,
+.hero-banner-carousel .hero-banner-description.reveal.visible {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: none;
+}
+/* 单个标签（.hero-banner-stat）无 slide 级动画（动画在 .hero-banner-stats 容器上），
+   必须保持 opacity:1 可见，整行淡入由容器动画负责——否则会被 reveal 锁成 0 而不显示 */
+.hero-banner-carousel .hero-banner-stat.reveal,
+.hero-banner-carousel .hero-banner-stat.reveal.visible {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
 .hero-banner-carousel .swiper-slide-active .hero-banner-title {
-  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) forwards;
+  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) both;
   animation-delay: 0.1s;
 }
 .hero-banner-carousel .swiper-slide-active .hero-banner-stats {
-  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) forwards;
+  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) both;
   animation-delay: 0.25s;
 }
 .hero-banner-carousel .swiper-slide-active .hero-banner-description {
-  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) forwards;
+  animation: heroBannerTitleReveal 0.6s var(--motion-easing-emphasized) both;
   animation-delay: 0.35s;
 }
 /* 非激活 slide 文字立即隐藏（避免 cube/flip/coverflow 把背面文字透出来） */
@@ -2064,6 +2128,10 @@
   .hero-carousel.swiper {
     aspect-ratio: 4 / 3; /* 移动端小Banner 轮播改用偏方形比例，避免高度过大 */
   }
+  /* 移动端无 hover，左右按钮不展示（触摸滑动即可切图） */
+  .swiper-nav {
+    display: none;
+  }
   /* 大Banner 轮播在移动端与 .hero-banner-frame 同策略：定高容器，文字贴底 */
   .hero-banner-carousel.swiper {
     position: relative;     /* 参与文档流，frame 高度由内容决定 */
@@ -2072,5 +2140,215 @@
   }
   .hero-banner-slide .hero-banner-content {
     padding: 3.5rem 2rem 2.5rem;
+  }
+}
+
+/* ========== SWIPE SLIDER（全屏滑动轮播，GSAP 逐屏滑动 + 文字动画） ========== */
+/* 对标 GSAP Swipe Slider demo：每屏占满视口、垂直堆叠、滚轮/触摸逐屏切换 */
+.container.swipe-slider-section {
+  max-width: 100%;          /* 覆盖 .container 的 1208/1520px 上限：全屏通栏 */
+  padding: 0;
+}
+.swipe-slider-section {
+  position: relative;
+  height: 100vh;
+  height: 100svh;           /* 移动端地址栏伸缩时仍占满可视区 */
+  overflow: hidden;
+  background: #0a0a0a;
+}
+/* ScrollTrigger 生成的 pin 占位（高度 = 板块高度 + pin 滚动距离）：
+   占位空段也使用与板块一致的深色底，避免滚完释放/从下方滚回时顶部闪过白色横条 */
+.pin-spacer {
+  background: #0a0a0a;
+}
+/* 每屏绝对堆叠，初始 visibility hidden，由 JS（gsap autoAlpha）控制显隐 */
+.swipe-slide {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+.swipe-outer,
+.swipe-inner {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;         /* 横竖双向裁剪：仅 overflow-y:hidden 会让 overflow-x 被规范强制为 auto，
+                                背景 scale 放大溢出时 inner 底部弹出横向滚动条 */
+}
+.swipe-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+.swipe-content {
+  position: relative;
+  z-index: 2;
+  max-width: 86vw;
+  text-align: center;
+  padding: 0 1rem;
+}
+.swipe-heading {
+  margin: 0;
+  font-size: clamp(2.25rem, 6vw, 6.5rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -2px;
+  color: #ffffff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+}
+.swipe-heading .char {
+  display: inline-block;    /* 逐字动画的基础：可独立位移/透明度 */
+  will-change: transform, opacity;
+}
+.swipe-subtitle {
+  margin: 1.5rem 0 0;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  font-weight: 400;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* SWIPE SLIDER 移动端 */
+@media (max-width: 1024px) {
+  .swipe-heading {
+    font-size: clamp(1.75rem, 7vw, 3rem);
+    letter-spacing: -1px;
+  }
+  .swipe-subtitle {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+}
+
+/* ========== FULLSCREEN SLIDER（全屏切换轮播，GSAP Observer 逐屏切换） ========== */
+/* 对标官方 Observer「Animated Continuous Sections」demo：页面锁定，滚轮/触摸/键盘逐屏切换 */
+.container.fullscreen-slider-section {
+  max-width: 100%;          /* 覆盖 .container 的 1208/1520px 上限：全屏通栏 */
+  padding: 0;
+}
+.fullscreen-slider-section {
+  position: relative;
+  height: 100vh;
+  height: 100svh;           /* 移动端地址栏伸缩时仍占满可视区 */
+  overflow: hidden;
+  background: #0a0a0a;
+  touch-action: none;       /* 阻止移动端原生触摸滚动，交给 Observer 切屏 */
+}
+/* 每屏绝对堆叠，初始 visibility hidden，由 JS（gsap autoAlpha）控制显隐 */
+.fs-slide {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+.fs-outer,
+.fs-inner {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;         /* 横竖双向裁剪：仅 overflow-y:hidden 会让 overflow-x 被规范强制为 auto，
+                                背景 scale 放大溢出时底部弹出横向滚动条 */
+}
+.fs-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+.fs-content {
+  position: relative;
+  z-index: 2;
+  max-width: 86vw;
+  text-align: center;
+  padding: 0 4.5rem;        /* 右侧留出圆点指示器空间 */
+}
+.fs-heading {
+  margin: 0;
+  font-size: clamp(2.25rem, 6vw, 6.5rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -2px;
+  color: #ffffff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+}
+.fs-heading .char {
+  display: inline-block;    /* 逐字动画的基础：可独立位移/透明度 */
+  will-change: transform, opacity;
+}
+.fs-subtitle {
+  margin: 1.5rem 0 0;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  font-weight: 400;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+}
+/* 右侧垂直居中竖排圆点指示器：显示共几张、当前第几张，点击可跳转 */
+.fs-dots {
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.fs-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  flex: none;
+}
+.fs-dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: #ffffff;
+  transform: scale(1.2);
+}
+/* 当前屏：白色胶囊竖条，高度拉长，直观标识"第几张" */
+.fs-dot.active {
+  width: 10px;
+  height: 26px;
+  border-radius: 5px;
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+/* FULLSCREEN SLIDER 移动端 */
+@media (max-width: 1024px) {
+  .fs-content {
+    padding: 0 3rem;
+  }
+  .fs-heading {
+    font-size: clamp(1.75rem, 7vw, 3rem);
+    letter-spacing: -1px;
+  }
+  .fs-subtitle {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .fs-dots {
+    right: 12px;
+    gap: 10px;
+  }
+  .fs-dot {
+    width: 8px;
+    height: 8px;
+  }
+  .fs-dot.active {
+    height: 22px;
   }
 }

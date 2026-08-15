@@ -39,6 +39,8 @@ var CaseRenderer = (function () {
   var RENDERERS = {
     'hero':          renderHero,
     'hero-banner':   renderHeroBanner, // 大图相框首屏（nixtio Hero：标题+副标题+CTA 叠加图上，滚动视差）
+    'swipe-slider':  renderSwipeSlider, // 全屏滑动轮播（GSAP 逐屏滑动 + 文字动画）
+    'fullscreen-slider': renderFullscreenSlider, // 全屏切换轮播（GSAP Observer：页面锁定，滚轮/触摸/键盘逐屏切换 + 右侧圆点指示）
     'intro':         renderIntro,
     'brand-logo':    renderBrandLogo,  // 独立 Logo 栏目（放在 Introduction 下方或其他位置）
     'parallax':      renderParallax,
@@ -60,6 +62,8 @@ var CaseRenderer = (function () {
   var TYPE_LABELS = {
     'hero': '小Banner首屏',
     'hero-banner': '大Banner首屏',
+    'swipe-slider': '全屏滑动轮播',
+    'fullscreen-slider': '全屏切换轮播',
     'intro': '介绍区',
     'brand-logo': '项目Logo栏目',
     'parallax': '视差图对',
@@ -190,6 +194,10 @@ var CaseRenderer = (function () {
     initHeroBannerParallax(container);
     // 轮播图（carousel）：懒加载 Swiper 并初始化（无轮播板块时零开销）
     initCarousels(container);
+    // 全屏滑动轮播（swipe-slider）：GSAP 逐屏滑动 + 文字动画（无此板块零开销）
+    initSwipeSliders(container);
+    // 全屏切换轮播（fullscreen-slider）：GSAP Observer 逐屏切换 + 页面锁定（无此板块零开销）
+    initFullscreenSliders(container);
     // 把新插入的所有板块注册进场动画（site-shell.js 暴露的接口）
     if (typeof window.registerRevealElements === 'function') {
       window.registerRevealElements(container);
@@ -281,7 +289,7 @@ var CaseRenderer = (function () {
     if (items.length === 1) {
       var only = items[0];
       if (isBanner) {
-        return heroBannerStaticMedia(only);
+        return heroBannerStaticMedia(only, s);
       }
       return '<div class="hero-video-embed"><img src="' + esc(only.image) + '" alt="' + esc(only.title || '') + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>';
     }
@@ -291,36 +299,44 @@ var CaseRenderer = (function () {
       var img = '<img src="' + esc(x.image) + '" alt="' + esc(x.title || ('Slide ' + (i + 1))) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">';
       if (isBanner) {
         // 大Banner：每张图配独立文案层（复用 hero-banner-content 视觉）
-        var content = heroBannerSlideContent(x);
+        var content = heroBannerSlideContent(x, s);
         return '<div class="swiper-slide hero-banner-slide"><div class="hero-banner-slide-media">' + img + '</div>' + content + '</div>';
       }
       return '<div class="swiper-slide">' + img + '</div>';
     }).join('');
     var wrap = isBanner ? 'hero-banner-carousel' : 'hero-carousel';
+    // 左右切换按钮：默认隐藏，鼠标悬停轮播图时显现（配合 pauseOnMouseEnter 的配套交互）
+    var navBtn = '<button type="button" class="swiper-nav swiper-nav-prev" aria-label="上一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>' +
+      '<button type="button" class="swiper-nav swiper-nav-next" aria-label="下一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>';
      var sw = '<div class="swiper ' + wrap + '" data-effect="' + esc(effect) + '" data-delay="' + delay + '">' +
-       '<div class="swiper-wrapper">' + slides + '</div></div>';
+       '<div class="swiper-wrapper">' + slides + '</div>' + navBtn + '</div>';
      // 大Banner 轮播也要包在 .hero-banner-frame 内（圆角裁剪 + absolute 定位基准，与单图同款）
      return isBanner ? '<div class="hero-banner-frame">' + sw + '</div>' : sw;
    }
 
   // 大Banner 轮播：单张静态（media + 左下信息块，与 videoType=image 同款结构）
-  function heroBannerStaticMedia(x) {
-    var content = heroBannerSlideContent(x);
+  function heroBannerStaticMedia(x, s) {
+    var content = heroBannerSlideContent(x, s);
     var media = '<div class="hero-banner-media"><img src="' + esc(x.image) + '" alt="' + esc(x.title || '') + '" loading="lazy"></div>';
     return '<div class="hero-banner-frame">' + media + content + '</div>';
   }
 
   // 大Banner 轮播：某张图的左下信息块（标题/标签/描述），每张图独立
-  function heroBannerSlideContent(x) {
-    var titleHtml = x.title ? '<h1 class="hero-banner-title">' + esc(x.title) + '</h1>' : '';
+  // 某张图未配置的字段回退到板块顶层文案（s.title/labels/description），保证图上始终有标题内容
+  function heroBannerSlideContent(x, s) {
+    var title = x.title || (s ? s.title : '');
+    var labels = [];
+    if (Array.isArray(x.labels) && x.labels.length) labels = x.labels;
+    else if (s && Array.isArray(s.labels) && s.labels.length) labels = s.labels;
+    var desc = (x.description || x.subtitle) || (s ? (s.description || s.subtitle) : '');
+    var titleHtml = title ? '<h1 class="hero-banner-title">' + esc(title) + '</h1>' : '';
     var statsHtml = '';
-    if (Array.isArray(x.labels) && x.labels.length) {
-      statsHtml = '<div class="hero-banner-stats">' + x.labels.map(function (lb) {
+    if (labels.length) {
+      statsHtml = '<div class="hero-banner-stats">' + labels.map(function (lb) {
         var t = (lb && typeof lb === 'object') ? lb.text : lb;
         return '<span class="hero-banner-stat">' + esc(t || '') + '</span>';
       }).join('') + '</div>';
     }
-    var desc = x.description || x.subtitle || '';
     var descHtml = desc ? '<p class="hero-banner-description">' + esc(desc) + '</p>' : '';
     var inner = titleHtml + statsHtml + descHtml;
     if (!inner) return '';
@@ -368,6 +384,69 @@ var CaseRenderer = (function () {
       content = '<div class="hero-banner-content">' + titleHtml + statsHtml + descHtml + '</div>';
     }
     section.innerHTML = '<div class="hero-banner-frame">' + mediaHtml + content + '</div>';
+    return section;
+  }
+
+  // ===== 1.55 全屏滑动轮播（swipe-slider）— GSAP 逐屏滑动 + 文字动画 =====
+  // 对标 GSAP Swipe Slider / Horizontal Scrolling Gallery 的滚动模型：
+  //   - 每屏占满 100vh，垂直堆叠；ScrollTrigger pin 把板块钉住 N 屏滚动量，滚动进度驱动切屏
+  //     （滚轮/触摸/拖拽全部交给页面原生滚动，不拦截、不 preventDefault）
+  //   - 切换动画：新屏从上下滑入（.outer/.inner 反方向切入产生"内容从剪裁窗内滑出"效果），
+  //     背景图反向轻微位移，标题字符逐个上翻（stagger random）
+  //   - 数据：s.slides[] = { image, title, subtitle }（1 屏时退化为静态全屏图）
+  function renderSwipeSlider(s) {
+    var section = sec('swipe-slider-section');
+    var slides = Array.isArray(s.slides) ? s.slides.filter(function (x) { return x; }) : [];
+    if (!slides.length) {
+      section.innerHTML = '<div class="video-placeholder warm-shot"><div class="placeholder-icon">' +
+        '<svg width="60" height="60" viewBox="0 0 60 60" fill="none">' +
+          '<circle cx="30" cy="30" r="28" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>' +
+          '<polyline points="22,28 28,22 28,38 34,22 34,38 40,30" stroke="rgba(255,255,255,0.6)" stroke-width="2" fill="none"/>' +
+        '</svg></div></div>';
+      return section;
+    }
+    section.innerHTML = slides.map(function (x, i) {
+      var bg = x.image ? ' style="background-image:linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.5) 100%),url(\'' + esc(x.image) + '\');"' : '';
+      var title = x.title ? '<h2 class="swipe-heading">' + esc(x.title) + '</h2>' : '';
+      var sub = x.subtitle ? '<p class="swipe-subtitle">' + esc(x.subtitle) + '</p>' : '';
+      return '<div class="swipe-slide" data-index="' + i + '">' +
+        '<div class="swipe-outer"><div class="swipe-inner">' +
+          '<div class="swipe-bg"' + bg + '><div class="swipe-content">' + title + sub + '</div></div>' +
+        '</div></div></div>';
+    }).join('');
+    return section;
+  }
+
+  // ===== 1.56 全屏切换轮播（fullscreen-slider）— GSAP Observer 逐屏切换 =====
+  // 对标官方 Observer「Animated Continuous Sections」demo（https://gsap.com/docs/v3/Plugins/Observer/）：
+  //   - 页面锁定：Observer（wheel/touch/pointer）+ 键盘 preventDefault，页面不滚动，只在本板块内逐屏切换
+  //   - 切换动画：新屏 .fs-outer/.fs-inner 反向裁剪滑入 + 标题逐字上翻（无 SplitText 手写拆字），背景静止
+  //   - 尾屏不循环（用户不喜回跳），到边界后继续滚动无反应
+  //   - 右侧垂直居中竖排圆点指示器（.fs-dots）：显示共几张、当前第几张，点击可跳转
+  //   - 数据：s.slides[] = { image, title, subtitle }（与 swipe-slider 一致，1 屏时静态展示）
+  function renderFullscreenSlider(s) {
+    var section = sec('fullscreen-slider-section');
+    var slides = Array.isArray(s.slides) ? s.slides.filter(function (x) { return x; }) : [];
+    if (!slides.length) {
+      section.innerHTML = '<div class="video-placeholder warm-shot"><div class="placeholder-icon">' +
+        '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<rect x="3" y="4" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-4.5-4.5L8 19"/></svg></div></div>';
+      return section;
+    }
+    var dotsHtml = '<div class="fs-dots" role="tablist" aria-label="幻灯片切换">' +
+      slides.map(function (_, i) {
+        return '<button type="button" class="fs-dot' + (i === 0 ? ' active' : '') + '" data-index="' + i +
+          '" aria-label="切换到第 ' + (i + 1) + ' 张" role="tab"></button>';
+      }).join('') + '</div>';
+    section.innerHTML = slides.map(function (x, i) {
+      var bg = x.image ? ' style="background-image:linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.5) 100%),url(\'' + esc(x.image) + '\');"' : '';
+      var title = x.title ? '<h2 class="fs-heading">' + esc(x.title) + '</h2>' : '';
+      var sub = x.subtitle ? '<p class="fs-subtitle">' + esc(x.subtitle) + '</p>' : '';
+      return '<div class="fs-slide" data-index="' + i + '">' +
+        '<div class="fs-outer"><div class="fs-inner">' +
+          '<div class="fs-bg"' + bg + '><div class="fs-content">' + title + sub + '</div></div>' +
+        '</div></div></div>';
+    }).join('') + dotsHtml;
     return section;
   }
 
@@ -471,6 +550,10 @@ var CaseRenderer = (function () {
           autoplay: slideCount > 1 ? { delay: delay, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
           grabCursor: slideCount > 1,
           resistance: true,
+          navigation: {
+            nextEl: box.querySelector('.swiper-nav-next'),
+            prevEl: box.querySelector('.swiper-nav-prev')
+          },
           // 移动端触摸滑动、禁止页面滚动冲突
           touchStartPreventDefault: false
         };
@@ -487,6 +570,249 @@ var CaseRenderer = (function () {
       });
     }).catch(function (e) {
       console.warn('Swiper 懒加载失败，轮播降级为静态首图:', e);
+    });
+  }
+
+  // ===== 1.6.5 全屏滑动轮播初始化（swipe-slider，ScrollTrigger pin + scrub 滚动驱动版） =====
+  // 对标 GSAP Horizontal Scrolling Gallery：不拦截滚轮，ScrollTrigger pin 钉住板块，
+  // 用 scrub 把「逐屏切换时间线」直接绑到滚动进度上——每滚一格画面就连续跟进，
+  // 不再有「滚动好几格画面才跳变」的虚空等待；滚完最后一屏自动释放 pin 自然进入下一板块。
+  //   - 每个过渡段 = 一屏滚动量（pin = (n-1) 屏），反向滚动时时间线自然回放
+  //   - 旧屏覆盖 + 新屏 outer/inner 反向滑入（裁剪效果）+ 背景 scale 缩放纵深 + 标题逐字上翻
+  //   - n = 1 屏时不做 pin，退化为静态全屏图
+  //   - ScrollTrigger 缺失（lib-gsap.min.js + lib-scrolltrigger.min.js 分文件加载）时静默降级：仅静态展示第一屏
+  function initSwipeSliders(root) {
+    var boxes = (root || document).querySelectorAll('.swipe-slider-section');
+    if (!boxes.length) return;
+    // GSAP 3.x 全局暴露为对象（window.gsap.to 是函数），不能用 typeof function 判断
+    if (!window.gsap || typeof window.gsap.to !== 'function') return;
+    var gsap = window.gsap;
+    // ScrollTrigger 单独文件加载（lib-scrolltrigger.min.js）：两者都认，兼容任何加载顺序
+    var ST = gsap.ScrollTrigger || window.ScrollTrigger;
+    if (!ST) return;
+
+    boxes.forEach(function (section) {
+      if (section.dataset.swipeInited) return;
+      section.dataset.swipeInited = '1';
+
+      var slides = gsap.utils.toArray('.swipe-slide', section);
+      if (!slides.length) return;
+      var n = slides.length;
+      var bgs = gsap.utils.toArray('.swipe-bg', section);
+      var outers = gsap.utils.toArray('.swipe-outer', section);
+      var inners = gsap.utils.toArray('.swipe-inner', section);
+      var headings = gsap.utils.toArray('.swipe-heading', section);
+      var subs = gsap.utils.toArray('.swipe-subtitle', section);
+
+      // 标题拆字符（无 SplitText 插件，手写；空格转 &nbsp; 防 inline-block 折叠）
+      var charSets = headings.map(function (h) {
+        var text = (h.textContent || '').replace(/\s+/g, ' ').trim();
+        h.innerHTML = '';
+        var chars = [];
+        for (var i = 0; i < text.length; i++) {
+          var c = document.createElement('span');
+          c.className = 'char';
+          c.textContent = text[i] === ' ' ? '\u00A0' : text[i];
+          h.appendChild(c);
+          chars.push(c);
+        }
+        return chars;
+      });
+
+      // 初始静态：全部隐藏，仅首屏可见（outer/inner 不回退偏移，避免 pin 前跳动）
+      gsap.set(slides, { autoAlpha: 0 });
+      gsap.set(outers, { yPercent: 100 });
+      gsap.set(inners, { yPercent: -100 });
+      gsap.set([outers[0], inners[0]], { yPercent: 0 });
+      gsap.set(slides[0], { autoAlpha: 1, zIndex: 1 });
+
+      // 单屏：不 pin，静态全屏图
+      if (n === 1) return;
+
+      // 构建 scrub 时间线（总时长 1，n-1 个过渡段等分）：
+      // 每段 = 一屏滚动量；段内旧屏保持不透明、新屏从其上方滑入覆盖（避免旧屏淡出时透出深色底成"黑罩"），
+      // 段尾新屏完全覆盖后才一次性隐藏旧屏；背景用 scale 放大缩放替代 yPercent 位移做纵深
+      // （yPercent 位移会让背景边缘露出板块深色底，形成过渡期"黑色遮罩"；scale 放大后图片始终填满无空档）
+      var per = 1 / (n - 1);
+      var tl = gsap.timeline({ defaults: { ease: 'none' } });
+      for (var i = 0; i < n - 1; i++) {
+        var pos = i * per;
+        var next = i + 1;
+        tl.set(slides[i], { zIndex: 0 }, pos)
+          .set(slides[next], { zIndex: 1, autoAlpha: 1 }, pos + 0.0001)
+          .set(slides[i], { autoAlpha: 0 }, pos + per) // 段尾新屏完全覆盖后再隐藏旧屏
+          .fromTo(outers[next], { yPercent: 100 }, { yPercent: 0, duration: per }, pos)
+          .fromTo(inners[next], { yPercent: -100 }, { yPercent: 0, duration: per }, pos)
+          .fromTo(bgs[next], { scale: 1.3 }, { scale: 1, duration: per }, pos)
+          .to(bgs[i], { scale: 1.15, duration: per }, pos);
+        if (charSets[next] && charSets[next].length) {
+          tl.fromTo(charSets[next], { autoAlpha: 0, yPercent: 150 }, {
+            autoAlpha: 1, yPercent: 0, duration: per * 0.65,
+            stagger: { each: per * 0.01, from: 'random' }
+          }, pos + per * 0.06);
+        }
+        if (subs[next]) {
+          tl.fromTo(subs[next], { autoAlpha: 0, yPercent: 40 }, {
+            autoAlpha: 1, yPercent: 0, duration: per * 0.5
+          }, pos + per * 0.35);
+        }
+      }
+
+      // pin + scrub：滚动进度直接驱动切屏时间线（每屏滚动量 = 一段过渡，连续无缝）
+      ST.create({
+        trigger: section,
+        start: 'top top',
+        end: function () { return '+=' + ((n - 1) * window.innerHeight); },
+        pin: true,
+        anticipatePin: 1,
+        scrub: 0.6,
+        animation: tl,
+        invalidateOnRefresh: true
+      });
+    });
+  }
+
+  // ===== 1.65 全屏切换轮播初始化（fullscreen-slider，GSAP Observer 逐屏切换版） =====
+  // 对标官方 Observer「Animated Continuous Sections」demo：
+  //   - Observer（type:"wheel,touch,pointer"）+ preventDefault 拦截滚轮/触摸/拖拽 → 页面不滚动、只切屏
+  //   - 方向键/空格/PageUp/PageDown 也 preventDefault 并触发切换（键盘滚动同样被锁定）
+  //   - 到尾不循环（clamp）：第一张/最后一张时继续滚动无反应
+  //   - 切换：旧屏保持不透明由新屏覆盖后再隐藏；新屏 outer/inner 反向裁剪滑入（背景静止不缩放，
+  //     避免切屏时看到背景缩放）；标题逐字上翻、副标题淡入
+  //   - 右侧 .fs-dots 圆点：竖排居中，当前高亮，点击跳转；随切换自动更新
+  //   - 复用已加载的 ScrollTrigger 内嵌 Observer（ScrollTrigger.observe() 与 Observer.create() 完全等价，
+  //     官方文档说明无需再单独加载 lib-gsap-observer.min.js，避免重复脚本文件）
+  function initFullscreenSliders(root) {
+    var boxes = (root || document).querySelectorAll('.fullscreen-slider-section');
+    if (!boxes.length) return;
+    // 页面锁定：存在该板块即锁死页面滚动（滚轮/触摸/键盘/滚动条拖动都不再滚动页面，
+    // 页面只会全屏在当前屏幕间切换；footer 等板块后内容不再可见——用户明确要求"不再考虑下拉看其他板块"）
+    if (!document.body.dataset.fsScrollLocked) {
+      document.body.dataset.fsScrollLocked = '1';
+      document.body.style.overflow = 'hidden';
+    }
+    if (!window.gsap || typeof window.gsap.to !== 'function') return;
+    var gsap = window.gsap;
+    var ST = gsap.ScrollTrigger || window.ScrollTrigger;
+    // 用 ScrollTrigger.observe() 复用 ScrollTrigger 内嵌的 Observer（等同 Observer.create，无需单独插件文件）
+    if (!ST || typeof ST.observe !== 'function') {
+      console.warn('[fullscreen-slider] 未找到 ScrollTrigger.observe（请确认加载 lib-scrolltrigger.min.js），降级为静态首屏');
+      return;
+    }
+
+    boxes.forEach(function (section) {
+      if (section.dataset.fsInited) return;
+      section.dataset.fsInited = '1';
+
+      var slides = gsap.utils.toArray('.fs-slide', section);
+      if (!slides.length) return;
+      var n = slides.length;
+      var outers = gsap.utils.toArray('.fs-outer', section);
+      var inners = gsap.utils.toArray('.fs-inner', section);
+      var headings = gsap.utils.toArray('.fs-heading', section);
+      var subs = gsap.utils.toArray('.fs-subtitle', section);
+      var dots = gsap.utils.toArray('.fs-dot', section);
+
+      // 标题拆字符（无 SplitText 插件，手写；空格转 &nbsp; 防 inline-block 折叠）
+      var charSets = headings.map(function (h) {
+        var text = (h.textContent || '').replace(/\s+/g, ' ').trim();
+        h.innerHTML = '';
+        var chars = [];
+        for (var i = 0; i < text.length; i++) {
+          var c = document.createElement('span');
+          c.className = 'char';
+          c.textContent = text[i] === ' ' ? '\u00A0' : text[i];
+          h.appendChild(c);
+          chars.push(c);
+        }
+        return chars;
+      });
+
+      // 初始静态：全部隐藏，仅首屏可见（outer/inner 归位，首屏无入场动画，避免与遮罩冲突）
+      gsap.set(slides, { autoAlpha: 0 });
+      gsap.set(outers, { yPercent: 100 });
+      gsap.set(inners, { yPercent: -100 });
+      gsap.set([outers[0], inners[0]], { yPercent: 0 });
+      gsap.set(slides[0], { autoAlpha: 1, zIndex: 1 });
+
+      var currentIndex = 0;
+      var animating = false;
+      var pending = null;
+
+      function updateDots() {
+        dots.forEach(function (d, i) {
+          d.classList.toggle('active', i === currentIndex);
+        });
+      }
+
+      function gotoSection(index, direction) {
+        if (index < 0 || index >= n) return; // 到尾不循环：边界外忽略
+        if (index === currentIndex) return;
+        if (animating) { pending = index; return; }
+        animating = true;
+        var dFactor = direction || (index > currentIndex ? 1 : -1);
+        var tl = gsap.timeline({
+          defaults: { duration: 1.2, ease: 'power1.inOut' },
+          onComplete: function () {
+            animating = false;
+            if (pending !== null) { var p = pending; pending = null; gotoSection(p); }
+          }
+        });
+        // 旧屏：降层、保持不透明让新屏覆盖，覆盖完成后一次性隐藏（背景不动，避免切屏时看到背景缩放）
+        if (currentIndex >= 0) {
+          gsap.set(slides[currentIndex], { zIndex: 0 });
+          tl.set(slides[currentIndex], { autoAlpha: 0 }, 1.2);
+        }
+        // 新屏：升层可见，outer/inner 反向裁剪滑入 + 标题逐字 + 副标题（背景静止不缩放）
+        gsap.set(slides[index], { autoAlpha: 1, zIndex: 1 });
+        tl.fromTo([outers[index], inners[index]], {
+            yPercent: function (i) { return i ? -100 * dFactor : 100 * dFactor; }
+          }, { yPercent: 0 }, 0)
+          .fromTo(charSets[index] && charSets[index].length ? charSets[index] : [], {
+            autoAlpha: 0, yPercent: 150 * dFactor
+          }, {
+            autoAlpha: 1, yPercent: 0, duration: 0.9, ease: 'power2',
+            stagger: { each: 0.02, from: 'random' }
+          }, 0.15)
+          .fromTo(subs[index], { autoAlpha: 0, yPercent: 40 * dFactor }, {
+            autoAlpha: 1, yPercent: 0, duration: 0.5
+          }, 0.4);
+
+        currentIndex = index;
+        updateDots();
+      }
+
+      // 圆点点击跳转
+      dots.forEach(function (d, i) {
+        d.addEventListener('click', function () {
+          gotoSection(i, i > currentIndex ? 1 : -1);
+        });
+      });
+
+      // Observer（ScrollTrigger 内嵌）：滚轮/触摸/拖拽逐屏切换 + preventDefault 锁定页面滚动
+      var obs = ST.observe({
+        type: 'wheel,touch,pointer',
+        tolerance: 10,
+        preventDefault: true,
+        onUp: function () { if (!animating) gotoSection(currentIndex - 1, -1); },
+        onDown: function () { if (!animating) gotoSection(currentIndex + 1, 1); }
+      });
+      section._fsObserver = obs;
+
+      // 键盘：方向键/空格/翻页键切换并阻止页面滚动
+      function onKey(e) {
+        var k = e.key;
+        var goNext = (k === 'ArrowDown' || k === 'PageDown' || k === ' ');
+        var goPrev = (k === 'ArrowUp' || k === 'PageUp');
+        if (goNext || goPrev) {
+          if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+          e.preventDefault();
+          if (goNext) gotoSection(currentIndex + 1, 1);
+          else gotoSection(currentIndex - 1, -1);
+        }
+      }
+      document.addEventListener('keydown', onKey, { passive: false });
+      section._fsKeyHandler = onKey;
     });
   }
 
@@ -966,10 +1292,15 @@ var CaseRenderer = (function () {
           (s.description ? '<p class="title-desc">' + esc(s.description) + '</p>' : '') +
         '</div>' +
       '</div>';
-    // 后台定义字号档位 → class（ts-96/124/148/176），CSS 用 --title-size 控制
+    // 后台定义字号档位 → class（ts-80/96/124/148/176），CSS 用 --title-size 控制
     var big = inner.querySelector('.title-big');
-    if (big && s.size && ['96', '124', '148', '176'].indexOf(String(s.size)) !== -1) {
+    if (big && s.size && ['80', '96', '124', '148', '176'].indexOf(String(s.size)) !== -1) {
       big.classList.add('ts-' + s.size);
+    }
+    // 后台定义上下边距档位（紧凑/标准/宽松）→ class（ts-pad-*），CSS 用 --title-pad / --title-pad-mobile 控制
+    var padMap = { '紧凑': 'compact', '标准': 'default', '宽松': 'spacious' };
+    if (s.padding && padMap[String(s.padding)]) {
+      section.classList.add('ts-pad-' + padMap[String(s.padding)]);
     }
     section.appendChild(inner);
     return section;

@@ -341,12 +341,18 @@ body {
 .dropzone-preview .dz-replace {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px;
   background: rgba(0,0,0,0.45); color: #fff; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .2s;
+  z-index: 1;
+  /* 纯视觉遮罩，不接收鼠标事件：点击上传由 .dropzone 容器委托处理，即使 opacity 过渡期间
+     也不会挡住右上角 .dz-clear 删除按钮（否则点击删除会误触发上传覆盖） */
+  pointer-events: none;
 }
 .dropzone-preview:hover .dz-replace { opacity: 1; }
 .dropzone-preview .dz-clear {
   position: absolute; top: 8px; right: 8px;
   width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff;
   border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  /* 必须在 .dz-replace 遮罩之上，否则 hover 时被遮罩盖住点不到（点击变成上传） */
+  z-index: 2;
 }
 .dropzone-preview .dz-clear:hover { background: var(--danger-color); }
 .dropzone-preview .dz-clear svg { width: 14px; height: 14px; }
@@ -933,7 +939,47 @@ body {
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group.full { grid-column: 1 / -1; }
 .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
-.form-label .hint-inline { font-weight: 500; color: var(--text-muted); font-size: 12px; }
+/* 字段辅助说明：标题旁圆圈感叹号，悬停弹出气泡（不占编辑界面空间） */
+.field-hint {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; margin-left: 2px; color: var(--text-muted);
+  cursor: help; flex: none; border-radius: 50%;
+}
+.field-hint:hover, .field-hint:focus { color: var(--accent-color); }
+.field-hint svg { width: 15px; height: 15px; }
+.hint-bubble {
+  position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%) translateY(4px);
+  width: 232px; background: rgba(28,29,33,0.96); color: #fff; font-size: 12px; font-weight: 400;
+  line-height: 1.65; padding: 9px 12px; border-radius: 8px; text-align: left; white-space: normal;
+  opacity: 0; visibility: hidden; transition: opacity .18s, transform .18s, visibility .18s;
+  pointer-events: none; z-index: 2000; box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+}
+.hint-bubble::after {
+  content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: rgba(28,29,33,0.96);
+}
+/* 靠顶字段的气泡翻转向下（JS 按视口高度判定加类），避免被编辑面板顶部裁切/被顶部导航遮住 */
+.hint-bubble.hint-below {
+  top: calc(100% + 9px);
+  bottom: auto;
+  transform: translateX(-50%) translateY(-4px);
+}
+.hint-bubble.hint-below::after {
+  top: auto; bottom: 100%;
+  border: 6px solid transparent; border-bottom-color: rgba(28,29,33,0.96);
+}
+.field-hint:hover .hint-bubble, .field-hint:focus .hint-bubble {
+  opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+}
+.form-label .field-reset {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; margin-left: 2px; padding: 0;
+  border: 1px solid var(--border-color); border-radius: 6px;
+  background: transparent; color: var(--text-muted); cursor: pointer; flex: none;
+  transition: background .2s, color .2s;
+}
+.form-label .field-reset:hover { background: var(--bg-hover); color: var(--text-primary); }
+.form-label .field-reset svg { width: 14px; height: 14px; }
 .form-input, .form-select, .form-textarea {
   padding: 9px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md);
   font-size: 14px; outline: none; transition: all .2s; font-family: inherit; background: var(--bg-primary); width: 100%;
@@ -1461,11 +1507,19 @@ body {
 /* 条目内图片控件（items-list 通用编辑器用） */
 .il-image { display: flex; flex-direction: column; gap: 8px; }
 .il-image-preview {
-  width: 100%; height: 120px; border-radius: var(--radius-sm);
+  position: relative; width: 100%; height: 120px; border-radius: var(--radius-sm);
   background: var(--bg-hover); overflow: hidden; display: flex;
   align-items: center; justify-content: center;
 }
 .il-image-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+/* 条目内图片清除按钮：右上角 x 图标，与全局上传（.dz-clear）视觉统一 */
+.il-image-preview .il-img-clear {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff;
+  border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2;
+}
+.il-image-preview .il-img-clear:hover { background: var(--danger-color); }
+.il-image-preview .il-img-clear svg { width: 14px; height: 14px; }
 .il-image-actions { display: flex; gap: 8px; align-items: center; }
 .il-image-actions .il-img-url { flex: 1; min-width: 0; }
 
@@ -1981,6 +2035,8 @@ function normalizeNavMenu(raw) {
 const TYPE_LABELS = {
   'hero': '小Banner首屏',
   'hero-banner': '大Banner首屏',
+  'swipe-slider': '全屏滑动轮播',
+  'fullscreen-slider': '全屏切换轮播',
   'intro': '介绍区',
   'brand-logo': '项目Logo栏目',
   'parallax': '视差图对',
@@ -2003,6 +2059,8 @@ const TYPE_LABELS = {
 const TYPE_DESCS = {
   'hero': '首屏媒体组件：只含视频/图片/占位符，无标题文字',
   'hero-banner': '首屏大图相框：标题+副标题+按钮叠加图上，滚动视差淡出',
+  'swipe-slider': '全屏一屏一屏滑动（GSAP pin 滚动驱动）：滚完一屏自然进入下一屏，标题逐字动画，到尾自然衔接下方内容',
+  'fullscreen-slider': '全屏切换轮播（GSAP Observer）：页面锁定不滚动，滚轮/触摸/方向键逐屏切换，右侧圆点指示第几张，到尾不循环',
   'intro': '项目基本信息：年份、行业、工作范围等',
   'brand-logo': '独立显示在 Introduction 下方的 Logo 区块（PC 居中 / 移动端居左）',
   'parallax': '两张图片叠加视差滚动效果',
@@ -2025,6 +2083,8 @@ const TYPE_DESCS = {
 const TYPE_ICONS = {
   'hero': '<rect x="2" y="3" width="20" height="14" rx="2"/><polygon points="10 9 15 12 10 15 10 9"/>',
   'hero-banner': '<rect x="3" y="2.5" width="18" height="19" rx="2.5"/><line x1="7" y1="7.5" x2="13" y2="7.5"/><line x1="7" y1="11" x2="10" y2="11"/><circle cx="16.5" cy="9.5" r="1.4"/>',
+  'swipe-slider': '<rect x="2.5" y="2.5" width="19" height="19" rx="2"/><polyline points="9 7.5 6.5 10 9 12.5"/><polyline points="15 16.5 17.5 14 15 11.5"/><line x1="6.5" y1="10" x2="17.5" y2="10"/><line x1="17.5" y1="14" x2="6.5" y2="14"/>',
+  'fullscreen-slider': '<rect x="2.5" y="2.5" width="19" height="19" rx="2"/><polyline points="9 7.5 6.5 10 9 12.5"/><polyline points="15 16.5 17.5 14 15 11.5"/><line x1="6.5" y1="10" x2="17.5" y2="10"/><line x1="17.5" y1="14" x2="6.5" y2="14"/><circle cx="20.5" cy="4.5" r="1.6" fill="currentColor"/>',
   'intro': '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="15" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
   'brand-logo': '<path d="M3 17V7h4l3 5 3-5h4v10h-2V11l-3 5-1 1.7h-2.4L7 11 4.6 14.2 3 15z M16 9h4v2h-4z"/><rect x="15.5" y="7.5" width="5.5" height="5.5" rx="1.2" opacity="0.35"/>',
   'parallax': '<rect x="3" y="4" width="18" height="16" rx="2"/><rect x="7" y="8" width="10" height="10" rx="1" opacity="0.5"/>',
@@ -2061,10 +2121,8 @@ const TYPE_FIELDS = {
   ],
   'hero-banner': [
     { key: 'title', label: '主标题 H1（叠加在大图左上，粗体大字）', type: 'textarea', rows: 2, placeholder: 'Premium Digital Agency for Startups, SaaS & Brands' },
-    { key: 'subtitle', label: '副标题描述（标题下方小字）', type: 'textarea', rows: 2, placeholder: 'We craft digital experiences that help ambitious companies grow.' },
-    { key: 'buttonText', label: '按钮文字', type: 'text', placeholder: 'Start a project' },
-    { key: 'linkPage', label: '站内页面跳转', type: 'text', hint: '填页面 key（如 works），渲染为 ../works/index.html；优先于链接URL' },
-    { key: 'linkUrl', label: '按钮链接URL（外链，新窗口）', type: 'text' },
+    { key: 'labels', label: '第二行信息标签（英文逗号分隔）', type: 'tags', placeholder: '50+ employees, 6 countries, Founded in 2010' },
+    { key: 'description', label: '第三行描述小字（标题下方）', type: 'textarea', rows: 2, placeholder: 'We craft digital experiences that help ambitious companies grow and stand out.' },
     { key: 'videoType', label: '背景媒体类型', type: 'select', options: ['image', 'video', 'placeholder', 'carousel'],
       hint: 'image=静态背景大图；video=背景视频；placeholder=占位色块；carousel=多图自动轮播（每张图配独立文案）' },
     { key: 'image', label: '背景大图', type: 'image', hint: '建议偏暗/主体偏下的图，保证左上文字可读', dependsOn: { field: 'videoType', value: 'image' } },
@@ -2080,6 +2138,20 @@ const TYPE_FIELDS = {
         { key: 'labels', label: '本图标签（英文逗号分隔）', type: 'tags', placeholder: '如 50+ employees' },
         { key: 'subtitle', label: '本图描述（选填）', type: 'textarea', placeholder: '本张图的描述文字' }
       ] }
+  ],
+  'swipe-slider': [
+    { key: 'slides', label: '滑动屏幕列表（每屏：背景大图 + 主标题 + 副标题）', type: 'items-list', itemLabel: '屏幕', itemFields: [
+      { key: 'image', label: '背景大图', type: 'image', hint: '建议 16:9 横图、内容居中、四周留安全边（全屏 cover 会裁切边缘）' },
+      { key: 'title', label: '主标题（切换时逐字上翻动画）', type: 'text', placeholder: '本屏的大标题' },
+      { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '本屏的描述文字' }
+    ] }
+  ],
+  'fullscreen-slider': [
+    { key: 'slides', label: '全屏屏幕列表（每屏：背景大图 + 主标题 + 副标题；右侧圆点自动生成）', type: 'items-list', itemLabel: '屏幕', itemFields: [
+      { key: 'image', label: '背景大图', type: 'image', hint: '建议 16:9 横图、内容居中、四周留安全边（全屏 cover 会裁切边缘）' },
+      { key: 'title', label: '主标题（切换时逐字上翻动画）', type: 'text', placeholder: '本屏的大标题' },
+      { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '本屏的描述文字' }
+    ] }
   ],
   'intro': [
     { key: 'label',   label: '板块标题（左栏小字，如 Introduction）', type: 'text', placeholder: 'Introduction' },
@@ -2134,7 +2206,8 @@ const TYPE_FIELDS = {
   ],
   'title': [
     { key: 'title', label: '大标题', type: 'text', placeholder: 'Projects' },
-    { key: 'size', label: '大标题字号（PC 端）', type: 'select', options: ['96', '124', '148', '176'], hint: '默认 148px，移动端统一 52px' },
+    { key: 'size', label: '大标题字号（PC 端）', type: 'select', options: ['80', '96', '124', '148', '176'], default: '148', hint: '默认 148px，移动端统一 52px' },
+    { key: 'padding', label: '上下边距', type: 'select', options: ['紧凑', '标准', '宽松'], default: '标准', hint: '默认标准（PC 5rem / 移动 3rem）' },
     { key: 'copyright', label: '版权（右上小字）', type: 'text', placeholder: '2010-26©' },
     { key: 'description', label: '内容描述（大标题下方）', type: 'textarea', rows: 3, placeholder: "We've helped businesses across industries achieve their goals. Here are some of our recent projects." }
   ],
@@ -2194,6 +2267,14 @@ function getDefaultSection(type) {
   switch(type) {
     case 'hero': return { ...base, videoUrl: '', videoType: 'video' };
     case 'hero-banner': return { ...base, title: 'Premium Digital Agency for Startups, SaaS & Brands', labels: [ { text: '50+ employees' }, { text: '6 countries' }, { text: 'Founded in 2010' } ], description: 'We craft digital experiences that help ambitious companies grow and stand out in a crowded market.', videoType: 'image', image: '', videoUrl: '', effect: 'slide', autoplayDelay: '4000', images: [] };
+    case 'swipe-slider': return { ...base, slides: [
+      { image: '', title: 'Scroll down', subtitle: '一屏一屏滑动浏览，滚轮 / 触摸 / 拖拽皆可' },
+      { image: '', title: 'Swipe to explore', subtitle: '标题逐字上翻动画，到尾可退出衔接下方内容' }
+    ] };
+    case 'fullscreen-slider': return { ...base, slides: [
+      { image: '', title: 'Full screen', subtitle: '页面锁定，滚轮 / 触摸 / 方向键逐屏切换，右侧圆点指示第几张' },
+      { image: '', title: 'Swipe to explore', subtitle: '标题逐字上翻动画，到尾不循环' }
+    ] };
     case 'intro': return { ...base, label: '', heading: '', year: '2025', industry: '', scopeTags: [], timeline: '' };
     case 'brand-logo': return { ...base, logoUrl: '' };
     case 'parallax': return { ...base, baseImage: '', overlayImage: '' };
@@ -2206,7 +2287,7 @@ function getDefaultSection(type) {
     case 'double-image': return { ...base, image1: '', image2: '' };
     case 'video': return { ...base, videos: [] };
     case 'testimonial': return { ...base, title: '', avatarInitials: '', name: '', role: '', quote: '' };
-    case 'title': return { ...base, title: 'Projects', copyright: '2010-26©', description: "We've helped businesses across industries achieve their goals. Here are some of our recent projects.", size: '148' };
+    case 'title': return { ...base, title: 'Projects', copyright: '2010-26©', description: "We've helped businesses across industries achieve their goals. Here are some of our recent projects.", size: '148', padding: '标准' };
     case 'next-projects': return { ...base, groups: [{ cards: [] }] };
     case 'clients': return { ...base, label: 'Our clients', heading: '', logos: [] };
     case 'stats': return { ...base, label: 'Why choose us', heading: 'We design for results – helping your business meet its goals.', subtitle: 'Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.', videoUrl: '', videoType: 'video', items: [
@@ -2628,6 +2709,26 @@ function buildCardThumbnail(s) {
           <div class="hero-title-overlay">${esc(s.title || 'Hero Banner')}${s.videoType === 'carousel' ? ' · 轮播' : ''}</div>
         </div>`;
       }
+      case 'swipe-slider': {
+        const arr = Array.isArray(s.slides) ? s.slides : [];
+        const first = arr.find(x => x && x.image) || {};
+        const bg = first.image || '';
+        const title = (arr[0] && arr[0].title) || (arr.length + ' 屏');
+        return `<div class="ct-hero"${bg ? ` style="background-image:url('${esc(bg)}');background-size:cover;background-position:center;"` : ''}>
+          <div class="hero-play-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 7.5 6.5 10 9 12.5"/><polyline points="15 16.5 17.5 14 15 11.5"/><line x1="6.5" y1="10" x2="17.5" y2="10"/><line x1="17.5" y1="14" x2="6.5" y2="14"/></svg></div>
+          <div class="hero-title-overlay">${esc(title)}${arr.length ? ' · ' + arr.length + '屏' : ''}</div>
+        </div>`;
+      }
+      case 'fullscreen-slider': {
+        const arr = Array.isArray(s.slides) ? s.slides : [];
+        const first = arr.find(x => x && x.image) || {};
+        const bg = first.image || '';
+        const title = (arr[0] && arr[0].title) || (arr.length + ' 屏');
+        return `<div class="ct-hero"${bg ? ` style="background-image:url('${esc(bg)}');background-size:cover;background-position:center;"` : ''}>
+          <div class="hero-play-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 7.5 6.5 10 9 12.5"/><polyline points="15 16.5 17.5 14 15 11.5"/><line x1="6.5" y1="10" x2="17.5" y2="10"/><line x1="17.5" y1="14" x2="6.5" y2="14"/><circle cx="20.5" cy="4.5" r="1.6" fill="currentColor"/></svg></div>
+          <div class="hero-title-overlay">${esc(title)}${arr.length ? ' · ' + arr.length + '屏' : ''}</div>
+        </div>`;
+      }
       case 'intro': {
         const year = s.year || '—';
         const industry = s.industry || '';
@@ -2783,7 +2884,24 @@ function buildCardPreviewText(s) {
   let text = '';
   switch (s.type) {
     case 'hero': text = '媒体：' + (s.videoType === 'video' ? '视频' : (s.videoType === 'carousel' ? '轮播图·' + (Array.isArray(s.images) ? s.images.filter(x => x && x.image).length : 0) + '张' : (s.videoType === 'image' ? '图片' : '占位符'))); break;
-    case 'hero-banner': text = (s.title ? s.title : '（未设置标题）') + (s.videoType === 'carousel' ? ' · 轮播' : ''); break;
+    case 'hero-banner': {
+      const imgCount = Array.isArray(s.images) ? s.images.filter(x => x && x.image).length : 0;
+      // 顶层标题为空时回退到轮播图里第一张已配标题的图；都没有则显示「轮播图·N张」，不再提示未设置标题
+      const slideTitle = Array.isArray(s.images) ? (s.images.find(x => x && x.title) || {}).title : '';
+      const head = s.title || slideTitle || (s.videoType === 'carousel' ? ('轮播图·' + imgCount + '张') : '（未设置标题）');
+      text = head + (s.videoType === 'carousel' ? ' · 轮播' : '');
+      break;
+    }
+    case 'swipe-slider': {
+      const arr = Array.isArray(s.slides) ? s.slides.filter(x => x && x.image) : [];
+      text = '全屏滑动轮播：' + arr.length + ' 屏 · 到尾衔接' + ((s.slides && s.slides[0] && s.slides[0].title) ? ' · ' + s.slides[0].title : '');
+      break;
+    }
+    case 'fullscreen-slider': {
+      const arr = Array.isArray(s.slides) ? s.slides.filter(x => x && x.image) : [];
+      text = '全屏切换轮播：' + arr.length + ' 屏 · 页面锁定' + ((s.slides && s.slides[0] && s.slides[0].title) ? ' · ' + s.slides[0].title : '');
+      break;
+    }
     case 'intro': text = s.heading ? s.heading : (s.label || '（未设置标题）'); break;
     case 'brand-logo': text = s.logoUrl ? '（已上传 Logo）' : '（未上传 Logo）'; break;
     case 'parallax': text = (s.baseImage || s.overlayImage) ? '视差图对' : '（未上传图片）'; break;
@@ -2967,7 +3085,7 @@ function renderEditorForm(section) {
   fields.forEach((f) => {
     const isFull = ['textarea', 'image', 'image-list', 'video', 'video-list', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker'].includes(f.type);
     html += `<div class="form-group${isFull ? ' full' : ''}">`;
-    html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="hint-inline">· ${esc(f.hint)}</span>` : ''}</label>`;
+    html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : ''}${(f.type === 'select' && f.default !== undefined) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>` : ''}</label>`;
     const val = section[f.key];
     const fieldUid = 'f_' + f.key + '_' + section.id;
     switch (f.type) {
@@ -2979,13 +3097,19 @@ function renderEditorForm(section) {
         break;
       case 'select':
         html += `<select class="form-select" data-bind-key="${esc(f.key)}" data-bind-ftype="select" id="${fieldUid}" data-gallery-colcount="${f.key === 'colCount' ? 'true' : ''}" data-rebuild-on-change="true">`;
+        // 空值时选中默认档位（如旧数据无 padding 字段时默认显示「标准」），避免误显示第一项
+        const curSel = String(val || '');
+        const selVal = (curSel === '' && f.default !== undefined) ? String(f.default) : curSel;
         (f.options || []).forEach((opt) => {
-          html += `<option value="${esc(opt)}"${opt === String(val || '') ? ' selected' : ''}>${esc(opt)}</option>`;
+          // 有 optionLabels（如 select 字段）时下拉显示中文，存值仍用英文
+          const optLabel = (f.optionLabels && f.optionLabels[opt]) || opt;
+          html += `<option value="${esc(opt)}"${opt === selVal ? ' selected' : ''}>${esc(optLabel)}</option>`;
         });
         html += `</select>`;
         break;
       case 'tags':
-        html += `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="tags" type="text" placeholder="用英文逗号分隔" value="${esc(Array.isArray(val) ? val.join(', ') : (val || ''))}" id="${fieldUid}">`;
+        // 兼容对象数组（如 labels: [{text:'50+ employees'}, ...]）→ 只提取 text 显示，避免出现 [object Object]
+        html += `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="tags" type="text" placeholder="用英文逗号分隔" value="${esc(Array.isArray(val) ? val.map((x) => (x && typeof x === 'object' ? (x.text || '') : x)).filter(Boolean).join(', ') : (val || ''))}" id="${fieldUid}">`;
         break;
       case 'image': {
         let sepLabel = '';
@@ -3059,6 +3183,16 @@ function renderEditorForm(section) {
     };
     inp.addEventListener('input', handler);
     inp.addEventListener('change', handler);
+  });
+
+  // 重置按钮：点击恢复 select 档位字段为默认值
+  container.querySelectorAll('[data-reset-key]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const k = btn.dataset.resetKey;
+      state.sections[selectedIndex][k] = btn.dataset.resetDefault;
+      onSectionChanged();
+      setTimeout(() => renderEditorForm(section), 0);
+    });
   });
 
   // Bind image / video / list fields — uid 必须和 render 时传入的一致
@@ -3845,10 +3979,11 @@ function bindImageFieldLegacy(key, onUpdate) {
     try {
       const url = await uploadImage(file, getFmtPick(dz.parentElement));
       if (!url) throw new Error('服务器未返回 URL');
-      const wrap = dz.parentElement;
+      // 替换整个 .dz-ctl（含 dz-url-input / 格式下拉），避免只替换 .dropzone 导致旧容器嵌套累积（格式下拉越来越多）
+      const ctl = dz.parentElement;
       const tmp = document.createElement('div');
       tmp.innerHTML = renderImageField(key, url);
-      wrap.replaceChild(tmp.firstElementChild, dz);
+      ctl.parentElement.replaceChild(tmp.firstElementChild, ctl);
       bindImageFieldLegacy(key, onUpdate);
       if (onUpdate) onUpdate(url);
       prog.close('图片已上传', 'success');
@@ -3870,10 +4005,11 @@ function bindImageFieldLegacy(key, onUpdate) {
   if (clearBtn) {
     clearBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const wrap = dz.parentElement;
+      // 同上传：替换整个 .dz-ctl，防止格式下拉残留累积
+      const ctl = dz.parentElement;
       const tmp = document.createElement('div');
       tmp.innerHTML = renderImageField(key, '');
-      wrap.replaceChild(tmp.firstElementChild, dz);
+      ctl.parentElement.replaceChild(tmp.firstElementChild, ctl);
       bindImageFieldLegacy(key, onUpdate);
       if (onUpdate) onUpdate('');
     });
@@ -3921,11 +4057,10 @@ function renderItemImageControl(fkey, url, idx) {
   return `
     <div class="il-image" data-il-key="${esc(fkey)}" data-il-type="image" data-il-idx="${idx}">
       <input type="hidden" class="il-image-value" value="${esc(url)}">
-      ${has ? `<div class="il-image-preview"><img src="${esc(url)}" alt="" loading="lazy"></div>` : ''}
+      ${has ? `<div class="il-image-preview"><img src="${esc(url)}" alt="" loading="lazy"><button type="button" class="il-img-clear" title="清除图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>` : ''}
       <div class="il-image-actions">
         <button type="button" class="btn-secondary il-img-upload" style="justify-content:center;">上传图片</button>
         ${fmtPickHtml()}
-        ${has ? `<button type="button" class="btn-secondary il-img-clear" style="justify-content:center;">清除</button>` : ''}
         <input class="form-input il-img-url" type="text" placeholder="https://... 图片 URL" value="${esc(url && url.startsWith('http') ? url : '')}">
       </div>
     </div>`;
@@ -3945,36 +4080,48 @@ function bindItemsListField(field, uid) {
     replaceListField(key, uid, renderItemsListField(field, state.sections[selectedIndex][key] || [], uid));
     bindItemsListField(field, uid);
   };
-  // 删除条目
-  wrap.querySelectorAll('[data-lf-remove]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.lfRemove);
-      const list = collectItemsList(key, uid);
-      list.splice(idx, 1);
-      state.sections[selectedIndex][key] = list;
-      rebind();
-      onSectionChanged();
+  // —— wrap 层一次性绑定（事件委托）——
+  // 此前每次上传/清除图片都会重新调用本函数，删除/添加/输入框监听器反复叠加，
+  // 导致「点一次垃圾桶删掉所有条目」「输入保存错乱」。改为只绑定一次，靠委托处理。
+  if (!wrap.dataset.lfBound) {
+    wrap.dataset.lfBound = '1';
+    // 删除 / 添加条目（委托）
+    wrap.addEventListener('click', (e) => {
+      const del = e.target.closest('[data-lf-remove]');
+      if (del) {
+        const idx = parseInt(del.dataset.lfRemove);
+        const list = collectItemsList(key, uid);
+        list.splice(idx, 1);
+        state.sections[selectedIndex][key] = list;
+        rebind();
+        onSectionChanged();
+        return;
+      }
+      const add = e.target.closest('[data-lf-add]');
+      if (add) {
+        const list = collectItemsList(key, uid);
+        list.push({});
+        state.sections[selectedIndex][key] = list;
+        rebind();
+        onSectionChanged();
+      }
     });
-  });
-  // 添加条目
-  const addBtn = wrap.querySelector('[data-lf-add]');
-  if (addBtn) {
-    addBtn.addEventListener('click', () => {
-      const list = collectItemsList(key, uid);
-      list.push({});
-      state.sections[selectedIndex][key] = list;
-      rebind();
-      onSectionChanged();
-    });
+    // 标量输入（text / textarea / tags）——input/change 都冒泡，委托到 wrap
+    const scalarSave = (e) => {
+      const t = e.target.closest('[data-il-key]');
+      if (t && t.dataset.ilType !== 'image') save();
+    };
+    wrap.addEventListener('input', scalarSave);
+    wrap.addEventListener('change', scalarSave);
   }
-  // 标量输入（text / textarea / tags）
-  wrap.querySelectorAll('[data-il-key]').forEach((inp) => {
-    if (inp.classList.contains('il-image')) return;
-    inp.addEventListener('input', () => save());
-    inp.addEventListener('change', () => save());
-  });
-  // 条目内图片控件
+  // 条目内图片控件：il-image 会被局部替换，每次渲染后单独绑定（不动 wrap 层委托，避免重复叠加）
+  bindItemImages(wrap, key, uid);
+}
+
+function bindItemImages(wrap, key, uid) {
   wrap.querySelectorAll('.il-image').forEach((imgWrap) => {
+    if (imgWrap.dataset.ilBound) return;
+    imgWrap.dataset.ilBound = '1';
     const setUrl = (url) => {
       const idx = imgWrap.dataset.ilIdx;
       const fkey = imgWrap.dataset.ilKey;
@@ -3986,7 +4133,7 @@ function bindItemsListField(field, uid) {
       const tmp = document.createElement('div');
       tmp.innerHTML = renderItemImageControl(fkey, url, idx);
       imgWrap.parentElement.replaceChild(tmp.firstElementChild, imgWrap);
-      bindItemsListField(field, uid);
+      bindItemImages(wrap, key, uid); // 只重绑图片控件（新 .il-image 无 ilBound）
       onSectionChanged();
     };
     imgWrap.querySelector('.il-img-upload').addEventListener('click', () => {
@@ -5189,6 +5336,32 @@ async function init() {
   $('#authBtn').onclick = onLoginClick;
   $('#authPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') onLoginClick(); });
   $('#btnLogout').onclick = () => doLogout();
+  // 字段说明气泡：靠顶（会顶到编辑面板顶部/顶部导航）时翻转向下，避免被裁切或遮挡
+  // 判定基准 = 滚动容器（.editor-body）可见顶部，而非视口顶部：
+  // 气泡默认朝上弹，若图标上方放不下完整气泡（会被 sticky 编辑头/顶部导航盖住）就翻转向下
+  function updateHintFlip(hint, bubble) {
+    const bH = bubble.offsetHeight || 120;
+    const r = hint.getBoundingClientRect();
+    const gap = 9; // 与 .hint-bubble 的 bottom/top calc(100% + 9px) 保持一致
+    const scrollBox = hint.closest('.editor-body');
+    // 滚动容器顶 + 4px 视为安全线：气泡上边缘低于它就不会被遮住
+    const safeTop = scrollBox ? scrollBox.getBoundingClientRect().top + 4 : bH + 16;
+    bubble.classList.toggle('hint-below', (r.top - bH - gap) < safeTop);
+  }
+  document.addEventListener('mouseover', (e) => {
+    const hint = e.target.closest ? e.target.closest('.field-hint') : null;
+    if (!hint) return;
+    const bubble = hint.querySelector('.hint-bubble');
+    if (!bubble) return;
+    updateHintFlip(hint, bubble);
+  });
+  // 悬停时滚动编辑区，同步刷新翻转方向
+  document.addEventListener('scroll', (e) => {
+    const hint = document.querySelector('.field-hint:hover');
+    if (!hint) return;
+    const bubble = hint.querySelector('.hint-bubble');
+    if (bubble) updateHintFlip(hint, bubble);
+  }, { capture: true });
   const u = getAuthUser();
   if (u) $('#navUser').textContent = u;
   const ok = await checkAuth();
