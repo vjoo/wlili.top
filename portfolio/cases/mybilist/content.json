@@ -2,156 +2,25 @@
   "version": 2,
   "sections": [
     {
-      "id": "hero-banner-demo",
-      "type": "hero-banner",
-      "title": "Premium Digital Agency for Startups, SaaS & Brands",
-      "labels": [
+      "id": "smsu6iw78hhz0",
+      "type": "fullscreen-slider",
+      "slides": [
         {
-          "text": "50+ employees"
+          "image": "/portfolio/cases/mybilist/uploads/1786786473850.jpg",
+          "title": "Full screen",
+          "subtitle": "页面锁定，滚轮 / 触摸 / 方向键逐屏切换，右侧圆点指示第几张"
         },
         {
-          "text": "6 countries"
+          "image": "/portfolio/cases/mybilist/uploads/1786786477321.jpg",
+          "title": "Swipe to explore",
+          "subtitle": "标题逐字上翻动画，到尾不循环"
         },
         {
-          "text": "Founded in 2010"
+          "image": "/portfolio/cases/mybilist/uploads/1786786481880.jpg",
+          "title": "",
+          "subtitle": ""
         }
-      ],
-      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
-      "videoType": "image",
-      "image": "/portfolio/cases/mybilist/uploads/1786451753906.jpg",
-      "videoUrl": ""
-    },
-    {
-      "id": "test-stats",
-      "subtitle": "Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.",
-      "heading": "We design for results – helping your business meet its goals.",
-      "videoType": "image",
-      "type": "stats",
-      "items": [
-        {
-          "title": "Successful projects completed",
-          "suffix": "+",
-          "value": "600",
-          "desc": "We've helped launch over 600 digital products and experiences that make brands stand out and feel human."
-        },
-        {
-          "title": "UpWork rating",
-          "suffix": "%",
-          "value": "100",
-          "desc": "Consistently rated 100% job success and top-rated talent."
-        }
-      ],
-      "videoUrl": "/portfolio/cases/mybilist/uploads/1786449011594.jpg",
-      "label": "Why choose us"
-    },
-    {
-      "label": "Join our mission",
-      "heading": "Our team,",
-      "subheading": "your vision",
-      "desc1": "If you're ready to create and collaborate, we'd love to hear from you.",
-      "desc2": "We thrive on teamwork, turning individual strengths into shared success. Together, we turn ideas into digital products that solve real problems for real people.",
-      "buttonText": "Apply now",
-      "items": [
-        {
-          "photo": "",
-          "name": "Bogdan"
-        },
-        {
-          "photo": "",
-          "name": "Alina"
-        },
-        {
-          "photo": "",
-          "name": "Dmitry"
-        },
-        {
-          "photo": "",
-          "name": "Kate"
-        }
-      ],
-      "id": "test-team",
-      "type": "team"
-    },
-    {
-      "label": "Our clients",
-      "heading": "",
-      "logos": [
-        {
-          "name": "",
-          "image": "/portfolio/cases/mybilist/uploads/1786449149628.jpg"
-        },
-        {
-          "name": "",
-          "image": "/portfolio/cases/mybilist/uploads/1786449155928.jpg"
-        },
-        {
-          "name": "",
-          "image": "/portfolio/cases/mybilist/uploads/1786449169470.jpg"
-        },
-        {
-          "name": "",
-          "image": "/portfolio/cases/mybilist/uploads/1786449174281.jpg"
-        },
-        {
-          "name": "",
-          "image": "/portfolio/cases/mybilist/uploads/1786449181591.jpg"
-        },
-        {
-          "name": "",
-          "image": "/portfolio/cases/mybilist/uploads/1786449189217.jpg"
-        }
-      ],
-      "id": "test-clients",
-      "type": "clients"
-    },
-    {
-      "id": "smson26d4kmz8",
-      "type": "next-projects",
-      "groups": [
-        {
-          "cards": [
-            {
-              "name": "Xefag1",
-              "year": "2025/09/11",
-              "href": "",
-              "linkPage": "",
-              "image1": "/portfolio/cases/mybilist/uploads/1786451465853.jpg",
-              "image2": "/portfolio/cases/mybilist/uploads/1786451471534.jpg"
-            },
-            {
-              "name": "Xefag2",
-              "year": "2025/09/11",
-              "href": "",
-              "linkPage": "",
-              "image1": "/portfolio/cases/mybilist/uploads/1786451479380.jpg",
-              "image2": "/portfolio/cases/mybilist/uploads/1786451486207.jpg"
-            }
-          ]
-        },
-        {
-          "cards": [
-            {
-              "name": "Linkmatch3",
-              "year": "2025/09/11",
-              "href": "",
-              "linkPage": "",
-              "image1": "/portfolio/cases/mybilist/uploads/1786452821236.jpg",
-              "image2": "/portfolio/cases/mybilist/uploads/1786452829552.jpg"
-            },
-            {
-              "name": "Linkmatch4",
-              "year": "2025/09/11",
-              "href": "",
-              "linkPage": "",
-              "image1": "/portfolio/cases/mybilist/uploads/1786452845018.jpg",
-              "image2": "/portfolio/cases/mybilist/uploads/1786452857666.png"
-            }
-          ]
-        }
-      ],
-      "title": "",
-      "copyright": "",
-      "allProjectsText": ""
+      ]
     }
   ],
   "letsTalk": {
