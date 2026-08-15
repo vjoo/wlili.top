@@ -43,7 +43,7 @@ wlili.top/
     ├── nav.js                  # 统一导航栏（自动注入）
     ├── tools.json              # 工具配置（分类、图标、关键词）
     ├── index.html              # 工具卡片列表页
-    ├── bookmark-manager.html   # 书签管理器（复杂页-侧边栏）
+    ├── bookmark-manager.html   # 书签管理器（标准工具页）
     ├── image-compress.html     # 图片压缩（标准工具页）
     ├── image-cropper.html      # 图片裁切
     ├── image-layout.html       # 配图排版
@@ -460,7 +460,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 ### 4.3 复杂工具页结构（侧边栏布局）
 
-适用于 `filament-manager.html`、`print-manager.html`、`bookmark-manager.html`、`prompt-library.html`、`seamless-pattern.html` 等需要持久导航的页面：
+适用于 `filament-manager.html`、`print-manager.html`、`seamless-pattern.html` 等需要持久导航的页面（对应 `nav.js` 的 `SIDEBAR_PAGES` 数组）：
 
 - 需在 `nav.js` 的 `SIDEBAR_PAGES` 数组中注册文件名，以启用移动端侧边栏切换按钮
 - 左侧 `.sidebar`（`220px`）+ 右侧主内容区
@@ -486,7 +486,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 |------|------|------|
 | **简单页** | 展示/复制为主，无复杂交互 | `proxy-sub.html`、`model-viewer.html` |
 | **标准工具页** | `dropzone` + 操作按钮 + 结果展示 | `image-compress.html`、`image-cropper.html`、`password-gen.html` |
-| **复杂工具页** | 侧边栏布局（`nav.js` 中 `SIDEBAR_PAGES` 标记） | `filament-manager.html`、`print-manager.html`、`seamless-pattern.html`、`bookmark-manager.html` |
+| **复杂工具页** | 侧边栏布局（`nav.js` 中 `SIDEBAR_PAGES` 标记） | `filament-manager.html`、`print-manager.html`、`seamless-pattern.html` |
 
 ---
 
@@ -618,9 +618,9 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | 3d-filament | 3D 耗材及预设管理 | `filament-manager.html` | reference | teal | 复杂工具页 |
 | phonetic-chart | 48 音标速查表 | `phonetic-chart.html` | reference | red | 简单页 |
 | print-manager | 打印管理器 | `print-manager.html` | manage | cyan | 复杂工具页 |
-| prompt-library | AI 提示词库 | `prompt-library.html` | creative | purple | 复杂工具页 |
+| prompt-library | AI 提示词库 | `prompt-library.html` | creative | purple | 复杂工具页（双栏） |
 | seamless-pattern | 四方连图素材库 | `seamless-pattern.html` | creative | pink | 复杂工具页 |
-| bookmark-manager | 书签管理器 | `bookmark-manager.html` | manage | blue | 复杂工具页 |
+| bookmark-manager | 书签管理器 | `bookmark-manager.html` | manage | blue | 标准工具页 |
 
 ### 图标色板（9 色）
 
