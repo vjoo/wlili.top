@@ -46,7 +46,6 @@ wlili.top/
     ├── bookmark-manager.html   # 书签管理器（复杂页-侧边栏）
     ├── image-compress.html     # 图片压缩（标准工具页）
     ├── image-cropper.html      # 图片裁切
-    ├── image-grid-editor.html  # 图片网格编辑
     ├── image-layout.html       # 配图排版
     ├── image-upscale.html      # AI 图片放大
     ├── unit-converter.html     # 在线换算
@@ -937,7 +936,6 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | 客户端压缩/转格式 | 浏览器 Canvas（toBlob），品质 10–100 可调，JPG/WebP/PNG/AVIF/SVG 互转、GIF/PDF 支持 | `image-compress.html` | `compressImage()` / `compressAll()` |
 | 客户端放大（AI 超分） | TensorFlow.js + UpscalerJS + ESRGAN（2x/4x，CDN 模型） | `image-upscale.html` | `loadModel()` |
 | 客户端裁剪/导出 | Canvas + 品质滑块，JPG/WebP/PNG | `image-cropper.html` | `qualitySlider` |
-| 客户端排版/网格编辑 | Canvas 导出 JPG/PNG | `image-grid-editor.html` | `exportFormat` |
 
 **选型铁律：**
 1. **运行环境决定技术，不要跨端混用**：服务端一律 Pillow 系（server.py），浏览器端一律 Canvas 系（image-*.html）。不要为了"统一"把服务端压缩搬进浏览器或反之——两套由环境锁死，各有适用场景
