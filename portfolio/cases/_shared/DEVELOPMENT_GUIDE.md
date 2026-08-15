@@ -141,7 +141,7 @@ portfolio/
 
 **地址：`http://localhost:8080/portfolio/cases/_shared/admin.html`**（全站**唯一一份**，所有页面共用；默认进入「页面管理」视图，点某行「内容」即可编辑该页；`?case=<key>` 可直达某页编辑，如 `admin.html?case=home`；后台样式/逻辑改这一份即可，**不要在任何页面目录放 admin.html 副本**）
 
-- 顶部双菜单：**板块导航**（编辑当前案例的板块内容 + 保存） / **页面管理**（点击后**新标签页**打开 `admin.html?view=pages`，自动进入页面管理视图，列表所有页面 title/key/type/level）
+- 左侧一级菜单：**板块管理**（编辑当前案例的板块内容 + 保存，下方展开「板块列表」二级菜单） / **页面管理**（右侧直接显示所有页面 title/key/type/level，无需新标签页） / **底部导航**（编辑网页底部联系区块） / **顶部导航**（编辑前台共用导航菜单）
 - **登录保护**：访问后台需登录（账号 `wl` / 密码 `905905`，见 `server.py` 顶部 `ADMIN_USER/ADMIN_PASS`，改这里即可换账号密码），token 存 localStorage，勾选「记住登录」30 天免输入；未登录时所有 `/api/*` 写操作返回 401
 - 「新建页面」：选类型 + 层级 → 从 `_template` 生成空白页
 - **「复制为」：选源页面 + 新 key → 一键复制（最常用：vjooProject → 第二个案例，然后进 admin.html 换数据）**
@@ -152,7 +152,7 @@ portfolio/
 
 ### 顶部导航设置（全站共享）
 
-后台侧边栏底部（`Let's talk 设置` 下方）有 **顶部导航设置** 按钮，编辑前台所有页面共用的顶部导航菜单：
+后台侧边栏一级菜单「**顶部导航**」入口，编辑前台所有页面共用的顶部导航菜单：
 
 - 支持：菜单**名称**编辑、**链接页面下拉选择**（自动列出 `cases.json` 里已有页面，选择后自动填入 `../<key>/index.html`）、**链接地址**自定义（外链 https://… 也可）、**在新窗口打开**勾选（渲染为 `target="_blank" rel="noopener"`）、菜单**新增 / 删除 / 恢复默认**
 - 数据存 `cases.json` 顶层 `navMenu`（全站共享），保存后**所有页面**顶部导航立即生效（桌面 + 移动端），无需逐页修改
@@ -360,7 +360,7 @@ portfolio/
 （outline 版 rect 用 `#0a0a0a`；hover 时双文本上滑切换。`.btn-submit` 例外：纯文本。）
 
 **后台 admin.html 顶部导航按钮（强制统一胶囊款）**
-- 顶部导航右侧四个元素：**板块导航 / 页面管理**（`.nav-tab`）、**预览**（`.nav-link`，图标+文字）、**退出**（`.nav-logout`）必须**同一款胶囊样式**：高 30px、圆角 100px、透明底、无边框（`border: 1px solid transparent`）、13px / 600、hover 浅灰底、active 黑底白字
+- 顶部导航右侧元素：**预览**（`.nav-link`，图标+文字）、**退出**（`.nav-logout`）必须**同一款胶囊样式**：高 30px、圆角 100px、透明底、无边框（`border: 1px solid transparent`）、13px / 600、hover 浅灰底、active 黑底白字（板块导航 / 页面管理已迁入左侧一级菜单，顶部不再有 `.nav-tab`）
 - 禁止混用其他按钮形态（白底圆角矩形带边框、带边框胶囊、12px 等都会造成同栏按钮三四种样子，用户视为视觉事故）
 - 后台为 `_shared/admin.html` 唯一一份共享文件，无副本可同步（2026-08-13 已共享化，勿再复制到页面目录）
 
@@ -393,7 +393,7 @@ portfolio/
 
 ## 十二、开发一个新页面/新区块的推荐流程
 
-1. 打开 `http://localhost:8080/portfolio/cases/_shared/admin.html` → 顶部「页面管理」→ **「复制为」**（选最接近的已有页面 + 新 key）或**「新建页面」**（选类型/层级，从 `_template` 生成）
+1. 打开 `http://localhost:8080/portfolio/cases/_shared/admin.html` → 左侧一级菜单「页面管理」→ **「复制为」**（选最接近的已有页面 + 新 key）或**「新建页面」**（选类型/层级，从 `_template` 生成）
 2. 打开后台，在「页面管理」点新页「内容」切换编辑（共享后台 `_shared/admin.html?case=<key>`，无需打开页面目录里的 admin.html）
 3. 如导航/社交要定制，在 index.html 的 `window.CASE_KEY` 后加 `window.CASE_SHELL`（见第四节）
 4. **只需要**在 `style.css` 里调整/新增板块内部布局；共享壳与适配、间距、动画不要动

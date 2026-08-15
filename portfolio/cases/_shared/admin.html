@@ -79,7 +79,8 @@ body {
 }
 .nav-link:hover { background: var(--bg-hover); color: var(--text-primary); }
 .save-status-wrap { display: flex; align-items: center; gap: 10px; }
-.save-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); padding-right: 4px; }
+.save-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); padding-right: 4px; min-width: 112px; }
+.save-status .save-text { display: inline-block; min-width: 88px; text-align: left; }
 .save-status .spinner {
   width: 12px; height: 12px; border: 2px solid var(--border-color); border-top-color: var(--accent-color);
   border-radius: 50%; display: none; animation: spin .7s linear infinite;
@@ -108,14 +109,6 @@ body {
   left: 0; top: 48px;
   z-index: 100;
 }
-.sidebar-title {
-  padding: 14px 16px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
 .nav-menu { flex: 1; padding: 4px 0 12px; overflow-y: auto; }
 .nav-item {
   display: flex; align-items: center; gap: 6px;
@@ -134,23 +127,53 @@ body {
   border-radius: 999px; background: var(--bg-active); color: var(--text-muted); flex-shrink: 0;
 }
 .nav-item.active .nav-num { background: var(--accent-light); color: var(--accent-color); }
+
+/* ===== 侧边栏一级菜单 ===== */
+.side-menu { padding: 12px 10px 10px; margin-bottom: 4px; }
+.side-menu-item {
+  display: flex; align-items: center; gap: 9px; width: 100%; box-sizing: border-box;
+  padding: 10px 12px; margin: 2px 0;
+  border: none; border-radius: var(--radius-md); background: transparent;
+  color: var(--text-secondary); font-size: 13.5px; font-weight: 600; cursor: pointer;
+  text-align: left; transition: background-color .28s cubic-bezier(.22, .61, .36, 1), color .28s cubic-bezier(.22, .61, .36, 1), box-shadow .28s cubic-bezier(.22, .61, .36, 1);
+}
+.side-menu-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+.side-menu-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.side-menu-item.active { background: #ffffff; color: var(--accent-color); box-shadow: var(--shadow-sm); }
+.side-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-arrow {
+  width: 15px !important; height: 15px !important;
+  transition: transform .28s cubic-bezier(.22, .61, .36, 1), opacity .28s cubic-bezier(.22, .61, .36, 1);
+  opacity: .55; margin-left: auto;
+}
+.side-group .side-menu-item.active .side-arrow { transform: rotate(180deg); opacity: .8; }
+/* 一级菜单手动收起子菜单时：箭头归位，不再展开 */
+.side-group.collapsed .side-menu-item.active .side-arrow { transform: rotate(0); opacity: .55; }
+/* 板块管理 展开子菜单（板块列表，arco 风格：无竖线连接，靠缩进与底色区分层级） */
+.side-sub {
+  padding: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: max-height .28s cubic-bezier(.22, .61, .36, 1), opacity .22s ease, padding .28s cubic-bezier(.22, .61, .36, 1);
+}
+.side-sub.open {
+  /* 超出一定高度后出现滚动条；小屏时按视口高度收缩，避免超出屏幕 */
+  max-height: min(520px, calc(100vh - 190px));
+  opacity: 1;
+  padding: 4px 6px 10px;
+}
+.side-sub .nav-menu { display: block; padding: 0; max-height: none; }
+.side-sub .nav-item { margin: 2px 0; padding: 9px 12px 9px 18px; font-size: 13px; }
+.side-sub .nav-item .nav-num { font-size: 10px; }
+.side-sub .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.side-sub .nav-item.active { background: var(--accent-light); color: var(--accent-color); box-shadow: none; }
+.side-sub .nav-item.active .nav-num { background: #ffffff; color: var(--accent-color); }
 .sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border-color); }
 .sf-copy { text-align: center; padding-top: 8px; color: var(--text-muted); font-size: 11px; }
 .sf-desc { color: var(--text-muted); font-size: 11px; line-height: 1.6; margin-bottom: 8px; }
 .sidebar-add-btn { padding: 0 0 8px; }
-/* Let's talk 设置入口（侧边栏底部） */
-.lt-nav-btn {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  padding: 10px 12px; margin: 0 0 4px; box-sizing: border-box;
-  border: 1px solid var(--border-color); border-radius: var(--radius-md);
-  background: var(--bg-card); color: var(--text-secondary);
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: all .2s;
-}
-.lt-nav-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-.lt-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-.lt-nav-btn.active { background: #ffffff; color: var(--accent-color); border-color: var(--accent-color); box-shadow: var(--shadow-sm); }
-
 /* Let's talk 二维码编辑区 */
 .lt-qr-grid {
   display: grid;
@@ -261,6 +284,21 @@ body {
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 .page-title { font-size: 20px; font-weight: 700; }
 .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+/* 页面切换下拉（板块管理顶栏 + 引导页） */
+.page-switcher {
+  height: 36px;
+  max-width: 230px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: inherit;
+  cursor: pointer;
+}
+.page-switcher:focus { outline: none; border-color: var(--accent-color); }
 
 /* ===== Buttons ===== */
 .btn-primary {
@@ -1200,28 +1238,12 @@ body {
   gap: 10px;
   min-width: 0;
 }
-.editor-back-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  transition: all .2s;
-  flex-shrink: 0;
-}
-.editor-back-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-.editor-back-btn svg { width: 16px; height: 16px; }
 .editor-title-wrap {
   min-width: 0;
   overflow: hidden;
 }
 .editor-title {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
@@ -1229,9 +1251,9 @@ body {
   text-overflow: ellipsis;
 }
 .editor-subtitle {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 .editor-header-actions {
   display: flex;
@@ -1261,6 +1283,14 @@ body {
   gap: 10px;
   min-width: 0;
 }
+.editor-footer-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .editor-footer-status {
   font-size: 12px;
   color: var(--text-muted);
@@ -1278,13 +1308,13 @@ body {
 /* ===== Type Picker Grid (in right panel) ===== */
 .type-picker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 12px;
 }
 .type-picker-tile {
   border: 1.5px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 18px 16px;
+  padding: 14px 12px;
   background: var(--bg-primary);
   cursor: pointer;
   transition: all .2s;
@@ -1292,8 +1322,8 @@ body {
   font-family: inherit;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 130px;
+  gap: 7px;
+  min-height: 112px;
 }
 .type-picker-tile:hover {
   border-color: var(--accent-color);
@@ -1346,66 +1376,6 @@ body {
   font-size: 13px;
   color: var(--text-muted);
   line-height: 1.6;
-}
-
-/* ===== Editor Placeholder (nothing selected) ===== */
-.editor-placeholder {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 40px 32px;
-  text-align: center;
-}
-.editor-placeholder-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  background: var(--accent-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-}
-.editor-placeholder-icon svg { width: 32px; height: 32px; color: var(--accent-color); }
-.editor-placeholder h3 {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.editor-placeholder p {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.7;
-  max-width: 320px;
-}
-.placeholder-type-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
-  width: 100%;
-  max-width: 480px;
-  margin-top: 10px;
-}
-.placeholder-type-btn {
-  padding: 10px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  transition: all .2s;
-  text-align: left;
-}
-.placeholder-type-btn:hover {
-  border-color: var(--accent-color);
-  background: var(--accent-light);
-  color: var(--accent-color);
 }
 
 /* ===== List Field (image-list / video-list / cards-list) ===== */
@@ -1585,14 +1555,17 @@ body {
   .type-picker-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
 @media (max-width: 768px) {
+  .workspace { flex-direction: column; }
   .sidebar-left {
-    position: static; width: 100%; height: auto; flex-direction: row; align-items: center;
-    border-right: none; border-bottom: 1px solid var(--border-color); overflow-x: auto;
+    position: static; width: 100%; height: auto; flex-direction: column; align-items: stretch;
+    border-right: none; border-bottom: 1px solid var(--border-color); overflow-x: hidden;
   }
-  .sidebar-title { display: none; }
-  .nav-menu { display: flex; padding: 8px; gap: 4px; flex-direction: row; overflow-x: auto; }
+  .side-menu { display: flex; flex-direction: row; gap: 6px; padding: 8px; border-bottom: 1px solid var(--border-color); margin-bottom: 0; overflow-x: auto; }
+  .side-menu-item { width: auto; margin: 0; padding: 9px 12px; white-space: nowrap; flex-shrink: 0; }
+  .nav-menu { display: flex; padding: 8px; gap: 4px; flex-direction: row; overflow-x: auto; flex: 0 0 auto; }
   .nav-item { margin: 0; padding: 9px 12px; white-space: nowrap; }
   .sidebar-footer { display: none; }
+  .pages-view { height: auto; overflow: visible; }
   .main-cols { margin-left: 0; }
   .left-work { padding: 14px; }
   .nav-links .nav-link span { display: none; }
@@ -1658,7 +1631,7 @@ body.auth-pending .pages-view { visibility: hidden; }
 .nav-logout:hover { background: var(--bg-hover); color: var(--text-primary); }
 
 /* ===== 页面管理视图 ===== */
-.pages-view { padding: 22px 24px 40px; max-width: 1080px; margin: 0 auto; }
+.pages-view { flex: 1; min-width: 0; padding: 22px 24px 40px; overflow-y: auto; height: calc(100vh - 48px); }
 .pages-topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
 .pages-list-card {
   background: var(--bg-primary); border: 1px solid var(--border-color, #eaeaea); border-radius: var(--radius-lg);
@@ -1726,8 +1699,6 @@ body.auth-pending .pages-view { visibility: hidden; }
       <span class="sub">组件化建站平台</span>
     </div>
     <div class="nav-links">
-      <button class="nav-tab active" id="tabSections" title="编辑当前案例的板块内容">板块导航</button>
-      <a class="nav-tab" id="tabPages" href="admin.html?view=pages" target="_blank" title="在新标签页打开页面管理（列表 / 新建 / 复制 / 层级 / 删除）">页面管理</a>
       <a class="nav-link" id="btnPreview" href="index.html" target="_blank" title="在新标签页预览当前案例">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         <span>预览</span>
@@ -1737,23 +1708,6 @@ body.auth-pending .pages-view { visibility: hidden; }
     </div>
   </div>
 </nav>
-
-<!-- ===== 页面管理视图 ===== -->
-<div class="pages-view" id="pagesView" style="display:none;">
-  <div class="pages-topbar">
-    <div>
-      <div class="page-title">页面管理</div>
-      <div class="page-subtitle">基于板块组装体系的页面索引 · 新建 / 复制 / 层级 / 删除，点「内容」进入该页面板块编辑</div>
-    </div>
-    <div style="display:flex; gap:10px;">
-      <button class="btn-accent" id="btnPgNew">＋ 新建页面</button>
-      <button class="btn-accent" id="btnPgCopy" style="background:var(--text-secondary);border-color:var(--text-secondary);">复制为…</button>
-    </div>
-  </div>
-  <div class="pages-list-card">
-    <div id="pagesList" class="pages-empty">加载中…</div>
-  </div>
-</div>
 
 <!-- 页面管理：新建 Modal -->
 <div class="modal-mask modal-narrow" id="pgModalNew">
@@ -1832,19 +1786,34 @@ body.auth-pending .pages-view { visibility: hidden; }
 </div>
 
 <div class="workspace">
-  <!-- ===== Left Sidebar: 板块导航 ===== -->
+  <!-- ===== Left Sidebar: 一级菜单（含可展开子菜单） + 板块二级导航 ===== -->
   <aside class="sidebar-left">
-    <div class="sidebar-title">板块导航</div>
-    <div class="nav-menu" id="sidebarNav"></div>
-    <div class="sidebar-footer">
-      <button class="lt-nav-btn" id="btnLetsTalkNav" title="编辑网页底部 Let's talk 联系区块（文案 + 四张二维码）">
+    <div class="side-menu" id="sideMenu">
+      <!-- 板块管理：一级菜单 + 展开子菜单（板块列表） -->
+      <div class="side-group" data-group="sections">
+        <button class="side-menu-item active" data-view="sections" title="编辑当前案例的板块内容（增删 / 排序 / 编辑）">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+          <span class="side-label">板块管理</span>
+          <svg class="side-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="side-sub" id="sideSubSections">
+          <div class="nav-menu" id="sidebarNav"></div>
+        </div>
+      </div>
+      <button class="side-menu-item" data-view="pages" title="页面管理（列表 / 新建 / 复制 / 层级 / 删除）">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        页面管理
+      </button>
+      <button class="side-menu-item" data-view="letsTalk" title="编辑网页底部 Let's talk 联系区块（文案 + 四张二维码）">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
-        Let's talk 设置
+        底部导航
       </button>
-      <button class="lt-nav-btn" id="btnNavMenuNav" title="编辑前台顶部导航菜单（名称 / 链接页面 / 是否新窗口）">
+      <button class="side-menu-item" data-view="navMenu" title="编辑前台顶部导航菜单（名称 / 链接页面 / 是否新窗口）">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        顶部导航设置
+        顶部导航
       </button>
+    </div>
+    <div class="sidebar-footer">
       <div class="sf-copy">© 2026 W.</div>
     </div>
   </aside>
@@ -1853,22 +1822,16 @@ body.auth-pending .pages-view { visibility: hidden; }
   <div class="main-cols">
 
     <!-- ===== Middle: Cards Grid ===== -->
-    <div class="left-work">
+    <div class="left-work" id="leftWork">
       <div class="page-header">
-        <div>
-          <div class="page-title">板块管理</div>
-          <div class="page-subtitle">拖拽排序 · 增删板块 · 左侧点击 / 卡片点击进入编辑</div>
-        </div>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <div class="page-title" title="拖拽排序 · 增删板块 · 左侧点击 / 卡片点击进入编辑">板块管理</div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-left:auto;">
+          <select class="page-switcher" title="切换编辑页面（有未保存修改时会先确认）"></select>
           <span style="font-size:13px; color:var(--text-muted);">共 <b id="sectionCount" style="color:var(--text-primary);">0</b> 个板块</span>
           <span class="save-status" id="saveStatus"><span class="spinner"></span><span class="save-text"></span></span>
           <button class="btn-primary" id="btnSave" title="保存当前案例的板块、Let's talk 与顶部导航修改 (Ctrl+S)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             保存
-          </button>
-          <button class="btn-accent" id="btnAddSection">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            添加板块
           </button>
         </div>
       </div>
@@ -1888,6 +1851,23 @@ body.auth-pending .pages-view { visibility: hidden; }
     <div class="right-work" id="rightWork">
       <!-- Content injected by JS -->
     </div>
+
+    <!-- ===== 页面管理视图（右侧区域，随左侧一级菜单切换） ===== -->
+    <div class="pages-view" id="pagesView" style="display:none;">
+      <div class="pages-topbar">
+        <div>
+          <div class="page-title">页面管理</div>
+          <div class="page-subtitle">基于板块组装体系的页面索引 · 新建 / 复制 / 层级 / 删除，点「内容」进入该页面板块编辑</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-accent" id="btnPgNew">＋ 新建页面</button>
+          <button class="btn-accent" id="btnPgCopy" style="background:var(--text-secondary);border-color:var(--text-secondary);">复制为…</button>
+        </div>
+      </div>
+      <div class="pages-list-card">
+        <div id="pagesList" class="pages-empty">加载中…</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1906,6 +1886,21 @@ body.auth-pending .pages-view { visibility: hidden; }
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ===== Switch Page Confirm Modal（有未保存修改时切换页面） ===== -->
+<div class="modal-mask modal-narrow" id="switchModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">未保存的修改</div></div>
+    <div class="modal-body"><div id="switchText" style="font-size:14px; line-height:1.7;"></div></div>
+    <div class="modal-footer">
+      <div class="modal-footer-right">
+        <button class="btn-secondary" onclick="closeModal('switchModal')">取消</button>
+        <button class="btn-secondary" id="btnSwitchDiscard">不保存切换</button>
+        <button class="btn-primary" id="btnSwitchSave">保存并切换</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -2592,11 +2587,10 @@ function renderSidebar() {
   if (state.sections.length > 22) {
     nav.style.maxHeight = 'calc(100vh - 220px)';
   }
-  // Let's talk / 顶部导航 入口高亮
-  const ltBtn = $('#btnLetsTalkNav');
-  if (ltBtn) ltBtn.classList.toggle('active', editorMode === 'letsTalk');
-  const navBtn = $('#btnNavMenuNav');
-  if (navBtn) navBtn.classList.toggle('active', editorMode === 'navMenu');
+  // 一级菜单高亮与当前视图同步（由 showView 主导，这里兜底保持一致）
+  document.querySelectorAll('#sideMenu .side-menu-item').forEach((b) => {
+    b.classList.toggle('active', b.dataset.view === currentView);
+  });
 }
 
 /* ===== Render: Cards Grid with Rich Thumbnails ===== */
@@ -2932,33 +2926,15 @@ function buildCardPreviewText(s) {
 function renderRightPanel() {
   const right = $('#rightWork');
 
-  if (editorMode === 'picker') {
-    // Type picker view
+  if (editorMode === 'picker' || editorMode === 'empty') {
+    // 组件面板（类型平铺）：无返回按钮、无页面切换器、无顶部标题栏，空/未选中与添加新板块统一为同一入口
     right.innerHTML = `
-      <div class="editor-header">
-        <div class="editor-header-left">
-          <button class="editor-back-btn" onclick="closeEditor()" title="关闭面板">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          </button>
-          <div class="editor-title-wrap">
-            <div class="editor-title">选择板块类型</div>
-            <div class="editor-subtitle">点击下方任意类型添加新板块</div>
-          </div>
-        </div>
-        <div class="editor-header-actions"></div>
-      </div>
       <div class="editor-body">
         <div class="type-picker-header">
           <h2>添加新板块</h2>
           <p>共有 ${ALL_TYPES.length} 种板块类型，每种针对不同的内容场景。点击任意瓷砖即可创建对应的空白板块并进入编辑。</p>
         </div>
         <div class="type-picker-grid" id="typePickerGrid"></div>
-      </div>
-      <div class="editor-footer">
-        <div class="editor-footer-left"><div class="editor-footer-status">选择一种类型开始...</div></div>
-        <div class="editor-footer-right">
-          <button class="btn-secondary" onclick="closeEditor()">取消</button>
-        </div>
       </div>`;
     const grid = $('#typePickerGrid');
     ALL_TYPES.forEach((t) => {
@@ -2991,28 +2967,18 @@ function renderRightPanel() {
     const s = state.sections[selectedIndex];
     const typeLabel = TYPE_LABELS[s.type] || s.type;
     right.innerHTML = `
-      <div class="editor-header">
-        <div class="editor-header-left">
-          <button class="editor-back-btn" onclick="closeEditor()" title="返回选择">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          </button>
-          <div class="editor-title-wrap">
-            <div class="editor-title">编辑 ${esc(typeLabel)} #${String(selectedIndex + 1).padStart(2, '0')}</div>
-            <div class="editor-subtitle">所有改动实时同步，修改完记得保存</div>
-          </div>
-        </div>
-        <div class="editor-header-actions">
-          <button class="btn-icon delete" id="btnDeleteEditor" title="删除此板块">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          </button>
-        </div>
-      </div>
       <div class="editor-body">
         <div id="editorFormContainer"></div>
       </div>
       <div class="editor-footer">
-        <div class="editor-footer-left"><div class="editor-footer-status" id="editorFooterStatus">就绪</div></div>
+        <div class="editor-footer-left">
+          <div class="editor-footer-title" id="editorFooterTitle">编辑 ${esc(typeLabel)} #${String(selectedIndex + 1).padStart(2, '0')}</div>
+          <div class="editor-footer-status" id="editorFooterStatus">就绪</div>
+        </div>
         <div class="editor-footer-right">
+          <button class="btn-icon delete" id="btnDeleteEditor" title="删除此板块">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
           <button class="btn-secondary" id="btnCancelChanges">取消改动</button>
         </div>
       </div>`;
@@ -3023,25 +2989,8 @@ function renderRightPanel() {
     return;
   }
 
-  // Empty placeholder
-  right.innerHTML = `
-    <div class="editor-placeholder" style="height: calc(100vh - 48px);">
-      <div class="editor-placeholder-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      </div>
-      <h3>开始编辑你的案例</h3>
-      <p>从左侧或中间选择一个板块进行编辑，或点击下方按钮创建新板块。也可以直接选择下方的快速添加类型。</p>
-      <div class="placeholder-type-buttons" id="placeholderTypeBtns"></div>
-    </div>`;
-  const ph = $('#placeholderTypeBtns');
-  ALL_TYPES.forEach((t) => {
-    const btn = document.createElement('button');
-    btn.className = 'placeholder-type-btn';
-    btn.type = 'button';
-    btn.textContent = TYPE_LABELS[t];
-    btn.onclick = () => addSectionOfType(t);
-    ph.appendChild(btn);
-  });
+  // 兜底：合法 editorMode（picker/empty/edit/letsTalk/navMenu）均在上方已处理
+  right.innerHTML = '';
 }
 
 function updateEditorFooterStatus() {
@@ -4706,9 +4655,6 @@ function renderLetsTalkEditor(right) {
   right.innerHTML = `
     <div class="editor-header">
       <div class="editor-header-left">
-        <button class="editor-back-btn" onclick="closeEditor()" title="返回选择">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
         <div class="editor-title-wrap">
           <div class="editor-title">Let's talk 设置</div>
           <div class="editor-subtitle">网页底部联系区块：左侧文案 + 右侧四张二维码（白色圆角卡片）</div>
@@ -4820,9 +4766,6 @@ function renderNavMenuEditor(right) {
   right.innerHTML = `
     <div class="editor-header">
       <div class="editor-header-left">
-        <button class="editor-back-btn" onclick="closeEditor()" title="返回选择">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
         <div class="editor-title-wrap">
           <div class="editor-title">顶部导航设置</div>
           <div class="editor-subtitle">前台所有页面顶部导航菜单（全站共享，保存后同步生效）</div>
@@ -4952,12 +4895,6 @@ function selectSection(index) {
   renderAll();
 }
 
-function closeEditor() {
-  selectedIndex = -1;
-  editorMode = 'empty';
-  renderAll();
-}
-
 function openTypePicker() {
   editorMode = 'picker';
   selectedIndex = -2;
@@ -5000,8 +4937,17 @@ function deleteSection(index) {
   const num = index + 1;
   confirmAction = () => {
     state.sections.splice(index, 1);
-    if (selectedIndex === index) { selectedIndex = -1; editorMode = 'empty'; }
-    else if (selectedIndex > index) selectedIndex -= 1;
+    if (state.sections.length === 0) {
+      // 全部删空 → 回到「添加新板块」类型选择
+      selectedIndex = -2;
+      editorMode = 'picker';
+    } else if (selectedIndex === index) {
+      // 删除当前编辑的组件 → 显示上一个组件的编辑界面（删第一个时选中相邻的下一个）
+      selectedIndex = index > 0 ? index - 1 : 0;
+      editorMode = 'edit';
+    } else if (selectedIndex > index) {
+      selectedIndex -= 1;
+    }
     updateDirtyState();
     renderAll();
     toast('板块已删除，记得保存', 'success');
@@ -5024,9 +4970,11 @@ async function saveAll() {
     setSaving(false, 'saved');
     updateEditorFooterStatus();
     toast('已保存全部修改', 'success');
+    return true;
   } catch (e) {
     setSaving(false, '');
     toast('保存失败：' + e.message, 'error');
+    return false;
   }
 }
 
@@ -5034,17 +4982,18 @@ function renderAll() {
   renderSidebar();
   renderSectionList();
   renderRightPanel();
+  syncSectionArea();
+  syncSideSub();
 }
 
 /* ===== Wire Up ===== */
 $('#btnSave').onclick = saveAll;
-$('#btnAddSection').onclick = openTypePicker;
-$('#btnLetsTalkNav').onclick = openLetsTalkEditor;
-$('#btnNavMenuNav').onclick = openNavMenuEditor;
 $('#btnConfirm').onclick = () => {
   closeModal('confirmModal');
   if (confirmAction) { confirmAction(); confirmAction = null; }
 };
+$('#btnSwitchDiscard').onclick = discardAndSwitch;
+$('#btnSwitchSave').onclick = saveAndSwitch;
 
 // Click mask to close confirm modal
 document.querySelectorAll('.modal-mask').forEach((m) => {
@@ -5066,15 +5015,82 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-/* ===== 顶部双菜单：板块导航 / 页面管理 ===== */
-let currentTab = 'sections';
-function showTab(tab) {
-  currentTab = tab;
-  $('#tabSections').classList.toggle('active', tab === 'sections');
-  $('#tabPages').classList.toggle('active', tab === 'pages');
-  document.querySelector('.workspace').style.display = tab === 'sections' ? '' : 'none';
-  $('#pagesView').style.display = tab === 'pages' ? '' : 'none';
-  if (tab === 'pages') loadPages();
+/* ===== 左侧一级菜单：板块管理 / 页面管理 / 底部导航 / 顶部导航 ===== */
+let currentView = 'sections'; // 'sections' | 'pages' | 'letsTalk' | 'navMenu'
+// 板块管理视图下：0 板块时隐藏中间卡片区，右侧占满显示占位引导；有板块后恢复双栏
+function syncSectionArea() {
+  if (currentView !== 'sections') return;
+  const lw = $('#leftWork');
+  const rw = $('#rightWork');
+  const showMid = state.sections.length > 0;
+  lw.style.display = showMid ? '' : 'none';
+  rw.style.display = '';
+  rw.style.width = showMid ? '' : '100%';
+}
+// 子菜单展开状态：无板块时禁止展开并隐藏箭头，避免露出空白
+function syncSideSub() {
+  const group = document.querySelector('.side-group[data-group="sections"]');
+  const sub = $('#sideSubSections');
+  const arrow = document.querySelector('.side-group[data-group="sections"] .side-arrow');
+  if (!sub) return;
+  const hasChildren = state.sections.length > 0;
+  sub.classList.toggle('open', currentView === 'sections' && hasChildren);
+  if (arrow) arrow.style.display = hasChildren ? '' : 'none';
+  // 自动展开时清除手动收起标记
+  if (sub.classList.contains('open') && group) group.classList.remove('collapsed');
+}
+// 一级菜单手动折叠：展开 ↔ 收起（无板块时不可展开）
+function toggleSideSub() {
+  const group = document.querySelector('.side-group[data-group="sections"]');
+  const sub = $('#sideSubSections');
+  if (!sub || !group || state.sections.length === 0) return;
+  const isOpen = sub.classList.contains('open');
+  sub.classList.toggle('open', !isOpen);
+  group.classList.toggle('collapsed', isOpen);
+}
+function showView(view) {
+  currentView = view;
+  // 一级菜单高亮
+  document.querySelectorAll('#sideMenu .side-menu-item').forEach((b) => {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  // 板块管理 展开子菜单（板块列表）：仅「板块管理」激活且有板块时展开
+  syncSideSub();
+  const lw = $('#leftWork');
+  const rw = $('#rightWork');
+  const pv = $('#pagesView');
+  if (view === 'pages') {
+    lw.style.display = 'none';
+    rw.style.display = 'none';
+    pv.style.display = '';
+    loadPages();
+    return;
+  }
+  if (view === 'letsTalk') {
+    lw.style.display = 'none';
+    rw.style.display = '';
+    rw.style.width = '100%';
+    pv.style.display = 'none';
+    openLetsTalkEditor();
+    return;
+  }
+  if (view === 'navMenu') {
+    lw.style.display = 'none';
+    rw.style.display = '';
+    rw.style.width = '100%';
+    pv.style.display = 'none';
+    openNavMenuEditor();
+    return;
+  }
+  // sections：0 板块隐藏中间区，有板块恢复双栏
+  pv.style.display = 'none';
+  // 若此前停留在 Let's talk / 顶部导航 编辑器，切回板块视图时重置
+  if (editorMode === 'letsTalk' || editorMode === 'navMenu') {
+    selectedIndex = -1;
+    editorMode = 'empty';
+  }
+  syncSectionArea();
+  renderRightPanel();
 }
 
 /* ===== 全局 API（页面索引 / 新建 / 复制 / 层级 / 删除，带登录 token） ===== */
@@ -5139,7 +5155,7 @@ async function loadPages() {
     wrap.querySelectorAll('[data-pg-edit]').forEach((b) => b.addEventListener('click', () => openPgEdit(b.getAttribute('data-pg-edit'))));
     wrap.querySelectorAll('[data-pg-copy]').forEach((b) => b.addEventListener('click', () => openPgCopy(b.getAttribute('data-pg-copy'))));
     wrap.querySelectorAll('[data-pg-del]').forEach((b) => b.addEventListener('click', () => openPgDel(b.getAttribute('data-pg-del'))));
-    wrap.querySelectorAll('[data-pg-open]').forEach((b) => b.addEventListener('click', () => switchCase(b.getAttribute('data-pg-open'), b.getAttribute('data-pg-title'))));
+    wrap.querySelectorAll('[data-pg-open]').forEach((b) => b.addEventListener('click', () => switchPageWithConfirm(b.getAttribute('data-pg-open'), b.getAttribute('data-pg-title'))));
   } catch (e) {
     wrap.className = 'pages-empty';
     wrap.textContent = '加载失败：' + e.message;
@@ -5148,8 +5164,7 @@ async function loadPages() {
 
 // 切换到某个页面编辑：动态改 CASE_KEY/API_BASE 后加载该页 content
 async function switchCase(key, title) {
-  if (key === CASE_KEY) { showTab('sections'); return; }
-  if (isDirty() && !window.confirm('当前页面有未保存的修改，切换到「' + (title || key) + '」将丢失这些修改，确定切换吗？')) return;
+  if (key === CASE_KEY) { showView('sections'); return; }
   CASE_KEY = key;
   API_BASE = '/api/cases/' + CASE_KEY;
   $('#btnPreview').href = '../' + key + '/index.html';
@@ -5157,8 +5172,47 @@ async function switchCase(key, title) {
   selectedIndex = -1;
   editorMode = 'empty';
   await loadState();
-  showTab('sections');
+  showView('sections');
+  loadPageSwitcher();
   toast('已切换到：' + (title || key), 'success');
+}
+
+/* ===== 页面切换：下拉 / 页面管理入口，未保存时弹窗确认 ===== */
+let pendingSwitch = null;
+function switchPageWithConfirm(key, title) {
+  if (!key) return;
+  if (key === CASE_KEY) { showView('sections'); return; }
+  if (!isDirty()) { switchCase(key, title); return; }
+  pendingSwitch = { key: key, title: title };
+  $('#switchText').textContent = '当前页面有未保存的修改，切换到其他页面后这些修改将丢失。要保存后再切换吗？';
+  openModal('switchModal');
+}
+function discardAndSwitch() {
+  closeModal('switchModal');
+  const p = pendingSwitch; pendingSwitch = null;
+  if (p) switchCase(p.key, p.title);
+}
+async function saveAndSwitch() {
+  closeModal('switchModal');
+  const p = pendingSwitch; pendingSwitch = null;
+  if (!p) return;
+  const ok = await saveAll();
+  if (ok) switchCase(p.key, p.title);
+  else toast('保存失败，未切换页面', 'error');
+}
+async function loadPageSwitcher() {
+  let pages = [];
+  try {
+    const data = await apiGlobal('/api/pages');
+    pages = (data && data.pages) || [];
+  } catch (e) { return; }
+  document.querySelectorAll('.page-switcher').forEach((sel) => {
+    sel.innerHTML = pages.map((p) =>
+      '<option value="' + esc(p.key) + '"' + (p.key === CASE_KEY ? ' selected' : '') + '>' +
+      esc((p.title || p.key) + ' · ' + p.key) + '</option>'
+    ).join('');
+    sel.onchange = () => switchPageWithConfirm(sel.value);
+  });
 }
 
 function openPgNew() {
@@ -5298,8 +5352,16 @@ function onLoginClick() {
 }
 
 async function afterAuth() {
-  $('#tabSections').onclick = () => showTab('sections');
-  // 页面管理已改为新标签页打开（admin.html?view=pages），此处不绑定切换
+  // 页面切换下拉初始化（page-header / 引导页）
+  loadPageSwitcher();
+  // 左侧一级菜单：绑定视图切换；「板块管理」已在当前视图时点击为折叠/展开子菜单
+  document.querySelectorAll('#sideMenu .side-menu-item').forEach((b) => {
+    b.addEventListener('click', () => {
+      const v = b.getAttribute('data-view');
+      if (v === 'sections' && currentView === 'sections') { toggleSideSub(); return; }
+      showView(v);
+    });
+  });
   $('#btnPgNew').onclick = openPgNew;
   $('#btnPgCopy').onclick = () => openPgCopy('');
   $('#pgNewSubmit').onclick = submitPgNew;
@@ -5312,7 +5374,7 @@ async function afterAuth() {
   // 共享后台（_shared/admin.html）：
   // - URL 无 ?case= 时（从 W. Block 入口打开）直接进入页面管理视图，避免请求空 content 404
   // - URL 带 ?case=<key> 时直达该页编辑，同步修正预览按钮与标题
-  // - ?view=pages 时进页面管理（切回「板块导航」立即编辑已加载内容）
+  // - ?view=pages 时进页面管理（切回「板块管理」立即编辑已加载内容）
   const qp = new URLSearchParams(location.search);
   if (CASE_KEY) {
     $('#btnPreview').href = '../' + CASE_KEY + '/index.html';
@@ -5325,7 +5387,7 @@ async function afterAuth() {
     state.letsTalk = normalizeLetsTalk(null);
     originalLetsTalk = JSON.parse(JSON.stringify(state.letsTalk));
     await loadNavMenuState();
-    showTab('pages');
+    showView('pages');
     return;
   }
   loadState();
