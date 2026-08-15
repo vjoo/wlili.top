@@ -6,12 +6,13 @@
       "type": "title",
       "title": "ZenHaven",
       "copyright": "",
-      "description": ""
+      "description": "",
+      "size": "80"
     },
     {
       "id": "s1",
       "type": "hero",
-      "videoUrl": "/portfolio/cases/vjooProject/uploads/1786414664376.mp4",
+      "videoUrl": "",
       "videoType": "image",
       "image": "/portfolio/cases/vjooProject/uploads/1786697696037.jpg"
     },

@@ -2,54 +2,23 @@
   "version": 2,
   "sections": [
     {
-      "id": "smsq4qe2sdd0r",
+      "id": "smssvzjvzf2wo",
       "type": "hero-banner",
-      "title": "Premium Digital Agency for Startups, SaaS & Brands",
+      "title": "Premium Interface Design for Startups,Web Platforms & Independent Creators",
       "labels": [
-        {
-          "text": "50+ employees"
-        },
-        {
-          "text": "6 countries"
-        },
-        {
-          "text": "Founded in 2010"
-        }
+        "界面设计",
+        "品牌视觉",
+        "设计规范"
       ],
-      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
+      "description": "打磨精致数字设计，与怀揣巧思的项目一同塑造与众不同的数字面貌。",
       "videoType": "image",
-      "image": "",
-      "videoUrl": ""
-    },
-    {
-      "id": "smsqyvwfa8zr8",
-      "type": "gallery",
-      "label": "",
-      "heading": "",
-      "colCount": "3",
-      "columns": [
-        {
-          "offsetRem": 0,
-          "images": [
-            {
-              "id": "smsqznv3582ye",
-              "src": "/portfolio/cases/home/uploads/1786593536029.jpg"
-            },
-            {
-              "id": "smsr02qti0evu",
-              "src": "/portfolio/cases/home/uploads/1786594230338.jpg"
-            }
-          ]
-        },
-        {
-          "offsetRem": 0,
-          "images": []
-        },
-        {
-          "offsetRem": 0,
-          "images": []
-        }
-      ]
+      "image": "/portfolio/cases/home/uploads/1786708923760.jpg",
+      "videoUrl": "",
+      "effect": "slide",
+      "autoplayDelay": "4000",
+      "images": [],
+      "subtitle": "1111111111",
+      "buttonText": "11111111"
     }
   ],
   "letsTalk": {

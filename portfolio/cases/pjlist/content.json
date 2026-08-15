@@ -4,22 +4,36 @@
     {
       "id": "smsprw2m3jq96",
       "type": "hero-banner",
-      "title": "Premium Digital Agency for Startups, SaaS & Brands",
-      "labels": [
+      "title": "",
+      "labels": [],
+      "description": "",
+      "videoType": "carousel",
+      "image": "/portfolio/cases/pjlist/uploads/1786536992715.png",
+      "videoUrl": "",
+      "images": [
         {
-          "text": "50+ employees"
+          "image": "/portfolio/cases/pjlist/uploads/1786717556714.jpg",
+          "title": "Premium UI Design for Startups,Web Projects & Independent Brands",
+          "labels": [
+            "界面设计",
+            "品牌视觉",
+            "数字体验"
+          ],
+          "subtitle": "打磨精致数字设计，与怀揣巧思的项目一同塑造与众不同的数字面貌。"
         },
         {
-          "text": "6 countries"
-        },
-        {
-          "text": "Founded in 2010"
+          "image": "/portfolio/cases/pjlist/uploads/1786717641668.jpg",
+          "title": "Digital & Data Visual Design for Platforms & Independent Creators",
+          "labels": [
+            "信息界面",
+            "数据可视化",
+            "视觉叙事"
+          ],
+          "subtitle": "搭建清晰的数字视觉，协助富有巧思的项目，将繁杂信息转化为直观的体验。"
         }
       ],
-      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
-      "videoType": "video",
-      "image": "/portfolio/cases/pjlist/uploads/1786536992715.png",
-      "videoUrl": ""
+      "effect": "slide",
+      "autoplayDelay": "2000"
     },
     {
       "id": "smspt62o385co-title",
@@ -113,7 +127,6 @@
               "year": "",
               "href": "",
               "linkPage": "",
-              "displacement": "",
               "image1": "",
               "image2": ""
             }
