@@ -306,7 +306,8 @@ var CaseRenderer = (function () {
       return '<div class="swiper-slide">' + img + '</div>';
     }).join('');
     var wrap = isBanner ? 'hero-banner-carousel' : 'hero-carousel';
-    // 左右切换按钮：默认隐藏，鼠标悬停轮播图时显现（配合 pauseOnMouseEnter 的配套交互）
+    // 左右切换按钮：默认隐藏，鼠标悬停轮播图时显现（hover 只显箭头、不暂停自动播放）
+    // 自动播放接管：点击箭头/圆点切换时停止，鼠标移出容器或触摸滑动后延迟 3s 恢复（见 initCarousels）
     var navBtn = '<button type="button" class="swiper-nav swiper-nav-prev" aria-label="上一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>' +
       '<button type="button" class="swiper-nav swiper-nav-next" aria-label="下一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>';
      var sw = '<div class="swiper ' + wrap + '" data-effect="' + esc(effect) + '" data-delay="' + delay + '">' +
@@ -568,7 +569,9 @@ var CaseRenderer = (function () {
           effect: effect,
           speed: 700,
           loop: slideCount > 1,          // ≥2 张才循环
-          autoplay: slideCount > 1 ? { delay: delay, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
+          // 自动播放接管策略：hover 不暂停；点击箭头切换时停止（disableOnInteraction:true 让 Swiper 不再自行恢复），
+          // 由下方 mouseleave / touchEnd 延迟恢复自动播放
+          autoplay: slideCount > 1 ? { delay: delay, disableOnInteraction: true, pauseOnMouseEnter: false } : false,
           grabCursor: slideCount > 1,
           resistance: true,
           navigation: {
@@ -584,7 +587,28 @@ var CaseRenderer = (function () {
         if (effect === 'flip') cfg.flipEffect = { slideShadows: false };
         if (effect === 'creative') cfg.creativeEffect = { prev: { translate: ['-20%', 0, -1] }, next: { translate: ['100%', 0, 0] } };
         try {
-          new window.Swiper(box, cfg);
+          var swiper = new window.Swiper(box, cfg);
+          if (slideCount > 1 && swiper.autoplay) {
+            var RESUME_DELAY = 3000; // 移出容器 / 触摸滑动后，延迟恢复自动播放
+            var resumeTimer = null;
+            function scheduleResume() {
+              clearTimeout(resumeTimer);
+              resumeTimer = setTimeout(function () {
+                if (swiper.autoplay && !swiper.autoplay.running) swiper.autoplay.start();
+              }, RESUME_DELAY);
+            }
+            // 鼠标移出容器 → 延迟恢复自动播放；倒计时内重新移入 → 取消恢复
+            box.addEventListener('mouseleave', scheduleResume);
+            box.addEventListener('mouseenter', function () { clearTimeout(resumeTimer); });
+            // 移动端/触屏：没有 mouseleave 概念，触摸滑动结束后延迟恢复
+            swiper.on('touchEnd', scheduleResume);
+            // 兜底：点击左右箭头 / 圆点切换 → 立即停止自动播放（与 disableOnInteraction:true 双保险）
+            box.querySelectorAll('.swiper-nav-prev, .swiper-nav-next').forEach(function (btn) {
+              btn.addEventListener('click', function () { swiper.autoplay.stop(); });
+            });
+            var pag = box.querySelector('.swiper-pagination');
+            if (pag) pag.addEventListener('click', function () { swiper.autoplay.stop(); });
+          }
         } catch (e) {
           console.warn('轮播初始化失败:', e);
         }
