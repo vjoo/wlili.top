@@ -147,8 +147,7 @@
   align-items: center;
 }
 
-.brand-logo-img,
-.brand-logo-placeholder {
+.brand-logo-img {
   height: 60px;    /* 高度固定 */
   width: auto;     /* 宽度自动 */
   max-width: 60%;  /* 不超过 container 一半宽度 */
@@ -1015,8 +1014,7 @@
   .brand-logo-wrap {
     justify-content: flex-start; /* 移动端居左 */
   }
-  .brand-logo-img,
-  .brand-logo-placeholder {
+  .brand-logo-img {
     height: 40px;
     max-width: 80%;
   }
@@ -1215,10 +1213,18 @@
 
 .clients-logos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  /* auto-fit：列数随内容收缩，Logo 少时（如 4 个）自动铺满一行并均分，不再留空列 */
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 0.25rem;
   margin-top: 0.5rem;
 }
+
+/* 后台指定「每行 N 个」：固定列数，超出自动换行 */
+.clients-logos.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.clients-logos.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.clients-logos.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.clients-logos.cols-5 { grid-template-columns: repeat(5, 1fr); }
+.clients-logos.cols-6 { grid-template-columns: repeat(6, 1fr); }
 
 /* 每个 Logo 独立白色圆角卡片容器：Logo 水平 + 垂直居中漂浮在白底上 */
 .client-logo {
@@ -1236,6 +1242,16 @@
 
 .client-logo:hover {
   filter: grayscale(0);
+  opacity: 1;
+}
+
+/* 彩色模式（后台 logoStyle=color）：保留图片原色，无黑白滤镜、不随悬停变化 */
+.clients-logos.color-mode .client-logo {
+  filter: none;
+  opacity: 1;
+}
+.clients-logos.color-mode .client-logo:hover {
+  filter: none;
   opacity: 1;
 }
 
@@ -2123,6 +2139,81 @@
   animation: none;
 }
 
+/* ===== fs 效果轮播（carousel 的 effect=fs：全屏裁剪滑入，自动播放） =====
+   复用 fullscreen-slider 的 .fs-slide/.fs-outer/.fs-inner/.fs-bg/.fs-dots 结构与动画，
+   但容器按 hero / hero-banner 的尺寸约束，不做页面锁定、不绑滚动。 */
+.hero-fs-carousel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1136 / 608;      /* 与小Banner 轮播 .hero-carousel 同尺寸 */
+  border-radius: 1.5625rem;
+  overflow: hidden;
+}
+/* 大Banner：铺满 .hero-banner-frame（圆角已被 frame overflow:hidden 裁剪） */
+.hero-banner-frame > .hero-fs-carousel {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+/* 每屏绝对堆叠：复用全屏版 .fs-slide 的显隐逻辑（initial visibility hidden 由 JS gsap 控制） */
+.hero-fs-carousel .fs-slide {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+/* ⚠️ outer/inner 保持块级 100% 高（勿加 position:absolute/inset:0——两图层会重叠成整屏移动，
+   失去全屏版的「上下两半反向滑入合拢」裁剪效果）。gsap 设 yPercent 时 transform 使其成为
+   fs-bg 的 containing block，背景随 inner 一起平移。 */
+.hero-fs-carousel .fs-outer,
+.hero-fs-carousel .fs-inner {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.hero-fs-carousel .fs-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+/* 大Banner fs 轮播：每张图左下文案（复用 .hero-banner-content 视觉，切图时随屏切换） */
+.hero-fs-carousel .hero-banner-content {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 6rem 5rem 2.5rem;
+}
+/* fs 内文案不参与全站 .reveal/.visible 显隐与进场动画（registerRevealElements 会给它们加 .reveal）：
+   整体显隐/淡入完全交给 initHeroFsCarousels 的 gsap 容器动画，避免 reveal 触发时子元素先闪现全亮 */
+.hero-fs-carousel .hero-banner-title.reveal,
+.hero-fs-carousel .hero-banner-title.reveal.visible,
+.hero-fs-carousel .hero-banner-title.visible,
+.hero-fs-carousel .hero-banner-stats.reveal,
+.hero-fs-carousel .hero-banner-stats.reveal.visible,
+.hero-fs-carousel .hero-banner-description.reveal,
+.hero-fs-carousel .hero-banner-description.reveal.visible {
+  opacity: 1;
+  transform: none;
+  animation: none;
+  transition: none;
+}
+/* 圆点指示器：小Banner 内更紧凑（全屏版竖排圆点在右侧，复用 .fs-dots 视觉） */
+.hero-fs-carousel .fs-dots {
+  right: 1.25rem;
+  gap: 10px;
+}
+.hero-fs-carousel .fs-dot {
+  width: 8px;
+  height: 8px;
+}
+.hero-fs-carousel .fs-dot.active {
+  width: 8px;
+  height: 20px;
+  border-radius: 4px;
+}
+
 /* HERO CAROUSEL 移动端 */
 @media (max-width: 1024px) {
   .hero-carousel.swiper {
@@ -2139,6 +2230,13 @@
     min-height: 420px;
   }
   .hero-banner-slide .hero-banner-content {
+    padding: 3.5rem 2rem 2.5rem;
+  }
+  /* fs 效果轮播移动端：小Banner 同 .hero-carousel 的 4:3 比例；大Banner 铺满定高 frame */
+  .hero-fs-carousel {
+    aspect-ratio: 4 / 3;
+  }
+  .hero-fs-carousel .hero-banner-content {
     padding: 3.5rem 2rem 2.5rem;
   }
 }

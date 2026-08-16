@@ -194,6 +194,8 @@ var CaseRenderer = (function () {
     initHeroBannerParallax(container);
     // 轮播图（carousel）：懒加载 Swiper 并初始化（无轮播板块时零开销）
     initCarousels(container);
+    // fs 效果轮播（carousel 的 effect=fs）：GSAP 自动播放裁剪滑入（无此板块零开销）
+    initHeroFsCarousels(container);
     // 全屏滑动轮播（swipe-slider）：GSAP 逐屏滑动 + 文字动画（无此板块零开销）
     initSwipeSliders(container);
     // 全屏切换轮播（fullscreen-slider）：GSAP Observer 逐屏切换 + 页面锁定（无此板块零开销）
@@ -295,6 +297,8 @@ var CaseRenderer = (function () {
     }
     var effect = s.effect || 'slide';
     var delay = Number(s.autoplayDelay) > 0 ? Number(s.autoplayDelay) : 4000;
+    // fs（全屏裁剪滑入）：复用 fullscreen-slider 的 outer/inner 裁剪滑入动画，但为自动播放、不受鼠标滚动影响
+    if (effect === 'fs') return heroFsCarouselHtml(items, s, isBanner, delay);
     var slides = items.map(function (x, i) {
       var img = '<img src="' + esc(x.image) + '" alt="' + esc(x.title || ('Slide ' + (i + 1))) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">';
       if (isBanner) {
@@ -313,6 +317,26 @@ var CaseRenderer = (function () {
      // 大Banner 轮播也要包在 .hero-banner-frame 内（圆角裁剪 + absolute 定位基准，与单图同款）
      return isBanner ? '<div class="hero-banner-frame">' + sw + '</div>' : sw;
    }
+
+  // ===== 1.41 fs 效果轮播（hero/hero-banner 的 effect=fs） =====
+  // 复用 fullscreen-slider 的 outer/inner「反向裁剪滑入」切换动画（纯图片层），但为自动播放、
+  // 不受鼠标滚动/触摸影响（不绑定 Observer/Swiper，仅定时器 + 圆点跳转），自动播放到尾循环。
+  function heroFsCarouselHtml(items, s, isBanner, delay) {
+    var slides = items.map(function (x, i) {
+      var bg = ' style="background-image:linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.42) 100%),url(\'' + esc(x.image) + '\');"';
+      var content = isBanner ? heroBannerSlideContent(x, s) : '';
+      return '<div class="fs-slide" data-index="' + i + '">' +
+        '<div class="fs-outer"><div class="fs-inner"><div class="fs-bg"' + bg + '></div></div></div>' +
+        content + '</div>';
+    }).join('');
+    var dots = '<div class="fs-dots" role="tablist" aria-label="幻灯片切换">' +
+      items.map(function (_, i) {
+        return '<button type="button" class="fs-dot' + (i === 0 ? ' active' : '') + '" data-index="' + i +
+          '" aria-label="切换到第 ' + (i + 1) + ' 张" role="tab"></button>';
+      }).join('') + '</div>';
+    var box = '<div class="hero-fs-carousel" data-delay="' + delay + '">' + slides + dots + '</div>';
+    return isBanner ? '<div class="hero-banner-frame">' + box + '</div>' : box;
+  }
 
   // 大Banner 轮播：单张静态（media + 左下信息块，与 videoType=image 同款结构）
   function heroBannerStaticMedia(x, s) {
@@ -570,6 +594,100 @@ var CaseRenderer = (function () {
       });
     }).catch(function (e) {
       console.warn('Swiper 懒加载失败，轮播降级为静态首图:', e);
+    });
+  }
+
+  // ===== 1.71 fs 效果轮播初始化（hero/hero-banner 的 effect=fs，自动播放版） =====
+  // 复用 fullscreen-slider 的「反向裁剪滑入」切换动画（.fs-outer/.fs-inner），但：
+  //   - 自动播放：setInterval 按 data-delay 间隔切下一张，到尾循环（首张 ↔ 末张无缝衔接）
+  //   - 不受鼠标滚动/触摸影响：不绑定 Observer / Swiper / 键盘，滚轮滚动页面照常，轮播只按定时器走
+  //   - 自动播放不受鼠标悬停影响（不暂停；圆点可点击手动切换，点击后自动播放继续）
+  //   - 右侧 .fs-dots 圆点：当前高亮、点击可跳转（与 fullscreen-slider 一致）
+  //   - 大Banner 每张图左下文案：切换时整体淡入上移（无 SplitText，容器级动画）
+  function initHeroFsCarousels(root) {
+    var boxes = (root || document).querySelectorAll('.hero-fs-carousel');
+    if (!boxes.length) return;
+    if (!window.gsap || typeof window.gsap.to !== 'function') {
+      // 无 GSAP 降级：仅展示首图（其余 slide 保持隐藏，不自动播放）
+      boxes.forEach(function (box) {
+        var first = box.querySelector('.fs-slide');
+        if (first) first.style.visibility = 'visible';
+      });
+      return;
+    }
+    var gsap = window.gsap;
+    boxes.forEach(function (box) {
+      if (box.dataset.fsCarInited) return;
+      box.dataset.fsCarInited = '1';
+      var slides = gsap.utils.toArray('.fs-slide', box);
+      if (!slides.length) return;
+      var n = slides.length;
+      var outers = gsap.utils.toArray('.fs-outer', box);
+      var inners = gsap.utils.toArray('.fs-inner', box);
+      var contents = gsap.utils.toArray('.hero-banner-content', box);
+      var dots = gsap.utils.toArray('.fs-dot', box);
+      var delay = parseInt(box.getAttribute('data-delay') || '4000', 10);
+
+      // 初始静态：全部隐藏，仅首屏可见（outer/inner 归位）
+      gsap.set(slides, { autoAlpha: 0 });
+      gsap.set(outers, { yPercent: 100 });
+      gsap.set(inners, { yPercent: -100 });
+      gsap.set([outers[0], inners[0]], { yPercent: 0 });
+      gsap.set(slides[0], { autoAlpha: 1, zIndex: 1 });
+      if (contents.length) gsap.set(contents, { autoAlpha: 0 });
+      gsap.set(contents[0], { autoAlpha: 1 });
+
+      var currentIndex = 0;
+      var animating = false;
+      var pending = null;              // 手动点击撞上切换动画时排队，动画结束后执行
+      var timer = null;
+
+      function updateDots() {
+        dots.forEach(function (d, i) { d.classList.toggle('active', i === currentIndex); });
+      }
+
+      function gotoIndex(index, direction) {
+        index = (index + n) % n;               // 到尾循环
+        if (index === currentIndex) return;
+        if (animating) { pending = index; return; }  // 动画中：记住目标，结束后跳（保证手动点击可靠）
+        animating = true;
+        var dFactor = direction || (index > currentIndex ? 1 : -1);
+        // 动画始终完整播放：不因 prefers-reduced-motion 瞬跳（与 fullscreen-slider 一致，
+        // 该切换动画是本效果的视觉核心，用户明确要求看到"两半合拢"）
+        var dur = 1.1;
+        var tl = gsap.timeline({
+          defaults: { duration: dur, ease: 'power1.inOut' },
+          onComplete: function () {
+            animating = false;
+            if (pending !== null) { var p = pending; pending = null; gotoIndex(p); }
+          }
+        });
+        // 旧屏：保持不透明由新屏覆盖，覆盖完成后隐藏（背景不动）
+        gsap.set(slides[currentIndex], { zIndex: 0 });
+        tl.set(slides[currentIndex], { autoAlpha: 0 }, dur);
+        // 新屏：outer/inner 反向裁剪滑入 + 文案淡入上移
+        gsap.set(slides[index], { autoAlpha: 1, zIndex: 1 });
+        tl.fromTo([outers[index], inners[index]], {
+            yPercent: function (i) { return i ? -100 * dFactor : 100 * dFactor; }
+          }, { yPercent: 0 }, 0)
+          .fromTo(contents[index], { autoAlpha: 0, yPercent: 36 * dFactor }, {
+            autoAlpha: 1, yPercent: 0, duration: Math.max(0.35, dur * 0.45), ease: 'power2'
+          }, dur * 0.3);
+        currentIndex = index;
+        updateDots();
+      }
+
+      function start() {
+        if (timer || n < 2) return;
+        timer = setInterval(function () { gotoIndex(currentIndex + 1, 1); }, delay);
+      }
+
+      // 圆点点击跳转
+      dots.forEach(function (d, i) {
+        d.addEventListener('click', function () { gotoIndex(i, i > currentIndex ? 1 : -1); });
+      });
+      // 自动播放不受鼠标悬停影响（用户要求：鼠标在 banner 上也不暂停，仅圆点可手动切换）
+      start();
     });
   }
 
@@ -897,25 +1015,15 @@ var CaseRenderer = (function () {
 
   // ===== 2.5 Brand Logo — 独立 Logo 栏目（放在 Introduction 下方或其他位置） =====
   //   不是 intro 的一部分：单独板块，PC 居中，移动端居左，高度固定宽度自动
+  //   未上传 Logo 时整块不渲染（Logo 已独立成板块，后台「（未上传 Logo）」卡片可见可管理，前端不再显示旧的占位提示）
   function renderBrandLogo(s) {
+    var logoUrl = s.logoUrl || '';
+    if (!logoUrl) return null;
     var section = el('section', 'brand-logo-section');
     var container = el('div', 'container');
-    var logoUrl = s.logoUrl || '';
-    var logoInnerHtml = '';
-    if (logoUrl) {
-      logoInnerHtml = '<img src="' + esc(logoUrl) + '" alt="Project logo" class="brand-logo-img">';
-    } else {
-      // 缺省占位图：灰色块 + 提示文字（与 intro 中旧占位风格一致，但宽度更自由）
-      logoInnerHtml =
-        '<svg class="brand-logo-placeholder" viewBox="0 0 500 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid meet" aria-hidden="true">' +
-          '<rect x="0" y="0" width="500" height="80" rx="14" fill="#E5E5EA"/>' +
-          '<text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" ' +
-          'font-family="Inter, -apple-system, \'PingFang SC\', \'Microsoft YaHei\', sans-serif" font-size="16" font-weight="500" fill="#8E8E93">' +
-          '管理后台 → 项目Logo栏目：上传项目 Logo（如 vjooProject）' +
-          '</text>' +
-        '</svg>';
-    }
-    container.innerHTML = '<div class="brand-logo-wrap">' + logoInnerHtml + '</div>';
+    container.innerHTML = '<div class="brand-logo-wrap">' +
+      '<img src="' + esc(logoUrl) + '" alt="Project logo" class="brand-logo-img">' +
+      '</div>';
     section.appendChild(container);
     return section;
   }
@@ -1362,6 +1470,8 @@ var CaseRenderer = (function () {
   }
 
   // ===== 12. Clients — 客户 Logo 条（nixtio Our clients） =====
+  // logosPerRow：留空=自适应（CSS auto-fit 自动按容器宽度排，少图自动铺满一行均分）；填 N=固定每行 N 个（.cols-N）
+  // logoStyle：'grayscale'（黑白，默认，悬停恢复彩色）/ 'color'（彩色，保留原色，.color-mode）
   function renderClients(s) {
     var section = sec('clients-section');
     var logos = Array.isArray(s.logos) ? s.logos : [];
@@ -1372,11 +1482,15 @@ var CaseRenderer = (function () {
       }
       return '<div class="client-logo client-logo-text">' + esc(name || 'Logo') + '</div>';
     }).join('');
+    var cls = 'clients-logos';
+    var perRow = parseInt(s.logosPerRow, 10);
+    if (perRow > 1) cls += ' cols-' + perRow;
+    if (s.logoStyle === 'color') cls += ' color-mode';
     section.innerHTML =
       '<div class="clients-main">' +
         (s.label ? '<p class="section-label">' + esc(s.label) + '</p>' : '') +
         (s.heading ? '<h2 class="section-heading">' + esc(s.heading) + '</h2>' : '') +
-        '<div class="clients-logos">' + logosHtml + '</div>' +
+        '<div class="' + cls + '">' + logosHtml + '</div>' +
       '</div>';
     return section;
   }

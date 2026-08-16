@@ -2105,8 +2105,8 @@ const TYPE_FIELDS = {
       hint: 'placeholder=占位纯色；video=播放视频；image=显示静态底图；carousel=多图自动轮播（1张时显示静态图）' },
     { key: 'videoUrl', label: '视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
     { key: 'image', label: '图片（videoType=image时用）', type: 'image', dependsOn: { field: 'videoType', value: 'image' } },
-    { key: 'effect', label: '轮播切换效果', type: 'select', options: ['slide', 'fade', 'cube', 'coverflow', 'flip', 'creative'],
-      hint: 'slide=滑动；fade=淡入；cube=立方体；coverflow=封面流；flip=翻转；creative=创意', dependsOn: { field: 'videoType', value: 'carousel' } },
+    { key: 'effect', label: '轮播切换效果', type: 'select', options: ['slide', 'fade', 'cube', 'coverflow', 'flip', 'creative', 'fs'],
+      hint: 'slide=滑动；fade=淡入；cube=立方体；coverflow=封面流；flip=翻转；creative=创意；fs=全屏裁剪滑入（自动播放，不受滚动影响）', dependsOn: { field: 'videoType', value: 'carousel' } },
     { key: 'autoplayDelay', label: '自动播放间隔（毫秒）', type: 'text', placeholder: '4000',
       hint: '默认 4000（4秒）。填 0 则关闭自动播放', dependsOn: { field: 'videoType', value: 'carousel' } },
     { key: 'images', label: '轮播图列表（1张=静态图，多张=自动轮播）', type: 'items-list', itemLabel: '轮播图',
@@ -2122,8 +2122,8 @@ const TYPE_FIELDS = {
       hint: 'image=静态背景大图；video=背景视频；placeholder=占位色块；carousel=多图自动轮播（每张图配独立文案）' },
     { key: 'image', label: '背景大图', type: 'image', hint: '建议偏暗/主体偏下的图，保证左上文字可读', dependsOn: { field: 'videoType', value: 'image' } },
     { key: 'videoUrl', label: '背景视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
-    { key: 'effect', label: '轮播切换效果', type: 'select', options: ['slide', 'fade', 'cube', 'coverflow', 'flip', 'creative'],
-      hint: 'slide=滑动；fade=淡入；cube=立方体；coverflow=封面流；flip=翻转；creative=创意', dependsOn: { field: 'videoType', value: 'carousel' } },
+    { key: 'effect', label: '轮播切换效果', type: 'select', options: ['slide', 'fade', 'cube', 'coverflow', 'flip', 'creative', 'fs'],
+      hint: 'slide=滑动；fade=淡入；cube=立方体；coverflow=封面流；flip=翻转；creative=创意；fs=全屏裁剪滑入（自动播放，不受滚动影响）', dependsOn: { field: 'videoType', value: 'carousel' } },
     { key: 'autoplayDelay', label: '自动播放间隔（毫秒）', type: 'text', placeholder: '4000',
       hint: '默认 4000（4秒）。填 0 则关闭自动播放', dependsOn: { field: 'videoType', value: 'carousel' } },
     { key: 'images', label: '轮播图列表（每张图可配独立标题/标签/描述，切图时文案一起切换）', type: 'items-list', itemLabel: '轮播图',
@@ -2213,6 +2213,14 @@ const TYPE_FIELDS = {
   'clients': [
     { key: 'label', label: '板块标题（左栏小字）', type: 'text', placeholder: 'Our clients' },
     { key: 'heading', label: '标题（大字）', type: 'text', placeholder: 'Unique solutions that generate leads' },
+    { key: 'logosPerRow', label: '每行显示数量', type: 'select', options: ['', '2', '3', '4', '5', '6'],
+      optionLabels: { '': '自动自适应', '2': '每行 2 个', '3': '每行 3 个', '4': '每行 4 个', '5': '每行 5 个', '6': '每行 6 个' },
+      default: '',
+      hint: '自动自适应（推荐）：Logo 少时自动铺满一行并均分；选数字：固定每行 N 个，超出自动换行' },
+    { key: 'logoStyle', label: 'Logo 显示效果', type: 'select', options: ['grayscale', 'color'],
+      optionLabels: { 'grayscale': '黑白', 'color': '彩色' },
+      default: 'grayscale',
+      hint: '黑白（默认）：图片显示为黑白，悬停恢复彩色；彩色：保留图片原色' },
     { key: 'logos', label: '客户 Logo 列表', type: 'items-list', itemLabel: 'Logo', itemFields: [
       { key: 'name', label: '客户名', type: 'text', placeholder: '如 ZenHaven' },
       { key: 'image', label: 'Logo 图', type: 'image' }
@@ -2284,7 +2292,7 @@ function getDefaultSection(type) {
     case 'testimonial': return { ...base, title: '', avatarInitials: '', name: '', role: '', quote: '' };
     case 'title': return { ...base, title: 'Projects', copyright: '2010-26©', description: "We've helped businesses across industries achieve their goals. Here are some of our recent projects.", size: '148', padding: '标准' };
     case 'next-projects': return { ...base, groups: [{ cards: [] }] };
-    case 'clients': return { ...base, label: 'Our clients', heading: '', logos: [] };
+    case 'clients': return { ...base, label: 'Our clients', heading: '', logosPerRow: '', logoStyle: 'grayscale', logos: [] };
     case 'stats': return { ...base, label: 'Why choose us', heading: 'We design for results – helping your business meet its goals.', subtitle: 'Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.', videoUrl: '', videoType: 'video', items: [
       { value: '600', suffix: '+', title: 'Successful projects completed', desc: "We've helped launch over 600 digital products and experiences that make brands stand out and feel human." },
       { value: '100', suffix: '%', title: 'UpWork rating', desc: 'Consistently rated 100% job success and top-rated talent.' }
