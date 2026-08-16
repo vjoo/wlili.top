@@ -292,7 +292,7 @@ portfolio/
 | `parallax` | `.image-section` | `.parallax-overlay-image`(data-parallax) > `.pio-base` + `.pio-overlay` | 1448/905，25px 圆角 |
 | `text` | `.challenges-section` | `.challenges-main`(grid) > `.section-label` + `.challenges-content` | margin 4rem（移动 80px） |
 | `showcase` | `.two-blocks-section` | `.two-blocks`(2列) > `.block-image` + `.block-text` | 4px 间距；白卡 padding 60px、圆角 25px；图片 722/785 |
-| `gallery` | `.screen-section` | `.screen-content`(白卡) > `.screen-info` + `.screen-wall`(2/3列) | 白卡 padding 60px；列宽 2列 474px / 3列 273px；列错落由每列 `offsetRem`（rem 单位）驱动：**仅当某列填了 offsetRem 时才启用错落**（含首图高度差微校正 0.3 权重）；全部未填/为 0 时各列顶部对齐、无阶梯（移动端恒 `margin-top: 0 !important` 强制对齐） |
+| `gallery` | `.screen-section` | `.screen-content`(白卡) > `.screen-info` + `.screen-wall`(2/3列) | 白卡 padding 60px；列宽 2列 474px / 3列 273px；列错落由每列 `offsetRem`（rem 单位）独立控制：**设置多少就是多少（1rem=16px），未填/为 0 即顶部对齐，不互相牵连、无自动微调**（移动端恒 `margin-top: 0 !important` 强制对齐） |
 | `single-image` | `.image-section` | `.image-single > .single-img` | 1136/710，25px 圆角 |
 | `double-image` | `.image-section` | 内联 grid 2列 | 1:1，4px 间距 |
 | `video` | `.video-section` | `.section-video-embed`(grid 1/2列) | 1136/608 |
