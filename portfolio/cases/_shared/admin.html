@@ -803,32 +803,6 @@ body {
   min-height: 100%;
 }
 
-/* ===== Video Card ===== */
-.ct-video {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px;
-}
-.ct-video .video-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(99,102,241,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.ct-video .video-icon-wrap svg { width: 22px; height: 22px; color: var(--accent-color); margin-left: 2px; }
-.ct-video .video-count {
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-}
-
 /* ===== Testimonial Card ===== */
 .ct-testimonial {
   padding: 12px;
@@ -1366,7 +1340,7 @@ body {
   line-height: 1.6;
 }
 
-/* ===== List Field (image-list / video-list / cards-list) ===== */
+/* ===== List Field (image-list / cards-list) ===== */
 .list-field { display: flex; flex-direction: column; gap: 10px; }
 .list-field-item {
   border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 12px;
@@ -2028,7 +2002,6 @@ const TYPE_LABELS = {
   'gallery': '截图墙',
   'single-image': '单图全宽',
   'double-image': '双图并排',
-  'video': '视频区',
   'testimonial': '客户评价',
   'title': '标题栏',
   'next-projects': '特效双图',
@@ -2052,7 +2025,6 @@ const TYPE_DESCS = {
   'gallery': '多张产品截图横向/网格展示',
   'single-image': '单张全宽度大图展示',
   'double-image': '两张图片并排对比展示',
-  'video': '一个或多个视频区块',
   'testimonial': '客户评价、引言卡片',
   'title': '超大标题 + 版权小字 + 内容描述',
   'next-projects': '案例末尾「特效双图」跳转卡',
@@ -2076,7 +2048,6 @@ const TYPE_ICONS = {
   'gallery': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   'single-image': '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
   'double-image': '<rect x="3" y="3" width="8" height="18" rx="2"/><rect x="13" y="3" width="8" height="18" rx="2"/>',
-  'video': '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>',
   'testimonial': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   'title': '<polyline points="5 4 19 4"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="5" y1="12" x2="19" y2="12"/>',
   'next-projects': '<path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/>',
@@ -2177,9 +2148,6 @@ const TYPE_FIELDS = {
     { key: 'image1', label: '图片1', type: 'image' },
     { key: 'image2', label: '图片2', type: 'image' }
   ],
-  'video': [
-    { key: 'videos', label: '视频列表', type: 'video-list' }
-  ],
   'testimonial': [
     { key: 'title', label: '标题', type: 'text' },
     { key: 'avatarInitials', label: '头像缩写', type: 'text' },
@@ -2276,7 +2244,6 @@ function getDefaultSection(type) {
     ] };
     case 'single-image': return { ...base, image: '' };
     case 'double-image': return { ...base, image1: '', image2: '' };
-    case 'video': return { ...base, videos: [] };
     case 'testimonial': return { ...base, title: '', avatarInitials: '', name: '', role: '', quote: '' };
     case 'title': return { ...base, title: 'Projects', copyright: '2010-26©', description: "We've helped businesses across industries achieve their goals. Here are some of our recent projects.", size: '148', padding: '标准' };
     case 'next-projects': return { ...base, groups: [{ cards: [] }] };
@@ -2779,13 +2746,6 @@ function buildCardThumbnail(s) {
           <div class="di-half" style="background-image:url('${esc(s.image2 || '')}');"></div>
         </div>`;
       }
-      case 'video': {
-        const videos = Array.isArray(s.videos) ? s.videos : [];
-        return `<div class="ct-video">
-          <div class="video-icon-wrap"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
-          <div class="video-count">共 ${videos.length} 段视频</div>
-        </div>`;
-      }
       case 'testimonial': {
         const initials = s.avatarInitials || (s.name ? s.name.slice(0, 2).toUpperCase() : '??');
         const name = s.name || '（未设置姓名）';
@@ -2898,7 +2858,6 @@ function buildCardPreviewText(s) {
     case 'gallery': text = s.heading ? s.heading : '截图墙'; break;
     case 'single-image': text = s.image ? '单图全宽' : '（未上传图片）'; break;
     case 'double-image': text = (s.image1 || s.image2) ? '双图并排' : '（未上传图片）'; break;
-    case 'video': text = '视频列表：' + (Array.isArray(s.videos) ? s.videos.length : 0) + ' 个'; break;
     case 'testimonial': text = s.name ? (s.name + (s.role ? ' · ' + s.role : '')) : (s.title || '（未设置姓名）'); break;
     case 'next-projects': {
       const gs = Array.isArray(s.groups)
@@ -3026,7 +2985,7 @@ function renderEditorForm(section) {
   let imageFieldRenderIndex = 0;
   let html = '<div class="form-grid">';
   fields.forEach((f) => {
-    const isFull = ['textarea', 'image', 'image-list', 'video', 'video-list', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker'].includes(f.type);
+    const isFull = ['textarea', 'image', 'image-list', 'video', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker'].includes(f.type);
     html += `<div class="form-group${isFull ? ' full' : ''}">`;
     html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : ''}${(f.type === 'select' && f.default !== undefined) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>` : ''}</label>`;
     const val = section[f.key];
@@ -3073,9 +3032,6 @@ function renderEditorForm(section) {
         break;
       case 'image-list':
         html += renderImageListField(f.key, Array.isArray(val) ? val : [], fieldUid);
-        break;
-      case 'video-list':
-        html += renderVideoListField(f.key, Array.isArray(val) ? val : [], fieldUid);
         break;
       case 'cards-list':
         html += renderCardsListField(f.key, Array.isArray(val) ? val : [], fieldUid);
@@ -3151,7 +3107,6 @@ function renderEditorForm(section) {
     if (f.type === 'image') bindImageField(f.key, fieldUid);
     else if (f.type === 'video') bindVideoField(f.key, fieldUid);
     else if (f.type === 'image-list') bindImageListField(f.key, fieldUid);
-    else if (f.type === 'video-list') bindVideoListField(f.key, fieldUid);
     else if (f.type === 'cards-list') bindCardsListField(f.key, fieldUid);
     else if (f.type === 'groups-list') bindGroupsListField(f.key, fieldUid);
     else if (f.type === 'displacement-picker') bindDisplacementPicker(f.key, fieldUid);
@@ -4201,93 +4156,6 @@ function collectImageList(key, uid) {
   wrap.querySelectorAll('.list-field-item').forEach((item) => {
     const hidden = item.querySelector('input[data-ftype="image-value"]');
     out.push(hidden ? (hidden.value || '') : '');
-  });
-  return out;
-}
-
-/* ===== Video List Field ===== */
-function renderVideoListField(key, list, uid) {
-  const items = list.map((v, i) => `
-    <div class="list-field-item" data-lf-item="${i}">
-      <div class="lf-head">
-        <span class="lf-title">视频 #${i + 1}</span>
-        <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-      </div>
-      <div class="lf-row">
-        <div class="form-group">
-          <label class="form-label">URL</label>
-          <input class="form-input" data-vl-key="url" data-vl-idx="${i}" type="text" value="${esc(v.url || '')}" placeholder="留空则为占位符">
-        </div>
-        <div class="form-group">
-          <label class="form-label">标签</label>
-          <input class="form-input" data-vl-key="label" data-vl-idx="${i}" type="text" value="${esc(v.label || '')}">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">类型</label>
-        <select class="form-select" data-vl-key="type" data-vl-idx="${i}">
-          ${['placeholder', 'video', 'image'].map((opt) => `<option value="${opt}"${opt === (v.type || 'placeholder') ? ' selected' : ''}>${opt}</option>`).join('')}
-        </select>
-      </div>
-    </div>`).join('');
-  return `
-    <div class="list-field" data-lf="${esc(key)}" data-uid="${esc(uid)}" data-ftype="video-list">
-      ${items}
-      <button type="button" class="btn-secondary list-field-add" data-lf-add="${esc(key)}" data-lf-add-uid="${esc(uid)}" style="justify-content:center;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        添加视频
-      </button>
-    </div>`;
-}
-
-function bindVideoListField(key, uid) {
-  const wrap = document.querySelector(`.list-field[data-lf="${key}"][data-uid="${uid}"]`);
-  if (!wrap) return;
-  wrap.querySelectorAll('[data-lf-remove]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.lfRemove);
-      const list = collectVideoList(key, uid);
-      list.splice(idx, 1);
-      state.sections[selectedIndex][key] = list;
-      replaceListField(key, uid, renderVideoListField(key, list, uid));
-      bindVideoListField(key, uid);
-      onSectionChanged();
-    });
-  });
-  const addBtn = wrap.querySelector('[data-lf-add]');
-  if (addBtn) {
-    addBtn.addEventListener('click', () => {
-      const list = collectVideoList(key, uid);
-      list.push({ url: '', label: 'Video ' + (list.length + 1), type: 'placeholder' });
-      state.sections[selectedIndex][key] = list;
-      replaceListField(key, uid, renderVideoListField(key, list, uid));
-      bindVideoListField(key, uid);
-      onSectionChanged();
-    });
-  }
-  // Bind inputs
-  wrap.querySelectorAll('[data-vl-key]').forEach((inp) => {
-    inp.addEventListener('input', () => {
-      state.sections[selectedIndex][key] = collectVideoList(key, uid);
-      onSectionChanged();
-    });
-    inp.addEventListener('change', () => {
-      state.sections[selectedIndex][key] = collectVideoList(key, uid);
-      onSectionChanged();
-    });
-  });
-}
-
-function collectVideoList(key, uid) {
-  const wrap = document.querySelector(`.list-field[data-lf="${key}"][data-uid="${uid}"]`);
-  if (!wrap) return [];
-  const out = [];
-  wrap.querySelectorAll('.list-field-item').forEach((item) => {
-    const obj = { url: '', label: '', type: 'placeholder' };
-    item.querySelectorAll('[data-vl-key]').forEach((inp) => {
-      obj[inp.dataset.vlKey] = inp.value;
-    });
-    out.push(obj);
   });
   return out;
 }

@@ -342,7 +342,7 @@
 }
 
 /* ========== TWO-BLOCKS SECTIONS (Landing / Platform / Social / Advertising) ========== */
-/* 原版：two-blocks/video/screen/image 展示区块之间仅 4px 紧贴，
+/* 原版：two-blocks/screen/image 展示区块之间仅 4px 紧贴，
    只有 project-info/challenges/testimonials 文字内容区才有 116px 大间距 */
 .two-blocks-section {
   margin-top: 0.25rem; /* 4px */
@@ -546,19 +546,6 @@
   object-fit: cover;
   position: absolute;
   inset: 0;
-}
-
-/* ========== VIDEO SECTION (独立视频区) ========== */
-.video-section {
-  margin-top: 0.25rem; /* 4px */
-  margin-bottom: 0.25rem;
-}
-
-.section-video-embed {
-  width: 100%;
-  aspect-ratio: 1136 / 608;
-  border-radius: 1.5625rem; /* 25px */
-  overflow: hidden;
 }
 
 /* ========== SCREEN SECTION (Mobile Landing / 屏幕墙) ========== */
@@ -1046,7 +1033,7 @@
     letter-spacing: -0.88px;
   }
 
-  /* 展示区块（two-blocks/screen/image/video）移动端也保持紧贴，
+  /* 展示区块（two-blocks/screen/image）移动端也保持紧贴，
      只有文字内容区才用大间距 */
   .two-blocks-section,
   .screen-section {

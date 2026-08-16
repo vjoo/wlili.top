@@ -11,7 +11,6 @@
       - Gallery/Screen wall: <section.screen-section.container> .screen-content
       - Single-image: <section.image-section.container> .image-single.single-img
       - Double-image: 自定义 style.css 补充（参见 RENDERERS）
-      - Video: <section.video-section.container> .video-grid .section-video-embed
       - Testimonials: <section.testimonials-section>
       - Next-projects: <section.next-projects-section> .projects-grid .project-card-image
    各页面通过 window.CASE_KEY 标识自己；进场动画由 site-shell.js 接管。
@@ -49,7 +48,6 @@ var CaseRenderer = (function () {
     'gallery':       renderGallery,
     'single-image':  renderSingleImage,
     'double-image':  renderDoubleImage,
-    'video':         renderVideo,
     'testimonial':   renderTestimonials,
     'title':         renderTitle,        // 独立标题组件（nixtio Projects 头部：大标题+版权+内容描述）
     'next-projects': renderNextProjects,
@@ -72,7 +70,6 @@ var CaseRenderer = (function () {
     'gallery': '截图墙',
     'single-image': '单图全宽',
     'double-image': '双图并排',
-    'video': '视频区',
     'testimonial': '客户评价',
     'title': '标题栏',
     'next-projects': '特效双图',
@@ -1334,22 +1331,7 @@ var CaseRenderer = (function () {
     return section;
   }
 
-  // ===== 9. Video Grid =====
-  function renderVideo(s) {
-    var section = sec('video-section');
-    var videos = s.videos || [];
-    var grid = el('div');
-    grid.style.cssText = 'display:grid;gap:4px;grid-template-columns:' + (videos.length > 1 ? '1fr 1fr' : '1fr') + ';';
-    videos.forEach(function (v) {
-      var col = el('div', 'section-video-embed');
-      col.innerHTML = videoPlaceholder(v.type || 'placeholder', v.url, v.label || 'Video');
-      grid.appendChild(col);
-    });
-    section.appendChild(grid);
-    return section;
-  }
-
-  // ===== 10. Testimonials — dark section =====
+  // ===== 9. Testimonials — dark section =====
   function renderTestimonials(s) {
     // testimonials 不是 .container，是全宽深色背景（style.css 921 行要求 max-width:100%，padding 7.5rem 2rem）
     var section = el('section', 'testimonials-section');

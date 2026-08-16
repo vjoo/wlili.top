@@ -525,7 +525,6 @@
     '.two-blocks-section',   // 原 .showcase-section（旧名）
     '.showcase-section',     // 兼容旧 class
     '.screen-section',
-    '.video-section',
     '.testimonials-section',
     '.title-section',         // 独立标题组件（Projects 头部）
     '.next-projects-section',
@@ -557,7 +556,6 @@
     '.screen-wall',
     '.screen-col',
     '.image-single',
-    '.section-video-embed',
     '.testimonial-card',
     '.next-projects-header',
     '.title-row',
