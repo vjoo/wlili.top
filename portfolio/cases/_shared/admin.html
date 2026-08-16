@@ -771,18 +771,6 @@ body {
   background-position: center;
   background-color: var(--bg-hover);
 }
-.ct-gallery .gallery-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 3px 10px;
-  background: rgba(43,48,65,0.85);
-  backdrop-filter: blur(4px);
-  color: #fff;
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 700;
-}
 
 /* ===== Single Image Card ===== */
 .ct-single-image {
@@ -2780,9 +2768,7 @@ function buildCardThumbnail(s) {
       case 'gallery': {
         const screens = Array.isArray(s.screens) ? s.screens : [];
         const first = screens[0] || '';
-        return `<div class="ct-gallery" style="background-image:url('${esc(first)}');">
-          <span class="gallery-badge">共 ${screens.length} 张</span>
-        </div>`;
+        return `<div class="ct-gallery" style="background-image:url('${esc(first)}');"></div>`;
       }
       case 'single-image': {
         return `<div class="ct-single-image" style="background-image:url('${esc(s.image || '')}');"></div>`;
@@ -2909,7 +2895,7 @@ function buildCardPreviewText(s) {
     case 'parallax': text = (s.baseImage || s.overlayImage) ? '视差图对' : '（未上传图片）'; break;
     case 'text': text = s.heading ? s.heading : (s.label || '（未设置标题）'); break;
     case 'showcase': text = s.desc ? s.desc : (s.label || '（未设置描述）'); break;
-    case 'gallery': text = '截图墙：' + (Array.isArray(s.screens) ? s.screens.length : 0) + ' 张' + (s.heading ? ' · ' + s.heading : ''); break;
+    case 'gallery': text = s.heading ? s.heading : '截图墙'; break;
     case 'single-image': text = s.image ? '单图全宽' : '（未上传图片）'; break;
     case 'double-image': text = (s.image1 || s.image2) ? '双图并排' : '（未上传图片）'; break;
     case 'video': text = '视频列表：' + (Array.isArray(s.videos) ? s.videos.length : 0) + ' 个'; break;
