@@ -175,7 +175,7 @@ portfolio/
 - **text（Challenges）板块**：`linkPage` 站内跳转（优先）／`linkUrl` 外链（新窗口，`target="_blank"`）
 - **next-projects 卡片**：每张卡片 `linkPage`（优先）／`href`（外链兜底）
 - **next-projects 组件级字段**：`title`（大标题）/ `copyright`（版权）/ `allProjectsText`（"所有项目"文字）/ `displacement`（置换图纹理）均为组件级，只填一次，渲染在板块顶部；`groups`（数组）每组只有 `{ cards: [...] }`，多组 = n 图列表；旧数据（字段在每组里或平铺 `title`/`cards`）由 render.js 与 admin 迁移函数自动提升为组件级，无需手工改
-- 已支持可视化编辑：admin.html「纯文本区」表单有「站内页面跳转」输入框；「特效双图」编辑器为多组列表（`groups-list`，页卡式切换），组件顶部统一设置「置换图纹理」（`displacement-picker` 缩略图选择器，10 张共享纹理 `_shared/assets/hover-dist-*`，空 = 全局默认，对本组件所有卡片统一生效）；纹理选项常量 `HOVER_DISP_OPTIONS`（共享后台 `_shared/admin.html` 维护）。前台渲染取纹理优先级：组件级 `s.displacement` → 旧数据卡片级 `c.displacement`（兼容）→ 全局默认 `hover-dist-10`
+- 已支持可视化编辑：admin.html「纯文本区」表单与「特效双图」卡片均有「站内跳转」**下拉选择**（`page-select` 字段，选项实时来自 `/api/pages`，显示「页面标题 · key」，留空 = 无跳转；旧数据中已失效的 key 会保留为「（页面已不存在）」选项，避免保存时丢失）；「特效双图」编辑器为多组列表（`groups-list`，页卡式切换），组件顶部统一设置「置换图纹理」（`displacement-picker` 缩略图选择器，10 张共享纹理 `_shared/assets/hover-dist-*`，空 = 全局默认，对本组件所有卡片统一生效）；纹理选项常量 `HOVER_DISP_OPTIONS`（共享后台 `_shared/admin.html` 维护）。前台渲染取纹理优先级：组件级 `s.displacement` → 旧数据卡片级 `c.displacement`（兼容）→ 全局默认 `hover-dist-10`
 - 共享函数：`window.pageUrl(key)` → `../<key>/index.html`；`window.pageHref(s)` → 取 `s.linkPage` 的 URL（site-shell.js 提供）
 - ⚠️ `linkPage` 填的必须是 `cases.json` 里真实存在的 key（大小写敏感），写错会渲染出 404 链接
 

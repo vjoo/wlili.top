@@ -628,6 +628,7 @@
   display: block;
   border-radius: 1.5625rem; /* 25px，与其它图片板块（双图/单图/视频）统一，图片无需自带圆角 */
   overflow: hidden;
+  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.2); /* 微阴影：白色底图也能看到边界 */
 }
 
 .screen-placeholder img {
