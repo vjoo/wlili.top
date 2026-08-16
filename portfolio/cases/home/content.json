@@ -4,21 +4,100 @@
     {
       "id": "smssvzjvzf2wo",
       "type": "hero-banner",
-      "title": "Premium Interface Design for Startups,Web Platforms & Independent Creators",
+      "title": "3D Scene Modeling & Production",
       "labels": [
         "界面设计",
         "品牌视觉",
         "设计规范"
       ],
       "description": "打磨精致数字设计，与怀揣巧思的项目一同塑造与众不同的数字面貌。",
-      "videoType": "image",
-      "image": "/portfolio/cases/home/uploads/1786708923760.jpg",
+      "videoType": "carousel",
+      "image": "",
       "videoUrl": "",
-      "effect": "slide",
-      "autoplayDelay": "4000",
-      "images": [],
+      "effect": "fade",
+      "autoplayDelay": "5000",
+      "images": [
+        {
+          "image": "/portfolio/cases/home/uploads/1786887529464.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1786887532885.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1786887537410.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        }
+      ],
       "subtitle": "1111111111",
       "buttonText": "11111111"
+    },
+    {
+      "id": "smsvv46tchq8t",
+      "type": "hero-banner",
+      "title": "3D Scene Modeling & Production",
+      "labels": [
+        {
+          "text": "50+ employees"
+        },
+        {
+          "text": "6 countries"
+        },
+        {
+          "text": "Founded in 2010"
+        }
+      ],
+      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
+      "videoType": "carousel",
+      "image": "",
+      "videoUrl": "",
+      "effect": "cube",
+      "autoplayDelay": "4000",
+      "images": [
+        {
+          "image": "/portfolio/cases/home/uploads/1786888274934.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1786888279946.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1786888284441.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1786888291224.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1786888295437.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1786888299566.jpg",
+          "title": "",
+          "labels": [],
+          "subtitle": ""
+        }
+      ]
     }
   ],
   "letsTalk": {

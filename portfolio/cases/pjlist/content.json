@@ -11,18 +11,8 @@
       "videoUrl": "",
       "images": [
         {
-          "image": "/portfolio/cases/pjlist/uploads/1786717556714.jpg",
-          "title": "Premium UI Design for Startups,Web Projects & Independent Brands",
-          "labels": [
-            "界面设计",
-            "品牌视觉",
-            "数字体验"
-          ],
-          "subtitle": "打磨精致数字设计，与怀揣巧思的项目一同塑造与众不同的数字面貌。"
-        },
-        {
-          "image": "/portfolio/cases/pjlist/uploads/1786717641668.jpg",
-          "title": "Digital & Data Visual Design for Platforms & Independent Creators",
+          "image": "/portfolio/cases/pjlist/uploads/1786882917773.jpg",
+          "title": "",
           "labels": [
             "信息界面",
             "数据可视化",
@@ -31,8 +21,8 @@
           "subtitle": "搭建清晰的数字视觉，协助富有巧思的项目，将繁杂信息转化为直观的体验。"
         }
       ],
-      "effect": "slide",
-      "autoplayDelay": "2000"
+      "effect": "fs",
+      "autoplayDelay": "4000"
     },
     {
       "id": "smspt62o385co-title",
@@ -51,17 +41,17 @@
               "name": "中外运・跨境物流智能调度平台",
               "year": "",
               "href": "",
-              "linkPage": "",
-              "image1": "/portfolio/cases/pjlist/uploads/1786878630781.jpg",
-              "image2": "/portfolio/cases/pjlist/uploads/1786878646512.jpg"
+              "linkPage": "reeoder",
+              "image1": "/portfolio/cases/pjlist/uploads/1786884151409.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786883990947.jpg"
             },
             {
-              "name": "",
+              "name": "智能锁出租房运营产品",
               "year": "",
               "href": "",
               "linkPage": "",
-              "image1": "",
-              "image2": ""
+              "image1": "/portfolio/cases/pjlist/uploads/1786884718955.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786884397236.jpg"
             }
           ]
         },

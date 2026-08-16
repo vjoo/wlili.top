@@ -11,24 +11,24 @@
       "image": "/portfolio/cases/reeoder/uploads/1786863168048.jpg",
       "videoUrl": "",
       "effect": "fs",
-      "autoplayDelay": "5000",
+      "autoplayDelay": "4000",
       "images": [
-        {
-          "image": "/portfolio/cases/reeoder/uploads/1786865812460.jpg",
-          "title": "Yeeorder New Engine of Global Sourcing and International Trade",
-          "labels": [
-            "20+ 全球空运航线",
-            "业务覆盖 35 个国家及地区",
-            "2010 年成立"
-          ],
-          "subtitle": "打通端到端跨境物流通道，联结全球贸易伙伴，打造全程可视、彼此信赖的一体化国际供应网络。"
-        },
         {
           "image": "/portfolio/cases/reeoder/uploads/1786865819617.jpg",
           "title": "Yeeorder Reliable Backbone of Global Cross-border Trade",
           "labels": [
             "80+ 全球港口服务点位",
             "航运网络遍及 42 个国家及地区",
+            "2010 年成立"
+          ],
+          "subtitle": "打通端到端跨境物流通道，联结全球贸易伙伴，打造全程可视、彼此信赖的一体化国际供应网络。"
+        },
+        {
+          "image": "/portfolio/cases/reeoder/uploads/1786865812460.jpg",
+          "title": "Yeeorder New Engine of Global Sourcing and International Trade",
+          "labels": [
+            "20+ 全球空运航线",
+            "业务覆盖 35 个国家及地区",
             "2010 年成立"
           ],
           "subtitle": "打通端到端跨境物流通道，联结全球贸易伙伴，打造全程可视、彼此信赖的一体化国际供应网络。"
@@ -198,7 +198,7 @@
               "href": "",
               "linkPage": "",
               "image1": "/portfolio/cases/reeoder/uploads/1786877218637.jpg",
-              "image2": "/portfolio/cases/reeoder/uploads/1786878148633.jpg"
+              "image2": "/portfolio/cases/reeoder/uploads/1786883975601.jpg"
             }
           ]
         }
@@ -289,25 +289,25 @@
           "offsetRem": 0,
           "images": [
             {
-              "id": "smsvpskqrnamu",
-              "src": "/portfolio/cases/reeoder/uploads/1786879441734.jpg"
+              "id": "smsvqdp6kgwy3",
+              "src": "/portfolio/cases/reeoder/uploads/1786880323836.jpg"
             },
             {
-              "id": "smsvq0v2t3gws",
-              "src": "/portfolio/cases/reeoder/uploads/1786879683341.jpg"
+              "id": "smsvqesc7bhtk",
+              "src": "/portfolio/cases/reeoder/uploads/1786880401927.jpg"
             }
           ]
         },
         {
-          "offsetRem": 0,
+          "offsetRem": 10,
           "images": [
             {
-              "id": "smsvpt8o1trdq",
-              "src": "/portfolio/cases/reeoder/uploads/1786879463509.jpg"
+              "id": "smsvqf6pt9o95",
+              "src": "/portfolio/cases/reeoder/uploads/1786880353071.jpg"
             },
             {
-              "id": "smsvptcv8t2og",
-              "src": "/portfolio/cases/reeoder/uploads/1786879513899.jpg"
+              "id": "smsvqfhakwmbg",
+              "src": "/portfolio/cases/reeoder/uploads/1786880424331.jpg"
             }
           ]
         },
@@ -320,7 +320,7 @@
             },
             {
               "id": "smsvq0nlys3vy",
-              "src": "/portfolio/cases/reeoder/uploads/1786879674548.jpg"
+              "src": "/portfolio/cases/reeoder/uploads/1786879763381.jpg"
             }
           ]
         }
