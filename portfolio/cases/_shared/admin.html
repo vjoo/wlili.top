@@ -4668,6 +4668,7 @@ function renderLetsTalkEditor(right) {
     <div class="editor-footer">
       <div class="editor-footer-left"><div class="editor-footer-status" id="editorFooterStatus">就绪</div></div>
       <div class="editor-footer-right">
+        <button class="btn-primary" id="btnLetsTalkSave">保存</button>
         <button class="btn-secondary" id="btnCancelLetsTalk">取消改动</button>
       </div>
     </div>`;
@@ -4726,6 +4727,7 @@ function renderLetsTalkEditor(right) {
       onLetsTalkChanged();
     }, QR_SLOTS[i]);
   });
+  $('#btnLetsTalkSave').onclick = saveAll;
   $('#btnCancelLetsTalk').onclick = cancelLetsTalkChanges;
   updateEditorFooterStatus();
 }
@@ -4777,12 +4779,13 @@ function renderNavMenuEditor(right) {
       <div id="navMenuForm"></div>
     </div>
     <div class="editor-footer">
-      <div class="editor-footer-left"><div class="editor-footer-status" id="editorFooterStatus">就绪</div></div>
-      <div class="editor-footer-right">
-        <button class="btn-secondary" id="btnNavMenuCancel">取消改动</button>
-        <button class="btn-secondary" id="btnNavMenuReset">恢复默认</button>
-      </div>
-    </div>`;
+        <div class="editor-footer-left"><div class="editor-footer-status" id="editorFooterStatus">就绪</div></div>
+        <div class="editor-footer-right">
+          <button class="btn-primary" id="btnNavMenuSave">保存</button>
+          <button class="btn-secondary" id="btnNavMenuCancel">取消改动</button>
+          <button class="btn-secondary" id="btnNavMenuReset">恢复默认</button>
+        </div>
+      </div>`;
 
   const form = $('#navMenuForm');
   let html = '<div class="navm-hint" style="margin-bottom:12px;">菜单显示在前台顶部导航栏（桌面 + 移动端）。「链接页面」下拉选择已有案例页，也可在「链接地址」直接填写自定义地址；勾选「在新窗口打开」后点击菜单会新开标签页。改动随顶部「保存」按钮一起提交。</div>';
@@ -4853,6 +4856,7 @@ function renderNavMenuEditor(right) {
     state.navMenu.push({ label: '', href: '', target: false });
     renderNavMenuEditor(right);
   };
+  $('#btnNavMenuSave').onclick = saveAll;
   $('#btnNavMenuCancel').onclick = cancelNavMenuChanges;
   $('#btnNavMenuReset').onclick = () => {
     state.navMenu = JSON.parse(JSON.stringify(DEFAULT_NAV_MENU));
