@@ -204,22 +204,13 @@ img {
   box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
-/* 滚动态白底胶囊：文字与下划线转深色，与白字过渡衔接（color/背景同步过渡） */
-.header-overlay.scrolled .nav-link {
-  color: #171717;
-}
-.header-overlay.scrolled .nav-link::after {
-  background: rgba(10, 10, 10, 0.32);
-}
-
 .nav-link {
   font-size: 16px;
   font-weight: 500;
   letter-spacing: -0.32px;
-  color: rgba(255, 255, 255, 0.92); /* 透明态白字：Hero 图不传大面积白底，白字可读 */
+  color: #616161; /* 胶囊导航链接色（用户指定） */
   position: relative;
   padding: 0.25rem 0;
-  transition: color var(--transition-base);
 }
 
 .nav-link::after {
@@ -231,8 +222,8 @@ img {
   height: 1px;
   min-height: 1px;
   opacity: 0;
-  background: rgba(255, 255, 255, 0.5); /* 透明态浅色下划线，暗图上也可见 */
-  transition: width var(--transition-base), opacity 0.2s ease-in-out, background-color var(--transition-base);
+  background: rgba(10, 10, 10, 0.32);
+  transition: width var(--transition-base), opacity 0.2s ease-in-out;
 }
 
 .nav-link:hover::after {
