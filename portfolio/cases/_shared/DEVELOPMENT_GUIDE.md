@@ -272,14 +272,14 @@ portfolio/
 **核心适配原则**
 1. **间距用 padding，不用 margin**（板块之间用 margin 会造成嵌套叠加 → 间距翻倍）
 2. **间距单位统一用 rem**（基准 16px，1rem=16px；换算注释保留如 `/* 64px */`），禁止新增 px 间距；与图片/边框对齐的精确值除外（如卡片内边距基准 `0 0 32px 108px → 0 0 2rem 6.75rem` 注释注明）
-3. 展示类板块（two-blocks / screen / image / video）之间**仅 4px（0.25rem）紧贴**
+3. 展示类板块（two-blocks / screen / image）之间**仅 4px（0.25rem）紧贴**
 4. 文字内容区（intro / challenges / testimonials / next-projects 头部）才用**大间距（4rem / 5rem）**
 5. 移动端**多列保持横向**，禁止改成纵向（屏幕墙规则已内置）
 6. 断点内**不要擅自加宽度微调**，模板已适配；如确需调整，加到 components.css 对应断点并注释理由
 
 ---
 
-## 七、板块系统（render.js 18 种板块，DOM 结构 = class 约定）
+## 七、板块系统（render.js 19 种板块，DOM 结构 = class 约定）
 
 | type | section class | 内部结构 | 尺寸要点 |
 |---|---|---|---|
@@ -295,7 +295,6 @@ portfolio/
 | `gallery` | `.screen-section` | `.screen-content`(白卡) > `.screen-info` + `.screen-wall`(2/3列) | 白卡 padding 60px；列宽 2列 474px / 3列 273px；列错落由每列 `offsetRem`（rem 单位）独立控制：**设置多少就是多少（1rem=16px），未填/为 0 即顶部对齐，不互相牵连、无自动微调**（移动端恒 `margin-top: 0 !important` 强制对齐） |
 | `single-image` | `.image-section` | `.image-single > .single-img` | 1136/710，25px 圆角 |
 | `double-image` | `.image-section` | 内联 grid 2列 | 1:1，4px 间距 |
-| `video` | `.video-section` | `.section-video-embed`(grid 1/2列) | 1136/608 |
 | `testimonial` | `.testimonials-section` | `.big-title` + `.testimonial-card`(avatar/info/quote) | 深色全宽、min-height 100svh、圆角 32px 顶；卡片 grid 200px 1fr |
 | `title` | `.title-section` | `.container > .title-row`（`.title-big` + `.title-info`>`.title-tagline`+`.title-desc`） | 独立标题组件：左超大标题 148px/600，右「版权小字 + 内容描述」列（gap 16px、max-width 365px、底部对齐、标题间距 80px）；`padding: 5rem 0 0`；移动端单列（52px、gap 24px、padding-top 3rem）。字段：title / copyright / description / size。size 为 PC 端字号档位（96/124/148/176，默认 148px，移动端统一 52px）。标题大字带逐字进场动画（与旧 Hero 标题同机制，`.title-big.reveal` 不淡入、`.char-animate` 逐个弹出，hover 可重播）。**旧 Hero 里的 `title` 与旧特效双图里的 title/copyright/allProjectsText 字段都会自动迁移为 title 组件**（render.js 与 admin loadState 均有迁移，admin 保存后内容即写回干净结构） |
 | `next-projects` | `.next-projects-section` | 多个 `.next-projects-group`（各自 `.projects-grid > a.project-card`） | **只含图片卡片组**（大标题/版权/描述已独立为 `title` 组件）；margin 均 0；组间 `margin-top: 4rem`；卡片图 722/546 + hover-effect，图片顶部直角、底部由卡片 18px 圆角裁切；标题栏「名称/年份」单行基线对齐，名称 18px/600 黑、年份与分隔符 12px/400 灰（移动端名称 16px） |
@@ -304,7 +303,7 @@ portfolio/
 | `services` | `.services-section` | `.services-label` + `.services-title` + `.services-list`(.service-item × n) | **深色区块** bg #0F0F11，padding 6rem 2rem（移动 4.5rem 1.25rem）；条目间细灰分割线 `border-top rgba(255,255,255,.12)`；header flex（编号 96px 左对齐 + 标题 + 圆形 +/- 按钮 40px，竖线淡出切换无旋转）；展开内容左右两栏 grid（左：标题+描述 #888888；右：Categories #888888 + 白色胶囊标签 #000/100px），左对齐基准 120px；max-height 640px |
 | `team` | `.team-section` | `.team-card-wrap`（白色圆角卡片） > `.team-text`（`.team-title` 两行 + `.team-columns` 左右两栏） + `.team-grid`（2×2 拼图） | margin 5rem（移动 60px）；白底 `#fff` 圆角 25px、padding 10px；左文本区 padding 60px（标题 52px：第一行黑 `.team-title-a` / 第二行灰 rgba(10,10,10,.6) `.team-title-b`；columns 2 栏 gap 16px，左栏 label 18px + desc 16px + 黑色胶囊按钮 30px/100px，右栏 desc 22px）；右 `.team-grid` 500px、2 列 gap 4px、每卡圆角 18px、4:5；**不显示姓名职位** → 移动端卡片纵向堆叠、text padding 28/24、columns 单栏、grid 100% 保持 2 列 |
 
-**间距统一规范（2026-08 统一）**：透明背景区块一律用 `margin`（PC 上下各 5rem = 80px，移动端 60px）；带背景色的区块一律用 `padding`（背景色延伸到间距区域保持连续）：services 深色 6rem、testimonials 深色 8rem（100svh 区块，内部留白）；next-projects 浅色区块例外——与 testimonials 紧贴、与 footer 衔接，margin/padding 均 0（移动端仅 `padding: 0 16px`）。4px 微距的紧密衔接区块（parallax/showcase/gallery/video 等）例外，保持 `0.25rem` 间距。
+**间距统一规范（2026-08 统一）**：透明背景区块一律用 `margin`（PC 上下各 5rem = 80px，移动端 60px）；带背景色的区块一律用 `padding`（背景色延伸到间距区域保持连续）：services 深色 6rem、testimonials 深色 8rem（100svh 区块，内部留白）；next-projects 浅色区块例外——与 testimonials 紧贴、与 footer 衔接，margin/padding 均 0（移动端仅 `padding: 0 16px`）。4px 微距的紧密衔接区块（parallax/showcase/gallery 等）例外，保持 `0.25rem` 间距。
 
 **新增板块的步骤（这是你唯一需要投入的地方）**
 1. 在 `render.js` 加 `type → 渲染函数`（`RENDERERS` + `TYPE_LABELS`）
