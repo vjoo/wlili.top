@@ -1288,17 +1288,28 @@ var CaseRenderer = (function () {
       if (h > maxFirstH) maxFirstH = h;
     }
     var isV2 = mode === 'v2';
+    // V2：只有当用户在某列填过 offsetRem 时才启用错落（含微校正）；
+    // 全部未设置/为 0 时各列顶部对齐，避免因首图高度差异产生意外阶梯
+    var hasUserOffset = false;
+    if (isV2) {
+      for (var k = 0; k < cols.length; k++) {
+        if (cols[k].getAttribute('data-offset-rem')) { hasUserOffset = true; break; }
+      }
+    }
     for (var j = 0; j < cols.length; j++) {
       var offsetPx;
       if (isV2) {
-        // V2：优先读用户在编辑器里填的每列 offsetRem（最直观）
-        var raw = cols[j].getAttribute('data-offset-rem');
-        var remVal = raw ? Math.max(0, parseFloat(raw) || 0) : 0;
-        offsetPx = Math.round(remVal * remPx);
-        // 微校正：如果第 j 列首图比第 0 列矮很多，再往下错会更反向——这里加一个轻度校正（0.3 权重）
-        var diffToCol0 = firstHs[j] - firstHs[0];
-        if (firstHs[0]) {
-          offsetPx = Math.max(0, offsetPx + Math.max(0, -diffToCol0 * 0.3));
+        offsetPx = 0;
+        if (hasUserOffset) {
+          // V2：优先读用户在编辑器里填的每列 offsetRem（最直观）
+          var raw = cols[j].getAttribute('data-offset-rem');
+          var remVal = raw ? Math.max(0, parseFloat(raw) || 0) : 0;
+          offsetPx = Math.round(remVal * remPx);
+          // 微校正：如果第 j 列首图比第 0 列矮很多，再往下错会更反向——这里加一个轻度校正（0.3 权重）
+          var diffToCol0 = firstHs[j] - firstHs[0];
+          if (firstHs[0]) {
+            offsetPx = Math.max(0, offsetPx + Math.max(0, -diffToCol0 * 0.3));
+          }
         }
       } else {
         // Legacy：旧 screens 数据，按原图预设比例（3列中间/右边下挫；2列右边下挫）
