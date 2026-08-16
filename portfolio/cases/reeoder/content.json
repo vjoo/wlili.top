@@ -4,25 +4,167 @@
     {
       "id": "smsvg6cq9e3gt",
       "type": "hero-banner",
-      "title": "Premium Digital Agency for Startups, SaaS & Brands",
-      "labels": [
-        {
-          "text": "50+ employees"
-        },
-        {
-          "text": "6 countries"
-        },
-        {
-          "text": "Founded in 2010"
-        }
-      ],
-      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
-      "videoType": "image",
+      "title": "\n",
+      "labels": [],
+      "description": "",
+      "videoType": "carousel",
       "image": "/portfolio/cases/reeoder/uploads/1786863168048.jpg",
       "videoUrl": "",
-      "effect": "slide",
-      "autoplayDelay": "4000",
-      "images": []
+      "effect": "fs",
+      "autoplayDelay": "5000",
+      "images": [
+        {
+          "image": "/portfolio/cases/reeoder/uploads/1786865812460.jpg",
+          "title": "Yeeorder New Engine of Global Sourcing and International Trade",
+          "labels": [
+            "20+ 全球空运航线",
+            "业务覆盖 35 个国家及地区",
+            "2010 年成立"
+          ],
+          "subtitle": "打通端到端跨境物流通道，联结全球贸易伙伴，打造全程可视、彼此信赖的一体化国际供应网络。"
+        },
+        {
+          "image": "/portfolio/cases/reeoder/uploads/1786865819617.jpg",
+          "title": "Yeeorder Reliable Backbone of Global Cross-border Trade",
+          "labels": [
+            "80+ 全球港口服务点位",
+            "航运网络遍及 42 个国家及地区",
+            "2010 年成立"
+          ],
+          "subtitle": "打通端到端跨境物流通道，联结全球贸易伙伴，打造全程可视、彼此信赖的一体化国际供应网络。"
+        },
+        {
+          "image": "/portfolio/cases/reeoder/uploads/1786867254550.jpg",
+          "title": "Yeeorder Integrated Link Connecting Global Trade Partners",
+          "labels": [
+            "300+ 合作物流服务商",
+            "服务辐射 48 个国家及地区",
+            "2010 年成立"
+          ],
+          "subtitle": "打通端到端跨境物流通道，联结全球贸易伙伴，打造全程可视、彼此信赖的一体化国际供应网络。"
+        }
+      ]
+    },
+    {
+      "id": "smsvi3k88fv46",
+      "type": "intro",
+      "label": "中外运・跨境物流智能调度平台",
+      "heading": "",
+      "rows": [
+        {
+          "id": "r_smsvi3k8amx0t",
+          "type": "text",
+          "label": "Year",
+          "value": "2025"
+        },
+        {
+          "id": "r_smsvi4rlpmjdr",
+          "type": "text",
+          "label": "Industry",
+          "value": "国际海运、跨境供应链物流"
+        },
+        {
+          "id": "r_smsvi4weymu2f",
+          "type": "tags",
+          "label": "Scope of work",
+          "value": [
+            "App 产品设计",
+            "货主端与码头运营端设计",
+            "集装箱 IoT 定位系统联调",
+            "物流调度中台设计",
+            "品牌视觉规范",
+            "交互动效设计"
+          ]
+        },
+        {
+          "id": "r_smsvi6dtnbr75",
+          "type": "text",
+          "label": "Timeline",
+          "value": "18"
+        }
+      ]
+    },
+    {
+      "id": "smsviw9692uql",
+      "type": "clients",
+      "label": "Our clients",
+      "heading": "",
+      "logos": [
+        {
+          "name": "",
+          "image": "/portfolio/cases/reeoder/uploads/1786867933028.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/reeoder/uploads/1786867937565.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/reeoder/uploads/1786867941957.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/reeoder/uploads/1786867950682.jpg"
+        }
+      ],
+      "logosPerRow": "",
+      "logoStyle": "grayscale"
+    },
+    {
+      "id": "smsviprlhjaaj",
+      "type": "gallery",
+      "label": "Mobile Landing Page",
+      "heading": "信息密度高、节奏紧凑的移动端落地页：一屏讲清 \"一把智能锁，管一整套房\"。",
+      "colCount": "3",
+      "columns": [
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smsviqr8jpn76",
+              "src": "/portfolio/cases/reeoder/uploads/1786867477820.jpg"
+            },
+            {
+              "id": "smsvirfz25xlf",
+              "src": "/portfolio/cases/reeoder/uploads/1786867495484.jpg"
+            },
+            {
+              "id": "smsvirtgvzzem",
+              "src": "/portfolio/cases/reeoder/uploads/1786867502822.jpg"
+            },
+            {
+              "id": "smsvis3pzez8o",
+              "src": "/portfolio/cases/reeoder/uploads/1786867533035.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smsvj75suscla",
+              "src": "/portfolio/cases/reeoder/uploads/1786868288303.jpg"
+            },
+            {
+              "id": "smsvisn5kc2kb",
+              "src": "/portfolio/cases/reeoder/uploads/1786867547770.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smsvj8yl2zmm7",
+              "src": "/portfolio/cases/reeoder/uploads/1786868309979.jpg"
+            },
+            {
+              "id": "smsvj9ftet9e4",
+              "src": "/portfolio/cases/reeoder/uploads/1786868337519.jpg"
+            }
+          ]
+        }
+      ]
     }
   ],
   "letsTalk": {
