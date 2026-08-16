@@ -2165,7 +2165,7 @@ const TYPE_FIELDS = {
     { key: 'label', label: '标签', type: 'text' },
     { key: 'heading', label: '标题', type: 'textarea' },
     { key: 'body', label: '正文', type: 'textarea' },
-    { key: 'linkPage', label: '站内页面跳转', type: 'text', hint: '填页面 key（如 works），渲染为 ../works/index.html；优先于链接URL' },
+    { key: 'linkPage', label: '站内页面跳转', type: 'page-select', hint: '选择站内页面（渲染为 ../页面key/index.html），优先于链接URL；也可留空' },
     { key: 'linkUrl', label: '链接URL（外链，新窗口）', type: 'text' },
     { key: 'linkText', label: '链接文字', type: 'text' }
   ],
@@ -3064,6 +3064,10 @@ function renderEditorForm(section) {
         });
         html += `</select>`;
         break;
+      case 'page-select':
+        // 站内页选择：选项来自 /api/pages 缓存（PAGE_OPTIONS），留空=无跳转
+        html += `<select class="form-select" data-bind-key="${esc(f.key)}" data-bind-ftype="page-select" data-page-select="1" id="${fieldUid}">${pageSelectOptions(val)}</select>`;
+        break;
       case 'tags':
         // 兼容对象数组（如 labels: [{text:'50+ employees'}, ...]）→ 只提取 text 显示，避免出现 [object Object]
         html += `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="tags" type="text" placeholder="用英文逗号分隔" value="${esc(Array.isArray(val) ? val.map((x) => (x && typeof x === 'object' ? (x.text || '') : x)).filter(Boolean).join(', ') : (val || ''))}" id="${fieldUid}">`;
@@ -3113,6 +3117,9 @@ function renderEditorForm(section) {
   });
   html += '</div>';
   container.innerHTML = html;
+  // 站内页下拉兜底刷新：PAGE_OPTIONS 可能晚于编辑器渲染完成，确保加载后用最新列表重填选项并保留选中值
+  refreshPageSelects();
+  ensurePageOptions().then(() => refreshPageSelects());
 
   // Bind two-way for scalar fields
   container.querySelectorAll('[data-bind-key]').forEach((inp) => {
@@ -4382,11 +4389,11 @@ function renderCardsListField(key, list, uid) {
       </div>
       <div class="lf-row">
         <div class="form-group">
-          <label class="form-label">站内跳转（linkPage key）</label>
-          <input class="form-input" data-cl-key="linkPage" data-cl-idx="${i}" type="text" value="${esc(c.linkPage || '')}" placeholder="如 works">
+          <label class="form-label">站内跳转（选择页面，留空=无）</label>
+          <select class="form-select" data-cl-key="linkPage" data-cl-idx="${i}" data-page-select="1">${pageSelectOptions(c.linkPage || '')}</select>
         </div>
         <div class="form-group">
-          <label class="form-label">外链 href（linkPage 为空时生效）</label>
+          <label class="form-label">外链 href（站内跳转为空时生效）</label>
           <input class="form-input" data-cl-key="href" data-cl-idx="${i}" type="text" value="${esc(c.href || '')}">
         </div>
       </div>
@@ -5225,6 +5232,49 @@ async function loadPageSwitcher() {
     ).join('');
     sel.onchange = () => switchPageWithConfirm(sel.value);
   });
+}
+
+/* ===== 站内页选择器：/api/pages 缓存，供 linkPage 字段下拉选择 ===== */
+let PAGE_OPTIONS = [];
+let pageOptionsPromise = null;
+async function loadPageOptions() {
+  try {
+    const data = await apiGlobal('/api/pages');
+    PAGE_OPTIONS = (data && data.pages) || [];
+  } catch (e) {
+    console.warn('loadPageOptions failed:', e);
+    PAGE_OPTIONS = [];
+  }
+  pageOptionsPromise = null;
+  // 若编辑器已打开，刷新所有站内页 select 选项（保留各自选中值）
+  refreshPageSelects();
+}
+// 确保页面选项已加载（渲染编辑器时兜底调用；PAGE_OPTIONS 已有数据则直接返回）
+function ensurePageOptions() {
+  if (PAGE_OPTIONS.length) return Promise.resolve();
+  if (!pageOptionsPromise) pageOptionsPromise = loadPageOptions();
+  return pageOptionsPromise;
+}
+// 用最新 PAGE_OPTIONS 刷新页面上所有站内页下拉，并保留各下拉当前选中值
+function refreshPageSelects() {
+  document.querySelectorAll('select[data-page-select]').forEach((sel) => {
+    const cur = sel.value;
+    sel.innerHTML = pageSelectOptions(cur);
+    sel.value = cur;
+  });
+}
+// 生成站内页选择器选项：空=无跳转；始终保留当前值（兼容旧数据中已失效的 key）
+function pageSelectOptions(current) {
+  const cur = String(current || '');
+  let html = '<option value="">— 无跳转 —</option>';
+  (PAGE_OPTIONS || []).forEach((p) => {
+    if (!p || !p.key) return;
+    html += '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc((p.title || p.key) + ' · ' + p.key) + '</option>';
+  });
+  if (cur && !(PAGE_OPTIONS || []).some((p) => p.key === cur)) {
+    html += '<option value="' + esc(cur) + '" selected>' + esc(cur) + '（页面已不存在）</option>';
+  }
+  return html;
 }
 
 function openPgNew() {

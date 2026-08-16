@@ -42,24 +42,18 @@
       "description": "We've helped businesses across industries achieve\ntheir goals. Here are some of our recent projects."
     },
     {
-      "id": "smspt62o385co",
-      "type": "hero",
-      "videoUrl": "",
-      "videoType": "placeholder"
-    },
-    {
       "id": "smsprwcl5kz27",
       "type": "next-projects",
       "groups": [
         {
           "cards": [
             {
-              "name": "",
+              "name": "中外运・跨境物流智能调度平台",
               "year": "",
               "href": "",
               "linkPage": "",
-              "image1": "",
-              "image2": ""
+              "image1": "/portfolio/cases/pjlist/uploads/1786878630781.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786878646512.jpg"
             },
             {
               "name": "",

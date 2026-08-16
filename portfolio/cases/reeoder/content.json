@@ -87,7 +87,7 @@
     {
       "id": "smsviw9692uql",
       "type": "clients",
-      "label": "Our clients",
+      "label": "",
       "heading": "",
       "logos": [
         {
@@ -96,45 +96,58 @@
         },
         {
           "name": "",
-          "image": "/portfolio/cases/reeoder/uploads/1786867937565.jpg"
+          "image": "/portfolio/cases/reeoder/uploads/1786873985429.jpg"
         },
         {
           "name": "",
-          "image": "/portfolio/cases/reeoder/uploads/1786867941957.jpg"
+          "image": "/portfolio/cases/reeoder/uploads/1786873739889.jpg"
         },
         {
           "name": "",
-          "image": "/portfolio/cases/reeoder/uploads/1786867950682.jpg"
+          "image": "/portfolio/cases/reeoder/uploads/1786873786073.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/reeoder/uploads/1786873939297.jpg"
         }
       ],
       "logosPerRow": "",
-      "logoStyle": "grayscale"
+      "logoStyle": "color"
     },
     {
       "id": "smsviprlhjaaj",
       "type": "gallery",
-      "label": "Mobile Landing Page",
-      "heading": "信息密度高、节奏紧凑的移动端落地页：一屏讲清 \"一把智能锁，管一整套房\"。",
+      "label": "App&Web",
+      "heading": "一款货主、货代、码头调度端一体化的跨境物流运营平台，一站式完成海陆空订舱、集装箱追踪、在线对账报关与全链路货运管理。",
       "colCount": "3",
       "columns": [
         {
           "offsetRem": 0,
           "images": [
             {
-              "id": "smsviqr8jpn76",
-              "src": "/portfolio/cases/reeoder/uploads/1786867477820.jpg"
+              "id": "smsvkimd4gv7x",
+              "src": "/portfolio/cases/reeoder/uploads/1786871579231.jpg"
             },
             {
-              "id": "smsvirfz25xlf",
-              "src": "/portfolio/cases/reeoder/uploads/1786867495484.jpg"
+              "id": "smsvl7bcdqp73",
+              "src": "/portfolio/cases/reeoder/uploads/1786871597346.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 5,
+          "images": [
+            {
+              "id": "smsvl81setewg",
+              "src": "/portfolio/cases/reeoder/uploads/1786872018068.jpg"
             },
             {
-              "id": "smsvirtgvzzem",
-              "src": "/portfolio/cases/reeoder/uploads/1786867502822.jpg"
+              "id": "smsvl8dsvwf6l",
+              "src": "/portfolio/cases/reeoder/uploads/1786871649671.jpg"
             },
             {
-              "id": "smsvis3pzez8o",
-              "src": "/portfolio/cases/reeoder/uploads/1786867533035.jpg"
+              "id": "smsvla87syesf",
+              "src": "/portfolio/cases/reeoder/uploads/1786871722620.jpg"
             }
           ]
         },
@@ -142,29 +155,128 @@
           "offsetRem": 0,
           "images": [
             {
-              "id": "smsvj75suscla",
-              "src": "/portfolio/cases/reeoder/uploads/1786868288303.jpg"
+              "id": "smsvkkhhvitdt",
+              "src": "/portfolio/cases/reeoder/uploads/1786870530173.jpg"
             },
             {
-              "id": "smsvisn5kc2kb",
-              "src": "/portfolio/cases/reeoder/uploads/1786867547770.jpg"
-            }
-          ]
-        },
-        {
-          "offsetRem": 0,
-          "images": [
-            {
-              "id": "smsvj8yl2zmm7",
-              "src": "/portfolio/cases/reeoder/uploads/1786868309979.jpg"
+              "id": "smsvkm4hxviq7",
+              "src": "/portfolio/cases/reeoder/uploads/1786870595081.jpg"
             },
             {
-              "id": "smsvj9ftet9e4",
-              "src": "/portfolio/cases/reeoder/uploads/1786868337519.jpg"
+              "id": "smsvkm89vwokx",
+              "src": "/portfolio/cases/reeoder/uploads/1786870601770.jpg"
+            },
+            {
+              "id": "smsvklw54f4fq",
+              "src": "/portfolio/cases/reeoder/uploads/1786870590682.jpg"
+            },
+            {
+              "id": "smsvlaixfiahr",
+              "src": "/portfolio/cases/reeoder/uploads/1786871896000.jpg"
             }
           ]
         }
       ]
+    },
+    {
+      "id": "smsvn10bzss0h",
+      "type": "next-projects",
+      "groups": [
+        {
+          "cards": [
+            {
+              "name": "可视化大屏",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "/portfolio/cases/reeoder/uploads/1786874671075.jpg",
+              "image2": "/portfolio/cases/reeoder/uploads/1786874866822.jpg"
+            },
+            {
+              "name": "移动端",
+              "year": "",
+              "href": "",
+              "linkPage": "",
+              "image1": "/portfolio/cases/reeoder/uploads/1786877218637.jpg",
+              "image2": "/portfolio/cases/reeoder/uploads/1786878148633.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "smsvkvhtqrx2p",
+      "type": "text",
+      "label": "Challenges",
+      "heading": "客户需要一套数字化物流系统，整合分散的海运、空运、陆运资源，替代线下人工询价、线下订舱、纸质对账传统模式，降低国内工厂与海外采购商之间的沟通与履约成本。",
+      "body": "项目从 PC 管理后台起步，已有基础原型等待视觉与体验深化。品牌主视觉定为干净工业蓝，面向工厂货主、货代从业者、海外采购商群体 —— 追求时效稳定、全程可视化、运价透明的跨境贸易从业者。",
+      "linkPage": "",
+      "linkUrl": "",
+      "linkText": ""
+    },
+    {
+      "id": "smsvk4lwn01bb",
+      "type": "showcase",
+      "label": "",
+      "desc": "完成基础功能模块后，项目拓展运价优惠商城、长期合约管理、报关单据自动生成、多币种结算运营板块，完整案例详情向下浏览。",
+      "image": "/portfolio/cases/reeoder/uploads/1786869796705.jpg",
+      "videoUrl": "",
+      "videoType": "image"
+    },
+    {
+      "id": "smsvk7q75jfao",
+      "type": "gallery",
+      "label": "",
+      "heading": "",
+      "colCount": "2",
+      "columns": [
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smsvk7r83vddb",
+              "src": "/portfolio/cases/reeoder/uploads/1786871326143.jpg"
+            },
+            {
+              "id": "smsvk8py2ojuk",
+              "src": "/portfolio/cases/reeoder/uploads/1786871299278.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 5,
+          "images": [
+            {
+              "id": "smsvl1y11uy77",
+              "src": "/portfolio/cases/reeoder/uploads/1786871336102.jpg"
+            },
+            {
+              "id": "smsvk9oc6t7g3",
+              "src": "/portfolio/cases/reeoder/uploads/1786870018037.jpg"
+            },
+            {
+              "id": "smsvl24n3hgzl",
+              "src": "/portfolio/cases/reeoder/uploads/1786871344885.jpg"
+            },
+            {
+              "id": "smsvl3e6chmb6",
+              "src": "/portfolio/cases/reeoder/uploads/1786871404956.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "smsvlkeihrffc",
+      "type": "double-image",
+      "image1": "/portfolio/cases/reeoder/uploads/1786872204000.jpg",
+      "image2": "/portfolio/cases/reeoder/uploads/1786872208854.jpg"
+    },
+    {
+      "id": "smsvmnmi9taxu",
+      "type": "double-image",
+      "image1": "/portfolio/cases/reeoder/uploads/1786874033592.jpg",
+      "image2": "/portfolio/cases/reeoder/uploads/1786874044438.jpg"
     }
   ],
   "letsTalk": {
