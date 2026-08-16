@@ -1348,7 +1348,10 @@ body {
 }
 .list-field-item .lf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .list-field-item .lf-head { display: flex; align-items: center; justify-content: space-between; }
+.list-field-item .lf-head-actions { display: flex; align-items: center; gap: 4px; }
 .list-field-item .lf-title { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.btn-icon:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-icon:disabled:hover { background: transparent; color: inherit; }
 .list-field-add { margin-top: 4px; }
 /* 特效双图多组（groups-list）：组内标量行与嵌套卡片区 */
 .gl-scalar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
@@ -3943,7 +3946,11 @@ function renderItemsListField(field, list, uid) {
     return `<div class="list-field-item" data-lf-item="${i}">
       <div class="lf-head">
         <span class="lf-title">${esc(itemLabel)} #${i + 1}</span>
-        <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        <div class="lf-head-actions">
+          <button type="button" class="btn-icon" data-lf-move="up" data-lf-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+          <button type="button" class="btn-icon" data-lf-move="down" data-lf-idx="${i}" title="下移"${i === list.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+          <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
       </div>
       ${body}
     </div>`;
@@ -3992,6 +3999,21 @@ function bindItemsListField(field, uid) {
     wrap.dataset.lfBound = '1';
     // 删除 / 添加条目（委托）
     wrap.addEventListener('click', (e) => {
+      const mv = e.target.closest('[data-lf-move]');
+      if (mv) {
+        const idx = parseInt(mv.dataset.lfIdx);
+        const dir = mv.dataset.lfMove === 'up' ? -1 : 1;
+        const list = collectItemsList(key, uid);
+        const j = idx + dir;
+        if (j < 0 || j >= list.length) return;
+        const tmp = list[idx];
+        list[idx] = list[j];
+        list[j] = tmp;
+        state.sections[selectedIndex][key] = list;
+        rebind();
+        onSectionChanged();
+        return;
+      }
       const del = e.target.closest('[data-lf-remove]');
       if (del) {
         const idx = parseInt(del.dataset.lfRemove);
