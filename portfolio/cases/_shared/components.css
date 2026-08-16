@@ -2006,7 +2006,8 @@
   display: block;
 }
 
-/* 轮播左右切换按钮：默认隐藏，鼠标悬停轮播图时显现（配套 pauseOnMouseEnter 暂停自动播放的交互） */
+/* 轮播左右切换按钮：默认隐藏，鼠标悬停轮播图时显现（hover 只显箭头、不暂停自动播放；
+   自动播放接管逻辑见 render.js initCarousels：点击切换停止、移出/触摸后延迟恢复） */
 .swiper-nav {
   position: absolute;
   top: 50%;
