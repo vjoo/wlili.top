@@ -572,7 +572,6 @@ var CaseRenderer = (function () {
           // 自动播放接管策略：hover 不暂停；点击箭头切换时停止（disableOnInteraction:true 让 Swiper 不再自行恢复），
           // 由下方 mouseleave / touchEnd 延迟恢复自动播放
           autoplay: slideCount > 1 ? { delay: delay, disableOnInteraction: true, pauseOnMouseEnter: false } : false,
-          grabCursor: slideCount > 1,
           resistance: true,
           navigation: {
             nextEl: box.querySelector('.swiper-nav-next'),
