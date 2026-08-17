@@ -290,8 +290,9 @@
 
 /* ========== CHALLENGES SECTION ========== */
 .challenges-section {
-  margin-top: 5rem;   /* 原 7.25rem = 116px，缩半到 64px，减少上下巨大空白 */
-  margin-bottom: 5rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 5rem 0;   /* 板块间距用 padding（无背景，视觉与 margin 等价） */
 }
 
 .challenges-main {
@@ -1024,8 +1025,9 @@
   }
 
   .challenges-section {
-    margin-top: 2.5rem;
-    margin-bottom: 2.5rem;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 2.5rem 0;
   }
 
   .section-heading {
@@ -1209,8 +1211,9 @@
 
 /* ========== CLIENTS SECTION（客户 Logo 条） ========== */
 .clients-section {
-  margin-top: 5rem;
-  margin-bottom: 5rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 5rem 0;   /* 板块间距用 padding（无背景，视觉与 margin 等价） */
 }
 
 .clients-main {
@@ -1278,8 +1281,9 @@
 
 /* ========== STATS SECTION（左圆角图片 + 右标题/描述/白色圆角数字卡） ========== */
 .stats-section {
-  margin-top: 5rem;
-  margin-bottom: 5rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 5rem 0;   /* 板块间距用 padding（无背景，视觉与 margin 等价） */
 }
 
 .stats-main {
@@ -1551,8 +1555,9 @@
 
 /* ========== TEAM SECTION（白色卡片 + 左文字右 2×2 头像拼图） ========== */
 .team-section {
-  margin-top: 5rem;
-  margin-bottom: 5rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 5rem 0;   /* 板块间距用 padding（无背景，视觉与 margin 等价） */
 }
 
 .team-card-wrap {
@@ -1688,8 +1693,9 @@
    ⚠️ 必须放在 PC 规则（.stats-section 5rem）之后，否则被覆盖 */
 @media (max-width: 1024px) {
   .stats-section {
-    margin-top: 2.5rem;
-    margin-bottom: 2.5rem;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 2.5rem 0;
   }
   .stats-layout {
     margin-top: 0;
@@ -1708,8 +1714,9 @@
 
   /* 移动端 stats 上下间距单独收紧（60px→40px），避免与 hero-banner 底部留白叠加过大 */
   .stats-section {
-    margin-top: 2.5rem;
-    margin-bottom: 2.5rem;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 2.5rem 0;
   }
 
   /* 移动端：stats-layout 不再叠加上下 margin（由 section 统一控制），
