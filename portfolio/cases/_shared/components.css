@@ -1023,8 +1023,8 @@
   }
 
   .challenges-section {
-    margin-top: 3.75rem;
-    margin-bottom: 3.75rem;
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
   }
 
   .section-heading {
@@ -1039,6 +1039,18 @@
   .screen-section {
     margin-top: 0.25rem;
     margin-bottom: 0.25rem;
+  }
+
+  /* 两块区白卡内边距收紧（PC 60px → 移动端 32/24px） */
+  .block-text {
+    padding: 2rem 1.5rem;
+    gap: 1.25rem;
+  }
+
+  /* 屏幕墙白卡内边距/组间距收紧（PC 60px → 移动端 32/24px） */
+  .screen-content {
+    padding: 2rem 1.5rem;
+    gap: 2rem;
   }
 
   /* 移动端：保持多列布局不变，只是缩小列宽 + 列间距（原版是整体等比缩放） */
@@ -1125,6 +1137,12 @@
 
   .next-projects-section {
     padding: 0 1rem;
+  }
+
+  /* 特效双图组间间距收紧（PC 4rem → 移动端 2.5rem） */
+  .next-projects-group {
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
   }
 
   /* 移动端：标题上方间距收紧（PC 4rem → 2.5rem） */
