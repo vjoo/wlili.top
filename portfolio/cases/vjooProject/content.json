@@ -178,7 +178,7 @@
       "type": "showcase",
       "label": "Platform Page",
       "desc": "出租管理，从未如此简单！远程发钥匙、电子合同、在线抄表缴费，一个 App 全搞定。",
-      "image": "/portfolio/cases/vjooProject/uploads/1786414819636.jpg",
+      "image": "/portfolio/cases/vjooProject/uploads/1786971831849.jpg",
       "videoUrl": "",
       "videoType": "image"
     },
@@ -203,19 +203,15 @@
           "images": [
             {
               "id": "smsnfsqx0fejh",
-              "src": "../_shared/placeholder.svg"
+              "src": "/portfolio/cases/vjooProject/uploads/1786972991720.jpg"
             },
             {
               "id": "smsnfsqx0nqpl",
-              "src": "../_shared/placeholder.svg"
+              "src": "/portfolio/cases/vjooProject/uploads/1786972112433.jpg"
             },
             {
               "id": "smsnfv7mm9enx",
-              "src": "/portfolio/cases/vjooProject/uploads/1786378888025.webp"
-            },
-            {
-              "id": "smsnfvc0pg3u6",
-              "src": "/portfolio/cases/vjooProject/uploads/1786378893714.webp"
+              "src": "/portfolio/cases/vjooProject/uploads/1786972117197.jpg"
             }
           ]
         },
@@ -224,19 +220,27 @@
           "images": [
             {
               "id": "smsnfsqx0rrww",
-              "src": "../_shared/placeholder.svg"
+              "src": "/portfolio/cases/vjooProject/uploads/1786972616836.jpg"
             },
             {
               "id": "smsnfsqx04rmb",
-              "src": "../_shared/placeholder.svg"
+              "src": "/portfolio/cases/vjooProject/uploads/1786972621885.jpg"
             },
             {
               "id": "smsnfvpsq229n",
-              "src": "/portfolio/cases/vjooProject/uploads/1786378911569.webp"
+              "src": "/portfolio/cases/vjooProject/uploads/1786972645439.jpg"
             }
           ]
         }
       ]
+    },
+    {
+      "id": "s16",
+      "type": "showcase",
+      "label": "color",
+      "desc": "多款 App 统一采用干净明亮的清新视觉色系，简约通透、视觉表现亮眼，成套视觉体系贯穿全线产品，塑造统一且富有记忆点的品牌视觉风格。",
+      "image": "/portfolio/cases/vjooProject/uploads/1786980750781.jpg",
+      "videoType": "image"
     },
     {
       "id": "s12",
@@ -306,76 +310,7 @@
       "label": "Notification",
       "desc": "在注册即收邮件的时代，我们不让通知淹没在收件箱里。钥匙到期、账单生成、续租提醒，每一封都精心设计，贴合品牌视觉。",
       "image": "/portfolio/cases/vjooProject/uploads/1786415006246.jpg",
-      "icons": [
-        "FB",
-        "IG",
-        "LI",
-        "X",
-        "YT"
-      ],
       "videoType": "image"
-    },
-    {
-      "id": "s16",
-      "type": "showcase",
-      "label": "color",
-      "desc": "多款 App 统一采用干净明亮的清新视觉色系，简约通透、视觉表现亮眼，成套视觉体系贯穿全线产品，塑造统一且富有记忆点的品牌视觉风格。",
-      "image": "/portfolio/cases/vjooProject/uploads/1786938880024.jpg",
-      "videoType": "image"
-    },
-    {
-      "id": "s17",
-      "type": "single-image",
-      "image": "../_shared/placeholder.svg"
-    },
-    {
-      "id": "s18",
-      "type": "double-image",
-      "image1": "../_shared/placeholder.svg",
-      "image2": "../_shared/placeholder.svg"
-    },
-    {
-      "id": "s21",
-      "type": "testimonial",
-      "title": "Clients Testimonials",
-      "avatarInitials": "W",
-      "name": "",
-      "role": "",
-      "quote": "出租房设计团队是把我们的想法变成产品的关键伙伴。他们出色的产品能力，把 \"智能锁 + 出租管理\" 的构想变成了美观又好用的 App。清爽直观的界面不仅让房东上手更快，也显著提升了租客的使用体验。"
-    },
-    {
-      "id": "smsspxm9aireo",
-      "type": "title",
-      "title": "Projects",
-      "copyright": "2010-26©",
-      "description": "We've helped businesses across industries achieve their goals. Here are some of our recent projects.",
-      "size": "148"
-    },
-    {
-      "id": "s22",
-      "type": "next-projects",
-      "groups": [
-        {
-          "cards": [
-            {
-              "name": "Xefag",
-              "year": "",
-              "href": "",
-              "linkPage": "",
-              "image1": "",
-              "image2": ""
-            },
-            {
-              "name": "Xefag",
-              "year": "",
-              "href": "",
-              "linkPage": "",
-              "image1": "",
-              "image2": ""
-            }
-          ]
-        }
-      ]
     }
   ],
   "letsTalk": {

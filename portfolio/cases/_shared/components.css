@@ -155,18 +155,19 @@
 }
 
 /* Intro Section (project-info)
- * ⚠️ 间距唯一控制点：只在内层 .project-info 上
- * 外层 <section.intro-section.container> 故意不设 margin，避免两层同名叠加 8rem
+ * ⚠️ 间距控制点：section 的 padding-block（与其他板块一致的写法）
  * PC: 两栏 grid 1:1
  *   - 左 50%: Introduction 小字（纵向贴顶部）
  *   - 右 50%: 大副标题 + 所有信息行（Year/Industry/Scope/Timeline）
  *   - 右栏里每个信息行内部再分 label 左 / value 右（flex space-between）
  */
 
-/* 外层 section：仅作为容器 + reveal 进场挂载点，不参与间距 */
+/* 外层 section：间距统一由 section 的 padding-block 控制（与其他板块一致），
+   内层 .project-info 不设上下 margin，避免双重间距 */
 .intro-section.container {
   margin-top: 0;
   margin-bottom: 0;
+  padding-block: 4rem 2rem;   /* 上 4rem，下 2rem（下边距减半，紧接客户 Logo 条） */
 }
 
 .project-info {
@@ -174,8 +175,7 @@
   grid-template-columns: 1fr 1fr;
   column-gap: 3rem;
   row-gap: 0;
-  margin-top: 4rem;
-  margin-bottom: 4rem;
+  margin: 0;
 }
 
 .section-label {
@@ -292,7 +292,8 @@
 .challenges-section {
   margin-top: 0;
   margin-bottom: 0;
-  padding: 5rem 0;   /* 板块间距用 padding（无背景，视觉与 margin 等价） */
+  /* padding-block 只控制上下，左右缩进交给 .container（PC 36px / 移动端 16px），保证全站对齐 */
+  padding-block: 5rem;
 }
 
 .challenges-main {
@@ -421,30 +422,6 @@
   font-weight: 500;
   line-height: 2.25rem; /* 36px */
   letter-spacing: -1.2px;
-  color: var(--color-black);
-}
-
-/* Social Part：标签 + 图标同一行，描述在底部 */
-.block-text-social .social-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.social-icons-row {
-  display: flex;
-  gap: 12px;
-}
-
-.social-icon-sm {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
   color: var(--color-black);
 }
 
@@ -629,7 +606,8 @@
 .testimonials-section {
   margin-top: 4rem;
   margin-bottom: 0;
-  padding: 8rem 2rem;
+  /* 左右缩进交给内部 .container（与其他板块同一宽度体系），板块自身只留上下 */
+  padding: 8rem 0;
   background: var(--color-background-dark);
   border-radius: 32px 32px 0 0;
   max-width: 100%;
@@ -639,6 +617,12 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+/* 外层是 flex，内部 .container 作为 flex 子项会被按内容收缩（margin auto 会覆盖 stretch）；
+   必须 width:100% 让它与其它板块的 .container 一样撑到 max-width 并居中，保证标题左对齐 */
+.testimonials-section .container {
+  width: 100%;
 }
 
 .big-title {
@@ -713,6 +697,9 @@
   color: var(--color-white);
   max-width: 680px;
   margin-top: 0;
+  /* 引用内容居右：块靠右对齐，文字右对齐 */
+  margin-left: auto;
+  text-align: right;
 }
 
 /* ========== TITLE（独立标题组件）========== */
@@ -972,10 +959,12 @@
   }
 
   /* Intro 移动端：变成单列上下排列（PC 是 1:1 两栏） */
+  .intro-section.container {
+    padding-block: 3.5rem 1.75rem;   /* 上 3.5rem，下减半 1.75rem（间距仍在 section 上，内层 .project-info 无上下 margin） */
+  }
   .project-info {
     grid-template-columns: 1fr;
-    margin-top: 3.5rem;
-    margin-bottom: 0;
+    margin: 0;
   }
   .section-label {
     grid-column: 1;
@@ -1027,7 +1016,7 @@
   .challenges-section {
     margin-top: 0;
     margin-bottom: 0;
-    padding: 2.5rem 0;
+    padding-block: 2.5rem;
   }
 
   .section-heading {
@@ -1106,7 +1095,7 @@
 
   .testimonials-section {
     margin-top: 0;           /* 移动端归零 PC 的 4rem 上留白，避免深色块前出现大空白 */
-    padding: 4rem 1rem;      /* 深色块上下留白收紧（PC 8rem → 移动端 4rem） */
+    padding: 4rem 0;         /* 深色块上下留白收紧（PC 8rem → 移动端 4rem）；左右由内部 .container 控制 */
     border-radius: 24px 24px 0 0;
     min-height: auto;
   }
@@ -1214,7 +1203,8 @@
 .clients-section {
   margin-top: 0;
   margin-bottom: 0;
-  padding: 5rem 0;   /* 板块间距用 padding（无背景，视觉与 margin 等价） */
+  /* padding-block 只控制上下，左右缩进交给 .container（PC 36px / 移动端 16px），保证全站对齐 */
+  padding-block: 2.5rem 5rem;   /* 上边距减半 2.5rem（紧接介绍区），下 5rem */
 }
 
 .clients-main {
@@ -1284,7 +1274,8 @@
 .stats-section {
   margin-top: 0;
   margin-bottom: 0;
-  padding: 5rem 0;   /* 板块间距用 padding（无背景，视觉与 margin 等价） */
+  /* padding-block 只控制上下，左右缩进交给 .container（PC 36px / 移动端 16px），保证全站对齐 */
+  padding-block: 5rem;
 }
 
 .stats-main {
@@ -1558,7 +1549,8 @@
 .team-section {
   margin-top: 0;
   margin-bottom: 0;
-  padding: 5rem 0;   /* 板块间距用 padding（无背景，视觉与 margin 等价） */
+  /* padding-block 只控制上下，左右缩进交给 .container（PC 36px / 移动端 16px），保证全站对齐 */
+  padding-block: 5rem;
 }
 
 .team-card-wrap {
@@ -1696,7 +1688,7 @@
   .stats-section {
     margin-top: 0;
     margin-bottom: 0;
-    padding: 2.5rem 0;
+    padding-block: 2.5rem;
   }
   .stats-layout {
     margin-top: 0;
@@ -1706,18 +1698,22 @@
 
 /* 新板块移动端适配 */
 @media (max-width: 768px) {
-  .clients-section,
+  .clients-section {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-block: 1.25rem 2.5rem;   /* 移动端上边距再减半（紧接介绍区），下 2.5rem */
+  }
   .team-section {
     margin-top: 0;
     margin-bottom: 0;
-    padding: 2.5rem 0;   /* 移动端紧凑间距（与 stats-section 一致），不再用 margin 叠加大留白 */
+    padding-block: 2.5rem;   /* 移动端紧凑间距（与 stats-section 一致），不再用 margin 叠加大留白 */
   }
 
   /* 移动端 stats 上下间距单独收紧（60px→40px），避免与 hero-banner 底部留白叠加过大 */
   .stats-section {
     margin-top: 0;
     margin-bottom: 0;
-    padding: 2.5rem 0;
+    padding-block: 2.5rem;
   }
 
   /* 移动端：stats-layout 不再叠加上下 margin（由 section 统一控制），
