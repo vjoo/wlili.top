@@ -1948,7 +1948,7 @@
   .hero-banner-section {
     min-height: auto;
     height: auto;          /* 覆盖桌面 height:100vh：高度由内容决定，避免上下大空白 */
-    padding: 3rem 1rem 1.25rem;   /* 底部 padding 收窄（3rem→1.25rem），避免与下一板块间距叠加成大空白 */
+    padding: 0.75rem 1rem 0.75rem;   /* 上下边距与 PC 一致（12px），左右保留 1rem */
   }
   .hero-banner-frame {
     height: auto;
