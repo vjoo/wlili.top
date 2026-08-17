@@ -21,7 +21,8 @@ var CaseRenderer = (function () {
 
   // index.html 统一用 window.CASE_KEY = 'xxx' 声明（注意不要用 const/let，它们不挂 window）
   var CASE_KEY = window.CASE_KEY || '__KEY__';
-  var API_URL = '/api/cases/' + CASE_KEY + '/content';
+  // 纯静态数据源：直接读同目录 content.json——本地（有 /api 后端）与外网纯静态托管均能访问，展示端不再依赖 /api
+  var API_URL = 'content.json';
   var container = null;
 
   // 默认缺损图：图片加载失败时统一替换（捕获阶段监听，覆盖所有板块）
