@@ -3,7 +3,7 @@
   "pages": [
     {
       "key": "vjooProject",
-      "title": "ZenHaven案例详情",
+      "title": "租房项目",
       "type": "detail",
       "level": 2,
       "parent": null,
@@ -70,7 +70,7 @@
       "target": false
     },
     {
-      "label": "锁寓项目",
+      "label": "租房项目",
       "href": "../vjooProject/index.html",
       "target": false
     },
