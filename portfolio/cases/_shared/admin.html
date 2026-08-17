@@ -1353,6 +1353,9 @@ body {
 .btn-icon:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-icon:disabled:hover { background: transparent; color: inherit; }
 .list-field-add { margin-top: 4px; }
+/* 交换图片1/图片2 按钮行 */
+.list-field-item .np-swap-row { grid-template-columns: auto 1fr; align-items: center; }
+.np-swap-hint { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
 /* 特效双图多组（groups-list）：组内标量行与嵌套卡片区 */
 .gl-scalar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .gl-cards {
@@ -4147,6 +4150,36 @@ function bindImageListField(key, uid) {
       }
     });
   });
+  // 卡片排序（上移/下移）：交换组内两张卡片的顺序
+  wrap.querySelectorAll('[data-lf-move]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.clIdx);
+      const dir = btn.dataset.lfMove === 'up' ? -1 : 1;
+      const list = collectCardsList(key, uid);
+      const j = idx + dir;
+      if (j < 0 || j >= list.length) return;
+      const tmp = list[idx]; list[idx] = list[j]; list[j] = tmp;
+      writeList(list);
+      replaceListField(key, uid, renderCardsListField(key, list, uid));
+      bindCardsListField(key, uid, setList);
+      onSectionChanged();
+    });
+  });
+  // 交换图片1 / 图片2 顺序（谁在前谁在后）
+  wrap.querySelectorAll('[data-cl-swap]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.clSwap);
+      const list = collectCardsList(key, uid);
+      if (!list[idx]) return;
+      const t = list[idx].image1;
+      list[idx].image1 = list[idx].image2;
+      list[idx].image2 = t;
+      writeList(list);
+      replaceListField(key, uid, renderCardsListField(key, list, uid));
+      bindCardsListField(key, uid, setList);
+      onSectionChanged();
+    });
+  });
   wrap.querySelectorAll('[data-lf-remove]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.lfRemove);
@@ -4251,7 +4284,11 @@ function renderCardsListField(key, list, uid) {
     <div class="list-field-item" data-lf-item="${i}">
       <div class="lf-head">
         <span class="lf-title">卡片 #${i + 1}</span>
-        <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        <div class="lf-head-actions">
+          <button type="button" class="btn-icon" data-lf-move="up" data-cl-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+          <button type="button" class="btn-icon" data-lf-move="down" data-cl-idx="${i}" title="下移"${i === list.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+          <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
       </div>
       <div class="lf-row">
         <div class="form-group">
@@ -4275,13 +4312,20 @@ function renderCardsListField(key, list, uid) {
       </div>
       <div class="lf-row">
         <div class="form-group">
-          <label class="form-label">图片1</label>
+          <label class="form-label">图片1（主图）</label>
           ${renderImageField(key + '__img1_' + i + '_' + uid, c.image1 || '')}
         </div>
         <div class="form-group">
-          <label class="form-label">图片2</label>
+          <label class="form-label">图片2（悬停切换图）</label>
           ${renderImageField(key + '__img2_' + i + '_' + uid, c.image2 || '')}
         </div>
+      </div>
+      <div class="lf-row np-swap-row">
+        <button type="button" class="btn-secondary" data-cl-swap="${i}" style="justify-content:center;width:auto;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><path d="M7 16V4"/><path d="M7 4 3 8"/><path d="M7 4l4 4"/><path d="M17 8v12"/><path d="M17 20l4-4"/><path d="M17 20l-4-4"/></svg>
+          交换图片1 / 图片2 顺序
+        </button>
+        <span class="np-swap-hint">图片1 = 主图（默认显示），图片2 = 悬停切换图</span>
       </div>
     </div>`).join('');
   return `
