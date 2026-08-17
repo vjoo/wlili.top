@@ -836,7 +836,8 @@
 
 /* Projects Grid */
 .projects-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 一行 2 张；只传 1 张时占左列、右侧留空，不拉伸铺满 */
   gap: 40px;
 }
 
@@ -1169,7 +1170,7 @@
   }
 
   .projects-grid {
-    flex-direction: column;
+    grid-template-columns: 1fr; /* 移动端单列（原 flex column 改 grid） */
     gap: 32px;
   }
 
