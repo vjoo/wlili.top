@@ -208,7 +208,7 @@ portfolio/
 </script>
 ```
 
-**Let's talk（底部联系区块）**：由 `site-shell.js` 渲染为「纯黑 #0A0A0A 左右两栏」——左栏占 **70%**、右栏二维码区占 **30%**；主标题**强制两行**（按空格分词：如 "Let's talk" → 第一行 `Let's` / 第二行 `talk`，两行超大号粗体、`line-height: 0.95` 收紧）；下方 4 段文案自上而下（英文副标题 / 中文副标题 / 合作咨询行 / 英文标签行 / 中文说明行）；右栏 **2×2 田字形**白色卡片，**每张固定 150px 白框**（圆角 16px、`padding 14px`），二维码 + 双语标签（黑色文字）**都在白框内**，整体垂直居中。**正式配置入口是后台 admin.html 的「Let's talk 设置」**（存于 content.json 顶层 `letsTalk`，优先级高于 CASE_SHELL）：
+**Let's talk（底部联系区块）**：由 `site-shell.js` 渲染为「纯黑 #0A0A0A 左右两栏」——左栏占 **70%**、右栏二维码区占 **30%**；主标题**强制两行**（按空格分词：如 "Let's talk" → 第一行 `Let's` / 第二行 `talk`，两行超大号粗体、`line-height: 0.95` 收紧）；下方 4 段文案自上而下（英文副标题 / 中文副标题 / 合作咨询行 / 英文标签行 / 中文说明行）；右栏 **2×2 田字形**白色卡片，**每张固定 150px 白框**（圆角 16px、`padding 14px`），二维码 + 双语标签（黑色文字）**都在白框内**，整体垂直居中。**正式配置入口是后台 admin.html 的「Let's talk 设置」**（存于 content.json 顶层 `letsTalk`，优先级高于 CASE_SHELL）。**宽度约束：`.footer-inner` / `.footer-bottom` 与 `.container` 同一宽度体系**（`max-width: 75.5rem` 1208px，≥1500px 时 95rem 1520px，padding 2.25rem/36px，移动 1rem/16px）——严禁写死 1440px（曾导致 Let's talk 内容比上方板块收窄错位，2026-08-17 修复）；≥1500px 的 `@media` 覆盖必须写在 `.footer-inner` 基础规则**之后**，否则被基础 max-width 反覆盖。
 
 ```json
 {
@@ -266,16 +266,17 @@ portfolio/
 | 断点 | 触发 | 自动发生的变化（勿覆盖） |
 |---|---|---|
 | `≤1024px` | Tablet | `.container` 不变；footer 单列（左文案在上、右 4 张二维码卡在下，`footer-right` 左对齐）、`.lets-talk-title` 96px、footer padding-top 6rem；Intro/Challenges/Two-blocks 单列；`.big-title` 80px |
-| `≤768px` | Mobile | 头部收起（PC 导航隐藏 → 黑圆汉堡 + 联系我胶囊）；`.container` padding 16px；Hero padding-top 120px；Hero 标题 52px；Intro 单列且 margin 3.5rem；Brand Logo 居左 40px；屏幕墙保持横向多列（`flex-direction:row` + `flex:1 1 0` + 列距 1rem）；Testimonials/Next 均为 `80px 16px`；footer 单列、二维码卡 2×2 网格（max-width 420px）、标题 56px、padding-top 5rem；火箭 48px 右下 16px |
+| `≤768px` | Mobile | 头部收起（PC 导航隐藏 → 黑圆汉堡 + 联系我胶囊）；`.container` padding 16px；Hero padding-top 120px；Hero 标题 52px；Intro 单列且间距 padding-block 3.5rem；Brand Logo 居左 40px；屏幕墙保持横向多列（`flex-direction:row` + `flex:1 1 0` + 列距 1rem）；Testimonials/Next 均为 `80px 16px`；footer 单列、二维码卡 2×2 网格（max-width 420px）、标题 56px、padding-top 5rem；火箭 48px 右下 16px |
 | `≤480px` | 小屏 | 大字进一步缩小（Hero 52px / `.big-title` 36px / `.lets-talk-title` 40px、英文副标题 17px） |
 
 **核心适配原则**
 1. **间距用 padding，不用 margin**（板块之间用 margin 会造成嵌套叠加 → 间距翻倍）
-2. **间距单位统一用 rem**（基准 16px，1rem=16px；换算注释保留如 `/* 64px */`），禁止新增 px 间距；与图片/边框对齐的精确值除外（如卡片内边距基准 `0 0 32px 108px → 0 0 2rem 6.75rem` 注释注明）
-3. 展示类板块（two-blocks / screen / image）之间**仅 4px（0.25rem）紧贴**
-4. 文字内容区（intro / challenges / testimonials / next-projects 头部）才用**大间距（4rem / 5rem）**
-5. 移动端**多列保持横向**，禁止改成纵向（屏幕墙规则已内置）
-6. 断点内**不要擅自加宽度微调**，模板已适配；如确需调整，加到 components.css 对应断点并注释理由
+2. **板块级纵向间距一律用 `padding-block`，严禁用 `padding: Xrem 0` 简写**：带 `.container` 的板块（challenges/clients/stats/team 等）用 `padding: Xrem 0` 会覆盖 `.container` 的左右缩进（PC 36px / ≤768px 16px）→ 板块内容贴边、全站左右不对齐（2026-08-17 严重回归教训）。`padding-block: Xrem` 只改上下、自动继承 `.container` 左右缩进，任意断点恒对齐
+3. **间距单位统一用 rem**（基准 16px，1rem=16px；换算注释保留如 `/* 64px */`），禁止新增 px 间距；与图片/边框对齐的精确值除外（如卡片内边距基准 `0 0 32px 108px → 0 0 2rem 6.75rem` 注释注明）
+4. 展示类板块（two-blocks / screen / image）之间**仅 4px（0.25rem）紧贴**
+5. 文字内容区（intro / challenges / testimonials / next-projects 头部）才用**大间距（4rem / 5rem）**
+6. 移动端**多列保持横向**，禁止改成纵向（屏幕墙规则已内置）
+7. 断点内**不要擅自加宽度微调**，模板已适配；如确需调整，加到 components.css 对应断点并注释理由
 
 ---
 
@@ -287,7 +288,7 @@ portfolio/
 | `hero-banner` | `.hero-banner-section` | `.hero-banner-frame`(圆角相框) > `.hero-banner-media`(底层大图) + `.hero-banner-content`(①`h1.hero-banner-title` 超大标题 → ②`.hero-banner-stats`>`.hero-banner-stat` 信息标签行 → ③`p.hero-banner-description` 描述段落) | **height 100vh 与第一屏同高，顶部延伸到视口顶、被悬浮导航覆盖（与导航重叠）**；**`.container.hero-banner-section { max-width:100% }` 覆盖 `.container` 的 1208/1520px 上限**，frame 随视口贴边扩展（max-width:none、height 100%=100vh-24px）；**四周小边距统一 12px**（移动：height auto、padding 3rem 16px、frame 62vh）、25px 圆角；文字块整体位于大图**左下**（`left:0; bottom:0`，flex 列 + align-items:flex-start，padding 6rem 5rem 2.5rem / 移动 3.5rem 2rem 1.5rem），组内不放按钮；标题 clamp(42px,5.5vw,84px)/700 白（移动 36px）、标签行 flex wrap gap 40px（移动 20px）18px/500 白 88%（移动 15px）、描述 16px 行高 1.8 白 78%（移动 14px/1.7）；**滚动视差**：media translateY 慢(×48)＋scale 缩小、content translateY 快(×110)、进度 40% 后 opacity 衰减；rAF+lerp 平滑、`prefers-reduced-motion` 时自动禁用（initHeroBannerParallax）；carousel 轮播 `effect` 支持 `fs`（同 hero：图片裁剪滑入自动播放，每图文案 `.hero-banner-content` 随屏整体淡入上移，文案不参与全站 `.reveal`——已用 CSS 覆盖规则剥离） |
 | `swipe-slider` | `.swipe-slider-section` | `.swipe-slide`×n（绝对堆叠）> `.swipe-outer` > `.swipe-inner` > `.swipe-bg`(cover 背景+渐变遮罩) > `.swipe-content`(`.swipe-heading` 标题 + `.swipe-subtitle` 副标题) | **全屏 100vh（100svh）通栏**（`.container.swipe-slider-section { max-width:100%; padding:0 }`），垂直堆叠、`overflow:hidden`；**滚动模型对标 GSAP Horizontal Scrolling Gallery：`ScrollTrigger pin` + `scrub` 把「逐屏切换时间线」直接绑到滚动进度（不拦截滚轮/触摸、无 preventDefault），每滚一格画面连续跟进（无虚空等待），滚完最后一屏自动释放 pin 自然进入下一板块**；pin = (n-1) 屏滚动量，每屏滚动量 = 一个过渡段；反向滚动时间线自然回放；**`.pin-spacer` 深色底**（与板块一致，避免滚回时顶部闪白条）；切换动画：新屏 `.outer/.inner` 反向滑入（裁剪效果）+ 背景图 **scale 放大缩放**（新屏 1.3→1、旧屏→1.15，制造纵深；⚠️ 勿用 yPercent 位移——背景偏移会露出板块深色底，过渡期视口中出现"黑色遮罩"黑条）+ 标题**逐字上翻**（`stagger random`，无 SplitText 插件手动拆 `.char`）+ 副标题淡入；首屏静态展示（不进场动画）；交互实现于 `initSwipeSliders`（依赖分文件加载的 `lib-gsap.min.js` + `lib-scrolltrigger.min.js`，代码兼容 `gsap.ScrollTrigger` / `window.ScrollTrigger`）；数据 `s.slides[] = { image, title, subtitle }`；**图片建议 16:9 横图、内容居中留安全边**（全屏 cover 会裁边缘）。唯一模式 = 到尾衔接。1 屏时不做 pin 退化为静态全屏图 |
 | `fullscreen-slider` | `.fullscreen-slider-section` | `.fs-slide`×n（绝对堆叠）> `.fs-outer` > `.fs-inner` > `.fs-bg`(cover 背景+渐变遮罩) > `.fs-content`(`.fs-heading` 标题 + `.fs-subtitle` 副标题) + `.fs-dots`(右侧竖排圆点×n) | **全屏 100vh（100svh）通栏**、`overflow:hidden`、`touch-action:none`；**页面锁定全屏切换**（对标官方 Observer「Animated Continuous Sections」demo）：`Observer`（type:`wheel,touch,pointer`）+ `preventDefault` 拦截滚轮/触摸/拖拽，方向键/空格/PageUp/PageDown 同样拦截并触发切换——**页面不滚动，只在板块内逐屏切换**；**到尾不循环**（第一张/最后一张时继续滚动无反应，用户不喜回跳）；切换动画：旧屏保持不透明由新屏覆盖后再隐藏（`.set` 到动画末尾，避免透出深色底成"黑罩"）、新屏 `.fs-outer/.fs-inner` 反向裁剪滑入（direction ±1，**背景静止不缩放**）+ 标题逐字上翻（手写拆 `.char`，`stagger random`）+ 副标题淡入；**右侧垂直居中竖排圆点指示器**（`.fs-dots`：白色圆点 10px、hover 放大、当前屏变 10×26px 白色胶囊竖条，点击跳转，自动随切换更新）；首屏静态展示（不进场动画，不进 REVEAL_SECTIONS）；交互实现于 `initFullscreenSliders`——**复用 ScrollTrigger 内嵌 Observer（`ScrollTrigger.observe()` 与 `Observer.create()` 完全等价，官方明确说明无需单独加载 Observer 插件文件），依赖仅 `lib-gsap.min.js` + `lib-scrolltrigger.min.js` 两份共享脚本**；数据 `s.slides[] = { image, title, subtitle }`；**图片建议 16:9 横图、内容居中留安全边**；1 屏时静态展示。⚠️ 该板块会拦截页面滚动：建议作为独立全屏页使用（页面只有一个该板块），如与其他板块混排将无法滚动到板块后的内容 |
-| `intro` | `.intro-section` | `.project-info`(grid 1fr 1fr) > `.section-label` + `.intro-heading` + `.info-main`(.info-row × n) | margin 4rem（移动 3.5rem）；信息行上边框 1px #e2e2e2 |
+| `intro` | `.intro-section` | `.project-info`(grid 1fr 1fr) > `.section-label` + `.intro-heading` + `.info-main`(.info-row × n) | 间距在 section 的 `padding-block: 4rem`（移动 3.5rem），内层 `.project-info` 无上下 margin（与其他板块结构一致）；信息行上边框 1px #e2e2e2 |
 | `brand-logo` | `.brand-logo-section` | `.container > .brand-logo-wrap > img/svg` | PC 高 60px 居中 / 移动 40px 居左 |
 | `parallax` | `.image-section` | `.parallax-overlay-image`(data-parallax) > `.pio-base` + `.pio-overlay` | 1448/905，25px 圆角 |
 | `text` | `.challenges-section` | `.challenges-main`(grid) > `.section-label` + `.challenges-content` | margin 4rem（移动 80px） |
@@ -295,7 +296,7 @@ portfolio/
 | `gallery` | `.screen-section` | `.screen-content`(白卡) > `.screen-info` + `.screen-wall`(2/3列) | 白卡 padding 60px；列宽 2列 474px / 3列 273px；列错落由每列 `offsetRem`（rem 单位）独立控制：**设置多少就是多少（1rem=16px），未填/为 0 即顶部对齐，不互相牵连、无自动微调**（移动端恒 `margin-top: 0 !important` 强制对齐） |
 | `single-image` | `.image-section` | `.image-single > .single-img` | 1136/710，25px 圆角 |
 | `double-image` | `.image-section` | 内联 grid 2列 | 1:1，4px 间距 |
-| `testimonial` | `.testimonials-section` | `.big-title` + `.testimonial-card`(avatar/info/quote) | 深色全宽、min-height 100svh、圆角 32px 顶；卡片 grid 200px 1fr |
+| `testimonial` | `.testimonials-section` | `.big-title` + `.testimonial-card`(avatar/info/quote) | 深色全宽、min-height 100svh、圆角 32px 顶；卡片 grid 200px 1fr；**板块自身不设左右 padding（`8rem 0`/移动 `4rem 0`），左右缩进完全交给内部 `.container`**；⚠️ 因外层是 flex，内部 `.container` 必须加 `width:100%`（否则 flex 子项被内容收缩、`margin:auto` 会覆盖 stretch，标题左缘与其它板块错位 ~96px，2026-08-17 修复） |
 | `title` | `.title-section` | `.container > .title-row`（`.title-big` + `.title-info`>`.title-tagline`+`.title-desc`） | 独立标题组件：左超大标题 148px/600，右「版权小字 + 内容描述」列（gap 16px、max-width 365px、底部对齐、标题间距 80px）；`padding: 5rem 0 0`；移动端单列（52px、gap 24px、padding-top 3rem）。字段：title / copyright / description / size。size 为 PC 端字号档位（96/124/148/176，默认 148px，移动端统一 52px）。标题大字带逐字进场动画（与旧 Hero 标题同机制，`.title-big.reveal` 不淡入、`.char-animate` 逐个弹出，hover 可重播）。**旧 Hero 里的 `title` 与旧特效双图里的 title/copyright/allProjectsText 字段都会自动迁移为 title 组件**（render.js 与 admin loadState 均有迁移，admin 保存后内容即写回干净结构） |
 | `next-projects` | `.next-projects-section` | 多个 `.next-projects-group`（各自 `.projects-grid > a.project-card`） | **只含图片卡片组**（大标题/版权/描述已独立为 `title` 组件）；margin 均 0；组间 `margin-top: 4rem`；卡片图 722/546 + hover-effect，图片顶部直角、底部由卡片 18px 圆角裁切；标题栏「名称/年份」单行基线对齐，名称 18px/600 黑、年份与分隔符 12px/400 灰（移动端名称 16px） |
 | `clients` | `.clients-section` | `.section-label` + `.section-heading` + `.clients-logos`(grid) | margin 5rem（移动 60px）；logo 栅格 **auto-fit** minmax(210px, 1fr)、gap 0.25rem、margin-top 0.5rem（auto-fit：Logo 少时自动铺满一行均分，不残留空列）；每 Logo 白底圆角 24px 卡片、高 136px、居中、`filter: grayscale(1)` + `opacity: 0.55`，悬停恢复彩色。字段：label / heading / logosPerRow / logoStyle / logos。`logosPerRow` 留空=自适应（推荐），填 N=加 `.cols-N` 固定每行 N 个（2-6，超出自动换行）；`logoStyle`：grayscale（默认黑白，悬停恢复彩色）/ color（加 `.color-mode`，`filter: none` 保留图片原色） |
@@ -380,7 +381,38 @@ portfolio/
 11. **`const`/`let` 不挂 `window`（新体系头号大坑）**：页面标识必须写 `window.CASE_KEY = 'xxx'`。写 `const CASE_KEY` 时，共享 render.js 读 `window.CASE_KEY` 得到 undefined → 走 `__KEY__` 回退 → 内容 API 404 → 页面空白。复制页面时服务端会自动替换成 `window.CASE_KEY` 写法，**手写新页面时务必遵守**
 12. **`linkPage` 写错导致 404**：站内跳转 key 必须与 `cases.json` 的 `key` 完全一致（大小写敏感）；为空/缺省时自动回退 `linkUrl`/`href`，不会报错，容易漏检，跳转前先在统一后台「页面管理」核对 key
 13. **改服务端 API 后忘记重启**：服务端只有 `server.py`（8080）一份代码，改 `/api/*` 后必须重启才生效；`portfolio/manage_server.py`（8090）已废弃（2026-08-11），**不要再去同步维护它**，确认无用后直接删除
-14. **上传图片不压缩 → uploads 越来越大**：`/api/cases/<key>/upload` 已内置 `pf_optimize_image` 自动压缩（无透明通道 → JPEG quality=90 / 长边≤2560；透明 PNG → 保持 PNG 仅限尺寸）。**不要再把原图直接写盘**；若改了压缩逻辑记得重启服务。上传只保留当前被 content.json 引用的文件，历史/重复图片定期清理（用正则提取 `uploads/xxx` 引用集合，删除未引用的）。**需要更多压缩/转格式能力时复用已有实现，不新写**：服务端一律 Pillow（server.py 的 `pf_optimize_image`），客户端浏览器端见 `tools/DEVELOPMENT_GUIDE.md` §十三 选型表（image-compress/image-upscale 等）
+14. **上传图片不压缩 → uploads 越来越大**：`/api/cases/<key>/upload` 已内置 `pf_optimize_image` 自动压缩（Gallery 传 `sectionType=gallery` 时缩到 700px，其他走 2560 兜底）。**不要再把原图直接写盘**；若改了压缩逻辑记得重启服务。上传只保留当前被 content.json 引用的文件，历史/重复图片定期清理（用正则提取 `uploads/xxx` 引用集合，删除未引用的）。**需要更多压缩/转格式能力时复用已有实现，不新写**：服务端一律 Pillow（server.py 的 `pf_optimize_image`），客户端浏览器端见 `tools/DEVELOPMENT_GUIDE.md` §十三 选型表（image-compress/image-upscale 等）
+
+    **§十二.1 图片防抓取：Gallery 截图墙专用 700px 尺寸限制（2026-08-17，覆盖旧 .th. 缩略图方案）**
+    > ⚠️ **重要约束**：本机制**只针对 Gallery 截图墙（多图瀑布）**，其余组件（Hero/Banner/Parallax/SingleImage/Showcase/DoubleImage/Clients/Team/NextProjects 等）一律用上传路径的原图，不做任何尺寸限制。
+    > ⚠️ **旧 .th. 缩略图方案已废弃**：2026-08-18 曾用 `.th.jpg` 650px 侧车缩略图方案，现已全部删除，改为**上传时直接缩到 700px 覆盖保存**，更简单，不再生成任何 .th. 文件。
+
+    **Gallery 图片规格（上传时处理）**：
+    - admin.html 上传 Gallery 图片时传 `sectionType: 'gallery'` 参数。
+    - server.py 收到 `sectionType=gallery` 后，调 `pf_optimize_image(data, ext, fmt, max_side=700)`：宽>700px 的图缩到 700px（等比，只缩不放）；≤700 不处理。
+    - **原尺寸图不保留**——缩完直接覆盖保存，不存原始大图。
+    - 质量：JPEG quality=90、PNG optimize（透明 PNG 保持 PNG）。
+    - 其他组件上传（无 sectionType 或非 gallery）：走默认 `max_side=2560` 兜底，不统一缩放。
+
+    **组件选择规则（render.js）**：
+    | 组件 | 图片路径处理 |
+    | --- | --- |
+    | Gallery（截图墙多图瀑布） | 直接用原图 URL（`esc(src)`），文件本身已 ≤700px，无需任何特殊处理。 |
+    | Hero / HeroBanner / Parallax / SingleImage / Showcase / Stats 配图 / DoubleImage / Clients / Team / NextProjects | **原样用原图 URL**，不做任何二次处理。 |
+
+    **上传流程**：
+    - 新上传：admin.html `uploadMedia(file, fmt, sectionType)` → Gallery 传 `'gallery'` → server.py `pf_optimize_image(max_side=700)` 缩放覆盖保存。
+    - 存量图：`scripts/process_gallery_images.py` 批量处理已有 Gallery 图片 + 清理 .th.* 旧文件 + 清理孤儿图片。
+      ```bash
+      # 先预览，确认无误再执行
+      python scripts/process_gallery_images.py --dry-run
+      python scripts/process_gallery_images.py
+      # 也可以只清理 .th.* 或只清理孤儿
+      python scripts/process_gallery_images.py --only-th
+      python scripts/process_gallery_images.py --only-orphans
+      ```
+
+
 15. **图片断链显示裂图**：`_shared/render.js` 已内置全局捕获阶段 `error` 监听，任意 `<img>` 加载失败自动替换为 `../_shared/placeholder.svg`（默认缺损图）。新建页面无需额外处理；**注意**：`new Image()` 创建的 DOM 外图片不走 document 冒泡，缺损图只对 DOM 内的 `<img>` 生效
 16. **works 旧作品集体系已删除（2026-08-13）**：`portfolio/works` 目录与 server.py 的旧 works API（`/api/config`、`/api/cards/files`、`/api/hero/type`、`/api/upload/hero`、`/api/upload/card`、`/api/delete/media`、`/api/upload/qrcode`）已全部裁剪。看到这些旧端点或目录名一律视为已废弃，**不要恢复、不要迁移逻辑**
 17. **同区域按钮样式必须统一（主动自查，不等用户指出）**：改 UI 时先观察同一条导航栏 / 同一操作区 / 同一卡片内的按钮，若存在多种尺寸/圆角/背景/边框/字重组合，直接统一为同一款（以页面既有主按钮款式为准）；「肉眼可见的不一致」属于必须主动修复项，不需要用户逐项汇报

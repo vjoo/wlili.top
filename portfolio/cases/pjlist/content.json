@@ -2,34 +2,32 @@
   "version": 2,
   "sections": [
     {
-      "id": "smsprw2m3jq96",
+      "id": "smsx1fmxpu4zm",
       "type": "hero-banner",
+      "title": "",
       "labels": [],
       "description": "",
-      "videoType": "carousel",
-      "image": "/portfolio/cases/pjlist/uploads/1786536992715.png",
+      "videoType": "image",
+      "image": "/portfolio/cases/pjlist/uploads/1786979962685.jpg",
       "videoUrl": "",
+      "effect": "fs",
+      "autoplayDelay": "4000",
       "images": [
         {
-          "image": "/portfolio/cases/pjlist/uploads/1786882917773.jpg",
+          "image": "",
           "title": "",
-          "labels": [
-            "信息界面",
-            "数据可视化",
-            "视觉叙事"
-          ],
-          "subtitle": "搭建清晰的数字视觉，协助富有巧思的项目，将繁杂信息转化为直观的体验。"
+          "labels": [],
+          "subtitle": ""
         }
-      ],
-      "effect": "fs",
-      "autoplayDelay": "4000"
+      ]
     },
     {
       "id": "smspt62o385co-title",
       "type": "title",
       "title": "Projects",
       "copyright": "2010-2026©",
-      "description": "We've helped businesses across industries achieve\ntheir goals. Here are some of our recent projects."
+      "description": "We've helped businesses across industries achieve\ntheir goals. Here are some of our recent projects.",
+      "size": "124"
     },
     {
       "id": "smsprwcl5kz27",
@@ -42,16 +40,16 @@
               "year": "",
               "href": "",
               "linkPage": "reeoder",
-              "image1": "/portfolio/cases/pjlist/uploads/1786884151409.jpg",
-              "image2": "/portfolio/cases/pjlist/uploads/1786883990947.jpg"
+              "image1": "/portfolio/cases/pjlist/uploads/1786980450189.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786980457589.jpg"
             },
             {
               "name": "智能锁出租房运营产品",
               "year": "",
               "href": "",
               "linkPage": "",
-              "image1": "/portfolio/cases/pjlist/uploads/1786884718955.jpg",
-              "image2": "/portfolio/cases/pjlist/uploads/1786884397236.jpg"
+              "image1": "/portfolio/cases/pjlist/uploads/1786980619796.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786980471086.jpg"
             }
           ]
         },
@@ -62,16 +60,16 @@
               "year": "",
               "href": "",
               "linkPage": "",
-              "image1": "",
-              "image2": ""
+              "image1": "/portfolio/cases/pjlist/uploads/1786957621477.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786980582434.jpg"
             },
             {
               "name": "",
               "year": "",
               "href": "",
               "linkPage": "",
-              "image1": "",
-              "image2": ""
+              "image1": "/portfolio/cases/pjlist/uploads/1786980590729.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786980510585.jpg"
             }
           ]
         },

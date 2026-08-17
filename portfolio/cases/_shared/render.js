@@ -1109,18 +1109,8 @@ var CaseRenderer = (function () {
   // ===== 5. Two-blocks (Showcase: Landing / Platform / Social / Advertising) =====
   function renderTwoBlocks(s) {
     var section = sec('two-blocks-section');
-    var hasIcons = s.icons && s.icons.length;
-    var blockTextCls = 'block-text' + (hasIcons ? ' block-text-social' : '');
-    var iconsHtml = '';
-    if (hasIcons) {
-      iconsHtml = '<div class="social-top">' +
-        '<p class="section-label">' + esc(s.label || '') + '</p>' +
-        '<div class="social-icons-row">' +
-          s.icons.map(function (ic) { return '<span class="social-icon-sm">' + esc(ic) + '</span>'; }).join('') +
-        '</div></div>';
-    } else if (s.label) {
-      iconsHtml = '<p class="section-label">' + esc(s.label) + '</p>';
-    }
+    var blockTextCls = 'block-text';
+    var labelHtml = s.label ? '<p class="section-label">' + esc(s.label) + '</p>' : '';
     // 右侧媒体：和 Hero 一致，按 videoType 取对应字段，统一走 videoPlaceholder
     // （videoPlaceholder 内部已根据 type 渲染 video / img / 占位三种情况）
     var scType = s.videoType || 'placeholder';
@@ -1148,7 +1138,7 @@ var CaseRenderer = (function () {
       '<div class="' + blocksCls + '">' +
         blockImageHtml +
         '<div class="block ' + blockTextCls + '">' +
-          iconsHtml +
+          labelHtml +
           (s.desc ? '<p class="block-desc">' + esc(s.desc) + '</p>' : '') +
         '</div>' +
       '</div>';

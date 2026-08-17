@@ -2425,7 +2425,7 @@ function getFmtPick(scope) {
   return el && el.value ? el.value : 'jpg';
 }
 
-async function uploadMedia(file, fmt) {
+async function uploadMedia(file, fmt, sectionType) {
   if (!file) return '';
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   if (MEDIA_EXT_ALL.indexOf(ext) < 0) {
@@ -2441,7 +2441,10 @@ async function uploadMedia(file, fmt) {
     } catch (e) { /* 量化不可用/失败 → 用原文件 */ }
   }
   const b64 = await fileToBase64(file);
-  const data = await api('/upload', 'POST', { ext, dataBase64: b64, format: fmt || 'jpg' });
+  const payload = { ext, dataBase64: b64, format: fmt || 'jpg' };
+  // sectionType: 截图墙(gallery)上传时传 'gallery'，服务器据此缩到700px宽（不保留原尺寸）
+  if (sectionType) payload.sectionType = sectionType;
+  const data = await api('/upload', 'POST', payload);
   return data.url || '';
 }
 
@@ -2470,7 +2473,7 @@ async function pngQuantizeUpload(file) {
 }
 
 // 兼容旧调用点：图片/视频字段统一走 uploadMedia（fmt 为单次上传格式，默认 jpg）
-async function uploadImage(file, fmt) { return uploadMedia(file, fmt); }
+async function uploadImage(file, fmt, sectionType) { return uploadMedia(file, fmt, sectionType); }
 async function uploadVideo(file, fmt) { return uploadMedia(file, fmt); }
 
 // 公共二维码上传：覆盖 _shared/assets/qr-<slot>.png，全站底部二维码统一（改一次全站生效）
@@ -3748,7 +3751,7 @@ function bindGalleryColumnsEditor(key, sectionId) {
             try {
               // 单次上传格式：读取本列「新增上传」旁的格式下拉（同一列的图片格式保持一致）
               var fmtEl = wrap.querySelector(`.gc-panel[data-gc-col="${ci}"] .fmt-pick`);
-              var url = await uploadImage(file, fmtEl ? fmtEl.value : 'jpg');
+              var url = await uploadImage(file, fmtEl ? fmtEl.value : 'jpg', 'gallery');
               if (!url) throw new Error('服务器未返回 URL');
               if (section.columns && section.columns[ci] && section.columns[ci].images[idx]) {
                 section.columns[ci].images[idx].src = url;
@@ -3784,7 +3787,7 @@ function bindGalleryColumnsEditor(key, sectionId) {
       if (!file) return;
       var prog = toastProgress('上传图片...');
       try {
-        var url = await uploadImage(file, getFmtPick(dz.parentElement));
+        var url = await uploadImage(file, getFmtPick(dz.parentElement), 'gallery');
         if (!url) throw new Error('服务器未返回 URL');
         if (!section.columns[ci]) section.columns[ci] = { offsetRem: 0, images: [] };
         section.columns[ci].images.push({ id: genId(), src: url });
