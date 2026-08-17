@@ -226,7 +226,9 @@
     }
   }
   function loadNavMenu() {
-    fetch('/api/navmenu', { cache: 'no-store' })
+    // 纯静态读取：直接解析项目 cases.json 顶层的 navMenu（页面在 /portfolio/cases/<key>/，故用 ../cases.json）
+    // 本地与纯静态托管均可用，不再依赖 /api 后端；失败或无配置时回退内置默认导航
+    fetch('../cases.json', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) { if (d && Array.isArray(d.navMenu)) applyNavMenu(d.navMenu); })
       .catch(function () {});
