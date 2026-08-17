@@ -1105,7 +1105,8 @@
   }
 
   .testimonials-section {
-    padding: 5rem 1rem;
+    margin-top: 0;           /* 移动端归零 PC 的 4rem 上留白，避免深色块前出现大空白 */
+    padding: 4rem 1rem;      /* 深色块上下留白收紧（PC 8rem → 移动端 4rem） */
     border-radius: 24px 24px 0 0;
     min-height: auto;
   }
