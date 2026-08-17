@@ -1682,8 +1682,9 @@
 @media (max-width: 768px) {
   .clients-section,
   .team-section {
-    margin-top: 3.75rem;
-    margin-bottom: 3.75rem;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 2.5rem 0;   /* 移动端紧凑间距（与 stats-section 一致），不再用 margin 叠加大留白 */
   }
 
   /* 移动端 stats 上下间距单独收紧（60px→40px），避免与 hero-banner 底部留白叠加过大 */
