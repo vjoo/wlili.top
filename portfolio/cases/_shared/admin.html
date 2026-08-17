@@ -4150,36 +4150,6 @@ function bindImageListField(key, uid) {
       }
     });
   });
-  // 卡片排序（上移/下移）：交换组内两张卡片的顺序
-  wrap.querySelectorAll('[data-lf-move]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.clIdx);
-      const dir = btn.dataset.lfMove === 'up' ? -1 : 1;
-      const list = collectCardsList(key, uid);
-      const j = idx + dir;
-      if (j < 0 || j >= list.length) return;
-      const tmp = list[idx]; list[idx] = list[j]; list[j] = tmp;
-      writeList(list);
-      replaceListField(key, uid, renderCardsListField(key, list, uid));
-      bindCardsListField(key, uid, setList);
-      onSectionChanged();
-    });
-  });
-  // 交换图片1 / 图片2 顺序（谁在前谁在后）
-  wrap.querySelectorAll('[data-cl-swap]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.clSwap);
-      const list = collectCardsList(key, uid);
-      if (!list[idx]) return;
-      const t = list[idx].image1;
-      list[idx].image1 = list[idx].image2;
-      list[idx].image2 = t;
-      writeList(list);
-      replaceListField(key, uid, renderCardsListField(key, list, uid));
-      bindCardsListField(key, uid, setList);
-      onSectionChanged();
-    });
-  });
   wrap.querySelectorAll('[data-lf-remove]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.lfRemove);
@@ -4354,6 +4324,36 @@ function bindCardsListField(key, uid, setList) {
     if (subKey.startsWith(key + '__')) {
       bindImageFieldLegacy(subKey, () => writeList(collectCardsList(key, uid)));
     }
+  });
+  // 卡片排序（上移/下移）：交换组内两张卡片的顺序
+  wrap.querySelectorAll('[data-lf-move]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.clIdx);
+      const dir = btn.dataset.lfMove === 'up' ? -1 : 1;
+      const list = collectCardsList(key, uid);
+      const j = idx + dir;
+      if (j < 0 || j >= list.length) return;
+      const tmp = list[idx]; list[idx] = list[j]; list[j] = tmp;
+      writeList(list);
+      replaceListField(key, uid, renderCardsListField(key, list, uid));
+      bindCardsListField(key, uid, setList);
+      onSectionChanged();
+    });
+  });
+  // 交换图片1 / 图片2 顺序（谁在前谁在后）
+  wrap.querySelectorAll('[data-cl-swap]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.clSwap);
+      const list = collectCardsList(key, uid);
+      if (!list[idx]) return;
+      const t = list[idx].image1;
+      list[idx].image1 = list[idx].image2;
+      list[idx].image2 = t;
+      writeList(list);
+      replaceListField(key, uid, renderCardsListField(key, list, uid));
+      bindCardsListField(key, uid, setList);
+      onSectionChanged();
+    });
   });
   wrap.querySelectorAll('[data-lf-remove]').forEach((btn) => {
     btn.addEventListener('click', () => {
