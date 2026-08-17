@@ -2,14 +2,6 @@
   "version": 2,
   "sections": [
     {
-      "id": "s1-title",
-      "type": "title",
-      "title": "ZenHaven",
-      "copyright": "",
-      "description": "",
-      "size": "80"
-    },
-    {
       "id": "s1",
       "type": "hero",
       "videoUrl": "",
@@ -56,9 +48,38 @@
       "heading": ""
     },
     {
-      "id": "smso4dsxot58z",
-      "type": "brand-logo",
-      "logoUrl": "/portfolio/cases/vjooProject/uploads/1786423947022.jpg"
+      "id": "smswownttib03",
+      "type": "clients",
+      "label": "",
+      "heading": "",
+      "logosPerRow": "",
+      "logoStyle": "color",
+      "logos": [
+        {
+          "name": "",
+          "image": "/portfolio/cases/vjooProject/uploads/1786938288996.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/vjooProject/uploads/1786938301166.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/vjooProject/uploads/1786939873054.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/vjooProject/uploads/1786940049543.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/vjooProject/uploads/1786940747924.jpg"
+        },
+        {
+          "name": "",
+          "image": "/portfolio/cases/vjooProject/uploads/1786938335259.jpg"
+        }
+      ]
     },
     {
       "id": "s3",
@@ -239,15 +260,15 @@
           "images": [
             {
               "id": "smsnfqtl0v6x4",
-              "src": "../_shared/placeholder.svg"
+              "src": "/portfolio/cases/vjooProject/uploads/1786938177860.jpg"
             },
             {
               "id": "smso1at4ce0m0",
-              "src": "/portfolio/cases/vjooProject/uploads/1786414887648.webp"
+              "src": "/portfolio/cases/vjooProject/uploads/1786938183743.jpg"
             },
             {
               "id": "smso1b0mec24z",
-              "src": "/portfolio/cases/vjooProject/uploads/1786414897378.webp"
+              "src": "/portfolio/cases/vjooProject/uploads/1786938192906.jpg"
             }
           ]
         },
@@ -256,11 +277,11 @@
           "images": [
             {
               "id": "smso1bisicb9n",
-              "src": "/portfolio/cases/vjooProject/uploads/1786414920923.webp"
+              "src": "/portfolio/cases/vjooProject/uploads/1786938200806.jpg"
             },
             {
               "id": "smso1bmzemkg4",
-              "src": "/portfolio/cases/vjooProject/uploads/1786414926357.webp"
+              "src": "/portfolio/cases/vjooProject/uploads/1786939390414.jpg"
             }
           ]
         },
@@ -269,11 +290,11 @@
           "images": [
             {
               "id": "smso1c0opm9ig",
-              "src": "/portfolio/cases/vjooProject/uploads/1786414944108.webp"
+              "src": "/portfolio/cases/vjooProject/uploads/1786938212811.jpg"
             },
             {
-              "id": "smso1cbddebjl",
-              "src": "/portfolio/cases/vjooProject/uploads/1786414957964.webp"
+              "id": "smswpkw2t5l7v",
+              "src": "/portfolio/cases/vjooProject/uploads/1786939406918.jpg"
             }
           ]
         }
@@ -282,8 +303,8 @@
     {
       "id": "s13",
       "type": "showcase",
-      "label": "Social Part",
-      "desc": "在注册即收邮件的时代，我们不让锁寓 ZenHaven 的通知淹没在收件箱里。钥匙到期、账单生成、续租提醒，每一封都精心设计，贴合品牌视觉。",
+      "label": "Notification",
+      "desc": "在注册即收邮件的时代，我们不让通知淹没在收件箱里。钥匙到期、账单生成、续租提醒，每一封都精心设计，贴合品牌视觉。",
       "image": "/portfolio/cases/vjooProject/uploads/1786415006246.jpg",
       "icons": [
         "FB",
@@ -297,9 +318,9 @@
     {
       "id": "s16",
       "type": "showcase",
-      "label": "Advertising Part",
-      "desc": "我们打造了完整的品牌视觉体系，让锁寓 ZenHaven 即使在没有手机的线下场景 —— 楼宇海报、电梯广告、名片、周边 —— 也能被一眼认出。",
-      "image": "../_shared/placeholder.svg",
+      "label": "color",
+      "desc": "多款 App 统一采用干净明亮的清新视觉色系，简约通透、视觉表现亮眼，成套视觉体系贯穿全线产品，塑造统一且富有记忆点的品牌视觉风格。",
+      "image": "/portfolio/cases/vjooProject/uploads/1786938880024.jpg",
       "videoType": "image"
     },
     {
@@ -320,7 +341,7 @@
       "avatarInitials": "W",
       "name": "",
       "role": "",
-      "quote": "锁寓 ZenHaven 设计团队是把我们的想法变成产品的关键伙伴。他们出色的设计能力，把 \"智能锁 + 出租管理\" 的构想变成了一个美观又好用的 App。清爽直观的界面不仅让房东上手更快，也显著提升了租客的使用体验。我们对结果非常满意。"
+      "quote": "出租房设计团队是把我们的想法变成产品的关键伙伴。他们出色的产品能力，把 \"智能锁 + 出租管理\" 的构想变成了美观又好用的 App。清爽直观的界面不仅让房东上手更快，也显著提升了租客的使用体验。"
     },
     {
       "id": "smsspxm9aireo",
