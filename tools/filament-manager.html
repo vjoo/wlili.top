@@ -2061,15 +2061,16 @@
     </div>
 
     <!-- 模态框容器 -->
-    <div class="modal-overlay" id="modalOverlay" onclick="app.closeModalOnOverlay(event)">
+    <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="modal" onclick="event.stopPropagation()">
             <!-- 动态内容 -->
         </div>
     </div>
 
     <!-- 图片查看模态框 -->
-    <div class="modal-overlay image-modal" id="imageModal" onclick="app.closeImageModal()">
+    <div class="modal-overlay image-modal" id="imageModal">
         <div class="modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="app.closeImageModal()">&times;</button>
             <img id="imageModalImg" src="" alt="预览">
         </div>
     </div>
@@ -4696,12 +4697,6 @@
             document.getElementById('modalOverlay').classList.remove('active');
             document.body.style.overflow = '';
             this._modalButtons = [];
-        },
-
-        closeModalOnOverlay(event) {
-            if (event.target === event.currentTarget) {
-                this.closeModal();
-            }
         },
 
         // 确认对话框
