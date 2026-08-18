@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>精选收藏夹 - W.-Studio Tools</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232B3041'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='13' font-weight='700' letter-spacing='0.5' fill='%23fff'%3EW.%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="common.css">
 <script src="nav.js"></script>
 <style>
@@ -232,45 +233,10 @@
   border-color: var(--fill-black);
 }
 
-/* ===== Tag Filter Bar ===== */
-.tag-filter-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  min-height: 0;
-}
-.tag-filter-wrap.has-tags { min-height: 36px; }
-.tag-filter-label {
-  font-size: 12px;
-  color: var(--ink-quaternary);
-  font-weight: 500;
-  flex-shrink: 0;
-  margin-right: 2px;
-}
-.tag-filter-pill {
-  padding: 3px 10px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-light);
-  background: var(--bg-white);
-  color: var(--ink-tertiary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.tag-filter-pill:hover { border-color: var(--border); color: var(--ink-secondary); }
-.tag-filter-pill.active {
-  background: var(--link);
-  color: #fff;
-  border-color: var(--link);
-}
-
 /* ===== Bookmark Grid — CSS Grid ===== */
 .bookmark-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 16px;
 }
 .bm-card {
@@ -321,7 +287,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: linear-gradient(135deg, var(--bg) 0%, var(--bg-elevated) 100%);
+  background: #313131;
 }
 .bm-cover-placeholder img.favicon {
   width: 40px;
@@ -356,30 +322,18 @@
   100% { transform: translateX(100%); }
 }
 
-/* Bottom gradient overlay */
+/* Bottom overlay */
 .bm-cover-overlay {
   position: absolute;
-  left: 0; right: 0; bottom: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
-  padding: 24px 12px 10px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #0000002e;
+  padding: 14px 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 3px;
   transition: background 0.3s;
-}
-.bm-card:hover .bm-cover-overlay {
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 60%, transparent 100%);
-}
-.bm-overlay-title {
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 .bm-overlay-domain {
   color: rgba(255,255,255,0.75);
@@ -413,12 +367,12 @@
 /* Action buttons top-right */
 .bm-actions {
   position: absolute;
-  top: 8px;
+  bottom: 8px;
   right: 8px;
   display: flex;
   gap: 6px;
   opacity: 0;
-  transform: translateY(-4px);
+  transform: translateY(4px);
   transition: opacity 0.25s, transform 0.25s;
   z-index: 2;
 }
@@ -426,6 +380,97 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Batch checkbox — 编辑模式左上角 */
+.bm-batch-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.9);
+  border: 2px solid rgba(0,0,0,0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.bm-batch-check:hover { background: #fff; border-color: var(--link); }
+.bm-batch-check.is-checked {
+  background: var(--link, #2B3041);
+  border-color: var(--link, #2B3041);
+}
+.bm-batch-check svg {
+  width: 14px;
+  height: 14px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.bm-batch-check.is-checked svg { opacity: 1; }
+/* 编辑模式下卡片选中态：蓝色边框高亮 */
+.bm-card.is-selected {
+  outline: 3px solid #2563eb;
+  outline-offset: -3px;
+  border-radius: var(--radius-md, 12px);
+  box-shadow: 0 0 0 1px #2563eb inset, 0 4px 16px rgba(37,99,235,0.25);
+}
+/* 编辑模式下 badge 让位给 checkbox */
+.bm-card .bm-cover-badge { transition: opacity 0.2s; }
+body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
+
+/* ===== 收藏星标按钮（右上角） ===== */
+.bm-favorite-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s;
+  padding: 0;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
+}
+.bm-favorite-btn:hover { transform: scale(1.15); }
+.bm-favorite-btn:active { transform: scale(0.95); }
+.bm-favorite-btn svg {
+  width: 20px;
+  height: 20px;
+  color: rgba(255,255,255,0.85);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: color 0.2s, fill 0.2s;
+}
+.bm-favorite-btn.is-favorited svg {
+  color: #fff20a;
+  fill: #fff20a;
+  stroke: #fff20a;
+  filter: drop-shadow(0 0 6px rgba(255,242,10,0.5));
+}
+
+/* 收藏分类 pill — 区分一下用黄色 active 态 */
+.cat-pill.is-fav-cat.active {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #fff;
+}
+.cat-pill.is-fav-cat.active .cat-count { opacity: 0.9; }
+
 .bm-action-btn {
   width: 30px;
   height: 30px;
@@ -446,7 +491,7 @@
 .bm-action-btn.is-danger:hover { color: var(--red); }
 .bm-action-btn svg { width: 15px; height: 15px; }
 
-/* Tags row below cover */
+/* Info row below cover */
 .bm-info {
   padding: 10px 12px 8px;
 }
@@ -478,21 +523,6 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.bm-tags {
-  padding: 0 12px 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.bm-tag {
-  font-size: 11px;
-  color: var(--ink-tertiary);
-  background: var(--bg);
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  white-space: nowrap;
-}
-
 /* ===== Empty State ===== */
 .empty-state {
   text-align: center;
@@ -632,39 +662,6 @@
   border-color: var(--link);
 }
 .modal-field textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
-.modal-tags-input {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  min-height: 42px;
-  align-items: center;
-}
-.modal-tags-input:focus-within { border-color: var(--link); }
-.modal-tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  background: var(--bg);
-  border-radius: var(--radius-pill);
-  font-size: 12px;
-  color: var(--ink-secondary);
-}
-.modal-tag-chip button {
-  border: none; background: transparent; cursor: pointer;
-  color: var(--ink-quaternary); padding: 0;
-  display: flex; align-items: center;
-}
-.modal-tag-chip button:hover { color: var(--red); }
-.modal-tag-chip button svg { width: 12px; height: 12px; }
-.modal-tag-input {
-  border: none; background: transparent; outline: none;
-  font-size: 13px; font-family: inherit;
-  color: var(--ink); min-width: 80px; flex: 1;
-}
 .modal-footer {
   display: flex;
   gap: 10px;
@@ -762,7 +759,6 @@
   .bookmark-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .bm-card { margin-bottom: 0; }
   .cat-pill { padding: 5px 12px; font-size: 12px; }
-  .bm-overlay-title { font-size: 13px; }
   .floating-cat-bar { padding: 8px 16px; }
   .back-to-top { right: 16px; bottom: 16px; }
 }
@@ -805,8 +801,8 @@
     </button>
     <button class="btn-import" id="btnDone" style="display:none;">完成</button>
     <input type="file" id="jsonFileInput" accept=".json" style="display:none;">
-    <!-- 展示模式：维护入口 -->
-    <button class="btn-settings" id="btnEdit" title="进入维护模式">
+    <!-- 展示模式：维护入口（默认隐藏，Ctrl+Shift+E 唤出） -->
+    <button class="btn-settings" id="btnEdit" title="进入维护模式（Ctrl+Shift+E 唤出）" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     </button>
   </div>
@@ -834,9 +830,6 @@
         </button>
       </div>
     </div>
-
-    <!-- Tag Filter -->
-    <div class="tag-filter-wrap" id="tagFilterWrap"></div>
 
     <!-- Bookmark Grid -->
     <div class="bookmark-grid" id="bookmarkGrid"></div>
@@ -895,12 +888,6 @@
         <label>推荐理由</label>
         <textarea id="editNotes" placeholder="一句话说明为什么推荐..."></textarea>
       </div>
-      <div class="modal-field">
-        <label>标签</label>
-        <div class="modal-tags-input" id="editTagsInput">
-          <input type="text" class="modal-tag-input" id="editTagInput" placeholder="输入标签后回车...">
-        </div>
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-modal danger" id="btnEditDelete" style="display:none;">删除</button>
@@ -951,6 +938,35 @@
   var DATA_URL = './data/bookmarks.json';
   var SCREENSHOT_BASE = 'https://image.thum.io/get/width/400/crop/250/';
   var FAVICON_BASE = 'https://icons.duckduckgo.com/ip3/';
+  var FAV_STORAGE_KEY = 'bm_favorites_v1';
+  var FAV_CATEGORY_KEY = '_favorites';
+  var EDIT_MODE_KEY = 'bm_edit_mode_v1';         // 是否处于编辑模式（session 级）
+  var EDIT_ENTRY_SHOWN_KEY = 'bm_edit_entry_v1'; // 编辑入口按钮是否已显示（session 级）
+
+  /* ===== 编辑模式/入口显隐：sessionStorage 持久化（刷新保持，关浏览器清空） ===== */
+  function restoreEditState() {
+    try {
+      if (sessionStorage.getItem(EDIT_MODE_KEY) === '1') {
+        state.editMode = true;
+        els.btnAdd.style.display = '';
+        els.btnExport.style.display = '';
+        els.btnImportJson.style.display = '';
+        els.btnBatchClear.style.display = '';
+        els.btnDone.style.display = '';
+        els.btnEdit.style.display = 'none';
+        els.editBanner.style.display = '';
+      } else if (sessionStorage.getItem(EDIT_ENTRY_SHOWN_KEY) === '1') {
+        /* 未进入编辑模式，但入口按钮之前被 Ctrl+Shift+E 唤出过，保持显示 */
+        els.btnEdit.style.display = '';
+      }
+    } catch (e) {}
+  }
+  function persistEditMode(on) {
+    try { sessionStorage.setItem(EDIT_MODE_KEY, on ? '1' : '0'); } catch (e) {}
+  }
+  function persistEditEntryShown(shown) {
+    try { sessionStorage.setItem(EDIT_ENTRY_SHOWN_KEY, shown ? '1' : '0'); } catch (e) {}
+  }
 
   /* ============================================
      状态
@@ -959,10 +975,9 @@
     data: null,
     editMode: false,
     currentCategory: 'all',
-    currentTag: null,
     searchQuery: '',
     editingId: null,
-    editingTags: []
+    favorites: []      // 收藏的书签 ID 数组（localStorage 持久化）
   };
 
   /* ============================================
@@ -974,10 +989,10 @@
   function cacheEls() {
     ['pageTitle','pageSubtitle','searchInput','btnAdd','btnExport','btnImportJson',
      'btnBatchClear','btnDone','jsonFileInput','btnEdit','editBanner','categoryFilter','catScrollLeft',
-     'catScrollRight','tagFilterWrap','bookmarkGrid','emptyState','floatingCatBar',
+     'catScrollRight','bookmarkGrid','emptyState','floatingCatBar',
      'floatingCategoryFilter','floatScrollLeft','floatScrollRight','backToTop',
      'editModal','editModalTitle','editModalClose','editTitle','editUrl','editCategory',
-     'editNotes','editTagsInput','editTagInput','btnEditDelete','btnEditCancel',
+     'editNotes','btnEditDelete','btnEditCancel',
      'btnEditSave','batchClearModal','batchClearClose','batchClearCategory',
      'batchClearCount','batchClearCancel','batchClearConfirm',
      'importStatus','importStatusText'
@@ -1005,6 +1020,45 @@
 
   function getScreenshotUrl(url) {
     return SCREENSHOT_BASE + encodeURIComponent(url);
+  }
+
+  /* ===== 收藏：localStorage 持久化 ===== */
+  function loadFavorites() {
+    try {
+      var raw = localStorage.getItem(FAV_STORAGE_KEY);
+      if (!raw) return [];
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr.filter(function(id) { return typeof id === 'string'; }) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveFavorites() {
+    try { localStorage.setItem(FAV_STORAGE_KEY, JSON.stringify(state.favorites)); }
+    catch (e) {}
+  }
+
+  function isFavorited(id) {
+    return state.favorites.indexOf(id) !== -1;
+  }
+
+  function toggleFavorite(id) {
+    var idx = state.favorites.indexOf(id);
+    if (idx === -1) {
+      state.favorites.push(id);
+    } else {
+      state.favorites.splice(idx, 1);
+    }
+    saveFavorites();
+  }
+
+  /* 清理孤儿收藏：原数据里不存在的 ID */
+  function pruneFavorites() {
+    if (!state.data || !state.data.bookmarks) return;
+    var validIds = {};
+    state.data.bookmarks.forEach(function(b) { validIds[b.id] = true; });
+    var before = state.favorites.length;
+    state.favorites = state.favorites.filter(function(id) { return validIds[id]; });
+    if (state.favorites.length !== before) saveFavorites();
   }
 
   function getCatLabel(key) {
@@ -1047,6 +1101,9 @@
       })
       .then(function(data) {
         state.data = data;
+        /* 加载 localStorage 收藏并清理孤儿 */
+        state.favorites = loadFavorites();
+        pruneFavorites();
         renderAll();
       })
       .catch(function(err) {
@@ -1064,21 +1121,20 @@
     if (!state.data || !state.data.bookmarks) return [];
     var bms = state.data.bookmarks;
 
-    if (state.currentCategory !== 'all') {
+    if (state.currentCategory === FAV_CATEGORY_KEY) {
+      /* 虚拟"收藏"分类：按 localStorage 的 ID 过滤 */
+      var favSet = {};
+      state.favorites.forEach(function(id) { favSet[id] = true; });
+      bms = bms.filter(function(b) { return favSet[b.id]; });
+    } else if (state.currentCategory !== 'all') {
       bms = bms.filter(function(b) { return b.category === state.currentCategory; });
-    }
-    if (state.currentTag) {
-      bms = bms.filter(function(b) {
-        return b.tags && b.tags.indexOf(state.currentTag) !== -1;
-      });
     }
     if (state.searchQuery) {
       var q = state.searchQuery.toLowerCase();
       bms = bms.filter(function(b) {
         return (b.title && b.title.toLowerCase().indexOf(q) !== -1) ||
                (b.url && b.url.toLowerCase().indexOf(q) !== -1) ||
-               (b.notes && b.notes.toLowerCase().indexOf(q) !== -1) ||
-               (b.tags && b.tags.some(function(t) { return t.toLowerCase().indexOf(q) !== -1; }));
+               (b.notes && b.notes.toLowerCase().indexOf(q) !== -1);
       });
     }
     return bms;
@@ -1087,20 +1143,8 @@
   function getCategoryCount(key) {
     if (!state.data || !state.data.bookmarks) return 0;
     if (key === 'all') return state.data.bookmarks.length;
+    if (key === FAV_CATEGORY_KEY) return state.favorites.length;
     return state.data.bookmarks.filter(function(b) { return b.category === key; }).length;
-  }
-
-  function getAvailableTags() {
-    if (!state.data || !state.data.bookmarks) return [];
-    var bms = state.data.bookmarks;
-    if (state.currentCategory !== 'all') {
-      bms = bms.filter(function(b) { return b.category === state.currentCategory; });
-    }
-    var tagMap = {};
-    bms.forEach(function(b) {
-      if (b.tags) b.tags.forEach(function(t) { tagMap[t] = (tagMap[t] || 0) + 1; });
-    });
-    return Object.keys(tagMap).sort(function(a, b) { return tagMap[b] - tagMap[a]; });
   }
 
   /* ============================================
@@ -1109,7 +1153,6 @@
   function renderAll() {
     renderHero();
     renderCategories();
-    renderTagFilter();
     renderBookmarks();
   }
 
@@ -1121,6 +1164,8 @@
 
   function renderCategories() {
     var cats = [{ key: 'all', label: '全部' }];
+    /* 虚拟"收藏"分类，紧跟"全部"之后 */
+    cats.push({ key: FAV_CATEGORY_KEY, label: '收藏' });
     if (state.data && state.data.categories) {
       cats = cats.concat(state.data.categories);
     }
@@ -1130,6 +1175,7 @@
       var cls = 'cat-pill';
       if (state.currentCategory === c.key) cls += ' active';
       if (c.key === 'all') cls += ' is-pinned';
+      if (c.key === FAV_CATEGORY_KEY) cls += ' is-fav-cat';
       return '<button class="' + cls + '" data-cat="' + c.key + '">' +
              escapeHtml(c.label) +
              (count > 0 ? ' <span class="cat-count">' + count + '</span>' : '') +
@@ -1141,25 +1187,6 @@
 
     updateScrollButtons(els.categoryFilter, els.catScrollLeft, els.catScrollRight);
     updateScrollButtons(els.floatingCategoryFilter, els.floatScrollLeft, els.floatScrollRight);
-  }
-
-  function renderTagFilter() {
-    var tags = getAvailableTags();
-    if (tags.length === 0) {
-      els.tagFilterWrap.innerHTML = '';
-      els.tagFilterWrap.classList.remove('has-tags');
-      return;
-    }
-
-    els.tagFilterWrap.classList.add('has-tags');
-    var html = '<span class="tag-filter-label">标签：</span>';
-    html += tags.map(function(t) {
-      var cls = 'tag-filter-pill';
-      if (state.currentTag === t) cls += ' active';
-      return '<button class="' + cls + '" data-tag="' + escapeHtml(t) + '">' + escapeHtml(t) + '</button>';
-    }).join('');
-
-    els.tagFilterWrap.innerHTML = html;
   }
 
   function renderBookmarks() {
@@ -1180,13 +1207,6 @@
       var faviconUrl = getFaviconUrl(bm.url);
       var delay = (idx % 12) * 0.03;
 
-      var tagsHtml = '';
-      if (bm.tags && bm.tags.length) {
-        tagsHtml = '<div class="bm-tags">' +
-          bm.tags.map(function(t) { return '<span class="bm-tag">' + escapeHtml(t) + '</span>'; }).join('') +
-          '</div>';
-      }
-
       var actionsHtml = '';
       if (state.editMode) {
         actionsHtml = '<div class="bm-actions">' +
@@ -1203,6 +1223,12 @@
         ? '<div class="bm-info-notes">' + escapeHtml(bm.notes) + '</div>'
         : '<div class="bm-info-domain">' + escapeHtml(domain) + '</div>';
 
+      /* 收藏按钮：所有人可见，右上角 */
+      var favCls = 'bm-favorite-btn' + (isFavorited(bm.id) ? ' is-favorited' : '');
+      var favHtml = '<button class="' + favCls + '" data-fav="' + bm.id + '" title="加入收藏" aria-label="收藏">' +
+        '<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+      '</button>';
+
       return '<div class="bm-card" data-id="' + bm.id + '" style="animation-delay:' + delay + 's">' +
         '<div class="bm-cover loading">' +
           '<img class="screenshot" data-src="' + escapeHtml(screenshotUrl) + '" alt="' + escapeHtml(bm.title) + '">' +
@@ -1211,19 +1237,18 @@
             '<div class="domain-text">' + escapeHtml(domain) + '</div>' +
           '</div>' +
           '<div class="bm-cover-overlay">' +
-            '<div class="bm-overlay-title">' + escapeHtml(bm.title) + '</div>' +
             '<div class="bm-overlay-domain">' + escapeHtml(domain) + '</div>' +
           '</div>' +
           '<div class="bm-cover-badge">' +
             '<span class="bm-badge">' + escapeHtml(catLabel) + '</span>' +
           '</div>' +
+          favHtml +
           actionsHtml +
         '</div>' +
         '<div class="bm-info">' +
           '<div class="bm-info-title">' + escapeHtml(bm.title) + '</div>' +
           infoHtml +
         '</div>' +
-        tagsHtml +
       '</div>';
     }).join('');
 
@@ -1372,22 +1397,31 @@
     });
 
     document.addEventListener('click', function(e) {
+      /* 收藏按钮（任何人可见，点击切换 localStorage 状态） */
+      var favBtn = e.target.closest('[data-fav]');
+      if (favBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        var favId = favBtn.getAttribute('data-fav');
+        toggleFavorite(favId);
+        /* 局部更新：切换 button 自身的 is-favorited 类 */
+        favBtn.classList.toggle('is-favorited');
+        /* 如果当前正在"收藏"分类下，需要重新渲染列表（移除/恢复该项） */
+        if (state.currentCategory === FAV_CATEGORY_KEY) {
+          renderCategories();
+          renderBookmarks();
+        } else {
+          /* 其他分类下，仅需更新收藏分类的数量计数 */
+          renderCategories();
+        }
+        return;
+      }
+
       /* 分类切换 */
       var catPill = e.target.closest('.cat-pill');
       if (catPill) {
         state.currentCategory = catPill.getAttribute('data-cat');
-        state.currentTag = null;
         renderAll();
-        return;
-      }
-
-      /* 标签切换 */
-      var tagPill = e.target.closest('.tag-filter-pill');
-      if (tagPill) {
-        var tag = tagPill.getAttribute('data-tag');
-        state.currentTag = (state.currentTag === tag) ? null : tag;
-        renderTagFilter();
-        renderBookmarks();
         return;
       }
 
@@ -1420,26 +1454,47 @@
      ============================================ */
   function enterEditMode() {
     state.editMode = true;
+    persistEditMode(true);
     els.btnAdd.style.display = '';
     els.btnExport.style.display = '';
     els.btnImportJson.style.display = '';
     els.btnBatchClear.style.display = '';
     els.btnDone.style.display = '';
     els.btnEdit.style.display = 'none';
+    persistEditEntryShown(false);
     els.editBanner.style.display = '';
     renderBookmarks();
   }
 
   function exitEditMode() {
     state.editMode = false;
+    persistEditMode(false);
     els.btnAdd.style.display = 'none';
     els.btnExport.style.display = 'none';
     els.btnImportJson.style.display = 'none';
     els.btnBatchClear.style.display = 'none';
     els.btnDone.style.display = 'none';
     els.btnEdit.style.display = '';
+    persistEditEntryShown(true);  // 点完成后保留入口按钮显示，方便再次进入
     els.editBanner.style.display = 'none';
     renderBookmarks();
+  }
+
+  /* ===== 快捷键：Ctrl+Shift+E 唤出/隐藏编辑入口 ===== */
+  function setupEditShortcut() {
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e')) {
+        e.preventDefault();
+        if (!state.editMode) {
+          var willShow = els.btnEdit.style.display === 'none';
+          els.btnEdit.style.display = willShow ? '' : 'none';
+          persistEditEntryShown(willShow);
+          if (willShow) {
+            showToast('编辑入口已显示，点击图标进入维护模式');
+          }
+        }
+      }
+    });
   }
 
   /* ============================================
@@ -1464,7 +1519,6 @@
       els.editUrl.value = bm.url || '';
       els.editCategory.value = bm.category || '';
       els.editNotes.value = bm.notes || '';
-      state.editingTags = (bm.tags || []).slice();
       els.btnEditDelete.style.display = '';
     } else {
       els.editModalTitle.textContent = '新增收藏';
@@ -1472,11 +1526,9 @@
       els.editUrl.value = '';
       if (els.editCategory.options.length) els.editCategory.selectedIndex = 0;
       els.editNotes.value = '';
-      state.editingTags = [];
       els.btnEditDelete.style.display = 'none';
     }
 
-    renderTagChips();
     els.editModal.classList.add('is-visible');
     setTimeout(function() { els.editTitle.focus(); }, 100);
   }
@@ -1484,37 +1536,6 @@
   function closeEditModal() {
     els.editModal.classList.remove('is-visible');
     state.editingId = null;
-    state.editingTags = [];
-  }
-
-  function renderTagChips() {
-    var input = els.editTagInput;
-    var chips = state.editingTags.map(function(tag, i) {
-      return '<span class="modal-tag-chip">' + escapeHtml(tag) +
-        '<button type="button" data-remove-tag="' + i + '">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-        '</button></span>';
-    }).join('');
-
-    els.editTagsInput.innerHTML = chips + '<input type="text" class="modal-tag-input" id="editTagInput" placeholder="输入标签后回车...">';
-    els.editTagInput = $('editTagInput');
-    bindTagInput();
-  }
-
-  function bindTagInput() {
-    els.editTagInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        var val = this.value.trim();
-        if (val && state.editingTags.indexOf(val) === -1) {
-          state.editingTags.push(val);
-          renderTagChips();
-        }
-      } else if (e.key === 'Backspace' && !this.value && state.editingTags.length) {
-        state.editingTags.pop();
-        renderTagChips();
-      }
-    });
   }
 
   function setupEditModal() {
@@ -1522,29 +1543,6 @@
     els.btnEditCancel.addEventListener('click', closeEditModal);
     els.btnEditSave.addEventListener('click', saveEdit);
     els.btnEditDelete.addEventListener('click', deleteFromEdit);
-
-    els.editModal.addEventListener('click', function(e) {
-      if (e.target === this) closeEditModal();
-    });
-
-    els.editTagsInput.addEventListener('click', function(e) {
-      var removeBtn = e.target.closest('[data-remove-tag]');
-      if (removeBtn) {
-        var idx = parseInt(removeBtn.getAttribute('data-remove-tag'), 10);
-        state.editingTags.splice(idx, 1);
-        renderTagChips();
-      } else {
-        els.editTagInput.focus();
-      }
-    });
-
-    bindTagInput();
-
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && els.editModal.classList.contains('is-visible')) {
-        closeEditModal();
-      }
-    });
   }
 
   function saveEdit() {
@@ -1566,7 +1564,6 @@
         bm.url = url;
         bm.category = category;
         bm.notes = notes;
-        bm.tags = state.editingTags.slice();
       }
       showToast('已保存（需导出后公开生效）');
     } else {
@@ -1575,8 +1572,7 @@
         title: title,
         url: url,
         category: category,
-        notes: notes,
-        tags: state.editingTags.slice()
+        notes: notes
       };
       state.data.bookmarks.unshift(newBm);
       showToast('已新增（需导出后公开生效）');
@@ -1642,7 +1638,8 @@
         }
         state.data = data;
         state.currentCategory = 'all';
-        state.currentTag = null;
+        /* 重新清理收藏孤儿（导入新数据后某些 ID 可能失效） */
+        pruneFavorites();
         renderAll();
         showToast('导入成功（' + data.bookmarks.length + ' 条收藏）');
       } catch (err) {
@@ -1707,14 +1704,6 @@
     els.batchClearCancel.addEventListener('click', closeBatchClearModal);
     els.batchClearConfirm.addEventListener('click', confirmBatchClear);
     els.batchClearCategory.addEventListener('change', updateBatchClearCount);
-    els.batchClearModal.addEventListener('click', function(e) {
-      if (e.target === this) closeBatchClearModal();
-    });
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && els.batchClearModal.classList.contains('is-visible')) {
-        closeBatchClearModal();
-      }
-    });
   }
 
   /* ============================================
@@ -1723,9 +1712,15 @@
   function init() {
     cacheEls();
 
+    /* 恢复编辑模式 / 编辑入口显隐（刷新后保持） */
+    restoreEditState();
+
     /* 编辑模式切换 */
     els.btnEdit.addEventListener('click', enterEditMode);
     els.btnDone.addEventListener('click', exitEditMode);
+
+    /* Ctrl+Shift+E 唤出编辑入口 */
+    setupEditShortcut();
 
     /* 新增 */
     els.btnAdd.addEventListener('click', function() {

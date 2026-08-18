@@ -177,6 +177,12 @@ const TOOLS = [
 8. **禁用缩放**：viewport 必须包含 `maximum-scale=1.0, user-scalable=no`
 9. **标题格式**：`<title>W.-工具名</title>`，首页为 `<title>W. Studio</title>`
 10. **图标配色**：工具卡片图标限用 5 色（red / orange / green / blue / purple），禁止新增颜色
+11. **弹窗关闭交互**（所有 `.modal-overlay` / `.modal-mask` / `.is-visible` 类弹窗统一适用）：
+    - **禁止**在遮罩层/空白区域绑定 `onclick` 或 `addEventListener('click')` 来关闭弹窗（例如 `e.target === this` 关闭）；
+    - **禁止**在全局/弹窗打开期间绑定 `Escape` 键关闭；
+    - 弹窗**只能通过弹窗内明确的按钮关闭**：右上角 `×`（`.modal-close`）、底部「取消」「关闭」「保存」「确认」「删除」等按钮（onclick/监听必须绑定在这些按钮自身或其 `[data-close-modal]` 属性上）；
+    - 例外：纯"看图/放大预览"类 Lightbox（如 filament-manager.imageModal 里只有一张图片）需确保**仍有关闭按钮**（× 或"关闭"），然后再去掉遮罩点击关闭，避免出现无法关闭的弹窗。
+12. **编辑入口显隐**：任何"管理/编辑模式"入口按钮（对应维护操作类 UI，如 bookmark-manager 的笔图标）默认隐藏，只能通过**键盘快捷键**唤出（如 `Ctrl+Shift+E`），避免外网访客误入。编辑模式状态和入口显隐需用 `sessionStorage` 持久化（刷新保持，关浏览器清空）。
 
 ## 五、工具页分类
 

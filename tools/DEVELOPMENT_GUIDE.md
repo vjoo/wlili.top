@@ -601,6 +601,20 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - 大数据量列表必须分批渲染（`requestAnimationFrame` 每帧 8 条），配合骨架屏
     - 存量数据提供"一键压缩现有图片"入口，批量压缩时临时关闭自动备份，完成统一备份
     - 参考实现：`prompt-library.html` 的 `compressImageFile()` / `compressAllImages()` / `renderList()`
+27. **弹窗关闭交互**（强制，所有 `.modal-overlay` / `.modal-box` / `.modal-mask` / `.is-visible` 类弹窗统一适用）：
+    - **禁止**在遮罩层/空白区域绑定 `onclick` 或 `addEventListener('click')` 来关闭弹窗（例如 `e.target === this` 关闭、`closest('.modal-mask')` 直接关）；
+    - **禁止**在全局或弹窗打开期间监听 `Escape` 键关闭弹窗；
+    - 弹窗**只能通过弹窗内明确的按钮关闭**：右上角 `×`（`.modal-close`）、底部「取消」「关闭」「保存」「确认」「删除」按钮（监听必须绑在按钮自身或 `[data-close-modal]` 属性上）；
+    - 例外：纯"看图/Lightbox"类弹窗（只有一张放大预览图）**必须先确保弹窗内有 × 关闭按钮**，再移除遮罩点击关闭，避免出现无法关闭的弹窗；
+    - 参考修正：`bookmark-manager.html`（editModal/batchClearModal）、`prompt-library.html`（confirmModal）、`filament-manager.html`（modalOverlay/imageModal）、`seamless-pattern.html`（modalOverlay）——以上页面已按本规则移除遮罩点击关闭。
+28. **管理/编辑入口默认隐藏规范**（所有含维护操作 UI 的页面，如数据管理页）：
+    - 任何"进入编辑模式 / 进入维护模式"的入口按钮默认隐藏（`style="display:none;"` 或 CSS 隐藏），避免外网访客误入；
+    - 入口按钮只能通过**键盘快捷键**唤出（推荐 `Ctrl+Shift+E`），快捷键要做 `e.preventDefault()` 防止浏览器默认行为；
+    - 两个状态必须用 **`sessionStorage` 持久化**（刷新保持、关闭浏览器清空）：
+      1. 编辑模式本身是否处于激活（对应 body.is-editing / state.editMode）；
+      2. 入口按钮当前是否显示（对应 btnEdit.style.display）；
+    - 初始化顺序：`cacheEls()` → `restoreEditState()`（从 sessionStorage 恢复）→ 再 bind 按钮事件，避免恢复后点击监听重复触发或状态不一致；
+    - 参考实现：`bookmark-manager.html` 的 `restoreEditState()` / `persistEditMode()` / `persistEditEntryShown()`。
 
 ---
 

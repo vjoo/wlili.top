@@ -4401,9 +4401,6 @@
     if (modalCallback) modalCallback();
     hideModal();
   });
-  document.getElementById('modalOverlay').addEventListener('click', function(e) {
-    if (e.target === this) hideModal();
-  });
 
   /* ============================================
      Data Management Event Listeners
