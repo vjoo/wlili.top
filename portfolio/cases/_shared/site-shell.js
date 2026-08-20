@@ -204,8 +204,33 @@
     try { if (window.registerRevealElements) window.registerRevealElements(newInner); } catch (_) {}
   }
 
+  // 测量 .header-nav 中所有 nav-link 的实际渲染宽度，
+  // 写入 --nav-scrolled-maxw CSS 变量（scrolled 胶囊收缩目标宽度）。
+  // 只在 DOM 有尺寸后调用（buildHeader 插入完成 / applyNavMenu 内容更新后）。
+  // ⚠️ 与 CSS 保持同步：justify-content(space-around)、gap(2.5rem=40px)、
+  //    padding(0 2rem=32px 左右) 全部恒定不切换，只靠 max-width 数值收缩同步带动动画。
+  //    因此这里的 gap/padding 参数始终用未滚动状态值，无需区分 scrolled。
+  function calcAndSetNavScrolledMaxw() {
+    var nav = document.getElementById('headerNav');
+    if (!nav) return;
+    requestAnimationFrame(function () {
+      var links = nav.querySelectorAll('.nav-link');
+      if (!links.length) return;
+      var linkTotal = 0;
+      for (var i = 0; i < links.length; i++) linkTotal += links[i].getBoundingClientRect().width;
+      var n = links.length;
+      var gapPx = 2.5 * 16;        // 恒定 gap: 2.5rem = 40px（与 CSS .header-nav gap 同步）
+      var paddingPx = 2 * 16;      // 恒定 padding: 左右各 2rem = 32px（与 CSS .header-nav padding 同步）
+      var extraAllowance = 20;     // 字体渲染差异 / 小数舍入的安全冗余
+      var minW = linkTotal + gapPx * (n - 1) + paddingPx * 2 + extraAllowance;
+      var scrolledMaxw = Math.max(minW, 320); // 下限 320px
+      document.documentElement.style.setProperty('--nav-scrolled-maxw', scrolledMaxw + 'px');
+    });
+  }
+
   // 全站顶部导航：cases.json 顶层 navMenu（后台「顶部导航设置」编辑）覆盖默认 navLinks。
   // 拉到配置后局部重渲染桌面 + 移动端导航链接（header 已由 injectShell 注入）。
+  // 重渲染后重算 --nav-scrolled-maxw 变量，保证胶囊收缩动画宽度与菜单数量匹配。
   function applyNavMenu(items) {
     if (!Array.isArray(items)) return;
     var clean = items.map(function (l) {
@@ -224,6 +249,7 @@
       var inner = mobile.querySelector('.mobile-menu-inner');
       if (inner) inner.innerHTML = clean.map(function (l) { return navLinkHtml(l, true); }).join('');
     }
+    calcAndSetNavScrolledMaxw();
   }
   function loadNavMenu() {
     // 纯静态读取：直接解析项目 cases.json 顶层的 navMenu（页面在 /portfolio/cases/<key>/，故用 ../cases.json）
@@ -296,6 +322,10 @@
 
     // 4. 回到顶部火箭
     main.appendChild(buildBackToTop());
+
+    // 5. 默认导航兜底：若 loadNavMenu 的 fetch 失败 / 无后台配置，
+    //    按 buildHeader 使用的默认 CONFIG.navLinks 也计算一次 --nav-scrolled-maxw。
+    calcAndSetNavScrolledMaxw();
   }
 
   // =========================================
@@ -343,6 +373,18 @@
           if (Date.now() - ts < 30000) restoreY = parseInt(saved, 10) || 0;
           sessionStorage.removeItem('case_scroll_y');
           sessionStorage.removeItem('case_scroll_t');
+        }
+      } catch (_) {}
+
+      // 同步隐藏首屏骨架屏（与过渡遮罩并行淡出，视觉上不互相遮挡）
+      try {
+        const sk = document.getElementById('page-skeleton');
+        if (sk) {
+          sk.classList.add('skeleton-leave');
+          // 与 opacity 400ms 过渡一致；transitionend 可能因 display 问题不触发，直接 setTimeout 更稳
+          setTimeout(() => {
+            try { sk.style.display = 'none'; } catch (_) {}
+          }, 450);
         }
       } catch (_) {}
 

@@ -4,10 +4,12 @@
     {
       "id": "smsx1fmxpu4zm",
       "type": "hero-banner",
-      "title": "",
-      "labels": [],
-      "description": "",
-      "videoType": "image",
+      "title": "PORTFOLIO 2026",
+      "labels": [
+        "WLi. Design Studio"
+      ],
+      "description": "App Interface・Web System・Visual Identity・3D Scene Design",
+      "videoType": "animated",
       "image": "/portfolio/cases/pjlist/uploads/1786979962685.jpg",
       "videoUrl": "",
       "effect": "fs",
@@ -19,7 +21,14 @@
           "labels": [],
           "subtitle": ""
         }
-      ]
+      ],
+      "animatedEffect": "tunnel",
+      "animatedParams": {
+        "mouseInteraction": false,
+        "color1": "#3616b6",
+        "backgroundColor": "#272031"
+      },
+      "textLayout": "center"
     },
     {
       "id": "smspt62o385co-title",
@@ -47,8 +56,8 @@
               "name": "智能锁出租房运营产品",
               "year": "",
               "href": "",
-              "linkPage": "",
-              "image1": "/portfolio/cases/pjlist/uploads/1786980619796.jpg",
+              "linkPage": "vjooProject",
+              "image1": "/portfolio/cases/pjlist/uploads/1787110553227.jpg",
               "image2": "/portfolio/cases/pjlist/uploads/1786980471086.jpg"
             }
           ]
@@ -56,19 +65,19 @@
         {
           "cards": [
             {
-              "name": "",
+              "name": "政府・流口大数据监管项目",
               "year": "",
               "href": "",
               "linkPage": "",
-              "image1": "/portfolio/cases/pjlist/uploads/1786957621477.jpg",
-              "image2": "/portfolio/cases/pjlist/uploads/1786980582434.jpg"
+              "image1": "/portfolio/cases/pjlist/uploads/1787034243511.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1787058480831.jpg"
             },
             {
-              "name": "",
+              "name": "智能锁蓝牙开门项目",
               "year": "",
               "href": "",
               "linkPage": "",
-              "image1": "/portfolio/cases/pjlist/uploads/1786980590729.jpg",
+              "image1": "/portfolio/cases/pjlist/uploads/1787110562983.jpg",
               "image2": "/portfolio/cases/pjlist/uploads/1786980510585.jpg"
             }
           ]

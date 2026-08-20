@@ -3,9 +3,9 @@
   "pages": [
     {
       "key": "vjooProject",
-      "title": "租房项目",
+      "title": "消费级端",
       "type": "detail",
-      "level": 2,
+      "level": 1,
       "parent": null,
       "year": "2026",
       "category": "网页设计",
@@ -15,9 +15,9 @@
     },
     {
       "key": "mybilist",
-      "title": "大屏案例",
+      "title": "政府端",
       "type": "detail",
-      "level": 2,
+      "level": 1,
       "parent": null,
       "year": "2026",
       "category": "网页设计",
@@ -27,9 +27,9 @@
     },
     {
       "key": "pjlist",
-      "title": "作品集列表",
+      "title": "UI设计",
       "type": "list",
-      "level": 2,
+      "level": 1,
       "parent": null,
       "year": "2026",
       "category": "网页设计",
@@ -39,7 +39,7 @@
     },
     {
       "key": "home",
-      "title": "首页",
+      "title": "3D设计",
       "type": "home",
       "level": 1,
       "parent": null,
@@ -49,9 +49,9 @@
     },
     {
       "key": "reeoder",
-      "title": "跨境项目",
+      "title": "企业端",
       "type": "detail",
-      "level": 2,
+      "level": 1,
       "parent": null,
       "nav": false,
       "cover": "",
@@ -60,23 +60,28 @@
   ],
   "navMenu": [
     {
-      "label": "首页",
+      "label": "3D设计",
       "href": "../home/index.html",
       "target": false
     },
     {
-      "label": "作品集",
+      "label": "UI设计",
       "href": "../pjlist/index.html",
       "target": false
     },
     {
-      "label": "租房项目",
+      "label": "消费者端",
       "href": "../vjooProject/index.html",
       "target": false
     },
     {
-      "label": "跨境项目",
+      "label": "企业端",
       "href": "../reeoder/index.html",
+      "target": false
+    },
+    {
+      "label": "政府端",
+      "href": "../mybilist/index.html",
       "target": false
     }
   ]

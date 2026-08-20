@@ -104,6 +104,184 @@ body {
   overflow-x: hidden;
 }
 
+/* ============================================================
+   首屏骨架屏 + Loading（防止外网慢加载时的白屏）
+   ────────────────────────────────────────────────────────
+   在每个案例页的 <body> 开头内联一段 #page-skeleton DOM
+   （不需要等待任何 JS/CSS 下载，浏览器解析到 body 就立即可见）。
+   site-shell.js 在 case-content-ready → 进场动画启动时：
+   给 #page-skeleton 加 .skeleton-leave，触发淡出，
+   动画结束（400ms 后）display:none 移除占位。
+   ⚠️ 所有尺寸用百分比/vw，移动端 100% 适配，不依赖 content.json
+   ⚠️ 动画时长与过渡遮罩 page-mask 保持一致，视觉同步
+   ============================================================ */
+
+#page-skeleton {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;                     /* 比 header-overlay(9990) 高，比 transition-mask(9999) 低 */
+  background: var(--color-background);
+  pointer-events: none;              /* 不拦截底层点击（如果用户先点了啥） */
+  transition: opacity 400ms ease, visibility 400ms ease;
+  opacity: 1;
+  visibility: visible;
+}
+#page-skeleton.skeleton-leave {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Loading 环：顶部居中位置 */
+#page-skeleton .sk-loader {
+  position: absolute;
+  top: max(3rem, 10vh);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(10, 10, 10, 0.08);
+  border-top-color: var(--color-text);
+  animation: sk-spin 900ms linear infinite;
+  z-index: 2;
+}
+@keyframes sk-spin {
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
+/* 骨架容器：仿 hero + intro 的垂直布局 */
+#page-skeleton .sk-inner {
+  position: absolute;
+  inset: 0;
+  padding: 0 calc(1rem + 2.25vw);       /* 与 .container padding 对齐 */
+  max-width: 75.5rem;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding-top: 14vh;
+  padding-bottom: 4rem;
+  overflow: hidden;
+}
+
+/* Hero 区骨架：上方一个大方块（封面），下面两行文字 */
+#page-skeleton .sk-hero {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+#page-skeleton .sk-hero-box {
+  width: 100%;
+  aspect-ratio: 16 / 9;                 /* 16:9 封面比例 */
+  border-radius: 1.5rem;
+  background: linear-gradient(
+    110deg,
+    rgba(10, 10, 10, 0.06) 20%,
+    rgba(10, 10, 10, 0.10) 50%,
+    rgba(10, 10, 10, 0.06) 80%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1400ms ease-in-out infinite;
+}
+#page-skeleton .sk-line {
+  height: 1.25rem;
+  border-radius: 8px;
+  background: linear-gradient(
+    110deg,
+    rgba(10, 10, 10, 0.06) 20%,
+    rgba(10, 10, 10, 0.10) 50%,
+    rgba(10, 10, 10, 0.06) 80%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1400ms ease-in-out infinite;
+}
+#page-skeleton .sk-line--title {
+  height: 2.75rem;
+  width: 72%;
+  border-radius: 12px;
+  animation-delay: 80ms;
+}
+#page-skeleton .sk-line--sub {
+  width: 42%;
+  animation-delay: 160ms;
+}
+
+/* Intro / 文本区骨架：左右两列布局（仿 intro 的 info grid） */
+#page-skeleton .sk-info {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 4rem;
+}
+#page-skeleton .sk-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+#page-skeleton .sk-label {
+  height: 0.9rem;
+  width: 38%;
+  border-radius: 6px;
+  background: rgba(10, 10, 10, 0.06);
+  animation: sk-shimmer 1400ms ease-in-out infinite;
+  animation-delay: 220ms;
+}
+#page-skeleton .sk-info-col .sk-line:nth-child(1) { width: 90%; animation-delay: 240ms; }
+#page-skeleton .sk-info-col .sk-line:nth-child(2) { width: 82%; animation-delay: 300ms; }
+#page-skeleton .sk-info-col .sk-line:nth-child(3) { width: 74%; animation-delay: 360ms; height: 1rem; }
+#page-skeleton .sk-info-col .sk-line:nth-child(4) { width: 60%; animation-delay: 420ms; height: 1rem; }
+
+/* Gallery / 截图墙骨架：3 个并排方块 */
+#page-skeleton .sk-gallery {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+#page-skeleton .sk-tile {
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  background: linear-gradient(
+    110deg,
+    rgba(10, 10, 10, 0.06) 20%,
+    rgba(10, 10, 10, 0.10) 50%,
+    rgba(10, 10, 10, 0.06) 80%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1400ms ease-in-out infinite;
+}
+#page-skeleton .sk-tile:nth-child(1) { animation-delay: 480ms; }
+#page-skeleton .sk-tile:nth-child(2) { animation-delay: 540ms; }
+#page-skeleton .sk-tile:nth-child(3) { animation-delay: 600ms; }
+
+@keyframes sk-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 移动端：Hero 区比例调整，info 改为单列，gallery 改为 2 列 */
+@media (max-width: 768px) {
+  #page-skeleton .sk-inner {
+    padding: 0 1rem;
+    padding-top: 18vh;
+    gap: 1.75rem;
+  }
+  #page-skeleton .sk-hero-box { aspect-ratio: 4 / 3; border-radius: 1rem; }
+  #page-skeleton .sk-line--title { height: 2rem; width: 86%; }
+  #page-skeleton .sk-line--sub { width: 60%; }
+  #page-skeleton .sk-info {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  #page-skeleton .sk-gallery { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  #page-skeleton .sk-loader { top: 2rem; }
+  #page-skeleton .sk-line--title { height: 1.5rem; }
+  #page-skeleton .sk-gallery .sk-tile:nth-child(3) { display: none; }
+}
+
 a {
   text-decoration: none;
   color: inherit;
@@ -171,36 +349,44 @@ img {
 }
 
 /* Nav 链接组：未滚动透明占满（链接分散），滚动后白底胶囊居中
- * 统一过渡属性：max-width / background-color / border-color
+ * 统一过渡属性：max-width / background-color / border-color / padding / box-shadow
+ * ⚠️ justify-content / gap 不做状态切换、不参与过渡：
+ *    - justify-content 是离散属性（space-around ↔ center 无过渡，会瞬间跳变），
+ *      会导致"链接先挤到一起，白色胶囊才收缩"的时序错位
+ *    - 方案：始终保持 justify-content: space-around + gap 恒定
+ *      只靠 max-width 的数值收缩同步带动链接间距缩小
+ *      （max-width 300ms 平滑过渡 → space-around 的百分比分配让链接像素间距同步减小）
  * ⚠️ 初始就给 margin-inline: auto：初始 max-width 很大时 auto 不产生位移
- *    避免 scrolled 时"突然加 margin-inline:auto"引起的跳变（auto 无法用 transition 过渡）
+ *    避免 scrolled 时"突然加 margin-inline:auto"引起的跳变
+ * ⚠️ --nav-scrolled-maxw：由 site-shell.js 的 applyNavMenu() 在注入菜单后动态计算写入
+ *    （= 所有 nav-link 宽度之和 + gap*(n-1) + padding*2 + 20 冗余），
+ *    替代旧硬编码 445px，2~10+ 菜单项都有正确的收缩动画且不溢出
  */
 .header-nav {
   display: flex;
   align-items: center;
-  justify-content: space-around; /* 原版：链接分散在整个 nav 宽度内 */
-  gap: 2.5rem; /* 40px，原版 */
-  height: 2.5rem; /* 40px，原版 */
-  padding: 0 2rem; /* 0 32px，原版 */
-  border-radius: 1.875rem; /* 30px，原版 */
-  width: 100%; /* 原版：占满可用空间 */
-  max-width: 51rem; /* 原版内联：max-width: 51rem = 816px，滚动后收缩上限 */
+  justify-content: space-around; /* 恒定：space-around，不参与状态切换 */
+  gap: 2.5rem;                   /* 恒定：40px，不参与状态切换 */
+  height: 2.5rem;                /* 40px，原版 */
+  padding: 0 2rem;               /* 恒定：32px 左右，不参与状态切换 */
+  border-radius: 1.875rem;       /* 30px，原版 */
+  width: 100%;                   /* 恒定：100%，只用 max-width 数值过渡 */
+  max-width: 51rem;              /* 816px，未滚动上限 */
   background: transparent;
   border: 1px solid transparent;
   margin-inline: auto;
   transition:
     max-width var(--transition-base),
-    width var(--transition-base),
     background-color var(--transition-base),
     border-color var(--transition-base),
-    box-shadow var(--transition-base),
-    padding var(--transition-base);
+    box-shadow var(--transition-base);
 }
 
 .header-overlay.scrolled .header-nav {
   background-color: var(--color-white);
   border-color: rgba(10, 10, 10, 0.05);
-  max-width: 27.8125rem; /* 原版滚动后内联 max-width: 445px（4 个链接的紧凑宽度） */
+  max-width: var(--nav-scrolled-maxw, 27.8125rem); /* 目标宽度由 JS 动态写入 */
+  /* justify-content / gap / padding 全部保持未滚动状态值不变，避免时序错位 */
   box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 

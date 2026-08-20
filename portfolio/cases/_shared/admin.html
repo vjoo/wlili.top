@@ -278,6 +278,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow-x: hidden;
 }
 
 /* ===== Page Header ===== */
@@ -935,9 +936,10 @@ body {
 .empty-state svg { width: 40px; height: 40px; opacity: .4; }
 
 /* ===== Form ===== */
-.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-width: 0; }
+.form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .form-group.full { grid-column: 1 / -1; }
+#editorFormContainer, #editorFormContainer > * { max-width: 100%; box-sizing: border-box; }
 .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
 /* 字段辅助说明：标题旁圆圈感叹号，悬停弹出气泡（不占编辑界面空间） */
 .field-hint {
@@ -980,6 +982,126 @@ body {
 }
 .form-label .field-reset:hover { background: var(--bg-hover); color: var(--text-primary); }
 .form-label .field-reset svg { width: 14px; height: 14px; }
+
+/* ===== 动画背景参数：内联可折叠面板 ===== */
+.ani-params-field {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  overflow: hidden;
+  transition: border-color .2s;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+/* 全局保险：禁用右栏所有容器的水平滚动 */
+.right-work *, .editor-body *, .ani-params-field *, .ani-params-body *, .ani-params-grid *,
+.right-work::before, .right-work::after,
+.editor-body::before, .editor-body::after {
+  box-sizing: border-box;
+}
+.right-work, .editor-body, .editor-footer, .editor-header,
+#editorFormContainer, #editorFormContainer .form-grid,
+.ani-params-field, .ani-params-body, .ani-params-grid, .ani-param-row,
+.form-input, .form-select, .form-textarea, .form-range {
+  max-width: 100% !important;
+}
+.ani-params-field.has-changes { border-color: var(--accent-color); }
+.ani-params-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  cursor: pointer; user-select: none;
+  border-bottom: 1px solid transparent;
+  transition: background .15s, border-color .2s;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+.ani-params-field:not(.collapsed) .ani-params-header { border-bottom-color: var(--border-color); }
+.ani-params-header:hover { background: var(--bg-hover); }
+.ani-params-chevron {
+  width: 16px; height: 16px; color: var(--text-muted); flex: none;
+  transition: transform .2s;
+}
+.ani-params-field.collapsed .ani-params-chevron { transform: rotate(-90deg); }
+.ani-params-title { font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; }
+.ani-params-badge {
+  font-size: 11px; font-weight: 500; color: var(--text-muted);
+  padding: 2px 8px; border-radius: 10px; background: var(--bg-tertiary);
+  white-space: nowrap;
+}
+.ani-params-field.has-changes .ani-params-badge { color: var(--accent-color); background: rgba(99,102,241,0.08); }
+.ani-params-reset-all {
+  display: inline-flex; align-items: center; gap: 4px;
+  width: auto; height: 22px; padding: 0 8px;
+  font-size: 11px; font-weight: 500; color: var(--text-muted);
+}
+.ani-params-reset-all svg { width: 13px; height: 13px; }
+.ani-params-reset-all .ani-params-reset-label { white-space: nowrap; }
+.ani-params-body {
+  padding: 16px;
+  max-height: 820px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+  transition: max-height .25s ease, padding .25s ease, opacity .2s ease;
+}
+.ani-params-field.collapsed .ani-params-body {
+  max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; overflow: hidden;
+}
+.ani-params-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 16px; }
+.ani-param-row { display: flex; flex-direction: column; gap: 6px; min-width: 0; width: 100%; max-width: 100%; box-sizing: border-box; overflow-x: clip; }
+.ani-param-row.changed .form-label { color: var(--accent-color); }
+.ani-param-row .form-label { font-size: 12px; width: 100%; box-sizing: border-box; min-width: 0; flex-wrap: nowrap; }
+.ani-param-row .form-label > *:first-child { min-width: 0; flex-shrink: 1; }
+.ani-param-row .ani-val { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* range 滑块 */
+.form-range {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px; border-radius: 2px;
+  background: var(--border-color);
+  outline: none; cursor: pointer;
+  margin: 8px 0 2px;
+  box-sizing: border-box;
+  padding: 0;
+}
+.form-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent-color); cursor: pointer;
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: transform .15s;
+}
+.form-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.form-range::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent-color); cursor: pointer;
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.form-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--border-color); }
+/* 颜色选择器 */
+.ani-color-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ani-color-input {
+  width: 38px; height: 38px; padding: 0; border: 1px solid var(--border-color);
+  border-radius: var(--radius-md); cursor: pointer; background: var(--bg-primary);
+  flex: none; overflow: hidden;
+}
+.ani-color-input::-webkit-color-swatch-wrapper { padding: 2px; }
+.ani-color-input::-webkit-color-swatch { border: none; border-radius: 4px; }
+.ani-color-text {
+  flex: 1; min-width: 0; height: 38px;
+  font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+@media (max-width: 1199px) {
+  .ani-params-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .ani-params-grid { grid-template-columns: 1fr; }
+  .ani-params-body { max-height: 400px; }
+}
 .form-input, .form-select, .form-textarea {
   padding: 9px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md);
   font-size: 14px; outline: none; transition: all .2s; font-family: inherit; background: var(--bg-primary); width: 100%;
@@ -1226,6 +1348,7 @@ body {
 .editor-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 18px 20px 24px;
   min-height: 0;
 }
@@ -2063,15 +2186,176 @@ const TYPE_ICONS = {
   'team': '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5"/>'
 };
 
+/* ===== 动画背景（animated）：效果与参数 =====
+ * 使用方式：组件 videoType 选 animated 后，用 animated-effect 选效果、animated-params 设参数。
+ * 渲染时 render.js 将 animatedEffect+animatedParams 透传给 _shared/animated-bg.js。
+ *
+ * 参数定义对照 reactbits.dev 官方 demo（Customize 面板），逐项翻译为中文并保留官方默认值。
+ * 引擎实际使用的 key 与本表 key 一一对应；编辑器仅存储与默认值不同的项，便于回退与精简 JSON。
+ */
+const ANIM_EFFECT_OPTIONS = {
+  iridescence: '虹彩 Iridescence',
+  grainient: '噪点渐变 Grainient',
+  molten: '熔融金属 Molten Metal',
+  topography: '地形线 Topography',
+  tunnel: '光隧道 Light Tunnel',
+  galaxy: '星系 Galaxy',
+  silk: '丝绸 Silk'
+};
+const ANIM_EFFECT_KEYS = Object.keys(ANIM_EFFECT_OPTIONS);
+
+// 每个效果的完整参数表（type: range | color | select | checkbox）
+// default 字段必须与 animated-bg.js 中 effect.defaults 完全一致，否则重置后效果会变。
+const ANIM_PARAM_SCHEMA = {
+  iridescence: [
+    { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#120f17', hint: '透明区域（无彩虹色处）露出的底色' },
+    { key: 'color',          label: '基础色',           type: 'color',  default: '#4D3380', hint: 'RGB(0.3, 0.2, 0.5) 的近似十六进制；引擎接受 hex 或 [r,g,b] 0-1 数组' },
+    { key: 'speed',          label: '动画速度',         type: 'range',  min: 0,    max: 3,    step: 0.05, default: 1 },
+    { key: 'amplitude',      label: '鼠标振幅',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.1, hint: '鼠标位置对 uv 的偏移幅度' },
+    { key: 'mouseInteraction', label: '启用鼠标交互',   type: 'checkbox', default: true }
+  ],
+  grainient: [
+    { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#120f17', hint: '透明区域露出的底色' },
+    { key: 'color1',         label: '主光色',           type: 'color',  default: '#FF9FFC' },
+    { key: 'color2',         label: '次要色',           type: 'color',  default: '#5227FF' },
+    { key: 'color3',         label: '深底色',           type: 'color',  default: '#B497CF' },
+    { key: 'timeSpeed',      label: '时间速度',         type: 'range',  min: 0,    max: 3,    step: 0.01, default: 0.25 },
+    { key: 'colorBalance',   label: '色彩平衡',         type: 'range',  min: -1,   max: 1,    step: 0.01, default: 0 },
+    { key: 'warpStrength',   label: '扭曲强度',         type: 'range',  min: 0,    max: 5,    step: 0.01, default: 1 },
+    { key: 'warpFrequency',  label: '扭曲频率',         type: 'range',  min: 0,    max: 20,   step: 0.1,  default: 5 },
+    { key: 'warpSpeed',      label: '扭曲速度',         type: 'range',  min: 0,    max: 10,   step: 0.1,  default: 2 },
+    { key: 'warpAmplitude',  label: '扭曲振幅',         type: 'range',  min: 0,    max: 200,  step: 1,    default: 50 },
+    { key: 'blendAngle',     label: '混合角度',         type: 'range',  min: 0,    max: 360,  step: 1,    default: 0 },
+    { key: 'blendSoftness',  label: '混合柔度',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.05 },
+    { key: 'rotationAmount', label: '旋转量',           type: 'range',  min: 0,    max: 2000, step: 10,   default: 500 },
+    { key: 'noiseScale',     label: '噪点缩放',          type: 'range',  min: 0.1,  max: 10,   step: 0.1,  default: 2 },
+    { key: 'grainAmount',    label: '颗粒量',           type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.1 },
+    { key: 'grainScale',     label: '颗粒缩放',          type: 'range',  min: 0.5,  max: 10,   step: 0.1,  default: 2 },
+    { key: 'grainAnimated',  label: '颗粒动画',         type: 'checkbox', default: false },
+    { key: 'contrast',       label: '对比度',           type: 'range',  min: 0,    max: 4,    step: 0.05, default: 1.5 },
+    { key: 'gamma',          label: '伽马校正',         type: 'range',  min: 0.2,  max: 3,    step: 0.01, default: 1 },
+    { key: 'saturation',     label: '饱和度',           type: 'range',  min: 0,    max: 2,    step: 0.01, default: 1 },
+    { key: 'centerX',        label: '中心 X 偏移',      type: 'range',  min: -1,   max: 1,    step: 0.01, default: 0 },
+    { key: 'centerY',        label: '中心 Y 偏移',      type: 'range',  min: -1,   max: 1,    step: 0.01, default: 0 },
+    { key: 'zoom',           label: '缩放',             type: 'range',  min: 0.1,  max: 5,    step: 0.01, default: 0.9 }
+  ],
+  molten: [
+    { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#120f17', hint: '透明区域（无辉光处）露出的底色' },
+    { key: 'color1',         label: '阴影色',           type: 'color',  default: '#5227FF', hint: '暗调辉光的基础色' },
+    { key: 'color2',         label: '中间色',           type: 'color',  default: '#FF9FFC', hint: '流动光丝的中间色' },
+    { key: 'color3',         label: '高光色',           type: 'color',  default: '#FFFFFF', hint: '炽热核心的高光色' },
+    { key: 'colorMode',      label: '配色模式',         type: 'select', options: ['molten', 'ember', 'frost'], optionLabels: { molten: '熔融 Molten', ember: '余烬 Ember', frost: '霜冻 Frost' }, default: 'molten' },
+    { key: 'speed',          label: '动画速度',         type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.35 },
+    { key: 'scale',          label: '缩放',             type: 'range',  min: 0.5,  max: 12,   step: 0.1,  default: 4 },
+    { key: 'detail',         label: '迭代次数',         type: 'range',  min: 1,    max: 8,    step: 1,    default: 3, hint: '域折叠迭代次数 1-8' },
+    { key: 'glow',           label: '辉光增益',         type: 'range',  min: 0,    max: 5,    step: 0.05, default: 1.6 },
+    { key: 'coreSize',       label: '核心粗细',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.1 },
+    { key: 'swirl',          label: '旋转涡流',         type: 'range',  min: 0,    max: 3,    step: 0.01, default: 1 },
+    { key: 'fold',           label: '折叠强度',         type: 'range',  min: -1,   max: 1,    step: 0.01, default: -0.2, hint: '湍流折叠强度，负值反向' },
+    { key: 'blackPoint',     label: '黑点',             type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.05, hint: '抬高暗部，让阴影渐隐为透明' },
+    { key: 'brightness',    label: '整体亮度',         type: 'range',  min: 0,    max: 3,    step: 0.01, default: 1.3 },
+    { key: 'opacity',        label: '不透明度',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 1 },
+    { key: 'grain',          label: '颗粒噪点',         type: 'checkbox', default: true },
+    { key: 'grainIntensity', label: '颗粒强度',         type: 'range',  min: 0,    max: 0.5,  step: 0.005, default: 0.05 },
+    { key: 'mouseInteraction', label: '光标漂移',       type: 'checkbox', default: true },
+    { key: 'mouseStrength',  label: '光标强度',         type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.3 }
+  ],
+  topography: [
+    { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#120f17', hint: '透明区域（无地形线处）露出的底色' },
+    { key: 'lowColor',       label: '低地势色',         type: 'color',  default: '#5227FF' },
+    { key: 'midColor',       label: '中地势色',         type: 'color',  default: '#FF9FFC' },
+    { key: 'highColor',      label: '高峰色',           type: 'color',  default: '#FFFFFF' },
+    { key: 'colorMode',      label: '线条着色',         type: 'select', options: ['elevation', 'uniform', 'alternating'], optionLabels: { elevation: '按海拔 Elevation', uniform: '统一色 Uniform', alternating: '交替色 Alternating' }, default: 'elevation' },
+    { key: 'speed',          label: '动画速度',         type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.35 },
+    { key: 'morphAmount',    label: '形变振幅',         type: 'range',  min: 0,    max: 10,   step: 0.1,  default: 3 },
+    { key: 'morphSpeed',     label: '形变速度',         type: 'range',  min: 0,    max: 1,    step: 0.005, default: 0.05 },
+    { key: 'bands',          label: '等高线条数',      type: 'range',  min: 0.5,  max: 12,   step: 0.1,  default: 2 },
+    { key: 'thickness',      label: '线条粗细',         type: 'range',  min: 0.001, max: 0.2, step: 0.001, default: 0.01 },
+    { key: 'scale',          label: '缩放',             type: 'range',  min: 0.1,  max: 8,    step: 0.1,  default: 1 },
+    { key: 'pixelSize',      label: '像素颗粒',         type: 'range',  min: 1,    max: 32,   step: 1,    default: 1, hint: '复古像素化步长，1=平滑' },
+    { key: 'glow',           label: '辉光半径',         type: 'range',  min: 0,    max: 3,    step: 0.01, default: 0.5 },
+    { key: 'contrast',       label: '对比度',           type: 'range',  min: 0.1,  max: 8,    step: 0.05, default: 3 },
+    { key: 'brightness',     label: '亮度',             type: 'range',  min: 0,    max: 3,    step: 0.01, default: 1 },
+    { key: 'fillBands',      label: '填充条带',         type: 'checkbox', default: false, hint: '在等高线之间按海拔柔和着色' },
+    { key: 'opacity',        label: '不透明度',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 1 },
+    { key: 'grain',          label: '颗粒噪点',         type: 'checkbox', default: true },
+    { key: 'grainIntensity', label: '颗粒强度',         type: 'range',  min: 0,    max: 0.5,  step: 0.005, default: 0.05 },
+    { key: 'mouseInteraction', label: '光标抬升',       type: 'checkbox', default: true },
+    { key: 'mouseRadius',    label: '光标半径',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.3 },
+    { key: 'mouseStrength',  label: '光标强度',         type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.4 }
+  ],
+  tunnel: [
+    { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#120f17', hint: '透明区域（无光缆处）露出的底色' },
+    { key: 'cableColor',     label: '光缆色',           type: 'color',  default: '#A855F7' },
+    { key: 'pulseColor',     label: '脉冲色',           type: 'color',  default: '#A855F7' },
+    { key: 'tunnelColor',    label: '隧道色',           type: 'color',  default: '#5227FF', hint: '光缆本体填充色，需隧道不透明度>0 才可见' },
+    { key: 'tunnelOpacity',  label: '隧道不透明度',     type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0 },
+    { key: 'speed',          label: '滚动速度',         type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.1 },
+    { key: 'flowDirection',  label: '流动方向',         type: 'select', options: ['outward', 'inward'], optionLabels: { outward: '向外 Outward', inward: '向内 Inward' }, default: 'outward' },
+    { key: 'pulseSpeed',     label: '脉冲速度',         type: 'range',  min: 0,    max: 10,   step: 0.1,  default: 2 },
+    { key: 'pulseLength',    label: '脉冲长度',         type: 'range',  min: 0.05, max: 2,    step: 0.01, default: 0.28 },
+    { key: 'pulseBlend',     label: '脉冲渐隐',         type: 'range',  min: 0,    max: 3,    step: 0.01, default: 1, hint: '小=锐利包，大=长拖尾' },
+    { key: 'pulseWidth',    label: '脉冲宽度',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 1, hint: '光缆截面被脉冲点亮的比例' },
+    { key: 'cableCount',     label: '光缆数量',         type: 'range',  min: 3,    max: 80,   step: 1,    default: 20 },
+    { key: 'thickness',      label: '光缆粗细',         type: 'range',  min: 0.05, max: 1,    step: 0.01, default: 0.35 },
+    { key: 'rimWidth',       label: '边缘辉光',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.15 },
+    { key: 'waviness',       label: '波动量',           type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.3 },
+    { key: 'sway',           label: '摇摆量',           type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.5 },
+    { key: 'size',           label: '尺寸',             type: 'range',  min: 0.2,  max: 5,    step: 0.01, default: 1 },
+    { key: 'centerX',        label: '中心 X 偏移',      type: 'range',  min: -1,   max: 1,    step: 0.01, default: 0 },
+    { key: 'centerY',        label: '中心 Y 偏移',      type: 'range',  min: -1,   max: 1,    step: 0.01, default: 0 },
+    { key: 'glow',           label: '辉光强度',         type: 'range',  min: 0,    max: 3,    step: 0.01, default: 1 },
+    { key: 'fadeNear',       label: '近端淡入',         type: 'range',  min: 0,    max: 3,    step: 0.01, default: 0.5 },
+    { key: 'fadeFar',        label: '远端淡出',         type: 'range',  min: 0.5,  max: 8,    step: 0.01, default: 2 },
+    { key: 'brightness',     label: '亮度',             type: 'range',  min: 0,    max: 3,    step: 0.01, default: 1 },
+    { key: 'colorVariance',  label: '光缆色变',         type: 'checkbox', default: true, hint: '为每根光缆添加细微色差' },
+    { key: 'grain',          label: '颗粒噪点',         type: 'checkbox', default: true },
+    { key: 'grainIntensity', label: '颗粒强度',         type: 'range',  min: 0,    max: 0.5,  step: 0.005, default: 0.05 },
+    { key: 'opacity',        label: '不透明度',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 1 },
+    { key: 'mouseInteraction', label: '光标视差',       type: 'checkbox', default: true },
+    { key: 'mouseStrength',  label: '光标强度',         type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.1 }
+  ],
+  galaxy: [
+    { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#120f17', hint: '透明背景开启时，星点之外露出的底色' },
+    { key: 'density',          label: '星点密度',       type: 'range',  min: 0.1,  max: 4,    step: 0.01, default: 1 },
+    { key: 'glowIntensity',   label: '辉光强度',       type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.3 },
+    { key: 'saturation',      label: '饱和度',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0, hint: '0=灰度，1=全彩' },
+    { key: 'hueShift',        label: '色相偏移',        type: 'range',  min: 0,    max: 360,  step: 1,    default: 140, hint: '所有星点色相偏移（度）' },
+    { key: 'twinkleIntensity', label: '闪烁强度',      type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.3 },
+    { key: 'rotationSpeed',   label: '自转速度',       type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.1 },
+    { key: 'starSpeed',       label: '星点速度',       type: 'range',  min: 0,    max: 4,    step: 0.01, default: 0.5 },
+    { key: 'speed',           label: '全局速度',       type: 'range',  min: 0,    max: 4,    step: 0.01, default: 1 },
+    { key: 'repulsionStrength', label: '排斥强度',     type: 'range',  min: 0,    max: 10,   step: 0.1,  default: 2 },
+    { key: 'autoCenterRepulsion', label: '中心排斥',  type: 'range',  min: 0,    max: 10,   step: 0.1,  default: 0, hint: '>0 时启用中心排斥，覆盖鼠标排斥' },
+    { key: 'mouseRepulsion',  label: '鼠标排斥',       type: 'checkbox', default: true },
+    { key: 'transparent',     label: '透明背景',       type: 'checkbox', default: true, hint: '黑色背景透明，仅显示星点' }
+  ],
+  silk: [
+    { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#120f17', hint: '透明区域（无丝绸处）露出的底色' },
+    { key: 'color',           label: '丝绸色',         type: 'color',  default: '#7B7481' },
+    { key: 'speed',           label: '动画速度',       type: 'range',  min: 0,    max: 20,   step: 0.1,  default: 5 },
+    { key: 'scale',           label: '图案缩放',       type: 'range',  min: 0.1,  max: 10,   step: 0.1,  default: 1 },
+    { key: 'noiseIntensity',  label: '噪点强度',       type: 'range',  min: 0,    max: 5,    step: 0.01, default: 1.5 },
+    { key: 'rotation',        label: '旋转角度',      type: 'range',  min: 0,    max: 6.28, step: 0.01, default: 0, hint: '弧度，0-2π' }
+  ]
+};
+// 兼容旧引用（部分代码仍读取 ANIM_PARAM_EXTRA / ANIM_COMMON_PARAMS）
+const ANIM_PARAM_EXTRA = ANIM_PARAM_SCHEMA;
+const ANIM_COMMON_PARAMS = [];
+
 /* ===== Type Field Definitions ===== */
 const TYPE_FIELDS = {
   'hero': [
-    { key: 'videoType', label: '首屏媒体类型', type: 'select', options: ['placeholder', 'video', 'image', 'carousel'],
-      hint: 'placeholder=占位纯色；video=播放视频；image=显示静态底图；carousel=多图自动轮播（1张时显示静态图）' },
+    { key: 'videoType', label: '首屏媒体类型', type: 'select', options: ['placeholder', 'video', 'image', 'carousel', 'animated'],
+      hint: 'placeholder=占位纯色；video=播放视频；image=显示静态底图；carousel=多图自动轮播（1张时显示静态图）；animated=动画背景（不占上传图/视频）' },
     { key: 'videoUrl', label: '视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
     { key: 'image', label: '图片（videoType=image时用）', type: 'image', dependsOn: { field: 'videoType', value: 'image' } },
     { key: 'effect', label: '轮播切换效果', type: 'select', options: ['slide', 'fade', 'cube', 'coverflow', 'flip', 'creative', 'fs'],
       hint: 'slide=滑动；fade=淡入；cube=立方体；coverflow=封面流；flip=翻转；creative=创意；fs=全屏裁剪滑入（自动播放，不受滚动影响）', dependsOn: { field: 'videoType', value: 'carousel' } },
+    { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
+      dependsOn: { field: 'videoType', value: 'animated' } },
+    { key: 'animatedParams', label: '动画参数', type: 'animated-params',
+      dependsOn: { field: 'videoType', value: 'animated' } },
     { key: 'autoplayDelay', label: '自动播放间隔（毫秒）', type: 'text', placeholder: '4000',
       hint: '默认 4000（4秒）。填 0 则关闭自动播放', dependsOn: { field: 'videoType', value: 'carousel' } },
     { key: 'images', label: '轮播图列表（1张=静态图，多张=自动轮播）', type: 'items-list', itemLabel: '轮播图',
@@ -2080,15 +2364,22 @@ const TYPE_FIELDS = {
       ] }
   ],
   'hero-banner': [
+    { key: 'textLayout', label: '文字布局', type: 'select', options: ['left', 'center'],
+      optionLabels: { 'left': '左下对齐（默认）', 'center': '垂直水平居中' }, default: 'left',
+      hint: 'left=文字块贴左下角；center=文字块在大图垂直+水平居中（标签行与描述也会居中对齐）' },
     { key: 'title', label: '主标题 H1（叠加在大图左上，粗体大字）', type: 'textarea', rows: 2, placeholder: 'Premium Digital Agency for Startups, SaaS & Brands' },
     { key: 'labels', label: '第二行信息标签（英文逗号分隔）', type: 'tags', placeholder: '50+ employees, 6 countries, Founded in 2010' },
     { key: 'description', label: '第三行描述小字（标题下方）', type: 'textarea', rows: 2, placeholder: 'We craft digital experiences that help ambitious companies grow and stand out.' },
-    { key: 'videoType', label: '背景媒体类型', type: 'select', options: ['image', 'video', 'placeholder', 'carousel'],
-      hint: 'image=静态背景大图；video=背景视频；placeholder=占位色块；carousel=多图自动轮播（每张图配独立文案）' },
+    { key: 'videoType', label: '背景媒体类型', type: 'select', options: ['image', 'video', 'placeholder', 'carousel', 'animated'],
+      hint: 'image=静态背景大图；video=背景视频；placeholder=占位色块；carousel=多图自动轮播（每张图配独立文案）；animated=动画背景（叠加文案，不占上传图）' },
     { key: 'image', label: '背景大图', type: 'image', hint: '建议偏暗/主体偏下的图，保证左上文字可读', dependsOn: { field: 'videoType', value: 'image' } },
     { key: 'videoUrl', label: '背景视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
     { key: 'effect', label: '轮播切换效果', type: 'select', options: ['slide', 'fade', 'cube', 'coverflow', 'flip', 'creative', 'fs'],
       hint: 'slide=滑动；fade=淡入；cube=立方体；coverflow=封面流；flip=翻转；creative=创意；fs=全屏裁剪滑入（自动播放，不受滚动影响）', dependsOn: { field: 'videoType', value: 'carousel' } },
+    { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
+      dependsOn: { field: 'videoType', value: 'animated' } },
+    { key: 'animatedParams', label: '动画参数', type: 'animated-params',
+      dependsOn: { field: 'videoType', value: 'animated' } },
     { key: 'autoplayDelay', label: '自动播放间隔（毫秒）', type: 'text', placeholder: '4000',
       hint: '默认 4000（4秒）。填 0 则关闭自动播放', dependsOn: { field: 'videoType', value: 'carousel' } },
     { key: 'images', label: '轮播图列表（每张图可配独立标题/标签/描述，切图时文案一起切换）', type: 'items-list', itemLabel: '轮播图',
@@ -2100,15 +2391,43 @@ const TYPE_FIELDS = {
       ] }
   ],
   'swipe-slider': [
-    { key: 'slides', label: '滑动屏幕列表（每屏：背景大图 + 主标题 + 副标题）', type: 'items-list', itemLabel: '屏幕', itemFields: [
+    { key: 'videoType', label: '背景媒体类型', type: 'select', options: ['slides', 'animated'],
+      optionLabels: { 'slides': '每屏背景大图（默认）', 'animated': '每屏独立动画背景' },
+      default: 'slides',
+      hint: '每屏背景大图：每张 slide 独立背景图；动画背景：每张 slide 独立动画背景' },
+    { key: 'slides', label: '屏幕列表（每屏：背景大图 + 主标题 + 副标题）', type: 'items-list', itemLabel: '屏幕',
+      dependsOn: { field: 'videoType', value: 'slides' },
+      itemFields: [
       { key: 'image', label: '背景大图', type: 'image', hint: '建议 16:9 横图、内容居中、四周留安全边（全屏 cover 会裁切边缘）' },
+      { key: 'title', label: '主标题（切换时逐字上翻动画）', type: 'text', placeholder: '本屏的大标题' },
+      { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '本屏的描述文字' }
+    ] },
+    { key: 'animatedSlides', label: '动画屏幕列表（每屏：动画背景 + 主标题 + 副标题）', type: 'items-list', itemLabel: '动画屏幕',
+      dependsOn: { field: 'videoType', value: 'animated' },
+      itemFields: [
+      { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence' },
+      { key: 'animatedParams', label: '动画参数', type: 'animated-params' },
       { key: 'title', label: '主标题（切换时逐字上翻动画）', type: 'text', placeholder: '本屏的大标题' },
       { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '本屏的描述文字' }
     ] }
   ],
   'fullscreen-slider': [
-    { key: 'slides', label: '全屏屏幕列表（每屏：背景大图 + 主标题 + 副标题；右侧圆点自动生成）', type: 'items-list', itemLabel: '屏幕', itemFields: [
+    { key: 'videoType', label: '背景媒体类型', type: 'select', options: ['slides', 'animated'],
+      optionLabels: { 'slides': '每屏背景大图（默认）', 'animated': '每屏独立动画背景' },
+      default: 'slides',
+      hint: '每屏背景大图：每张 slide 独立背景图；动画背景：每张 slide 独立动画背景' },
+    { key: 'slides', label: '屏幕列表（每屏：背景大图 + 主标题 + 副标题；右侧圆点自动生成）', type: 'items-list', itemLabel: '屏幕',
+      dependsOn: { field: 'videoType', value: 'slides' },
+      itemFields: [
       { key: 'image', label: '背景大图', type: 'image', hint: '建议 16:9 横图、内容居中、四周留安全边（全屏 cover 会裁切边缘）' },
+      { key: 'title', label: '主标题（切换时逐字上翻动画）', type: 'text', placeholder: '本屏的大标题' },
+      { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '本屏的描述文字' }
+    ] },
+    { key: 'animatedSlides', label: '动画屏幕列表（每屏：动画背景 + 主标题 + 副标题；右侧圆点自动生成）', type: 'items-list', itemLabel: '动画屏幕',
+      dependsOn: { field: 'videoType', value: 'animated' },
+      itemFields: [
+      { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence' },
+      { key: 'animatedParams', label: '动画参数', type: 'animated-params' },
       { key: 'title', label: '主标题（切换时逐字上翻动画）', type: 'text', placeholder: '本屏的大标题' },
       { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '本屏的描述文字' }
     ] }
@@ -2123,7 +2442,14 @@ const TYPE_FIELDS = {
     { key: 'logoUrl', label: '项目 Logo 图片（建议透明 PNG/SVG，高度固定宽度自动，PC 居中，移动端居左）', type: 'image' }
   ],
   'parallax': [
-    { key: 'baseImage', label: '底层图', type: 'image' },
+    { key: 'videoType', label: '底层图媒体类型', type: 'select', options: ['image', 'animated'],
+      optionLabels: { 'image': '静态底层图（默认）', 'animated': '动画背景（底层图用动画）' },
+      default: 'image', hint: '底层图可选动画背景；叠加图始终为静态图片' },
+    { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
+      dependsOn: { field: 'videoType', value: 'animated' } },
+    { key: 'animatedParams', label: '动画参数', type: 'animated-params',
+      dependsOn: { field: 'videoType', value: 'animated' } },
+    { key: 'baseImage', label: '底层图', type: 'image', dependsOn: { field: 'videoType', value: 'image' } },
     { key: 'overlayImage', label: '叠加图', type: 'image' }
   ],
   'text': [
@@ -2137,9 +2463,14 @@ const TYPE_FIELDS = {
   'showcase': [
     { key: 'label', label: '标签', type: 'text' },
     { key: 'desc', label: '描述', type: 'textarea' },
-    { key: 'videoType', label: '媒体类型', type: 'select', options: ['placeholder', 'video', 'image'] },
+    { key: 'videoType', label: '媒体类型', type: 'select', options: ['placeholder', 'video', 'image', 'animated'],
+      hint: 'placeholder=占位纯色；video=播放视频；image=静态图片；animated=动画背景' },
     { key: 'image', label: '图片', type: 'image', dependsOn: { field: 'videoType', value: 'image' } },
-    { key: 'videoUrl', label: '视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } }
+    { key: 'videoUrl', label: '视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
+    { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
+      dependsOn: { field: 'videoType', value: 'animated' } },
+    { key: 'animatedParams', label: '动画参数', type: 'animated-params',
+      dependsOn: { field: 'videoType', value: 'animated' } }
   ],
   'gallery': [
     { key: 'label', label: '标签', type: 'text' },
@@ -2148,7 +2479,13 @@ const TYPE_FIELDS = {
     { key: 'columns', label: '分列截图（每列独立管理）', type: 'gallery-columns' }
   ],
   'single-image': [
-    { key: 'image', label: '图片', type: 'image' }
+    { key: 'videoType', label: '媒体类型', type: 'select', options: ['image', 'animated'],
+      optionLabels: { 'image': '静态图片（默认）', 'animated': '动画背景' }, default: 'image', hint: '单图全宽，可选动画背景替代静态图' },
+    { key: 'image', label: '图片', type: 'image', dependsOn: { field: 'videoType', value: 'image' } },
+    { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
+      dependsOn: { field: 'videoType', value: 'animated' } },
+    { key: 'animatedParams', label: '动画参数', type: 'animated-params',
+      dependsOn: { field: 'videoType', value: 'animated' } }
   ],
   'double-image': [
     { key: 'image1', label: '图片1', type: 'image' },
@@ -2192,7 +2529,14 @@ const TYPE_FIELDS = {
     { key: 'label', label: '小标签（右栏顶部）', type: 'text', placeholder: 'Why choose us' },
     { key: 'heading', label: '大标题（右栏第一行）', type: 'textarea', rows: 2, placeholder: 'We design for results - helping your business meet its goals.' },
     { key: 'subtitle', label: '简短描述（标题下方）', type: 'textarea', rows: 2, placeholder: 'Easy-to-use interfaces, seamless development, and lasting impressions.' },
-    { key: 'videoUrl', label: '左侧图片/视频（圆角竖版，留空则不显示）', type: 'video', hint: '上传 mp4/webm 或填直链' },
+    { key: 'videoType', label: '左侧媒体类型', type: 'select', options: ['video', 'none', 'animated'],
+      optionLabels: { 'video': '视频/图片（默认）', 'none': '不显示', 'animated': '动画背景' },
+      default: 'video', hint: '动画背景：左侧用动画背景替代视频/图片' },
+    { key: 'videoUrl', label: '左侧视频（圆角竖版，留空则不显示）', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
+    { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
+      dependsOn: { field: 'videoType', value: 'animated' } },
+    { key: 'animatedParams', label: '动画参数', type: 'animated-params',
+      dependsOn: { field: 'videoType', value: 'animated' } },
     { key: 'items', label: '统计项列表', type: 'items-list', itemLabel: '统计项', itemFields: [
       { key: 'value', label: '数值', type: 'text', placeholder: '600' },
       { key: 'suffix', label: '后缀', type: 'text', placeholder: '+' },
@@ -2231,24 +2575,30 @@ function getDefaultSection(type) {
   const base = { id: genId(), type };
   switch(type) {
     case 'hero': return { ...base, videoUrl: '', videoType: 'video' };
-    case 'hero-banner': return { ...base, title: 'Premium Digital Agency for Startups, SaaS & Brands', labels: [ { text: '50+ employees' }, { text: '6 countries' }, { text: 'Founded in 2010' } ], description: 'We craft digital experiences that help ambitious companies grow and stand out in a crowded market.', videoType: 'image', image: '', videoUrl: '', effect: 'slide', autoplayDelay: '4000', images: [] };
-    case 'swipe-slider': return { ...base, slides: [
+    case 'hero-banner': return { ...base, textLayout: 'left', title: 'Premium Digital Agency for Startups, SaaS & Brands', labels: [ { text: '50+ employees' }, { text: '6 countries' }, { text: 'Founded in 2010' } ], description: 'We craft digital experiences that help ambitious companies grow and stand out in a crowded market.', videoType: 'image', image: '', videoUrl: '', effect: 'slide', autoplayDelay: '4000', images: [] };
+    case 'swipe-slider': return { ...base, videoType: 'slides', slides: [
       { image: '', title: 'Scroll down', subtitle: '一屏一屏滑动浏览，滚轮 / 触摸 / 拖拽皆可' },
       { image: '', title: 'Swipe to explore', subtitle: '标题逐字上翻动画，到尾可退出衔接下方内容' }
+    ], animatedSlides: [
+      { animatedEffect: 'iridescence', animatedParams: {}, title: 'Scroll down', subtitle: '一屏一屏滑动浏览，滚轮 / 触摸 / 拖拽皆可' },
+      { animatedEffect: 'molten', animatedParams: {}, title: 'Swipe to explore', subtitle: '每屏独立动画背景，逐屏切换' }
     ] };
-    case 'fullscreen-slider': return { ...base, slides: [
+    case 'fullscreen-slider': return { ...base, videoType: 'slides', slides: [
       { image: '', title: 'Full screen', subtitle: '页面锁定，滚轮 / 触摸 / 方向键逐屏切换，右侧圆点指示第几张' },
       { image: '', title: 'Swipe to explore', subtitle: '标题逐字上翻动画，到尾不循环' }
+    ], animatedSlides: [
+      { animatedEffect: 'iridescence', animatedParams: {}, title: 'Full screen', subtitle: '页面锁定，滚轮 / 触摸 / 方向键逐屏切换' },
+      { animatedEffect: 'molten', animatedParams: {}, title: 'Swipe to explore', subtitle: '每屏独立动画背景，逐屏切换' }
     ] };
     case 'intro': return { ...base, label: '', heading: '', year: '2025', industry: '', scopeTags: [], timeline: '' };
     case 'brand-logo': return { ...base, logoUrl: '' };
-    case 'parallax': return { ...base, baseImage: '', overlayImage: '' };
+    case 'parallax': return { ...base, videoType: 'image', baseImage: '', overlayImage: '' };
     case 'text': return { ...base, label: '', heading: '', body: '', linkPage: '', linkUrl: '', linkText: '' };
     case 'showcase': return { ...base, label: '', desc: '', image: '', videoUrl: '', videoType: 'placeholder' };
     case 'gallery': return { ...base, label: '', heading: '', colCount: '3', columns: [
       { offsetRem: 0, images: [] }, { offsetRem: 0, images: [] }, { offsetRem: 0, images: [] }
     ] };
-    case 'single-image': return { ...base, image: '' };
+    case 'single-image': return { ...base, videoType: 'image', image: '' };
     case 'double-image': return { ...base, image1: '', image2: '' };
     case 'testimonial': return { ...base, title: '', avatarInitials: '', name: '', role: '', quote: '' };
     case 'title': return { ...base, title: 'Projects', copyright: '2010-26©', description: "We've helped businesses across industries achieve their goals. Here are some of our recent projects.", size: '148', padding: '标准' };
@@ -2994,7 +3344,7 @@ function renderEditorForm(section) {
   let imageFieldRenderIndex = 0;
   let html = '<div class="form-grid">';
   fields.forEach((f) => {
-    const isFull = ['textarea', 'image', 'image-list', 'video', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker'].includes(f.type);
+    const isFull = ['textarea', 'image', 'image-list', 'video', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker', 'animated-params'].includes(f.type);
     html += `<div class="form-group${isFull ? ' full' : ''}">`;
     html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : ''}${(f.type === 'select' && f.default !== undefined) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>` : ''}</label>`;
     const val = section[f.key];
@@ -3063,6 +3413,9 @@ function renderEditorForm(section) {
       case 'items-list':
         html += renderItemsListField(f, Array.isArray(val) ? val : [], fieldUid);
         break;
+      case 'animated-params':
+        html += renderAnimatedParamsField(f, val || {}, fieldUid, section);
+        break;
     }
     html += `</div>`;
   });
@@ -3122,6 +3475,7 @@ function renderEditorForm(section) {
     else if (f.type === 'gallery-columns') bindGalleryColumnsEditor(f.key, section.id);
     else if (f.type === 'intro-rows') bindIntroRowsEditor(f.key, section.id);
     else if (f.type === 'items-list') bindItemsListField(f, fieldUid);
+    else if (f.type === 'animated-params') bindAnimatedParamsField(f, fieldUid, section);
   });
 }
 
@@ -4119,6 +4473,357 @@ function collectItemsList(key, uid) {
   return out;
 }
 
+/* ===== 动画背景参数 Field（内联可折叠面板，不再使用弹窗） =====
+ * animatedParams 存为对象（或空对象）。面板按当前 animatedEffect 渲染该效果的完整参数表。
+ * 参数对照 reactbits.dev 官方 demo 的 Customize 面板，逐项翻译为中文并保留官方默认值。
+ * 仅存储与默认值不同的项，便于回退与精简 JSON；重置按钮可一键恢复默认。
+ */
+function renderAnimatedParamsField(f, params, uid, section) {
+  const effect = (section && section.animatedEffect) || 'iridescence';
+  const stored = (params && typeof params === 'object') ? params : {};
+  const schema = ANIM_PARAM_SCHEMA[effect] || [];
+  const merged = mergeAnimatedDefaults(effect, stored);
+  const changedKeys = countChangedParams(effect, stored);
+  const effectLabel = ANIM_EFFECT_OPTIONS[effect] || effect;
+  return `
+    <div class="ani-params-field${changedKeys ? ' has-changes' : ''}" data-ani-field data-key="${esc(f.key)}" data-uid="${esc(uid)}" data-effect="${esc(effect)}">
+      <input type="hidden" data-ani-value value="${esc(JSON.stringify(stored))}">
+      <div class="ani-params-header" data-ani-toggle>
+        <svg class="ani-params-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <span class="ani-params-title">${esc(effectLabel)}</span>
+        <span class="ani-params-badge">${changedKeys ? `已改 ${changedKeys} 项` : '使用默认值'}</span>
+        <button type="button" class="field-reset ani-params-reset-all" data-ani-reset-all title="重置全部参数为默认值" aria-label="重置全部参数为默认值">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <span class="ani-params-reset-label">重置全部</span>
+        </button>
+      </div>
+      <div class="ani-params-body">
+        <div class="form-grid ani-params-grid">${schema.map((p) => renderAnimParamRow(p, merged[p.key], merged)).join('')}</div>
+      </div>
+    </div>`;
+}
+// 渲染单个参数行（含控件 + 数值显示 + 单项重置按钮）
+function renderAnimParamRow(p, val, merged) {
+  const isDefault = isParamDefault(p, val);
+  const hintHtml = p.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(p.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(p.hint)}</span></span>` : '';
+  const resetHtml = !isDefault
+    ? `<button type="button" class="field-reset ani-param-reset" data-ani-reset-key="${esc(p.key)}" data-ani-reset-default="${esc(p.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>`
+    : '';
+  let controlHtml = '';
+  if (p.type === 'range') {
+    const num = (val !== undefined && val !== null && !isNaN(val)) ? Number(val) : (p.min !== undefined ? p.min : 0);
+    controlHtml = `
+      <label class="form-label">${esc(p.label)} <span class="ani-val">${formatParamValue(p, num)}</span>${hintHtml}${resetHtml}</label>
+      <input type="range" class="form-range" data-ani-p="${esc(p.key)}" data-ani-type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${num}">`;
+  } else if (p.type === 'color') {
+    const hex = normalizeHex(val);
+    controlHtml = `
+      <label class="form-label">${esc(p.label)} <span class="ani-val">${hex.toUpperCase()}</span>${hintHtml}${resetHtml}</label>
+      <div class="ani-color-wrap">
+        <input type="color" class="ani-color-input" data-ani-p="${esc(p.key)}" data-ani-type="color" value="${hex}">
+        <input type="text" class="form-input ani-color-text" data-ani-p="${esc(p.key)}" data-ani-type="color-text" value="${hex.toUpperCase()}" placeholder="#FFFFFF" maxlength="7">
+      </div>`;
+  } else if (p.type === 'select') {
+    const opts = (p.options || []).map((opt) => {
+      const label = (p.optionLabels && p.optionLabels[opt]) || opt;
+      const sel = (val === opt) ? ' selected' : '';
+      return `<option value="${esc(opt)}"${sel}>${esc(label)}</option>`;
+    }).join('');
+    controlHtml = `
+      <label class="form-label">${esc(p.label)} <span class="ani-val">${esc((p.optionLabels && p.optionLabels[val]) || val)}</span>${hintHtml}${resetHtml}</label>
+      <select class="form-select" data-ani-p="${esc(p.key)}" data-ani-type="select">${opts}</select>`;
+  } else if (p.type === 'checkbox') {
+    const checked = (val === true || val === 'true') ? ' checked' : '';
+    controlHtml = `
+      <label class="form-label">${esc(p.label)} <span class="ani-val">${val ? '开' : '关'}</span>${hintHtml}${resetHtml}</label>
+      <label class="checkbox-label" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);"><input type="checkbox" data-ani-p="${esc(p.key)}" data-ani-type="checkbox"${checked}> <span>${val ? '已启用' : '未启用'}</span></label>`;
+  }
+  return `<div class="form-group ani-param-row${isDefault ? '' : ' changed'}" data-ani-row="${esc(p.key)}">${controlHtml}</div>`;
+}
+// 统计与默认值不同的参数数量
+function countChangedParams(effect, params) {
+  const schema = ANIM_PARAM_SCHEMA[effect] || [];
+  if (!params || typeof params !== 'object') return 0;
+  let count = 0;
+  schema.forEach((p) => { if (!isParamDefault(p, params[p.key])) count++; });
+  return count;
+}
+// 判断参数当前值是否等于其默认值
+function isParamDefault(p, val) {
+  if (val === undefined || val === null) return true;
+  if (p.type === 'color') return normalizeHex(val).toLowerCase() === normalizeHex(p.default).toLowerCase();
+  if (p.type === 'checkbox') return (!!val) === (!!p.default);
+  if (p.type === 'select') return String(val) === String(p.default);
+  if (p.type === 'range') return Math.abs(Number(val) - Number(p.default)) < (p.step || 0.0001) / 2;
+  return String(val) === String(p.default);
+}
+// 格式化参数值用于显示
+function formatParamValue(p, val) {
+  if (p.type === 'range') {
+    const num = Number(val);
+    if (isNaN(num)) return String(val);
+    // 整数步长显示为整数；小数步长保留必要位数
+    if (p.step && p.step >= 1) return String(Math.round(num));
+    if (p.step && p.step >= 0.1) return num.toFixed(1);
+    if (p.step && p.step >= 0.01) return num.toFixed(2);
+    return num.toFixed(3);
+  }
+  if (p.type === 'color') return normalizeHex(val).toUpperCase();
+  if (p.type === 'checkbox') return val ? '开' : '关';
+  if (p.type === 'select') return (p.optionLabels && p.optionLabels[val]) || val;
+  return String(val);
+}
+// 规范化十六进制色值（接受 #abc / #aabbcc / 不带 #）
+function normalizeHex(val) {
+  if (val === undefined || val === null || val === '') return '#000000';
+  let s = String(val).trim();
+  if (!s.startsWith('#')) s = '#' + s;
+  if (s.length === 4) {
+    s = '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+  }
+  if (!/^#[0-9a-fA-F]{6}$/.test(s)) return '#000000';
+  return s.toLowerCase();
+}
+function animatedParamsSummary(params) {
+  if (!params || typeof params !== 'object') return '';
+  const keys = Object.keys(params).filter((k) => params[k] !== undefined && params[k] !== null);
+  return keys.length ? `已自定义 ${keys.length} 项` : '';
+}
+function bindAnimatedParamsField(field, uid, section) {
+  const wrap = document.querySelector(`.ani-params-field[data-uid="${esc(uid)}"]`);
+  if (!wrap || wrap.dataset.aniBound) return;
+  wrap.dataset.aniBound = '1';
+  const hidden = wrap.querySelector('[data-ani-value]');
+  const header = wrap.querySelector('[data-ani-toggle]');
+  const body = wrap.querySelector('.ani-params-body');
+  // 1. 折叠/展开
+  if (header) header.addEventListener('click', (e) => {
+    if (e.target.closest('[data-ani-reset-all]')) return;
+    wrap.classList.toggle('collapsed');
+  });
+  // 2. 重置全部
+  const resetAllBtn = wrap.querySelector('[data-ani-reset-all]');
+  if (resetAllBtn) resetAllBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const effect = wrap.dataset.effect || 'iridescence';
+    section.animatedParams = {};
+    hidden.value = '{}';
+    rebuildAnimPanel(wrap, section, effect);
+    onSectionChanged();
+  });
+  // 3. 各参数控件
+  wrap.querySelectorAll('[data-ani-p]').forEach((el) => {
+    bindAnimParamControl(el, wrap, section);
+  });
+  // 4. 各参数单项重置
+  wrap.querySelectorAll('[data-ani-reset-key]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.aniResetKey;
+      if (!section.animatedParams) section.animatedParams = {};
+      delete section.animatedParams[key];
+      hidden.value = JSON.stringify(section.animatedParams);
+      const effect = wrap.dataset.effect || 'iridescence';
+      rebuildAnimPanel(wrap, section, effect);
+      onSectionChanged();
+    });
+  });
+}
+// 绑定单个参数控件：input 事件实时更新数值显示，change 事件写入 section
+function bindAnimParamControl(el, wrap, section) {
+  const key = el.dataset.aniP;
+  const type = el.dataset.aniType;
+  const row = el.closest('.ani-param-row');
+  const valSpan = row ? row.querySelector('.ani-val') : null;
+  if (type === 'range') {
+    el.addEventListener('input', () => {
+      if (valSpan) valSpan.textContent = formatParamValue({ type: 'range', step: parseFloat(el.step) }, parseFloat(el.value));
+      row && row.classList.add('changed');
+    });
+    el.addEventListener('change', () => {
+      if (!section.animatedParams) section.animatedParams = {};
+      section.animatedParams[key] = parseFloat(el.value);
+      wrap.querySelector('[data-ani-value]').value = JSON.stringify(section.animatedParams);
+      // 若值已回到默认，移除该键并刷新行（显示重置按钮消失）
+      const effect = wrap.dataset.effect || 'iridescence';
+      const schema = (ANIM_PARAM_SCHEMA[effect] || []).find((p) => p.key === key);
+      if (schema && isParamDefault(schema, section.animatedParams[key])) {
+        delete section.animatedParams[key];
+        wrap.querySelector('[data-ani-value]').value = JSON.stringify(section.animatedParams);
+        rebuildAnimPanel(wrap, section, effect);
+      } else {
+        // 确保该行有重置按钮
+        ensureResetButton(row, schema, el.value);
+      }
+      updateAnimBadge(wrap, effect);
+      onSectionChanged();
+    });
+  } else if (type === 'color' || type === 'color-text') {
+    const colorInput = (type === 'color') ? el : row.querySelector('[data-ani-type="color"]');
+    const textInput = (type === 'color-text') ? el : row.querySelector('[data-ani-type="color-text"]');
+    const handler = (src, dst) => () => {
+      let v = src.value;
+      if (type === 'color-text') {
+        // 文本输入：允许临时非法值，但只有合法时同步色块
+        const normalized = normalizeHex(v);
+        if (normalized !== '#000000' || /^#?[0-9a-fA-F]{3,6}$/.test(v)) {
+          if (dst) dst.value = normalized;
+        }
+      } else {
+        if (dst) dst.value = v.toUpperCase();
+      }
+      if (valSpan) valSpan.textContent = (type === 'color-text' ? normalizeHex(v) : v).toUpperCase();
+      row && row.classList.add('changed');
+    };
+    el.addEventListener('input', handler(el, (type === 'color') ? textInput : colorInput));
+    el.addEventListener('change', () => {
+      let v = (type === 'color') ? el.value : normalizeHex(el.value);
+      if (!section.animatedParams) section.animatedParams = {};
+      section.animatedParams[key] = v;
+      wrap.querySelector('[data-ani-value]').value = JSON.stringify(section.animatedParams);
+      const effect = wrap.dataset.effect || 'iridescence';
+      const schema = (ANIM_PARAM_SCHEMA[effect] || []).find((p) => p.key === key);
+      if (schema && isParamDefault(schema, v)) {
+        delete section.animatedParams[key];
+        wrap.querySelector('[data-ani-value]').value = JSON.stringify(section.animatedParams);
+        rebuildAnimPanel(wrap, section, effect);
+      } else {
+        ensureResetButton(row, schema, v);
+      }
+      updateAnimBadge(wrap, effect);
+      onSectionChanged();
+    });
+  } else if (type === 'select') {
+    el.addEventListener('change', () => {
+      if (!section.animatedParams) section.animatedParams = {};
+      section.animatedParams[key] = el.value;
+      wrap.querySelector('[data-ani-value]').value = JSON.stringify(section.animatedParams);
+      const effect = wrap.dataset.effect || 'iridescence';
+      const schema = (ANIM_PARAM_SCHEMA[effect] || []).find((p) => p.key === key);
+      if (schema && isParamDefault(schema, el.value)) {
+        delete section.animatedParams[key];
+        wrap.querySelector('[data-ani-value]').value = JSON.stringify(section.animatedParams);
+        rebuildAnimPanel(wrap, section, effect);
+      } else {
+        if (valSpan) valSpan.textContent = formatParamValue(schema, el.value);
+        ensureResetButton(row, schema, el.value);
+      }
+      updateAnimBadge(wrap, effect);
+      onSectionChanged();
+    });
+  } else if (type === 'checkbox') {
+    el.addEventListener('change', () => {
+      if (!section.animatedParams) section.animatedParams = {};
+      section.animatedParams[key] = el.checked;
+      wrap.querySelector('[data-ani-value]').value = JSON.stringify(section.animatedParams);
+      const effect = wrap.dataset.effect || 'iridescence';
+      const schema = (ANIM_PARAM_SCHEMA[effect] || []).find((p) => p.key === key);
+      if (schema && isParamDefault(schema, el.checked)) {
+        delete section.animatedParams[key];
+        wrap.querySelector('[data-ani-value]').value = JSON.stringify(section.animatedParams);
+        rebuildAnimPanel(wrap, section, effect);
+      } else {
+        if (valSpan) valSpan.textContent = el.checked ? '开' : '关';
+        const label = row.querySelector('.checkbox-label span');
+        if (label) label.textContent = el.checked ? '已启用' : '未启用';
+        ensureResetButton(row, schema, el.checked);
+      }
+      updateAnimBadge(wrap, effect);
+      onSectionChanged();
+    });
+  }
+}
+// 确保某行有重置按钮（值改变后补上）
+function ensureResetButton(row, schema, val) {
+  if (!row || !schema) return;
+  const label = row.querySelector('.form-label');
+  if (!label) return;
+  if (label.querySelector('[data-ani-reset-key]')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'field-reset ani-param-reset';
+  btn.dataset.aniResetKey = schema.key;
+  btn.dataset.aniResetDefault = schema.default;
+  btn.title = '重置此项';
+  btn.setAttribute('aria-label', '重置此项');
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // 找到最近的 ani-params-field 容器
+    const wrap = row.closest('.ani-params-field');
+    if (!wrap) return;
+    const key = btn.dataset.aniResetKey;
+    // section 引用通过 wrap 的 uid 查找
+    const uid = wrap.dataset.uid;
+    const sec = (typeof selectedIndex !== 'undefined' && state.sections[selectedIndex]) || null;
+    if (sec && sec.animatedParams) delete sec.animatedParams[key];
+    wrap.querySelector('[data-ani-value]').value = JSON.stringify((sec && sec.animatedParams) || {});
+    const effect = wrap.dataset.effect || 'iridescence';
+    rebuildAnimPanel(wrap, sec, effect);
+    onSectionChanged();
+  });
+  label.appendChild(btn);
+}
+// 刷新整个参数面板（保留折叠状态）
+function rebuildAnimPanel(wrap, section, effect) {
+  if (!wrap) return;
+  const schema = ANIM_PARAM_SCHEMA[effect] || [];
+  const stored = (section && section.animatedParams && typeof section.animatedParams === 'object') ? section.animatedParams : {};
+  const merged = mergeAnimatedDefaults(effect, stored);
+  const grid = wrap.querySelector('.ani-params-grid');
+  if (grid) grid.innerHTML = schema.map((p) => renderAnimParamRow(p, merged[p.key], merged)).join('');
+  // 重新绑定控件
+  wrap.querySelectorAll('[data-ani-p]').forEach((el) => bindAnimParamControl(el, wrap, section));
+  wrap.querySelectorAll('[data-ani-reset-key]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.aniResetKey;
+      if (section && section.animatedParams) delete section.animatedParams[key];
+      wrap.querySelector('[data-ani-value]').value = JSON.stringify((section && section.animatedParams) || {});
+      rebuildAnimPanel(wrap, section, effect);
+      onSectionChanged();
+    });
+  });
+  updateAnimBadge(wrap, effect);
+}
+// 更新面板顶部的「已改 N 项」徽章
+function updateAnimBadge(wrap, effect) {
+  if (!wrap) return;
+  const stored = (() => {
+    try { return JSON.parse(wrap.querySelector('[data-ani-value]').value || '{}'); }
+    catch (e) { return {}; }
+  })();
+  const n = countChangedParams(effect, stored);
+  const badge = wrap.querySelector('.ani-params-badge');
+  if (badge) badge.textContent = n ? `已改 ${n} 项` : '使用默认值';
+  wrap.classList.toggle('has-changes', n > 0);
+}
+// 合并默认值：将 schema 中的 default 作为底线，用户已存值覆盖
+function mergeAnimatedDefaults(effect, params) {
+  const out = {};
+  const schema = ANIM_PARAM_SCHEMA[effect] || [];
+  schema.forEach((p) => {
+    if (p.default !== undefined) out[p.key] = p.default;
+    else if (p.type === 'range') out[p.key] = p.min !== undefined ? p.min : 0;
+    else if (p.type === 'checkbox') out[p.key] = false;
+    else if (p.type === 'color') out[p.key] = '#000000';
+    else if (p.type === 'select' && p.options && p.options.length) out[p.key] = p.options[0];
+    else out[p.key] = '';
+  });
+  // 优先使用引擎实际默认值（如果可用）—— 与 schema.default 应一致
+  if (typeof window !== 'undefined' && window.AnimatedBG && window.AnimatedBG.effectDefaults && window.AnimatedBG.effectDefaults[effect]) {
+    const engineDefs = window.AnimatedBG.effectDefaults[effect];
+    Object.keys(engineDefs).forEach((k) => {
+      // 仅覆盖 schema 中存在的键，且引擎默认值类型匹配
+      if (schema.some((p) => p.key === k)) {
+        out[k] = engineDefs[k];
+      }
+    });
+  }
+  Object.assign(out, params || {});
+  return out;
+}
+
 /* ===== Image List Field ===== */
 function renderImageListField(key, list, uid) {
   const items = list.map((url, i) => `
@@ -4937,17 +5642,8 @@ $('#btnConfirm').onclick = () => {
 $('#btnSwitchDiscard').onclick = discardAndSwitch;
 $('#btnSwitchSave').onclick = saveAndSwitch;
 
-// Click mask to close confirm modal
-document.querySelectorAll('.modal-mask').forEach((m) => {
-  m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); });
-});
-
-// ESC closes confirm modal only (editor has X button in panel)
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-mask.open').forEach((m) => m.classList.remove('open'));
-  }
-});
+/* ⚠️ 弹窗关闭规则：仅允许内部按钮（× / 取消 / 保存 / 确认 / 删除）
+ * 禁止通过 mask 点击 或 ESC 键关闭 —— 防止误操作丢失未保存内容 */
 
 // Ctrl/Cmd+S triggers save
 document.addEventListener('keydown', (e) => {
