@@ -198,6 +198,8 @@ var CaseRenderer = (function () {
     initSwipeSliders(container);
     // 全屏切换轮播（fullscreen-slider）：GSAP Observer 逐屏切换 + 页面锁定（无此板块零开销）
     initFullscreenSliders(container);
+    // 动画背景（animated）：延迟加载 ogl+引擎并启动所有 [data-animated-bg] 容器（无此板块零开销）
+    if (container.querySelector('[data-animated-bg]')) ensureAnimatedBG();
     // 把新插入的所有板块注册进场动画（site-shell.js 暴露的接口）
     if (typeof window.registerRevealElements === 'function') {
       window.registerRevealElements(container);
@@ -240,6 +242,36 @@ var CaseRenderer = (function () {
     });
   }
 
+  // ===== 动画背景（animated）辅助 =====
+  // 组件 videoType 选 videoType=animated 时，用动画背景占位（不占上传图/视频）；
+  // 效果名 + 参数通过 data-* 属性透传给 _shared/animated-bg.js（window.AnimatedBG）
+  function isAnimated(s) { return s && s.videoType === 'animated'; }
+  function animatedEffect(s) { return (s && s.animatedEffect) || 'iridescence'; }
+  function animatedMedia(effect, params, style) {
+    var st = 'position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;overflow:hidden;pointer-events:none;z-index:0;' + (style || '');
+    return '<div data-animated-bg data-effect="' + esc(effect || 'iridescence') +
+      '" data-params="' + esc(JSON.stringify(params || {})) + '" style="' + st + '"></div>';
+  }
+  // 延迟加载动画背景依赖（ogl + 引擎），加载完成后启动所有已渲染的 [data-animated-bg] 容器
+  function ensureAnimatedBG() {
+    if (window.AnimatedBG) { try { window.AnimatedBG.bootAll(); } catch (e) {} return; }
+    var base = '../_shared/';
+    try {
+      var cs = document.querySelector('script[src$="render.js"]');
+      if (cs && cs.src) base = cs.src.slice(0, cs.src.lastIndexOf('/') + 1);
+    } catch (e) { /* keep default */ }
+    function load(src, cb) {
+      var s = document.createElement('script');
+      s.src = src; s.async = true; s.onload = cb; s.onerror = cb;
+      document.head.appendChild(s);
+    }
+    function bootEngine() {
+      load(base + 'animated-bg.js', function () { if (window.AnimatedBG) { try { window.AnimatedBG.bootAll(); } catch (e) {} } });
+    }
+    if (window.OGL) bootEngine();
+    else load(base + 'assets/lib-ogl.min.js', bootEngine);
+  }
+
   // ===== 1. Hero Section（小Banner首屏）— 只含媒体（视频/图片/占位/轮播），无标题文字 =====
   // 标题请用独立「标题栏」组件（type: title）承载
   function renderHero(s) {
@@ -254,7 +286,7 @@ var CaseRenderer = (function () {
     if (heroType === 'image') heroMedia = s.image || '';
     else if (heroType === 'video') heroMedia = s.videoUrl || '';
     // 只有用户没显式选类型（videoType 缺失/不是合法值）时，才根据已有字段自动回退兜底
-    if (heroType !== 'placeholder' && heroType !== 'image' && heroType !== 'video' && heroType !== 'carousel') {
+    if (heroType !== 'placeholder' && heroType !== 'image' && heroType !== 'video' && heroType !== 'carousel' && heroType !== 'animated') {
       if (s.videoUrl) { heroMedia = s.videoUrl; heroType = 'video'; }
       else if (s.image) { heroMedia = s.image; heroType = 'image'; }
       else { heroType = 'placeholder'; }
@@ -263,6 +295,8 @@ var CaseRenderer = (function () {
     var mediaHtml = '';
     if (heroType === 'carousel') {
       mediaHtml = carouselMediaHtml(s, false);
+    } else if (heroType === 'animated') {
+      mediaHtml = '<div class="hero-video-embed">' + animatedMedia(animatedEffect(s), s.animatedParams) + '</div>';
     } else if (heroType !== 'placeholder') {
       mediaHtml = '<div class="hero-video-embed">' + videoPlaceholder(heroType, heroMedia, 'Hero Banner') + '</div>';
     }
@@ -363,7 +397,9 @@ var CaseRenderer = (function () {
     var descHtml = desc ? '<p class="hero-banner-description">' + esc(desc) + '</p>' : '';
     var inner = titleHtml + statsHtml + descHtml;
     if (!inner) return '';
-    return '<div class="hero-banner-content">' + inner + '</div>';
+    // 文字布局：center=垂直水平居中；默认 left=左下对齐（沿用原 .hero-banner-content 样式）
+    var layoutClass = (s && s.textLayout === 'center') ? ' center' : '';
+    return '<div class="hero-banner-content' + layoutClass + '">' + inner + '</div>';
   }
 
   // ===== 1.5 Hero Banner（nixtio 首屏 Hero：圆角相框大图 + 左下信息块 + 滚动视差） =====
@@ -378,7 +414,7 @@ var CaseRenderer = (function () {
     var mediaSrc = '';
     if (mediaType === 'image') mediaSrc = s.image || '';
     else if (mediaType === 'video') mediaSrc = s.videoUrl || '';
-    if (mediaType !== 'placeholder' && mediaType !== 'image' && mediaType !== 'video' && mediaType !== 'carousel') {
+    if (mediaType !== 'placeholder' && mediaType !== 'image' && mediaType !== 'video' && mediaType !== 'carousel' && mediaType !== 'animated') {
       if (s.videoUrl) { mediaSrc = s.videoUrl; mediaType = 'video'; }
       else if (s.image) { mediaSrc = s.image; mediaType = 'image'; }
       else { mediaType = 'placeholder'; }
@@ -390,7 +426,11 @@ var CaseRenderer = (function () {
       section.innerHTML = carouselMediaHtml(s, true);
       return section;
     }
-    mediaHtml = '<div class="hero-banner-media">' + videoPlaceholder(mediaType, mediaSrc, 'Hero Banner') + '</div>';
+    if (mediaType === 'animated') {
+      mediaHtml = '<div class="hero-banner-media">' + animatedMedia(animatedEffect(s), s.animatedParams) + '</div>';
+    } else {
+      mediaHtml = '<div class="hero-banner-media">' + videoPlaceholder(mediaType, mediaSrc, 'Hero Banner') + '</div>';
+    }
     // 文字层：①主标题（整体从下往上+渐入 reveal，标题长也不再逐字）→ ②信息标签行 → ③描述段落（旧数据 subtitle 自动映射为描述）
     var titleHtml = s.title ? '<h1 class="hero-banner-title">' + esc(s.title) + '</h1>' : '';
     var statsHtml = '';
@@ -404,7 +444,9 @@ var CaseRenderer = (function () {
     var descHtml = desc ? '<p class="hero-banner-description">' + esc(desc) + '</p>' : '';
     var content = '';
     if (titleHtml || statsHtml || descHtml) {
-      content = '<div class="hero-banner-content">' + titleHtml + statsHtml + descHtml + '</div>';
+      // 文字布局：center=垂直水平居中；默认 left=左下对齐
+      var layoutClass = (s.textLayout === 'center') ? ' center' : '';
+      content = '<div class="hero-banner-content' + layoutClass + '">' + titleHtml + statsHtml + descHtml + '</div>';
     }
     section.innerHTML = '<div class="hero-banner-frame">' + mediaHtml + content + '</div>';
     return section;
@@ -419,7 +461,13 @@ var CaseRenderer = (function () {
   //   - 数据：s.slides[] = { image, title, subtitle }（1 屏时退化为静态全屏图）
   function renderSwipeSlider(s) {
     var section = sec('swipe-slider-section');
-    var slides = Array.isArray(s.slides) ? s.slides.filter(function (x) { return x; }) : [];
+    var isAnimated = s.videoType === 'animated';
+    var slides;
+    if (isAnimated) {
+      slides = Array.isArray(s.animatedSlides) ? s.animatedSlides.filter(function (x) { return x; }) : [];
+    } else {
+      slides = Array.isArray(s.slides) ? s.slides.filter(function (x) { return x; }) : [];
+    }
     if (!slides.length) {
       section.innerHTML = '<div class="video-placeholder warm-shot"><div class="placeholder-icon">' +
         '<svg width="60" height="60" viewBox="0 0 60 60" fill="none">' +
@@ -429,12 +477,13 @@ var CaseRenderer = (function () {
       return section;
     }
     section.innerHTML = slides.map(function (x, i) {
-      var bg = x.image ? ' style="background-image:linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.5) 100%),url(\'' + esc(x.image) + '\');"' : '';
+      var anim = isAnimated ? animatedMedia(x.animatedEffect || 'iridescence', x.animatedParams || {}) : '';
+      var bg = anim ? '' : (x.image ? ' style="background-image:linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.5) 100%),url(\'' + esc(x.image) + '\');"' : ' style="background-color:#0b0f1a;"');
       var title = x.title ? '<h2 class="swipe-heading">' + esc(x.title) + '</h2>' : '';
       var sub = x.subtitle ? '<p class="swipe-subtitle">' + esc(x.subtitle) + '</p>' : '';
       return '<div class="swipe-slide" data-index="' + i + '">' +
         '<div class="swipe-outer"><div class="swipe-inner">' +
-          '<div class="swipe-bg"' + bg + '><div class="swipe-content">' + title + sub + '</div></div>' +
+          '<div class="swipe-bg"' + bg + '>' + anim + '<div class="swipe-content">' + title + sub + '</div></div>' +
         '</div></div></div>';
     }).join('');
     return section;
@@ -449,7 +498,13 @@ var CaseRenderer = (function () {
   //   - 数据：s.slides[] = { image, title, subtitle }（与 swipe-slider 一致，1 屏时静态展示）
   function renderFullscreenSlider(s) {
     var section = sec('fullscreen-slider-section');
-    var slides = Array.isArray(s.slides) ? s.slides.filter(function (x) { return x; }) : [];
+    var isAnimated = s.videoType === 'animated';
+    var slides;
+    if (isAnimated) {
+      slides = Array.isArray(s.animatedSlides) ? s.animatedSlides.filter(function (x) { return x; }) : [];
+    } else {
+      slides = Array.isArray(s.slides) ? s.slides.filter(function (x) { return x; }) : [];
+    }
     if (!slides.length) {
       section.innerHTML = '<div class="video-placeholder warm-shot"><div class="placeholder-icon">' +
         '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -462,12 +517,13 @@ var CaseRenderer = (function () {
           '" aria-label="切换到第 ' + (i + 1) + ' 张" role="tab"></button>';
       }).join('') + '</div>';
     section.innerHTML = slides.map(function (x, i) {
-      var bg = x.image ? ' style="background-image:linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.5) 100%),url(\'' + esc(x.image) + '\');"' : '';
+      var anim = isAnimated ? animatedMedia(x.animatedEffect || 'iridescence', x.animatedParams || {}) : '';
+      var bg = anim ? '' : (x.image ? ' style="background-image:linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.5) 100%),url(\'' + esc(x.image) + '\');"' : ' style="background-color:#0b0f1a;"');
       var title = x.title ? '<h2 class="fs-heading">' + esc(x.title) + '</h2>' : '';
       var sub = x.subtitle ? '<p class="fs-subtitle">' + esc(x.subtitle) + '</p>' : '';
       return '<div class="fs-slide" data-index="' + i + '">' +
         '<div class="fs-outer"><div class="fs-inner">' +
-          '<div class="fs-bg"' + bg + '><div class="fs-content">' + title + sub + '</div></div>' +
+          '<div class="fs-bg"' + bg + '>' + anim + '<div class="fs-content">' + title + sub + '</div></div>' +
         '</div></div></div>';
     }).join('') + dotsHtml;
     return section;
@@ -1059,7 +1115,9 @@ var CaseRenderer = (function () {
       '<div class="pio-overlay"><div class="pio-overlay-img"></div></div>';
     var base = wrap.querySelector('.pio-base');
     var over = wrap.querySelector('.pio-overlay-img');
-    if (s.baseImage) base.appendChild(img(s.baseImage, 'Case Photo'));
+    if (s.videoType === 'animated') {
+      base.innerHTML = animatedMedia(animatedEffect(s), s.animatedParams);
+    } else if (s.baseImage) base.appendChild(img(s.baseImage, 'Case Photo'));
     if (s.overlayImage) over.appendChild(img(s.overlayImage, 'Case Photo'));
     section.appendChild(wrap);
     return section;
@@ -1118,7 +1176,7 @@ var CaseRenderer = (function () {
     if (scType === 'image') scMedia = s.image || '';
     else if (scType === 'video') scMedia = s.videoUrl || '';
     // 和 Hero 一致：只有没显式选类型时才自动兜底
-    if (scType !== 'placeholder' && scType !== 'image' && scType !== 'video') {
+    if (scType !== 'placeholder' && scType !== 'image' && scType !== 'video' && scType !== 'animated') {
       if (s.videoUrl) { scMedia = s.videoUrl; scType = 'video'; }
       else if (s.image) { scMedia = s.image; scType = 'image'; }
       else { scType = 'placeholder'; }
@@ -1126,7 +1184,11 @@ var CaseRenderer = (function () {
     // placeholder = 不渲染左侧 block-image，让白色文字卡片占满整行
     var hasMedia = scType !== 'placeholder';
     var blocksCls = 'two-blocks' + (hasMedia ? '' : ' two-blocks--single');
-    var right = hasMedia ? videoPlaceholder(scType, scMedia, s.label || 'Showcase Media') : '';
+    var right = hasMedia
+      ? (scType === 'animated'
+          ? animatedMedia(animatedEffect(s), s.animatedParams)
+          : videoPlaceholder(scType, scMedia, s.label || 'Showcase Media'))
+      : '';
     var blockImageHtml = '';
     if (hasMedia) {
       blockImageHtml =
@@ -1323,7 +1385,9 @@ var CaseRenderer = (function () {
     var section = sec('image-section');
     var inner = el('div', 'image-single');
     var p = el('div', 'single-img');
-    if (s.image) p.appendChild(img(s.image, 'Full Width'));
+    if (s.videoType === 'animated') {
+      p.innerHTML = animatedMedia(animatedEffect(s), s.animatedParams, 'min-height:56vh;');
+    } else if (s.image) p.appendChild(img(s.image, 'Full Width'));
     inner.appendChild(p);
     section.appendChild(inner);
     return section;
@@ -1500,7 +1564,9 @@ var CaseRenderer = (function () {
       '</div>';
     }).join('');
     var media = '';
-    if (s.videoUrl) {
+    if (s.videoType === 'animated') {
+      media = '<div class="stats-media">' + animatedMedia(animatedEffect(s), s.animatedParams) + '</div>';
+    } else if (s.videoUrl) {
       media = '<div class="stats-media">' +
         videoPlaceholder(s.videoType || 'video', s.videoUrl, '') +
       '</div>';

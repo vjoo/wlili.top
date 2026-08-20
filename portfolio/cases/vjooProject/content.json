@@ -84,8 +84,9 @@
     {
       "id": "s3",
       "type": "parallax",
-      "baseImage": "/portfolio/cases/vjooProject/uploads/1786414574330.jpg",
-      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786438894756.png"
+      "baseImage": "/portfolio/cases/vjooProject/uploads/1787115133792.jpg",
+      "overlayImage": "/portfolio/cases/vjooProject/uploads/1787115087571.png",
+      "videoType": "image"
     },
     {
       "id": "s4",
@@ -100,7 +101,8 @@
       "id": "s5",
       "type": "parallax",
       "baseImage": "/portfolio/cases/vjooProject/uploads/1786414706002.jpg",
-      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786438976074.png"
+      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786438976074.png",
+      "videoType": "image"
     },
     {
       "id": "s6",
@@ -171,7 +173,8 @@
       "id": "s8",
       "type": "parallax",
       "baseImage": "/portfolio/cases/vjooProject/uploads/1786414765214.jpg",
-      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786696307903.png"
+      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786696307903.png",
+      "videoType": "image"
     },
     {
       "id": "s9",
@@ -243,6 +246,14 @@
       "videoType": "image"
     },
     {
+      "id": "s13",
+      "type": "showcase",
+      "label": "Notification",
+      "desc": "在注册即收邮件的时代，我们不让通知淹没在收件箱里。钥匙到期、账单生成、续租提醒，每一封都精心设计，贴合品牌视觉。",
+      "image": "/portfolio/cases/vjooProject/uploads/1787115162974.jpg",
+      "videoType": "image"
+    },
+    {
       "id": "s12",
       "type": "gallery",
       "label": "",
@@ -285,7 +296,7 @@
             },
             {
               "id": "smso1bmzemkg4",
-              "src": "/portfolio/cases/vjooProject/uploads/1786939390414.jpg"
+              "src": "/portfolio/cases/vjooProject/uploads/1787111483958.jpg"
             }
           ]
         },
@@ -294,7 +305,7 @@
           "images": [
             {
               "id": "smso1c0opm9ig",
-              "src": "/portfolio/cases/vjooProject/uploads/1786938212811.jpg"
+              "src": "/portfolio/cases/vjooProject/uploads/1787113529253.jpg"
             },
             {
               "id": "smswpkw2t5l7v",
@@ -303,14 +314,6 @@
           ]
         }
       ]
-    },
-    {
-      "id": "s13",
-      "type": "showcase",
-      "label": "Notification",
-      "desc": "在注册即收邮件的时代，我们不让通知淹没在收件箱里。钥匙到期、账单生成、续租提醒，每一封都精心设计，贴合品牌视觉。",
-      "image": "/portfolio/cases/vjooProject/uploads/1786415006246.jpg",
-      "videoType": "image"
     }
   ],
   "letsTalk": {

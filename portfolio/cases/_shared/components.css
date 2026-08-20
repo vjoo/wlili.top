@@ -1912,6 +1912,26 @@
   /* ⚠️ 不能加 will-change: transform, opacity：父级合成层会干扰子元素（主标题）的 opacity 过渡，
      .reveal 进场动画（transition）在合成层内计算异常，标题无法从 opacity 0 渐入 */
 }
+/* 文字布局=center：垂直 + 水平居中（覆盖默认 left:0/bottom:0 左下锚定）
+   PC：content 改为 absolute 铺满整个 frame，flex 列垂直水平居中；
+   标签行与描述段落同步居中对齐（margin:auto 让描述在 max-width 内居中） */
+.hero-banner-content.center {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem 5rem;
+}
+.hero-banner-content.center .hero-banner-title { text-align: center; }
+.hero-banner-content.center .hero-banner-stats { justify-content: center; }
+.hero-banner-content.center .hero-banner-description {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
 /* ① 超大主标题：视觉占比最大（整体从下往上+渐入 reveal，进场动画由 site-shell 统一驱动） */
 .hero-banner-title {
   font-size: clamp(42px, 5.5vw, 84px);
@@ -1987,6 +2007,14 @@
     bottom: auto;
     padding: 3.5rem 2rem 2.5rem;  /* 底部留白加大（1.5rem→2.5rem），文字不再紧贴视频底边 */
     max-width: 100%;
+  }
+  /* 居中布局移动端：frame 改为垂直居中（覆盖 flex-end），content 沿用 relative 参与流式布局，
+     仅调整内边距与文字对齐；避免 absolute 在 frame 高度自适应时撑不开容器 */
+  .hero-banner-frame:has(.hero-banner-content.center) {
+    justify-content: center;
+  }
+  .hero-banner-content.center {
+    padding: 2.5rem 2rem;
   }
   .hero-banner-title {
     font-size: 36px;

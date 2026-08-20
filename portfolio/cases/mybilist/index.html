@@ -63,6 +63,26 @@
   <!-- 头部导航 / 移动端菜单 / 底部 Let's Talk / 回到顶部火箭 / 过渡遮罩
        由 site-shell.js 自动注入，无需在此手写 -->
 
+  <!-- 首屏骨架屏 + Loading：解决外网慢加载白屏问题。HTML 解析到 body 立即可见（不依赖任何 JS/CSS），
+       site-shell.js 加载完成 + case-content-ready 后淡出离场（与过渡遮罩同步）。 -->
+  <div id="page-skeleton" aria-hidden="true">
+    <div class="sk-loader"></div>
+    <div class="sk-inner">
+      <div class="sk-hero">
+        <div class="sk-hero-box"></div>
+        <div class="sk-line sk-line--title"></div>
+        <div class="sk-line sk-line--sub"></div>
+      </div>
+      <div class="sk-info">
+        <div class="sk-info-col"><div class="sk-label"></div><div class="sk-line"></div><div class="sk-line"></div></div>
+        <div class="sk-info-col"><div class="sk-label"></div><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line"></div></div>
+      </div>
+      <div class="sk-gallery">
+        <div class="sk-tile"></div><div class="sk-tile"></div><div class="sk-tile"></div>
+      </div>
+    </div>
+  </div>
+
   <main>
     <!-- Page Wrapper -->
     <div class="page-wrapper" id="pageWrapper">

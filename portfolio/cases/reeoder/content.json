@@ -11,7 +11,7 @@
       "image": "/portfolio/cases/reeoder/uploads/1786863168048.jpg",
       "videoUrl": "",
       "effect": "fs",
-      "autoplayDelay": "4000",
+      "autoplayDelay": "5500",
       "images": [
         {
           "image": "/portfolio/cases/reeoder/uploads/1786865819617.jpg",
@@ -43,7 +43,8 @@
           ],
           "subtitle": "打通端到端跨境物流通道，联结全球贸易伙伴，打造全程可视、彼此信赖的一体化国际供应网络。"
         }
-      ]
+      ],
+      "textLayout": "center"
     },
     {
       "id": "smsvi3k88fv46",
