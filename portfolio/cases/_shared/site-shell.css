@@ -131,11 +131,13 @@ body {
   visibility: hidden;
 }
 
-/* Loading 环：顶部居中位置 */
+/* Loading 环：顶部居中位置
+   用 fixed + 50vw 直接相对 viewport，避免父容器 #page-skeleton 因 scrollbar
+   导致 width < viewport 时 left:50% 偏左（实测偏 7.67px）。 */
 #page-skeleton .sk-loader {
-  position: absolute;
+  position: fixed;
   top: max(3rem, 10vh);
-  left: 50%;
+  left: 50vw;
   transform: translateX(-50%);
   width: 38px;
   height: 38px;
@@ -149,13 +151,14 @@ body {
   to { transform: translateX(-50%) rotate(360deg); }
 }
 
-/* 骨架容器：仿 hero + intro 的垂直布局 */
+/* 骨架容器：仿 hero + intro 的垂直布局
+   不设 max-width / margin-inline:auto，只用 padding 控制左右间距——
+   骨架屏是过渡用的占位，不需要与 .container 等宽，占满视口更符合
+   "避免空白屏" 的目标（大屏上 max-width:75.5rem 会让左右各空 243px）。 */
 #page-skeleton .sk-inner {
   position: absolute;
   inset: 0;
-  padding: 0 calc(1rem + 2.25vw);       /* 与 .container padding 对齐 */
-  max-width: 75.5rem;
-  margin-inline: auto;
+  padding: 0 calc(1rem + 2.25vw);       /* 左右 padding 与 .container 一致 */
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
