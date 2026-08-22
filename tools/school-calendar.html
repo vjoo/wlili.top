@@ -54,7 +54,8 @@
     .form-grid .form-group:nth-child(4) {
       grid-column: span 2;
     }
-    .form-grid .col-title {
+    /* 次学期报到日期（年/月/日 三段下拉）占 4 列，与法定 2 列拼满第二行 */
+    .form-grid .col-nextreg {
       grid-column: span 4;
     }
     .form-grid .col-holiday {
@@ -295,7 +296,14 @@
     padding: 4px;
     position: relative;
     vertical-align: middle;
-    height: 38px;
+    height: 44px;
+    line-height: 1.3;
+    overflow: hidden;
+  }
+  /* 底部假期行（寒假/暑假）的周次列：橘色区分，与教学周（蓝）区分 */
+  .cal-table tbody td.col-week.vacation {
+    background-color: #fff3e0 !important;
+    color: #e65100;
   }
   .cal-table td .day-num {
     font-size: 14px;
@@ -448,9 +456,10 @@
     .date-field .df-year { flex: 1 1 100%; }
     .date-field .df-month,
     .date-field .df-day { flex: 1 1 0; }
-    /* 报到/开学日期在窄屏各占一行，避免半宽下年份被截断 */
+    /* 报到/开学/次学期报到 日期在窄屏各占一行，避免半宽下年份被截断 */
     .form-grid > .form-group:nth-child(3),
-    .form-grid > .form-group:nth-child(4) { grid-column: 1 / -1; }
+    .form-grid > .form-group:nth-child(4),
+    .form-grid > .form-group:nth-child(5) { grid-column: 1 / -1; }
     /* 假期区间在窄屏改为：起 / 至 / 止 竖向堆叠，每个日期框整行宽，年份再独占一行 */
     .breaks-row { flex-wrap: wrap; gap: 8px; }
     .breaks-label { min-width: auto; }
@@ -773,9 +782,9 @@
           <label>开学日期</label>
           <input type="date" class="form-control" id="startDateInput" value="2026-09-01">
         </div>
-        <div class="form-group col-title">
-          <label>日历标题 (自动生成/可修改)</label>
-          <input type="text" class="form-control" id="calTitleInput" value="2026学年 第一学期 校历">
+        <div class="form-group col-nextreg">
+          <label>次学期报到日期</label>
+          <input type="date" class="form-control" id="nextRegisterInput">
         </div>
         <div class="form-group col-holiday">
           <label>法定节假日</label>
@@ -832,6 +841,12 @@
           <label style="font-size:13px; color:var(--ink-secondary); font-weight:500; margin:0;">自定义（生日、考试时间等）</label>
         </div>
         <div id="customTagsContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+      <!-- 日历标题：移到最下方（生成按钮上方），自动生成/可手动修改 -->
+      <div class="form-group" style="margin-top:18px;">
+        <label>日历标题 (自动生成/可修改)</label>
+        <input type="text" class="form-control" id="calTitleInput" value="2026学年 第一学期 校历">
       </div>
 
       <div class="form-actions">
@@ -1954,15 +1969,36 @@ function renderCalendar() {
   var startMonday = getMonday(startDate);
   var currentDate = new Date(startMonday);
 
-  // 计算结束日期所在周的周日（让最后一周完整显示）
+  // 计算结束日期（学期边界）所在周的周日，让最后教学周完整显示
   var endEnd = new Date(endDate);
   var endDay = endEnd.getDay() === 0 ? 7 : endEnd.getDay();
   endEnd.setDate(endEnd.getDate() + (7 - endDay));
+  var teachingLastSunday = new Date(endEnd);
 
-  var totalDays = Math.round((endEnd - currentDate) / (1000 * 60 * 60 * 24)) + 1;
+  // 教学周数（用于副标题与周次编号；假期周另行标注）
+  var totalDays = Math.round((teachingLastSunday - currentDate) / (1000 * 60 * 60 * 24)) + 1;
   var totalWeeks = Math.ceil(totalDays / 7);
 
-  // 副标题：显示真实学期区间（开学 至 最后上课日）
+  // 次学期报到日期：扩展日历底部，展示假期（寒假/暑假）至次学期报到
+  var nextReg = document.getElementById('nextRegisterInput').value;
+  var breakName = (term === '1') ? '寒假' : '暑假';
+  var vacLastSunday = null;
+  if (nextReg) {
+    var nr = parseDate(nextReg);
+    if (nr) {
+      var nd = (nr.getDay() === 0) ? 7 : nr.getDay();
+      vacLastSunday = new Date(nr);
+      vacLastSunday.setDate(vacLastSunday.getDate() + (7 - nd));
+    }
+  }
+  // 整张日历最后一格的周日 = 教学 / 假期 取较晚者
+  var lastSunday = new Date(teachingLastSunday);
+  if (vacLastSunday && vacLastSunday > lastSunday) lastSunday = vacLastSunday;
+
+  var overallDays = Math.round((lastSunday - currentDate) / (1000 * 60 * 60 * 24)) + 1;
+  var overallWeeks = Math.ceil(overallDays / 7);
+
+  // 副标题：显示真实学期区间（开学 至 最后上课日），周数为教学周
   var officialStart = parseDate(startDateStr);
   var semEnd = parseDate(semEndStr);
   var sd = officialStart.getFullYear() + '年' + (officialStart.getMonth() + 1) + '月' + officialStart.getDate() + '日';
@@ -1970,13 +2006,16 @@ function renderCalendar() {
   document.getElementById('calSubtitleDisplay').innerText = sd + ' 至 ' + ed + ' （共' + totalWeeks + '周）';
 
   var allEvents = gatherAllEvents();
+  if (nextReg) allEvents[nextReg] = { name: '报到', type: 'start' };
 
   var tableHtml = '';
   var mobileHtml = '<div class="mobile-dow"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>';
-  var weekNum = 1;
 
-  for (var i = 0; i < totalWeeks; i++) {
-    var tableRow = '<tr><td class="col-week">第' + weekNum + '周</td>';
+  for (var i = 0; i < overallWeeks; i++) {
+    var isVacation = (i >= totalWeeks);
+    var weekLabel = isVacation ? breakName : ('第' + (i + 1) + '周');
+    var colWeekCls = 'col-week' + (isVacation ? ' vacation' : '');
+    var tableRow = '<tr><td class="' + colWeekCls + '">' + weekLabel + '</td>';
     var mobileDays = '';
 
     for (var j = 0; j < 7; j++) {
@@ -1990,7 +2029,7 @@ function renderCalendar() {
       var tagHtml = '';
       var mTag = '';
 
-      if (currentDate < startMonday || currentDate > endEnd) {
+      if (currentDate < startMonday || currentDate > lastSunday) {
         cls += ' empty';
         tableRow += '<td class="' + cls + '"></td>';
         mobileDays += '<div class="mobile-day empty"></div>';
@@ -2011,8 +2050,7 @@ function renderCalendar() {
     }
     tableRow += '</tr>';
     tableHtml += tableRow;
-    mobileHtml += '<div class="mobile-week"><div class="mobile-week-head">第' + weekNum + '周</div><div class="mobile-days">' + mobileDays + '</div></div>';
-    weekNum++;
+    mobileHtml += '<div class="mobile-week"><div class="mobile-week-head">' + weekLabel + '</div><div class="mobile-days">' + mobileDays + '</div></div>';
   }
 
   tbody.innerHTML = tableHtml;
@@ -2151,6 +2189,21 @@ function updatePreset() {
   }
 
   document.getElementById('calTitleInput').value = title;
+
+  // 次学期报到日期：由下一学期预设自动推算（减少人为操作）；
+  // 并据此收束当前学期「终止性假期」的结束日 = 次学期报到前一天。
+  var nextTerm = lookupNextTermStart(year, term, grade);
+  var nextRegStr = nextTerm ? (nextTerm.registerDate || nextTerm.startDate) : '';
+  var nextRegEl = document.getElementById('nextRegisterInput');
+  if (nextRegEl) nextRegEl.value = nextRegStr;
+  if (nextRegStr) {
+    if (term === '1') {
+      document.getElementById('winterBreakEndInput').value = daysBefore(nextRegStr, 1);
+    } else {
+      document.getElementById('summerBreakEndInput').value = daysBefore(nextRegStr, 1);
+    }
+  }
+
   toggleBreakRows(term);
   updateTermReference();
   refreshAllDateFields();
@@ -2414,6 +2467,11 @@ triggerSelects.forEach(function(id) {
   document.getElementById(id).addEventListener('change', updateTermReference);
 });
 
+// 次学期报到日期变化时，实时重绘底部假期行
+document.getElementById('nextRegisterInput').addEventListener('change', function() {
+  renderCalendar();
+});
+
 // 添加标注按钮
 document.getElementById('addTagBtn').addEventListener('click', function() {
   addCustomTag();
@@ -2510,6 +2568,13 @@ function validateForm() {
       }
     }
   });
+
+  // 次学期报到日期必须晚于当前学期的终止性假期开始（否则底部假期行逻辑无意义）
+  var nextReg = document.getElementById('nextRegisterInput').value;
+  if (nextReg && terminalStart && nextReg <= terminalStart) {
+    showError(document.getElementById('nextRegisterInput'), '次学期报到日期应晚于假期开始日期');
+    valid = false;
+  }
 
   return valid;
 }
