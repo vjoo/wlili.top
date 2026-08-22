@@ -1867,6 +1867,18 @@ function expandDateRange(startStr, endStr, name, type) {
   return map;
 }
 
+// 长假期（寒假/暑假）跨数十天，逐日红字标签太密太乱：
+// 只标记「开始 / 结束」两个标签，中间日期不再显示标签
+function sparseBreakRange(startStr, endStr, name) {
+  var map = {};
+  if (!startStr) return map;
+  var start = parseDate(startStr);
+  var end = endStr ? parseDate(endStr) : start;
+  map[formatFullDate(start)] = { name: name + '开始', type: 'break' };
+  if (end > start) map[formatFullDate(end)] = { name: name + '结束', type: 'break' };
+  return map;
+}
+
 // 收集所有事件
 function gatherAllEvents() {
   var allEvents = {};
@@ -1878,9 +1890,10 @@ function gatherAllEvents() {
   if (startDate) allEvents[startDate] = { name: '开学', type: 'start' };
 
   // 寒假/暑假/秋假/春假（仅展开当前可见的假期行，避免隐藏学期的假期被误绘到日历）
+  // 寒假/暑假为长假期：只标「开始/结束」两个标签；秋假/春假较短，保持逐日标注
   var breakDefs = [
-    { row: 'winterBreakRow',  s: 'winterBreakStartInput',  e: 'winterBreakEndInput',  name: '寒假' },
-    { row: 'summerBreakRow',  s: 'summerBreakStartInput',  e: 'summerBreakEndInput',  name: '暑假' },
+    { row: 'winterBreakRow',  s: 'winterBreakStartInput',  e: 'winterBreakEndInput',  name: '寒假', sparse: true },
+    { row: 'summerBreakRow',  s: 'summerBreakStartInput',  e: 'summerBreakEndInput',  name: '暑假', sparse: true },
     { row: 'autumnBreakRow',  s: 'autumnBreakStartInput',  e: 'autumnBreakEndInput',  name: '秋假' },
     { row: 'springBreakRow',  s: 'springBreakStartInput',  e: 'springBreakEndInput',  name: '春假' }
   ];
@@ -1889,7 +1902,7 @@ function gatherAllEvents() {
     var s = document.getElementById(b.s).value;
     var e = document.getElementById(b.e).value;
     if (s) {
-      var m = expandDateRange(s, e, b.name, 'break');
+      var m = b.sparse ? sparseBreakRange(s, e, b.name) : expandDateRange(s, e, b.name, 'break');
       Object.keys(m).forEach(function(k) { allEvents[k] = m[k]; });
     }
   });
@@ -1971,10 +1984,15 @@ function renderCalendar() {
   var startMonday = getMonday(startDate);
   var currentDate = new Date(startMonday);
 
-  // 计算结束日期（学期边界）所在周的周日，让最后教学周完整显示
+  // 结束边界：放假起始日若恰为周一（该周整周无课），教学周止于前一周日；
+  // 否则放假在周中开始，该周仍算教学周，止于放假起始日所在周周日
   var endEnd = new Date(endDate);
-  var endDay = endEnd.getDay() === 0 ? 7 : endEnd.getDay();
-  endEnd.setDate(endEnd.getDate() + (7 - endDay));
+  if (endEnd.getDay() === 1) {
+    endEnd.setDate(endEnd.getDate() - 1);
+  } else {
+    var endDay = endEnd.getDay() === 0 ? 7 : endEnd.getDay();
+    endEnd.setDate(endEnd.getDate() + (7 - endDay));
+  }
   var teachingLastSunday = new Date(endEnd);
 
   // 教学周数：以「开学周」为第1周，算到学期结束边界所在周周日（假期周另行标注）
@@ -2115,14 +2133,19 @@ function daysAfter(dateStr, n) {
   return formatFullDate(d);
 }
 
-// 计算学期周数（与 renderCalendar 完全一致：以「开学日」所在周为第1周，至放假起始日所在周周日）
+// 计算学期周数（与 renderCalendar 完全一致：以「开学日」所在周为第1周；
+// 放假起始日若为周一则该周整周无课、不计入教学周，否则算至放假起始日所在周周日）
 function countWeeks(regStr, startStr, vacStartStr) {
   if (!regStr || !startStr || !vacStartStr) return 0;
   var startMon = getMonday(parseDate(startStr));
   var end = parseDate(vacStartStr);
-  var endDay = end.getDay() === 0 ? 7 : end.getDay();
   var endSun = new Date(end);
-  endSun.setDate(endSun.getDate() + (7 - endDay));
+  if (end.getDay() === 1) {
+    endSun.setDate(endSun.getDate() - 1);
+  } else {
+    var endDay = end.getDay() === 0 ? 7 : end.getDay();
+    endSun.setDate(endSun.getDate() + (7 - endDay));
+  }
   var totalDays = Math.round((endSun - startMon) / (1000 * 60 * 60 * 24)) + 1;
   return Math.ceil(totalDays / 7);
 }
