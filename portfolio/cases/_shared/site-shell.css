@@ -1076,3 +1076,69 @@ img {
     letter-spacing: -2px;
   }
 }
+
+/* ================================================================
+   深色主题（后台「页面管理」顶部切换，全站共享，存 cases.json 顶层 theme）
+   只反转「页面背景 / 文字 / 卡片底」；顶部导航与底部 footer 不参与变色（下方豁免区）
+   ================================================================ */
+[data-theme="dark"] {
+  --color-background: #0a0a0a;                       /* 页面底 → 与 Let's talk 底色一致 */
+  --color-text: #f5f5f5;
+  --color-text-secondary: rgba(245, 245, 245, 0.72);
+  --color-text-tertiary: rgba(245, 245, 245, 0.5);
+  --color-black: #f5f5f5;                            /* 主文字/深填充 → 浅色 */
+  --color-white: #1a1a1a;                            /* 白卡底 → 深卡（文字用白处需局部豁免） */
+  --color-gray-ultra-light: rgba(255, 255, 255, 0.06);
+  --color-gray-border: rgba(255, 255, 255, 0.16);
+  --color-primary: #f5f5f5;
+  color-scheme: dark;
+}
+
+/* 豁免区：以下区块保持浅色主题的变量逻辑，不参与反转 ——
+   顶部导航 / 移动菜单 / 底部 footer（用户要求不参与变色）；
+   services / testimonials / hero-banner / 全屏轮播（本来就深底白字或图底白字） */
+[data-theme="dark"] .header-overlay,
+[data-theme="dark"] .mobile-menu,
+[data-theme="dark"] .footer,
+[data-theme="dark"] .hero-section,
+[data-theme="dark"] .services-section,
+[data-theme="dark"] .testimonials-section,
+[data-theme="dark"] .hero-banner-section,
+[data-theme="dark"] .swipe-slider-section,
+[data-theme="dark"] .fullscreen-slider-section {
+  --color-background: #f5f5f5;
+  --color-black: #0a0a0a;
+  --color-white: #fff;
+  --color-primary: #000;
+  --color-text-secondary: rgba(10, 10, 10, 0.6);
+  --color-text-tertiary: rgba(255, 255, 255, 0.6);
+  --color-gray-ultra-light: rgba(10, 10, 10, 0.04);
+  --color-gray-border: rgba(255, 255, 255, 0.16);
+  /* 头部/移动菜单/hero 等内部未显式设色的文字不继承 body 的深色浅字，还原为黑字 */
+  color: var(--color-black);
+}
+
+/* 加载动画（首屏骨架屏 + 页面过渡黑遮罩）属品牌壳层，不参与主题变色：
+   骨架屏内白色 logo / 方块动画（var(--color-white)）与黑色过渡遮罩（var(--color-black)）
+   在深色主题下会被变量反转成深字深块 / 白遮罩，需还原为浅色主题原样 */
+[data-theme="dark"] #page-skeleton {
+  --color-white: #fff;
+  --color-black: #0a0a0a;
+}
+[data-theme="dark"] .page-transition-overlay {
+  background: #0a0a0a; /* 黑遮罩保持黑色（与 Let's talk 底色一致，深浅主题通用） */
+}
+
+/* ================================================================
+   加载动画选择（后台「页面管理」主题旁切换，全站共享，存 cases.json 顶层 loader）
+   1（默认）= 首屏骨架屏（白 logo + 3×3 方块 + 黑色马赛克幕布）→ 隐藏黑遮罩；
+   2 = 页面过渡黑遮罩（进场向上滑走的黑幕）→ 隐藏骨架屏。
+   两套动画颜色均为品牌壳层固定色（黑幕/白 logo），不随主题色变化。
+   ================================================================ */
+:root[data-loader="1"] .page-transition-overlay,
+:root:not([data-loader]) .page-transition-overlay {
+  display: none; /* 骨架屏模式：黑遮罩不参与（页面加载动画由骨架屏接管） */
+}
+:root[data-loader="2"] #page-skeleton {
+  display: none !important; /* 黑遮罩模式：骨架屏不显示 */
+}

@@ -47,6 +47,7 @@ var CaseRenderer = (function () {
     'text':          renderChallenges,
     'showcase':      renderTwoBlocks,
     'gallery':       renderGallery,
+    'masonry':       renderMasonry,   // 瀑布流卡片墙（prompt-library 风格：图片按原始比例自然排布）
     'single-image':  renderSingleImage,
     'double-image':  renderDoubleImage,
     'testimonial':   renderTestimonials,
@@ -69,6 +70,7 @@ var CaseRenderer = (function () {
     'text': '纯文本区',
     'showcase': '展示区',
     'gallery': '截图墙',
+    'masonry': '瀑布流',
     'single-image': '单图全宽',
     'double-image': '双图并排',
     'testimonial': '客户评价',
@@ -1441,6 +1443,43 @@ var CaseRenderer = (function () {
       }
       cols[j].style.marginTop = offsetPx + 'px';
     }
+  }
+
+  // ===== 6.7 瀑布流（masonry）— prompt-library 风格：封面图按原始比例自然排布的瀑布卡片 =====
+  // 字段：label（小标签）/ heading（标题）/ items[] = { image, title, tags[] }
+  // 卡片 = 封面图（高度自适应，瀑布错落）+ 底部渐变信息层（标题 + 标签胶囊）
+  function renderMasonry(s) {
+    var section = sec('masonry-section');
+    var items = Array.isArray(s.items) ? s.items : [];
+    var head = '';
+    if (s.label || s.heading) {
+      head = '<div class="masonry-head">' +
+        (s.label ? '<p class="section-label">' + esc(s.label) + '</p>' : '') +
+        (s.heading ? '<h2 class="section-heading">' + esc(s.heading) + '</h2>' : '') +
+      '</div>';
+    }
+    var cards = items.map(function (it) {
+      var title = (it && it.title) ? it.title : '';
+      var tags = [];
+      if (it && Array.isArray(it.tags)) {
+        tags = it.tags.map(function (t) {
+          return (t && typeof t === 'object') ? t.text : t;
+        }).filter(Boolean);
+      }
+      var tagHtml = tags.map(function (t) {
+        return '<span class="masonry-tag">' + esc(t) + '</span>';
+      }).join('');
+      var overlay = (title || tagHtml) ? '<div class="masonry-overlay">' +
+        (title ? '<div class="masonry-title">' + esc(title) + '</div>' : '') +
+        (tagHtml ? '<div class="masonry-meta">' + tagHtml + '</div>' : '') +
+      '</div>' : '';
+      var cover = (it && it.image)
+        ? '<div class="masonry-cover"><img src="' + esc(it.image) + '" alt="' + esc(title) + '" loading="lazy"></div>'
+        : '<div class="masonry-cover masonry-cover-empty"></div>';
+      return '<div class="masonry-card">' + cover + overlay + '</div>';
+    }).join('');
+    section.innerHTML = head + '<div class="masonry-wall">' + cards + '</div>';
+    return section;
   }
 
   // ===== 7. Single Image =====
