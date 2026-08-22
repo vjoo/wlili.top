@@ -31,7 +31,8 @@
   };
   var LETS_TALK_KEYS = ['title', 'subtitleEn', 'subtitleZh', 'slogan', 'tags', 'tagsZh'];
 
-  // 合并 letsTalk：override 的字段优先，缺失时回退 base，再回退默认值
+  // 合并 letsTalk：override 的字段优先，缺失时回退 base，再回退默认值。
+  // qrCodes 语义：override 中某槽 url 明确为空字符串 ⇒ 隐藏；override 中某槽 url/槽位不存在 ⇒ 继承 base（不强制清空）。
   function mergeLetsTalk(base, override) {
     base = base || DEFAULT_LETS_TALK;
     var src = (override && typeof override === 'object') ? override : {};
@@ -39,15 +40,25 @@
     LETS_TALK_KEYS.forEach(function (k) {
       out[k] = (typeof src[k] === 'string' && src[k] !== '') ? src[k] : (base[k] || DEFAULT_LETS_TALK[k] || '');
     });
-    var baseCodes = Array.isArray(base.qrCodes) ? base.qrCodes : DEFAULT_LETS_TALK.qrCodes;
-    var codes = Array.isArray(src.qrCodes) ? src.qrCodes : [];
-    out.qrCodes = baseCodes.map(function (def, i) {
-      var c = codes[i] || {};
+    var baseCodes = Array.isArray(base.qrCodes) ? base.qrCodes : [];
+    var defaultCodes = DEFAULT_LETS_TALK.qrCodes || [];
+    var codes = Array.isArray(src.qrCodes) ? src.qrCodes : null;
+    // 若 src 显式提供 qrCodes（空数组也作数）⇒ 以其长度为准，每个槽单独回退 base→default；
+    // 未提供 qrCodes（null/undefined/非数组）⇒ 继承 base，再缺就回退 default，保证兼容旧版。
+    var targetCodes;
+    if (codes === null) {
+      targetCodes = baseCodes.length ? baseCodes : defaultCodes;
+    } else {
+      targetCodes = codes;
+    }
+    out.qrCodes = targetCodes.map(function (c, i) {
+      var def = baseCodes[i] || defaultCodes[i] || { label: '', labelEn: '', url: '' };
+      var cc = c || {};
       return {
-        label: (typeof c.label === 'string' && c.label) ? c.label : def.label,
-        labelEn: (typeof c.labelEn === 'string' && c.labelEn) ? c.labelEn : def.labelEn,
-        // url 为空字符串时回退默认（全站公共二维码），避免新建页面显示空白占位
-        url: (typeof c.url === 'string' && c.url) ? c.url : (def.url || '')
+        label: (typeof cc.label === 'string' && cc.label) ? cc.label : def.label,
+        labelEn: (typeof cc.labelEn === 'string' && cc.labelEn) ? cc.labelEn : def.labelEn,
+        // url 明确为空字符串 ⇒ 隐藏；url 不存在/非字符串 ⇒ 继承 def
+        url: (cc.url === '') ? '' : ((typeof cc.url === 'string' && cc.url) ? cc.url : (def.url || ''))
       };
     });
     return out;
@@ -156,9 +167,9 @@
   }
 
   function qrCardHtml(qr) {
-    var src = qr.url ? escAttr(qr.url) : QR_PLACEHOLDER;
-    return '<figure class="qr-card' + (qr.url ? '' : ' is-empty') + '">' +
-      '<div class="qr-frame"><img src="' + src + '" alt="' + escAttr(qr.label) + ' 二维码" loading="lazy"></div>' +
+    if (!qr.url) return '';
+    return '<figure class="qr-card">' +
+      '<div class="qr-frame"><img src="' + escAttr(qr.url) + '" alt="' + escAttr(qr.label) + ' 二维码" loading="lazy"></div>' +
       '<figcaption class="qr-label">' +
         '<span class="qr-label-zh">' + escAttr(qr.label) + '</span>' +
         '<span class="qr-label-en">' + escAttr(qr.labelEn) + '</span>' +
@@ -169,6 +180,10 @@
   // Let's talk 左右两栏（左：文案；右：四张二维码白卡）
   // 文案分三组：标题 → 副标题对（两行贴紧）→ 合作咨询行 → 标签对（两行贴紧）
   function letsTalkColumnsHtml(lt) {
+    var qrHtml = (lt.qrCodes || []).map(qrCardHtml).join('');
+    var rightCol = qrHtml ? '<div class="footer-right">' +
+        '<div class="qr-grid qr-count-' + (lt.qrCodes || []).filter(function(q){ return q.url; }).length + '">' + qrHtml + '</div>' +
+      '</div>' : '';
     return '<div class="footer-left">' +
         '<h2 class="lets-talk-title">' + renderLetsTalkTitle(lt.title) + '</h2>' +
         '<div class="lt-pair">' +
@@ -180,10 +195,7 @@
           '<p class="lt-tags">' + escAttr(lt.tags) + '</p>' +
           '<p class="lt-tags-zh">' + escAttr(lt.tagsZh) + '</p>' +
         '</div>' +
-      '</div>' +
-      '<div class="footer-right">' +
-        '<div class="qr-grid">' + (lt.qrCodes || []).map(qrCardHtml).join('') + '</div>' +
-      '</div>';
+      '</div>' + rightCol;
   }
 
   function escAttr(s) {
@@ -256,7 +268,13 @@
     // 本地与纯静态托管均可用，不再依赖 /api 后端；失败或无配置时回退内置默认导航
     fetch('../cases.json', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { if (d && Array.isArray(d.navMenu)) applyNavMenu(d.navMenu); })
+      .then(function (d) {
+        if (d && Array.isArray(d.navMenu)) applyNavMenu(d.navMenu);
+        // 同时读取 cases.json 顶层的公共 letsTalk（后台「底部导航」编辑后保存在这里）
+        if (d && d.letsTalk && typeof d.letsTalk === 'object') {
+          try { applyContentLetsTalk(d.letsTalk); } catch (_) {}
+        }
+      })
       .catch(function () {});
   }
   // 页面从 BFCache 恢复（前进/后退）或重新可见时，重新拉取导航，保证后台保存后前台自动同步
@@ -329,6 +347,127 @@
   }
 
   // =========================================
+  // 网格动画逻辑 (提取自加载动画)
+  // =========================================
+  // 由于我们需要使用 WebGL，确保 ThreeJS 存在
+  let mosaicRenderer, mosaicMaterial, mosaicGeometry, mosaicMesh, mosaicScene, mosaicCamera, gridRafId;
+
+  function initGridAnimation() {
+    const blocks = document.querySelectorAll('#page-skeleton .block');
+    if (!blocks.length) return;
+
+    let loadingInterval = setInterval(() => {
+      blocks.forEach(block => {
+        const rand = Math.random();
+        if (rand > 0.6) {
+          block.style.opacity = '1';
+        } else if (rand > 0.3) {
+          block.style.opacity = '0.4';
+        } else {
+          block.style.opacity = '0';
+        }
+      });
+    }, 400);
+
+    const skeleton = document.getElementById('page-skeleton');
+    if (skeleton) {
+      skeleton.dataset.gridInterval = loadingInterval;
+    }
+
+    // 初始化 Three.js 马赛克幕布层 (如果有 Three.js)
+    if (typeof THREE !== 'undefined' && typeof gsap !== 'undefined') {
+      try {
+        mosaicScene = new THREE.Scene();
+        mosaicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+        mosaicCamera.position.z = 1;
+
+        mosaicRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        mosaicRenderer.setSize(window.innerWidth, window.innerHeight);
+        // 将 canvas 盖在整个网页的最上面（比 #page-skeleton z-index 更低，作为其背景；也可以做其兄弟节点）
+        Object.assign(mosaicRenderer.domElement.style, {
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          zIndex: '99997', // 在 logo / 网格 (99998) 之下，作为背景遮罩
+          pointerEvents: 'none'
+        });
+        document.body.appendChild(mosaicRenderer.domElement);
+
+        const vertexShader = `
+          varying vec2 vUv;
+          void main() {
+              vUv = uv;
+              gl_Position = vec4(position, 1.0);
+          }
+        `;
+
+        const fragmentShader = `
+          uniform float uProgress;
+          uniform vec3 uColor;
+          uniform vec2 uResolution;
+          varying vec2 vUv;
+          
+          float random (vec2 st) {
+              return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+          }
+          
+          void main() {
+              float mosaicSize = 11.0;
+              vec2 grid = vec2(mosaicSize, mosaicSize / (uResolution.x / uResolution.y));
+              vec2 id = floor(vUv * grid);
+              float n = random(id);
+              float alpha = 1.0 - smoothstep(n, n + 0.2, uProgress);
+              gl_FragColor = vec4(uColor, alpha);
+          }
+        `;
+
+        mosaicGeometry = new THREE.PlaneGeometry(2, 2);
+        // 抓取当前的主题色用于幕布背景
+        const rootStyles = getComputedStyle(document.documentElement);
+        // 默认蓝色，如果能取到则转化为 hex (假设取到的是 rgb或 hex)
+        let themeColor = '#0100ff';
+        mosaicMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms: {
+                uProgress: { value: 0.0 }, // 0: 满屏， 1: 完全消失
+                uColor: { value: new THREE.Color(themeColor) }, 
+                uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+            },
+            transparent: true,
+        });
+
+        mosaicMesh = new THREE.Mesh(mosaicGeometry, mosaicMaterial);
+        mosaicScene.add(mosaicMesh);
+
+        function renderMosaic() {
+          gridRafId = requestAnimationFrame(renderMosaic);
+          mosaicRenderer.render(mosaicScene, mosaicCamera);
+        }
+        renderMosaic();
+
+        // 绑定 resize (仅在幕布存活时有效)
+        window.addEventListener('resize', handleMosaicResize);
+
+      } catch (err) {
+        console.error("Grid ThreeJS layer failed:", err);
+      }
+    }
+  }
+
+  function handleMosaicResize() {
+    if (mosaicRenderer && mosaicMaterial) {
+      mosaicRenderer.setSize(window.innerWidth, window.innerHeight);
+      if (mosaicMaterial.uniforms.uResolution) {
+          mosaicMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+      }
+    }
+  }
+
+  // 必须在脚本一开始就调用动画
+  initGridAnimation();
+
+  // =========================================
   // 1. Page Transition + 滚动恢复
   // =========================================
   let maskLifted = false;
@@ -358,12 +497,12 @@
       flushRevealReady();
       return;
     }
-    let alreadyStarted = false;
+    // 极端兜底：如果没有触发事件，最少保证 loading 时长后滑走
+    let hasStarted = false;
     const startTransition = () => {
-      if (alreadyStarted) return;
-      alreadyStarted = true;
-
-      // 刷新位置恢复（sessionStorage，30 秒内有效）
+      if(hasStarted) return;
+      hasStarted = true;
+      
       let restoreY = 0;
       try {
         const saved = sessionStorage.getItem('case_scroll_y');
@@ -376,17 +515,39 @@
         }
       } catch (_) {}
 
-      // 同步隐藏首屏骨架屏（与过渡遮罩并行淡出，视觉上不互相遮挡）
+      // 停止 3x3 动画
       try {
         const sk = document.getElementById('page-skeleton');
         if (sk) {
+          if (sk.dataset.gridInterval) {
+            clearInterval(parseInt(sk.dataset.gridInterval, 10));
+          }
           sk.classList.add('skeleton-leave');
-          // 与 opacity 400ms 过渡一致；transitionend 可能因 display 问题不触发，直接 setTimeout 更稳
           setTimeout(() => {
             try { sk.style.display = 'none'; } catch (_) {}
           }, 450);
         }
       } catch (_) {}
+
+      // 停止 Three.js 马赛克消散动画
+      if (typeof gsap !== 'undefined' && mosaicMaterial && mosaicRenderer) {
+        gsap.to(mosaicMaterial.uniforms.uProgress, {
+          value: 1.2,
+          duration: 2.5,
+          ease: "power2.inOut",
+          onComplete: () => {
+            // 彻底清理 WebGL 资源
+            if (gridRafId) cancelAnimationFrame(gridRafId);
+            window.removeEventListener('resize', handleMosaicResize);
+            if (mosaicRenderer.domElement && mosaicRenderer.domElement.parentNode) {
+              mosaicRenderer.domElement.parentNode.removeChild(mosaicRenderer.domElement);
+            }
+            if(mosaicGeometry) mosaicGeometry.dispose();
+            if(mosaicMaterial) mosaicMaterial.dispose();
+            mosaicRenderer.dispose();
+          }
+        });
+      }
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -406,12 +567,23 @@
         });
       });
     };
+
+    // 为了确保加载动画能被看清（至少显示 1.5秒左右，配合原逻辑的 1500ms）
+    const minLoadingTime = 1500;
+    const startTime = Date.now();
+
+    const attemptStartTransition = () => {
+      const elapsedTime = Date.now() - startTime;
+      const delay = Math.max(0, minLoadingTime - elapsedTime);
+      setTimeout(startTransition, delay);
+    };
+
     // 1) 内容渲染完成（render.js 会发信号）后才滑走遮罩
-    window.addEventListener('case-content-ready', startTransition, { once: true });
+    window.addEventListener('case-content-ready', attemptStartTransition, { once: true });
     // 2) 兜底：window load 后仍未触发时强制滑走
-    window.addEventListener('load', () => { setTimeout(startTransition, 300); }, { once: true });
-    // 3) 极端兜底：1.5s 后仍未触发就滑走
-    setTimeout(startTransition, 1500);
+    window.addEventListener('load', attemptStartTransition, { once: true });
+    // 3) 极端兜底：3s 后强制滑走（原先是 1.5s，但因为有了 minimumLoadingTime，放大一些作最后保险）
+    setTimeout(startTransition, 3000);
   }
 
   // 导航跳转前清除「刷新位置恢复」标记：

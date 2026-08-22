@@ -2,11 +2,18 @@
   "version": 2,
   "sections": [
     {
-      "id": "s1",
-      "type": "hero",
-      "videoUrl": "",
+      "id": "smt13nbz5erel",
+      "type": "hero-banner",
+      "textLayout": "left",
+      "title": "",
+      "labels": [],
+      "description": "",
       "videoType": "image",
-      "image": "/portfolio/cases/vjooProject/uploads/1786697696037.jpg"
+      "image": "/portfolio/cases/vjooProject/uploads/1787204920188.jpg",
+      "videoUrl": "",
+      "effect": "slide",
+      "autoplayDelay": "4000",
+      "images": []
     },
     {
       "id": "s2",
@@ -315,35 +322,5 @@
         }
       ]
     }
-  ],
-  "letsTalk": {
-    "title": "Let's talk",
-    "subtitleEn": "Have a project in mind? Let's create something meaningful together.",
-    "subtitleZh": "有项目想法？我们一起把它变成有价值的设计。",
-    "slogan": "合作咨询 / 约稿商单 / 作品集交流",
-    "tags": "Product Design ｜ Mobile & Touch ｜ B2B / B2C / To G",
-    "tagsZh": "面向产品、移动端、触控设备，覆盖消费、企业、政企多类型项目",
-    "qrCodes": [
-      {
-        "label": "微信好友",
-        "labelEn": "WeChat",
-        "url": "/portfolio/cases/_shared/assets/qr-wechat.png"
-      },
-      {
-        "label": "公众号",
-        "labelEn": "Official Account",
-        "url": "/portfolio/cases/_shared/assets/qr-official.png"
-      },
-      {
-        "label": "小红书",
-        "labelEn": "Xiaohongshu",
-        "url": "/portfolio/cases/_shared/assets/qr-xiaohongshu.png"
-      },
-      {
-        "label": "抖音号",
-        "labelEn": "Douyin",
-        "url": "/portfolio/cases/_shared/assets/qr-douyin.png"
-      }
-    ]
-  }
+  ]
 }

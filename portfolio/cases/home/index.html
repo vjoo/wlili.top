@@ -66,7 +66,22 @@
   <!-- 首屏骨架屏 + Loading：解决外网慢加载白屏问题。HTML 解析到 body 立即可见（不依赖任何 JS/CSS），
        site-shell.js 加载完成 + case-content-ready 后淡出离场（与过渡遮罩同步）。 -->
   <div id="page-skeleton" aria-hidden="true">
-    <div class="sk-loader"></div>
+    <div class="sk-loader">
+      <div class="grid-animation">
+          <!-- 3x3 网格，共 9 个方块 -->
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+      </div>
+      <div class="logo-text">WLI</div>
+      <div class="subtitle-text">{ creative innovation studio }</div>
+    </div>
     <div class="sk-inner">
       <div class="sk-hero">
         <div class="sk-hero-box"></div>

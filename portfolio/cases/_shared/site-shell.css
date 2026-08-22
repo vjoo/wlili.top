@@ -117,54 +117,57 @@ body {
    ============================================================ */
 
 #page-skeleton {
-  position: fixed;
+  position: fixed; /* Fix it covering the viewport */
   inset: 0;
-  z-index: 9998;                     /* 比 header-overlay(9990) 高，比 transition-mask(9999) 低 */
-  background: var(--color-background);
-  pointer-events: none;              /* 不拦截底层点击（如果用户先点了啥） */
-  transition: opacity 400ms ease, visibility 400ms ease;
-  opacity: 1;
-  visibility: visible;
-}
-#page-skeleton.skeleton-leave {
-  opacity: 0;
-  visibility: hidden;
+  z-index: 99998; /* Just below ThreeJS canvas but above everything else */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
-/* Loading 环：顶部居中位置
-   用 fixed + 50vw 直接相对 viewport，避免父容器 #page-skeleton 因 scrollbar
-   导致 width < viewport 时 left:50% 偏左（实测偏 7.67px）。 */
 #page-skeleton .sk-loader {
-  position: fixed;
-  top: max(3rem, 10vh);
-  left: 50vw;
-  transform: translateX(-50%);
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 2.5px solid rgba(10, 10, 10, 0.08);
-  border-top-color: var(--color-text);
-  animation: sk-spin 900ms linear infinite;
-  z-index: 2;
-}
-@keyframes sk-spin {
-  to { transform: translateX(-50%) rotate(360deg); }
-}
-
-/* 骨架容器：仿 hero + intro 的垂直布局
-   不设 max-width / margin-inline:auto，只用 padding 控制左右间距——
-   骨架屏是过渡用的占位，不需要与 .container 等宽，占满视口更符合
-   "避免空白屏" 的目标（大屏上 max-width:75.5rem 会让左右各空 243px）。 */
-#page-skeleton .sk-inner {
-  position: absolute;
-  inset: 0;
-  padding: 0 calc(1rem + 2.25vw);       /* 左右 padding 与 .container 一致 */
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
-  padding-top: 14vh;
-  padding-bottom: 4rem;
-  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#page-skeleton .grid-animation {
+  display: grid;
+  grid-template-columns: repeat(3, 20px);
+  grid-template-rows: repeat(3, 20px);
+  gap: 2px;
+  margin-bottom: 20px;
+}
+
+#page-skeleton .block {
+  width: 20px;
+  height: 20px;
+  background-color: var(--color-white); /* 改为白色 */
+  opacity: 0; 
+  transition: opacity 0.4s ease-in-out;
+}
+
+#page-skeleton .logo-text {
+  font-family: "Arial Black", Arial, sans-serif;
+  font-weight: 900;
+  font-size: 24px;
+  letter-spacing: 1px;
+  color: var(--color-white); /* 改为白色 */
+  margin-bottom: 8px;
+}
+
+#page-skeleton .subtitle-text {
+  font-family: monospace, sans-serif;
+  font-size: 12px;
+  color: var(--color-white); /* 改为白色 */
+}
+
+/* 骨架容器 - 旧版假排版样式（如 hero / info / gallery 等）已经用不到了，注释或删除 */
+#page-skeleton .sk-inner {
+  display: none;
 }
 
 /* Hero 区骨架：上方一个大方块（封面），下面两行文字 */
@@ -647,7 +650,6 @@ img {
   flex-direction: column;
   position: relative;
 }
-
 .footer-inner {
   display: grid;
   grid-template-columns: 7fr 3fr; /* 左文案 70% / 右二维码 30% */
@@ -655,10 +657,15 @@ img {
   align-items: center;
   width: 100%;
   /* 与 .container 同一宽度体系：75.5rem(1208px)/≥1500px 95rem(1520px)，padding 2.25rem(36px)，
-     保证 Let's talk 内容与上方各板块左右对齐（此前写死 1440px 导致收窄错位） */
+     保证 Let's talk 内容与上方各板块左右对齐 */
   max-width: 75.5rem;
   margin: 0 auto;
   padding: 0 2.25rem;
+}
+
+/* 无二维码时：左栏占满全宽 */
+.footer-inner:not(:has(.footer-right)) {
+  grid-template-columns: 1fr;
 }
 
 /* ---- 左栏：文案（全部左对齐） ---- */
@@ -725,7 +732,7 @@ img {
   max-width: 560px;
 }
 
-/* ---- 右栏：2×2 田字形白色卡片（每张 150px，二维码 + 双语标签同在白框内） ---- */
+/* ---- 右栏：二维码白色卡片，数量自适应 ---- */
 .footer-right {
   display: flex;
   justify-content: flex-end;
@@ -737,6 +744,13 @@ img {
   gap: 16px;
   width: auto;
 }
+
+/* 仅1个二维码时：单列居右 */
+.qr-grid.qr-count-1 {
+  grid-template-columns: 150px;
+}
+
+/* 无二维码时不渲染右栏（由 JS 控制） */
 
 .qr-card {
   width: 150px;
@@ -766,11 +780,6 @@ img {
   height: 100%;
   object-fit: contain;
   display: block;
-}
-
-/* 未上传二维码时：占位纹理降低透明度，暗示待配置 */
-.qr-card.is-empty .qr-frame img {
-  opacity: 0.5;
 }
 
 .qr-label {

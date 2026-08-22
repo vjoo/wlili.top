@@ -1,0 +1,18 @@
+﻿const fs = require('fs');
+const f = 'd:/wl共享文件夹/自创AI工具/wlili.top/tools/school-calendar.html';
+let c = fs.readFileSync(f, 'utf8');
+c = c.replace('<option value="2026-2027" selected>2026-2027</option>', '<option value="2026" selected>2026</option>');
+c = c.replace(/'2024-2025'/g, "'2024'");
+c = c.replace(/'2025-2026'/g, "'2025'");
+c = c.replace(/'2026-2027'/g, "'2026'");
+c = c.replace(/'2027-2028'/g, "'2027'");
+c = c.replace('value="2026-2027学年 第一学期 校历"', 'value="2026学年 第一学期 校历"');
+c = c.replace('>2026-2027学年 第一学期 校历<', '>2026学年 第一学期 校历<');
+c = c.replace("var years = currentYear.split('-');\n    nextYear = (parseInt(years[0], 10) + 1) + '-' + (parseInt(years[1], 10) + 1);", "nextYear = String(parseInt(currentYear, 10) + 1);");
+c = c.replace("document.getElementById('yearSelect').value = '2026-2027';", "document.getElementById('yearSelect').value = '2026';");
+fs.writeFileSync(f, c, 'utf8');
+const after = fs.readFileSync(f, 'utf8');
+console.log('opt:', after.includes('value="2026" selected'));
+console.log('noOldKey:', !after.includes("'2026-2027'"));
+console.log('init:', after.includes("yearSelect').value = '2026'"));
+console.log('title:', after.includes('2026学年 第一学期 校历'));

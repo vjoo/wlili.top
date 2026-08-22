@@ -210,10 +210,10 @@
       colorMode: 'molten',
       grain: true,
       grainIntensity: 0.05,
-      mouseInteraction: true,
+      mouseInteraction: false,
       mouseStrength: 0.3,
       opacity: 1.0,
-      enableInteraction: true
+      enableInteraction: false
     },
     create: function (container, params) {
       var gc = createGL(container, true);
@@ -486,8 +486,8 @@
       color: [1, 1, 1],
       speed: 1,
       amplitude: 0.1,
-      mouseInteraction: true,
-      enableInteraction: true
+      mouseInteraction: false,
+      enableInteraction: false
     },
     create: function (container, params) {
       var gc = createGL(container, false);
@@ -569,8 +569,8 @@
       rotationSpeed: 0.1,
       autoCenterRepulsion: 0,
       transparent: false,
-      mouseInteraction: true,
-      enableInteraction: true
+      mouseInteraction: false,
+      enableInteraction: false
     },
     create: function (container, params) {
       var gc = createGL(container, false);
@@ -784,9 +784,9 @@
       grain: true,
       grainIntensity: 0.05,
       opacity: 1,
-      mouseInteraction: true,
+      mouseInteraction: false,
       mouseStrength: 0.1,
-      enableInteraction: true
+      enableInteraction: false
     },
     create: function (container, params) {
       var gc = createGL(container, true);
@@ -964,10 +964,10 @@
       opacity: 1,
       grain: true,
       grainIntensity: 0.05,
-      mouseInteraction: true,
+      mouseInteraction: false,
       mouseRadius: 0.3,
       mouseStrength: 0.4,
-      enableInteraction: true
+      enableInteraction: false
     },
     create: function (container, params) {
       var gc = createGL(container, true);
