@@ -33,8 +33,28 @@
 
   .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
+  }
+  .form-grid .form-group {
+    min-width: 0;
+  }
+  .form-grid .col-title {
+    grid-column: auto;
+  }
+  .form-grid .col-holiday {
+    grid-column: auto;
+  }
+  @media (min-width: 900px) {
+    .form-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .form-grid .col-title {
+      grid-column: span 3;
+    }
+    .form-grid .col-holiday {
+      grid-column: span 1;
+    }
   }
 
   /* 下方预览区 */
@@ -111,6 +131,21 @@
     background: var(--bg-white);
     outline: none;
     transition: border-color 0.2s;
+    min-width: 0;
+    max-width: 100%;
+  }
+  select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  input[type="date"].form-control::-webkit-calendar-picker-indicator {
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
   }
   .form-control:focus {
     border-color: var(--link);
@@ -468,9 +503,6 @@
   }
 
   @media (max-width: 1068px) {
-    .form-grid {
-      grid-template-columns: 1fr 1fr;
-    }
     .preview-area {
       width: 100%;
       overflow-x: auto;
@@ -638,15 +670,16 @@
           <label>开学日期</label>
           <input type="date" class="form-control" id="startDateInput" value="2026-09-01">
         </div>
-        <div class="form-group" style="grid-column: 1 / -1;">
+        <div class="form-group col-title">
           <label>日历标题 (自动生成/可修改)</label>
           <input type="text" class="form-control" id="calTitleInput" value="2026学年 第一学期 校历">
         </div>
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="showHolidaysCheckbox" checked>
-            <span>法定节假日</span>
-          </label>
+        <div class="form-group col-holiday">
+          <label>法定节假日</label>
+          <select class="form-control" id="showHolidaysSelect">
+            <option value="1" selected>开启</option>
+            <option value="0">关闭</option>
+          </select>
         </div>
       </div>
 
@@ -1748,7 +1781,7 @@ function gatherAllEvents() {
   }
 
   // 法定节假日
-  var showHolidays = document.getElementById('showHolidaysCheckbox').checked;
+  var showHolidays = document.getElementById('showHolidaysSelect').value === '1';
   if (showHolidays) {
     Object.keys(currentEventsMap).forEach(function(key) {
       var ev = currentEventsMap[key];
