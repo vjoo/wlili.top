@@ -12,6 +12,16 @@
        ============================================================ -->
   <script>
     (function () {
+      // 4. 全站主题（浅色/深色）：head 最早执行，深色模式下避免首帧白屏闪烁
+      try {
+        var _th = localStorage.getItem('case_theme');
+        if (_th === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) { /* ignore */ }
+      // 5. 全站加载动画（1=骨架屏 默认 / 2=黑遮罩）：尽早应用，避免首帧显示错误的加载动画
+      try {
+        var _ld = localStorage.getItem('case_loader');
+        if (_ld === '1' || _ld === '2') document.documentElement.setAttribute('data-loader', _ld);
+      } catch (e) { /* ignore */ }
       // 1. 关闭浏览器自动恢复滚动位置（自己在 site-shell.js 里用 sessionStorage 管理）
       try {
         if ('scrollRestoration' in window.history) {
@@ -66,7 +76,22 @@
   <!-- 首屏骨架屏 + Loading：解决外网慢加载白屏问题。HTML 解析到 body 立即可见（不依赖任何 JS/CSS），
        site-shell.js 加载完成 + case-content-ready 后淡出离场（与过渡遮罩同步）。 -->
   <div id="page-skeleton" aria-hidden="true">
-    <div class="sk-loader"></div>
+    <div class="sk-loader">
+      <div class="grid-animation">
+          <!-- 3x3 网格，共 9 个方块 -->
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+          <div class="block"></div>
+      </div>
+      <div class="logo-text">WLI</div>
+      <div class="subtitle-text">{ creative innovation studio }</div>
+    </div>
     <div class="sk-inner">
       <div class="sk-hero">
         <div class="sk-hero-box"></div>

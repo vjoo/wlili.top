@@ -1749,6 +1749,35 @@ body.auth-pending .pages-view { visibility: hidden; }
 .pages-ops .btn-sm { height: 30px; padding: 0 12px; font-size: 12px; }
 .pages-empty { text-align: center; color: var(--text-muted); padding: 48px 0; font-size: 13px; }
 
+/* 全站主题切换（浅色 / 深色，存 cases.json 顶层 theme；仅前台组件与页面背景变色） */
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  background: #f0f0f2;
+  border-radius: 100px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.theme-btn {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(10, 10, 10, 0.55);
+  padding: 5px 14px;
+  border-radius: 100px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.theme-btn:hover { color: rgba(10, 10, 10, 0.85); }
+.theme-btn.active {
+  background: #fff;
+  color: #0a0a0a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
 /* 页面管理 Modal 补充 */
 .modal-x {
   background: transparent; border: none; font-size: 20px; line-height: 1; cursor: pointer;
@@ -1946,9 +1975,19 @@ body.auth-pending .pages-view { visibility: hidden; }
     <!-- ===== 页面管理视图（右侧区域，随左侧一级菜单切换） ===== -->
     <div class="pages-view" id="pagesView" style="display:none;">
       <div class="pages-topbar">
-        <div>
-          <div class="page-title">页面管理</div>
-          <div class="page-subtitle">基于板块组装体系的页面索引 · 新建 / 复制 / 层级 / 删除，点「内容」进入该页面板块编辑</div>
+        <div style="display:flex; align-items:center; gap:18px; min-width:0;">
+          <div>
+            <div class="page-title">页面管理</div>
+            <div class="page-subtitle">基于板块组装体系的页面索引 · 新建 / 复制 / 层级 / 删除，点「内容」进入该页面板块编辑</div>
+          </div>
+          <div class="theme-switch" id="themeSwitch" title="全站主题切换（仅前台组件与页面背景变色；顶部导航与底部 footer 不参与）">
+            <button type="button" class="theme-btn" data-theme="light">浅色</button>
+            <button type="button" class="theme-btn" data-theme="dark">深色</button>
+          </div>
+          <div class="theme-switch" id="loaderSwitch" title="全站加载动画：1=首屏骨架屏（白logo+3×3方块动画，默认）；2=页面过渡黑遮罩。颜色固定不随主题">
+            <button type="button" class="theme-btn" data-loader="1">加载动画1</button>
+            <button type="button" class="theme-btn" data-loader="2">加载动画2</button>
+          </div>
         </div>
         <div style="display:flex; gap:10px;">
           <button class="btn-accent" id="btnPgNew">＋ 新建页面</button>
@@ -2132,6 +2171,7 @@ const TYPE_LABELS = {
   'text': '纯文本区',
   'showcase': '展示区',
   'gallery': '截图墙',
+  'masonry': '瀑布流',
   'single-image': '单图全宽',
   'double-image': '双图并排',
   'testimonial': '客户评价',
@@ -2155,6 +2195,7 @@ const TYPE_DESCS = {
   'text': '大段文字、引言、说明文字区块',
   'showcase': '左侧图片/视频 + 右侧标签+描述',
   'gallery': '多张产品截图横向/网格展示',
+  'masonry': '瀑布流卡片墙：封面图+标题+标签，按图片原始比例自然排布（prompt-library 风格）',
   'single-image': '单张全宽度大图展示',
   'double-image': '两张图片并排对比展示',
   'testimonial': '客户评价、引言卡片',
@@ -2483,6 +2524,15 @@ const TYPE_FIELDS = {
     { key: 'colCount', label: '列数', type: 'select', options: ['2', '3'] },
     { key: 'columns', label: '分列截图（每列独立管理）', type: 'gallery-columns' }
   ],
+  'masonry': [
+    { key: 'label', label: '板块标题（左栏小字，选填）', type: 'text', placeholder: 'Gallery' },
+    { key: 'heading', label: '标题（选填）', type: 'text', placeholder: '作品集锦' },
+    { key: 'items', label: '瀑布流卡片列表（每张卡片：封面图 + 标题 + 标签）', type: 'items-list', itemLabel: '卡片', itemFields: [
+      { key: 'image', label: '封面图', type: 'image', hint: '竖图/方图效果最佳，瀑布流按原始比例自然排布' },
+      { key: 'title', label: '标题', type: 'text', placeholder: '卡片标题' },
+      { key: 'tags', label: '标签（英文逗号分隔）', type: 'tags', placeholder: '如 品牌, 海报' }
+    ] }
+  ],
   'single-image': [
     { key: 'videoType', label: '媒体类型', type: 'select', options: ['image', 'animated'],
       optionLabels: { 'image': '静态图片（默认）', 'animated': '动画背景' }, default: 'image', hint: '单图全宽，可选动画背景替代静态图' },
@@ -2607,6 +2657,7 @@ function getDefaultSection(type) {
     case 'gallery': return { ...base, label: '', heading: '', colCount: '3', columns: [
       { offsetRem: 0, images: [] }, { offsetRem: 0, images: [] }, { offsetRem: 0, images: [] }
     ] };
+    case 'masonry': return { ...base, label: '', heading: '', items: [] };
     case 'single-image': return { ...base, videoType: 'image', image: '' };
     case 'double-image': return { ...base, image1: '', image2: '' };
     case 'testimonial': return { ...base, title: '', avatarInitials: '', name: '', role: '', quote: '' };
@@ -5461,6 +5512,64 @@ async function loadNavMenuState() {
   originalNavMenu = JSON.parse(JSON.stringify(state.navMenu));
 }
 
+// 全站主题（存 cases.json 顶层 theme，后台「页面管理」顶部切换，前台全站生效）
+async function loadThemeState() {
+  try {
+    const data = await apiGlobal('/api/theme');
+    applyThemeSwitch(data.theme === 'dark' ? 'dark' : 'light');
+  } catch (e) {
+    applyThemeSwitch('light');
+  }
+}
+function applyThemeSwitch(t) {
+  document.querySelectorAll('#themeSwitch .theme-btn').forEach((b) => {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+}
+function bindThemeSwitch() {
+  document.querySelectorAll('#themeSwitch .theme-btn').forEach((b) => {
+    b.addEventListener('click', async () => {
+      const t = b.dataset.theme;
+      try {
+        await apiGlobal('/api/theme', 'POST', { theme: t });
+        applyThemeSwitch(t);
+        toast('已切换为' + (t === 'dark' ? '深色' : '浅色') + '主题，前台全站生效', 'success');
+      } catch (e) {
+        toast('主题保存失败：' + e.message, 'error');
+      }
+    });
+  });
+}
+
+// 全站加载动画（存 cases.json 顶层 loader，后台「页面管理」主题旁切换；1=骨架屏 2=黑遮罩）
+async function loadLoaderState() {
+  try {
+    const data = await apiGlobal('/api/loader');
+    applyLoaderSwitch(data.loader === '2' ? '2' : '1');
+  } catch (e) {
+    applyLoaderSwitch('1');
+  }
+}
+function applyLoaderSwitch(l) {
+  document.querySelectorAll('#loaderSwitch .theme-btn').forEach((b) => {
+    b.classList.toggle('active', b.dataset.loader === l);
+  });
+}
+function bindLoaderSwitch() {
+  document.querySelectorAll('#loaderSwitch .theme-btn').forEach((b) => {
+    b.addEventListener('click', async () => {
+      const l = b.dataset.loader;
+      try {
+        await apiGlobal('/api/loader', 'POST', { loader: l });
+        applyLoaderSwitch(l);
+        toast('已切换为' + (l === '2' ? '加载动画2（黑遮罩）' : '加载动画1（骨架屏）') + '，前台全站生效', 'success');
+      } catch (e) {
+        toast('加载动画保存失败：' + e.message, 'error');
+      }
+    });
+  });
+}
+
 // 全站底部 Let's talk（公共存储，存 cases.json 顶层 letsTalk）
 // 与 navMenu 同级，admin.html 不再从 content.json 读取 letsTalk
 async function loadLetsTalkSharedState() {
@@ -6171,6 +6280,8 @@ async function afterAuth() {
     originalSections = [];
     await loadNavMenuState();
     await loadLetsTalkSharedState();
+    await loadThemeState();
+    await loadLoaderState();
     showView('pages');
     return;
   }
@@ -6182,6 +6293,8 @@ async function init() {
   $('#authBtn').onclick = onLoginClick;
   $('#authPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') onLoginClick(); });
   $('#btnLogout').onclick = () => doLogout();
+  bindThemeSwitch(); // 全站主题切换（页面管理 topbar），元素常驻 DOM，任何入口都可绑定
+  bindLoaderSwitch(); // 全站加载动画切换（页面管理 topbar，主题旁）
   // 字段说明气泡：靠顶（会顶到编辑面板顶部/顶部导航）时翻转向下，避免被裁切或遮挡
   // 判定基准 = 滚动容器（.editor-body）可见顶部，而非视口顶部：
   // 气泡默认朝上弹，若图标上方放不下完整气泡（会被 sticky 编辑头/顶部导航盖住）就翻转向下

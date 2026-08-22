@@ -12,6 +12,16 @@
        ============================================================ -->
   <script>
     (function () {
+      // 4. 全站主题（浅色/深色）：head 最早执行，深色模式下避免首帧白屏闪烁
+      try {
+        var _th = localStorage.getItem('case_theme');
+        if (_th === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) { /* ignore */ }
+      // 5. 全站加载动画（1=骨架屏 默认 / 2=黑遮罩）：尽早应用，避免首帧显示错误的加载动画
+      try {
+        var _ld = localStorage.getItem('case_loader');
+        if (_ld === '1' || _ld === '2') document.documentElement.setAttribute('data-loader', _ld);
+      } catch (e) { /* ignore */ }
       // 1. 关闭浏览器自动恢复滚动位置（自己在 site-shell.js 里用 sessionStorage 管理）
       try {
         if ('scrollRestoration' in window.history) {

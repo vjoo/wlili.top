@@ -243,6 +243,37 @@
   // 全站顶部导航：cases.json 顶层 navMenu（后台「顶部导航设置」编辑）覆盖默认 navLinks。
   // 拉到配置后局部重渲染桌面 + 移动端导航链接（header 已由 injectShell 注入）。
   // 重渲染后重算 --nav-scrolled-maxw 变量，保证胶囊收缩动画宽度与菜单数量匹配。
+  // 全站主题（后台「页面管理」顶部切换，存 cases.json 顶层 theme）：
+  // 只切「组件 + 页面背景」，顶部导航与底部 footer 不参与（CSS 已豁免）。
+  function applyTheme(theme) {
+    var t = (theme === 'dark') ? 'dark' : 'light';
+    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('case_theme', t); } catch (_) {}
+  }
+  // 先同步应用本地缓存（防首屏闪烁），再等 cases.json 权威值覆盖（后台保存后全站同步生效）
+  try {
+    var cached = localStorage.getItem('case_theme');
+    if (cached) applyTheme(cached);
+  } catch (_) {}
+
+  // 全站加载动画（后台「页面管理」主题旁切换，存 cases.json 顶层 loader）：
+  // '1'=首屏骨架屏（默认）/ '2'=页面过渡黑遮罩。显隐由 CSS [data-loader] 控制，颜色固定不随主题。
+  function applyLoader(loader) {
+    var l = (loader === '2') ? '2' : '1';
+    document.documentElement.setAttribute('data-loader', l);
+    try { localStorage.setItem('case_loader', l); } catch (_) {}
+  }
+  // 先同步应用本地缓存（防首帧错动画），再等 cases.json 权威值覆盖
+  try {
+    var cachedLoader = localStorage.getItem('case_loader');
+    if (cachedLoader === '1' || cachedLoader === '2') applyLoader(cachedLoader);
+  } catch (_) {}
+  function currentLoader() {
+    var attr = document.documentElement.getAttribute('data-loader');
+    return (attr === '2') ? '2' : '1';
+  }
+
   function applyNavMenu(items) {
     if (!Array.isArray(items)) return;
     var clean = items.map(function (l) {
@@ -270,6 +301,10 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         if (d && Array.isArray(d.navMenu)) applyNavMenu(d.navMenu);
+        // 全站主题：cases.json 顶层 theme（后台「页面管理」顶部切换）
+        if (d && (d.theme === 'dark' || d.theme === 'light')) applyTheme(d.theme);
+        // 全站加载动画：cases.json 顶层 loader（后台「页面管理」主题旁切换）
+        if (d && (d.loader === '1' || d.loader === '2')) applyLoader(d.loader);
         // 同时读取 cases.json 顶层的公共 letsTalk（后台「底部导航」编辑后保存在这里）
         if (d && d.letsTalk && typeof d.letsTalk === 'object') {
           try { applyContentLetsTalk(d.letsTalk); } catch (_) {}
@@ -374,8 +409,8 @@
       skeleton.dataset.gridInterval = loadingInterval;
     }
 
-    // 初始化 Three.js 马赛克幕布层 (如果有 Three.js)
-    if (typeof THREE !== 'undefined' && typeof gsap !== 'undefined') {
+    // 初始化 Three.js 马赛克幕布层 (如果有 Three.js)；加载动画=2（黑遮罩）时骨架屏隐藏，无需幕布
+    if (currentLoader() !== '2' && typeof THREE !== 'undefined' && typeof gsap !== 'undefined') {
       try {
         mosaicScene = new THREE.Scene();
         mosaicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
@@ -412,7 +447,7 @@
           }
           
           void main() {
-              float mosaicSize = 11.0;
+              float mosaicSize = 13.0;
               vec2 grid = vec2(mosaicSize, mosaicSize / (uResolution.x / uResolution.y));
               vec2 id = floor(vUv * grid);
               float n = random(id);
@@ -568,8 +603,8 @@
       });
     };
 
-    // 为了确保加载动画能被看清（至少显示 1.5秒左右，配合原逻辑的 1500ms）
-    const minLoadingTime = 1500;
+    // 为了确保加载动画能被看清（至少显示 1.2秒左右，配合原逻辑的 1200ms）
+    const minLoadingTime = 1200;
     const startTime = Date.now();
 
     const attemptStartTransition = () => {
@@ -741,6 +776,7 @@
     '.two-blocks-section',   // 原 .showcase-section（旧名）
     '.showcase-section',     // 兼容旧 class
     '.screen-section',
+    '.masonry-section',   // 瀑布流卡片墙
     '.testimonials-section',
     '.title-section',         // 独立标题组件（Projects 头部）
     '.next-projects-section',
@@ -771,6 +807,7 @@
     '.screen-info',
     '.screen-wall',
     '.screen-col',
+    '.masonry-wall',
     '.image-single',
     '.testimonial-card',
     '.next-projects-header',
