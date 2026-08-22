@@ -425,7 +425,7 @@
         // 抓取当前的主题色用于幕布背景
         const rootStyles = getComputedStyle(document.documentElement);
         // 默认蓝色，如果能取到则转化为 hex (假设取到的是 rgb或 hex)
-        let themeColor = '#0100ff';
+        let themeColor = '#000000';/*#0100ff*/
         mosaicMaterial = new THREE.ShaderMaterial({
             vertexShader,
             fragmentShader,
