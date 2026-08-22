@@ -1966,6 +1966,8 @@ function renderCalendar() {
   var startDate = parseDate(calStartStr);
   var endDate = parseDate(endDateStr);
 
+  // 第一周以「开学日期」所在周为准：若报到在开学前一周的周日，该周只标注「报到」，不计为第1周
+  var firstTeachingMonday = getMonday(parseDate(startDateStr));
   var startMonday = getMonday(startDate);
   var currentDate = new Date(startMonday);
 
@@ -1975,9 +1977,13 @@ function renderCalendar() {
   endEnd.setDate(endEnd.getDate() + (7 - endDay));
   var teachingLastSunday = new Date(endEnd);
 
-  // 教学周数（用于副标题与周次编号；假期周另行标注）
-  var totalDays = Math.round((teachingLastSunday - currentDate) / (1000 * 60 * 60 * 24)) + 1;
+  // 教学周数：以「开学周」为第1周，算到学期结束边界所在周周日（假期周另行标注）
+  var totalDays = Math.round((teachingLastSunday - firstTeachingMonday) / (1000 * 60 * 60 * 24)) + 1;
   var totalWeeks = Math.ceil(totalDays / 7);
+
+  // 假期第一周（教学结束周的下一周）的周一
+  var vacMonday = new Date(teachingLastSunday);
+  vacMonday.setDate(vacMonday.getDate() + 1);
 
   // 次学期报到日期：扩展日历底部，展示假期（寒假/暑假）至次学期报到
   var nextReg = document.getElementById('nextRegisterInput').value;
@@ -2006,14 +2012,23 @@ function renderCalendar() {
   document.getElementById('calSubtitleDisplay').innerText = sd + ' 至 ' + ed + ' （共' + totalWeeks + '周）';
 
   var allEvents = gatherAllEvents();
-  if (nextReg) allEvents[nextReg] = { name: '报到', type: 'start' };
+  if (nextReg) allEvents[nextReg] = { name: '次报道', type: 'start' };
 
   var tableHtml = '';
   var mobileHtml = '<div class="mobile-dow"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>';
 
   for (var i = 0; i < overallWeeks; i++) {
-    var isVacation = (i >= totalWeeks);
-    var weekLabel = isVacation ? breakName : ('第' + (i + 1) + '周');
+    var weekMonday = new Date(startMonday);
+    weekMonday.setDate(weekMonday.getDate() + i * 7);
+    var isVacation = (weekMonday >= vacMonday);
+    var weekLabel;
+    if (weekMonday < firstTeachingMonday) {
+      weekLabel = '报到'; // 开学前的报到周（如报到在开学前一周的周日）
+    } else if (isVacation) {
+      weekLabel = breakName;
+    } else {
+      weekLabel = '第' + (Math.round(((weekMonday - firstTeachingMonday) / (1000 * 60 * 60 * 24)) / 7) + 1) + '周';
+    }
     var colWeekCls = 'col-week' + (isVacation ? ' vacation' : '');
     var tableRow = '<tr><td class="' + colWeekCls + '">' + weekLabel + '</td>';
     var mobileDays = '';
@@ -2100,11 +2115,10 @@ function daysAfter(dateStr, n) {
   return formatFullDate(d);
 }
 
-// 计算学期周数（与 renderCalendar 完全一致：取 min(报到,开学) 的周一，至放假起始日所在周周日）
+// 计算学期周数（与 renderCalendar 完全一致：以「开学日」所在周为第1周，至放假起始日所在周周日）
 function countWeeks(regStr, startStr, vacStartStr) {
   if (!regStr || !startStr || !vacStartStr) return 0;
-  var calStartStr = (regStr < startStr) ? regStr : startStr;
-  var startMon = getMonday(parseDate(calStartStr));
+  var startMon = getMonday(parseDate(startStr));
   var end = parseDate(vacStartStr);
   var endDay = end.getDay() === 0 ? 7 : end.getDay();
   var endSun = new Date(end);
