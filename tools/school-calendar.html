@@ -47,13 +47,18 @@
   }
   @media (min-width: 900px) {
     .form-grid {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(6, 1fr);
+    }
+    /* 报到/开学日期为「年/月/日」三段下拉，需更宽以免年份被截断 */
+    .form-grid .form-group:nth-child(3),
+    .form-grid .form-group:nth-child(4) {
+      grid-column: span 2;
     }
     .form-grid .col-title {
-      grid-column: span 3;
+      grid-column: span 4;
     }
     .form-grid .col-holiday {
-      grid-column: span 1;
+      grid-column: span 2;
     }
   }
 
@@ -101,7 +106,7 @@
     min-height: var(--a4-height);
     background: white;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    padding: 15mm;
+    padding: 12mm;
     box-sizing: border-box;
     margin-bottom: 40px;
     flex: none;
@@ -298,18 +303,21 @@
     display: block;
   }
   .cal-table td .event-tag {
-    font-size: 10px;
+    font-size: 12px;
     background: #000;
     color: #fff;
     padding: 1px 4px;
     border-radius: 2px;
     display: inline-block;
-    margin-top: 2px;
+    margin-top: 1px;
     white-space: nowrap;
-    transform: scale(0.9);
+    line-height: 1.25;
   }
 
-  .cal-table td .event-tag.tag-holiday { background: #d32f2f; }
+  /* 国家法定节假日：橘色，与学校寒暑假/春秋假（红色）区分 */
+  .cal-table td .event-tag.tag-holiday { background: #ffa617; color: #fff; }
+  /* 学校假期（寒暑假/春秋假）：红色 */
+  .cal-table td .event-tag.tag-break { background: #d32f2f; }
   .cal-table td .event-tag.tag-start { background: #d32f2f; }
   .cal-table td .event-tag.tag-custom { background: #d32f2f; }
 
@@ -412,6 +420,37 @@
     font-size: 13px;
   }
 
+  /* 自定义日期录入（年/月/日 三段下拉，移动端友好，年份点按即选） */
+  .date-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .date-field select {
+    flex: 1;
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 24px;
+    font-size: 13px;
+    text-overflow: ellipsis;
+  }
+  .date-field .df-year { flex: 1.4; }
+  .date-field .df-month,
+  .date-field .df-day { flex: 1; }
+  .date-field.input-error select { border-color: #d32f2f; }
+  .date-range .date-field,
+  .breaks-range .date-field { flex: 1 1 0; min-width: 0; }
+  .tag-row .date-field { flex: 1; min-width: 0; }
+  @media (max-width: 600px) {
+    .date-field select { padding-left: 6px; padding-right: 20px; font-size: 12px; }
+    /* 假期区间在窄屏改为：起 / 至 / 止 各占一行，避免 6 个下拉挤在一行 */
+    .breaks-row { flex-wrap: wrap; gap: 8px; }
+    .breaks-label { min-width: auto; }
+    .breaks-range { flex-wrap: wrap; }
+    .breaks-range .range-sep { flex-basis: 100%; text-align: center; padding: 0; }
+  }
+
   /* 假期区块：独立布局，每个假期占一行 */
   .breaks-section {
     margin-top: 20px;
@@ -425,12 +464,13 @@
   }
   .breaks-row {
     display: flex;
-    align-items: center;
-    gap: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
   }
   .breaks-label {
     flex: none;
-    min-width: 56px;
+    min-width: 0;
     font-size: 13px;
     color: var(--ink-secondary);
     font-weight: 500;
@@ -490,7 +530,7 @@
       min-height: auto !important;
       box-shadow: none !important;
       margin: 0 !important;
-      padding: 8mm 10mm !important;
+      padding: 6mm 8mm !important;
       box-sizing: border-box !important;
     }
     .cal-table {
@@ -624,14 +664,70 @@
       line-height: 1.6;
     }
     .preview-area {
-      width: calc(100% + 16px);
-      margin-left: -8px;
-      margin-right: -8px;
-      padding: 0 8px 8px;
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      padding: 0 0 8px;
+    }
+    /* 移动端也直接显示与打印一致的 A4 表格（可横向滑动），不再用周卡片，避免与打印版本不一致 */
+    .a4-paper {
+      width: 210mm !important;
+      min-width: 210mm !important;
+      padding: 12mm !important;
+    }
+    .cal-table {
+      display: table !important;
+    }
+    #mobileCal {
+      display: none !important;
     }
     .scroll-hint {
-      right: 16px;
+      display: block !important;
     }
+  }
+  /* ===== 移动端：竖向周卡片 ===== */
+  .mobile-cal { display: none; }
+  .mobile-dow, .mobile-days {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+  }
+  .mobile-dow { background: #f3f4f6; border-radius: 8px 8px 0 0; }
+  .mobile-dow span { font-size: 11px; text-align: center; padding: 5px 0; color: #666; }
+  .mobile-week {
+    border: 1px solid var(--border-light); border-radius: 12px;
+    margin-bottom: 10px; overflow: hidden;
+  }
+  .mobile-week-head {
+    background: #1565c0; color: #fff; padding: 8px 12px;
+    font-weight: 600; font-size: 14px;
+  }
+  .mobile-day {
+    padding: 7px 2px; text-align: center; min-height: 46px;
+    border-right: 1px solid #eee; border-bottom: 1px solid #eee;
+    box-sizing: border-box;
+  }
+  .mobile-day:last-child { border-right: none; }
+  .mobile-day .m-daynum { font-size: 13px; font-weight: 600; }
+  .mobile-day.weekend { background: #fff0f0; }
+  .mobile-day.weekend .m-daynum { color: #d32f2f; }
+  .mobile-day.holiday { background: #fffde7; }
+  .mobile-day.empty { background: #fafafa; min-height: 0; padding: 0; }
+  .mobile-day .m-tag {
+    display: block; font-size: 12px; margin-top: 2px;
+    background: #000; color: #fff; border-radius: 2px;
+    padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* 国家法定节假日：橘色 */
+  .mobile-day .m-tag.tag-holiday { background: #ffa617; color: #fff; }
+  /* 学校假期（寒暑假/春秋假）：红色 */
+  .mobile-day .m-tag.tag-break { background: #d32f2f; }
+  .mobile-day .m-tag.tag-start,
+  .mobile-day .m-tag.tag-custom { background: #d32f2f; }
+  .mobile-day .m-tag.tag-workday { background: #757575; }
+
+  /* 打印：始终使用 A4 表格，隐藏移动端列表 */
+  @media print {
+    .cal-table { display: table !important; }
+    #mobileCal { display: none !important; }
   }
 </style>
 <script src="nav.js"></script>
@@ -724,9 +820,9 @@
 
       <!-- 自定义日期标注 -->
       <div style="margin-top:20px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-          <label style="font-size:13px; color:var(--ink-secondary); font-weight:500; margin:0;">自定义（生日、考试时间等）</label>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
           <button type="button" class="btn-outlined" id="addTagBtn" style="height:32px; padding:0 12px; font-size:13px; min-width:auto; flex:none;">+ 添加标注</button>
+          <label style="font-size:13px; color:var(--ink-secondary); font-weight:500; margin:0;">自定义（生日、考试时间等）</label>
         </div>
         <div id="customTagsContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
@@ -774,6 +870,7 @@
           <tbody id="calBody">
           </tbody>
         </table>
+        <div id="mobileCal" class="mobile-cal"></div>
       </div>
     </div>
 
@@ -1758,27 +1855,22 @@ function gatherAllEvents() {
   var startDate = document.getElementById('startDateInput').value;
   if (startDate) allEvents[startDate] = { name: '开学', type: 'start' };
 
-  // 寒假/暑假/秋假（区间展开）
-  var winterStart = document.getElementById('winterBreakStartInput').value;
-  var winterEnd = document.getElementById('winterBreakEndInput').value;
-  if (winterStart) {
-    var winterMap = expandDateRange(winterStart, winterEnd, '寒假', 'holiday');
-    Object.keys(winterMap).forEach(function(k) { allEvents[k] = winterMap[k]; });
-  }
-
-  var summerStart = document.getElementById('summerBreakStartInput').value;
-  var summerEnd = document.getElementById('summerBreakEndInput').value;
-  if (summerStart) {
-    var summerMap = expandDateRange(summerStart, summerEnd, '暑假', 'holiday');
-    Object.keys(summerMap).forEach(function(k) { allEvents[k] = summerMap[k]; });
-  }
-
-  var autumnStart = document.getElementById('autumnBreakStartInput').value;
-  var autumnEnd = document.getElementById('autumnBreakEndInput').value;
-  if (autumnStart) {
-    var autumnMap = expandDateRange(autumnStart, autumnEnd, '秋假', 'holiday');
-    Object.keys(autumnMap).forEach(function(k) { allEvents[k] = autumnMap[k]; });
-  }
+  // 寒假/暑假/秋假/春假（仅展开当前可见的假期行，避免隐藏学期的假期被误绘到日历）
+  var breakDefs = [
+    { row: 'winterBreakRow',  s: 'winterBreakStartInput',  e: 'winterBreakEndInput',  name: '寒假' },
+    { row: 'summerBreakRow',  s: 'summerBreakStartInput',  e: 'summerBreakEndInput',  name: '暑假' },
+    { row: 'autumnBreakRow',  s: 'autumnBreakStartInput',  e: 'autumnBreakEndInput',  name: '秋假' },
+    { row: 'springBreakRow',  s: 'springBreakStartInput',  e: 'springBreakEndInput',  name: '春假' }
+  ];
+  breakDefs.forEach(function(b) {
+    if (document.getElementById(b.row).style.display === 'none') return;
+    var s = document.getElementById(b.s).value;
+    var e = document.getElementById(b.e).value;
+    if (s) {
+      var m = expandDateRange(s, e, b.name, 'break');
+      Object.keys(m).forEach(function(k) { allEvents[k] = m[k]; });
+    }
+  });
 
   // 法定节假日
   var showHolidays = document.getElementById('showHolidaysSelect').value === '1';
@@ -1809,23 +1901,31 @@ function renderCalendar() {
   var title = document.getElementById('calTitleInput').value;
   var startDateStr = document.getElementById('startDateInput').value;
   var regDateStr = document.getElementById('registerDateInput').value;
-
   document.getElementById('calTitleDisplay').innerText = title;
 
   var tbody = document.getElementById('calBody');
+  var mobileCal = document.getElementById('mobileCal');
   tbody.innerHTML = '';
+  if (mobileCal) mobileCal.innerHTML = '';
 
-  var endDateStr = '';
-  var breakStarts = [];
+  // 学期结束边界：以“终止性假期”（第一学期=寒假、第二学期=暑假）的开始日为界。
+  // 秋假/春假属于学期中短假，绝不能当作学期终点（否则日历会提前截断）。
+  var term = document.getElementById('termSelect').value;
   var ws = document.getElementById('winterBreakStartInput').value;
   var ss = document.getElementById('summerBreakStartInput').value;
   var as = document.getElementById('autumnBreakStartInput').value;
-  if (ws) breakStarts.push(ws);
-  if (ss) breakStarts.push(ss);
-  if (as) breakStarts.push(as);
-  if (breakStarts.length > 0) {
-    breakStarts.sort();
-    endDateStr = breakStarts[0];
+  var ps = document.getElementById('springBreakStartInput').value;
+
+  var endDateStr = '';
+  if (term === '1' && ws) endDateStr = ws;
+  else if (term === '2' && ss) endDateStr = ss;
+  else {
+    var cand = [];
+    if (ws) cand.push(ws);
+    if (ss) cand.push(ss);
+    if (as) cand.push(as);
+    if (ps) cand.push(ps);
+    if (cand.length) { cand.sort(); endDateStr = cand[0]; }
   }
 
   if (!startDateStr || !endDateStr) {
@@ -1833,10 +1933,13 @@ function renderCalendar() {
     return;
   }
 
+  // 学期实际结束日（最后上课日）= 终止性假期开始日前一天
+  var semEndStr = endDateStr;
+  if (term === '1' && ws) semEndStr = daysBefore(ws, 1);
+  else if (term === '2' && ss) semEndStr = daysBefore(ss, 1);
+
   var calStartStr = startDateStr;
-  if (regDateStr && regDateStr < startDateStr) {
-    calStartStr = regDateStr;
-  }
+  if (regDateStr && regDateStr < startDateStr) calStartStr = regDateStr;
 
   var startDate = parseDate(calStartStr);
   var endDate = parseDate(endDateStr);
@@ -1844,7 +1947,7 @@ function renderCalendar() {
   var startMonday = getMonday(startDate);
   var currentDate = new Date(startMonday);
 
-  // 计算结束日期所在周的周日
+  // 计算结束日期所在周的周日（让最后一周完整显示）
   var endEnd = new Date(endDate);
   var endDay = endEnd.getDay() === 0 ? 7 : endEnd.getDay();
   endEnd.setDate(endEnd.getDate() + (7 - endDay));
@@ -1852,20 +1955,22 @@ function renderCalendar() {
   var totalDays = Math.round((endEnd - currentDate) / (1000 * 60 * 60 * 24)) + 1;
   var totalWeeks = Math.ceil(totalDays / 7);
 
-  // 副标题
+  // 副标题：显示真实学期区间（开学 至 最后上课日）
   var officialStart = parseDate(startDateStr);
+  var semEnd = parseDate(semEndStr);
   var sd = officialStart.getFullYear() + '年' + (officialStart.getMonth() + 1) + '月' + officialStart.getDate() + '日';
-  var ed = endDate.getFullYear() + '年' + (endDate.getMonth() + 1) + '月' + endDate.getDate() + '日';
+  var ed = semEnd.getFullYear() + '年' + (semEnd.getMonth() + 1) + '月' + semEnd.getDate() + '日';
   document.getElementById('calSubtitleDisplay').innerText = sd + ' 至 ' + ed + ' （共' + totalWeeks + '周）';
 
   var allEvents = gatherAllEvents();
 
-  var html = '';
+  var tableHtml = '';
+  var mobileHtml = '<div class="mobile-dow"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>';
   var weekNum = 1;
 
   for (var i = 0; i < totalWeeks; i++) {
-    html += '<tr>';
-    html += '<td class="col-week">第' + weekNum + '周</td>';
+    var tableRow = '<tr><td class="col-week">第' + weekNum + '周</td>';
+    var mobileDays = '';
 
     for (var j = 0; j < 7; j++) {
       var fd = formatFullDate(currentDate);
@@ -1876,35 +1981,35 @@ function renderCalendar() {
       var cls = isWeekend ? 'weekend' : '';
       cls += (m % 2 === 1) ? ' month-odd' : ' month-even';
       var tagHtml = '';
+      var mTag = '';
 
-      // 判断是否在学期范围内
       if (currentDate < startMonday || currentDate > endEnd) {
         cls += ' empty';
-        html += '<td class="' + cls + '"></td>';
+        tableRow += '<td class="' + cls + '"></td>';
+        mobileDays += '<div class="mobile-day empty"></div>';
       } else {
         if (allEvents[fd]) {
           var ev = allEvents[fd];
-          if (ev.type === 'holiday') {
-            cls += ' holiday';
-          }
-          tagHtml = '<span class="event-tag tag-' + ev.type + '">' + ev.name + '</span>';
+          if (ev.type === 'holiday') cls += ' holiday';
+          var tcls = 'tag-' + ev.type;
+          tagHtml = '<span class="event-tag ' + tcls + '">' + ev.name + '</span>';
+          mTag = '<span class="m-tag ' + tcls + '">' + ev.name + '</span>';
         }
 
         var dayDisplay = m + '/' + d;
-
-        html += '<td class="' + cls + '">' +
-          '<span class="day-num">' + dayDisplay + '</span>' +
-          tagHtml +
-        '</td>';
+        tableRow += '<td class="' + cls + '"><span class="day-num">' + dayDisplay + '</span>' + tagHtml + '</td>';
+        mobileDays += '<div class="mobile-day ' + cls.trim() + '"><span class="m-daynum">' + dayDisplay + '</span>' + mTag + '</div>';
       }
-
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    html += '</tr>';
+    tableRow += '</tr>';
+    tableHtml += tableRow;
+    mobileHtml += '<div class="mobile-week"><div class="mobile-week-head">第' + weekNum + '周</div><div class="mobile-days">' + mobileDays + '</div></div>';
     weekNum++;
   }
 
-  tbody.innerHTML = html;
+  tbody.innerHTML = tableHtml;
+  if (mobileCal) mobileCal.innerHTML = mobileHtml;
 }
 
 // 推算下一学期的开学日期
@@ -1942,11 +2047,72 @@ function daysBefore(dateStr, n) {
   return formatFullDate(d);
 }
 
+// 计算某个日期后 N 天（返回 YYYY-MM-DD 字符串）
+function daysAfter(dateStr, n) {
+  if (!dateStr) return '';
+  var d = parseDate(dateStr);
+  d.setDate(d.getDate() + n);
+  return formatFullDate(d);
+}
+
+// 计算学期周数（与 renderCalendar 完全一致：取 min(报到,开学) 的周一，至放假起始日所在周周日）
+function countWeeks(regStr, startStr, vacStartStr) {
+  if (!regStr || !startStr || !vacStartStr) return 0;
+  var calStartStr = (regStr < startStr) ? regStr : startStr;
+  var startMon = getMonday(parseDate(calStartStr));
+  var end = parseDate(vacStartStr);
+  var endDay = end.getDay() === 0 ? 7 : end.getDay();
+  var endSun = new Date(end);
+  endSun.setDate(endSun.getDate() + (7 - endDay));
+  var totalDays = Math.round((endSun - startMon) / (1000 * 60 * 60 * 24)) + 1;
+  return Math.ceil(totalDays / 7);
+}
+
+// ===== 通用时间段（杭州校历惯例，可由学年直接推算，减少人为操作）=====
+// 幼儿园/小学/初中假期基本一致（幼儿园参照义务教育执行），故合并为通用档；
+// 真正差异大的是高中（本工具 grade 写死 primary，暂不区分）。
+// 锚点每年稳定：寒假 次年1/30~2/21、秋假 当年9/28~9/30（国庆前）、
+// 春假 次年4/28~5/5（五一前后）、暑假 次年7/5~8/31。
+function generalHolidayRanges(year) {
+  var y = parseInt(year, 10);
+  if (!y) return null;
+  return {
+    winter:  { start: (y + 1) + '-01-30', end: (y + 1) + '-02-21' },
+    autumn:  { start: y + '-09-28',       end: y + '-09-30' },
+    spring:  { start: (y + 1) + '-04-28', end: (y + 1) + '-05-05' },
+    summer:  { start: (y + 1) + '-07-05', end: (y + 1) + '-08-31' }
+  };
+}
+
+var _lastGenYear = null;   // 仅当年份真正变化时，才用通用时间段预填（切学期不覆盖已改值）
+function fillGeneralHolidays(year) {
+  var g = generalHolidayRanges(year);
+  if (!g) return;
+  var map = {
+    winterBreakStartInput: g.winter.start,  winterBreakEndInput: g.winter.end,
+    summerBreakStartInput: g.summer.start,  summerBreakEndInput: g.summer.end,
+    autumnBreakStartInput: g.autumn.start,  autumnBreakEndInput: g.autumn.end,
+    springBreakStartInput: g.spring.start,  springBreakEndInput: g.spring.end
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = map[id];   // 写入隐藏镜像 .value
+  });
+  refreshAllDateFields();          // 同步到「年/月/日」三段下拉
+}
+
 // 绑定下拉框联动（学年/学期/学段 变更时自动填充官方预设数据）
 function updatePreset() {
   var year = document.getElementById('yearSelect').value;
   var term = document.getElementById('termSelect').value;
   var grade = 'primary';
+
+  // 学年切换时，用「杭州通用时间段」预填四个假期，减少人为操作；
+  // 仅当年份真正变化才预填，切学期不覆盖用户已改的值。
+  if (year !== _lastGenYear) {
+    fillGeneralHolidays(year);
+    _lastGenYear = year;
+  }
 
   var tName = term === '1' ? '第一学期' : '第二学期';
   var title = year + '学年 ' + tName + ' 校历';
@@ -1961,37 +2127,6 @@ function updatePreset() {
     if (data) {
       document.getElementById('startDateInput').value = data.startDate || '';
       document.getElementById('registerDateInput').value = data.registerDate || '';
-
-      // 清空假期区间
-      ['winterBreakStartInput', 'winterBreakEndInput',
-       'summerBreakStartInput', 'summerBreakEndInput',
-       'autumnBreakStartInput', 'autumnBreakEndInput',
-       'springBreakStartInput', 'springBreakEndInput'].forEach(function(id) {
-        document.getElementById(id).value = '';
-      });
-
-      // 根据学期自动填充假期区间（含结束日期推算）
-      if (term === '1') {
-        // 第一学期：寒假
-        if (data.endDate) {
-          document.getElementById('winterBreakStartInput').value = data.endDate;
-          // 寒假结束日期 = 下一学期（同学年 T2）报到日期前一天
-          var next = lookupNextTermStart(year, term, grade);
-          if (next) {
-            document.getElementById('winterBreakEndInput').value = daysBefore(next.registerDate || next.startDate, 1);
-          }
-        }
-      } else {
-        // 第二学期：暑假
-        if (data.endDate) {
-          document.getElementById('summerBreakStartInput').value = data.endDate;
-          // 暑假结束日期 = 下一学年 T1 报到日期前一天
-          var next = lookupNextTermStart(year, term, grade);
-          if (next) {
-            document.getElementById('summerBreakEndInput').value = daysBefore(next.registerDate || next.startDate, 1);
-          }
-        }
-      }
 
       currentEventsMap = {};
       if (data.events && Array.isArray(data.events)) {
@@ -2011,6 +2146,7 @@ function updatePreset() {
   document.getElementById('calTitleInput').value = title;
   toggleBreakRows(term);
   updateTermReference();
+  refreshAllDateFields();
 }
 
 function toggleBreakRows(term) {
@@ -2054,20 +2190,27 @@ function updateTermReference() {
   if (reg) { parts.push(smartDate(reg) + '报到注册'); }
   if (start) { parts.push(smartDate(start) + '正式上课'); }
   if (term === '1' && winterStart) {
-    parts.push('至' + smartDate(winterStart) + '结束');
+    var semEnd1 = daysBefore(winterStart, 1);
+    parts.push('至' + smartDate(semEnd1) + '结束');
     var vacD = parseDate(winterStart);
     vacD.setDate(vacD.getDate() + 1);
     parts.push(smartDate(formatFullDate(vacD)) + '起放寒假');
   }
   if (term === '2' && summerStart) {
-    parts.push('本学期于' + smartDate(summerStart) + '结束');
+    var semEnd2 = daysBefore(summerStart, 1);
+    parts.push('本学期于' + smartDate(semEnd2) + '结束');
     var vacD = parseDate(summerStart);
     vacD.setDate(vacD.getDate() + 1);
     parts.push(smartDate(formatFullDate(vacD)) + '起放暑假');
   }
 
+  // 换算学期周数（与日历副标题一致：min(报到,开学) 周一 → 放假起始日所在周周日）
+  var vacStart = (term === '1') ? winterStart : summerStart;
+  var weeks = (reg && start && vacStart) ? countWeeks(reg, start, vacStart) : 0;
+
   if (parts.length > 0) {
-    refEl.innerHTML = '<b>时间安排参考（' + tName + '）</b><br>' + parts.join('，') + '。';
+    var head = '时间安排参考（' + tName + (weeks ? '，共' + weeks + '周' : '') + '）';
+    refEl.innerHTML = '<b>' + head + '</b><br>' + parts.join('，') + '。';
   } else {
     refEl.innerHTML = '';
   }
@@ -2083,11 +2226,8 @@ function clearAllInputs() {
   currentEventsMap = {};
   document.getElementById('startDateInput').value = '';
   document.getElementById('registerDateInput').value = '';
-  ['winterBreakStartInput', 'winterBreakEndInput',
-   'summerBreakStartInput', 'summerBreakEndInput',
-   'autumnBreakStartInput', 'autumnBreakEndInput'].forEach(function(id) {
-    document.getElementById(id).value = '';
-  });
+  // 注意：假期区间由「通用时间段」统一管理（updatePreset 顶部已预填），此处不再清空，
+  // 以免在无官方预设的兜底分支里把预填的假期冲掉。
   clearCustomTags();
 }
 
@@ -2105,10 +2245,155 @@ function addCustomTag(date, label) {
     '<button type="button" class="tag-remove" title="删除">&times;</button>';
   container.appendChild(row);
 
+  // 把原生日期输入框换成三段下拉（保留 .tag-date-input 类供 gatherAllEvents 读取）
+  convertDateInput(row.querySelector('input.tag-date-input'));
+
   row.querySelector('.tag-remove').addEventListener('click', function() {
     row.remove();
   });
 }
+
+// ===== 自定义日期录入组件（年/月/日 三段下拉，替代原生 input[type=date]）=====
+// 把原生日期输入框替换为「年 / 月 / 日」三段下拉，年份单独成块、移动端点按即选；
+// 保留隐藏镜像 <input>（沿用原 id 与 .value），所有既有读取 / 校验逻辑无需改动。
+function convertDateInput(inputEl) {
+  var id = inputEl.id;
+  var cls = inputEl.className;
+  var val = inputEl.value || '';
+  var initY = '', initM = '', initD = '';
+  if (val) { var p = val.split('-'); initY = p[0]; initM = p[1]; initD = p[2]; }
+  var curYear = new Date().getFullYear();
+  var baseYear = initY ? parseInt(initY, 10) : curYear;
+  var minY = baseYear - 10, maxY = baseYear + 10;
+
+  var wrapper = document.createElement('div');
+  wrapper.className = 'date-field';
+  wrapper.setAttribute('data-date-id', id || '');
+
+  function opt(value, text, selected) {
+    var o = document.createElement('option');
+    o.value = value; o.textContent = text;
+    if (selected) o.selected = true;
+    return o;
+  }
+
+  var ySel = document.createElement('select');
+  ySel.className = 'form-control df-year';
+  ySel.appendChild(opt('', '年', !initY));
+  for (var yy = minY; yy <= maxY; yy++) {
+    ySel.appendChild(opt(String(yy), yy + '年', String(yy) === initY));
+  }
+
+  var mSel = document.createElement('select');
+  mSel.className = 'form-control df-month';
+  mSel.appendChild(opt('', '月', !initM));
+  for (var mm = 1; mm <= 12; mm++) {
+    var ms = String(mm).padStart(2, '0');
+    mSel.appendChild(opt(ms, mm + '月', ms === initM));
+  }
+
+  var dSel = document.createElement('select');
+  dSel.className = 'form-control df-day';
+  dSel.appendChild(opt('', '日', !initD));
+
+  function fillDays() {
+    var yy = parseInt(ySel.value, 10) || curYear;
+    var mm = parseInt(mSel.value, 10);
+    if (!mm) { dSel.innerHTML = ''; dSel.appendChild(opt('', '日', true)); return; }
+    var dim = new Date(yy, mm, 0).getDate();
+    var cur = parseInt(dSel.value, 10) || 1;
+    dSel.innerHTML = '';
+    dSel.appendChild(opt('', '日', false));
+    for (var dd = 1; dd <= dim; dd++) {
+      var ds = String(dd).padStart(2, '0');
+      dSel.appendChild(opt(ds, ds, ds === initD && mm === parseInt(initM, 10)));
+    }
+    if (cur > dim) cur = dim;
+    dSel.value = String(cur).padStart(2, '0');
+  }
+  fillDays();
+  wrapper._fillDays = fillDays;
+
+  var hidden = document.createElement('input');
+  hidden.type = 'hidden';
+  hidden.className = cls + ' date-mirror';
+  if (id) hidden.id = id;
+
+  function computeVal() {
+    if (!ySel.value || !mSel.value || !dSel.value) return '';
+    return ySel.value + '-' + mSel.value + '-' + dSel.value;
+  }
+  function ensureYearOption(y) {
+    if (!y) return;
+    for (var i = 0; i < ySel.options.length; i++) {
+      if (ySel.options[i].value === y) return;
+    }
+    var o = document.createElement('option');
+    o.value = y; o.textContent = y + '年';
+    ySel.appendChild(o);
+  }
+  function sync() {
+    if (hidden.value === '') {
+      if (ySel.value || mSel.value || dSel.value) {
+        if (!ySel.value) ySel.value = String(curYear);
+        if (!mSel.value) mSel.value = '01';
+        if (!dSel.value) dSel.value = '01';
+        fillDays();
+      }
+    } else {
+      ensureYearOption(ySel.value);
+    }
+    hidden.value = computeVal();
+    clearError(hidden);
+    hidden.dispatchEvent(new Event('change'));
+  }
+
+  ySel.addEventListener('change', function() { fillDays(); sync(); });
+  mSel.addEventListener('change', function() { fillDays(); sync(); });
+  dSel.addEventListener('change', sync);
+  hidden.value = computeVal();
+
+  wrapper.appendChild(ySel);
+  wrapper.appendChild(mSel);
+  wrapper.appendChild(dSel);
+  wrapper.appendChild(hidden);
+  inputEl.parentNode.replaceChild(wrapper, inputEl);
+  return wrapper;
+}
+
+// 根据隐藏镜像的 .value，把三段下拉同步到正确日期（供 updatePreset 等程序化赋值后刷新）
+function setDateFieldValue(wrapper, val) {
+  var ySel = wrapper.querySelector('.df-year');
+  var mSel = wrapper.querySelector('.df-month');
+  var dSel = wrapper.querySelector('.df-day');
+  if (!ySel || !mSel || !dSel) return;
+  if (!val) { ySel.value = ''; mSel.value = ''; dSel.value = ''; return; }
+  var p = val.split('-');
+  var found = false;
+  for (var i = 0; i < ySel.options.length; i++) {
+    if (ySel.options[i].value === p[0]) { found = true; break; }
+  }
+  if (!found) { var o = document.createElement('option'); o.value = p[0]; o.textContent = p[0] + '年'; ySel.appendChild(o); }
+  ySel.value = p[0];
+  mSel.value = p[1];
+  if (wrapper._fillDays) wrapper._fillDays();
+  dSel.value = p[2];
+}
+function refreshAllDateFields() {
+  document.querySelectorAll('.date-field').forEach(function(w) {
+    var id = w.getAttribute('data-date-id');
+    var hidden = id ? document.getElementById(id) : w.querySelector('input.date-mirror');
+    if (hidden) setDateFieldValue(w, hidden.value || '');
+  });
+}
+
+// 初始化：把所有固定日期输入框替换为三段下拉
+['registerDateInput', 'startDateInput', 'winterBreakStartInput', 'winterBreakEndInput',
+ 'summerBreakStartInput', 'summerBreakEndInput', 'autumnBreakStartInput', 'autumnBreakEndInput',
+ 'springBreakStartInput', 'springBreakEndInput'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) convertDateInput(el);
+});
 
 // 事件绑定
 var triggerSelects = ['yearSelect', 'termSelect'];
@@ -2117,14 +2402,9 @@ triggerSelects.forEach(function(id) {
 });
 
 ['registerDateInput', 'startDateInput', 'winterBreakStartInput', 'winterBreakEndInput',
- 'summerBreakStartInput', 'summerBreakEndInput'].forEach(function(id) {
+ 'summerBreakStartInput', 'summerBreakEndInput',
+ 'autumnBreakStartInput', 'autumnBreakEndInput', 'springBreakStartInput', 'springBreakEndInput'].forEach(function(id) {
   document.getElementById(id).addEventListener('change', updateTermReference);
-});
-
-document.querySelectorAll('.form-control[type="date"]').forEach(function(el) {
-  el.addEventListener('change', function() {
-    clearError(this);
-  });
 });
 
 // 添加标注按钮
@@ -2132,26 +2412,36 @@ document.getElementById('addTagBtn').addEventListener('click', function() {
   addCustomTag();
 });
 
+// 日期录入组件里，对外“可见”的报错载体是 .date-field 外层（隐藏镜像本身不可见）
+function displayEl(inputEl) {
+  if (inputEl && inputEl.classList && inputEl.classList.contains('date-mirror')) {
+    return inputEl.closest('.date-field') || inputEl;
+  }
+  return inputEl;
+}
+
 function showError(inputEl, msg) {
-  inputEl.classList.add('input-error');
-  var errEl = inputEl.parentElement.querySelector('.error-msg');
+  var t = displayEl(inputEl);
+  t.classList.add('input-error');
+  var errEl = t.parentElement.querySelector('.error-msg');
   if (!errEl) {
     errEl = document.createElement('div');
     errEl.className = 'error-msg';
-    inputEl.parentElement.appendChild(errEl);
+    t.parentElement.appendChild(errEl);
   }
   errEl.textContent = msg;
   errEl.classList.add('visible');
 }
 
 function clearError(inputEl) {
-  inputEl.classList.remove('input-error');
-  var errEl = inputEl.parentElement.querySelector('.error-msg');
+  var t = displayEl(inputEl);
+  t.classList.remove('input-error');
+  var errEl = t.parentElement.querySelector('.error-msg');
   if (errEl) errEl.classList.remove('visible');
 }
 
 function clearAllErrors() {
-  document.querySelectorAll('.form-control.input-error').forEach(function(el) {
+  document.querySelectorAll('.form-control.input-error, .date-field.input-error').forEach(function(el) {
     clearError(el);
   });
 }
@@ -2191,6 +2481,26 @@ function validateForm() {
     var row = document.getElementById(p[0]).closest('.breaks-row');
     if (row && row.style.display !== 'none') {
       if (!validateDateRange(p[0], p[1], p[2])) valid = false;
+    }
+  });
+
+  // 学期结束性假期（寒假/暑假）开始必须晚于开学日期
+  var term = document.getElementById('termSelect').value;
+  var terminalStartId = (term === '1') ? 'winterBreakStartInput' : 'summerBreakStartInput';
+  var terminalStart = document.getElementById(terminalStartId).value;
+  if (startDate && terminalStart && terminalStart <= startDate) {
+    showError(document.getElementById(terminalStartId), '假期开始日期应晚于开学日期');
+    valid = false;
+  }
+  // 学期中短假（秋假/春假）必须落在开学与学期结束之间
+  ['autumnBreakStartInput', 'autumnBreakEndInput', 'springBreakStartInput', 'springBreakEndInput'].forEach(function(id) {
+    var row = document.getElementById(id).closest('.breaks-row');
+    if (row && row.style.display !== 'none') {
+      var v = document.getElementById(id).value;
+      if (v && startDate && terminalStart && (v <= startDate || v >= terminalStart)) {
+        showError(document.getElementById(id), '短假日期应在开学与学期结束之间');
+        valid = false;
+      }
     }
   });
 
@@ -2242,8 +2552,8 @@ document.getElementById('exportBtn').addEventListener('click', function() {
 });
 
 // 初始化
-document.getElementById('yearSelect').value = '2026';
 document.getElementById('termSelect').value = '1';
+document.getElementById('yearSelect').value = '2026';
 updatePreset();
 
 </script>
