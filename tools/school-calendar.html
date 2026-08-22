@@ -148,19 +148,26 @@
 
   .form-actions {
     display: flex;
+    flex-direction: column;
     gap: 12px;
     margin-top: 24px;
   }
 
   .form-actions .btn-filled {
-    flex: 2;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     border-radius: var(--radius-pill);
   }
-  .form-actions .btn-outlined {
+
+  .form-actions-row2 {
+    display: flex;
+    gap: 12px;
+  }
+
+  .form-actions-row2 .btn-outlined {
     flex: 1;
     display: flex;
     align-items: center;
@@ -300,6 +307,8 @@
   .checkbox-label {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
+    height: 36px;
     gap: 6px;
     cursor: pointer;
     font-size: 14px;
@@ -310,6 +319,14 @@
     width: 16px;
     height: 16px;
     cursor: pointer;
+    margin: 0;
+    flex: none;
+    display: block;
+  }
+  .form-group:has(.checkbox-label) {
+    display: flex;
+    align-items: flex-end;
+    min-height: calc(13px + 6px + 36px);
   }
 
   /* 自定义标注行 */
@@ -378,20 +395,25 @@
   }
   .breaks-label {
     flex: none;
-    width: 72px;
+    min-width: 56px;
     font-size: 13px;
     color: var(--ink-secondary);
     font-weight: 500;
   }
   .breaks-range {
+    display: flex;
     flex: 1;
     gap: 12px;
+    min-width: 0;
   }
   .breaks-range .form-control {
     height: 40px;
-    min-width: 160px;
+    flex: 1 1 0;
+    min-width: 0;
+    width: 0;
   }
   .breaks-range .range-sep {
+    flex: none;
     font-size: 14px;
     padding: 0 4px;
   }
@@ -492,8 +514,27 @@
   }
 
   @media (max-width: 600px) {
+    .section {
+      padding: 16px 0 32px;
+    }
+    .section-inner.layout-container {
+      padding: 0 8px;
+      gap: 16px;
+    }
+    .layout-container {
+      gap: 16px;
+    }
+    .form-panel {
+      padding: 12px;
+      border-radius: var(--radius-md);
+    }
     .form-grid {
       grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .breaks-section {
+      padding: 12px;
+      gap: 10px;
     }
     .breaks-row {
       flex-direction: column;
@@ -502,18 +543,62 @@
     }
     .breaks-label {
       width: auto;
+      min-width: auto;
+    }
+    .breaks-range {
+      gap: 8px;
     }
     .breaks-range .form-control {
+      flex: 1 1 0;
       min-width: 0;
+      width: 0;
+      height: 38px;
+      padding: 0 8px;
+      font-size: 13px;
+    }
+    .breaks-range .range-sep {
+      padding: 0;
+      font-size: 13px;
+    }
+    .form-control {
+      height: 36px;
+      padding: 0 10px;
+      font-size: 13px;
+    }
+    .form-group label {
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .form-actions {
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .form-actions-row2 {
+      gap: 10px;
+    }
+    .form-actions-row2 .btn-outlined {
+      height: 40px;
+    }
+    .form-group:has(.checkbox-label) {
+      min-height: calc(12px + 4px + 36px);
+    }
+    .tag-row .tag-remove {
+      width: 30px;
+      height: 30px;
+    }
+    .term-reference {
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1.6;
     }
     .preview-area {
-      width: calc(100% + 32px);
-      margin-left: -16px;
-      margin-right: -16px;
-      padding: 0 16px 8px;
+      width: calc(100% + 16px);
+      margin-left: -8px;
+      margin-right: -8px;
+      padding: 0 8px 8px;
     }
     .scroll-hint {
-      right: 26px;
+      right: 16px;
     }
   }
 </style>
@@ -523,7 +608,7 @@
 
 <div class="page-hero">
   <h1>学期校历生成器</h1>
-  <p>自动生成标准A4学期周历，支持打印和导出</p>
+  <p>自动生成标准学期日历A4排版，支持浏览器直接打印</p>
 </div>
 
 <section class="section">
@@ -607,25 +692,27 @@
       <!-- 自定义日期标注 -->
       <div style="margin-top:20px;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-          <label style="font-size:13px; color:var(--ink-secondary); font-weight:500; margin:0;">自定义日期标注</label>
+          <label style="font-size:13px; color:var(--ink-secondary); font-weight:500; margin:0;">自定义（生日、考试时间等）</label>
           <button type="button" class="btn-outlined" id="addTagBtn" style="height:32px; padding:0 12px; font-size:13px; min-width:auto; flex:none;">+ 添加标注</button>
         </div>
         <div id="customTagsContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
 
       <div class="form-actions">
-        <button class="btn-outlined" id="printBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-          打印
-        </button>
         <button class="btn-filled" id="generateBtn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
           生成校历
         </button>
-        <button class="btn-outlined" id="exportBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          导出PDF
-        </button>
+        <div class="form-actions-row2">
+          <button class="btn-outlined" id="printBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            打印
+          </button>
+          <button class="btn-outlined" id="exportBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            导出
+          </button>
+        </div>
       </div>
     </div>
 
