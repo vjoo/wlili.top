@@ -433,7 +433,6 @@
     padding-left: 8px;
     padding-right: 24px;
     font-size: 13px;
-    text-overflow: ellipsis;
   }
   .date-field .df-year { flex: 1.4; }
   .date-field .df-month,
@@ -443,12 +442,20 @@
   .breaks-range .date-field { flex: 1 1 0; min-width: 0; }
   .tag-row .date-field { flex: 1; min-width: 0; }
   @media (max-width: 600px) {
-    .date-field select { padding-left: 6px; padding-right: 20px; font-size: 12px; }
-    /* 假期区间在窄屏改为：起 / 至 / 止 各占一行，避免 6 个下拉挤在一行 */
+    .date-field { flex-wrap: wrap; gap: 4px; }
+    .date-field select { padding-left: 6px; padding-right: 18px; font-size: 12px; }
+    /* 移动端：年份独占一行，月/日占下一行，彻底避免「年」被浏览器截断 */
+    .date-field .df-year { flex: 1 1 100%; }
+    .date-field .df-month,
+    .date-field .df-day { flex: 1 1 0; }
+    /* 报到/开学日期在窄屏各占一行，避免半宽下年份被截断 */
+    .form-grid > .form-group:nth-child(3),
+    .form-grid > .form-group:nth-child(4) { grid-column: 1 / -1; }
+    /* 假期区间在窄屏改为：起 / 至 / 止 竖向堆叠，每个日期框整行宽，年份再独占一行 */
     .breaks-row { flex-wrap: wrap; gap: 8px; }
     .breaks-label { min-width: auto; }
-    .breaks-range { flex-wrap: wrap; }
-    .breaks-range .range-sep { flex-basis: 100%; text-align: center; padding: 0; }
+    .breaks-range { flex-direction: column; align-items: stretch; gap: 4px; }
+    .breaks-range .range-sep { flex-basis: auto; text-align: left; padding: 2px 0; }
   }
 
   /* 假期区块：独立布局，每个假期占一行 */
@@ -2281,7 +2288,7 @@ function convertDateInput(inputEl) {
   ySel.className = 'form-control df-year';
   ySel.appendChild(opt('', '年', !initY));
   for (var yy = minY; yy <= maxY; yy++) {
-    ySel.appendChild(opt(String(yy), yy + '年', String(yy) === initY));
+    ySel.appendChild(opt(String(yy), String(yy), String(yy) === initY));
   }
 
   var mSel = document.createElement('select');
@@ -2329,7 +2336,7 @@ function convertDateInput(inputEl) {
       if (ySel.options[i].value === y) return;
     }
     var o = document.createElement('option');
-    o.value = y; o.textContent = y + '年';
+    o.value = y; o.textContent = y;
     ySel.appendChild(o);
   }
   function sync() {
