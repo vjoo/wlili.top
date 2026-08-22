@@ -2087,9 +2087,12 @@ function normalizeLetsTalk(raw) {
   LETS_TALK_TEXT_KEYS.forEach((k) => {
     out[k] = typeof src[k] === 'string' ? src[k] : base[k];
   });
-  const codes = Array.isArray(src.qrCodes) ? src.qrCodes : [];
-  out.qrCodes = base.qrCodes.map((def, i) => {
-    const c = codes[i] || {};
+  // 二维码数量可变：以传入数组为准（0~N 个），每个槽位补全缺省字段
+  // 若传入 qrCodes 不是数组或为空，回退到 DEFAULT 的 4 槽位（保证首次进入有默认结构）
+  let codes = Array.isArray(src.qrCodes) ? src.qrCodes : [];
+  if (!codes.length) codes = base.qrCodes.map((c) => Object.assign({}, c));
+  out.qrCodes = codes.map((c, i) => {
+    const def = base.qrCodes[i] || { label: '', labelEn: '', url: '' };
     return {
       label: (typeof c.label === 'string' && c.label) ? c.label : def.label,
       labelEn: (typeof c.labelEn === 'string' && c.labelEn) ? c.labelEn : def.labelEn,
@@ -2212,7 +2215,7 @@ const ANIM_PARAM_SCHEMA = {
     { key: 'color',          label: '基础色',           type: 'color',  default: '#4D3380', hint: 'RGB(0.3, 0.2, 0.5) 的近似十六进制；引擎接受 hex 或 [r,g,b] 0-1 数组' },
     { key: 'speed',          label: '动画速度',         type: 'range',  min: 0,    max: 3,    step: 0.05, default: 1 },
     { key: 'amplitude',      label: '鼠标振幅',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 0.1, hint: '鼠标位置对 uv 的偏移幅度' },
-    { key: 'mouseInteraction', label: '启用鼠标交互',   type: 'checkbox', default: true }
+    { key: 'mouseInteraction', label: '启用鼠标交互',   type: 'checkbox', default: false }
   ],
   grainient: [
     { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#120f17', hint: '透明区域露出的底色' },
@@ -2312,7 +2315,7 @@ const ANIM_PARAM_SCHEMA = {
     { key: 'grain',          label: '颗粒噪点',         type: 'checkbox', default: true },
     { key: 'grainIntensity', label: '颗粒强度',         type: 'range',  min: 0,    max: 0.5,  step: 0.005, default: 0.05 },
     { key: 'opacity',        label: '不透明度',         type: 'range',  min: 0,    max: 1,    step: 0.01, default: 1 },
-    { key: 'mouseInteraction', label: '光标视差',       type: 'checkbox', default: true },
+    { key: 'mouseInteraction', label: '光标视差',       type: 'checkbox', default: false },
     { key: 'mouseStrength',  label: '光标强度',         type: 'range',  min: 0,    max: 2,    step: 0.01, default: 0.1 }
   ],
   galaxy: [
@@ -2327,7 +2330,7 @@ const ANIM_PARAM_SCHEMA = {
     { key: 'speed',           label: '全局速度',       type: 'range',  min: 0,    max: 4,    step: 0.01, default: 1 },
     { key: 'repulsionStrength', label: '排斥强度',     type: 'range',  min: 0,    max: 10,   step: 0.1,  default: 2 },
     { key: 'autoCenterRepulsion', label: '中心排斥',  type: 'range',  min: 0,    max: 10,   step: 0.1,  default: 0, hint: '>0 时启用中心排斥，覆盖鼠标排斥' },
-    { key: 'mouseRepulsion',  label: '鼠标排斥',       type: 'checkbox', default: true },
+    { key: 'mouseRepulsion',  label: '鼠标排斥',       type: 'checkbox', default: false },
     { key: 'transparent',     label: '透明背景',       type: 'checkbox', default: true, hint: '黑色背景透明，仅显示星点' }
   ],
   silk: [
@@ -2412,6 +2415,8 @@ const TYPE_FIELDS = {
     ] }
   ],
   'fullscreen-slider': [
+    { key: 'autoplayDelay', label: '自动播放间隔（毫秒）', type: 'text', placeholder: '0',
+      hint: '填入数字如 4000 表示4秒切换一次。填 0 或不填则关闭自动播放' },
     { key: 'videoType', label: '背景媒体类型', type: 'select', options: ['slides', 'animated'],
       optionLabels: { 'slides': '每屏背景大图（默认）', 'animated': '每屏独立动画背景' },
       default: 'slides',
@@ -2561,6 +2566,10 @@ const TYPE_FIELDS = {
     { key: 'desc1', label: '左栏正文', type: 'textarea' },
     { key: 'desc2', label: '右栏正文', type: 'textarea' },
     { key: 'buttonText', label: '按钮文字', type: 'text', placeholder: 'Apply now' },
+    { key: 'avatarColorMode', label: '头像颜色模式', type: 'select',
+      options: ['grayscale', 'color'],
+      optionLabels: { grayscale: '黑白（默认，灰度去色）', color: '彩色（原图）' },
+      default: 'grayscale' },
     { key: 'items', label: '成员头像（2×2 拼图，最多 4 个）', type: 'items-list', itemLabel: '成员', itemFields: [
       { key: 'name', label: '姓名', type: 'text', placeholder: 'Bogdan' },
       { key: 'photo', label: '头像照片', type: 'image' }
@@ -2583,12 +2592,12 @@ function getDefaultSection(type) {
       { animatedEffect: 'iridescence', animatedParams: {}, title: 'Scroll down', subtitle: '一屏一屏滑动浏览，滚轮 / 触摸 / 拖拽皆可' },
       { animatedEffect: 'molten', animatedParams: {}, title: 'Swipe to explore', subtitle: '每屏独立动画背景，逐屏切换' }
     ] };
-    case 'fullscreen-slider': return { ...base, videoType: 'slides', slides: [
+    case 'fullscreen-slider': return { ...base, videoType: 'slides', autoplayDelay: '', slides: [
       { image: '', title: 'Full screen', subtitle: '页面锁定，滚轮 / 触摸 / 方向键逐屏切换，右侧圆点指示第几张' },
       { image: '', title: 'Swipe to explore', subtitle: '标题逐字上翻动画，到尾不循环' }
     ], animatedSlides: [
-      { animatedEffect: 'iridescence', animatedParams: {}, title: 'Full screen', subtitle: '页面锁定，滚轮 / 触摸 / 方向键逐屏切换' },
-      { animatedEffect: 'molten', animatedParams: {}, title: 'Swipe to explore', subtitle: '每屏独立动画背景，逐屏切换' }
+      { animatedEffect: 'iridescence', animatedParams: { mouseInteraction: false }, title: 'Full screen', subtitle: '页面锁定，滚轮 / 触摸 / 方向键逐屏切换' },
+      { animatedEffect: 'molten', animatedParams: { mouseInteraction: false }, title: 'Swipe to explore', subtitle: '每屏独立动画背景，逐屏切换' }
     ] };
     case 'intro': return { ...base, label: '', heading: '', year: '2025', industry: '', scopeTags: [], timeline: '' };
     case 'brand-logo': return { ...base, logoUrl: '' };
@@ -2828,6 +2837,7 @@ async function uploadVideo(file, fmt) { return uploadMedia(file, fmt); }
 
 // 公共二维码上传：覆盖 _shared/assets/qr-<slot>.png，全站底部二维码统一（改一次全站生效）
 // slot: wechat / official / xiaohongshu / douyin
+// 兼容两种访问方式：admin.html 可以 /portfolio/cases/_shared/admin.html 或 /cases/_shared/admin.html 打开
 async function uploadSharedQr(slot, file) {
   if (!file) return '';
   const ext = (file.name.split('.').pop() || '').toLowerCase();
@@ -2835,19 +2845,8 @@ async function uploadSharedQr(slot, file) {
     throw new Error('二维码请上传图片格式（jpg/png/webp/gif/avif）');
   }
   const b64 = await fileToBase64(file);
-  const token = getAuthToken();
-  const res = await fetch('/api/shared/upload', {
-    method: 'POST',
-    headers: Object.assign(
-      { 'Content-Type': 'application/json' },
-      token ? { 'Authorization': 'Bearer ' + token } : {}
-    ),
-    body: JSON.stringify({ ext, dataBase64: b64, slot })
-  });
-  const data = await res.json();
-  if (!res.ok || data.status === 'error') {
-    throw new Error(data.message || ('请求失败 ' + res.status));
-  }
+  // 走 apiGlobal：和 /api/letstalk、/api/navmenu 一致，自动带 token，401/错误处理统一
+  const data = await apiGlobal('/api/shared/upload', 'POST', { ext, dataBase64: b64, slot });
   return data.url || '';
 }
 
@@ -2868,18 +2867,18 @@ async function loadState() {
       if (!s.id) s.id = genId();
       if (!s.type) s.type = 'text';
     });
-    state.letsTalk = normalizeLetsTalk(data.letsTalk);
+    // letsTalk 已提升为全站公共存储（cases.json 顶层），不在 content.json 中读取
+    // loadState 只负责 sections，letsTalk 由 loadLetsTalkSharedState 统一加载
   } catch (e) {
     const hint = (e instanceof TypeError)
       ? '无法连接服务器，请先双击启动「启动首页管理.bat」'
       : e.message;
     toast('内容加载失败：' + hint, 'error');
     state.sections = [];
-    state.letsTalk = normalizeLetsTalk(null);
   }
   originalSections = JSON.parse(JSON.stringify(state.sections));
-  originalLetsTalk = JSON.parse(JSON.stringify(state.letsTalk));
   await loadNavMenuState();
+  await loadLetsTalkSharedState();
   renderAll();
 }
 
@@ -4298,6 +4297,15 @@ function renderItemsListField(field, list, uid) {
         ctl = `<input class="form-input" data-il-key="${esc(f.key)}" data-il-type="tags" data-il-idx="${i}" type="text" placeholder="英文逗号分隔" value="${esc(Array.isArray(v) ? v.join(', ') : (v || ''))}">`;
       } else if (f.type === 'image') {
         ctl = renderItemImageControl(f.key, v || '', i);
+      } else if (f.type === 'select') {
+        const opts = (f.options || []).map((opt) => {
+          const optLabel = (f.optionLabels && f.optionLabels[opt]) || opt;
+          const sel = (v === opt) ? ' selected' : (f.default === opt && !v ? ' selected' : '');
+          return `<option value="${esc(opt)}"${sel}>${esc(optLabel)}</option>`;
+        }).join('');
+        ctl = `<select class="form-select" data-il-key="${esc(f.key)}" data-il-type="select" data-il-idx="${i}">${opts}</select>`;
+      } else if (f.type === 'animated-params') {
+        ctl = renderAnimatedParamsField(f, v, uid + '_item' + i, item || {});
       } else {
         ctl = `<input class="form-input" data-il-key="${esc(f.key)}" data-il-type="text" data-il-idx="${i}" type="text" placeholder="${esc(f.placeholder || '')}" value="${esc(v || '')}">`;
       }
@@ -4396,13 +4404,48 @@ function bindItemsListField(field, uid) {
     // 标量输入（text / textarea / tags）——input/change 都冒泡，委托到 wrap
     const scalarSave = (e) => {
       const t = e.target.closest('[data-il-key]');
-      if (t && t.dataset.ilType !== 'image') save();
+      if (t && t.dataset.ilType !== 'image') {
+        save();
+        if (t.dataset.ilType === 'select' && t.dataset.ilKey === 'animatedEffect') {
+          // Re-render to reflect new schema when animatedEffect changes
+          rebind();
+        }
+      }
     };
     wrap.addEventListener('input', scalarSave);
     wrap.addEventListener('change', scalarSave);
   }
-  // 条目内图片控件：il-image 会被局部替换，每次渲染后单独绑定（不动 wrap 层委托，避免重复叠加）
+  // 条目内图片控件和动画参数面板需要单独绑定
   bindItemImages(wrap, key, uid);
+  bindItemAnimatedParams(wrap, key, uid);
+}
+
+function bindItemAnimatedParams(wrap, key, uid) {
+  wrap.querySelectorAll('.ani-params-field').forEach((aniWrap) => {
+    // extract index from uid which is like `f_animatedSlides_123_item0`
+    const match = aniWrap.dataset.uid.match(/_item(\d+)$/);
+    if (!match) return;
+    const idx = parseInt(match[1]);
+    const list = collectItemsList(key, uid);
+    const item = list[idx] || {};
+    
+    // We bind animated params by faking a section object
+    const fakeSection = {
+      animatedEffect: item.animatedEffect || 'iridescence',
+      animatedParams: item.animatedParams || {},
+      // getter setter to intercept updates
+      get animatedEffect() { return item.animatedEffect || 'iridescence'; },
+      get animatedParams() { return item.animatedParams || {}; },
+      set animatedParams(val) {
+        item.animatedParams = val;
+        list[idx] = item;
+        state.sections[selectedIndex][key] = list;
+        // Don't call onSectionChanged() here to avoid focus loss, it will be called by bindAnimatedParamsField
+      }
+    };
+    
+    bindAnimatedParamsField({key: 'animatedParams'}, aniWrap.dataset.uid, fakeSection);
+  });
 }
 
 function bindItemImages(wrap, key, uid) {
@@ -4468,6 +4511,16 @@ function collectItemsList(key, uid) {
         obj[fkey] = inp.value;
       }
     });
+    
+    // Read animated params specifically if exists
+    const aniWrap = item.querySelector('.ani-params-field');
+    if (aniWrap) {
+      try {
+        const hidden = aniWrap.querySelector('[data-ani-value]');
+        obj['animatedParams'] = JSON.parse(hidden.value || '{}');
+      } catch (e) {}
+    }
+    
     out.push(obj);
   });
   return out;
@@ -5337,10 +5390,12 @@ function renderLetsTalkEditor(right) {
   });
   html += '</div>';
 
-  // 四张二维码：上传 / 直链，white 圆角卡片里展示（建议上传正方形图片）
+  // 二维码：上传 / 直链，白色圆角卡片里展示（建议上传正方形图片）
   // 公共二维码：上传覆盖 _shared/assets/qr-*.png，全站底部统一，改一次全站生效
-  html += '<div class="form-hint" style="margin-top:20px;margin-bottom:8px;">二维码（正方形图片，白色圆角卡片横向一排）</div>';
-  html += '<div class="form-hint" style="margin-top:-4px;margin-bottom:8px;color:var(--accent, #e8590c);">全站公共：这里上传会替换所有页面底部的对应二维码，改一次全站生效。</div>';
+  // 灵活显示：未上传图片的二维码不显示；1个显示1列，2个一行2列，3-4个两行2列
+  html += '<div class="form-hint" style="margin-top:20px;margin-bottom:8px;">二维码（正方形图片，白色圆角卡片）</div>';
+  html += '<div class="form-hint" style="margin-top:-4px;margin-bottom:4px;color:var(--accent, #e8590c);">全站公共：上传会替换所有页面底部的对应二维码。</div>';
+  html += '<div class="form-hint" style="margin-top:-4px;margin-bottom:8px;">未上传图片的二维码不会显示。1个=1列，2个=一行2列，3-4个=两行2列。</div>';
   html += '<div class="lt-qr-grid">';
   lt.qrCodes.forEach((qr, i) => {
     const uid = 'lt_qr' + i;
@@ -5404,6 +5459,18 @@ async function loadNavMenuState() {
     state.navMenu = [];
   }
   originalNavMenu = JSON.parse(JSON.stringify(state.navMenu));
+}
+
+// 全站底部 Let's talk（公共存储，存 cases.json 顶层 letsTalk）
+// 与 navMenu 同级，admin.html 不再从 content.json 读取 letsTalk
+async function loadLetsTalkSharedState() {
+  try {
+    const data = await apiGlobal('/api/letstalk');
+    state.letsTalk = normalizeLetsTalk(data.letsTalk);
+  } catch (e) {
+    state.letsTalk = normalizeLetsTalk(null);
+  }
+  originalLetsTalk = JSON.parse(JSON.stringify(state.letsTalk));
 }
 
 function renderNavMenuEditor(right) {
@@ -5606,14 +5673,43 @@ function deleteSection(index) {
 async function saveAll() {
   setSaving(true, '保存中...');
   try {
-    await api('/content', 'POST', { version: 2, sections: state.sections, letsTalk: state.letsTalk });
+    // 顶部导航编辑模式：独立保存到公共 navMenu，不依赖 CASE_KEY（不调用 /content）
+    if (editorMode === 'navMenu') {
+      const cleanNav = normalizeNavMenu(state.navMenu);
+      await apiGlobal('/api/navmenu', 'POST', { navMenu: cleanNav });
+      originalNavMenu = JSON.parse(JSON.stringify(cleanNav));
+      setSaving(false, 'saved');
+      updateEditorFooterStatus();
+      toast('已保存顶部导航（全站公共）', 'success');
+      return true;
+    }
+    // 底部导航（Let's talk）编辑模式：独立保存到公共 letsTalk，不依赖 CASE_KEY
+    if (editorMode === 'letsTalk') {
+      const cleanLt = normalizeLetsTalk(state.letsTalk);
+      await apiGlobal('/api/letstalk', 'POST', { letsTalk: cleanLt });
+      originalLetsTalk = JSON.parse(JSON.stringify(cleanLt));
+      setSaving(false, 'saved');
+      updateEditorFooterStatus();
+      toast('已保存底部导航（全站公共）', 'success');
+      return true;
+    }
+    // 板块编辑模式：保存当前案例 sections（letsTalk 已不在 content.json 中）
+    if (!CASE_KEY) {
+      throw new Error('请先在页面管理选择案例页，再编辑板块内容');
+    }
+    await api('/content', 'POST', { version: 2, sections: state.sections });
+    // 顺便同步保存有变动的 navMenu / letsTalk（如果在板块编辑器内同时改了这俩）
     const cleanNav = normalizeNavMenu(state.navMenu);
     if (JSON.stringify(cleanNav) !== JSON.stringify(originalNavMenu)) {
       await apiGlobal('/api/navmenu', 'POST', { navMenu: cleanNav });
+      originalNavMenu = JSON.parse(JSON.stringify(cleanNav));
+    }
+    if (JSON.stringify(state.letsTalk) !== JSON.stringify(originalLetsTalk)) {
+      const cleanLt = normalizeLetsTalk(state.letsTalk);
+      await apiGlobal('/api/letstalk', 'POST', { letsTalk: cleanLt });
+      originalLetsTalk = JSON.parse(JSON.stringify(cleanLt));
     }
     originalSections = JSON.parse(JSON.stringify(state.sections));
-    originalLetsTalk = JSON.parse(JSON.stringify(state.letsTalk));
-    originalNavMenu = JSON.parse(JSON.stringify(cleanNav));
     setSaving(false, 'saved');
     updateEditorFooterStatus();
     toast('已保存全部修改', 'success');
@@ -5740,7 +5836,14 @@ async function apiGlobal(path, method, body) {
   }
   const token = getAuthToken();
   if (token) opt.headers = Object.assign({}, opt.headers || {}, { 'Authorization': 'Bearer ' + token });
-  const res = await fetch(path, opt);
+  // apiGlobal 的 path 形如 '/api/letstalk'（无 /portfolio 前缀）。
+  // 浏览器按绝对路径请求：http://<host>/api/xxx → server.py 的 do_GET/do_POST 会在根路径匹配路由。
+  // 为兼容反向代理/子目录部署场景：若首次 404 则补 /portfolio 前缀重试一次。
+  let res = await fetch(path, opt);
+  if (res.status === 404 && path.startsWith('/api/')) {
+    const alt = '/portfolio' + path;
+    res = await fetch(alt, { ...opt });
+  }
   if (res.status === 401) {
     handleAuthExpired();
     throw new Error('未登录或登录已过期，请重新登录');
@@ -6062,12 +6165,12 @@ async function afterAuth() {
     document.title = CASE_KEY + ' — W. Block';
   }
   if (!CASE_KEY || qp.get('view') === 'pages') {
-    // 页面管理视图也要初始化原始状态（navMenu 等），否则 isDirty 会把
+    // 页面管理视图也要初始化原始状态（navMenu / letsTalk 等），否则 isDirty 会把
     // originalNavMenu=null vs state.navMenu=[] 判成「有未保存修改」，点「内容」恒弹确认框
     state.sections = [];
-    state.letsTalk = normalizeLetsTalk(null);
-    originalLetsTalk = JSON.parse(JSON.stringify(state.letsTalk));
+    originalSections = [];
     await loadNavMenuState();
+    await loadLetsTalkSharedState();
     showView('pages');
     return;
   }

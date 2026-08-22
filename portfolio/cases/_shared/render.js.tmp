@@ -1,0 +1,187 @@
+
+  // ===== 1.65 全屏切换轮播初始化（fullscreen-slider，GSAP Observer 逐屏切换版） =====
+  function initFullscreenSliders(root) {
+    var boxes = (root || document).querySelectorAll('.fullscreen-slider-section');
+    if (!boxes.length) return;
+    if (!window.gsap || typeof window.gsap.to !== 'function') return;
+    var gsap = window.gsap;
+    var ST = gsap.ScrollTrigger || window.ScrollTrigger;
+    if (!ST || typeof ST.observe !== 'function') {
+      console.warn('[fullscreen-slider] 未找到 ScrollTrigger.observe');
+      return;
+    }
+
+    boxes.forEach(function (section) {
+      if (section.dataset.fsInited) return;
+      section.dataset.fsInited = '1';
+
+      var slides = gsap.utils.toArray('.fs-slide', section);
+      if (!slides.length) return;
+      var n = slides.length;
+      var outers = gsap.utils.toArray('.fs-outer', section);
+      var inners = gsap.utils.toArray('.fs-inner', section);
+      var headings = gsap.utils.toArray('.fs-heading', section);
+      var subs = gsap.utils.toArray('.fs-subtitle', section);
+      var dots = gsap.utils.toArray('.fs-dot', section);
+
+      var charSets = headings.map(function (h) {
+        var text = (h.textContent || '').replace(/\s+/g, ' ').trim();
+        h.innerHTML = '';
+        var chars = [];
+        for (var i = 0; i < text.length; i++) {
+          var c = document.createElement('span');
+          c.className = 'char';
+          c.textContent = text[i] === ' ' ? '\u00A0' : text[i];
+          h.appendChild(c);
+          chars.push(c);
+        }
+        return chars;
+      });
+
+      gsap.set(slides, { autoAlpha: 0 });
+      gsap.set(outers, { yPercent: 100 });
+      gsap.set(inners, { yPercent: -100 });
+      gsap.set([outers[0], inners[0]], { yPercent: 0 });
+      gsap.set(slides[0], { autoAlpha: 1, zIndex: 1 });
+      
+      if (n === 1) return;
+
+      var currentIndex = 0;
+      var animating = false;
+      var pending = null;
+      var isActive = false;
+
+      function updateDots() {
+        dots.forEach(function (d, i) {
+          d.classList.toggle('active', i === currentIndex);
+        });
+      }
+
+      function gotoSection(index, direction) {
+        if (index < 0 || index >= n) {
+          return;
+        }
+        if (index === currentIndex) return;
+        if (animating) { pending = index; return; }
+        animating = true;
+        var dFactor = direction || (index > currentIndex ? 1 : -1);
+        var tl = gsap.timeline({
+          defaults: { duration: 1.2, ease: 'power1.inOut' },
+          onComplete: function () {
+            animating = false;
+            if (pending !== null) { var p = pending; pending = null; gotoSection(p); }
+          }
+        });
+        if (currentIndex >= 0) {
+          gsap.set(slides[currentIndex], { zIndex: 0 });
+          tl.set(slides[currentIndex], { autoAlpha: 0 }, 1.2);
+        }
+        gsap.set(slides[index], { autoAlpha: 1, zIndex: 1 });
+        tl.fromTo([outers[index], inners[index]], {
+            yPercent: function (i) { return i ? -100 * dFactor : 100 * dFactor; }
+          }, { yPercent: 0 }, 0)
+          .fromTo(charSets[index] && charSets[index].length ? charSets[index] : [], {
+            autoAlpha: 0, yPercent: 150 * dFactor
+          }, {
+            autoAlpha: 1, yPercent: 0, duration: 0.9, ease: 'power2',
+            stagger: { each: 0.02, from: 'random' }
+          }, 0.15)
+          .fromTo(subs[index], { autoAlpha: 0, yPercent: 40 * dFactor }, {
+            autoAlpha: 1, yPercent: 0, duration: 0.5
+          }, 0.4);
+
+        currentIndex = index;
+        updateDots();
+      }
+
+      dots.forEach(function (d, i) {
+        d.addEventListener('click', function () {
+          isActive = true;
+          gotoSection(i, i > currentIndex ? 1 : -1);
+        });
+      });
+      
+      var obs = ST.observe({
+        target: section,
+        type: 'wheel,touch,pointer',
+        wheelSpeed: -1,
+        tolerance: 10,
+        preventDefault: false,
+        onUp: function () { 
+          if (!isActive) return;
+          if (currentIndex === 0) {
+            isActive = false;
+            return;
+          }
+          if (!animating) gotoSection(currentIndex - 1, -1);
+        },
+        onDown: function () { 
+          if (!isActive) return;
+          if (currentIndex === n - 1) {
+            isActive = false;
+            return;
+          }
+          if (!animating) gotoSection(currentIndex + 1, 1);
+        }
+      });
+      
+      section.addEventListener('wheel', function(e) {
+        if (isActive) e.preventDefault();
+      }, { passive: false });
+      
+      section.addEventListener('touchmove', function(e) {
+        if (isActive) e.preventDefault();
+      }, { passive: false });
+      
+      section.addEventListener('touchstart', function(e) {
+        isActive = true;
+      });
+      
+      section.addEventListener('wheel', function(e) {
+        if (!isActive) isActive = true;
+      }, { passive: false });
+
+      section._fsObserver = obs;
+
+      function onKey(e) {
+        var rect = section.getBoundingClientRect();
+        if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+        
+        var k = e.key;
+        var goNext = (k === 'ArrowDown' || k === 'PageDown' || k === ' ');
+        var goPrev = (k === 'ArrowUp' || k === 'PageUp');
+        if (goNext || goPrev) {
+          if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+          
+          isActive = true;
+          if (goNext && currentIndex < n - 1) {
+            e.preventDefault();
+            gotoSection(currentIndex + 1, 1);
+          } else if (goPrev && currentIndex > 0) {
+            e.preventDefault();
+            gotoSection(currentIndex - 1, -1);
+          }
+        }
+      }
+      document.addEventListener('keydown', onKey, { passive: false });
+      section._fsKeyHandler = onKey;
+      
+      ST.create({
+        trigger: section,
+        start: "top center",
+        end: "bottom center",
+        onEnter: function() {
+           isActive = true;
+        },
+        onEnterBack: function() {
+           isActive = true;
+        },
+        onLeave: function() {
+           isActive = false;
+        },
+        onLeaveBack: function() {
+           isActive = false;
+        }
+      });
+    });
+  }

@@ -2,50 +2,120 @@
   "version": 2,
   "sections": [
     {
-      "id": "smsucu0qwd5zj",
-      "type": "fullscreen-slider",
-      "slides": [
+      "id": "smt0yv412txlb",
+      "type": "hero-banner",
+      "textLayout": "center",
+      "title": "Premium Digital Agency for Startups, SaaS & Brands",
+      "labels": [
         {
-          "image": "",
-          "title": "Full screen",
-          "subtitle": "页面锁定，滚轮 / 触摸 / 方向键逐屏切换，右侧圆点指示第几张"
+          "text": "50+ employees"
         },
         {
-          "image": "",
-          "title": "Swipe to explore",
-          "subtitle": "标题逐字上翻动画，到尾不循环"
+          "text": "6 countries"
+        },
+        {
+          "text": "Founded in 2010"
+        }
+      ],
+      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
+      "videoType": "image",
+      "image": "/portfolio/cases/mybilist/uploads/1787205087556.jpg",
+      "videoUrl": "",
+      "effect": "slide",
+      "autoplayDelay": "4000",
+      "images": [],
+      "animatedEffect": "topography"
+    },
+    {
+      "id": "smt0yw5imo1i9",
+      "type": "team",
+      "label": "Join our mission",
+      "heading": "Our team,",
+      "subheading": "your vision",
+      "desc1": "If you're ready to create and collaborate, we'd love to hear from you.",
+      "desc2": "We thrive on teamwork, turning individual strengths into shared success. Together, we turn ideas into digital products that solve real problems for real people.",
+      "buttonText": "Apply now",
+      "items": [
+        {
+          "name": "",
+          "photo": "/portfolio/cases/mybilist/uploads/1787206203706.jpg"
+        },
+        {
+          "name": "",
+          "photo": "/portfolio/cases/mybilist/uploads/1787206321208.jpg"
+        },
+        {
+          "name": "",
+          "photo": "/portfolio/cases/mybilist/uploads/1787206303466.jpg"
+        },
+        {
+          "name": "",
+          "photo": "/portfolio/cases/mybilist/uploads/1787206386046.jpg"
+        }
+      ],
+      "avatarColorMode": "color"
+    },
+    {
+      "id": "smt12zv9x6v0r",
+      "type": "stats",
+      "label": "Why choose us",
+      "heading": "We design for results – helping your business meet its goals.",
+      "subtitle": "Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.",
+      "videoUrl": "/portfolio/cases/mybilist/uploads/1787203971302.mp4",
+      "videoType": "video",
+      "items": [
+        {
+          "value": "600",
+          "suffix": "+",
+          "title": "Successful projects completed",
+          "desc": "We've helped launch over 600 digital products and experiences that make brands stand out and feel human."
+        },
+        {
+          "value": "100",
+          "suffix": "%",
+          "title": "UpWork rating",
+          "desc": "Consistently rated 100% job success and top-rated talent."
+        }
+      ]
+    },
+    {
+      "id": "smt1418r2eb7r",
+      "type": "gallery",
+      "label": "",
+      "heading": "",
+      "colCount": "2",
+      "columns": [
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smt141dp1vgfl",
+              "src": "/portfolio/cases/mybilist/uploads/1787205564526.jpg"
+            },
+            {
+              "id": "smt141tadbvna",
+              "src": "/portfolio/cases/mybilist/uploads/1787205586329.jpg"
+            },
+            {
+              "id": "smt14548su14u",
+              "src": "/portfolio/cases/mybilist/uploads/1787205726749.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 5,
+          "images": [
+            {
+              "id": "smt142vgvfzfh",
+              "src": "/portfolio/cases/mybilist/uploads/1787205635848.jpg"
+            },
+            {
+              "id": "smt142qltl74t",
+              "src": "/portfolio/cases/mybilist/uploads/1787205615491.jpg"
+            }
+          ]
         }
       ]
     }
-  ],
-  "letsTalk": {
-    "title": "Let's talk",
-    "subtitleEn": "Have a project in mind? Let's create something meaningful together.",
-    "subtitleZh": "有项目想法？我们一起把它变成有价值的设计。",
-    "slogan": "合作咨询 / 约稿商单 / 作品集交流",
-    "tags": "Product Design ｜ Mobile & Touch ｜ B2B / B2C / To G",
-    "tagsZh": "面向产品、移动端、触控设备，覆盖消费、企业、政企多类型项目",
-    "qrCodes": [
-      {
-        "label": "微信好友",
-        "labelEn": "WeChat",
-        "url": "/portfolio/cases/mybilist/uploads/1786518922396.png"
-      },
-      {
-        "label": "公众号",
-        "labelEn": "Official Account",
-        "url": ""
-      },
-      {
-        "label": "小红书",
-        "labelEn": "Xiaohongshu",
-        "url": "/portfolio/cases/mybilist/uploads/1786518929142.png"
-      },
-      {
-        "label": "抖音号",
-        "labelEn": "Douyin",
-        "url": "/portfolio/cases/mybilist/uploads/1786518933287.png"
-      }
-    ]
-  }
+  ]
 }

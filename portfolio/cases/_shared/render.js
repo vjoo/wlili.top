@@ -498,6 +498,9 @@ var CaseRenderer = (function () {
   //   - 数据：s.slides[] = { image, title, subtitle }（与 swipe-slider 一致，1 屏时静态展示）
   function renderFullscreenSlider(s) {
     var section = sec('fullscreen-slider-section');
+    if (s.autoplayDelay && parseInt(s.autoplayDelay) > 0) {
+      section.setAttribute('data-autoplay', s.autoplayDelay);
+    }
     var isAnimated = s.videoType === 'animated';
     var slides;
     if (isAnimated) {
@@ -859,8 +862,8 @@ var CaseRenderer = (function () {
         start: 'top top',
         end: function () { return '+=' + ((n - 1) * window.innerHeight); },
         pin: true,
-        anticipatePin: 1,
-        scrub: 0.6,
+        anticipatePin: 0,
+        scrub: 1,
         animation: tl,
         invalidateOnRefresh: true
       });
@@ -868,30 +871,14 @@ var CaseRenderer = (function () {
   }
 
   // ===== 1.65 全屏切换轮播初始化（fullscreen-slider，GSAP Observer 逐屏切换版） =====
-  // 对标官方 Observer「Animated Continuous Sections」demo：
-  //   - Observer（type:"wheel,touch,pointer"）+ preventDefault 拦截滚轮/触摸/拖拽 → 页面不滚动、只切屏
-  //   - 方向键/空格/PageUp/PageDown 也 preventDefault 并触发切换（键盘滚动同样被锁定）
-  //   - 到尾不循环（clamp）：第一张/最后一张时继续滚动无反应
-  //   - 切换：旧屏保持不透明由新屏覆盖后再隐藏；新屏 outer/inner 反向裁剪滑入（背景静止不缩放，
-  //     避免切屏时看到背景缩放）；标题逐字上翻、副标题淡入
-  //   - 右侧 .fs-dots 圆点：竖排居中，当前高亮，点击跳转；随切换自动更新
-  //   - 复用已加载的 ScrollTrigger 内嵌 Observer（ScrollTrigger.observe() 与 Observer.create() 完全等价，
-  //     官方文档说明无需再单独加载 lib-gsap-observer.min.js，避免重复脚本文件）
   function initFullscreenSliders(root) {
     var boxes = (root || document).querySelectorAll('.fullscreen-slider-section');
     if (!boxes.length) return;
-    // 页面锁定：存在该板块即锁死页面滚动（滚轮/触摸/键盘/滚动条拖动都不再滚动页面，
-    // 页面只会全屏在当前屏幕间切换；footer 等板块后内容不再可见——用户明确要求"不再考虑下拉看其他板块"）
-    if (!document.body.dataset.fsScrollLocked) {
-      document.body.dataset.fsScrollLocked = '1';
-      document.body.style.overflow = 'hidden';
-    }
     if (!window.gsap || typeof window.gsap.to !== 'function') return;
     var gsap = window.gsap;
     var ST = gsap.ScrollTrigger || window.ScrollTrigger;
-    // 用 ScrollTrigger.observe() 复用 ScrollTrigger 内嵌的 Observer（等同 Observer.create，无需单独插件文件）
     if (!ST || typeof ST.observe !== 'function') {
-      console.warn('[fullscreen-slider] 未找到 ScrollTrigger.observe（请确认加载 lib-scrolltrigger.min.js），降级为静态首屏');
+      console.warn('[fullscreen-slider] 未找到 ScrollTrigger.observe');
       return;
     }
 
@@ -908,7 +895,6 @@ var CaseRenderer = (function () {
       var subs = gsap.utils.toArray('.fs-subtitle', section);
       var dots = gsap.utils.toArray('.fs-dot', section);
 
-      // 标题拆字符（无 SplitText 插件，手写；空格转 &nbsp; 防 inline-block 折叠）
       var charSets = headings.map(function (h) {
         var text = (h.textContent || '').replace(/\s+/g, ' ').trim();
         h.innerHTML = '';
@@ -923,12 +909,13 @@ var CaseRenderer = (function () {
         return chars;
       });
 
-      // 初始静态：全部隐藏，仅首屏可见（outer/inner 归位，首屏无入场动画，避免与遮罩冲突）
       gsap.set(slides, { autoAlpha: 0 });
       gsap.set(outers, { yPercent: 100 });
       gsap.set(inners, { yPercent: -100 });
       gsap.set([outers[0], inners[0]], { yPercent: 0 });
       gsap.set(slides[0], { autoAlpha: 1, zIndex: 1 });
+      
+      if (n === 1) return;
 
       var currentIndex = 0;
       var animating = false;
@@ -941,7 +928,7 @@ var CaseRenderer = (function () {
       }
 
       function gotoSection(index, direction) {
-        if (index < 0 || index >= n) return; // 到尾不循环：边界外忽略
+        if (index < 0 || index >= n) return;
         if (index === currentIndex) return;
         if (animating) { pending = index; return; }
         animating = true;
@@ -953,12 +940,10 @@ var CaseRenderer = (function () {
             if (pending !== null) { var p = pending; pending = null; gotoSection(p); }
           }
         });
-        // 旧屏：降层、保持不透明让新屏覆盖，覆盖完成后一次性隐藏（背景不动，避免切屏时看到背景缩放）
         if (currentIndex >= 0) {
           gsap.set(slides[currentIndex], { zIndex: 0 });
           tl.set(slides[currentIndex], { autoAlpha: 0 }, 1.2);
         }
-        // 新屏：升层可见，outer/inner 反向裁剪滑入 + 标题逐字 + 副标题（背景静止不缩放）
         gsap.set(slides[index], { autoAlpha: 1, zIndex: 1 });
         tl.fromTo([outers[index], inners[index]], {
             yPercent: function (i) { return i ? -100 * dFactor : 100 * dFactor; }
@@ -977,33 +962,111 @@ var CaseRenderer = (function () {
         updateDots();
       }
 
-      // 圆点点击跳转
       dots.forEach(function (d, i) {
         d.addEventListener('click', function () {
           gotoSection(i, i > currentIndex ? 1 : -1);
         });
       });
-
+      
       // Observer（ScrollTrigger 内嵌）：滚轮/触摸/拖拽逐屏切换 + preventDefault 锁定页面滚动
+      // 现在的实现：仅当到达全屏组件顶部，并且试图向下滚动（或者向上滚动但不到第一张）时拦截滚动
+      // 我们需要结合 ScrollTrigger 来确保鼠标在组件区域内且页面正好滚动到该区域时才拦截
+      // 自动播放逻辑
+      var autoPlayInterval = parseInt(section.dataset.autoplay) || 0;
+      var autoPlayTimer = null;
+      var isHovering = false;
+
+      function startAutoPlay() {
+        if (!autoPlayInterval || autoPlayInterval <= 0) return;
+        stopAutoPlay();
+        autoPlayTimer = setInterval(function() {
+          if (!isHovering && !animating) {
+            var nextIndex = (currentIndex + 1) % n;
+            gotoSection(nextIndex, 1);
+          }
+        }, autoPlayInterval);
+      }
+
+      function stopAutoPlay() {
+        if (autoPlayTimer) {
+          clearInterval(autoPlayTimer);
+          autoPlayTimer = null;
+        }
+      }
+
+      // 如果需要，初始启动自动播放（当处于可见区域时可优化为可见时播放，这里暂且简单处理）
+      startAutoPlay();
+
+      section.addEventListener('mouseenter', function() { isHovering = true; });
+      section.addEventListener('mouseleave', function() { isHovering = false; });
+      
       var obs = ST.observe({
+        target: section, // 监听特定的section而不是window，解决滚动监听失效问题
         type: 'wheel,touch,pointer',
+        wheelSpeed: -1,
         tolerance: 10,
-        preventDefault: true,
-        onUp: function () { if (!animating) gotoSection(currentIndex - 1, -1); },
-        onDown: function () { if (!animating) gotoSection(currentIndex + 1, 1); }
+        preventDefault: false, // 改回false，使用原生的事件监听来决定是否阻止，以免导致无法滚出区域
+        onUp: function (self) {
+          // 向上滑 (往回看前面的 slides)
+          if (currentIndex > 0) {
+            if (!animating) {
+              gotoSection(currentIndex - 1, -1);
+              startAutoPlay(); // 用户交互后重置自动播放定时器
+            }
+          }
+        },
+        onDown: function (self) { 
+          // 向下滑 (往下看后面的 slides)
+          if (currentIndex < n - 1) {
+            if (!animating) {
+              gotoSection(currentIndex + 1, 1);
+              startAutoPlay(); // 用户交互后重置自动播放定时器
+            }
+          }
+        }
       });
+      
       section._fsObserver = obs;
+      
+      // 添加 wheel 阻止默认行为以防止在组件内滚动页面
+      section.addEventListener('wheel', function(e) {
+        var rect = section.getBoundingClientRect();
+        if (Math.abs(rect.top) > 5) return; // 如果还没完全对齐到屏幕顶部，不拦截
+        
+        if ((e.deltaY > 0 && currentIndex < n - 1) || (e.deltaY < 0 && currentIndex > 0)) {
+          e.preventDefault(); // 只在非首尾阶段阻止默认滚动
+        }
+      }, { passive: false });
+      
+      // 添加 touchmove 阻止默认行为以防止在移动端组件内滚动页面
+      section.addEventListener('touchmove', function(e) {
+        var rect = section.getBoundingClientRect();
+        if (Math.abs(rect.top) > 5) return; // 如果还没完全对齐到屏幕顶部，不拦截
+        
+        if (currentIndex > 0 && currentIndex < n - 1) {
+          e.preventDefault(); // 中间锁定原生滚动
+        }
+      }, { passive: false });
 
       // 键盘：方向键/空格/翻页键切换并阻止页面滚动
       function onKey(e) {
+        // 如果当前不在视口内，不拦截键盘
+        var rect = section.getBoundingClientRect();
+        if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+        
         var k = e.key;
         var goNext = (k === 'ArrowDown' || k === 'PageDown' || k === ' ');
         var goPrev = (k === 'ArrowUp' || k === 'PageUp');
         if (goNext || goPrev) {
           if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-          e.preventDefault();
-          if (goNext) gotoSection(currentIndex + 1, 1);
-          else gotoSection(currentIndex - 1, -1);
+          
+          if (goNext && currentIndex < n - 1) {
+            e.preventDefault();
+            gotoSection(currentIndex + 1, 1);
+          } else if (goPrev && currentIndex > 0) {
+            e.preventDefault();
+            gotoSection(currentIndex - 1, -1);
+          }
         }
       }
       document.addEventListener('keydown', onKey, { passive: false });
@@ -1660,6 +1723,9 @@ var CaseRenderer = (function () {
     var section = sec('team-section');
     var items = Array.isArray(s.items) ? s.items : [];
     var gridItems = items.slice(0, 4);
+    // 头像颜色模式：默认 grayscale（黑白，灰度去色），color 则保留原图彩色
+    var colorMode = s.avatarColorMode === 'color' ? 'color' : 'grayscale';
+    section.setAttribute('data-avatar-color', colorMode);
     var cardsHtml = '';
     for (var i = 0; i < 4; i++) {
       var it = gridItems[i];

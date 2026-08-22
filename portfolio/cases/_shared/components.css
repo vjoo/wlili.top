@@ -1661,11 +1661,31 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: grayscale(1);
+  /* 默认 grayscale：由 [data-avatar-color="grayscale"] 控制，不在这里硬编码 */
   transition: filter 0.3s;
 }
 
-.team-photo-card:hover {
+/* 默认（灰度模式 / 未设置）：头像黑白，悬浮变彩色 */
+.team-section[data-avatar-color="grayscale"] .team-photo-card {
+  filter: grayscale(1);
+}
+.team-section[data-avatar-color="grayscale"] .team-photo-card:hover {
+  filter: grayscale(0);
+}
+
+/* 彩色模式：始终保留原图，无灰度滤镜 */
+.team-section[data-avatar-color="color"] .team-photo-card {
+  filter: none;
+}
+.team-section[data-avatar-color="color"] .team-photo-card:hover {
+  filter: none;
+}
+
+/* 兼容旧版：未带 data-avatar-color 属性 → 沿用之前的黑白+悬浮变彩色 */
+.team-section:not([data-avatar-color]) .team-photo-card {
+  filter: grayscale(1);
+}
+.team-section:not([data-avatar-color]) .team-photo-card:hover {
   filter: grayscale(0);
 }
 
@@ -2376,7 +2396,7 @@
   height: 100svh;           /* 移动端地址栏伸缩时仍占满可视区 */
   overflow: hidden;
   background: #0a0a0a;
-  touch-action: none;       /* 阻止移动端原生触摸滚动，交给 Observer 切屏 */
+  /* touch-action: none;  移除这个，让我们的 JS 根据位置控制是否拦截 */
 }
 /* 每屏绝对堆叠，初始 visibility hidden，由 JS（gsap autoAlpha）控制显隐 */
 .fs-slide {

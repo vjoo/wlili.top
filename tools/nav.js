@@ -52,7 +52,8 @@
       label: '查询参考',
       tools: [
         { name: '3D耗材管理', href: './filament-manager.html' },
-        { name: '音标速查', href: './phonetic-chart.html' }
+        { name: '音标速查', href: './phonetic-chart.html' },
+        { name: '中小学校历生成', href: './school-calendar.html' }
       ]
     },
     {
