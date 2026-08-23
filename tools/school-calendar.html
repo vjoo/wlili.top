@@ -572,6 +572,41 @@
     .cal-table {
       page-break-inside: avoid;
     }
+    /* A4 单页适配：标题两行（标题+副标题）+ 行高由 JS beforeprint 自适应（fitCalendarToPage）填满整页 */
+    .cal-header {
+      margin-bottom: 8px;
+    }
+    .cal-title {
+      font-size: 18px;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+    .cal-subtitle {
+      font-size: 12px;
+    }
+    .cal-table {
+      font-size: 11px;
+    }
+    .cal-table thead th {
+      padding: 3px 2px;
+      font-size: 11px;
+    }
+    .cal-table td:not(.col-week) {
+      height: 31px;
+      padding: 1px 2px;
+      line-height: 1.2;
+    }
+    .cal-table td .day-num {
+      font-size: 12px;
+    }
+    .cal-table td .event-tag {
+      font-size: 10px;
+      padding: 0 3px;
+    }
+    .cal-table tbody td.col-week {
+      font-size: 11px;
+      padding: 2px 1px;
+    }
     * {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
@@ -2695,6 +2730,31 @@ document.getElementById('generateBtn').addEventListener('click', function() {
 });
 
 // 打印按钮
+// 打印前自适应行高：按内容行数动态分配行高，让日历恰好填满 A4 高度（不空底、不超页）
+// A4 297mm ≈ 1122px（96dpi）；固定占用 ≈ 126px = 标题区两行(~46) + 表头(~23) + 打印 padding 6mm×2(~45) + 余量
+function fitCalendarToPage() {
+  var body = document.getElementById('calBody');
+  if (!body || !body.rows.length) return;
+  var rows = body.rows.length;
+  var avail = 1122 - 126;
+  var rowH = Math.floor(avail / rows);
+  rowH = Math.max(28, Math.min(52, rowH)); // 行少时放大填满，但不超过 52px 保持美观
+  for (var i = 0; i < rows; i++) {
+    var cells = body.rows[i].cells;
+    for (var j = 1; j < cells.length; j++) cells[j].style.height = rowH + 'px';
+  }
+}
+function restoreCalendarHeight() {
+  var body = document.getElementById('calBody');
+  if (!body) return;
+  for (var i = 0; i < body.rows.length; i++) {
+    var cells = body.rows[i].cells;
+    for (var j = 1; j < cells.length; j++) cells[j].style.height = '';
+  }
+}
+window.addEventListener('beforeprint', fitCalendarToPage);
+window.addEventListener('afterprint', restoreCalendarHeight);
+
 document.getElementById('printBtn').addEventListener('click', function() {
   if (document.getElementById('previewArea').classList.contains('hidden')) {
     renderCalendar();
