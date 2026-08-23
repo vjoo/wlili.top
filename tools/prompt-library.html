@@ -1901,6 +1901,13 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
+      <div class="data-settings-row">
+        <div class="data-settings-info">
+          <div class="data-settings-label">服务器同步</div>
+          <div class="data-settings-desc" id="serverSyncDesc">双通道存储：本地 IndexedDB + 服务器文件备份（清理浏览器数据不丢）</div>
+        </div>
+        <span class="backup-status" id="serverSyncStatus"></span>
+      </div>
       <div class="backup-status" id="backupStatus"></div>
     </div>
   </div>
@@ -2000,7 +2007,7 @@
       var tx = db.transaction(STORE_NAME, 'readwrite');
       var store = tx.objectStore(STORE_NAME);
       var req = store.add(record);
-      req.onsuccess = function() { triggerAutoBackup(); resolve(record); };
+      req.onsuccess = function() { triggerAutoBackup(); scheduleServerSync(); resolve(record); };
       req.onerror = function(e) { reject(e.target.error); };
     });
   }
@@ -2010,7 +2017,7 @@
       var tx = db.transaction(STORE_NAME, 'readwrite');
       var store = tx.objectStore(STORE_NAME);
       var req = store.put(record);
-      req.onsuccess = function() { triggerAutoBackup(); resolve(record); };
+      req.onsuccess = function() { triggerAutoBackup(); scheduleServerSync(); resolve(record); };
       req.onerror = function(e) { reject(e.target.error); };
     });
   }
@@ -2040,9 +2047,88 @@
       var tx = db.transaction(STORE_NAME, 'readwrite');
       var store = tx.objectStore(STORE_NAME);
       var req = store.delete(id);
-      req.onsuccess = function() { triggerAutoBackup(); resolve(); };
+      req.onsuccess = function() { triggerAutoBackup(); scheduleServerSync(); resolve(); };
       req.onerror = function(e) { reject(e.target.error); };
     });
+  }
+
+  /* ============================================
+     Server Sync Layer（双通道：IndexedDB 为主 + server.py 文件同步兜底）
+     规范：tools/DEVELOPMENT_GUIDE.md 规则 29
+     服务器不可用（纯静态托管/云端）时静默降级为仅本地存储
+     ============================================ */
+  var serverAvailable = false;
+  var _syncTimer = null;
+
+  function probeServer() {
+    return fetch('/api/health', { method: 'GET', cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error('bad'); return r.json(); })
+      .then(function(j) { serverAvailable = !!(j && j.status === 'ok'); })
+      .catch(function() { serverAvailable = false; })
+      .then(function() { return serverAvailable; });
+  }
+
+  // 全量推送到服务器（每次增删改后防抖调用）
+  function pushToServer() {
+    if (!serverAvailable) return Promise.resolve(false);
+    return dbGetAll().then(function(list) {
+      return fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: list || [] })
+      }).then(function(r) { return r.ok; }).catch(function() { return false; });
+    });
+  }
+
+  function scheduleServerSync() {
+    if (!serverAvailable) return;
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(function() { pushToServer(); }, 800);
+  }
+
+  // 从服务器拉取并合并（本地同 id 优先，服务端独有的并入；返回新增条数）
+  function pullFromServer() {
+    if (!serverAvailable) return Promise.resolve(0);
+    return fetch('/api/prompts', { cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        var remote = (d && Array.isArray(d.records)) ? d.records : [];
+        if (!remote.length) return 0;
+        return dbGetAll().then(function(local) {
+          var merged = {};
+          (local || []).forEach(function(r) { if (r && r.id) merged[r.id] = r; });
+          var added = 0;
+          remote.forEach(function(r) {
+            if (r && r.id && !merged[r.id]) { merged[r.id] = r; added++; }
+          });
+          var finalList = Object.keys(merged).map(function(k) { return merged[k]; });
+          return dbPutAll(finalList).then(function() { return added; });
+        });
+      }).catch(function() { return 0; });
+  }
+
+  // 批量写入（合并/恢复用）
+  function dbPutAll(records) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(STORE_NAME, 'readwrite');
+      var store = tx.objectStore(STORE_NAME);
+      records.forEach(function(r) { store.put(r); });
+      tx.oncomplete = function() { triggerAutoBackup(); resolve(); };
+      tx.onerror = function(e) { reject(e.target.error); };
+    });
+  }
+
+  // 数据安全面板：显示当前服务器同步状态
+  function updateServerSyncStatus() {
+    var el = document.getElementById('serverSyncStatus');
+    if (!el) return;
+    if (serverAvailable) {
+      el.textContent = '服务器同步已开启';
+      el.style.color = 'var(--green)';
+    } else {
+      el.textContent = '仅本地存储（未检测到本地服务器）';
+      el.style.color = 'var(--ink-quaternary)';
+    }
   }
 
   /* ============================================
@@ -4608,6 +4694,22 @@
   }).then(function() {
     renderList();
     handleScrollVisibility();
+    /* 双通道同步（规则 29）：探测服务器 → 拉取合并（恢复场景）→ 本地有数据则推送备份 */
+    probeServer().then(function() {
+      return pullFromServer();
+    }).then(function(added) {
+      if (added > 0) {
+        return loadAll().then(function() { renderList(); handleScrollVisibility(); });
+      }
+      return null;
+    }).then(function() {
+      return dbGetAll();
+    }).then(function(list) {
+      if (list && list.length) pushToServer();
+      updateServerSyncStatus();
+    }).catch(function() {
+      updateServerSyncStatus();
+    });
   }).catch(function(err) {
     console.error('Init error:', err);
     showToast('初始化失败，请刷新重试');

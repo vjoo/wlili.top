@@ -615,6 +615,18 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
       2. 入口按钮当前是否显示（对应 btnEdit.style.display）；
     - 初始化顺序：`cacheEls()` → `restoreEditState()`（从 sessionStorage 恢复）→ 再 bind 按钮事件，避免恢复后点击监听重复触发或状态不一致；
     - 参考实现：`bookmark-manager.html` 的 `restoreEditState()` / `persistEditMode()` / `persistEditEntryShown()`。
+29. **数据持久化统一规范（强制，所有需要保存用户数据的工具页）**：
+    - **开发前必须先询问用户选择哪种存储定位**（不可默认、不可替用户决定）：
+      - **方案 A：私人工具 → 仅本地存储**（localStorage / IndexedDB 单通道，不落盘服务端）。适用于数据是用户自己用、不想被外网/局域网他人访问的场景（如 `filament-manager.html` / `print-manager.html`，数据是用户私人耗材/打印记录）；
+      - **方案 B：素材库 / 共享数据 → 双通道**。适用于需要防丢、多设备共享、数据有长期价值的场景（如 `prompt-library.html`，历史教训：纯 IndexedDB 方案清理浏览器站点数据 / 切换 origin 后数据全丢，2026-08-23）；
+    - 选 B 时数据「**双通道**」存储：浏览器本地（localStorage / IndexedDB）为主 + server.py 服务端文件同步兜底；
+    - 参考实现：`filament-manager.html` / `print-manager.html` 的 `_localStorage` 封装（`getItem`/`setItem` 内 fetch `/api/data` 全量同步 + `/api/health` 探测服务器可用性）；
+    - 服务端：server.py 已内置 `/api/data`（GET 全量读 / POST 全量写，落盘 `server_data.json`）。新工具的专属数据**写入独立 key 或独立数据文件**（如 `tools/prompt-library-data.json`），禁止与现有工具数据互相覆盖；
+    - 回退规则：`/api/health` 探测失败（纯静态托管 / EdgeOne / GitHub Pages 云端部署无后端）时**静默降级为仅本地存储**，不影响使用；本地 server.py 环境自动启用双通道；
+    - 备份：页面必须提供「导出 JSON / 导入 JSON」入口（`exportData()` / `importData()`），数据管理面板标注当前存储方式；
+    - 数据文件放 `.gitignore`（用户私有数据不上云），由 server.py 运行时自动创建；文本类数据量级远小于 EdgeOne 25MB 单文件限制，无需担心部署；
+    - 数据文件仅存非敏感数据（与 §九 安全规范一致）；
+    - **新开发带数据保存的工具时，必须先向用户确认存储定位（方案 A 仅本地 / 方案 B 双通道），确认后再实现；单通道与双通道均不可自行默认。**
 
 ---
 
@@ -777,7 +789,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | CSP 策略部署 | ✅ 已完成 | 所有页面已添加 CSP meta 标签 |
 | 防点击劫持 | ✅ 已完成 | `frame-ancestors 'none'` |
 | XSS 防护 | ✅ 已缓解 | `innerHTML` 数据源可控 + CSP |
-| 本地存储 | ✅ 可接受 | 仅存储非敏感数据（耗材参数、布局状态），无 token/密码 |
+| 本地存储 | ✅ 可接受 | 仅存储非敏感数据（耗材参数、布局状态），无 token/密码；需持久化的工具数据按规则 29「双通道」存储（本地 + server.py 文件同步），禁止单一通道 |
 | SRI 校验 | ⏳ 建议 | 未来可为 CDN 脚本添加 `integrity` |
 | HTTPS 强制 | ⏳ 建议 | EdgeOne 部署后默认启用 |
 | 响应头 | ⏳ 建议 | CDN 层补充 `X-Content-Type-Options: nosniff`、`Referrer-Policy: strict-origin-when-cross-origin` |

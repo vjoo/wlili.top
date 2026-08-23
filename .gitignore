@@ -2,6 +2,10 @@
 server.py
 server_data.json
 
+# 工具页双通道数据文件（规则 29：用户私有数据不上云，由 server.py 运行时创建）
+tools/prompt-library-data.json
+tools/prompt-library-data.json.tmp
+
 # 本地工具与运行时缓存
 _restart_server.py
 __pycache__/
@@ -9,3 +13,6 @@ __pycache__/
 
 # 本地 AI 配置
 .trae/
+
+# WorkBuddy 本地工具数据（工作日志/会话记忆，仅本地使用，不上传部署）
+.workbuddy/
