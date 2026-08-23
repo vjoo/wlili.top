@@ -171,10 +171,31 @@
     box-shadow: 0 0 0 3px rgba(211,47,47,0.1);
   }
   .error-msg {
-    font-size: 12px;
-    color: #d32f2f;
-    margin-top: 4px;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 6px;
+    z-index: 999;
     display: none;
+    max-width: 280px;
+    background: #d32f2f;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.45;
+    padding: 6px 10px;
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    pointer-events: none;
+    text-align: left;
+    white-space: normal;
+  }
+  .error-msg::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 16px;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid #d32f2f;
   }
   .error-msg.visible {
     display: block;
@@ -327,8 +348,8 @@
     line-height: 1.25;
   }
 
-  /* 国家法定节假日：橘色，与学校寒暑假/春秋假（红色）区分 */
-  .cal-table td .event-tag.tag-holiday { background: #ffa617; color: #fff; }
+  /* 国家法定节假日：浅橙黄，与学校寒暑假/春秋假（红色）区分 */
+  .cal-table td .event-tag.tag-holiday { background: #ffc973; color: #7a5300; }
   /* 学校假期（寒暑假/春秋假）：红色 */
   .cal-table td .event-tag.tag-break { background: #d32f2f; }
   .cal-table td .event-tag.tag-start { background: #d32f2f; }
@@ -347,7 +368,7 @@
     background-color: #fafafa !important;
   }
 
-  .cal-table td .event-tag.tag-workday { background: #757575; color: #fff; }
+  .cal-table td .event-tag.tag-workday { background: #b6b6b6; color: #444; }
 
   /* 月份底色：绿紫交替 */
   .cal-table td.month-odd { background-color: #f5fff6; }
@@ -716,13 +737,13 @@
     background: #000; color: #fff; border-radius: 2px;
     padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  /* 国家法定节假日：橘色 */
-  .mobile-day .m-tag.tag-holiday { background: #ffa617; color: #fff; }
+  /* 国家法定节假日：浅橙黄 */
+  .mobile-day .m-tag.tag-holiday { background: #ffc973; color: #7a5300; }
   /* 学校假期（寒暑假/春秋假）：红色 */
   .mobile-day .m-tag.tag-break { background: #d32f2f; }
   .mobile-day .m-tag.tag-start,
   .mobile-day .m-tag.tag-custom { background: #d32f2f; }
-  .mobile-day .m-tag.tag-workday { background: #757575; }
+  .mobile-day .m-tag.tag-workday { background: #b6b6b6; color: #444; }
 
   /* ========== 打印专用样式（置于文件末尾，确保压过所有响应式 max-width 块）========== */
   @media print {
@@ -2359,16 +2380,12 @@ function updateTermReference() {
   if (term === '1' && winterStart) {
     var semEnd1 = daysBefore(winterStart, 1);
     parts.push('至' + smartDate(semEnd1) + '结束');
-    var vacD = parseDate(winterStart);
-    vacD.setDate(vacD.getDate() + 1);
-    parts.push(smartDate(formatFullDate(vacD)) + '起放寒假');
+    parts.push(smartDate(winterStart) + '起放寒假');
   }
   if (term === '2' && summerStart) {
     var semEnd2 = daysBefore(summerStart, 1);
     parts.push('本学期于' + smartDate(semEnd2) + '结束');
-    var vacD = parseDate(summerStart);
-    vacD.setDate(vacD.getDate() + 1);
-    parts.push(smartDate(formatFullDate(vacD)) + '起放暑假');
+    parts.push(smartDate(summerStart) + '起放暑假');
   }
 
   // 换算学期周数（与日历副标题一致：min(报到,开学) 周一 → 放假起始日所在周周日）
@@ -2628,20 +2645,27 @@ function displayEl(inputEl) {
 function showError(inputEl, msg) {
   var t = displayEl(inputEl);
   t.classList.add('input-error');
-  var errEl = t.parentElement.querySelector('.error-msg');
-  if (!errEl) {
+  // 悬浮提示：absolute 定位不占文档流，不挤破排版；定位上下文 = 输入框自身（.date-field）或其父容器（原生 input 无法容纳子元素）
+  var host = t;
+  if (host.tagName === 'INPUT') host = t.parentElement;
+  if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  var errEl = host ? host.querySelector('.error-msg') : null;
+  if (!errEl && host) {
     errEl = document.createElement('div');
     errEl.className = 'error-msg';
-    t.parentElement.appendChild(errEl);
+    host.appendChild(errEl);
   }
-  errEl.textContent = msg;
-  errEl.classList.add('visible');
+  if (errEl) {
+    errEl.textContent = msg;
+    errEl.classList.add('visible');
+  }
 }
 
 function clearError(inputEl) {
   var t = displayEl(inputEl);
   t.classList.remove('input-error');
-  var errEl = t.parentElement.querySelector('.error-msg');
+  var host = (t.tagName === 'INPUT') ? t.parentElement : t;
+  var errEl = host ? host.querySelector('.error-msg') : null;
   if (errEl) errEl.classList.remove('visible');
 }
 
