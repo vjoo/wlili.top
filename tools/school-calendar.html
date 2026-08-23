@@ -287,6 +287,8 @@
     font-size: 12px;
     color: #000;
     table-layout: fixed;
+    /* 统一跨设备字体：PC（雅黑）、iOS（苹方）、Android（思源/黑体）全部走黑体系，避免打印时中文/数字字体随系统漂移 */
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", "Microsoft JhengHei", sans-serif;
   }
   .cal-table th, .cal-table td {
     border: 1px solid #000;
@@ -338,6 +340,7 @@
   }
   .cal-table td .event-tag {
     font-size: 12px;
+    font-weight: 600;
     background: #000;
     color: #fff;
     padding: 1px 4px;
@@ -345,11 +348,12 @@
     display: inline-block;
     margin-top: 1px;
     white-space: nowrap;
-    line-height: 1.25;
+    line-height: 1.5;
+    vertical-align: middle;
   }
 
-  /* 国家法定节假日：浅橙黄，与学校寒暑假/春秋假（红色）区分 */
-  .cal-table td .event-tag.tag-holiday { background: #ffc973; color: #fff; }
+  /* 国家法定节假日：橘色，与学校寒暑假/春秋假（红色）区分 */
+  .cal-table td .event-tag.tag-holiday { background: #ffa617; color: #fff; }
   /* 学校假期（寒暑假/春秋假）：红色 */
   .cal-table td .event-tag.tag-break { background: #d32f2f; }
   .cal-table td .event-tag.tag-start { background: #d32f2f; }
@@ -368,7 +372,7 @@
     background-color: #fafafa !important;
   }
 
-  .cal-table td .event-tag.tag-workday { background: #b6b6b6; color: #fff; }
+  .cal-table td .event-tag.tag-workday { background: #757575; color: #fff; }
 
   /* 月份底色：绿紫交替 */
   .cal-table td.month-odd { background-color: #f5fff6; }
@@ -377,7 +381,7 @@
   .cal-table td.month-even .day-num { color: #6a1b9a; }
   .cal-table td:not(.col-week) { overflow: hidden; }
   .cal-table td .day-num { line-height: 1.3; }
-  .cal-table td .event-tag { line-height: 1.2; }
+  .cal-table td .event-tag { line-height: 1.5; }
   .term-reference { font-size: 13px; line-height: 1.8; color: var(--ink-secondary); background: var(--bg); border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 10px 14px; }
   .term-reference b { color: var(--ink); }
 
@@ -737,13 +741,13 @@
     background: #000; color: #fff; border-radius: 2px;
     padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  /* 国家法定节假日：浅橙黄 */
-  .mobile-day .m-tag.tag-holiday { background: #ffc973; color: #fff; }
+  /* 国家法定节假日：橘色 */
+  .mobile-day .m-tag.tag-holiday { background: #ffa617; color: #fff; }
   /* 学校假期（寒暑假/春秋假）：红色 */
   .mobile-day .m-tag.tag-break { background: #d32f2f; }
   .mobile-day .m-tag.tag-start,
   .mobile-day .m-tag.tag-custom { background: #d32f2f; }
-  .mobile-day .m-tag.tag-workday { background: #b6b6b6; color: #fff; }
+  .mobile-day .m-tag.tag-workday { background: #757575; color: #fff; }
 
   /* ========== 打印专用样式（置于文件末尾，确保压过所有响应式 max-width 块）========== */
   @media print {
@@ -820,7 +824,10 @@
     }
     .cal-table td .event-tag {
       font-size: 10px;
-      padding: 0 3px;
+      font-weight: 600;
+      padding: 1px 4px;
+      line-height: 1.5;
+      vertical-align: middle;
     }
     .cal-table tbody td.col-week {
       font-size: 11px;
