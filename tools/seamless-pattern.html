@@ -143,6 +143,9 @@
 .panel-header { padding:14px 18px; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; }
 .panel-title { font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; }
 .panel-body { padding:14px; }
+.sync-status { font-weight:600; }
+.sync-on { color:#16a34a; }
+.sync-off { color:var(--text-muted); }
 
 /* Table */
 .data-table { width:100%; border-collapse:collapse; font-size:14px; }
@@ -885,11 +888,78 @@
     function loadData(key) {
         try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e) { return []; }
     }
-    function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+    function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); _syncStore.scheduleSync(); }
     function loadObject(key) {
         try { return JSON.parse(localStorage.getItem(key)) || null; } catch(e) { return null; }
     }
-    function saveObject(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
+    function saveObject(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); _syncStore.scheduleSync(); }
+
+    // ============================================
+    // 局域网同步存储层（规则 29 双通道：与 print-manager 同款架构，独立端点 /api/seamless）
+    // 本地 localStorage 为主 + server.py 服务端文件兜底；服务器不可用时静默降级仅本地
+    // ============================================
+    var _syncStore = {
+        _available: false,
+        _timer: null,
+        _probe: function() {
+            return fetch('/api/health').then(function(res) {
+                if (!res.ok) throw new Error('health ' + res.status);
+                return res.json();
+            }).then(function(info) {
+                _syncStore._available = !!(info && info.mode === 'sync');
+                return _syncStore._available;
+            }).catch(function() { _syncStore._available = false; return false; });
+        },
+        collectData: function() {
+            return {
+                patterns: loadData(STORAGE_KEYS.patterns),
+                palettes: loadData(STORAGE_KEYS.palettes),
+                licenses: loadData(STORAGE_KEYS.licenses),
+                elements: loadObject(STORAGE_KEYS.elements)
+            };
+        },
+        push: function() {
+            if (!_syncStore._available) return Promise.resolve(false);
+            return fetch('/api/seamless', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(_syncStore.collectData())
+            }).then(function(res) { return res.ok; }).catch(function() { return false; });
+        },
+        scheduleSync: function() {
+            if (!_syncStore._available) return;
+            clearTimeout(_syncStore._timer);
+            _syncStore._timer = setTimeout(function() { _syncStore.push(); }, 800);
+        },
+        mergeFromServer: function(serverData) {
+            // 本地优先：服务端有数据而本地为空时才补入（用于浏览器数据被清理后的恢复）
+            if (!serverData || typeof serverData !== 'object') return false;
+            if (Array.isArray(serverData.patterns) && serverData.patterns.length && !loadData(STORAGE_KEYS.patterns).length) {
+                saveData(STORAGE_KEYS.patterns, serverData.patterns);
+            }
+            if (Array.isArray(serverData.palettes) && serverData.palettes.length && !loadData(STORAGE_KEYS.palettes).length) {
+                saveData(STORAGE_KEYS.palettes, serverData.palettes);
+            }
+            if (Array.isArray(serverData.licenses) && serverData.licenses.length && !loadData(STORAGE_KEYS.licenses).length) {
+                saveData(STORAGE_KEYS.licenses, serverData.licenses);
+            }
+            if (serverData.elements && typeof serverData.elements === 'object' && !loadObject(STORAGE_KEYS.elements)) {
+                saveObject(STORAGE_KEYS.elements, serverData.elements);
+            }
+        },
+        init: function() {
+            return _syncStore._probe().then(function(ok) {
+                if (!ok) return false;
+                return fetch('/api/seamless').then(function(res) {
+                    if (!res.ok) throw new Error('GET /api/seamless ' + res.status);
+                    return res.json();
+                }).then(function(data) {
+                    _syncStore.mergeFromServer(data);
+                    return _syncStore.push(); // 合并后回推一次，保证服务器与本地一致
+                }).catch(function() { return false; });
+            });
+        }
+    };
 
     function initData() {
         var ver = localStorage.getItem(STORAGE_KEYS.version);
@@ -1292,6 +1362,14 @@
 
         init: function() {
             initData();
+            // 双通道：探测局域网同步服务器 → 拉取合并 → 回推（异步，不阻塞渲染）
+            _syncStore.init().then(function(ok) {
+                var el = document.getElementById('serverSyncStatus');
+                if (el) {
+                    el.textContent = ok ? '服务器同步已开启' : '仅本地存储（未连接同步服务器）';
+                    el.className = ok ? 'sync-status sync-on' : 'sync-status sync-off';
+                }
+            });
             this.bindEvents();
             this.render();
         },
@@ -3049,6 +3127,9 @@
             html += '</div></div></div>';
 
             html += '<div class="panel panel-static" style="margin-bottom:20px;"><div class="panel-header"><span class="panel-title">数据管理</span></div><div class="panel-body">';
+            var _syncTxt = _syncStore._available ? '服务器同步已开启' : '仅本地存储（未连接同步服务器）';
+            var _syncCls = _syncStore._available ? 'sync-status sync-on' : 'sync-status sync-off';
+            html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">存储方式：<span class="' + _syncCls + '" id="serverSyncStatus">' + _syncTxt + '</span></div>';
             html += '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
             html += '<button class="btn-secondary" onclick="app.exportData()">导出全部数据</button>';
             html += '<button class="btn-secondary" onclick="app.importData()">导入数据</button>';
@@ -3063,7 +3144,7 @@
             html += '<div style="font-size:13px;color:var(--text-secondary);line-height:1.8;">';
             html += '<div><strong>四方连图素材库</strong> v1.0</div>';
             html += '<div>用于管理无缝四方连续纺织印花图案的提示词生成、素材入库、版权授权全流程。</div>';
-            html += '<div style="margin-top:8px;color:var(--text-muted);font-size:12px;">所有数据存储在本地浏览器，不会上传服务器。</div>';
+            html += '<div style="margin-top:8px;color:var(--text-muted);font-size:12px;">数据双通道存储：本地浏览器为主 + 局域网服务器同步兜底（服务器不可用时自动降级为仅本地）。</div>';
             html += '</div></div></div>';
 
             return html;
@@ -4340,6 +4421,8 @@
             this.genState = { subjects:[], outfits:[], decorations:[], paletteId:'p1', layoutIndex:0, styleIndex:0, smartHistory:[], currentTheme:null, elementTab:'subjects' };
             this.charState = { subjects:[], outfits:[], props:[], paletteId:'p1', styleIndex:0, wordStyleIndex:0, elementTab:'subjects' };
             initData();
+            // 清空后立即同步空数据到服务端，避免下次打开从服务器拉回旧数据
+            _syncStore.scheduleSync();
             showToast('全部数据已清空');
             this.render();
         },

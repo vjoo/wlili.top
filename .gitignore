@@ -5,6 +5,8 @@ server_data.json
 # 工具页双通道数据文件（规则 29：用户私有数据不上云，由 server.py 运行时创建）
 tools/prompt-library-data.json
 tools/prompt-library-data.json.tmp
+tools/seamless-pattern-data.json
+tools/seamless-pattern-data.json.tmp
 
 # 本地工具与运行时缓存
 _restart_server.py

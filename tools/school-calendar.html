@@ -140,6 +140,11 @@
     min-width: 0;
     max-width: 100%;
   }
+  .form-control:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-muted, #f1f3f5);
+  }
   select.form-control {
     appearance: none;
     -webkit-appearance: none;
@@ -446,6 +451,9 @@
   .date-field .df-month,
   .date-field .df-day { flex: 1; }
   .date-field.input-error select { border-color: #d32f2f; }
+  /* 假期勾选取消后置灰（联动 .is-disabled 类） */
+  .date-field.is-disabled { opacity: 0.5; cursor: not-allowed; }
+  .date-field.is-disabled select { cursor: not-allowed; pointer-events: none; }
   .date-range .date-field,
   .breaks-range .date-field { flex: 1 1 0; min-width: 0; }
   .tag-row .date-field { flex: 1; min-width: 0; }
@@ -490,6 +498,18 @@
     font-size: 13px;
     color: var(--ink-secondary);
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .break-check {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--accent, #2f6fed);
+    flex: none;
   }
   .breaks-range {
     display: flex;
@@ -798,7 +818,7 @@
       <!-- 假期区间区块：每行一个假期，标签+起止日期独立一行，避免挤压 -->
       <div class="breaks-section">
         <div class="breaks-row" id="winterBreakRow">
-          <label class="breaks-label">寒假</label>
+          <label class="breaks-label"><input type="checkbox" class="break-check" id="winterBreakCheck" checked> 寒假</label>
           <div class="date-range breaks-range">
             <input type="date" class="form-control" id="winterBreakStartInput">
             <span class="range-sep">至</span>
@@ -806,7 +826,7 @@
           </div>
         </div>
         <div class="breaks-row" id="summerBreakRow">
-          <label class="breaks-label">暑假</label>
+          <label class="breaks-label"><input type="checkbox" class="break-check" id="summerBreakCheck" checked> 暑假</label>
           <div class="date-range breaks-range">
             <input type="date" class="form-control" id="summerBreakStartInput">
             <span class="range-sep">至</span>
@@ -814,7 +834,7 @@
           </div>
         </div>
         <div class="breaks-row" id="autumnBreakRow">
-          <label class="breaks-label">秋假</label>
+          <label class="breaks-label"><input type="checkbox" class="break-check" id="autumnBreakCheck" checked> 秋假</label>
           <div class="date-range breaks-range">
             <input type="date" class="form-control" id="autumnBreakStartInput">
             <span class="range-sep">至</span>
@@ -822,7 +842,7 @@
           </div>
         </div>
         <div class="breaks-row" id="springBreakRow">
-          <label class="breaks-label">春假</label>
+          <label class="breaks-label"><input type="checkbox" class="break-check" id="springBreakCheck" checked> 春假</label>
           <div class="date-range breaks-range">
             <input type="date" class="form-control" id="springBreakStartInput">
             <span class="range-sep">至</span>
@@ -1889,16 +1909,18 @@ function gatherAllEvents() {
   var startDate = document.getElementById('startDateInput').value;
   if (startDate) allEvents[startDate] = { name: '开学', type: 'start' };
 
-  // 寒假/暑假/秋假/春假（仅展开当前可见的假期行，避免隐藏学期的假期被误绘到日历）
+  // 寒假/暑假/秋假/春假（仅展开当前可见的假期行 + 勾选启用的假期，避免隐藏学期/被取消的假期误绘到日历）
   // 寒假/暑假为长假期：只标「开始/结束」两个标签；秋假/春假较短，保持逐日标注
   var breakDefs = [
-    { row: 'winterBreakRow',  s: 'winterBreakStartInput',  e: 'winterBreakEndInput',  name: '寒假', sparse: true },
-    { row: 'summerBreakRow',  s: 'summerBreakStartInput',  e: 'summerBreakEndInput',  name: '暑假', sparse: true },
-    { row: 'autumnBreakRow',  s: 'autumnBreakStartInput',  e: 'autumnBreakEndInput',  name: '秋假' },
-    { row: 'springBreakRow',  s: 'springBreakStartInput',  e: 'springBreakEndInput',  name: '春假' }
+    { row: 'winterBreakRow',  c: 'winterBreakCheck',  s: 'winterBreakStartInput',  e: 'winterBreakEndInput',  name: '寒假', sparse: true },
+    { row: 'summerBreakRow',  c: 'summerBreakCheck',  s: 'summerBreakStartInput',  e: 'summerBreakEndInput',  name: '暑假', sparse: true },
+    { row: 'autumnBreakRow',  c: 'autumnBreakCheck',  s: 'autumnBreakStartInput',  e: 'autumnBreakEndInput',  name: '秋假' },
+    { row: 'springBreakRow',  c: 'springBreakCheck',  s: 'springBreakStartInput',  e: 'springBreakEndInput',  name: '春假' }
   ];
   breakDefs.forEach(function(b) {
     if (document.getElementById(b.row).style.display === 'none') return;
+    var chk = document.getElementById(b.c);
+    if (chk && !chk.checked) return;
     var s = document.getElementById(b.s).value;
     var e = document.getElementById(b.e).value;
     if (s) {
@@ -2004,10 +2026,13 @@ function renderCalendar() {
   vacMonday.setDate(vacMonday.getDate() + 1);
 
   // 次学期报到日期：扩展日历底部，展示假期（寒假/暑假）至次学期报到
+  // 受终止性假期（寒假=第一学期 / 暑假=第二学期）勾选控制：取消勾选则日历只到教学结束周
   var nextReg = document.getElementById('nextRegisterInput').value;
   var breakName = (term === '1') ? '寒假' : '暑假';
+  var termBreakCheck = document.getElementById((term === '1') ? 'winterBreakCheck' : 'summerBreakCheck');
+  var showTermBreak = !termBreakCheck || termBreakCheck.checked;
   var vacLastSunday = null;
-  if (nextReg) {
+  if (showTermBreak && nextReg) {
     var nr = parseDate(nextReg);
     if (nr) {
       var nd = (nr.getDay() === 0) ? 7 : nr.getDay();
@@ -2030,7 +2055,7 @@ function renderCalendar() {
   document.getElementById('calSubtitleDisplay').innerText = sd + ' 至 ' + ed + ' （共' + totalWeeks + '周）';
 
   var allEvents = gatherAllEvents();
-  if (nextReg) allEvents[nextReg] = { name: '次报道', type: 'start' };
+  if (nextReg && showTermBreak) allEvents[nextReg] = { name: '次报道', type: 'start' };
 
   var tableHtml = '';
   var mobileHtml = '<div class="mobile-dow"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>';
@@ -2508,6 +2533,39 @@ triggerSelects.forEach(function(id) {
 document.getElementById('nextRegisterInput').addEventListener('change', function() {
   renderCalendar();
 });
+
+// 假期勾选（在日历中显示/隐藏）变化时：联动日期输入置灰 + 实时重绘日历
+function updateBreakInputsDisabled() {
+  [
+    ['winterBreakCheck', 'winterBreakStartInput', 'winterBreakEndInput'],
+    ['summerBreakCheck', 'summerBreakStartInput', 'summerBreakEndInput'],
+    ['autumnBreakCheck', 'autumnBreakStartInput', 'autumnBreakEndInput'],
+    ['springBreakCheck', 'springBreakStartInput', 'springBreakEndInput']
+  ].forEach(function(g) {
+    var chk = document.getElementById(g[0]);
+    var dis = !chk.checked;
+    [g[1], g[2]].forEach(function(id) {
+      var mirror = document.getElementById(id);
+      if (!mirror) return;
+      // 假期行日期是「年/月/日 三段下拉」组件：<input type=date> 是隐藏镜像（.date-mirror），
+      // 真正可点击的是 .date-field 容器内的三个 select。需同时禁用镜像 + 容器内 select
+      var field = mirror.closest('.date-field');
+      if (field) {
+        field.classList.toggle('is-disabled', dis);
+        field.querySelectorAll('select').forEach(function(s) { s.disabled = dis; });
+      }
+      mirror.disabled = dis; // 兼容直接是 type=date 的写法
+    });
+  });
+}
+['winterBreakCheck', 'summerBreakCheck', 'autumnBreakCheck', 'springBreakCheck'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', function() {
+    updateBreakInputsDisabled();
+    renderCalendar();
+  });
+});
+// 初始同步一次（默认全勾选 → 日期输入可编辑）
+updateBreakInputsDisabled();
 
 // 添加标注按钮
 document.getElementById('addTagBtn').addEventListener('click', function() {
