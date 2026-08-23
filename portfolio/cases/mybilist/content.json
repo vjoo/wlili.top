@@ -176,34 +176,6 @@
           ]
         }
       ]
-    },
-    {
-      "id": "smt4hwgbuw435",
-      "type": "masonry",
-      "label": "",
-      "heading": "",
-      "items": [
-        {
-          "image": "/portfolio/cases/mybilist/uploads/1787410246798.jpg",
-          "title": "",
-          "tags": []
-        },
-        {
-          "image": "/portfolio/cases/mybilist/uploads/1787410251821.jpg",
-          "title": "",
-          "tags": []
-        },
-        {
-          "image": "/portfolio/cases/mybilist/uploads/1787410261649.jpg",
-          "title": "",
-          "tags": []
-        },
-        {
-          "image": "/portfolio/cases/mybilist/uploads/1787410266334.jpg",
-          "title": "",
-          "tags": []
-        }
-      ]
     }
   ]
 }

@@ -70,7 +70,7 @@ var CaseRenderer = (function () {
     'text': '纯文本区',
     'showcase': '展示区',
     'gallery': '截图墙',
-    'masonry': '瀑布流',
+  'masonry': '瀑布流',
     'single-image': '单图全宽',
     'double-image': '双图并排',
     'testimonial': '客户评价',
