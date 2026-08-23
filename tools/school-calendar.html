@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>W.-学期校历生成器</title>
+<title>W.-自助校历生成</title>
 <link rel="stylesheet" href="common.css">
 <style>
   :root {
@@ -473,6 +473,17 @@
     .breaks-label { min-width: auto; }
     .breaks-range { flex-direction: column; align-items: stretch; gap: 4px; }
     .breaks-range .range-sep { flex-basis: auto; text-align: left; padding: 2px 0; }
+    /* 自定义标注行：移动端「年/月/日 三个下拉一行」+「标注名称一行」，删除按钮跟随名称行 */
+    .tag-row { flex-wrap: wrap; }
+    .tag-row .date-field {
+      flex: 1 1 100%;
+      flex-wrap: nowrap;
+    }
+    .tag-row .date-field .df-year,
+    .tag-row .date-field .df-month,
+    .tag-row .date-field .df-day { flex: 1 1 0; }
+    .tag-row .date-field select { padding-right: 12px; }
+    .tag-row .tag-label-input { flex: 2 1 0; min-width: 0; }
   }
 
   /* 假期区块：独立布局，每个假期占一行 */
@@ -529,89 +540,7 @@
     padding: 0 4px;
   }
 
-  /* 打印专用样式 */
-  @media print {
-    @page {
-      size: A4 portrait;
-      margin: 0;
-    }
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      background: white !important;
-      width: 100% !important;
-      height: auto !important;
-      overflow: visible !important;
-    }
-    .global-nav, .page-hero, .form-panel, #privacyNotice, .scroll-hint {
-      display: none !important;
-    }
-    .section, .section-inner, .layout-container {
-      padding: 0 !important;
-      margin: 0 !important;
-      max-width: none !important;
-      width: 100% !important;
-    }
-    .preview-area,
-    .preview-area.hidden {
-      display: block !important;
-      overflow: visible !important;
-      width: 100% !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-    .a4-paper {
-      width: 100% !important;
-      min-width: 100% !important;
-      min-height: auto !important;
-      box-shadow: none !important;
-      margin: 0 !important;
-      padding: 6mm 8mm !important;
-      box-sizing: border-box !important;
-    }
-    .cal-table {
-      page-break-inside: avoid;
-    }
-    /* A4 单页适配：标题两行（标题+副标题）+ 行高由 JS beforeprint 自适应（fitCalendarToPage）填满整页 */
-    .cal-header {
-      margin-bottom: 8px;
-    }
-    .cal-title {
-      font-size: 18px;
-      margin-bottom: 4px;
-      letter-spacing: 1px;
-    }
-    .cal-subtitle {
-      font-size: 12px;
-    }
-    .cal-table {
-      font-size: 11px;
-    }
-    .cal-table thead th {
-      padding: 3px 2px;
-      font-size: 11px;
-    }
-    .cal-table td:not(.col-week) {
-      height: 31px;
-      padding: 1px 2px;
-      line-height: 1.2;
-    }
-    .cal-table td .day-num {
-      font-size: 12px;
-    }
-    .cal-table td .event-tag {
-      font-size: 10px;
-      padding: 0 3px;
-    }
-    .cal-table tbody td.col-week {
-      font-size: 11px;
-      padding: 2px 1px;
-    }
-    * {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-  }
+  /* 打印专用样式（主块移到了文件末尾，确保压过所有响应式 max-width 块） */
 
   @media (max-width: 1068px) {
     .preview-area {
@@ -795,10 +724,91 @@
   .mobile-day .m-tag.tag-custom { background: #d32f2f; }
   .mobile-day .m-tag.tag-workday { background: #757575; }
 
-  /* 打印：始终使用 A4 表格，隐藏移动端列表 */
+  /* ========== 打印专用样式（置于文件末尾，确保压过所有响应式 max-width 块）========== */
   @media print {
-    .cal-table { display: table !important; }
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+    .global-nav, .page-hero, .form-panel, #privacyNotice,
+    .preview-area .scroll-hint, .scroll-hint {
+      display: none !important;
+    }
+    .section, .section-inner, .layout-container {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: none !important;
+      width: 100% !important;
+    }
+    .preview-area,
+    .preview-area.hidden {
+      display: block !important;
+      overflow: visible !important;
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .a4-paper {
+      width: 100% !important;
+      min-width: 100% !important;
+      min-height: auto !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+      padding: 6mm 8mm !important;
+      box-sizing: border-box !important;
+    }
+    .cal-table {
+      display: table !important;
+      page-break-inside: avoid;
+    }
     #mobileCal { display: none !important; }
+    /* A4 单页适配：标题两行（标题+副标题）+ 行高由 JS beforeprint 自适应（fitCalendarToPage）填满整页 */
+    .cal-header {
+      margin-bottom: 8px;
+    }
+    .cal-title {
+      font-size: 18px;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+    .cal-subtitle {
+      font-size: 12px;
+    }
+    .cal-table {
+      font-size: 11px;
+    }
+    .cal-table thead th {
+      padding: 3px 2px;
+      font-size: 11px;
+    }
+    .cal-table td:not(.col-week) {
+      height: 31px;
+      padding: 1px 2px;
+      line-height: 1.2;
+    }
+    .cal-table td .day-num {
+      font-size: 12px;
+    }
+    .cal-table td .event-tag {
+      font-size: 10px;
+      padding: 0 3px;
+    }
+    .cal-table tbody td.col-week {
+      font-size: 11px;
+      padding: 2px 1px;
+    }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
   }
 </style>
 <script src="nav.js"></script>
@@ -806,7 +816,7 @@
 <body>
 
 <div class="page-hero">
-  <h1>学期校历生成器</h1>
+  <h1>自助校历生成</h1>
   <p>自动生成标准学期日历A4排版，支持浏览器直接打印</p>
 </div>
 
@@ -2655,6 +2665,75 @@ function validateDateRange(startId, endId, label) {
   return true;
 }
 
+// 计算当前校历的实际日期范围（与 renderCalendar 保持一致）：
+// 起始 = 报到/开学中较早者；结束 = 教学结束周周日 与 次学期报到周周日 中较晚者。
+// 返回 { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD' }；缺关键日期时返回 null。
+function calcCalendarRange() {
+  var startDateStr = document.getElementById('startDateInput').value;
+  var regDateStr = document.getElementById('registerDateInput').value;
+  if (!startDateStr) return null;
+  var term = document.getElementById('termSelect').value;
+  var ws = document.getElementById('winterBreakStartInput').value;
+  var ss = document.getElementById('summerBreakStartInput').value;
+  var as = document.getElementById('autumnBreakStartInput').value;
+  var ps = document.getElementById('springBreakStartInput').value;
+  var endDateStr = '';
+  if (term === '1' && ws) endDateStr = ws;
+  else if (term === '2' && ss) endDateStr = ss;
+  else {
+    var cand = [];
+    if (ws) cand.push(ws);
+    if (ss) cand.push(ss);
+    if (as) cand.push(as);
+    if (ps) cand.push(ps);
+    if (cand.length) { cand.sort(); endDateStr = cand[0]; }
+  }
+  if (!endDateStr) return null;
+
+  var calStartStr = startDateStr;
+  if (regDateStr && regDateStr < startDateStr) calStartStr = regDateStr;
+
+  // 结束边界所在周周日（放假起始日恰为周一则止于前一周日）
+  var endEnd = parseDate(endDateStr);
+  if (endEnd.getDay() === 1) {
+    endEnd.setDate(endEnd.getDate() - 1);
+  } else {
+    var endDay = endEnd.getDay() === 0 ? 7 : endEnd.getDay();
+    endEnd.setDate(endEnd.getDate() + (7 - endDay));
+  }
+  var lastSunday = new Date(endEnd);
+
+  // 假期周：次学期报到日所在周周日，取较晚者
+  var nextReg = document.getElementById('nextRegisterInput').value;
+  if (nextReg) {
+    var nr = parseDate(nextReg);
+    if (nr) {
+      var nd = (nr.getDay() === 0) ? 7 : nr.getDay();
+      var nrSun = new Date(nr);
+      nrSun.setDate(nrSun.getDate() + (7 - nd));
+      if (nrSun > lastSunday) lastSunday = nrSun;
+    }
+  }
+
+  return { start: calStartStr, end: formatFullDate(lastSunday) };
+}
+
+// 校历范围校验：假期起止日期与自定义标注日期都必须落在日历表范围内，
+// 否则日期会「静默丢失」（渲染时匹配不到格子，用户无感知）
+function validateWithinRange(inputId, label, range) {
+  var el = document.getElementById(inputId);
+  if (!el) return true;
+  // 该输入框已有更具体的错误（如「结束不能早于开始」）时不覆盖，保留最明确的原因
+  if (displayEl(el).classList.contains('input-error')) return true;
+  var v = el.value;
+  if (!v) return true;
+  if (v < range.start || v > range.end) {
+    showError(el, label + '日期 ' + v + ' 不在校历范围内（' + range.start + ' ~ ' + range.end + '）');
+    return false;
+  }
+  return true;
+}
+
 function validateForm() {
   clearAllErrors();
   var valid = true;
@@ -2678,6 +2757,27 @@ function validateForm() {
       if (!validateDateRange(p[0], p[1], p[2])) valid = false;
     }
   });
+
+  // 校历范围校验：假期起止日期与自定义标注日期必须落在日历表范围内，
+  // 否则这些日期会「静默丢失」（渲染时匹配不到格子，用户无感知）
+  var range = calcCalendarRange();
+  if (range) {
+    pairs.forEach(function(p) {
+      var row = document.getElementById(p[0]).closest('.breaks-row');
+      if (row && row.style.display !== 'none') {
+        if (!validateWithinRange(p[0], p[2] + '开始', range)) valid = false;
+        if (!validateWithinRange(p[1], p[2] + '结束', range)) valid = false;
+      }
+    });
+    document.querySelectorAll('#customTagsContainer .tag-row .tag-date-input').forEach(function(inp) {
+      var v = inp.value;
+      if (!v) return;
+      if (v < range.start || v > range.end) {
+        showError(inp, '标注日期 ' + v + ' 不在校历范围内（' + range.start + ' ~ ' + range.end + '）');
+        valid = false;
+      }
+    });
+  }
 
   // 学期结束性假期（寒假/暑假）开始必须晚于开学日期
   var term = document.getElementById('termSelect').value;
@@ -2755,11 +2855,29 @@ function restoreCalendarHeight() {
 window.addEventListener('beforeprint', fitCalendarToPage);
 window.addEventListener('afterprint', restoreCalendarHeight);
 
+// 打印前提示：纸张上出现的网址/日期是浏览器「页眉和页脚」（默认开启），CSS 无法关闭，
+// 只能在系统打印对话框里取消勾选。桌面端用户通常已关掉，仅窄屏（移动端）弹提示引导。
+function showPrintHeaderTip() {
+  if (window.innerWidth >= 1068) return;
+  var tip = document.getElementById('printHeaderTip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'printHeaderTip';
+    tip.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;max-width:92vw;background:#111;color:#fff;font-size:13px;line-height:1.6;padding:12px 16px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);text-align:center;pointer-events:none;';
+    document.body.appendChild(tip);
+  }
+  tip.textContent = '打印时请在系统打印对话框取消勾选「页眉和页脚」（Chrome：更多设置 → 选项），纸张上就不会出现网址和日期';
+  tip.style.display = 'block';
+  clearTimeout(tip._t);
+  tip._t = setTimeout(function() { tip.style.display = 'none'; }, 6000);
+}
+
 document.getElementById('printBtn').addEventListener('click', function() {
   if (document.getElementById('previewArea').classList.contains('hidden')) {
     renderCalendar();
     document.getElementById('previewArea').classList.remove('hidden');
   }
+  showPrintHeaderTip();
   window.print();
 });
 
@@ -2774,6 +2892,7 @@ document.getElementById('exportBtn').addEventListener('click', function() {
   try { preview.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch(e) {}
   // 稍等滚动完成再弹出打印对话框
   setTimeout(function() {
+    showPrintHeaderTip();
     window.print();
   }, 300);
 });

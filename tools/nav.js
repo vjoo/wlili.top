@@ -53,7 +53,7 @@
       tools: [
         { name: '3D耗材管理', href: './filament-manager.html' },
         { name: '音标速查', href: './phonetic-chart.html' },
-        { name: '学期校历生成器', href: './school-calendar.html' }
+        { name: '自助校历生成', href: './school-calendar.html' }
       ]
     },
     {
