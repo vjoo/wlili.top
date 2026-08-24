@@ -226,6 +226,10 @@
     var nav = document.getElementById('headerNav');
     if (!nav) return;
     requestAnimationFrame(function () {
+      // ⚠️ ≤768px 时 .header-nav 是 display:none，此时测量所有 nav-link 宽度恒为 0，
+      //    会把 --nav-scrolled-maxw 算成 320px 下限；窗口再放大后该错误值不失效，
+      //    scrolled 时胶囊收缩过窄 → 菜单文字被压成竖排。display:none 时直接跳过。
+      if (getComputedStyle(nav).display === 'none') return;
       var links = nav.querySelectorAll('.nav-link');
       if (!links.length) return;
       var linkTotal = 0;
@@ -239,6 +243,18 @@
       document.documentElement.style.setProperty('--nav-scrolled-maxw', scrolledMaxw + 'px');
     });
   }
+  // 窗口跨断点（移动端 ↔ 桌面）后重算 --nav-scrolled-maxw：
+  // 移动端（display:none）期间算出的 320px 下限会残留，resize 回桌面后若不重算，
+  // scrolled 胶囊收缩目标过窄 → 菜单文字竖排。rAF 节流，只重算一次。
+  var navResizeTicking = false;
+  window.addEventListener('resize', function () {
+    if (navResizeTicking) return;
+    navResizeTicking = true;
+    requestAnimationFrame(function () {
+      calcAndSetNavScrolledMaxw();
+      navResizeTicking = false;
+    });
+  });
 
   // 全站顶部导航：cases.json 顶层 navMenu（后台「顶部导航设置」编辑）覆盖默认 navLinks。
   // 拉到配置后局部重渲染桌面 + 移动端导航链接（header 已由 injectShell 注入）。
@@ -784,6 +800,12 @@
     '.stats-section',     // 数据统计（nixtio）
     '.services-section',  // 编号服务手风琴（nixtio）
     '.team-section',      // 团队成员（nixtio）
+    // 产品详情类组件（pd- 命名空间，结构对齐上面的 -section 约定）
+    '.pd-eyebrow-section',
+    '.pd-intro-head-section',
+    '.pd-split-head-section',
+    '.pd-hero-section',
+    '.pd-scene-grid-section',
     '.footer'
   ];
   const REVEAL_CHILDREN = [
@@ -826,7 +848,17 @@
     '.team-grid',
     '.team-photo-card',
     '.lets-talk-title',
-    '.qr-card'
+    '.qr-card',
+    // 产品详情类组件（pd- 命名空间）二级 stagger
+    '.pd-intro-title',
+    '.pd-intro-sub',
+    '.pd-split-main',
+    '.pd-split-aside',
+    '.pd-hero-copy',
+    '.pd-product-panel',
+    '.pd-product-card',
+    '.pd-grid-head',
+    '.pd-scene-card'
   ];
 
   let revealObserverInstance = null;

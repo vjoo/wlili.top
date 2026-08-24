@@ -2180,7 +2180,12 @@ const TYPE_LABELS = {
   'clients': '客户 Logo 条',
   'stats': '数据统计',
   'services': '服务列表',
-  'team': '团队区块'
+  'team': '团队区块',
+  'eyebrow': '眉标',
+  'eyebrow-head': '导语头',
+  'split-head': '分栏头',
+  'product-hero': '产品首屏',
+  'scene-grid': '场景网格'
 };
 
 /* ===== Type Descriptions ===== */
@@ -2204,7 +2209,12 @@ const TYPE_DESCS = {
   'clients': '客户 Logo 横向排列条',
   'stats': '大数字数据统计',
   'services': '编号服务列表，点击展开描述与分类标签',
-  'team': '团队区块：白色圆角卡片 + 左文字右 2×2 头像拼图'
+  'team': '团队区块：白色圆角卡片 + 左文字右 2×2 头像拼图',
+  'eyebrow': '胶囊标签：行业/分类小字标识（来自 scenes-tag）',
+  'eyebrow-head': '居中导语头：眉标签 + 标题 + 副标题（来自 scenes-head）',
+  'split-head': '分栏头：左序号标题 + 右描述（来自 sec-head）',
+  'product-hero': '产品首屏：左文案 + 右产品面板的 hero 布局（来自 hero）',
+  'scene-grid': '场景网格：居中头 + 场景卡片网格，卡片可新增/删除（来自 scenes）'
 };
 
 /* ===== Type Icons (inline SVG paths) ===== */
@@ -2227,7 +2237,12 @@ const TYPE_ICONS = {
   'clients': '<circle cx="5" cy="12" r="2"/><path d="M7 12h3l2-3 2 5 2-2h2"/><circle cx="20" cy="8" r="1.5"/><circle cx="20" cy="16" r="1.5"/>',
   'stats': '<path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7" rx=".5"/><rect x="12" y="6" width="3" height="11" rx=".5"/><rect x="17" y="13" width="3" height="4" rx=".5"/>',
   'services': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><circle cx="7" cy="6.5" r=".8"/><circle cx="10" cy="6.5" r=".8"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="16" x2="14" y2="16"/>',
-  'team': '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5"/>'
+  'team': '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5"/>',
+  'eyebrow': '<rect x="3" y="9" width="18" height="6" rx="3"/><line x1="7" y1="12" x2="17" y2="12"/>',
+  'eyebrow-head': '<path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h7"/><circle cx="17" cy="12" r="0.6" fill="currentColor"/>',
+  'split-head': '<line x1="4" y1="7" x2="13" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="9" y1="17" x2="16" y2="17"/>',
+  'product-hero': '<rect x="3" y="4" width="9" height="16" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/>',
+  'scene-grid': '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/>'
 };
 
 /* ===== 动画背景（animated）：效果与参数 =====
@@ -2623,6 +2638,56 @@ const TYPE_FIELDS = {
     { key: 'items', label: '成员头像（2×2 拼图，最多 4 个）', type: 'items-list', itemLabel: '成员', itemFields: [
       { key: 'name', label: '姓名', type: 'text', placeholder: 'Bogdan' },
       { key: 'photo', label: '头像照片', type: 'image' }
+    ] }
+  ],
+
+  /* ===== 产品详情类板块（来自 questek-detail，类名中文化） ===== */
+  'eyebrow': [
+    { key: 'text', label: '标签文字（留空则前台不显示该板块）', type: 'text', placeholder: '03 · INDUSTRY · 行业落地' }
+  ],
+  'eyebrow-head': [
+    { key: 'eyebrow', label: '眉标签（选填，留空则不显示）', type: 'text', placeholder: '03 · INDUSTRY · 行业落地' },
+    { key: 'title', label: '标题', type: 'textarea', rows: 2 },
+    { key: 'subtitle', label: '副标题/描述', type: 'textarea', rows: 2 }
+  ],
+  'split-head': [
+    { key: 'num', label: '序号（选填，如 01）', type: 'text', placeholder: '01' },
+    { key: 'en', label: '英文标注（选填，如 HANDHELD TERMINAL）', type: 'text', placeholder: 'HANDHELD TERMINAL' },
+    { key: 'title', label: '标题', type: 'textarea', rows: 2, placeholder: 'QUESTEK MA55A\n手持实人核验终端' },
+    { key: 'aside', label: '右侧描述（选填，留空则不显示右侧栏）', type: 'textarea', rows: 3 },
+    { key: 'asideWide', label: '右侧栏宽度', type: 'select', options: ['', 'wide'],
+      optionLabels: { '': '默认（窄）', 'wide': '加宽' } },
+    { key: 'asideRight', label: '右侧栏对齐', type: 'select', options: ['', 'right'],
+      optionLabels: { '': '默认（左对齐）', 'right': '右对齐' } }
+  ],
+  'product-hero': [
+    { key: 'badge', label: '徽标文字（选填，留空则不显示）', type: 'text', placeholder: '2025 全新工业核验产品矩阵 · 现货发售' },
+    { key: 'title', label: '主标题 H1', type: 'textarea', rows: 2, placeholder: '把每一次核验\n做到工程师级别' },
+    { key: 'desc', label: '描述', type: 'textarea', rows: 3 },
+    { key: 'stats', label: '数据指标（可新增/删除）', type: 'items-list', itemLabel: '指标', itemFields: [
+      { key: 'value', label: '数值', type: 'text', placeholder: '5000' },
+      { key: 'label', label: '说明', type: 'text', placeholder: 'mAh 超长续航' }
+    ] },
+    { key: 'products', label: '产品卡（可新增/删除，双卡并排）', type: 'items-list', itemLabel: '产品', itemFields: [
+      { key: 'image', label: '产品图', type: 'image' },
+      { key: 'type', label: '类型标（选填，如 HANDHELD · 手持终端）', type: 'text', placeholder: 'HANDHELD · 手持终端' },
+      { key: 'name', label: '产品名', type: 'text', placeholder: 'QUESTEK MA55A' },
+      { key: 'desc', label: '描述', type: 'text', placeholder: '5.5寸 / IP68 / 5000mAh' }
+    ] }
+  ],
+  'scene-grid': [
+    { key: 'eyebrow', label: '眉标签（选填，留空则不显示）', type: 'text', placeholder: '03 · INDUSTRY · 行业落地' },
+    { key: 'title', label: '标题', type: 'text', placeholder: '为 6 大行业,重新设计的核验流程' },
+    { key: 'subtitle', label: '副标题/描述', type: 'textarea', rows: 2 },
+    { key: 'cards', label: '场景卡列表（可新增/删除，每 3 张自动分一行）', type: 'items-list', itemLabel: '场景卡', itemFields: [
+      { key: 'num', label: '序号（选填）', type: 'text', placeholder: '01', inline: true },
+      { key: 'numColor', label: '序号颜色', type: 'select', options: ['', 'blue', 'orange', 'red', 'green'],
+        optionLabels: { '': '默认（随主题）', 'blue': '蓝色', 'orange': '橙色', 'red': '红色', 'green': '绿色' }, default: '', inline: true },
+      { key: 'category', label: '分类标（选填，右上角，如 GOVERNMENT）', type: 'text', placeholder: 'GOVERNMENT' },
+      { key: 'title', label: '标题', type: 'text', placeholder: '政务大厅 · 即办即核' },
+      { key: 'desc', label: '描述', type: 'textarea' },
+      { key: 'size', label: '卡片高度', type: 'select', options: ['tall', 'short'],
+        optionLabels: { 'tall': '高（默认）', 'short': '矮' }, default: 'tall' }
     ] }
   ]
 };
@@ -3227,6 +3292,34 @@ function buildCardThumbnail(s) {
           <div class="ct-team-grid">${items.slice(0, 4).map((it) => `<div class="ct-member">${it && it.photo
             ? `<div class="ct-member-photo" style="background-image:url('${esc(it.photo)}');"></div>`
             : `<div class="ct-member-photo ct-member-empty">${esc((it && it.name && it.name[0]) || '?')}</div>`}<span>${esc((it && it.name) || '')}</span></div>`).join('') || '<span class="ct-muted">（未添加成员）</span>'}</div>
+        </div>`;
+      }
+      case 'eyebrow':
+        return `<div style="padding:8px 10px;"><span class="pd-eyebrow">${esc(s.text || '（未填写标签文字）')}</span></div>`;
+      case 'eyebrow-head':
+        return `<div style="padding:8px 10px;text-align:center;">
+          ${s.eyebrow ? '<span class="pd-eyebrow">' + esc(s.eyebrow) + '</span><br>' : ''}
+          <b style="font-size:14px;">${esc(s.title || '（未设置标题）')}</b>
+          ${s.subtitle ? '<br><span style="font-size:12px;opacity:.6;">' + esc(s.subtitle) + '</span>' : ''}
+        </div>`;
+      case 'split-head':
+        return `<div style="padding:8px 10px;">
+          <div style="font-size:12px;opacity:.6;">${esc((s.num ? s.num + ' · ' : '') + (s.en || ''))}</div>
+          <b style="font-size:14px;">${esc(s.title || '（未设置标题）')}</b>
+          ${s.aside ? '<br><span style="font-size:12px;opacity:.6;">' + esc(s.aside) + '</span>' : ''}
+        </div>`;
+      case 'product-hero': {
+        const products = Array.isArray(s.products) ? s.products : [];
+        return `<div style="padding:8px 10px;">
+          <b style="font-size:14px;">${esc(s.title || '（未设置主标题）')}</b>
+          <div style="font-size:12px;opacity:.6;margin-top:4px;">产品卡 ${products.length} 张 · 指标 ${Array.isArray(s.stats) ? s.stats.length : 0} 项</div>
+        </div>`;
+      }
+      case 'scene-grid': {
+        const cards = Array.isArray(s.cards) ? s.cards : [];
+        return `<div style="padding:8px 10px;">
+          <b style="font-size:14px;">${esc(s.title || '（未设置标题）')}</b>
+          <div style="font-size:12px;opacity:.6;margin-top:4px;">场景卡 ${cards.length} 张</div>
         </div>`;
       }
       default:
@@ -4339,7 +4432,8 @@ function renderItemsListField(field, list, uid) {
   const key = field.key;
   const itemLabel = field.itemLabel || '条目';
   const items = list.map((item, i) => {
-    const body = (field.itemFields || []).map((f) => {
+    // 渲染单个字段的 form-group；inline 字段会被打包进 .lf-row（两列同行）
+    function itemFieldHtml(f) {
       const v = item ? item[f.key] : '';
       let ctl = '';
       if (f.type === 'textarea') {
@@ -4361,7 +4455,24 @@ function renderItemsListField(field, list, uid) {
         ctl = `<input class="form-input" data-il-key="${esc(f.key)}" data-il-type="text" data-il-idx="${i}" type="text" placeholder="${esc(f.placeholder || '')}" value="${esc(v || '')}">`;
       }
       return `<div class="form-group"><label class="form-label">${esc(f.label)}</label>${ctl}</div>`;
-    }).join('');
+    }
+    // body：字段定义带 inline:true 时，连续的 inline 字段打包进 .lf-row（两列同行）；
+    // 其余字段独占一行（保持原纵向布局）。移动端 .lf-row 已有 1fr 单列回退。
+    const fields = field.itemFields || [];
+    let body = '';
+    for (let fi = 0; fi < fields.length; fi++) {
+      if (fields[fi].inline) {
+        let rowHtml = '';
+        while (fi < fields.length && fields[fi].inline) {
+          rowHtml += itemFieldHtml(fields[fi]);
+          fi++;
+        }
+        fi--; // while 循环多推进一位，回退
+        body += `<div class="lf-row">${rowHtml}</div>`;
+      } else {
+        body += itemFieldHtml(fields[fi]);
+      }
+    }
     return `<div class="list-field-item" data-lf-item="${i}">
       <div class="lf-head">
         <span class="lf-title">${esc(itemLabel)} #${i + 1}</span>

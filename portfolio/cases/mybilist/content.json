@@ -176,6 +176,101 @@
           ]
         }
       ]
+    },
+    {
+      "id": "smt6zzkoxx8tw",
+      "type": "scene-grid",
+      "eyebrow": "",
+      "title": "为 6 大行业,重新设计的核验流程",
+      "subtitle": "从窗口办证到工地考勤,设备形态与核验链路都已被现场打磨过。",
+      "cards": [
+        {
+          "num": "01",
+          "numColor": "blue",
+          "category": " GOVERNMENT",
+          "title": "政务大厅 · 即办即核",
+          "desc": "窗口办事员的桌面一体机,办事群众扫描身份证 + 人脸识别,30 秒完成全部身份核验,自动对接政务中台。",
+          "size": "tall"
+        },
+        {
+          "num": "02",
+          "numColor": "blue",
+          "category": "CAMPUS",
+          "title": "校园宿舍 · 宿管减负",
+          "desc": "壁挂式 A81A 部署于宿舍楼入口,学生刷脸进入,与教务系统自动同步归寝 / 离寝记录,异常情况 5 分钟内通知辅导员。",
+          "size": "tall"
+        },
+        {
+          "num": "03",
+          "numColor": "blue",
+          "category": "PARK",
+          "title": "园区通行 · 无感核验",
+          "desc": "访客通过小程序预约,现场 A81A 一体机扫码 + 人脸核验,自动开闸并通知被访人,后台实时同步到物业系统。",
+          "size": "tall"
+        },
+        {
+          "num": "04",
+          "numColor": "blue",
+          "category": "CONSTRUCTION",
+          "title": "工地考勤 · 实人打卡",
+          "desc": "MA55A 部署于工地入口,工人刷身份证 + 人脸考勤,自动生成实名制台账并实时上传住建平台。IP68 防摔防水,适配工地恶劣环境。",
+          "size": "tall"
+        },
+        {
+          "num": "05",
+          "numColor": "blue",
+          "category": "HOTEL",
+          "title": "民宿酒店 · 自助入住",
+          "desc": "前台一体机完成人证比对后自动出房卡,客人无需等待前台办理,系统对接公安旅馆业登记系统,合规可追溯。",
+          "size": "tall"
+        },
+        {
+          "num": "06",
+          "numColor": "blue",
+          "category": "HEALTHCARE",
+          "title": "医院挂号 · 一证通办",
+          "desc": "诊室门口 A81A 一站完成电子健康卡核验、挂号确认与医保身份绑定,患者无需反复到窗口排队,医院数据回传医保局。",
+          "size": "tall"
+        }
+      ]
+    },
+    {
+      "id": "smt7bih21b2u6",
+      "type": "product-hero",
+      "title": "把每一次核验做到工程师级别",
+      "badge": "2025 全新工业核验产品矩阵 · 现货发售",
+      "desc": "实人核验 · 专业扫码头 · 三防机身。专为政务、出行、园区核验场景打造的两款工业级终端，与一套成熟的人证比对引擎。",
+      "stats": [
+        {
+          "value": "5000",
+          "label": "mAh 超长续航"
+        },
+        {
+          "value": "1.5m",
+          "label": "六面防摔"
+        },
+        {
+          "value": "IP68",
+          "label": "工业三防等级"
+        }
+      ],
+      "products": [
+        {
+          "image": "/portfolio/cases/mybilist/uploads/1787581074703.png",
+          "type": "DESKTOP · 核验一体机",
+          "name": "QUESTEK A81A",
+          "desc": "8寸 / 双目活体 / 壁挂桌面两用"
+        },
+        {
+          "image": "/portfolio/cases/mybilist/uploads/1787581025169.png",
+          "type": "HANDHELD · 手持终端",
+          "name": "QUESTEK MA55A",
+          "desc": "5.5寸 / IP68 / 5000mAh"
+        }
+      ],
+      "panelLabel": "PRODUCT · 2025",
+      "primaryBtn": "11",
+      "secondaryBtn": "111"
     }
   ]
 }

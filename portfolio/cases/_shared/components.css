@@ -1476,7 +1476,7 @@
   font-size: 18px;
   font-weight: 500;
   letter-spacing: -0.4px;
-  color: #0a0a0a;
+  color: var(--color-black);
   margin: 0;
 }
 
@@ -1701,7 +1701,7 @@
 
 .team-label {
   font-size: 18px;
-  color: #0a0a0a;
+  color: var(--color-black);
   margin: 0;
 }
 
@@ -2637,9 +2637,11 @@
 /* 文字类硬编码 → 深色主题下的浅色 */
 [data-theme="dark"] .stat-value,
 [data-theme="dark"] .stat-value .stat-suffix,
+[data-theme="dark"] .stat-title,
 [data-theme="dark"] .stats-title,
 [data-theme="dark"] .stats-subtitle,
-[data-theme="dark"] .team-title-a {
+[data-theme="dark"] .team-title-a,
+[data-theme="dark"] .team-label {
   color: #f5f5f5;
 }
 [data-theme="dark"] .stats-label {
@@ -2659,3 +2661,535 @@
 [data-theme="dark"] .masonry-tag {
   color: #fff;
 }
+
+
+/* ============================================================
+   Product Detail Components (eyebrow / intro-head / split-head / hero / scene-grid)
+   Merged from components-product.css — shared site-wide, theme-aware via var(--color-*)
+   ============================================================ */
+/* ============================================
+   Product Detail — Section Components (site-wide)
+   ─────────────────────────────────────────
+   Naming: BEM-like with pd- prefix (product-detail scope).
+   Source: questek-detail page reusable blocks.
+
+     Class                  Origin (questek)
+     ───────────────        ─────────────────
+     .pd-eyebrow            scenes-tag (pill label — the <span>, not the section)
+     .pd-eyebrow-section    eyebrow block wrapper (container)
+     .pd-intro-head-section scenes-head (centered intro)
+     .pd-split-head-section sec-head (num + title | aside)
+     .pd-hero-section       hero (left copy + right panel)
+     .pd-scene-grid-section scenes (head + card grid)
+
+   Color strategy: theme-flip via var(--color-*) tokens
+     · Outer bg    → var(--color-background)
+     · Inner card  → var(--color-white)
+     · Primary txt → var(--color-black)
+     · Secondary   → var(--color-text-secondary)
+     · Border      → var(--color-gray-ultra-light)
+     · Accent      → #888888 (neutral grey, visible in both themes)
+     · Avoid       --color-text-tertiary (white in light mode — invisible on light bg)
+   ============================================ */
+
+/* ========== 1. Eyebrow (pill tag) ========== */
+/* Same family as masonry-tag / service-tag / row-tag */
+.pd-eyebrow {
+  --pd-eyebrow-color: #888888;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 980px;
+  background: var(--color-gray-ultra-light);
+  border: 1px solid var(--color-gray-ultra-light);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--pd-eyebrow-color);
+  white-space: nowrap;
+}
+
+/* ========== 2. Intro Head (centered section intro) ========== */
+.pd-intro-head-section {
+  --pd-intro-fg: var(--color-black);
+  --pd-intro-fg2: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.pd-intro-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--pd-intro-fg);
+  margin: 0;
+}
+
+.pd-intro-sub {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--pd-intro-fg2);
+  max-width: 40rem;
+  margin: 0;
+}
+
+/* ========== 3. Split Head (left num+title / right aside) ========== */
+.pd-split-head-section {
+  --pd-split-accent: #888888;
+  --pd-split-fg: var(--color-black);
+  --pd-split-fg2: var(--color-text-secondary);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2.5rem;
+}
+
+.pd-split-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* Num row: 01 · bar · EN label */
+.pd-split-num-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--pd-split-accent);
+  letter-spacing: 0.04em;
+}
+
+.pd-split-num-row .pd-bar {
+  width: 2rem;
+  height: 1px;
+  background: var(--pd-split-accent);
+}
+
+.pd-split-num-row .pd-en {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--pd-split-fg2);
+  letter-spacing: 0.12em;
+}
+
+.pd-split-title {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--pd-split-fg);
+  white-space: pre-line;
+  margin: 0;
+}
+
+.pd-split-aside {
+  width: 22.5rem;
+  flex-shrink: 0;
+}
+
+.pd-split-aside p {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--pd-split-fg2);
+  margin: 0;
+}
+
+/* Modifiers on .pd-split-aside itself */
+.pd-split-aside.wide { width: 45rem; }
+.pd-split-aside.right { text-align: right; }
+
+/* ========== 4. Hero (left copy + right product panel) ========== */
+/* Three-layer flip: outer(var(--color-background)) → panel(var(--color-white)) → card(ultra-light) */
+.pd-hero-section {
+  --pd-hero-accent: #888888;
+  --pd-hero-bg: var(--color-background);
+  --pd-hero-bg2: var(--color-white);
+  --pd-hero-card-bg: var(--color-gray-ultra-light);
+  --pd-hero-img-bg: var(--color-gray-ultra-light);
+  --pd-hero-fg: var(--color-black);
+  --pd-hero-fg2: var(--color-text-secondary);
+  --pd-hero-fg3: var(--color-text-secondary);
+  --pd-hero-border: var(--color-gray-ultra-light);
+  --pd-hero-border-strong: var(--color-gray-ultra-light);
+  --pd-hero-divider: var(--color-gray-ultra-light);
+  --pd-hero-divider2: var(--color-gray-ultra-light);
+
+  display: flex;
+  gap: 3rem;
+  padding-block: 5rem;        /* 仅上下；左右 36px 内缩交给 .container（与 .stats-section 一致） */
+  background: var(--pd-hero-bg);
+  min-height: 47.5rem;
+}
+
+/* ---- Left copy area ---- */
+.pd-hero-copy {
+  width: 33.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.75rem;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pd-hero-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 980px;
+  background: var(--pd-hero-bg2);
+  border: 1px solid var(--pd-hero-border);
+}
+
+.pd-hero-badge-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--pd-hero-accent);
+  flex-shrink: 0;
+}
+
+.pd-hero-badge-text {
+  font-size: 0.75rem;
+  color: var(--pd-hero-fg2);
+  font-weight: 500;
+}
+
+.pd-hero-title {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--pd-hero-fg);
+  margin: 0;
+}
+
+.pd-hero-desc {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  font-weight: normal;
+  color: var(--pd-hero-fg2);
+  max-width: 32.5rem;
+  margin: 0;
+}
+
+/* ---- Stats row ---- */
+.pd-stats-row {
+  display: flex;
+  width: 100%;
+  padding-top: 1.75rem;
+}
+
+.pd-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.pd-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--pd-hero-fg);
+}
+
+.pd-stat-label {
+  font-size: 0.75rem;
+  color: var(--pd-hero-fg3);
+  font-weight: normal;
+  opacity: 0.5;
+}
+
+.pd-stat-divider {
+  width: 1px;
+  height: 2.75rem;
+  background: var(--pd-hero-divider2);
+  margin: 0 1.75rem;
+  flex-shrink: 0;
+}
+
+/* ---- Right product panel ---- */
+.pd-product-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border-radius: 1.5625rem;
+  padding: 2.5rem;
+  min-width: 0;
+}
+
+/* ---- Product card stage (two cards side-by-side) ---- */
+.pd-product-stage {
+  display: flex;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.pd-product-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--pd-hero-card-bg);
+  border-radius: 1.5625rem;
+  padding: 1.5rem;
+  gap: 1rem;
+  border: 1px solid var(--pd-hero-border);
+  min-width: 0;
+}
+
+.pd-product-img {
+  flex: 1;
+  background: transparent;
+  border-radius: 1rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  color: var(--color-black);   /* SVG uses currentColor, flips with theme */
+}
+
+.pd-product-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.pd-product-type {
+  align-self: flex-start;
+  display: inline-flex;
+  padding: 0.25rem 0.625rem;
+  border-radius: 100px;
+  background: var(--color-gray-ultra-light);
+  border: 1px solid var(--color-gray-ultra-light);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--pd-hero-accent);
+}
+
+.pd-product-name {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--pd-hero-fg);
+}
+
+.pd-product-desc {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  font-weight: normal;
+  opacity: 0.5;
+  color: var(--pd-hero-fg3);
+}
+
+/* ========== 5. Scene Grid (centered head + scene card grid) ========== */
+/* Centered intro head + N rows × 3 columns. Each card: num(top-left) + tag(top-right) + title + desc. */
+.pd-scene-grid-section {
+  --pd-grid-accent: #888888;
+  --pd-grid-fg: var(--color-black);
+  --pd-grid-fg2: var(--color-text-secondary);
+  --pd-grid-fg3: var(--color-text-secondary);
+  --pd-grid-card-bg: var(--color-white);
+  --pd-grid-border: var(--color-gray-ultra-light);
+
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+  padding-block: 7.5rem;       /* 仅上下；左右 36px 内缩交给 .container（与 .stats-section 一致） */
+  background: var(--color-background);
+}
+
+/* ---- Grid header (centered) ---- */
+.pd-grid-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.pd-grid-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--pd-grid-fg);
+  margin: 0;
+}
+
+.pd-grid-sub {
+  font-size: 1rem;
+  color: var(--pd-grid-fg2);
+  margin: 0;
+}
+
+/* ---- Card grid container ---- */
+.pd-grid-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pd-grid-row {
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* ---- Single scene card ---- */
+.pd-scene-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem;
+  border-radius: 1.5625rem;
+  background: var(--pd-grid-card-bg);
+  border: 1px solid var(--pd-grid-border);
+}
+
+.pd-scene-card.tall { min-height: 21.25rem; }   /* 340px */
+.pd-scene-card.short { min-height: 17.5rem; }    /* 280px */
+
+/* Card top: num(left) + tag(right) */
+.pd-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.pd-card-num {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--pd-grid-accent);
+}
+
+.pd-card-tag {
+  font-size: 0.6875rem;
+  font-weight: normal;
+  color: var(--pd-grid-fg3);
+  letter-spacing: 0.08em;
+  opacity: 0.5;
+}
+
+/* Card body content */
+.pd-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pd-card-title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--pd-grid-fg);
+  margin: 0;
+}
+
+.pd-scene-card.short .pd-card-title {
+  font-size: 1.25rem;
+}
+
+.pd-card-desc {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--pd-grid-fg2);
+  margin: 0;
+}
+
+.pd-scene-card.short .pd-card-desc {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+/* ========== Responsive (1024 / 768) ========== */
+
+@media (max-width: 1024px) {
+  /* Split head → stack vertically */
+  .pd-split-head-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  .pd-split-aside,
+  .pd-split-aside.wide { width: 100%; }
+  .pd-split-aside.right { text-align: left; }
+
+  /* Hero → stack vertically */
+  .pd-hero-section {
+    flex-direction: column;
+    padding-block: 3rem;
+    min-height: auto;
+  }
+  .pd-hero-copy { width: 100%; }
+  .pd-product-panel { width: 100%; }
+  .pd-product-stage { flex-direction: column; }
+
+  /* Scene grid → single column */
+  .pd-scene-grid-section { padding-block: 4rem; }
+  .pd-grid-row { flex-direction: column; }
+  .pd-scene-card,
+  .pd-scene-card.tall,
+  .pd-scene-card.short { min-height: auto; }
+}
+
+@media (max-width: 768px) {
+  .pd-intro-title { font-size: 2rem; }
+
+  .pd-hero-section { padding-block: 2rem; gap: 2rem; }
+  .pd-product-panel { padding: 1.5rem; border-radius: 1.25rem; }
+  .pd-product-card { padding: 1.25rem; }
+  .pd-product-name { font-size: 1.25rem; }
+  .pd-stats-row { flex-wrap: wrap; gap: 1rem; }
+  .pd-stat-divider { display: none; }
+
+  .pd-scene-grid-section { padding-block: 3rem; gap: 2.5rem; }
+  .pd-scene-card { padding: 1.5rem; }
+  .pd-card-title { font-size: 1.125rem; }
+}
+
+/* ================================================================
+   可复用强调色（装饰文字 / 装饰元素通用工具类）
+   ─────────────────────────────────────────────────────────────
+   供所有组件复用：眉标、分栏头序号、场景卡序号、产品类型标……任意
+   "装饰性文字 / 小元素"需要自定义颜色时，在元素 class 上追加对应
+   工具类即可，例如：<span class="pd-card-num pd-accent-blue">01</span>
+
+   · 颜色为**用户指定值**（蓝 #006fff / 橙 #ff9300 / 红 #eb0000 / 绿 #26ee00），
+     浅色与深色主题同值——该组亮色在深色底上可读性良好，无需调亮
+   · 工具类必须定义在所有组件"默认色"规则之后（本文件末尾），
+     同为单类选择器时靠后的获胜，才能覆盖组件默认 color
+   · 也可直接用变量做非文字装饰：border-color / background 等
+     （如 border-color: var(--pd-accent-blue)）
+   ================================================================ */
+:root {
+  --pd-accent-blue: #006fff;
+  --pd-accent-orange: #ff9300;
+  --pd-accent-red: #eb0000;
+  --pd-accent-green: #26ee00;
+}
+[data-theme="dark"] {
+  --pd-accent-blue: #006fff;
+  --pd-accent-orange: #ff9300;
+  --pd-accent-red: #eb0000;
+  --pd-accent-green: #26ee00;
+}
+.pd-accent-blue   { color: var(--pd-accent-blue); }
+.pd-accent-orange { color: var(--pd-accent-orange); }
+.pd-accent-red    { color: var(--pd-accent-red); }
+.pd-accent-green  { color: var(--pd-accent-green); }

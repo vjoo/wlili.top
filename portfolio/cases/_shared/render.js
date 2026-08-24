@@ -56,7 +56,12 @@ var CaseRenderer = (function () {
     'clients':       renderClients,    // 客户 Logo 条（nixtio Our clients）
     'stats':         renderStats,      // 数据统计（nixtio Why choose us）
     'services':      renderServices,   // 编号服务手风琴（nixtio Services）
-    'team':          renderTeam        // 团队成员卡片（nixtio Our team）
+    'team':          renderTeam,       // 团队成员卡片（nixtio Our team）
+    'eyebrow':       renderEyebrow,    // 眉标（胶囊标签，来自 scenes-tag）
+    'eyebrow-head':  renderEyebrowHead,// 导语头（居中：眉标签 + 标题 + 副标题，来自 scenes-head）
+    'split-head':    renderSplitHead,  // 分栏头（左序号标题 + 右描述，来自 sec-head）
+    'product-hero':  renderProductHero,// 产品首屏（左文案 + 右产品面板，来自 hero）
+    'scene-grid':    renderSceneGrid   // 场景网格（居中头 + 场景卡片网格，来自 scenes）
   };
 
   var TYPE_LABELS = {
@@ -79,7 +84,12 @@ var CaseRenderer = (function () {
     'clients': '客户 Logo 条',
     'stats': '数据统计',
     'services': '服务列表',
-    'team': '团队成员'
+    'team': '团队成员',
+    'eyebrow': '眉标',
+    'eyebrow-head': '导语头',
+    'split-head': '分栏头',
+    'product-hero': '产品首屏',
+    'scene-grid': '场景网格'
   };
 
   function init() {
@@ -1817,6 +1827,141 @@ var CaseRenderer = (function () {
         '<circle cx="30" cy="30" r="28" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>' +
         '<polygon points="25,18 25,42 43,30" fill="rgba(255,255,255,0.6)"/>' +
       '</svg></div></div>';
+  }
+
+  // ===== 14. Eyebrow (pill tag) =====
+  // Single field text; empty = no render
+  function renderEyebrow(s) {
+    if (!s || !s.text) return null;
+    var section = sec('pd-eyebrow-section');
+    section.innerHTML = '<span class="pd-eyebrow">' + esc(s.text) + '</span>';
+    return section;
+  }
+
+  // ===== 15. Intro Head (centered intro) =====
+  // eyebrow / title / subtitle — each optional, empty skips container
+  function renderEyebrowHead(s) {
+    var section = sec('pd-intro-head-section');
+    var html = '';
+    if (s.eyebrow) html += '<span class="pd-eyebrow">' + esc(s.eyebrow) + '</span>';
+    if (s.title) html += '<h2 class="pd-intro-title">' + esc(s.title) + '</h2>';
+    if (s.subtitle) html += '<p class="pd-intro-sub">' + esc(s.subtitle) + '</p>';
+    if (!html) return null; // all empty → skip
+    section.innerHTML = html;
+    return section;
+  }
+
+  // ===== 16. Split Head (left num+title / right aside) =====
+  // Num row: renders only when num or en present; aside: only when aside text exists (wide/right via select)
+  function renderSplitHead(s) {
+    var section = sec('pd-split-head-section');
+    var main = '<div class="pd-split-main">';
+    if (s.num || s.en) {
+      main += '<div class="pd-split-num-row">';
+      if (s.num) main += '<span class="n">' + esc(s.num) + '</span>';
+      if (s.en) {
+        if (s.num) main += '<span class="pd-bar"></span>';
+        main += '<span class="pd-en">' + esc(s.en) + '</span>';
+      }
+      main += '</div>';
+    }
+    if (s.title) main += '<h2 class="pd-split-title">' + esc(s.title) + '</h2>';
+    main += '</div>';
+    section.innerHTML = main;
+    if (s.aside) {
+      var asideCls = 'pd-split-aside';
+      if (s.asideWide === 'wide') asideCls += ' wide';
+      if (s.asideRight === 'right') asideCls += ' right';
+      var aside = document.createElement('div');
+      aside.className = asideCls;
+      aside.innerHTML = '<p>' + esc(s.aside) + '</p>';
+      section.appendChild(aside);
+    }
+    return section;
+  }
+
+  // ===== 17. Product Hero (left copy + right product panel) =====
+  // badge / title / desc / buttons / stats / productType — each optional
+  // 面板头（pd-panel-header / panelLabel / 圆点）已移除，不再渲染
+  function renderProductHero(s) {
+    var section = sec('pd-hero-section');
+    var left = '<div class="pd-hero-copy">';
+    if (s.badge) {
+      left += '<div class="pd-hero-badge"><span class="pd-hero-badge-dot"></span><span class="pd-hero-badge-text">' + esc(s.badge) + '</span></div>';
+    }
+    if (s.title) left += '<h1 class="pd-hero-title">' + esc(s.title) + '</h1>';
+    if (s.desc) left += '<p class="pd-hero-desc">' + esc(s.desc) + '</p>';
+    var stats = Array.isArray(s.stats) ? s.stats : [];
+    if (stats.length) {
+      var st = '';
+      stats.forEach(function (it, i) {
+        if (i > 0) st += '<span class="pd-stat-divider"></span>';
+        st += '<div class="pd-stat-item"><span class="pd-stat-value">' + esc(it.value || '') + '</span>' +
+              '<span class="pd-stat-label">' + esc(it.label || '') + '</span></div>';
+      });
+      left += '<div class="pd-stats-row">' + st + '</div>';
+    }
+    left += '</div>';
+
+    var panel = '<div class="pd-product-panel">';
+    var products = Array.isArray(s.products) ? s.products : [];
+    panel += '<div class="pd-product-stage">';
+    products.forEach(function (p) {
+      panel += '<div class="pd-product-card">';
+      panel += '<div class="pd-product-img">' + (p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.name || '') + '">' : '') + '</div>';
+      panel += '<div class="pd-product-info">';
+      if (p.type) panel += '<span class="pd-product-type">' + esc(p.type) + '</span>';
+      if (p.name) panel += '<div class="pd-product-name">' + esc(p.name) + '</div>';
+      if (p.desc) panel += '<div class="pd-product-desc">' + esc(p.desc) + '</div>';
+      panel += '</div></div>';
+    });
+    panel += '</div></div>';
+
+    section.innerHTML = left + panel;
+    return section;
+  }
+
+  // ===== 18. Scene Grid (centered head + scene card grid) =====
+  // eyebrow / title / subtitle optional; cards is add/delete array, 3 per row; size = tall/short
+  function renderSceneGrid(s) {
+    var section = sec('pd-scene-grid-section');
+    var head = '<div class="pd-grid-head">';
+    if (s.eyebrow) head += '<span class="pd-eyebrow">' + esc(s.eyebrow) + '</span>';
+    if (s.title) head += '<h2 class="pd-grid-title">' + esc(s.title) + '</h2>';
+    if (s.subtitle) head += '<p class="pd-grid-sub">' + esc(s.subtitle) + '</p>';
+    head += '</div>';
+
+    var cards = Array.isArray(s.cards) ? s.cards : [];
+    var grid = '';
+    for (var r = 0; r < cards.length; r += 3) {
+      var rowCards = cards.slice(r, r + 3);
+      grid += '<div class="pd-grid-row">';
+      rowCards.forEach(function (c) {
+        var cls = 'pd-scene-card';
+        if (c.size === 'short') cls += ' short'; else cls += ' tall';
+        grid += '<div class="' + cls + '">';
+        grid += '<div class="pd-card-header">';
+        if (c.num) {
+          // 序号颜色：numColor 白名单校验（blue/orange/red/green）→ 追加可复用强调色工具类 pd-accent-*；
+          // 空值或不合法则不加类，保持默认色（--pd-grid-accent，随主题翻转）。
+          var numCls = 'pd-card-num';
+          if (c.numColor && ['blue', 'orange', 'red', 'green'].indexOf(c.numColor) !== -1) {
+            numCls += ' pd-accent-' + c.numColor;
+          }
+          grid += '<span class="' + numCls + '">' + esc(c.num) + '</span>';
+        }
+        if (c.category) grid += '<span class="pd-card-tag">' + esc(c.category) + '</span>';
+        grid += '</div>';
+        grid += '<div class="pd-card-body">';
+        if (c.title) grid += '<h3 class="pd-card-title">' + esc(c.title) + '</h3>';
+        if (c.desc) grid += '<p class="pd-card-desc">' + esc(c.desc) + '</p>';
+        grid += '</div></div>';
+      });
+      grid += '</div>';
+    }
+
+    section.innerHTML = head + '<div class="pd-grid-body">' + grid + '</div>';
+    return section;
   }
 
   return { init: init, render: render, TYPE_LABELS: TYPE_LABELS };

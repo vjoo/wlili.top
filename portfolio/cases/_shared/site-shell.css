@@ -403,6 +403,7 @@ img {
   color: #616161; /* 胶囊导航链接色（用户指定） */
   position: relative;
   padding: 0.25rem 0;
+  white-space: nowrap; /* 兜底：max-width 收缩动画任意中间帧都不允许文字换行（竖排） */
 }
 
 .nav-link::after {
