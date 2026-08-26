@@ -5,19 +5,11 @@
       "id": "smt0yv412txlb",
       "type": "hero-banner",
       "textLayout": "center",
-      "title": "Premium Digital Agency for Startups, SaaS & Brands",
+      "title": "通行服务一体化综合治理",
       "labels": [
-        {
-          "text": "50+ employees"
-        },
-        {
-          "text": "6 countries"
-        },
-        {
-          "text": "Founded in 2010"
-        }
+        "30 + 研发周期，落地 10+ 省市区，创立于 2010 年"
       ],
-      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
+      "description": "我们将身份核验与硬件门禁管控，整合为统一便民服务生态。",
       "videoType": "image",
       "image": "/portfolio/cases/mybilist/uploads/1787205087556.jpg",
       "videoUrl": "",
@@ -29,12 +21,12 @@
     {
       "id": "smt0yw5imo1i9",
       "type": "team",
-      "label": "Join our mission",
-      "heading": "Our team,",
-      "subheading": "your vision",
-      "desc1": "If you're ready to create and collaborate, we'd love to hear from you.",
-      "desc2": "We thrive on teamwork, turning individual strengths into shared success. Together, we turn ideas into digital products that solve real problems for real people.",
-      "buttonText": "Apply now",
+      "label": "政府 / 行业数字化治理",
+      "heading": "UI&UX",
+      "subheading": "移动端 & Web 后台设计・智能硬件交互设计・数据大屏可视化设计・实名核验与门禁系统界面设计・项目视觉体系搭建",
+      "desc1": "融合移动端应用、智能硬件设备、生物识别技术与智能门禁管控的社区人居数字化综合平台。",
+      "desc2": "",
+      "buttonText": "",
       "items": [
         {
           "name": "",
@@ -58,23 +50,23 @@
     {
       "id": "smt12zv9x6v0r",
       "type": "stats",
-      "label": "Why choose us",
-      "heading": "We design for results – helping your business meet its goals.",
-      "subtitle": "Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.",
+      "label": "",
+      "heading": "全链路智能化数字服务体系",
+      "subtitle": "依托移动端 APP，联动智能门锁、小区匝道闸机、楼栋门禁终端、政务大门访客设备等多类硬件；",
       "videoUrl": "/portfolio/cases/mybilist/uploads/1787203971302.mp4",
       "videoType": "video",
       "items": [
         {
-          "value": "600",
+          "value": "30",
           "suffix": "+",
-          "title": "Successful projects completed",
-          "desc": "We've helped launch over 600 digital products and experiences that make brands stand out and feel human."
+          "title": "研发周期",
+          "desc": "通过实名认证、蓝牙开门、人脸识别核验等技术，标准化实现管理，完成全场景人居信息高效采集与智能核验。"
         },
         {
-          "value": "100",
-          "suffix": "%",
-          "title": "UpWork rating",
-          "desc": "Consistently rated 100% job success and top-rated talent."
+          "value": "10",
+          "suffix": "+",
+          "title": "落地省市区",
+          "desc": "在全国多地落地推广数智项目包括钱塘区、拱墅区、临平区、西湖区、富阳区、滨江区、浙江、新疆、福建等"
         }
       ]
     },

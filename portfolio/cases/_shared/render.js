@@ -200,6 +200,8 @@ var CaseRenderer = (function () {
     });
     // 渲染完成后触发下游脚本
     if (typeof window.initHoverEffects === 'function') window.initHoverEffects();
+    // 焦点缩放应用（带 data-focus 的 img：图片加载完成后微信式缩放/平移定位；懒加载图由 load 委托补应用）
+    applyFocusZooms(container);
     // hero-banner 滚动视差（scroll scrub + 平滑插值；prefers-reduced-motion 时自动跳过）
     initHeroBannerParallax(container);
     // 轮播图（carousel）：懒加载 Swiper 并初始化（无轮播板块时零开销）
@@ -210,6 +212,8 @@ var CaseRenderer = (function () {
     initSwipeSliders(container);
     // 全屏切换轮播（fullscreen-slider）：GSAP Observer 逐屏切换 + 页面锁定（无此板块零开销）
     initFullscreenSliders(container);
+    // 视口可见性：滚出视口暂停持续媒体/动画（视频解码、轮播自动播放），避免离屏消耗 GPU
+    initViewportMedia(container);
     // 动画背景（animated）：延迟加载 ogl+引擎并启动所有 [data-animated-bg] 容器（无此板块零开销）
     if (container.querySelector('[data-animated-bg]')) ensureAnimatedBG();
     // 把新插入的所有板块注册进场动画（site-shell.js 暴露的接口）
@@ -680,6 +684,14 @@ var CaseRenderer = (function () {
             var pag = box.querySelector('.swiper-pagination');
             if (pag) pag.addEventListener('click', function () { swiper.autoplay.stop(); });
           }
+          // 视口可见性：滚出视口暂停自动播放（滚回恢复）——避免离屏仍持续切图动画消耗 GPU
+          box.__pauseAuto = function () { try { if (swiper.autoplay) swiper.autoplay.stop(); } catch (e) {} };
+          box.__resumeAuto = function () {
+            try {
+              if (slideCount > 1 && swiper.autoplay && !swiper.autoplay.running) swiper.autoplay.start();
+            } catch (e) {}
+          };
+          box.dataset.vpPausable = '1';
         } catch (e) {
           console.warn('轮播初始化失败:', e);
         }
@@ -773,6 +785,10 @@ var CaseRenderer = (function () {
         if (timer || n < 2) return;
         timer = setInterval(function () { gotoIndex(currentIndex + 1, 1); }, delay);
       }
+      // 视口可见性：滚出视口暂停自动播放（滚回恢复）——避免离屏仍每 N 秒跑 gsap 切图动画
+      box.__pauseAuto = function () { if (timer) { clearInterval(timer); timer = null; } };
+      box.__resumeAuto = function () { start(); };
+      box.dataset.vpPausable = '1';
 
       // 圆点点击跳转
       dots.forEach(function (d, i) {
@@ -1006,6 +1022,11 @@ var CaseRenderer = (function () {
         }
       }
 
+      // 视口可见性：滚出视口暂停自动播放（滚回恢复）——避免离屏仍每 N 秒切屏跑 gsap 动画
+      section.__pauseAuto = stopAutoPlay;
+      section.__resumeAuto = startAutoPlay;
+      section.dataset.vpPausable = '1';
+
       // 如果需要，初始启动自动播放（当处于可见区域时可优化为可见时播放，这里暂且简单处理）
       startAutoPlay();
 
@@ -1083,6 +1104,54 @@ var CaseRenderer = (function () {
       }
       document.addEventListener('keydown', onKey, { passive: false });
       section._fsKeyHandler = onKey;
+    });
+  }
+
+  // ===== 视口可见性：滚出视口暂停持续媒体/动画（视频解码、轮播自动播放） =====
+  // 与 animated-bg.js 的 IntersectionObserver 同理：
+  //   - 视频（autoplay muted loop）滚出视口仍持续解码渲染 → CPU/GPU 常驻消耗
+  //   - 轮播（Swiper / fs 效果 / fullscreen-slider 自动播放）滚出视口仍每 N 秒切屏跑 gsap 动画
+  // 统一用 IO 暂停/恢复；页面隐藏（visibilitychange）时全部暂停省电。
+  // 轮播容器在各自初始化闭包内注册 __pauseAuto/__resumeAuto + data-vp-pausable="1"。
+  function initViewportMedia(root) {
+    var items = [];
+    // 1) 自动播放视频
+    (root || document).querySelectorAll('video[autoplay]').forEach(function (v) {
+      items.push({
+        el: v,
+        pause: function () { try { if (!v.paused) v.pause(); } catch (e) {} },
+        resume: function () {
+          try {
+            var p = v.play();
+            if (p && p.catch) p.catch(function () {});
+          } catch (e) {}
+        }
+      });
+    });
+    // 2) 注册了 __pauseAuto/__resumeAuto 的轮播容器
+    (root || document).querySelectorAll('[data-vp-pausable]').forEach(function (box) {
+      if (typeof box.__pauseAuto !== 'function' || typeof box.__resumeAuto !== 'function') return;
+      items.push({
+        el: box,
+        pause: function () { try { box.__pauseAuto(); } catch (e) {} },
+        resume: function () { try { box.__resumeAuto(); } catch (e) {} }
+      });
+    });
+    if (!items.length) return;
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var it = en.target.__vpItem;
+        if (!it) return;
+        if (en.isIntersecting) it.resume(); else it.pause();
+      });
+    }, { rootMargin: '100px' }); // 提前 100px 进入/离开视口，避免边缘抖动反复启停
+    items.forEach(function (it) {
+      it.el.__vpItem = it;
+      io.observe(it.el);
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) items.forEach(function (it) { it.pause(); });
     });
   }
 
@@ -1259,10 +1328,12 @@ var CaseRenderer = (function () {
     // placeholder = 不渲染左侧 block-image，让白色文字卡片占满整行
     var hasMedia = scType !== 'placeholder';
     var blocksCls = 'two-blocks' + (hasMedia ? '' : ' two-blocks--single');
+    // 左右互换：layout=text-first 时文字卡片排左、图片排右（CSS 仅桌面 >1024px 生效，移动端恢复上图下字）
+    if (hasMedia && s.layout === 'text-first') blocksCls += ' two-blocks--text-first';
     var right = hasMedia
       ? (scType === 'animated'
           ? animatedMedia(animatedEffect(s), s.animatedParams)
-          : videoPlaceholder(scType, scMedia, s.label || 'Showcase Media'))
+          : videoPlaceholder(scType, scMedia, s.label || 'Showcase Media', s.imageFocus))
       : '';
     var blockImageHtml = '';
     if (hasMedia) {
@@ -1511,11 +1582,13 @@ var CaseRenderer = (function () {
     var section = sec('image-section');
     var grid = el('div');
     grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:stretch;';
-    var colStyle = 'width:100%;aspect-ratio:1/1;background:#fafafa;border-radius:25px;overflow:hidden;display:flex;align-items:center;justify-content:center;';
+    // position:relative 是焦点缩放 img position:absolute 的定位基准（缺了 img 会相对页面级定位 → 偏移/露底）
+    // background 用 var(--color-gray-ultra-light) 随浅深主题翻转（浅色 #fafafa 系 / 深色 rgba(255,255,255,0.06)）
+    var colStyle = 'width:100%;aspect-ratio:1/1;background:var(--color-gray-ultra-light);border-radius:25px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;';
     var col1 = el('div'); col1.style.cssText = colStyle;
     var col2 = el('div'); col2.style.cssText = colStyle;
-    if (s.image1) { var i1 = img(s.image1, 'Image 1'); i1.style.cssText = 'width:100%;height:100%;object-fit:cover;'; col1.appendChild(i1); }
-    if (s.image2) { var i2 = img(s.image2, 'Image 2'); i2.style.cssText = 'width:100%;height:100%;object-fit:cover;'; col2.appendChild(i2); }
+    if (s.image1) { var i1 = img(s.image1, 'Image 1'); i1.style.cssText = 'width:100%;height:100%;object-fit:cover;'; if (s.imageFocus1) i1.setAttribute('data-focus', s.imageFocus1); col1.appendChild(i1); }
+    if (s.image2) { var i2 = img(s.image2, 'Image 2'); i2.style.cssText = 'width:100%;height:100%;object-fit:cover;'; if (s.imageFocus2) i2.setAttribute('data-focus', s.imageFocus2); col2.appendChild(i2); }
     grid.appendChild(col1); grid.appendChild(col2);
     section.appendChild(grid);
     return section;
@@ -1680,7 +1753,7 @@ var CaseRenderer = (function () {
       media = '<div class="stats-media">' + animatedMedia(animatedEffect(s), s.animatedParams) + '</div>';
     } else if (s.videoUrl) {
       media = '<div class="stats-media">' +
-        videoPlaceholder(s.videoType || 'video', s.videoUrl, '') +
+        videoPlaceholder(s.videoType || 'video', s.videoUrl, '', s.imageFocus) +
       '</div>';
     }
     section.innerHTML =
@@ -1780,12 +1853,20 @@ var CaseRenderer = (function () {
       var it = gridItems[i];
       var name = (it && it.name) || '';
       if (it && it.photo) {
-        cardsHtml += '<div class="team-photo-card"><img src="' + esc(it.photo) + '" alt="' + esc(name) + '" loading="lazy"></div>';
+        // 焦点（item.imageFocus "x,y" 或 "x,y,zoom"）：加 data-focus 标记，由 applyFocusZoom 在图片
+        // 加载后用 transform 方案应用（object-position + zoom，放大后双向可平移）；默认 50% 50% 居中、1x
+        var fp = '';
+        if (it.imageFocus) {
+          var fv = String(it.imageFocus).trim().match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/);
+          if (fv) fp = ' data-focus="' + esc(fv[1] + ',' + fv[2] + (fv[3] ? ',' + fv[3] : '')) + '"';
+        }
+        cardsHtml += '<div class="team-photo-card"><img src="' + esc(it.photo) + '" alt="' + esc(name) + '" loading="lazy"' + fp + '></div>';
       } else {
         cardsHtml += '<div class="team-photo-card team-photo-empty"><span>' + esc(name ? name.slice(0, 1).toUpperCase() : '?') + '</span></div>';
       }
     }
-    var btnText = s.buttonText || 'Apply now';
+    // 按钮文字：后台不填（buttonText 为空）则不渲染按钮（无默认值兜底）
+    var btnText = s.buttonText;
     section.innerHTML =
       '<div class="team-card-wrap">' +
         '<div class="team-text">' +
@@ -1809,8 +1890,62 @@ var CaseRenderer = (function () {
     return section;
   }
 
+  // ===== 焦点缩放应用（微信头像式）：图片显示尺寸 = zoom × cover 尺寸，transform translate 定位 =====
+  // 数据 data-focus="x,y,zoom"（object-position 百分比 + 缩放倍数）。窗口（容器 overflow:hidden）显示图片局部，
+  // zoom>1 时横向纵向都有平移空间——object-fit:cover 等比放大盒方案在 16:9 图 / 4:5 竖框下纵向永远贴齐，
+  // 放大也无上下空间，必须用「图片实际尺寸 = zoom×cover」+ translate 才可双向移动。
+  function applyFocusZooms(root) {
+    var list = (root || document).querySelectorAll('img[data-focus]');
+    for (var i = 0; i < list.length; i++) applyFocusZoom(list[i]);
+  }
+  function applyFocusZoom(img) {
+    if (img.dataset.focusApplied === '1') return true;
+    var d = String(img.getAttribute('data-focus') || '50,50,1').split(',').map(Number);
+    var x = Math.max(0, Math.min(100, d[0] || 50));
+    var y = Math.max(0, Math.min(100, d[1] || 50));
+    var box = img.parentElement;
+    if (!box || !img.naturalWidth || img.naturalWidth < 2) return false; // 未加载完，等 onload 再应用
+    var W = box.clientWidth, H = box.clientHeight;
+    if (!W || !H) return false;
+    var r = img.naturalWidth / img.naturalHeight;
+    var cw = Math.max(W, H * r), ch = Math.max(H, W / r); // zoom=1 时 cover 显示尺寸
+    // z 硬 clamp 到 [1, 图片 1:1 物理像素]：z_max = min(natW/cw, natH/ch)，
+    // 超出则浏览器物理放大 natural 像素 → 模糊（存量旧数据如 "x,y,3" 也在此兜底）
+    var zMax = Math.max(1, Math.min(img.naturalWidth / cw, img.naturalHeight / ch));
+    var zRaw = d[2] || 1;
+    if (zRaw > zMax + 0.001) {
+      // z 被 clamp：按"显示中心不变"反算 x/y（旧显示窗口中心对应的图片绝对位置在新尺寸下也是中心），
+      // 避免 clamp 后窗口跳到图片不同区域造成"偏移"感
+      var oldDw = zRaw * cw, oldDh = zRaw * ch;
+      var newDw = zMax * cw, newDh = zMax * ch;
+      if (oldDw > W) x = Math.max(0, Math.min(100, x * (oldDw - W) / (newDw - W)));
+      if (oldDh > H) y = Math.max(0, Math.min(100, y * (oldDh - H) / (newDh - H)));
+    }
+    var z = Math.max(1, Math.min(zMax, zRaw));
+    var dw = z * cw, dh = z * ch;                          // zoom 后图片显示尺寸
+    // 脱离 flex 居中（.team-photo-card 等容器 flex 居中会破坏 translate 数学）→ 左上对齐
+    img.style.position = 'absolute';
+    img.style.left = '0';
+    img.style.top = '0';
+    img.style.margin = '0';
+    img.style.maxWidth = 'none';                           // 关键：覆盖 site-shell.css 全局 img{max-width:100%}
+    img.style.maxHeight = 'none';                          // 否则放大尺寸被 clamp 回容器宽 → 右缘露背景色块
+    img.style.width = dw + 'px';
+    img.style.height = dh + 'px';
+    img.style.objectPosition = '0 0';                     // 盒比例 = 图片比例 → cover 无裁切（fill 等价）
+    img.style.transform = 'translate(' + (-(dw - W) * x / 100).toFixed(2) + 'px,' + (-(dh - H) * y / 100).toFixed(2) + 'px)';
+    img.dataset.focusApplied = '1';
+    return true;
+  }
+  // 懒加载/异步图片加载完成后补应用（事件委托捕获阶段，不重复绑定每个 img）
+  document.addEventListener('load', function (e) {
+    if (e.target && e.target.tagName === 'IMG' && e.target.hasAttribute('data-focus')) {
+      applyFocusZoom(e.target);
+    }
+  }, true);
+
   // ===== 媒体渲染（图片/动图/视频统一：按 URL 扩展名自动识别，后台不再区分上传类型） =====
-  function videoPlaceholder(type, url, alt) {
+  function videoPlaceholder(type, url, alt, focus) {
     if (url) {
       // 按 URL 扩展名自动识别：mp4/webm/mov/m4v/ogv/ogg → <video>，其余（jpg/png/webp/gif/apng/avif）→ <img>
       var ext = String(url).split('?')[0].split('.').pop().toLowerCase();
@@ -1820,7 +1955,14 @@ var CaseRenderer = (function () {
         // 关键：不加 controls 属性 → 不显示进度条/播放按钮/音量
         return '<video src="' + esc(url) + '" autoplay muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;"></video>';
       }
-      return '<img src="' + esc(url) + '" alt="' + esc(alt || '') + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
+      // 焦点（focus "x,y" 或 "x,y,zoom"）：加 data-focus 标记，由 applyFocusZoom 在图片加载后
+      // 用 transform 方案应用（object-position + zoom，放大后双向可平移）；默认 50% 50% 居中、1x
+      var df = '';
+      if (typeof focus === 'string') {
+        var fm = focus.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/);
+        if (fm) df = ' data-focus="' + esc(fm[1] + ',' + fm[2] + (fm[3] ? ',' + fm[3] : '')) + '"';
+      }
+      return '<img src="' + esc(url) + '" alt="' + esc(alt || '') + '"' + df + ' style="width:100%;height:100%;object-fit:cover;object-position:0 0;border-radius:inherit;">';
     }
     return '<div class="video-placeholder warm-shot"><div class="placeholder-icon">' +
       '<svg width="60" height="60" viewBox="0 0 60 60" fill="none">' +

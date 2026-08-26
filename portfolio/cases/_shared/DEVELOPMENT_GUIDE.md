@@ -381,28 +381,48 @@ portfolio/
 11. **`const`/`let` 不挂 `window`（新体系头号大坑）**：页面标识必须写 `window.CASE_KEY = 'xxx'`。写 `const CASE_KEY` 时，共享 render.js 读 `window.CASE_KEY` 得到 undefined → 走 `__KEY__` 回退 → 内容 API 404 → 页面空白。复制页面时服务端会自动替换成 `window.CASE_KEY` 写法，**手写新页面时务必遵守**
 12. **`linkPage` 写错导致 404**：站内跳转 key 必须与 `cases.json` 的 `key` 完全一致（大小写敏感）；为空/缺省时自动回退 `linkUrl`/`href`，不会报错，容易漏检，跳转前先在统一后台「页面管理」核对 key
 13. **改服务端 API 后忘记重启**：服务端只有 `server.py`（8080）一份代码，改 `/api/*` 后必须重启才生效；`portfolio/manage_server.py`（8090）已废弃（2026-08-11），**不要再去同步维护它**，确认无用后直接删除
-14. **上传图片不压缩 → uploads 越来越大**：`/api/cases/<key>/upload` 已内置 `pf_optimize_image` 自动压缩（Gallery 传 `sectionType=gallery` 时缩到 700px，其他走 2560 兜底）。**不要再把原图直接写盘**；若改了压缩逻辑记得重启服务。上传只保留当前被 content.json 引用的文件，历史/重复图片定期清理（用正则提取 `uploads/xxx` 引用集合，删除未引用的）。**需要更多压缩/转格式能力时复用已有实现，不新写**：服务端一律 Pillow（server.py 的 `pf_optimize_image`），客户端浏览器端见 `tools/DEVELOPMENT_GUIDE.md` §十三 选型表（image-compress/image-upscale 等）
+14. **上传图片不压缩 → uploads 越来越大**：`/api/cases/<key>/upload` 已内置 `pf_optimize_image` 自动压缩（Gallery 传 `sectionType` 时缩到 700px 宽；Showcase 传 `sectionType='showcase'` 时覆盖式缩到铺满显示框 722×785；Team 头像传 `sectionType='team'` 时覆盖式缩到铺满 4:5 竖框 400×500；其他走 2560 兜底）。**不要再把原图直接写盘**；若改了压缩逻辑记得重启服务。上传只保留当前被 content.json 引用的文件，历史/重复图片定期清理（用正则提取 `uploads/xxx` 引用集合，删除未引用的）。**需要更多压缩/转格式能力时复用已有实现，不新写**：服务端一律 Pillow（server.py 的 `pf_optimize_image`），客户端浏览器端见 `tools/DEVELOPMENT_GUIDE.md` §十三 选型表（image-compress/image-upscale 等）
 
-    **§十二.1 图片防抓取：Gallery 截图墙专用 700px 尺寸限制（2026-08-17，覆盖旧 .th. 缩略图方案）**
-    > ⚠️ **重要约束**：本机制**只针对 Gallery 截图墙（多图瀑布）**，其余组件（Hero/Banner/Parallax/SingleImage/Showcase/DoubleImage/Clients/Team/NextProjects 等）一律用上传路径的原图，不做任何尺寸限制。
-    > ⚠️ **旧 .th. 缩略图方案已废弃**：2026-08-18 曾用 `.th.jpg` 650px 侧车缩略图方案，现已全部删除，改为**上传时直接缩到 700px 覆盖保存**，更简单，不再生成任何 .th. 文件。
+    **§十二.1 图片防抓取：Gallery 700px / Showcase 722×785 / Team 640×800 覆盖式 / HeroBanner 1680px 尺寸限制（2026-08-17 建立，2026-08-26 扩展 Showcase + Team + HeroBanner）**
+    > ⚠️ **重要约束**：本机制**只针对 Gallery 截图墙（多图瀑布）、Showcase 展示区（焦点图）、Team 团队区块（成员头像）与 HeroBanner 大Banner（首屏大图/轮播图）**，其余组件（Hero/Parallax/SingleImage/DoubleImage/Clients/Stats/Services/NextProjects 等）一律用上传路径的原图，不做任何尺寸限制。
+    > ⚠️ **旧 .th. 缩略图方案已废弃**：2026-08-18 曾用 `.th.jpg` 650px 侧车缩略图方案，现已全部删除，改为**上传时直接缩放覆盖保存**，更简单，不再生成任何 .th. 文件。
 
-    **Gallery 图片规格（上传时处理）**：
-    - admin.html 上传 Gallery 图片时传 `sectionType: 'gallery'` 参数。
-    - server.py 收到 `sectionType=gallery` 后，调 `pf_optimize_image(data, ext, fmt, max_side=700)`：宽>700px 的图缩到 700px（等比，只缩不放）；≤700 不处理。
+    **Gallery / Showcase / Team / HeroBanner / DoubleImage / Stats / Masonry 图片规格（上传时处理）**：
+    - admin.html 上传 Gallery 图片时传 `sectionType: 'gallery'`；Showcase 焦点图传 `'showcase'`（section 级 `focus: true` 字段标记，bindImageField 判定）；Team 成员头像传 `'team'`（items-list 内 `focus: true` 的 image 字段，bindItemImages 的 `data-il-focus="1"` 判定）；HeroBanner 首屏大图/轮播图传 `'hero-banner'`（bindImageField / bindItemImages 里按 `state.sections[selectedIndex].type === 'hero-banner'` 判定）；DoubleImage 双图传 `'double-image'`；Stats 左图（video 字段上传图片）传 `'stats'`；Masonry 瀑布流封面图传 `'masonry'`。
+    - **Gallery**：`pf_optimize_image(data, ext, fmt, max_side=700)`——宽>700px 的图缩到 700px（等比，只缩不放）；≤700 不处理。
+    - **Showcase**：`pf_optimize_image(data, ext, fmt, cover_box=(722, 785))`——**覆盖式**缩放：等比缩到刚好覆盖显示框（同 CSS `object-fit:cover` 的显示尺寸）。横图（宽高比 > 722/785）高度贴齐 785px；竖图宽度贴齐 722px。图比显示框小则不放大。
+    - **Team**：`pf_optimize_image(data, ext, fmt, cover_box=(640, 800))`——**覆盖式**缩放，显示框 `.team-photo-card` 为 4:5 竖框（桌面每卡约 248×310，**640×800 约 2.6 倍余量：焦点缩放放大 2 倍看局部仍 1:1 不糊**；勿用 400×500——放大 2-3 倍会因像素不足被浏览器拉伸模糊）。
+    - **HeroBanner**：`pf_optimize_image(data, ext, fmt, max_side=1680)`——宽>1680px 的图缩到 1680px（等比，只缩不放）。全屏 cover 背景：1440 屏 1:1、1920 屏轻微放大 <1.2× 无感；避免原图 2560 直出（省约 50-60% 流量）。**不覆盖式**（首屏图无固定比例框，cover 裁切由显示框决定）。
+    - **DoubleImage**：`pf_optimize_image(data, ext, fmt, cover_box=(1440, 1440))`——覆盖式 1:1 方框（前台每列 `aspect-ratio: 1/1`，桌面约 722×722，**1440 = 显示框 2 倍余量**：大图压缩后仍可焦点放大 2× 1:1 不糊。⚠️ 曾用 1080（1.5 倍）把 4000×3000 大图压到只剩 1.33 倍余量，用户反馈"不能放大"——cover_box 必须 = 显示框 × 期望最大缩放）。双图焦点**分开存** `imageFocus1`/`imageFocus2`（renderImageFieldWithUrl 的 `focusKey` 参数；bindFocusPanel 缺省按 hidden 的 `data-bind-key` 动态写字段，不再硬编码 imageFocus）。
+    - **Stats**：`pf_optimize_image(data, ext, fmt, cover_box=(960, 1200))`——覆盖式 4:5 竖框（前台 `.stats-media` 4/5，桌面约 400×500，2.4 倍余量支持焦点放大 2×）。**stats 左图走 video 字段**（视频/图片混用）：`renderVideoFieldWithUrl` 支持 `options.focus`（URL 是图片时渲染 4:5 焦点面板）；`bindVideoField` 上传时按 file.type 分流——图片 → `uploadImage(file, 'auto', 'stats')`（fmt auto 智能保留透明），视频 → `uploadVideo` 原样。动图（gif/apng）与视频不压缩。
+    - **Masonry**：`pf_optimize_image(data, ext, fmt, max_side=800)`——宽>800px 缩到 800px（等比只缩不放）。瀑布流封面图**按原始比例自然排布**（非固定裁切框，`column-count:3` 桌面每列约 470px）→ 走按宽度规则（同 Gallery），800 = 列宽 1.7 倍（2x 屏 1:1）。**不覆盖式**（无固定框）。⚠️ 批量重处理存量图时**透明 png 必须用 fmt='auto'**（曾用 'jpg' 把透明 logo 填白底误转）。
     - **原尺寸图不保留**——缩完直接覆盖保存，不存原始大图。
-    - 质量：JPEG quality=90、PNG optimize（透明 PNG 保持 PNG）。
-    - 其他组件上传（无 sectionType 或非 gallery）：走默认 `max_side=2560` 兜底，不统一缩放。
+    - **格式（质量压缩，与尺寸压缩并行）**：后台格式下拉**默认 JPG**（`fmt='jpg'` 透明填白底 q90）——`webp` 可选（有损 q82 / 透明无损，体积更小；2026-08-26 曾设默认并全量迁移，因前台显示/兼容问题回退默认 JPG）；`png` 保留透明；`auto` 无透明转 JPG、透明留 PNG。**存量已全量回退 jpg（2026-08-26，从 webp-migration 备份无损恢复）**；PNG（透明 logo）与 gif/apng 动图保持原格式。
+    - ⚠️ **透明 PNG 缩放必须预乘 alpha**（2026-08-26 修）：PIL 直接 LANCZOS 缩放 RGBA 时，透明像素的 RGB（导出工具常存白色）会混入边缘 → 半透明白边/锯齿。`pf_optimize_image` 缩放透明图走 `_premultiply_alpha`（rgb=rgb×alpha/255，ImageChops.multiply L 整数）→ resize → `_unpremultiply_alpha`（逐像素除 alpha，只处理 alpha∈(0,255)，alpha<8 归零避免除法噪声）。缩放过的透明图统一 RGBA 输出（P 索引色 8bit 展开 32bit，边缘平滑）。**PNG 分支「重编码不小于原图回退原字节」仅限未缩放（need_resize=false）**——曾因回退丢弃缩放结果导致透明图尺寸压缩失效。实测可见白边 12% → 2.7%。
+    - 其他组件上传（无 sectionType 或非 gallery/showcase/team/hero-banner）：走默认 `max_side=2560` 兜底，不统一缩放。
+    - ⚠️ **Showcase/Team 不能用 700px 宽规则**：显示框都是竖框（showcase 722/785、team 4/5），object-fit:cover 按显示框裁切，按宽度压会把 16:9 横图高度压没、被前台拉伸变模糊；覆盖式保证显示时 1:1 像素映射不放大。
 
     **组件选择规则（render.js）**：
     | 组件 | 图片路径处理 |
     | --- | --- |
     | Gallery（截图墙多图瀑布） | 直接用原图 URL（`esc(src)`），文件本身已 ≤700px，无需任何特殊处理。 |
-    | Hero / HeroBanner / Parallax / SingleImage / Showcase / Stats 配图 / DoubleImage / Clients / Team / NextProjects | **原样用原图 URL**，不做任何二次处理。 |
+    | Showcase（展示区焦点图） | 直接用原图 URL（`esc(src)`），文件已按覆盖式规则缩放（横图高≥785、竖图宽≥722），显示时 1:1 不放大。 |
+    | Team（团队成员头像） | 直接用原图 URL（`esc(src)`），文件已按覆盖式规则缩放（4:5 覆盖 400×500），显示时 1:1 不放大。 |
+    | Hero / Parallax / SingleImage / Stats 配图 / DoubleImage / Clients / NextProjects | **原样用原图 URL**，不做任何二次处理。 |
+    | HeroBanner（大Banner 首屏大图 / 轮播图） | 直接用原图 URL（`esc(src)`），文件已缩到 ≤1680px 宽，全屏 cover 背景 1440 屏 1:1 不放大。 |
+
+    **焦点调整（imageFocus）数据格式**：
+    - 焦点字段（showcase 的 image、team 的 photo）后台有「焦点调整」面板：**拖动平移 + 滑块等比缩放**（微信头像式，放大后可选显示局部画面，横纵双向可平移）。
+    - 数据存 `imageFocus = "x,y,zoom"`（object-position 百分比 + 缩放倍数，zoom 默认 1；兼容旧格式 `"x,y"`）。
+    - **前台应用（transform 方案）**：图片显示尺寸 = `zoom × cover 尺寸`（图片比例不变），`transform: translate(-(dw-W)×x/100, -(dh-H)×y/100)` 定位，容器 overflow:hidden 显示局部。**不能用 object-fit:cover 等比放大盒**——16:9 图在 4:5 竖框下 cover 纵向永远贴齐盒，放大也无上下空间；transform 方案 zoom>1 时横纵都有平移空间。
+    - 前台实现：img 带 `data-focus="x,y,zoom"` → render.js `applyFocusZoom()`（渲染完成后 + img load 事件委托）设置尺寸/transform，img 需 `position:absolute` 脱离 flex 居中（容器 position:relative）。
+    - 缩放时后台保持显示中心不变（x/y 按 `× z_old/z_new` 反比调整）。
+    - **z 范围 = [1, 图片 1:1 物理像素] = `[1, min(natW/cw, natH/ch)]`**：z=1 时图片刚好填满窗口（无背景色块），z_max 时图片 = natural 像素（1:1 不模糊），z>z_max 浏览器放大 → 模糊 → 滑块硬 clamp。绑定时传 `frontBox=[W,H]`（showcase 722×785、team 248×310 桌面默认）让 z_max 按前台框算，保证前台永远不模糊。
+    - ⚠️ items-list 内焦点 hidden 用 `data-il-key="imageFocus"`（ftype=focus），**不能**用 section 级 `data-bind-key="imageFocus"`，否则被 renderEditorForm 收集器误写成 section.imageFocus。
 
     **上传流程**：
-    - 新上传：admin.html `uploadMedia(file, fmt, sectionType)` → Gallery 传 `'gallery'` → server.py `pf_optimize_image(max_side=700)` 缩放覆盖保存。
-    - 存量图：`scripts/process_gallery_images.py` 批量处理已有 Gallery 图片 + 清理 .th.* 旧文件 + 清理孤儿图片。
+    - 新上传：admin.html `uploadMedia(file, fmt, sectionType)` → Gallery 传 `'gallery'`（max_side=700）、Showcase 焦点图传 `'showcase'`（cover_box=722×785）、Team 头像传 `'team'`（cover_box=640×800）、HeroBanner 首屏/轮播图传 `'hero-banner'`（max_side=1680）→ server.py `pf_optimize_image` 缩放覆盖保存。
+    - 存量图：`scripts/process_gallery_images.py` 批量处理已有 Gallery 图片 + 清理 .th.* 旧文件 + 清理孤儿图片（Showcase/Team 存量图不在此脚本范围，重新上传/替换即走新规则）。
       ```bash
       # 先预览，确认无误再执行
       python scripts/process_gallery_images.py --dry-run

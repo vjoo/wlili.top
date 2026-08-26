@@ -363,6 +363,12 @@
   grid-template-columns: 1fr;
 }
 
+/* 左右互换：左字右图（后台「左右布局」= 左字右图 时）。
+   仅桌面（>1024px，两列并排）生效——order 反转让文字排左、图片排右；
+   移动端（≤1024px，两列变一列堆叠）恢复默认 order，保持"上图下字"。 */
+.two-blocks.two-blocks--text-first .block-text { order: -1; }
+.two-blocks.two-blocks--text-first .block-image { order: 0; }
+
 .block {
   min-width: 0;
 }
@@ -399,6 +405,11 @@
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
   transform: translateX(-100%);
   animation: shimmer 2.5s infinite;
+}
+/* 图片加载后 ::before 被 img 盖住但 shimmer 仍每 2.5s 无限循环（无意义的常驻动画）→ 有 img 时停掉 */
+.block-img-placeholder:has(img)::before {
+  animation: none;
+  opacity: 0;
 }
 
 /* 文字区块：白色卡片 */
@@ -1010,6 +1021,11 @@
   .challenges-main,
   .two-blocks {
     grid-template-columns: 1fr;
+  }
+  /* 展示区左右互换在移动端不生效：一列堆叠时强制恢复 DOM 顺序（图在上、字在下） */
+  .two-blocks.two-blocks--text-first .block-text,
+  .two-blocks.two-blocks--text-first .block-image {
+    order: 0;
   }
 
   .big-title {
@@ -1681,6 +1697,9 @@
 
 .team-title-b {
   display: block;
+  /* 第二行字号与第一行(.team-title: clamp(34px,4.5vw,52px))关联缩放：vw 系数为第一行的 0.65 倍，
+     桌面上限 34px（用户实测合适值），移动端下限 22px 随断点缩小，不写死 PC 单值 */
+  font-size: clamp(22px, 2.93vw, 34px);
   color: rgba(10, 10, 10, 0.6);
 }
 
@@ -1746,6 +1765,7 @@
 }
 
 .team-photo-card {
+  position: relative; /* 焦点缩放 img position:absolute 的定位基准 */
   border-radius: 18px;
   overflow: hidden;
   aspect-ratio: 4 / 5;
@@ -2631,7 +2651,8 @@
 [data-theme="dark"] .project-card-image,
 [data-theme="dark"] .client-logo,
 [data-theme="dark"] .stat-item,
-[data-theme="dark"] .team-card-wrap {
+[data-theme="dark"] .team-card-wrap,
+[data-theme="dark"] .team-photo-card {
   background: #1a1a1a;
 }
 /* 文字类硬编码 → 深色主题下的浅色 */

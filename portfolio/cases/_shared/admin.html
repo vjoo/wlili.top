@@ -396,6 +396,63 @@ body {
 .dropzone-preview .dz-clear:hover { background: var(--danger-color); }
 .dropzone-preview .dz-clear svg { width: 14px; height: 14px; }
 
+/* ===== 图片焦点调整面板（微信头像式：上传大图缩略图 + 下方小图拖动显示区域） ===== */
+/* 上传预览（dropzone）在上，焦点调整框在下方，普通块布局 */
+.img-field-media { min-width: 0; }
+.img-focus {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px dashed var(--border-light, #ddd);
+  border-radius: 12px;
+  background: var(--bg-secondary, #f7f7f9);
+  min-width: 0;
+}
+.img-focus-stage {
+  width: min(200px, 100%);
+  aspect-ratio: 722 / 785; /* 与前台 .block-img-placeholder 一致 */
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 auto;
+  cursor: grab;
+  background: #000;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.img-focus.dragging .img-focus-stage { cursor: grabbing; }
+.img-focus-stage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.img-focus-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  text-align: center;
+  line-height: 1.4;
+}
+.img-focus-zoom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted, #888);
+}
+.img-focus-zoom .img-focus-zoom-range {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent, #006fff);
+  cursor: pointer;
+}
+.img-focus-zoom .img-focus-zoom-val {
+  min-width: 34px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== Video preview (uses <video> element to show first frame) ===== */
 .dropzone-preview.dz-video-preview {
   background: #000;
@@ -2522,11 +2579,13 @@ const TYPE_FIELDS = {
     { key: 'linkText', label: '链接文字', type: 'text' }
   ],
   'showcase': [
+    { key: 'layout', label: '左右布局（仅桌面生效，移动端保持上图下字）', type: 'select', options: ['', 'text-first'],
+      optionLabels: { '': '左图右字（默认）', 'text-first': '左字右图' }, default: '' },
     { key: 'label', label: '标签', type: 'text' },
     { key: 'desc', label: '描述', type: 'textarea' },
     { key: 'videoType', label: '媒体类型', type: 'select', options: ['placeholder', 'video', 'image', 'animated'],
       hint: 'placeholder=占位纯色；video=播放视频；image=静态图片；animated=动画背景' },
-    { key: 'image', label: '图片', type: 'image', dependsOn: { field: 'videoType', value: 'image' } },
+    { key: 'image', label: '图片', type: 'image', focus: true, dependsOn: { field: 'videoType', value: 'image' } },
     { key: 'videoUrl', label: '视频', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
     { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
       dependsOn: { field: 'videoType', value: 'animated' } },
@@ -2558,8 +2617,8 @@ const TYPE_FIELDS = {
       dependsOn: { field: 'videoType', value: 'animated' } }
   ],
   'double-image': [
-    { key: 'image1', label: '图片1', type: 'image' },
-    { key: 'image2', label: '图片2', type: 'image' }
+    { key: 'image1', label: '图片1', type: 'image', focus: true },
+    { key: 'image2', label: '图片2', type: 'image', focus: true }
   ],
   'testimonial': [
     { key: 'title', label: '标题', type: 'text' },
@@ -2602,7 +2661,7 @@ const TYPE_FIELDS = {
     { key: 'videoType', label: '左侧媒体类型', type: 'select', options: ['video', 'none', 'animated'],
       optionLabels: { 'video': '视频/图片（默认）', 'none': '不显示', 'animated': '动画背景' },
       default: 'video', hint: '动画背景：左侧用动画背景替代视频/图片' },
-    { key: 'videoUrl', label: '左侧视频（圆角竖版，留空则不显示）', type: 'video', hint: '上传 mp4/webm 或填直链', dependsOn: { field: 'videoType', value: 'video' } },
+    { key: 'videoUrl', label: '左侧视频（圆角竖版，留空则不显示）', type: 'video', focus: true, hint: '上传 mp4/webm 或填直链；上传图片（png/jpg）自动覆盖式压缩 4:5 竖框 960x1200 并可用焦点调整', dependsOn: { field: 'videoType', value: 'video' } },
     { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
       dependsOn: { field: 'videoType', value: 'animated' } },
     { key: 'animatedParams', label: '动画参数', type: 'animated-params',
@@ -2630,14 +2689,14 @@ const TYPE_FIELDS = {
     { key: 'subheading', label: '标题第二行（灰色）', type: 'text', placeholder: 'your vision' },
     { key: 'desc1', label: '左栏正文', type: 'textarea' },
     { key: 'desc2', label: '右栏正文', type: 'textarea' },
-    { key: 'buttonText', label: '按钮文字', type: 'text', placeholder: 'Apply now' },
+    { key: 'buttonText', label: '按钮文字（选填，留空则不显示按钮）', type: 'text', placeholder: 'Apply now' },
     { key: 'avatarColorMode', label: '头像颜色模式', type: 'select',
       options: ['grayscale', 'color'],
       optionLabels: { grayscale: '黑白（默认，灰度去色）', color: '彩色（原图）' },
       default: 'grayscale' },
-    { key: 'items', label: '成员头像（2×2 拼图，最多 4 个）', type: 'items-list', itemLabel: '成员', itemFields: [
+    { key: 'items', label: '成员头像（2×2 拼图，最多 4 个）', type: 'items-list', itemLabel: '成员', max: 4, itemFields: [
       { key: 'name', label: '姓名', type: 'text', placeholder: 'Bogdan' },
-      { key: 'photo', label: '头像照片', type: 'image' }
+      { key: 'photo', label: '头像照片', type: 'image', focus: true }
     ] }
   ],
 
@@ -2718,7 +2777,7 @@ function getDefaultSection(type) {
     case 'brand-logo': return { ...base, logoUrl: '' };
     case 'parallax': return { ...base, videoType: 'image', baseImage: '', overlayImage: '' };
     case 'text': return { ...base, label: '', heading: '', body: '', linkPage: '', linkUrl: '', linkText: '' };
-    case 'showcase': return { ...base, label: '', desc: '', image: '', videoUrl: '', videoType: 'placeholder' };
+    case 'showcase': return { ...base, label: '', desc: '', image: '', videoUrl: '', videoType: 'image' };
     case 'gallery': return { ...base, label: '', heading: '', colCount: '3', columns: [
       { offsetRem: 0, images: [] }, { offsetRem: 0, images: [] }, { offsetRem: 0, images: [] }
     ] };
@@ -2882,18 +2941,25 @@ function genId() {
 const MEDIA_EXT_ALL = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'bmp', 'tiff', 'tif', 'ico', 'apng', 'svg', 'mp4', 'webm', 'mov', 'm4v', 'ogv', 'ogg'];
 const MEDIA_ACCEPT = '.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp,.tiff,.tif,.ico,.apng,.svg,.mp4,.webm,.mov,.m4v,.ogv,.ogg';
 
-/* 单次上传格式选择（放在每个上传控件旁，仅对本次上传生效，不做全局记忆）：
-   jpg  → 转 JPG（透明填白底，体积最小，默认）
+/* 单次上传格式选择（放在每个上传控件旁）：
+   优先级：控件上次选择（setUrl/setImageValue 重渲染时传入）> localStorage 全局记忆（pf_fmt_pick）> 默认 jpg。
+   上传/切换后下拉不再重置回 jpg，避免透明图反复重选 PNG（控件级 + 全局双保险）：
+   jpg  → 转 JPG（透明填白底，体积小，默认）
+   webp → 转 WebP（体积更小，可选）
    png  → 保留 PNG 透明通道（适合重叠层/logo）
    auto → 无透明转 JPG、有透明保留 PNG（智能） */
 function fmtPickHtml(selected) {
+  if (!selected) {
+    try { selected = localStorage.getItem('pf_fmt_pick') || ''; } catch (e) {}
+  }
   selected = selected || 'jpg';
   const opts = [
     ['jpg', 'JPG（体积小）'],
+    ['webp', 'WebP（更小）'],
     ['png', 'PNG（留透明）'],
     ['auto', '自动']
   ].map(([v, t]) => `<option value="${v}"${v === selected ? ' selected' : ''}>${t}</option>`).join('');
-  return `<span class="fmt-pick-wrap" title="本次上传的压缩格式：JPG 体积最小（透明填白底）；PNG 保留透明通道（适合重叠图/logo）；自动（无透明转 JPG、有透明留 PNG）"><label>格式</label><select class="form-select fmt-pick">${opts}</select></span>`;
+  return `<span class="fmt-pick-wrap" title="本次上传的压缩格式：JPG 体积小（透明填白底）；WebP 体积更小（透明图转无损 WebP）；PNG 保留透明通道（适合重叠图/logo）；自动（无透明转 JPG、有透明留 PNG）"><label>格式</label><select class="form-select fmt-pick" onchange="try{localStorage.setItem('pf_fmt_pick',this.value)}catch(e){}">${opts}</select></span>`;
 }
 function getFmtPick(scope) {
   const el = scope && scope.querySelector ? scope.querySelector('.fmt-pick') : null;
@@ -2917,7 +2983,7 @@ async function uploadMedia(file, fmt, sectionType) {
   }
   const b64 = await fileToBase64(file);
   const payload = { ext, dataBase64: b64, format: fmt || 'jpg' };
-  // sectionType: 截图墙(gallery)上传时传 'gallery'，服务器据此缩到700px宽（不保留原尺寸）
+  // sectionType: 截图墙(gallery)→服务器缩到700px宽；展示区(showcase 焦点图)→覆盖式缩到铺满显示框 722x785
   if (sectionType) payload.sectionType = sectionType;
   const data = await api('/upload', 'POST', payload);
   return data.url || '';
@@ -3525,12 +3591,21 @@ function renderEditorForm(section) {
         else if (imageFieldsInSection.length > 1) {
           if (imageFieldRenderIndex === 0) sepLabel = '粘贴直链（两张图可通用）：';
         }
-        html += renderImageFieldWithUrl(f.key, val || '', fieldUid, { sepLabel });
+        // double-image 双图：焦点分别存 imageFocus1/imageFocus2（前台每列 1:1 方框）
+        const isDi = section.type === 'double-image';
+        const fk = isDi ? (f.key === 'image1' ? 'imageFocus1' : 'imageFocus2') : 'imageFocus';
+        html += renderImageFieldWithUrl(f.key, val || '', fieldUid, {
+          sepLabel, focus: f.focus,
+          focusValue: String(section[fk] || ''),
+          focusKey: fk,
+          stageRatio: isDi ? '1/1' : undefined,
+          focusHint: isDi ? '拖动调整显示区域 · 放大后可选局部画面（前台比例 1:1）' : undefined
+        });
         imageFieldRenderIndex++;
         break;
       }
       case 'video':
-        html += renderVideoFieldWithUrl(f.key, val || '', fieldUid);
+        html += renderVideoFieldWithUrl(f.key, val || '', fieldUid, { focus: f.focus, focusValue: String(section.imageFocus || '') });
         break;
       case 'image-list':
         html += renderImageListField(f.key, Array.isArray(val) ? val : [], fieldUid);
@@ -3636,8 +3711,58 @@ function renderImageFieldWithUrl(key, url, uid, options) {
   const urlId = 'url_' + key + '_' + uid;
   const sepLabel = options.sepLabel || '';
   const sepHtml = sepLabel ? ('<span class="dz-url-sep">' + sepLabel + '</span>') : '';
-  const fmtHtml = options.hideFmt ? '' : fmtPickHtml();
-  return `
+  const fmtHtml = options.hideFmt ? '' : fmtPickHtml(options.fmtPick);
+  // 焦点调整面板（微信头像式拖拽定位）：仅 options.focus 的图片字段启用
+  // 焦点存 section.imageFocus = "x,y"（object-position 百分比，默认 50,50 居中）
+  // 布局：上传大图缩略图（dropzone）在上，焦点调整框（小图拖动）在下方
+  // 焦点值在 .img-field-media 内以 hidden（data-bind-key="imageFocus"）保存
+  const urlInputBlock = `
+    <div class="dz-url-input">
+      ${sepHtml}
+      ${fmtHtml}
+      <input class="form-input" type="text" placeholder="https://... 图片 URL" value="${esc(url && url.startsWith('http') ? url : '')}" data-url-key="${esc(key)}" data-url-uid="${esc(uid)}" id="${urlId}">
+    </div>`;
+  let mediaHtml = '';
+  if (options.focus) {
+    // 焦点字段：dropzone（有图时含大图预览）+ 下方焦点面板，包在 .img-field-media 内便于整体替换
+    // focusKey：默认 'imageFocus'（showcase/stats）；double-image 双图用 imageFocus1/imageFocus2
+    const focusKey = options.focusKey || 'imageFocus';
+    const fv = String(options.focusValue || '50,50').trim();
+    const m = fv.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/);
+    const fx = m ? m[1] : '50';
+    const fy = m ? m[2] : '50';
+    const fz = m && m[3] && parseFloat(m[3]) >= 1 ? parseFloat(m[3]).toFixed(1) : '1.0';
+    // 图片初始 100% cover 铺满（JS bindFocusPanel 加载自然尺寸后接管缩放/平移，避免初始跳变）
+    const focusPanel = has ? `
+      <div class="img-focus" data-focus-key="${esc(key)}" data-focus-uid="${esc(uid)}" data-focus-bound="0">
+        <div class="img-focus-stage"${options.stageRatio ? ' style="aspect-ratio:' + esc(options.stageRatio) + ';"' : ''}>
+          <img class="img-focus-img" src="${esc(url)}" alt="" draggable="false" style="width:100%;height:100%;object-fit:cover;object-position:0 0;">
+        </div>
+        <input type="hidden" data-bind-key="${esc(focusKey)}" data-ftype="image-focus-value" value="${fx},${fy},${fz}">
+        <div class="img-focus-zoom">
+          <span>缩放</span>
+          <input type="range" class="img-focus-zoom-range" min="1" max="3" step="0.1" value="${fz}">
+          <span class="img-focus-zoom-val">${fz}×</span>
+        </div>
+        <div class="img-focus-hint">${esc(options.focusHint || '拖动调整显示区域 · 放大后可选局部画面')}</div>
+      </div>` : '';
+    mediaHtml = `
+    <div class="img-field-media">
+      <div class="dropzone${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-uid="${esc(uid)}" data-focus-field="1" id="${dzId}" data-ftype="image">
+        <input type="hidden" data-bind-key="${esc(key)}" data-ftype="image-value" value="${esc(url)}">
+        <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+        <div class="dz-title">点击选择或拖拽图片</div>
+        <div class="dz-sub">图片 jpg/png/webp/gif/avif</div>
+        ${has ? `<div class="dropzone-preview">
+          <img src="${esc(url)}" alt="" loading="lazy">
+          <button type="button" class="dz-clear" data-clear="${esc(key)}" data-clear-uid="${esc(uid)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <div class="dz-replace">点击替换媒体</div>
+        </div>` : ''}
+      </div>
+      ${focusPanel}
+    </div>`;
+  } else {
+    mediaHtml = `
     <div class="dropzone${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-uid="${esc(uid)}" id="${dzId}" data-ftype="image">
       <input type="hidden" data-bind-key="${esc(key)}" data-ftype="image-value" value="${esc(url)}">
       <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
@@ -3648,12 +3773,9 @@ function renderImageFieldWithUrl(key, url, uid, options) {
         <button type="button" class="dz-clear" data-clear="${esc(key)}" data-clear-uid="${esc(uid)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         <div class="dz-replace">点击替换媒体</div>
       </div>` : ''}
-    </div>
-    <div class="dz-url-input">
-      ${sepHtml}
-      ${fmtHtml}
-      <input class="form-input" type="text" placeholder="https://... 图片 URL" value="${esc(url && url.startsWith('http') ? url : '')}" data-url-key="${esc(key)}" data-url-uid="${esc(uid)}" id="${urlId}">
     </div>`;
+  }
+  return `${mediaHtml}${urlInputBlock}`;
 }
 
 function bindImageField(key, uid, writeFn, sharedSlot) {
@@ -3665,9 +3787,19 @@ function bindImageField(key, uid, writeFn, sharedSlot) {
     try {
       // 单次上传格式：读取本字段旁的格式下拉（默认 jpg），不影响其他上传控件
       const fmt = getFmtPick(dz.parentElement);
-      const url = sharedSlot ? await uploadSharedQr(sharedSlot, file) : await uploadImage(file, fmt);
+      // 焦点字段（showcase 展示区图片）上传时传 sectionType='showcase'，
+      // 服务器覆盖式缩到刚好铺满显示框 722x785（横图保高度、竖图保宽度，只缩不放）
+      const isFocusField = !!dz.parentElement.querySelector('.img-focus') || dz.getAttribute('data-focus-field') === '1';
+      // 大Banner(hero-banner)首屏大图：传 sectionType='hero-banner' → 服务器缩到 1680px 宽（全屏 cover 背景）
+      // 双图并排(double-image)：焦点图传 'double-image' → 覆盖式 1:1 方框 1080x1080
+      const curSec = (state.sections && state.sections[selectedIndex]) || {};
+      const upSecType = isFocusField ? 'showcase'
+        : (curSec.type === 'hero-banner' ? 'hero-banner'
+        : (curSec.type === 'double-image' ? 'double-image' : ''));
+      const url = sharedSlot ? await uploadSharedQr(sharedSlot, file) : await uploadImage(file, fmt, upSecType);
       if (!url) throw new Error('服务器未返回 URL');
-      setImageValue(key, uid, url, writeFn);
+      // 焦点字段（showcase 图片）上传后保留焦点视图：空态 dropzone 有 data-focus-field 标记
+      setImageValue(key, uid, url, writeFn, !!dz.parentElement.querySelector('.img-focus') || dz.getAttribute('data-focus-field') === '1');
       prog.close('图片已上传', 'success');
     } catch (e) {
       prog.close('上传失败：' + e.message, 'error');
@@ -3687,41 +3819,228 @@ function bindImageField(key, uid, writeFn, sharedSlot) {
   if (clearBtn) {
     clearBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      setImageValue(key, uid, '', writeFn);
+      // 焦点字段清除后保持焦点形态（空态 dropzone 仍带 data-focus-field，下次上传保留面板）
+      const isFocus = !!dz.parentElement.querySelector('.img-focus') || dz.getAttribute('data-focus-field') === '1';
+      setImageValue(key, uid, '', writeFn, isFocus);
     });
   }
-  // URL input
+  bindUrlInput(key, uid, writeFn, dz ? (!!dz.parentElement.querySelector('.img-focus') || dz.getAttribute('data-focus-field') === '1') : undefined);
+  // 焦点面板（微信头像式拖拽定位）：每次绑定 dropzone 时同步绑定（面板随 re-render 重建）
+  // showcase 组件：前台 cover 框 722×785；double-image：1:1 方框 722×722——z_max 按前台框算保证 1:1 不模糊
+  // hiddenSel 按面板 data-bind-key（imageFocus / imageFocus1 / imageFocus2）动态匹配
+  const focusPanel = dz.parentElement.querySelector('.img-focus');
+  if (focusPanel) {
+    const curSec = (state.sections && state.sections[selectedIndex]) || {};
+    const frontBox = curSec.type === 'double-image' ? [722, 722] : [722, 785];
+    const fkEl = focusPanel.querySelector('[data-bind-key]');
+    const fk = fkEl ? fkEl.getAttribute('data-bind-key') : 'imageFocus';
+    bindFocusPanel(focusPanel, '[data-bind-key="' + fk + '"]', undefined, frontBox);
+  }
+}
+// URL 直链 input 绑定（焦点视图/dropzone 共用）
+function bindUrlInput(key, uid, writeFn, withFocus) {
   const urlInp = document.querySelector(`input[data-url-key="${key}"][data-url-uid="${uid}"]`);
-  if (urlInp) {
-    urlInp.addEventListener('change', () => {
-      const v = urlInp.value.trim();
-      if (v && /^https?:\/\//i.test(v)) {
-        setImageValue(key, uid, v, writeFn);
-        toast('已使用直链图片');
-      } else if (!v) {
-        // If URL cleared, we don't clear the field unless there was an http URL before
-      } else {
-        toast('请输入有效的 https:// 图片直链', 'error');
-        const hidden = dz.querySelector('input[data-ftype="image-value"]');
-        urlInp.value = hidden && hidden.value && hidden.value.startsWith('http') ? hidden.value : '';
+  if (!urlInp || urlInp.dataset.urlBound === '1') return;
+  urlInp.dataset.urlBound = '1';
+  urlInp.addEventListener('change', () => {
+    const v = urlInp.value.trim();
+    if (v && /^https?:\/\//i.test(v)) {
+      setImageValue(key, uid, v, writeFn, withFocus);
+      toast('已使用直链图片');
+    } else if (!v) {
+      // If URL cleared, we don't clear the field unless there was an http URL before
+    } else {
+      toast('请输入有效的 https:// 图片直链', 'error');
+      const hidden = document.querySelector(`input[data-bind-key="${key}"][data-ftype="image-value"]`);
+      urlInp.value = hidden && hidden.value && hidden.value.startsWith('http') ? hidden.value : '';
+    }
+  });
+}
+
+// 焦点调整面板拖拽交互：拖动图片（object-fit:cover）调整显示区域 + 滑块等比缩放（放大后显示局部），
+// 保存到 hidden input = "x,y,zoom"（zoom 默认 1；兼容旧格式 "x,y"），前台用 object-position + width/height 放大应用
+// 参数：panel 焦点面板；hiddenSel hidden 选择器（section 级默认 [data-bind-key="imageFocus"]，
+//   items-list 级传 [data-il-key="imageFocus"] 避免与 section 级收集器冲突）；onPos 写入回调
+//   （缺省写 state.sections[selectedIndex].imageFocus；items-list 传回调写 item.imageFocus）；
+//   frontBox [W, H] 前台组件 cover 框尺寸（showcase 722×785、team 248×310 桌面默认）——传了则
+//   z_max 用前台框算（= 图片 1:1 物理像素 nat/cover），保证前台永远不模糊；
+//   不传则 z_max 用 stage 预览框算（后台预览独立上限）
+function bindFocusPanel(panel, hiddenSel, onPos, frontBox) {
+  if (panel.dataset.focusBound === '1') return;
+  panel.dataset.focusBound = '1';
+  const stage = panel.querySelector('.img-focus-stage');
+  const img = panel.querySelector('.img-focus-img');
+  const hidden = panel.querySelector(hiddenSel || '[data-bind-key="imageFocus"]');
+  const range = panel.querySelector('.img-focus-zoom-range');
+  const rangeVal = panel.querySelector('.img-focus-zoom-val');
+  if (!stage || !img || !hidden) return;
+  let nat = null;
+  let zMax = 1; // 图片 1:1 物理像素上限（probe.onload 后更新为精确值）
+  const probe = new Image();
+  probe.onload = () => {
+    nat = { w: probe.naturalWidth, h: probe.naturalHeight };
+    if (nat.w > 1 && nat.h > 1) {
+      const p0 = parse(hidden.value);
+      bx = p0.x; by = p0.y; bz = p0.z;
+      // 动态算 z_max = min(naturalW / coverW, naturalH / coverH)
+      // 传 frontBox 用前台框（精确上限 → 前台 1:1 像素），不传用 stage 预览框
+      const W_box = (frontBox && frontBox[0]) || stage.clientWidth;
+      const H_box = (frontBox && frontBox[1]) || stage.clientHeight;
+      const r0 = nat.w / nat.h;
+      const cw_box = Math.max(W_box, H_box * r0), ch_box = Math.max(H_box, W_box / r0);
+      zMax = Math.max(1, Math.min(nat.w / cw_box, nat.h / ch_box));
+      if (range) {
+        range.max = zMax.toFixed(1);
+        const curV = parseFloat(range.value) || 1;
+        if (curV > zMax + 0.001) { // 旧 hidden z 超过新上限：clamp 滑块并写回 hidden
+          range.value = zMax.toFixed(1);
+          applyZoom(zMax);
+        }
+        if (rangeVal) rangeVal.textContent = Math.min(curV, zMax).toFixed(1) + '×';
       }
+      // 放大空间提示：zMax ≤ 1.05 说明图片比前台显示框小，浏览器本身已在放大 → 无局部放大余量
+      const hintEl = panel.querySelector('.img-focus-hint');
+      if (hintEl && zMax <= 1.05) {
+        hintEl.textContent = '图片尺寸小于显示框（已 1:1 铺满），无放大空间——建议上传 ≥ 前台框 2 倍尺寸的图';
+      }
+      apply(bx, by);
+    }
+  };
+  probe.src = img.src;
+  let dragging = false, sx = 0, sy = 0, bx = 50, by = 50, bz = 1;
+  const parse = (v) => {
+    const p = String(v || '50,50,1').split(',').map(Number);
+    const z = (p[2] && p[2] >= 1) ? p[2] : 1;
+    return { x: p[0] || 50, y: p[1] || 50, z: z };
+  };
+  const writeHidden = (x, y) => {
+    // zoom 保留 1 位小数，避免 hidden 值无限增长
+    hidden.value = Math.round(x) + ',' + Math.round(y) + ',' + Math.round(bz * 10) / 10;
+  };
+  // 微信头像式等比缩放 + 双向平移：图片显示尺寸 = zoom × cover 尺寸（图片比例不变），
+  // transform translate 定位 → 窗口（stage）显示图片局部。zoom>1 时横向纵向都有平移空间
+  // （object-fit:cover 等比放大盒的方案，16:9 图在 4:5 竖框纵向永远贴齐、放大也无上下空间）
+  const apply = (x, y) => {
+    if (!nat || !nat.w || !nat.h) return;
+    const W = stage.clientWidth, H = stage.clientHeight;
+    if (!W || !H) return;
+    const r = nat.w / nat.h;
+    const cw = Math.max(W, H * r), ch = Math.max(H, W / r); // zoom=1 时 cover 显示尺寸
+    const dw = bz * cw, dh = bz * ch;                        // zoom 后图片显示尺寸
+    img.style.maxWidth = 'none';                             // 覆盖全局 img{max-width:100%}，否则放大被 clamp 回容器宽
+    img.style.maxHeight = 'none';
+    img.style.width = dw + 'px';
+    img.style.height = dh + 'px';
+    img.style.objectPosition = '0 0';                        // 盒比例 = 图片比例 → cover 无裁切（fill 等价）
+    img.style.transform = 'translate(' + (-(dw - W) * x / 100).toFixed(2) + 'px,' + (-(dh - H) * y / 100).toFixed(2) + 'px)';
+  };
+  const setPos = (x, y) => {
+    x = Math.max(0, Math.min(100, x));
+    y = Math.max(0, Math.min(100, y));
+    apply(x, y);
+    writeHidden(x, y);
+    // 焦点值直接同步进 state：焦点面板可能是上传/替换后动态插入的，
+    // 收集逻辑（renderEditorForm 内 [data-bind-key] 监听）只在初次渲染绑定，
+    // 动态插入的 hidden 没有监听器 → 依赖 change 事件会静默丢失（保存后前台不变）
+    try {
+      if (typeof onPos === 'function') {
+        // 传完整值 "x,y,zoom"（items-list 级写入 item.imageFocus 用）
+        onPos(hidden.value);
+      } else if (typeof selectedIndex === 'number' && selectedIndex >= 0 &&
+          state.sections && state.sections[selectedIndex]) {
+        // 写入 hidden 的 data-bind-key 对应字段：默认 imageFocus；
+        // double-image 双图面板用 imageFocus1/imageFocus2（focusKey 参数化）
+        const fk = hidden.getAttribute('data-bind-key') || 'imageFocus';
+        state.sections[selectedIndex][fk] = hidden.value;
+        if (typeof onSectionChanged === 'function') onSectionChanged();
+      }
+    } catch (_) {}
+    // 兜底：初次渲染路径下收集监听已绑定，触发一次保持两条路径一致（重复写入无害）
+    try { hidden.dispatchEvent(new Event('change')); } catch (_) {}
+  };
+  const onDown = (e) => {
+    // 缩放滑块行（.img-focus-zoom）的 mousedown 冒泡到面板会误触发图片拖拽——直接排除
+    if (e.target && e.target.closest && e.target.closest('.img-focus-zoom')) return;
+    dragging = true;
+    panel.classList.add('dragging');
+    const p = parse(hidden.value);
+    bx = p.x; by = p.y; bz = p.z;
+    sx = (e.touches ? e.touches[0].clientX : e.clientX);
+    sy = (e.touches ? e.touches[0].clientY : e.clientY);
+    e.preventDefault();
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX);
+    const cy = (e.touches ? e.touches[0].clientY : e.clientY);
+    const W = stage.clientWidth, H = stage.clientHeight;
+    if (!nat || !W || !H || (nat.w < 2 && nat.h < 2)) return;
+    const ratio = nat.w / nat.h;
+    // 总可平移像素 = 图片显示尺寸(zoom×cover) - 窗口尺寸；zoom>1 时纵向也有空间（可上下移动）
+    const cw = Math.max(W, H * ratio), ch = Math.max(H, W / ratio);
+    const effW = bz * cw - W;
+    const effH = bz * ch - H;
+    const nx = bx + (effW > 0 ? (cx - sx) / effW * 100 : 0);
+    const ny = by + (effH > 0 ? (cy - sy) / effH * 100 : 0);
+    setPos(nx, ny);
+  };
+  const onUp = () => { dragging = false; panel.classList.remove('dragging'); };
+  panel.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  panel.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onUp);
+  // 滑块等比缩放：保持显示区域中心对应的图片位置不变（x_new = x × z_old / z_new）
+  if (range) {
+    const applyZoom = (newZ) => {
+      newZ = Math.max(1, Math.min(zMax, newZ));
+      const cur = parse(hidden.value);
+      const cz = cur.z;
+      if (Math.abs(newZ - cz) < 0.001) return;
+      const xNew = Math.max(0, Math.min(100, cur.x * cz / newZ));
+      const yNew = Math.max(0, Math.min(100, cur.y * cz / newZ));
+      bz = newZ;
+      setPos(xNew, yNew);
+      // 同步滑块位置和显示值（避免 clamp 后滑块停留在 max 上方导致困惑）
+      if (range && parseFloat(range.value).toFixed(1) !== newZ.toFixed(1)) range.value = newZ.toFixed(1);
+      if (rangeVal) rangeVal.textContent = newZ.toFixed(1) + '×';
+    };
+    range.addEventListener('input', () => applyZoom(parseFloat(range.value) || 1));
+    range.addEventListener('change', () => {
+      // 拖完滑块：按当前实际位置重写 hidden（含 onPos 同步）
+      const p = parse(hidden.value);
+      bz = parseFloat(range.value) || 1;
+      setPos(p.x, p.y);
     });
   }
 }
 
-function setImageValue(key, uid, url, writeFn) {
+function setImageValue(key, uid, url, writeFn, withFocus) {
   const dz = document.querySelector(`.dropzone[data-dz="${key}"][data-uid="${uid}"]`);
   if (!dz) return;
-  const wrap = dz.parentElement;
-  const newHtml = renderImageFieldWithUrl(key, url, uid);
+  // withFocus=true 的字段（如 showcase 图片）重渲时保留焦点面板（新图焦点重置 50,50）；
+  // fmtPick 保留控件当前选择的格式（上传后下拉不重置回 jpg）
+  const prevFmt = dz.querySelector('.fmt-pick') ? dz.querySelector('.fmt-pick').value : '';
+  const oldFk = dz.parentElement.querySelector('.img-focus [data-bind-key]');
+  const fk = oldFk ? oldFk.getAttribute('data-bind-key') : 'imageFocus';
+  const curSec = (state.sections && state.sections[selectedIndex]) || {};
+  const newHtml = renderImageFieldWithUrl(key, url, uid, Object.assign(
+    withFocus ? { focus: true, focusKey: fk, stageRatio: curSec.type === 'double-image' ? '1/1' : undefined } : {},
+    prevFmt ? { fmtPick: prevFmt } : {}
+  ));
   const tmp = document.createElement('div');
   tmp.innerHTML = newHtml;
   const newDz = tmp.firstElementChild;
-  const urlInput = tmp.children[1];
-  wrap.replaceChild(newDz, dz);
+  const urlInput = tmp.querySelector('.dz-url-input');
+  // 焦点字段：dropzone + 焦点面板包在 .img-field-media 内，整体替换（避免面板重复/残留）；
+  // 非焦点字段：直接替换 dropzone
+  const mediaWrap = dz.closest('.img-field-media') || dz;
+  const container = mediaWrap.parentElement;
+  container.replaceChild(newDz, mediaWrap);
   // 用新的整个 .dz-url-input（含格式下拉 + URL 输入框）替换旧的整个 .dz-url-input，
   // 避免只替换输入框导致旧格式下拉残留堆积（堆积后 getFmtPick 会读到旧值，PNG/JPG 选择失效）
-  const oldUrlWrap = wrap.querySelector('.dz-url-input');
+  const oldUrlWrap = container.querySelector('.dz-url-input');
   if (oldUrlWrap && urlInput) {
     oldUrlWrap.parentElement.replaceChild(urlInput, oldUrlWrap);
   }
@@ -3745,8 +4064,27 @@ function renderVideoFieldWithUrl(key, url, uid, options) {
   const urlId = 'vurl_' + key + '_' + uid;
   const sepLabel = options.sepLabel || '';
   const sepHtml = sepLabel ? ('<span class="dz-url-sep">' + sepLabel + '</span>') : '';
-  // 视频预览：用 <video> + preload=metadata 显示首帧缩略图
-  // 不用 controls，不自动播放（在后台管理界面只需要看首帧做识别）
+  // 焦点字段（如 stats 左图，field.focus=true）：URL 是图片时渲染焦点面板（4:5 竖框，拖动/缩放调整显示区域）
+  const isImg = has && !isVideoUrl(url);
+  const focus = !!(options.focus && isImg);
+  const fv = focus ? String(options.focusValue || '50,50').trim() : '50,50';
+  const fm = fv.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/);
+  const fx = fm ? fm[1] : '50';
+  const fy = fm ? fm[2] : '50';
+  const fz = fm && fm[3] && parseFloat(fm[3]) >= 1 ? parseFloat(fm[3]).toFixed(1) : '1.0';
+  const focusPanel = focus ? `
+    <div class="img-focus" data-focus-bound="0">
+      <div class="img-focus-stage" style="aspect-ratio:4/5;">
+        <img class="img-focus-img" src="${esc(url)}" alt="" draggable="false" style="width:100%;height:100%;object-fit:cover;object-position:0 0;">
+      </div>
+      <input type="hidden" data-bind-key="imageFocus" data-ftype="image-focus-value" value="${fx},${fy},${fz}">
+      <div class="img-focus-zoom">
+        <span>缩放</span>
+        <input type="range" class="img-focus-zoom-range" min="1" max="3" step="0.1" value="${fz}">
+        <span class="img-focus-zoom-val">${fz}×</span>
+      </div>
+      <div class="img-focus-hint">拖动调整显示区域 · 放大后可选局部画面（前台比例 4:5）</div>
+    </div>` : '';
   return `
     <div class="dropzone dropzone-video${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-uid="${esc(uid)}" id="${dzId}" data-ftype="video">
       <input type="hidden" data-bind-key="${esc(key)}" data-ftype="video-value" value="${esc(url)}">
@@ -3760,6 +4098,7 @@ function renderVideoFieldWithUrl(key, url, uid, options) {
         <div class="dz-replace">点击替换媒体</div>
       </div>` : ''}
     </div>
+    ${focusPanel}
     <div class="dz-url-input">
       ${sepHtml}
       <input class="form-input" type="text" placeholder="https://... 视频 URL 或上传文件" value="${esc(url && url.startsWith('http') ? url : '')}" data-url-key="${esc(key)}" data-url-uid="${esc(uid)}" id="${urlId}">
@@ -3771,12 +4110,18 @@ function bindVideoField(key, uid) {
   if (!dz) return;
   const handler = async (file) => {
     if (!file) return;
-    const prog = toastProgress('正在上传视频...（大文件可能需要较久）');
+    const prog = toastProgress('正在上传媒体...');
     try {
-      const url = await uploadVideo(file);
+      // 图片 → 走图片压缩（stats 左图传 sectionType='stats' 覆盖式 4:5；fmt auto 智能保留透明）；
+      // 视频 → 原样上传（不动压缩）
+      const isImage = /^image\//i.test(file.type) || /\.(png|jpe?g|webp|gif|avif)$/i.test(file.name || '');
+      const curSec = (state.sections && state.sections[selectedIndex]) || {};
+      const url = isImage
+        ? await uploadImage(file, 'auto', curSec.type === 'stats' ? 'stats' : '')
+        : await uploadVideo(file);
       if (!url) throw new Error('服务器未返回 URL');
       setVideoValue(key, uid, url);
-      prog.close('视频已上传', 'success');
+      prog.close(isImage ? '图片已上传' : '视频已上传', 'success');
     } catch (e) {
       prog.close('上传失败：' + e.message, 'error');
     }
@@ -3815,17 +4160,26 @@ function bindVideoField(key, uid) {
       }
     });
   }
+  // 焦点面板（stats 左图等 focus 视频字段、且 URL 是图片时渲染）：写入 section.imageFocus（section 级）
+  // stats 组件：前台 .stats-media 4:5 竖框，桌面约 400×500——z_max 按此算保证前台 1:1 不模糊
+  const focusPanel = dz.parentElement.querySelector('.img-focus');
+  if (focusPanel) {
+    bindFocusPanel(focusPanel, '[data-bind-key="imageFocus"]', undefined, [400, 500]);
+  }
 }
 
 function setVideoValue(key, uid, url) {
   const dz = document.querySelector(`.dropzone.dropzone-video[data-dz="${key}"][data-uid="${uid}"]`);
   if (!dz) return;
   const wrap = dz.parentElement;
-  const newHtml = renderVideoFieldWithUrl(key, url, uid);
+  // 保留焦点形态与焦点值（stats 左图等 focus 字段）：重渲染后焦点面板不丢失
+  const focus = !!wrap.querySelector('.img-focus');
+  const focusValue = wrap.querySelector('[data-bind-key="imageFocus"]') ? wrap.querySelector('[data-bind-key="imageFocus"]').value : '';
+  const newHtml = renderVideoFieldWithUrl(key, url, uid, { focus, focusValue });
   const tmp = document.createElement('div');
   tmp.innerHTML = newHtml;
   const newDz = tmp.firstElementChild;
-  const urlInput = tmp.children[1];
+  const urlInput = tmp.querySelector('.dz-url-input');
   wrap.replaceChild(newDz, dz);
   // 整块替换 .dz-url-input，避免嵌套累积
   const oldUrlWrap = wrap.querySelector('.dz-url-input');
@@ -4441,7 +4795,7 @@ function renderItemsListField(field, list, uid) {
       } else if (f.type === 'tags') {
         ctl = `<input class="form-input" data-il-key="${esc(f.key)}" data-il-type="tags" data-il-idx="${i}" type="text" placeholder="英文逗号分隔" value="${esc(Array.isArray(v) ? v.join(', ') : (v || ''))}">`;
       } else if (f.type === 'image') {
-        ctl = renderItemImageControl(f.key, v || '', i);
+        ctl = renderItemImageControl(f.key, v || '', i, f, item ? item.imageFocus : undefined);
       } else if (f.type === 'select') {
         const opts = (f.options || []).map((opt) => {
           const optLabel = (f.optionLabels && f.optionLabels[opt]) || opt;
@@ -4487,22 +4841,46 @@ function renderItemsListField(field, list, uid) {
   }).join('');
   return `<div class="list-field" data-lf="${esc(key)}" data-uid="${esc(uid)}" data-ftype="items-list">
     ${items}
+    ${!field.max || list.length < field.max ? `
     <button type="button" class="btn-secondary list-field-add" data-lf-add="${esc(key)}" data-lf-add-uid="${esc(uid)}" style="justify-content:center;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       添加${esc(itemLabel)}
-    </button>
+    </button>` : `<div class="lf-max-hint" style="padding:10px 0;font-size:12px;color:var(--text-muted,#999);">已达上限（最多 ${esc(field.max)} 个${esc(itemLabel)}）</div>`}
   </div>`;
 }
 
-function renderItemImageControl(fkey, url, idx) {
+function renderItemImageControl(fkey, url, idx, field, focusValue, fmtPick) {
   const has = !!url;
+  // 焦点字段（如 team 头像，field.focus=true）：有图时渲染焦点面板（拖动调整显示区域 + 滑块缩放），
+  // 上传时传 sectionType='team' 走覆盖式压缩（4:5 竖框 400x500）；数据存 item.imageFocus（data-il-type="focus"）
+  const focus = !!(field && field.focus);
+  const fv = focus ? String(focusValue || '50,50').trim() : '50,50';
+  const fm = fv.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/);
+  const fx = fm ? fm[1] : '50';
+  const fy = fm ? fm[2] : '50';
+  const fz = fm && fm[3] && parseFloat(fm[3]) >= 1 ? parseFloat(fm[3]).toFixed(1) : '1.0';
+  // 图片初始 100% cover 铺满（JS bindFocusPanel 加载自然尺寸后接管缩放/平移，避免初始跳变）
+  const focusPanel = focus && has ? `
+    <div class="img-focus" data-focus-bound="0">
+      <div class="img-focus-stage" style="aspect-ratio:4/5;">
+        <img class="img-focus-img" src="${esc(url)}" alt="" draggable="false" style="width:100%;height:100%;object-fit:cover;object-position:0 0;">
+      </div>
+      <input type="hidden" data-il-key="imageFocus" data-il-type="focus" value="${fx},${fy},${fz}">
+      <div class="img-focus-zoom">
+        <span>缩放</span>
+        <input type="range" class="img-focus-zoom-range" min="1" max="3" step="0.1" value="${fz}">
+        <span class="img-focus-zoom-val">${fz}×</span>
+      </div>
+      <div class="img-focus-hint">拖动调整显示区域 · 放大后可选局部画面（前台比例 4:5）</div>
+    </div>` : '';
   return `
-    <div class="il-image" data-il-key="${esc(fkey)}" data-il-type="image" data-il-idx="${idx}">
+    <div class="il-image${focus ? ' il-image-focus' : ''}" data-il-key="${esc(fkey)}" data-il-type="image" data-il-idx="${idx}"${focus ? ' data-il-focus="1"' : ''}>
       <input type="hidden" class="il-image-value" value="${esc(url)}">
       ${has ? `<div class="il-image-preview"><img src="${esc(url)}" alt="" loading="lazy"><button type="button" class="il-img-clear" title="清除图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>` : ''}
+      ${focusPanel}
       <div class="il-image-actions">
         <button type="button" class="btn-secondary il-img-upload" style="justify-content:center;">上传图片</button>
-        ${fmtPickHtml()}
+        ${fmtPickHtml(fmtPick)}
         <input class="form-input il-img-url" type="text" placeholder="https://... 图片 URL" value="${esc(url && url.startsWith('http') ? url : '')}">
       </div>
     </div>`;
@@ -4557,6 +4935,10 @@ function bindItemsListField(field, uid) {
       const add = e.target.closest('[data-lf-add]');
       if (add) {
         const list = collectItemsList(key, uid);
+        if (field.max && list.length >= field.max) {
+          toast(`最多 ${field.max} 个${field.itemLabel || '条目'}`, 'error');
+          return;
+        }
         list.push({});
         state.sections[selectedIndex][key] = list;
         rebind();
@@ -4578,7 +4960,7 @@ function bindItemsListField(field, uid) {
     wrap.addEventListener('change', scalarSave);
   }
   // 条目内图片控件和动画参数面板需要单独绑定
-  bindItemImages(wrap, key, uid);
+  bindItemImages(wrap, field, uid);
   bindItemAnimatedParams(wrap, key, uid);
 }
 
@@ -4610,22 +4992,31 @@ function bindItemAnimatedParams(wrap, key, uid) {
   });
 }
 
-function bindItemImages(wrap, key, uid) {
+function bindItemImages(wrap, field, uid) {
+  const key = field.key;
   wrap.querySelectorAll('.il-image').forEach((imgWrap) => {
     if (imgWrap.dataset.ilBound) return;
     imgWrap.dataset.ilBound = '1';
+    const isFocus = imgWrap.dataset.ilFocus === '1';
     const setUrl = (url) => {
       const idx = imgWrap.dataset.ilIdx;
       const fkey = imgWrap.dataset.ilKey;
       const list = collectItemsList(key, uid);
       const item = list[idx] || {};
       item[fkey] = url;
+      // 换新图后焦点重置（旧图焦点值不再适用）
+      if (item.imageFocus) delete item.imageFocus;
       list[idx] = item;
       state.sections[selectedIndex][key] = list;
+      // ⚠️ 必须传 itemFields 里的图片字段定义（field 是 items-list 定义，field.focus 为 undefined
+      //    → 焦点面板不渲染：只有整体重渲染（新增/排序）时才会出现）。
+      // 格式下拉保留控件当前选择（上传后不重置回 jpg，避免透明图反复重选 PNG）
+      const imgField = (field.itemFields || []).find((ff) => ff.key === fkey) || field;
+      const prevFmt = imgWrap.querySelector('.fmt-pick') ? imgWrap.querySelector('.fmt-pick').value : '';
       const tmp = document.createElement('div');
-      tmp.innerHTML = renderItemImageControl(fkey, url, idx);
+      tmp.innerHTML = renderItemImageControl(fkey, url, idx, imgField, item.imageFocus, prevFmt);
       imgWrap.parentElement.replaceChild(tmp.firstElementChild, imgWrap);
-      bindItemImages(wrap, key, uid); // 只重绑图片控件（新 .il-image 无 ilBound）
+      bindItemImages(wrap, field, uid); // 只重绑图片控件（新 .il-image 无 ilBound）
       onSectionChanged();
     };
     imgWrap.querySelector('.il-img-upload').addEventListener('click', () => {
@@ -4633,7 +5024,14 @@ function bindItemImages(wrap, key, uid) {
         if (!file) return;
         const prog = toastProgress('正在上传图片...');
         try {
-          const url = await uploadImage(file, getFmtPick(imgWrap));
+          // 焦点字段（team 头像等）：上传时传 sectionType='team'，服务器覆盖式缩到 4:5 竖框 400x500
+          // hero-banner 轮播图（images[]）：传 sectionType='hero-banner' → 缩到 1680px 宽
+          // masonry 瀑布流封面图（items[]）：传 sectionType='masonry' → 缩到 800px 宽（自然比例排布）
+          const curSec = (state.sections && state.sections[selectedIndex]) || {};
+          const upSecType = isFocus ? 'team'
+            : (curSec.type === 'hero-banner' ? 'hero-banner'
+            : (curSec.type === 'masonry' ? 'masonry' : ''));
+          const url = await uploadImage(file, getFmtPick(imgWrap), upSecType);
           if (!url) throw new Error('服务器未返回 URL');
           setUrl(url);
           prog.close('图片已上传', 'success');
@@ -4652,6 +5050,20 @@ function bindItemImages(wrap, key, uid) {
         else if (v) toast('请输入有效的 https:// 图片直链', 'error');
       });
     }
+    // 焦点面板（team 头像拖动调整显示区域）：写入 item.imageFocus（items-list 级，区别于 section 级 imageFocus）
+    // team 组件：前台 cover 框 248×310（4:5 竖框桌面默认），z_max 按此算保证前台 1:1 像素不模糊
+    const focusPanel = imgWrap.querySelector('.img-focus');
+    if (focusPanel) {
+      bindFocusPanel(focusPanel, '[data-il-key="imageFocus"]', (val) => {
+        const idx = parseInt(imgWrap.dataset.ilIdx);
+        const list = collectItemsList(key, uid);
+        const item = list[idx] || {};
+        item.imageFocus = val;
+        list[idx] = item;
+        state.sections[selectedIndex][key] = list;
+        if (typeof onSectionChanged === 'function') onSectionChanged();
+      }, [248, 310]);
+    }
   });
 }
 
@@ -4666,6 +5078,8 @@ function collectItemsList(key, uid) {
       const ftype = inp.dataset.ilType;
       if (ftype === 'tags') {
         obj[fkey] = inp.value.split(',').map((s) => s.trim()).filter(Boolean);
+      } else if (ftype === 'focus') {
+        obj[fkey] = inp.value || '';
       } else if (ftype === 'image') {
         const hidden = inp.querySelector('.il-image-value');
         obj[fkey] = hidden ? (hidden.value || '') : '';
@@ -6397,6 +6811,10 @@ async function afterAuth() {
     return;
   }
   loadState();
+  // 板块管理视图（?case=xxx）也要恢复顶部「主题 / 加载动画」选中态：
+  // 页面管理视图在上一分支已调用，此处补调，否则 active 类从未设置、按钮无选中效果
+  loadThemeState();
+  loadLoaderState();
 }
 
 /* ===== Init（先鉴权，成功后再加载内容） ===== */

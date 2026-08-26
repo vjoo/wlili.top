@@ -1134,7 +1134,7 @@ img {
    加载动画选择（后台「页面管理」主题旁切换，全站共享，存 cases.json 顶层 loader）
    1（默认）= 首屏骨架屏（白 logo + 3×3 方块 + 黑色马赛克幕布）→ 隐藏黑遮罩；
    2 = 页面过渡黑遮罩（进场向上滑走的黑幕）→ 隐藏骨架屏。
-   两套动画颜色均为品牌壳层固定色（黑幕/白 logo），不随主题色变化。
+   动画颜色均为品牌壳层固定色（黑幕/白 logo），不随主题色变化。
    ================================================================ */
 :root[data-loader="1"] .page-transition-overlay,
 :root:not([data-loader]) .page-transition-overlay {
@@ -1143,3 +1143,4 @@ img {
 :root[data-loader="2"] #page-skeleton {
   display: none !important; /* 黑遮罩模式：骨架屏不显示 */
 }
+

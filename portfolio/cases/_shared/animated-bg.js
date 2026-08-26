@@ -58,7 +58,9 @@
   }
 
   function sizeCanvas(c, container) {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // 渲染分辨率上限 1.5（原 2）：全屏 shader 效果（topography/molten 等）在 2x 屏 = 4 倍像素量，
+    // 对线条/流体类视觉效果无感，但 GPU 负载减半——避免集显/笔记本一卡一卡
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     var w = container.clientWidth;
     var h = container.clientHeight;
     // 容器暂无布局（隐藏 / 懒加载未显示 / 高度由内容撑起而 content 尚未就绪）：
@@ -98,7 +100,7 @@
       preserveDrawingBuffer: true,
       antialias: false,
       depth: false,
-      dpr: Math.min(window.devicePixelRatio || 1, 2)
+      dpr: Math.min(window.devicePixelRatio || 1, 1.5)   // 与 sizeCanvas 一致：上限 1.5，全屏 shader 负载减半
     };
     if (webgl2) opts.webgl = 2;
     var renderer = new OGL.Renderer(opts);
@@ -123,17 +125,22 @@
   }
 
   /* 统一的 WebGL 实例壳：负责尺寸同步、iResolution 自适应、鼠标坐标转换、渲染调度。
-   * setup(glCtx) 由各效果自行实现，返回 { program, mesh, update? }。 */
-  function makeWebGLInstance(container, params, glCtx, setup) {
+   * setup(glCtx) 由各效果自行实现，返回 { program, mesh, update? }。
+   * fpsLimit: 可选帧率上限（如重效果传 30）——缓慢动画 30fps 视觉等同，GPU 负载减半。 */
+  function makeWebGLInstance(container, params, glCtx, setup, fpsLimit) {
     var fs = setup(glCtx);
     /* 所有效果着色器已改为不透明输出，暗色区域在着色器内与 #120f17 背景混合。
      * backgroundColor 参数保留用于 canvas CSS 背景色（后备方案）。 */
     if (params && params.backgroundColor) {
       glCtx.canvas.style.background = params.backgroundColor;
     }
-    var inst = { _visible: true, destroyed: false, _lastSize: null };
+    var inst = { _visible: true, destroyed: false, _lastSize: null, _lastRenderT: 0 };
     inst.update = function (t) {
       if (inst.destroyed) return;
+      // 帧率上限（重效果降帧渲染）：线条/噪点类缓慢动画 30fps 视觉等同，GPU 负载减半
+      var _now = performance.now();
+      if (fpsLimit && _now - inst._lastRenderT < 1000 / fpsLimit) return;
+      inst._lastRenderT = _now;
       var s = sizeCanvas(glCtx.canvas, container);
       // 同步 ogl Renderer 视口（Renderer 内部 width/height 默认为 300x150，必须显式 setSize）
       if (glCtx.renderer && s.w && s.h && (!inst._lastSize || inst._lastSize[0] !== s.w || inst._lastSize[1] !== s.h)) {
@@ -962,7 +969,7 @@
       brightness: 1,
       fillBands: false,
       opacity: 1,
-      grain: true,
+      grain: false,          // 噪点用 iTime 驱动每帧全屏重算，地形线视觉上几乎无差 → 默认关（省 GPU）
       grainIntensity: 0.05,
       mouseInteraction: false,
       mouseRadius: 0.3,
@@ -1107,6 +1114,7 @@
       ].join('\n');
       var mouseActive = 0;
       var ctrlArrays = [u.uCtrlA.value, u.uCtrlB.value, u.uCtrlC.value, u.uCtrlD.value];
+      // 地形线：线条动画缓慢，30fps 渲染足够流畅且省 GPU（全屏 shader 负载减半）
       return makeWebGLInstance(container, params, gc, function (g) {
         var fs = makeProgram(g.gl, VS_W2, frag, u, true);
         fs.update = function (uniforms, t, p, mx, my) {
@@ -1130,7 +1138,7 @@
           }
         };
         return fs;
-      });
+      }, 30);
     }
   };
 
@@ -1239,12 +1247,44 @@
     try {
       var inst = def.create(el, merged);
       inst._visible = true;
+      inst._inView = true;
       el.__animbg = inst;
       instances.push(inst);
+      observeBG(el);
     } catch (err) {
       console.error('[animated-bg] 启动效果失败: ' + name, err);
     }
   }
+
+  /* ---------------- 视口可见性：滚出视口 / 页面隐藏时暂停渲染 ----------------
+     之前无论元素是否可见都持续 WebGL rAF 渲染，滚动页面时 GPU/主线程被占用 → 明显顿挫。
+     用 IntersectionObserver 维护可见集，tick 只渲染可见实例；页面隐藏时整个循环暂停。 */
+  var bgObserver = null;
+  var pageHidden = document.hidden;
+  function syncVisibility() {
+    for (var i = 0; i < instances.length; i++) {
+      var inst = instances[i];
+      if (inst && !inst.destroyed) inst._visible = pageHidden ? false : !!inst._inView;
+    }
+  }
+  function observeBG(el) {
+    if (!('IntersectionObserver' in window)) return;
+    if (!bgObserver) {
+      bgObserver = new IntersectionObserver(function (entries) {
+        for (var j = 0; j < entries.length; j++) {
+          var t = entries[j].target;
+          if (t.__animbg) t.__animbg._inView = entries[j].isIntersecting;
+        }
+        syncVisibility();
+      });
+    }
+    bgObserver.observe(el);
+  }
+  document.addEventListener('visibilitychange', function () {
+    pageHidden = document.hidden;
+    syncVisibility();
+    startLoop(); // 恢复可见时重启 rAF（startLoop 内部会因 hidden 直接跳过）
+  });
 
   function bootAll() {
     var list = document.querySelectorAll('[data-animated-bg]');
@@ -1256,12 +1296,13 @@
     var t = now / 1000;
     for (var i = 0; i < instances.length; i++) {
       var inst = instances[i];
-      if (!inst.destroyed && inst.update) inst.update(t);
+      // 仅渲染可见实例（视口内 + 页面可见），滚出视口的动画背景不再每帧消耗 GPU
+      if (!inst.destroyed && inst._visible && inst.update) inst.update(t);
     }
     startLoop();
   }
   function startLoop() {
-    if (!raf) raf = requestAnimationFrame(tick);
+    if (!raf && !document.hidden) raf = requestAnimationFrame(tick);
   }
 
   window.AnimatedBG = {

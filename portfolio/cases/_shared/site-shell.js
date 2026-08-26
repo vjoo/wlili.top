@@ -685,14 +685,17 @@
   // 2.5 自定义平滑滚动（rAF 缓动，保证"快速滑动到指定位置"的过程可见）
   // 显式 behavior:'auto' 覆盖 CSS 的 scroll-behavior:smooth，动画完全由 JS 驱动
   // =========================================
-  function smoothScrollTo(targetY, duration) {
+  function smoothScrollTo(targetY, duration, onComplete) {
     var doc = document.documentElement;
     var body = document.body;
     var maxY = doc.scrollHeight - window.innerHeight;
     targetY = Math.max(0, Math.min(targetY || 0, maxY));
     var startY = window.pageYOffset || doc.scrollTop || 0;
     var diff = targetY - startY;
-    if (Math.abs(diff) < 1) return;
+    if (Math.abs(diff) < 1) {
+      if (onComplete) onComplete();
+      return;
+    }
     var dur = duration || 600;
     // html 上 CSS 的 scroll-behavior:smooth 会让每个 scrollTop 写入都触发"原生平滑"，
     // 逐帧写入会被合并成一次瞬间跳动。动画期间临时改为 auto，结束后还原。
@@ -715,6 +718,7 @@
       } else {
         doc.style.scrollBehavior = prevDocSb;
         if (body) body.style.scrollBehavior = prevBodySb;
+        if (onComplete) onComplete();
       }
     }
     requestAnimationFrame(step);
@@ -724,12 +728,23 @@
   function initContactScroll() {
     const btn = document.getElementById('startProjectBtn');
     if (!btn) return;
+    const docTop = (el) => el.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0);
+    function scrollToFooter(footer, retries) {
+      smoothScrollTo(docTop(footer), 700, function () {
+        // 动画期间页面高度可能仍在变化（懒加载图片/视频加载撑高内容，目标与 scrollHeight
+        // 都是点击瞬间的值 → 会停在"中间"）。到位后校验 footer 最新位置，偏差过大补滚一次。
+        const arrived = window.pageYOffset || document.documentElement.scrollTop || 0;
+        const latest = docTop(footer);
+        if (retries > 0 && Math.abs(latest - arrived) > 60) {
+          scrollToFooter(footer, retries - 1);
+        }
+      });
+    }
     btn.addEventListener('click', (e) => {
       const footer = document.getElementById('footer') || document.querySelector('.footer');
       if (!footer) return; // 无 footer 时保留默认链接跳转
       e.preventDefault();
-      const top = footer.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0);
-      smoothScrollTo(top, 700);
+      scrollToFooter(footer, 2);
     });
   }
 

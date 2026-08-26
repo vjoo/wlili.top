@@ -2,132 +2,182 @@
   "version": 2,
   "sections": [
     {
-      "id": "smssvzjvzf2wo",
+      "id": "smt8bgxfzm6k6",
       "type": "hero-banner",
-      "title": "3D Scene Modeling & Production",
-      "labels": [
-        "界面设计",
-        "品牌视觉",
-        "设计规范"
-      ],
-      "description": "打磨精致数字设计，与怀揣巧思的项目一同塑造与众不同的数字面貌。",
-      "videoType": "carousel",
+      "textLayout": "center",
+      "title": "营销产品可视化、商品主视觉等建模渲染",
+      "labels": [],
+      "description": "我们打造超写实渲染与沉浸式场景视觉，让品牌创意脱颖而出。",
+      "videoType": "animated",
       "image": "",
       "videoUrl": "",
-      "effect": "fade",
-      "autoplayDelay": "5000",
-      "images": [
-        {
-          "image": "/portfolio/cases/home/uploads/1786887529464.jpg",
-          "title": "",
-          "labels": [],
-          "subtitle": ""
-        },
-        {
-          "image": "/portfolio/cases/home/uploads/1786887532885.jpg",
-          "title": "",
-          "labels": [],
-          "subtitle": ""
-        },
-        {
-          "image": "/portfolio/cases/home/uploads/1786887537410.jpg",
-          "title": "",
-          "labels": [],
-          "subtitle": ""
-        }
-      ],
-      "subtitle": "1111111111",
-      "buttonText": "11111111"
+      "effect": "slide",
+      "autoplayDelay": "4000",
+      "images": [],
+      "animatedEffect": "tunnel",
+      "animatedParams": {
+        "cableColor": "#4d70ff",
+        "pulseColor": "#4775ff"
+      }
     },
     {
-      "id": "smsvv46tchq8t",
-      "type": "hero-banner",
-      "title": "3D Scene Modeling & Production",
-      "labels": [
+      "id": "smt8s8hy0zreq",
+      "type": "title",
+      "title": "Introduction",
+      "copyright": "2010-26©",
+      "description": "Stylized & Isometric scene：clay‑style 3D, 2.5D isometric illustration scene",
+      "size": "80",
+      "padding": "标准"
+    },
+    {
+      "id": "smt8se0cn56os",
+      "type": "team",
+      "label": "",
+      "heading": "CGI Background Assets for Enterprise Platform UI",
+      "subheading": "",
+      "desc1": "企业端需要兼顾科技专业气质，严格把控画面对比、细节密度与色彩饱和度，同时输出适配明 / 暗色系统主题的多套版本。",
+      "desc2": "包含硬表面产品模型、2.5D 等轴测场景、氛围感商业主视觉，为产品展示、网页落地页、品牌营销、展会输出高保真 CGI 视觉成果。",
+      "buttonText": "Wlili.top",
+      "items": [
         {
-          "text": "50+ employees"
+          "name": "",
+          "photo": "/portfolio/cases/home/uploads/1787669720322.jpg",
+          "imageFocus": "24,30,1.4"
         },
         {
-          "text": "6 countries"
+          "name": "",
+          "photo": "/portfolio/cases/home/uploads/1787669723415.jpg",
+          "imageFocus": "29,48,1.8"
         },
         {
-          "text": "Founded in 2010"
+          "name": "",
+          "photo": "/portfolio/cases/home/uploads/1787669735592.jpg",
+          "imageFocus": "69,58,1.5"
+        },
+        {
+          "name": "",
+          "photo": "/portfolio/cases/home/uploads/1787732182287.jpg",
+          "imageFocus": "24,54,1.4"
         }
       ],
-      "description": "We craft digital experiences that help ambitious companies grow and stand out in a crowded market.",
-      "videoType": "carousel",
-      "image": "",
+      "avatarColorMode": "color"
+    },
+    {
+      "id": "smt9szolvoti9",
+      "type": "hero-banner",
+      "textLayout": "left",
+      "title": "B‑End Oriented 3D Scene Design",
+      "labels": [
+        "Material & Lighting",
+        "Scene Composition",
+        "Render Output"
+      ],
+      "description": "Premium 3D Asset & Scene Studio for B‑End Platform UI Visuals",
+      "videoType": "image",
+      "image": "/portfolio/cases/home/uploads/1787732154325.jpg",
       "videoUrl": "",
-      "effect": "cube",
+      "effect": "slide",
       "autoplayDelay": "4000",
-      "images": [
+      "images": []
+    },
+    {
+      "id": "smt9z90dp3gj5",
+      "type": "title",
+      "title": "Introduction",
+      "copyright": "2010-26©",
+      "description": "Fully Automatic Bluetooth Anti-Theft Lock Cylinder (Indoor)，Upgrade to a fully automatic smart lock — without removing your existing lock.",
+      "size": "80",
+      "padding": "标准"
+    },
+    {
+      "id": "smt9z9bq2owhg",
+      "type": "team",
+      "label": "",
+      "heading": "Bluetooth Smart Lock Cylinder",
+      "subheading": "",
+      "desc1": "把家门装进手机里。全自动蓝牙防盗门锁芯专为传统机械锁升级而生，无需拆除原有锁体，五分钟即可完成安装，让普通门锁秒变全自动智能锁。",
+      "desc2": "手机蓝牙一触即开，远程收发虚拟钥匙，纯铜 C 级锁芯守护安全，充一次电安心使用近一年。告别翻找钥匙的日常，从今天开始。",
+      "buttonText": "Wlili.top",
+      "items": [
         {
-          "image": "/portfolio/cases/home/uploads/1786888274934.jpg",
-          "title": "",
-          "labels": [],
-          "subtitle": ""
+          "name": "",
+          "photo": "/portfolio/cases/home/uploads/1787744314110.jpg",
+          "imageFocus": "31,45,1.1"
         },
         {
-          "image": "/portfolio/cases/home/uploads/1786888279946.jpg",
-          "title": "",
-          "labels": [],
-          "subtitle": ""
+          "name": "",
+          "photo": "/portfolio/cases/home/uploads/1787744567708.jpg",
+          "imageFocus": "64,50,1"
         },
         {
-          "image": "/portfolio/cases/home/uploads/1786888284441.jpg",
-          "title": "",
-          "labels": [],
-          "subtitle": ""
+          "name": "",
+          "photo": "/portfolio/cases/home/uploads/1787744251384.png",
+          "imageFocus": "47,77,1.6"
         },
         {
-          "image": "/portfolio/cases/home/uploads/1786888291224.jpg",
-          "title": "",
-          "labels": [],
-          "subtitle": ""
+          "name": "",
+          "photo": "/portfolio/cases/home/uploads/1787744630546.jpg",
+          "imageFocus": "72,50,1"
+        }
+      ],
+      "avatarColorMode": "color"
+    },
+    {
+      "id": "smta1gbgutdhq",
+      "type": "stats",
+      "label": "Unlock in Seconds",
+      "heading": "国密级防盗标准，防撬防技术开启，为家筑起一道坚实的安防线。",
+      "subtitle": "Pure Copper, C-Grade Cylinder— Anti-pick, anti-bump, and resistant to technical opening. Security you can trust.",
+      "videoUrl": "/portfolio/cases/home/uploads/1787745412854.gif",
+      "videoType": "video",
+      "items": [
+        {
+          "value": "300",
+          "suffix": "+",
+          "title": "天超长待机",
+          "desc": "充一次电，安心守护家门近一年。低电量自动提醒，USB Type-C 随时补给。"
         },
         {
-          "image": "/portfolio/cases/home/uploads/1786888295437.jpg",
+          "value": "≤3 ",
+          "suffix": "s",
+          "title": "手机蓝牙一触即开",
+          "desc": "开锁时间不超过 3 秒，快人一步，从容进出。高扭矩直流电机，轻松驱动锁芯，经超 10 万次开关测试，持久稳定耐用。"
+        }
+      ],
+      "imageFocus": "72,50,1"
+    },
+    {
+      "id": "smta2pbsoeogf",
+      "type": "masonry",
+      "label": "",
+      "heading": "",
+      "items": [
+        {
+          "image": "/portfolio/cases/home/uploads/1787748119847.jpg",
           "title": "",
-          "labels": [],
-          "subtitle": ""
+          "tags": []
         },
         {
-          "image": "/portfolio/cases/home/uploads/1786888299566.jpg",
+          "image": "/portfolio/cases/home/uploads/1787747942477.jpg",
           "title": "",
-          "labels": [],
-          "subtitle": ""
+          "tags": []
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787747946735.jpg",
+          "title": "",
+          "tags": []
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787747563320.jpg",
+          "title": "",
+          "tags": []
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787747719275.png",
+          "title": "",
+          "tags": []
         }
       ]
     }
-  ],
-  "letsTalk": {
-    "title": "Let's talk",
-    "subtitleEn": "Have a project in mind? Let's create something meaningful together.",
-    "subtitleZh": "有项目想法？我们一起把它变成有价值的设计。",
-    "slogan": "合作咨询 / 约稿商单 / 作品集交流",
-    "tags": "Product Design ｜ Mobile & Touch ｜ B2B / B2C / To G",
-    "tagsZh": "面向产品、移动端、触控设备，覆盖消费、企业、政企多类型项目",
-    "qrCodes": [
-      {
-        "label": "微信好友",
-        "labelEn": "WeChat",
-        "url": ""
-      },
-      {
-        "label": "公众号",
-        "labelEn": "Official Account",
-        "url": ""
-      },
-      {
-        "label": "小红书",
-        "labelEn": "Xiaohongshu",
-        "url": ""
-      },
-      {
-        "label": "抖音号",
-        "labelEn": "Douyin",
-        "url": ""
-      }
-    ]
-  }
+  ]
 }
