@@ -2877,6 +2877,7 @@
   --pd-hero-divider2: var(--color-gray-ultra-light);
 
   display: flex;
+  align-items: center;
   gap: 3rem;
   padding-block: 5rem;        /* 仅上下；左右 36px 内缩交给 .container（与 .stats-section 一致） */
   background: var(--pd-hero-bg);
@@ -3001,8 +3002,15 @@
   min-width: 0;
 }
 
+/* 无产品信息时消除底部留白 */
+.pd-product-card.no-info {
+  align-self: flex-start;     /* 不随 stage 纵向拉伸，避免 img(flex:0 0 auto) 不填充导致底部空白 */
+}
+
 .pd-product-img {
-  flex: 1;
+  flex: 0 0 auto;              /* 不拉伸填充，改由 aspect-ratio 定高，保证焦点前后台比例一致 */
+  aspect-ratio: 4 / 5;        /* 固定竖框：与后台焦点预览面板 4:5 一致，焦点位置才精准对齐 */
+  position: relative;         /* 焦点 transform 绝对定位基准（applyFocusZoom 接管 img） */
   background: transparent;
   border-radius: 1rem;
   overflow: hidden;

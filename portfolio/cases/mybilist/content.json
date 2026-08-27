@@ -19,6 +19,44 @@
       "animatedEffect": "topography"
     },
     {
+      "id": "smt7bih21b2u6",
+      "type": "product-hero",
+      "title": "把每一次核验做到工程师级别",
+      "badge": "2025 全新工业核验产品矩阵 · 现货发售",
+      "desc": "实人核验 · 专业扫码头 · 三防机身。专为政务、出行、园区核验场景打造的两款工业级终端，与一套成熟的人证比对引擎。",
+      "stats": [
+        {
+          "value": "5000",
+          "label": "mAh 超长续航"
+        },
+        {
+          "value": "1.5m",
+          "label": "六面防摔"
+        },
+        {
+          "value": "IP68",
+          "label": "工业三防等级"
+        }
+      ],
+      "products": [
+        {
+          "image": "/portfolio/cases/mybilist/uploads/1787835511626.png",
+          "type": "DESKTOP · 核验一体机",
+          "name": "QUESTEK A***A",
+          "desc": "8寸 / 双目活体 / 壁挂桌面两用"
+        },
+        {
+          "image": "/portfolio/cases/mybilist/uploads/1787833836458.png",
+          "type": "HANDHELD · 手持终端",
+          "name": "QUESTEK M***A",
+          "desc": "5.5寸 / IP68 / 5000mAh"
+        }
+      ],
+      "panelLabel": "PRODUCT · 2025",
+      "primaryBtn": "11",
+      "secondaryBtn": "111"
+    },
+    {
       "id": "smt0yw5imo1i9",
       "type": "team",
       "label": "政府 / 行业数字化治理",
@@ -225,44 +263,6 @@
           "size": "tall"
         }
       ]
-    },
-    {
-      "id": "smt7bih21b2u6",
-      "type": "product-hero",
-      "title": "把每一次核验做到工程师级别",
-      "badge": "2025 全新工业核验产品矩阵 · 现货发售",
-      "desc": "实人核验 · 专业扫码头 · 三防机身。专为政务、出行、园区核验场景打造的两款工业级终端，与一套成熟的人证比对引擎。",
-      "stats": [
-        {
-          "value": "5000",
-          "label": "mAh 超长续航"
-        },
-        {
-          "value": "1.5m",
-          "label": "六面防摔"
-        },
-        {
-          "value": "IP68",
-          "label": "工业三防等级"
-        }
-      ],
-      "products": [
-        {
-          "image": "/portfolio/cases/mybilist/uploads/1787581074703.png",
-          "type": "DESKTOP · 核验一体机",
-          "name": "QUESTEK A81A",
-          "desc": "8寸 / 双目活体 / 壁挂桌面两用"
-        },
-        {
-          "image": "/portfolio/cases/mybilist/uploads/1787581025169.png",
-          "type": "HANDHELD · 手持终端",
-          "name": "QUESTEK MA55A",
-          "desc": "5.5寸 / IP68 / 5000mAh"
-        }
-      ],
-      "panelLabel": "PRODUCT · 2025",
-      "primaryBtn": "11",
-      "secondaryBtn": "111"
     }
   ]
 }

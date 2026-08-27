@@ -6,7 +6,7 @@
       "type": "product-hero",
       "badge": "众乐乐 Design Concept",
       "title": "小水滴人",
-      "desc": "坚信好IP是理性逻辑与感性故事的交织。擅长用潮玩化的视觉语言，重塑东方传统文化符号，在Z世代语境下寻找情感共鸣",
+      "desc": "坚信好 IP 是理性逻辑与感性故事的交织。我用潮玩化的视觉语言，重塑东方传统文化符号，在 Z 世代语境下寻找情感共鸣。\"小水滴人\" 就是一次尝试 —— 把 \"人人可为、聚沙成塔\" 的朴素道理，装进一个可爱又有温度的角色里。",
       "stats": [
         {
           "value": "小水滴",
@@ -14,18 +14,20 @@
         },
         {
           "value": "水滴妈妈",
-          "label": "成人身高165cm"
+          "label": "成人身高160cm"
         }
       ],
       "products": [
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787761542914.jpg",
+          "image": "/portfolio/cases/ipdesign/uploads/1787832254046.jpg",
+          "imageFocus": "50,50,1.0",
           "type": "",
           "name": "",
           "desc": ""
         },
         {
           "image": "/portfolio/cases/ipdesign/uploads/1787761517942.jpg",
+          "imageFocus": "64,0,1.1",
           "type": "",
           "name": "",
           "desc": ""
@@ -36,10 +38,10 @@
       "id": "smta7mkirpk2c",
       "type": "team",
       "label": "",
-      "heading": "炎炎夏日",
+      "heading": "场景故事・炎炎夏日",
       "subheading": "",
       "desc1": "度假圣地、阳光海滩、沙滩、冲浪、开心玩耍",
-      "desc2": "We thrive on teamwork, turning individual strengths into shared success. Together, we turn ideas into digital products that solve real problems for real people.",
+      "desc2": "在轻松快乐的夏日场景里，用最阳光的姿态告诉大家：环保与快乐从来不是二选一，它们可以同时发生。",
       "buttonText": "Wlili.top",
       "items": [
         {
@@ -75,23 +77,23 @@
     {
       "id": "smta7dft0dfu9",
       "type": "stats",
-      "label": "Why choose us",
-      "heading": "We design for results – helping your business meet its goals.",
-      "subtitle": "Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.",
+      "label": "设计理念 → 形象设定→ 场景故事→ 应用画面；",
+      "heading": "生活要懂得休息，快乐才有滋味，爱护自己也是一种 \"环保\"",
+      "subtitle": "3D 卡通渲染风格潮玩手办质感，夏日热带海滩场景。",
       "videoUrl": "/portfolio/cases/ipdesign/uploads/1787755363947.mp4",
       "videoType": "video",
       "items": [
         {
-          "value": "600",
-          "suffix": "+",
-          "title": "Successful projects completed",
-          "desc": "We've helped launch over 600 digital products and experiences that make brands stand out and feel human."
+          "value": "画面中央偏左",
+          "suffix": "",
+          "title": "黄色墨镜、身穿蓝底白花夏威夷衬衫和白色短裤、脚穿黄色拖鞋的",
+          "desc": "Q 版卡通角色，惬意地半躺在蓝白条纹沙滩躺椅上，一只手举着插有吸管的青色椰汁饮品，表情放松享受；"
         },
         {
-          "value": "100",
-          "suffix": "%",
-          "title": "UpWork rating",
-          "desc": "Consistently rated 100% job success and top-rated talent."
+          "value": "背景",
+          "suffix": "",
+          "title": "湛蓝天空 + 蓬松白云 + 倾斜的椰子树×2 + 灌木丛}+ 阳光光斑",
+          "desc": "躺椅前方的小木凳上放着一台屏幕打开的笔记本电脑，营造 \"海边远程办公\" 的度假氛围。前景是细腻的金黄色沙滩，散落着橙色海星、小贝壳、彩色沙滩球和一行脚印，一只红色小螃蟹在沙面上爬行；"
         }
       ]
     },
@@ -131,26 +133,58 @@
     {
       "id": "smtac7y26q9te",
       "type": "stats",
-      "label": "Why choose us",
-      "heading": "We design for results – helping your business meet its goals.",
-      "subtitle": "Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.",
+      "label": "设计理念 → 形象设定→ 场景故事→ 应用画面；",
+      "heading": "养宠要懂得文明，陪伴才有滋味，爱护环境也是一种 \"温柔\"",
+      "subtitle": "3D 卡通渲染风格，潮玩手办质感，干净白色场景。",
       "videoUrl": "/portfolio/cases/ipdesign/uploads/1787763917198.mp4",
       "videoType": "video",
       "mediaRatio": "landscape",
       "items": [
         {
-          "value": "600",
-          "suffix": "+",
-          "title": "Successful projects completed",
-          "desc": "We've helped launch over 600 digital products and experiences that make brands stand out and feel human."
+          "value": "画面中央偏左",
+          "suffix": "",
+          "title": "身穿浅色短袖的小水滴孩子和妈妈，看到前方跑了一只可爱的小狗，孩子轻轻抚摸柴犬的头顶； ",
+          "desc": "Q 版柴犬面朝孩子，张嘴吐舌、眯眼微笑，神态愉悦放松；小水滴妈妈站在一旁微微俯身，温柔地注视着一人一狗；"
         },
         {
-          "value": "100",
-          "suffix": "%",
-          "title": "UpWork rating",
-          "desc": "Consistently rated 100% job success and top-rated talent."
+          "value": "背景",
+          "suffix": "",
+          "title": "浅灰白干净的场景地面 + 蓝黄配色",
+          "desc": "一卷宠物拾便袋、一根牵引绳和一个宠物水碗\"文明遛狗、爱护环境\"，爱护环境从每一次遛狗开始。"
         }
       ]
+    },
+    {
+      "id": "smtbg1co4dyh7",
+      "type": "team",
+      "label": "NanoBananaPro",
+      "heading": "故事场景",
+      "subheading": "3D 卡通治愈风。妈妈牵着小水滴在小区散步，阳光柔和。孩子看见路边草坪里一只小狗正开心玩耍，兴奋地想冲进去；刚跑到草坪边...",
+      "desc1": "\"grid_layout\": \"5x5\",\n  \"grid_aspect_ratio\": \"16:9\",\n  \"global_watermark\": {\n    \"position\": \"bottom_center\",\n    \"size\": \"extremely small\"",
+      "desc2": "\"shot_number\": \"Shot 1\",\n      \"prompt_text\": \"Full Shot, Mom (160cm blue head) and boy (100cm blue head) walking on community path, cute, stylized, green trees, no timecode, no subtitles.\"\n    },...",
+      "buttonText": "Wlili.top",
+      "items": [
+        {
+          "name": "",
+          "photo": "/portfolio/cases/ipdesign/uploads/1787831430241.jpg",
+          "imageFocus": "50,50,1.0"
+        },
+        {
+          "name": "",
+          "photo": "/portfolio/cases/ipdesign/uploads/1787831436989.jpg",
+          "imageFocus": "50,50,1.0"
+        },
+        {
+          "name": "",
+          "photo": "/portfolio/cases/ipdesign/uploads/1787831441623.jpg",
+          "imageFocus": "50,50,1.0"
+        },
+        {
+          "name": "",
+          "photo": "/portfolio/cases/ipdesign/uploads/1787831445356.jpg"
+        }
+      ],
+      "avatarColorMode": "color"
     },
     {
       "id": "smta7f0wvax1a",
@@ -204,22 +238,17 @@
           "tags": []
         },
         {
+          "image": "/portfolio/cases/ipdesign/uploads/1787830475918.jpg",
+          "title": "",
+          "tags": []
+        },
+        {
           "image": "/portfolio/cases/ipdesign/uploads/1787756107133.jpg",
           "title": "",
           "tags": []
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787756123956.jpg",
-          "title": "",
-          "tags": []
-        },
-        {
           "image": "/portfolio/cases/ipdesign/uploads/1787756323574.jpg",
-          "title": "",
-          "tags": []
-        },
-        {
-          "image": "/portfolio/cases/ipdesign/uploads/1787756281781.jpg",
           "title": "",
           "tags": []
         },

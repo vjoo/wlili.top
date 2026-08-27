@@ -208,13 +208,16 @@ body {
 .navm-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
 .navm-num {
   font-size: 11px; font-weight: 700; color: var(--text-muted);
   background: var(--bg-active); padding: 2px 9px; border-radius: 999px;
 }
+.navm-ops { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.navm-move { color: var(--text-muted); flex-shrink: 0; }
+.navm-move:hover { background: var(--bg-active); color: var(--text-primary); }
+.navm-move:disabled { opacity: 0.3; cursor: not-allowed; }
 .navm-del { color: var(--danger-color); flex-shrink: 0; }
 .navm-del:hover { background: rgba(239, 68, 68, 0.08); }
 .navm-grid {
@@ -408,7 +411,7 @@ body {
   min-width: 0;
 }
 .img-focus-stage {
-  width: min(200px, 100%);
+  width: min(260px, 100%);
   aspect-ratio: 722 / 785; /* 与前台 .block-img-placeholder 一致 */
   border-radius: 10px;
   overflow: hidden;
@@ -1836,7 +1839,7 @@ body.auth-pending .pages-view { visibility: hidden; }
 .pages-badge.lv1 { background: #eef; color: #33c; }
 .pages-badge.lv2 { background: #efe; color: #2a8a2a; }
 .pages-badge.lv3 { background: #ffe; color: #b8860b; }
-.pages-badge.nav { background: #0a0a0a; color: #fff; }
+.pages-badge.home { background: var(--accent-color); color: #fff; }
 .pages-ops { display: flex; gap: 8px; flex-shrink: 0; }
 .pages-ops .btn-sm { height: 30px; padding: 0 12px; font-size: 12px; }
 .pages-empty { text-align: center; color: var(--text-muted); padding: 48px 0; font-size: 13px; }
@@ -1993,10 +1996,6 @@ body.auth-pending .pages-view { visibility: hidden; }
         <div class="form-group"><label class="form-label">层级 level</label>
           <select class="form-select" id="pgEditLevel"><option value="1">1 一级页</option><option value="2">2 二级页</option><option value="3">3 三级页</option></select>
         </div>
-      </div>
-      <div class="form-group" style="display:flex;align-items:center;gap:8px;">
-        <input type="checkbox" id="pgEditNav" style="width:auto;height:auto;">
-        <label class="form-label" for="pgEditNav" style="margin:0;">出现在导航中</label>
       </div>
     </div>
     <div class="modal-footer">
@@ -2212,6 +2211,7 @@ let originalNavMenu = null;
 let selectedIndex = -1; // -1 = nothing selected; -2 = type picker open; -3 = Let's talk 编辑器; -4 = 顶部导航设置; >=0 = editing
 let editorMode = 'empty'; // 'empty' | 'picker' | 'edit' | 'letsTalk' | 'navMenu'
 let confirmAction = null;
+let confirmBtnRestore = null;  // 弹窗关闭后恢复按钮文字/样式（非删除类操作用）
 let draggedIndex = null;
 
 /* ===== Let's talk 底部联系区块默认值（存于 content.json 顶层 letsTalk） ===== */
@@ -2787,7 +2787,7 @@ const TYPE_FIELDS = {
       { key: 'label', label: '说明', type: 'text', placeholder: 'mAh 超长续航' }
     ] },
     { key: 'products', label: '产品卡（可新增/删除，双卡并排）', type: 'items-list', itemLabel: '产品', itemFields: [
-      { key: 'image', label: '产品图', type: 'image' },
+      { key: 'image', label: '产品图', type: 'image', focus: true },
       { key: 'type', label: '类型标（选填，如 HANDHELD · 手持终端）', type: 'text', placeholder: 'HANDHELD · 手持终端' },
       { key: 'name', label: '产品名', type: 'text', placeholder: 'QUESTEK MA55A' },
       { key: 'desc', label: '描述', type: 'text', placeholder: '5.5寸 / IP68 / 5000mAh' }
@@ -2908,7 +2908,10 @@ function isDirty() {
 }
 
 function openModal(id) { $('#' + id).classList.add('open'); }
-function closeModal(id) { $('#' + id).classList.remove('open'); }
+function closeModal(id) {
+  $('#' + id).classList.remove('open');
+  if (id === 'confirmModal' && confirmBtnRestore) { confirmBtnRestore(); confirmBtnRestore = null; }
+}
 
 async function api(path, method, body) {
   const opt = { method: method || 'GET' };
@@ -5105,11 +5108,11 @@ function bindItemImages(wrap, field, uid) {
         if (!file) return;
         const prog = toastProgress('正在上传图片...');
         try {
-          // 焦点字段（team 头像等）：上传时传 sectionType='team'，服务器覆盖式缩到 4:5 竖框 400x500
-          // hero-banner 轮播图（images[]）：传 sectionType='hero-banner' → 缩到 1680px 宽
-          // masonry 瀑布流封面图（items[]）：传 sectionType='masonry' → 缩到 800px 宽（自然比例排布）
+          // 焦点字段：上传时传对应 sectionType 走覆盖式压缩（4:5 竖框）。
+          // team 头像 → 'team'（640x800）；product-hero 产品图 → 'product-hero'（1024x1280）；
+          // hero-banner 轮播图（images[]）→ 'hero-banner'（1680px 宽）；masonry 封面 → 'masonry'（800px 宽）
           const curSec = (state.sections && state.sections[selectedIndex]) || {};
-          const upSecType = isFocus ? 'team'
+          const upSecType = isFocus ? (curSec.type === 'product-hero' ? 'product-hero' : 'team')
             : (curSec.type === 'hero-banner' ? 'hero-banner'
             : (curSec.type === 'masonry' ? 'masonry' : ''));
           const url = await uploadImage(file, getFmtPick(imgWrap), upSecType);
@@ -6346,7 +6349,11 @@ function renderNavMenuEditor(right) {
     html += `<div class="navm-item" data-navm-i="${i}">
       <div class="navm-head">
         <span class="navm-num">菜单 ${String(i + 1).padStart(2, '0')}</span>
-        <button class="btn-icon delete navm-del" data-navm-del="${i}" title="删除此菜单"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        <span class="navm-ops">
+          <button type="button" class="btn-icon navm-move" data-navm-move="up" data-navm-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+          <button type="button" class="btn-icon navm-move" data-navm-move="down" data-navm-idx="${i}" title="下移"${i === items.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+          <button type="button" class="btn-icon delete navm-del" data-navm-del="${i}" title="删除此菜单"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </span>
       </div>
       <div class="navm-grid">
         <div class="form-group">
@@ -6402,6 +6409,21 @@ function renderNavMenuEditor(right) {
     btn.addEventListener('click', () => {
       state.navMenu.splice(Number(btn.dataset.navmDel), 1);
       renderNavMenuEditor(right);
+    });
+  });
+  // 上下箭头换序：点击箭头交换相邻菜单项（首/末项禁用对应箭头）
+  form.querySelectorAll('[data-navm-move]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.navmIdx);
+      const dir = btn.dataset.navmMove === 'up' ? -1 : 1;
+      const j = idx + dir;
+      if (j < 0 || j >= state.navMenu.length) return;
+      const tmp = state.navMenu[idx];
+      state.navMenu[idx] = state.navMenu[j];
+      state.navMenu[j] = tmp;
+      updateDirtyState();
+      renderNavMenuEditor(right);
+      toast('已调整菜单顺序，记得保存');
     });
   });
   $('#btnNavMenuAdd').onclick = () => {
@@ -6576,6 +6598,7 @@ $('#btnSave').onclick = saveAll;
 $('#btnConfirm').onclick = () => {
   closeModal('confirmModal');
   if (confirmAction) { confirmAction(); confirmAction = null; }
+  if (confirmBtnRestore) { confirmBtnRestore(); confirmBtnRestore = null; }
 };
 $('#btnSwitchDiscard').onclick = discardAndSwitch;
 $('#btnSwitchSave').onclick = saveAndSwitch;
@@ -6699,14 +6722,16 @@ async function apiGlobal(path, method, body) {
 
 /* ===== 页面管理视图 ===== */
 const PG_TYPE_LABEL = { detail: '案例详情', home: '首页', list: '列表', about: '关于' };
+let currentHomeKey = 'home';   // 当前全站首页 key（来自 /api/pages 的 homeKey 字段）
 
 function pageRowHtml(p) {
   const isCurrent = p.key === CASE_KEY;
+  const isHome = !!(p.isHome || p.key === currentHomeKey);
   const btnStyle = 'height:30px;padding:0 12px;font-size:12px;';
   return '<div class="pages-row">' +
     '<div class="pages-info">' +
       '<div class="pt">' + esc(p.title || p.key) + ' <span class="pages-badge lv' + esc(p.level || 3) + '">L' + esc(p.level || 3) + '</span>' +
-        (p.nav ? ' <span class="pages-badge nav">导航</span>' : '') +
+        (isHome ? ' <span class="pages-badge home">首页</span>' : '') +
         (isCurrent ? ' <span class="pages-badge" style="background:var(--accent-light);color:var(--accent-color);">当前</span>' : '') + '</div>' +
       '<div class="pk">' + esc(p.key) + ' · ' + esc(PG_TYPE_LABEL[p.type] || p.type || 'detail') +
         (p.parent ? ' · 父级: ' + esc(p.parent) : ' · 顶级') + '</div>' +
@@ -6716,6 +6741,7 @@ function pageRowHtml(p) {
       '<button class="btn-secondary" style="' + btnStyle + '" data-pg-edit="' + esc(p.key) + '">层级</button>' +
       '<button class="btn-accent" style="' + btnStyle + '" data-pg-open="' + esc(p.key) + '" data-pg-title="' + esc(p.title || p.key) + '">内容</button>' +
       '<button class="btn-secondary" style="' + btnStyle + '" data-pg-copy="' + esc(p.key) + '">复制</button>' +
+      ((p.level === 1 && !isHome) ? '<button class="btn-secondary" style="' + btnStyle + '" data-pg-home="' + esc(p.key) + '">设为首页</button>' : '') +
       '<button class="btn-danger" style="' + btnStyle + '" data-pg-del="' + esc(p.key) + '">删除</button>' +
     '</div>' +
   '</div>';
@@ -6728,21 +6754,44 @@ async function loadPages() {
   try {
     const data = await apiGlobal('/api/pages');
     const pages = (data && data.pages) || [];
+    currentHomeKey = (data && data.homeKey) || 'home';
     if (!pages.length) {
       wrap.className = 'pages-empty';
       wrap.textContent = '暂无页面。点右上角「＋ 新建页面」创建第一个。';
       return;
     }
     wrap.className = '';
-    wrap.innerHTML = pages.map(pageRowHtml).join('');
+    wrap.innerHTML = pages.map((p) => pageRowHtml(p, currentHomeKey)).join('');
     wrap.querySelectorAll('[data-pg-edit]').forEach((b) => b.addEventListener('click', () => openPgEdit(b.getAttribute('data-pg-edit'))));
     wrap.querySelectorAll('[data-pg-copy]').forEach((b) => b.addEventListener('click', () => openPgCopy(b.getAttribute('data-pg-copy'))));
     wrap.querySelectorAll('[data-pg-del]').forEach((b) => b.addEventListener('click', () => openPgDel(b.getAttribute('data-pg-del'))));
+    wrap.querySelectorAll('[data-pg-home]').forEach((b) => b.addEventListener('click', () => setHomePage(b.getAttribute('data-pg-home'))));
     wrap.querySelectorAll('[data-pg-open]').forEach((b) => b.addEventListener('click', () => switchPageWithConfirm(b.getAttribute('data-pg-open'), b.getAttribute('data-pg-title'))));
   } catch (e) {
     wrap.className = 'pages-empty';
     wrap.textContent = '加载失败：' + e.message;
   }
+}
+
+// 设为首页（一级页面）：二次确认后调用 /api/pages/update 置 isHome=true，server 自动清其他页并写 homeKey
+function setHomePage(key) {
+  confirmAction = () => {
+    apiGlobal('/api/pages/update', 'POST', { key: key, isHome: true })
+      .then(() => { toast('已将「' + key + '」设为全站首页', 'success'); loadPages(); })
+      .catch((e) => toast(e.message, 'error'));
+  };
+  // 弹窗关闭后（确认/取消/×）均恢复按钮默认状态
+  confirmBtnRestore = () => {
+    const btn = $('#btnConfirm');
+    btn.textContent = '删除';
+    btn.className = 'btn-danger';
+  };
+  $('#confirmText').innerHTML = '确定将页面「<b>' + esc(key) + '</b>」设为全站首页吗？<br><br>设置后，前台「返回首页」等链接将指向该页面。此设置可随时在「页面管理」中更改。';
+  // 临时改为「确认」按钮（非删除语义）
+  const btn = $('#btnConfirm');
+  btn.textContent = '确认';
+  btn.className = 'btn-primary';
+  openModal('confirmModal');
 }
 
 // 切换到某个页面编辑：动态改 CASE_KEY/API_BASE 后加载该页 content
@@ -6955,7 +7004,6 @@ async function openPgEdit(key) {
       .join('');
     $('#pgEditTitle').value = cur.title || '';
     $('#pgEditLevel').value = String(cur.level || 3);
-    $('#pgEditNav').checked = !!cur.nav;
     window.__pgEditKey = key;
     openModal('pgModalEdit');
   } catch (e) { toast('加载失败：' + e.message); }
@@ -6968,8 +7016,7 @@ async function submitPgEdit() {
       key: key,
       title: $('#pgEditTitle').value.trim(),
       parent: $('#pgEditParent').value || null,
-      level: $('#pgEditLevel').value,
-      nav: $('#pgEditNav').checked
+      level: $('#pgEditLevel').value
     });
     toast('层级已保存', 'success');
     closeModal('pgModalEdit');

@@ -1,6 +1,7 @@
 {
   "version": 3,
   "theme": "dark",
+  "homeKey": "home",
   "pages": [
     {
       "key": "vjooProject",
@@ -12,7 +13,8 @@
       "category": "网页设计",
       "nav": false,
       "cover": "",
-      "createdAt": "2026-08-10T00:00:00"
+      "createdAt": "2026-08-10T00:00:00",
+      "isHome": false
     },
     {
       "key": "mybilist",
@@ -24,7 +26,8 @@
       "category": "网页设计",
       "nav": false,
       "cover": "",
-      "createdAt": "2026-08-11T19:35:26"
+      "createdAt": "2026-08-11T19:35:26",
+      "isHome": false
     },
     {
       "key": "pjlist",
@@ -36,7 +39,8 @@
       "category": "网页设计",
       "nav": false,
       "cover": "",
-      "createdAt": "2026-08-12T15:33:21"
+      "createdAt": "2026-08-12T15:33:21",
+      "isHome": false
     },
     {
       "key": "home",
@@ -44,6 +48,7 @@
       "type": "home",
       "level": 1,
       "parent": null,
+      "isHome": true,
       "nav": false,
       "cover": "",
       "createdAt": "2026-08-12T21:31:34"
@@ -56,17 +61,19 @@
       "parent": null,
       "nav": false,
       "cover": "",
-      "createdAt": "2026-08-16T14:12:52"
+      "createdAt": "2026-08-16T14:12:52",
+      "isHome": false
     },
     {
       "key": "ipdesign",
       "title": "IP设计",
       "type": "detail",
-      "level": 2,
+      "level": 1,
       "parent": null,
       "nav": false,
       "cover": "",
-      "createdAt": "2026-08-26T22:39:16"
+      "createdAt": "2026-08-26T22:39:16",
+      "isHome": false
     }
   ],
   "navMenu": [
@@ -76,8 +83,8 @@
       "target": false
     },
     {
-      "label": "项目集",
-      "href": "../pjlist/index.html",
+      "label": "IP设计",
+      "href": "../ipdesign/index.html",
       "target": false
     },
     {
@@ -93,6 +100,11 @@
     {
       "label": "政府端",
       "href": "../mybilist/index.html",
+      "target": false
+    },
+    {
+      "label": "项目集",
+      "href": "../pjlist/index.html",
       "target": false
     }
   ],

@@ -2053,13 +2053,22 @@ var CaseRenderer = (function () {
     var products = Array.isArray(s.products) ? s.products : [];
     panel += '<div class="pd-product-stage">';
     products.forEach(function (p) {
-      panel += '<div class="pd-product-card">';
-      panel += '<div class="pd-product-img">' + (p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.name || '') + '">' : '') + '</div>';
-      panel += '<div class="pd-product-info">';
-      if (p.type) panel += '<span class="pd-product-type">' + esc(p.type) + '</span>';
-      if (p.name) panel += '<div class="pd-product-name">' + esc(p.name) + '</div>';
-      if (p.desc) panel += '<div class="pd-product-desc">' + esc(p.desc) + '</div>';
-      panel += '</div></div>';
+      panel += '<div class="pd-product-card' + (infoHtml ? '' : ' no-info') + '">';
+      // 焦点（item.imageFocus "x,y" 或 "x,y,zoom"）：加 data-focus 标记，由 applyFocusZoom 在图片
+      // 加载后用 transform 方案应用（object-position 百分比 + 缩放倍数）；默认 50% 50% 居中、1x
+      var fp = '';
+      if (p.image && p.imageFocus) {
+        var fv = String(p.imageFocus).trim().match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/);
+        if (fv) fp = ' data-focus="' + esc(fv[1] + ',' + fv[2] + (fv[3] ? ',' + fv[3] : '')) + '"';
+      }
+      panel += '<div class="pd-product-img">' + (p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.name || '') + '"' + fp + '>' : '') + '</div>';
+      // pd-product-info 仅在 type/name/desc 至少有一个有值时渲染，避免空容器占位占空间
+      var infoHtml = '';
+      if (p.type) infoHtml += '<span class="pd-product-type">' + esc(p.type) + '</span>';
+      if (p.name) infoHtml += '<div class="pd-product-name">' + esc(p.name) + '</div>';
+      if (p.desc) infoHtml += '<div class="pd-product-desc">' + esc(p.desc) + '</div>';
+      if (infoHtml) panel += '<div class="pd-product-info">' + infoHtml + '</div>';
+      panel += '</div>';
     });
     panel += '</div></div>';
 

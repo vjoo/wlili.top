@@ -105,7 +105,7 @@
     header.id = 'headerOverlay';
     header.innerHTML =
       '<div class="header-content">' +
-        '<a href="' + CONFIG.homeUrl + '" class="logo-link" aria-label="' + CONFIG.brandAria + '">' +
+        '<a href="' + CONFIG.homeUrl + '" class="logo-link" data-home-link aria-label="' + CONFIG.brandAria + '">' +
           '<svg width="44" height="44" viewBox="0 0 44 44" fill="none">' +
             '<rect width="44" height="44" rx="8" fill="#0a0a0a"/>' +
             '<text x="22" y="29" text-anchor="middle" fill="white" font-size="14" font-weight="700" font-family="Inter">' + CONFIG.brandText + '</text>' +
@@ -113,7 +113,7 @@
         '</a>' +
         '<nav class="header-nav" id="headerNav">' + links + '</nav>' +
         '<div class="header-actions">' +
-          '<a href="' + CONFIG.contactHref + '" class="btn-primary" id="startProjectBtn">' +
+          '<a href="' + CONFIG.contactHref + '" class="btn-primary" id="startProjectBtn" data-home-link>' +
             '<span class="btn-wrapper"><span class="btn-text">' + CONFIG.contactLabel + '</span><span class="btn-text btn-duplicate">' + CONFIG.contactLabel + '</span></span>' +
             '<span class="btn-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 8 8"><rect width="8" height="8" fill="#fff" rx="4"></rect></svg></span>' +
           '</a>' +
@@ -321,12 +321,23 @@
         if (d && (d.theme === 'dark' || d.theme === 'light')) applyTheme(d.theme);
         // 全站加载动画：cases.json 顶层 loader（后台「页面管理」主题旁切换）
         if (d && (d.loader === '1' || d.loader === '2')) applyLoader(d.loader);
+        // 可配置首页：cases.json 顶层 homeKey（后台「页面管理」→ 设为首页）
+        if (d && d.homeKey) applyHomeUrl('../' + d.homeKey + '/index.html');
         // 同时读取 cases.json 顶层的公共 letsTalk（后台「底部导航」编辑后保存在这里）
         if (d && d.letsTalk && typeof d.letsTalk === 'object') {
           try { applyContentLetsTalk(d.letsTalk); } catch (_) {}
         }
       })
       .catch(function () {});
+  }
+  // 将全站首页链接（logo / 联系按钮 / 页脚「返回首页」）指向可配置的首页，不再写死 home
+  function applyHomeUrl(url) {
+    if (!url) return;
+    CONFIG.homeUrl = url;
+    CONFIG.contactHref = url;
+    document.querySelectorAll('[data-home-link]').forEach(function (a) {
+      a.setAttribute('href', url);
+    });
   }
   // 页面从 BFCache 恢复（前进/后退）或重新可见时，重新拉取导航，保证后台保存后前台自动同步
   var lastNavMenuFetch = 0;
@@ -340,7 +351,8 @@
   function buildFooter() {
     var lt = CONFIG.letsTalk;
     var footerLinks = CONFIG.footerLinks.map(function (l) {
-      return '<a href="' + l.href + '"' + (l.target ? ' target="_blank" rel="noopener"' : '') + '>' + l.label + '</a>';
+      var isHomeLink = (l.label === '返回首页');
+      return '<a href="' + l.href + '"' + (l.target ? ' target="_blank" rel="noopener"' : '') + (isHomeLink ? ' data-home-link' : '') + '>' + l.label + '</a>';
     }).join('');
 
     var el = document.createElement('footer');
