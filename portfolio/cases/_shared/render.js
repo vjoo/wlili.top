@@ -1696,6 +1696,8 @@ var CaseRenderer = (function () {
           '<div class="project-card-image" data-hover-effect' +
           ' data-image1="' + esc(c.image1 || '') + '"' +
           ' data-image2="' + esc(c.image2 || '') + '"' +
+          ' data-focus1="' + esc(c.imageFocus1 || c.imageFocus || '') + '"' +
+          ' data-focus2="' + esc(c.imageFocus2 || '') + '"' +
           ' data-displacement="' + esc(disp) + '">' +
             '<div class="project-logo-placeholder" style="display:none;"></div>' +
           '</div>';
@@ -1756,9 +1758,11 @@ var CaseRenderer = (function () {
         videoPlaceholder(s.videoType || 'video', s.videoUrl, '', s.imageFocus) +
       '</div>';
     }
+    // 媒体比例：显式 mediaRatio 优先；缺省时视频默认横图（解决视频被左右切），图片默认竖图
+    var landscape = s.mediaRatio ? (s.mediaRatio === 'landscape') : (s.videoType === 'video');
     section.innerHTML =
       '<div class="stats-main">' +
-        '<div class="stats-layout' + (media ? ' has-media' : '') + '">' +
+        '<div class="stats-layout' + (media ? ' has-media' : '') + (landscape && media ? ' is-landscape' : '') + '">' +
           media +
           '<div class="stats-content">' +
             (s.label ? '<p class="stats-label">' + esc(s.label) + '</p>' : '') +

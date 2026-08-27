@@ -56,6 +56,16 @@
       "nav": false,
       "cover": "",
       "createdAt": "2026-08-16T14:12:52"
+    },
+    {
+      "key": "ipdesign",
+      "title": "IP设计",
+      "type": "detail",
+      "level": 2,
+      "parent": null,
+      "nav": false,
+      "cover": "",
+      "createdAt": "2026-08-26T22:39:16"
     }
   ],
   "navMenu": [

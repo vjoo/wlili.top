@@ -15,25 +15,48 @@
   var MAX_WIDTH = 1800;            // 纹理最大宽度（约容器 2x DPR），控制内存与 dataURL 体积
 
   // 把图片按 cover 方式等比裁切到 targetAspect（宽/高），返回 dataURL；失败时回退原图
-  function coverCrop(src, targetAspect, maxW) {
+  // focus：可选 "x,y,zoom"（x,y = 微信式位移百分比，zoom = 缩放倍数默认 1）。
+  //   与后台 bindFocusPanel.apply() 的 transform 完全等价：图片 cover 贴合舞台（object-position:0 0），
+  //   以 translate=-(dw-W)*x/100 平移，舞台窗口显示的源矩形即最终裁切窗口。
+  //   x=0 → 左对齐、x=50 → 居中、x=100 → 右对齐；zoom>1 时窗口缩小 = 局部放大。
+  //   无 focus / "50,50,1" = 原居中 cover 裁切（向后兼容）。
+  function coverCrop(src, targetAspect, maxW, focus) {
     return new Promise(function (resolve) {
       var img = new Image();
       img.crossOrigin = '';
       img.onload = function () {
         var iw = img.naturalWidth, ih = img.naturalHeight;
         if (!iw || !ih) { resolve(src); return; }
-        var aspect = iw / ih;
-        var sx = 0, sy = 0, sw = iw, sh = ih;
-        if (aspect > targetAspect) {
-          // 原图更宽 → 裁左右（保中间）
-          sw = ih * targetAspect;
-          sx = (iw - sw) / 2;
-        } else if (aspect < targetAspect) {
-          // 原图更高 → 裁上下（保中间）
-          sh = iw / targetAspect;
-          sy = (ih - sh) / 2;
+        var A = targetAspect;           // 舞台宽/高（=722/546）
+        var r = iw / ih;                // 源图宽/高
+        var Mx = Math.max(1, r / A);    // 宽方向 cover 系数
+        var My = Math.max(1, A / r);    // 高方向 cover 系数
+        // 解析焦点（默认 50,50,1 = 居中、不放大）
+        var z = 1, fx = 50, fy = 50;
+        var fm = (focus && typeof focus === 'string')
+          ? focus.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/)
+          : null;
+        if (fm) {
+          fx = parseFloat(fm[1]) || 50;
+          fy = parseFloat(fm[2]) || 50;
+          z = (fm[3] && parseFloat(fm[3]) >= 1) ? parseFloat(fm[3]) : 1;
         }
-        var scale = Math.min(1, maxW / sw);
+        // 后台 apply()：dw=bz*cw, cw=W*Mx → W/dw = 1/(z*Mx)；translate=-(dw-W)*x/100
+        // → 舞台窗口左缘在源图中的横向占比 = (1 - 1/(z*Mx)) * x/100（x=0 左对齐，x=100 右对齐）
+        var leftFrac = fx / 100 * (1 - 1 / (z * Mx));
+        var topFrac  = fy / 100 * (1 - 1 / (z * My));
+        var sw = iw / (z * Mx);   // 源裁切窗口宽（= 舞台宽在源图中的占比 × iw）
+        var sh = ih / (z * My);   // 源裁切窗口高
+        var sx = Math.round(iw * leftFrac);
+        var sy = Math.round(ih * topFrac);
+        sw = Math.round(sw); sh = Math.round(sh);
+        // 防御性 clamp（正常 x∈[0,100] 时已恰好贴合，不会越界）
+        if (sx < 0) { sw += sx; sx = 0; }
+        if (sy < 0) { sh += sy; sy = 0; }
+        if (sx + sw > iw) sw = iw - sx;
+        if (sy + sh > ih) sh = ih - sy;
+        sw = Math.max(1, sw); sh = Math.max(1, sh);
+        var scale = Math.min(1, maxW / sw);   // 只缩不放：窗口已小于 maxW 则不放大
         var cw = Math.max(1, Math.round(sw * scale));
         var ch = Math.max(1, Math.round(sh * scale));
         var canvas = document.createElement('canvas');
@@ -64,9 +87,12 @@
       var image1 = el.getAttribute('data-image1');
       var image2 = el.getAttribute('data-image2');
       var disp = el.getAttribute('data-displacement');
+      // 双图独立焦点：image1 用 data-focus1（兼容旧 imageFocus），image2 用 data-focus2
+      var focus1 = el.getAttribute('data-focus1') || el.getAttribute('data-focus') || '';
+      var focus2 = el.getAttribute('data-focus2') || '';
       Promise.all([
-        coverCrop(image1, TARGET_ASPECT, maxW),
-        coverCrop(image2, TARGET_ASPECT, maxW)
+        coverCrop(image1, TARGET_ASPECT, maxW, focus1),
+        coverCrop(image2, TARGET_ASPECT, maxW, focus2)
       ]).then(function (srcs) {
         try {
           new global.hoverEffect({

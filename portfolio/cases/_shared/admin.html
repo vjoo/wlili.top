@@ -1573,6 +1573,10 @@ body {
 }
 .np-tab-add:hover { color: var(--accent-color); border-color: var(--accent-color); background: rgba(99,102,241,0.05); }
 .np-tab-add svg { width: 13px; height: 13px; }
+/* 组 Tab 拖动排序态 */
+.np-tab[draggable="true"] { cursor: grab; }
+.np-tab.dragging { opacity: .45; cursor: grabbing; }
+.np-tab.drag-over { box-shadow: inset 0 -3px 0 var(--accent-color); color: var(--text-primary); }
 .np-panels {
   border: 1px solid var(--border-color); border-top: none;
   border-radius: 0 0 var(--radius-md) var(--radius-md);
@@ -1580,6 +1584,37 @@ body {
 }
 .np-panel { display: none; flex-direction: column; gap: 10px; }
 .np-panel.active { display: flex; }
+
+/* 双图独立焦点面板：Tab 页卡切换（722/546 预览图太宽，并排放不下） */
+.np-dual-focus { padding: 0; }
+.np-focus-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.np-focus-tab {
+  padding: 6px 14px;
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+}
+.np-focus-tab:hover { background: rgba(99,102,241,0.05); color: var(--text-primary); }
+.np-focus-tab.active { background: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary); font-weight: 600; }
+.np-focus-bodies { }
+.np-focus-col {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+}
+.np-focus-col.active { display: flex; }
+.np-focus-col > .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; }
+.np-focus-col .img-focus-hint { font-size: 11px; }
 /* 置换图纹理选择器（displacement-picker）：折叠容器 + 缩略图网格，点击选中 */
 .dp-wrap { border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); overflow: hidden; }
 .dp-head {
@@ -1922,6 +1957,27 @@ body.auth-pending .pages-view { visibility: hidden; }
     <div class="modal-footer">
       <button class="btn-secondary" data-close-modal>取消</button>
       <button class="btn-primary" id="pgCopySubmit">复制</button>
+    </div>
+  </div>
+</div>
+
+<!-- 板块：复制到页面 Modal -->
+<div class="modal-mask modal-narrow" id="cpModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">复制板块到页面</div><button class="modal-x" data-close-modal>&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">目标页面</label><select class="form-select" id="cpTarget"></select></div>
+      <p style="font-size:12px;color:var(--text-muted);line-height:1.6;">复制会把板块数据连同其图片/视频文件一起拷贝到目标页（文件名自动重命名避免冲突）。带数据，目标页可直接显示。</p>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;align-items:center;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;">
+        <input type="checkbox" id="cpMove" style="width:auto;height:auto;cursor:pointer;">
+        复制后从本页删除（相当于移动）
+      </label>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secondary" data-close-modal>取消</button>
+        <button class="btn-primary" id="cpSubmit">确定</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2661,7 +2717,10 @@ const TYPE_FIELDS = {
     { key: 'videoType', label: '左侧媒体类型', type: 'select', options: ['video', 'none', 'animated'],
       optionLabels: { 'video': '视频/图片（默认）', 'none': '不显示', 'animated': '动画背景' },
       default: 'video', hint: '动画背景：左侧用动画背景替代视频/图片' },
-    { key: 'videoUrl', label: '左侧视频（圆角竖版，留空则不显示）', type: 'video', focus: true, hint: '上传 mp4/webm 或填直链；上传图片（png/jpg）自动覆盖式压缩 4:5 竖框 960x1200 并可用焦点调整', dependsOn: { field: 'videoType', value: 'video' } },
+    { key: 'mediaRatio', label: '媒体比例（横图解决视频被切）', type: 'select', options: ['portrait', 'landscape'],
+      optionLabels: { 'portrait': '竖图（媒体在左，4:5 竖框）', 'landscape': '横图（媒体在右，4:3 横向，视频完整不切）' },
+      default: 'landscape', hint: '横图下媒体移到右侧横向显示，视频不再被左右切掉；竖图沿用原左侧竖版布局。布局随比例自动切换' },
+    { key: 'videoUrl', label: '媒体（圆角，留空则不显示）', type: 'video', focus: true, hint: '上传 mp4/webm 或填直链；竖图上传图片自动覆盖式压缩 4:5 竖框 960x1200，横图压缩 4:3 横框 1200x900，均可用焦点调整', dependsOn: { field: 'videoType', value: 'video' } },
     { key: 'animatedEffect', label: '动画效果', type: 'select', options: ANIM_EFFECT_KEYS, optionLabels: ANIM_EFFECT_OPTIONS, default: 'iridescence',
       dependsOn: { field: 'videoType', value: 'animated' } },
     { key: 'animatedParams', label: '动画参数', type: 'animated-params',
@@ -2788,7 +2847,7 @@ function getDefaultSection(type) {
     case 'title': return { ...base, title: 'Projects', copyright: '2010-26©', description: "We've helped businesses across industries achieve their goals. Here are some of our recent projects.", size: '148', padding: '标准' };
     case 'next-projects': return { ...base, groups: [{ cards: [] }] };
     case 'clients': return { ...base, label: 'Our clients', heading: '', logosPerRow: '', logoStyle: 'grayscale', logos: [] };
-    case 'stats': return { ...base, label: 'Why choose us', heading: 'We design for results – helping your business meet its goals.', subtitle: 'Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.', videoUrl: '', videoType: 'video', items: [
+    case 'stats': return { ...base, label: 'Why choose us', heading: 'We design for results – helping your business meet its goals.', subtitle: 'Easy-to-use interfaces, seamless development, and lasting impressions keep your users coming back.', videoUrl: '', videoType: 'video', mediaRatio: 'landscape', items: [
       { value: '600', suffix: '+', title: 'Successful projects completed', desc: "We've helped launch over 600 digital products and experiences that make brands stand out and feel human." },
       { value: '100', suffix: '%', title: 'UpWork rating', desc: 'Consistently rated 100% job success and top-rated talent.' }
     ] };
@@ -3133,6 +3192,7 @@ function renderSectionList() {
         </div>
         <div class="card-actions">
           <button class="btn-icon" title="编辑" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn-icon" title="复制到页面" data-act="more"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
           <button class="btn-icon delete" title="删除" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
       </div>
@@ -3148,6 +3208,7 @@ function renderSectionList() {
     });
 
     el.querySelector('[data-act="edit"]').onclick = (e) => { e.stopPropagation(); selectSection(i); };
+    el.querySelector('[data-act="more"]').onclick = (e) => { e.stopPropagation(); openCopySectionModal(i); };
     el.querySelector('[data-act="delete"]').onclick = (e) => { e.stopPropagation(); deleteSection(i); };
 
     // Drag & Drop reorder
@@ -3604,9 +3665,17 @@ function renderEditorForm(section) {
         imageFieldRenderIndex++;
         break;
       }
-      case 'video':
-        html += renderVideoFieldWithUrl(f.key, val || '', fieldUid, { focus: f.focus, focusValue: String(section.imageFocus || '') });
+      case 'video': {
+        // 焦点预览框比例随媒体比例切换：横图 4:3、竖图 4:5
+        const landscape = section.mediaRatio ? section.mediaRatio === 'landscape' : (section.videoType === 'video');
+        html += renderVideoFieldWithUrl(f.key, val || '', fieldUid, {
+          focus: f.focus,
+          focusValue: String(section.imageFocus || ''),
+          stageRatio: landscape ? '4/3' : '4/5',
+          focusHint: landscape ? '拖动调整显示区域 · 放大后可选局部画面（前台比例 4:3）' : '拖动调整显示区域 · 放大后可选局部画面（前台比例 4:5）'
+        });
         break;
+      }
       case 'image-list':
         html += renderImageListField(f.key, Array.isArray(val) ? val : [], fieldUid);
         break;
@@ -4064,9 +4133,10 @@ function renderVideoFieldWithUrl(key, url, uid, options) {
   const urlId = 'vurl_' + key + '_' + uid;
   const sepLabel = options.sepLabel || '';
   const sepHtml = sepLabel ? ('<span class="dz-url-sep">' + sepLabel + '</span>') : '';
-  // 焦点字段（如 stats 左图，field.focus=true）：URL 是图片时渲染焦点面板（4:5 竖框，拖动/缩放调整显示区域）
+  // 焦点字段（如 stats 左图，field.focus=true）：URL 是图片时渲染焦点面板；预览框比例随媒体比例切换
   const isImg = has && !isVideoUrl(url);
   const focus = !!(options.focus && isImg);
+  const stageRatio = options.stageRatio || '4/5';   // 横图 4:3 / 竖图 4:5
   const fv = focus ? String(options.focusValue || '50,50').trim() : '50,50';
   const fm = fv.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/);
   const fx = fm ? fm[1] : '50';
@@ -4074,7 +4144,7 @@ function renderVideoFieldWithUrl(key, url, uid, options) {
   const fz = fm && fm[3] && parseFloat(fm[3]) >= 1 ? parseFloat(fm[3]).toFixed(1) : '1.0';
   const focusPanel = focus ? `
     <div class="img-focus" data-focus-bound="0">
-      <div class="img-focus-stage" style="aspect-ratio:4/5;">
+      <div class="img-focus-stage" style="aspect-ratio:${esc(stageRatio)};">
         <img class="img-focus-img" src="${esc(url)}" alt="" draggable="false" style="width:100%;height:100%;object-fit:cover;object-position:0 0;">
       </div>
       <input type="hidden" data-bind-key="imageFocus" data-ftype="image-focus-value" value="${fx},${fy},${fz}">
@@ -4083,7 +4153,7 @@ function renderVideoFieldWithUrl(key, url, uid, options) {
         <input type="range" class="img-focus-zoom-range" min="1" max="3" step="0.1" value="${fz}">
         <span class="img-focus-zoom-val">${fz}×</span>
       </div>
-      <div class="img-focus-hint">拖动调整显示区域 · 放大后可选局部画面（前台比例 4:5）</div>
+      <div class="img-focus-hint">${esc(options.focusHint || '拖动调整显示区域 · 放大后可选局部画面（前台比例 ' + stageRatio + '）')}</div>
     </div>` : '';
   return `
     <div class="dropzone dropzone-video${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-uid="${esc(uid)}" id="${dzId}" data-ftype="video">
@@ -4108,16 +4178,19 @@ function renderVideoFieldWithUrl(key, url, uid, options) {
 function bindVideoField(key, uid) {
   const dz = document.querySelector(`.dropzone.dropzone-video[data-dz="${key}"][data-uid="${uid}"]`);
   if (!dz) return;
+  // 媒体比例（横图/竖图）在绑定外层计算，供上传压缩与焦点 frontBox 共用
+  const curSec = (state.sections && state.sections[selectedIndex]) || {};
+  const landscape = curSec.mediaRatio ? curSec.mediaRatio === 'landscape' : (curSec.videoType === 'video');
   const handler = async (file) => {
     if (!file) return;
     const prog = toastProgress('正在上传媒体...');
     try {
-      // 图片 → 走图片压缩（stats 左图传 sectionType='stats' 覆盖式 4:5；fmt auto 智能保留透明）；
+      // 图片 → 走图片压缩（stats 按媒体比例传 sectionType：横图 stats-landscape 覆盖式 4:3，竖图 stats 覆盖式 4:5；fmt auto 智能保留透明）；
       // 视频 → 原样上传（不动压缩）
       const isImage = /^image\//i.test(file.type) || /\.(png|jpe?g|webp|gif|avif)$/i.test(file.name || '');
-      const curSec = (state.sections && state.sections[selectedIndex]) || {};
+      const st = (curSec.type === 'stats') ? (landscape ? 'stats-landscape' : 'stats') : '';
       const url = isImage
-        ? await uploadImage(file, 'auto', curSec.type === 'stats' ? 'stats' : '')
+        ? await uploadImage(file, 'auto', st)
         : await uploadVideo(file);
       if (!url) throw new Error('服务器未返回 URL');
       setVideoValue(key, uid, url);
@@ -4161,10 +4234,11 @@ function bindVideoField(key, uid) {
     });
   }
   // 焦点面板（stats 左图等 focus 视频字段、且 URL 是图片时渲染）：写入 section.imageFocus（section 级）
-  // stats 组件：前台 .stats-media 4:5 竖框，桌面约 400×500——z_max 按此算保证前台 1:1 不模糊
+  // 横图前台 .stats-media 4:3 约 540×405（z_max 略大于 1 即可 1:1 不糊）；竖图 4:5 约 400×500
   const focusPanel = dz.parentElement.querySelector('.img-focus');
   if (focusPanel) {
-    bindFocusPanel(focusPanel, '[data-bind-key="imageFocus"]', undefined, [400, 500]);
+    const fb = landscape ? [540, 405] : [400, 500];
+    bindFocusPanel(focusPanel, '[data-bind-key="imageFocus"]', undefined, fb);
   }
 }
 
@@ -4175,7 +4249,13 @@ function setVideoValue(key, uid, url) {
   // 保留焦点形态与焦点值（stats 左图等 focus 字段）：重渲染后焦点面板不丢失
   const focus = !!wrap.querySelector('.img-focus');
   const focusValue = wrap.querySelector('[data-bind-key="imageFocus"]') ? wrap.querySelector('[data-bind-key="imageFocus"]').value : '';
-  const newHtml = renderVideoFieldWithUrl(key, url, uid, { focus, focusValue });
+  const curSec = (state.sections && state.sections[selectedIndex]) || {};
+  const landscape = curSec.mediaRatio ? curSec.mediaRatio === 'landscape' : (curSec.videoType === 'video');
+  const newHtml = renderVideoFieldWithUrl(key, url, uid, {
+    focus, focusValue,
+    stageRatio: landscape ? '4/3' : '4/5',
+    focusHint: landscape ? '拖动调整显示区域 · 放大后可选局部画面（前台比例 4:3）' : '拖动调整显示区域 · 放大后可选局部画面（前台比例 4:5）'
+  });
   const tmp = document.createElement('div');
   tmp.innerHTML = newHtml;
   const newDz = tmp.firstElementChild;
@@ -4735,21 +4815,22 @@ function renderImageField(key, url) {
     </div>`;
 }
 
-function bindImageFieldLegacy(key, onUpdate) {
+function bindImageFieldLegacy(key, onUpdate, sectionType) {
   const dz = document.querySelector(`.dropzone[data-dz="${key}"]`);
   if (!dz) return;
   const handler = async (file) => {
     if (!file) return;
     const prog = toastProgress('正在上传图片...');
     try {
-      const url = await uploadImage(file, getFmtPick(dz.parentElement));
+      // sectionType：特效双图(next-projects 卡片图)传 'next-projects' → 服务器覆盖式缩到 722x546 比例框
+      const url = await uploadImage(file, getFmtPick(dz.parentElement), sectionType || '');
       if (!url) throw new Error('服务器未返回 URL');
       // 替换整个 .dz-ctl（含 dz-url-input / 格式下拉），避免只替换 .dropzone 导致旧容器嵌套累积（格式下拉越来越多）
       const ctl = dz.parentElement;
       const tmp = document.createElement('div');
       tmp.innerHTML = renderImageField(key, url);
       ctl.parentElement.replaceChild(tmp.firstElementChild, ctl);
-      bindImageFieldLegacy(key, onUpdate);
+      bindImageFieldLegacy(key, onUpdate, sectionType);
       if (onUpdate) onUpdate(url);
       prog.close('图片已上传', 'success');
     } catch (e) {
@@ -4775,7 +4856,7 @@ function bindImageFieldLegacy(key, onUpdate) {
       const tmp = document.createElement('div');
       tmp.innerHTML = renderImageField(key, '');
       ctl.parentElement.replaceChild(tmp.firstElementChild, ctl);
-      bindImageFieldLegacy(key, onUpdate);
+      bindImageFieldLegacy(key, onUpdate, sectionType);
       if (onUpdate) onUpdate('');
     });
   }
@@ -5627,6 +5708,35 @@ function renderCardsListField(key, list, uid) {
           ${renderImageField(key + '__img2_' + i + '_' + uid, c.image2 || '')}
         </div>
       </div>
+      ${(() => {
+        const panels = [];
+        if (c.image1) panels.push({ label: '图片1 焦点', key: 'imageFocus1', url: c.image1, val: c.imageFocus1 || c.imageFocus });
+        if (c.image2) panels.push({ label: '图片2 焦点', key: 'imageFocus2', url: c.image2, val: c.imageFocus2 });
+        if (!panels.length) return '';
+        if (panels.length === 1) {
+          return `<div class="lf-row"><div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">${esc(panels[0].label)}（拖动定位 / 缩放框选局部）</label>
+            ${renderCardFocusPanel(panels[0].label, panels[0].key, panels[0].url, panels[0].val)}
+          </div></div>`;
+        }
+        // 双图：左右并排（桌面 2 列；移动端 .np-dual-focus 已有单列回退 + Tab 切换）
+        const itemsHtml = panels.map((p, pi) =>
+          `<div class="np-focus-col${pi === 0 ? ' active' : ''}">
+            <label class="form-label">${esc(p.label)}（独立设置）</label>
+            ${renderCardFocusPanel(p.label, p.key, p.url, p.val)}
+          </div>`
+        ).join('');
+        return `
+        <div class="lf-row">
+          <div class="form-group np-dual-focus" style="grid-column:1/-1;">
+            <div class="np-focus-tabs" data-np-ftab="1">
+              <button type="button" class="np-focus-tab active" data-np-ft="0">${esc(panels[0].label)}</button>
+              <button type="button" class="np-focus-tab" data-np-ft="1">${esc(panels[1].label)}</button>
+            </div>
+            <div class="np-focus-bodies">${itemsHtml}</div>
+          </div>
+        </div>`;
+      })()}
       <div class="lf-row np-swap-row">
         <button type="button" class="btn-secondary" data-cl-swap="${i}" style="justify-content:center;width:auto;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><path d="M7 16V4"/><path d="M7 4 3 8"/><path d="M7 4l4 4"/><path d="M17 8v12"/><path d="M17 20l4-4"/><path d="M17 20l-4-4"/></svg>
@@ -5645,6 +5755,29 @@ function renderCardsListField(key, list, uid) {
     </div>`;
 }
 
+// 特效双图卡片焦点面板：以指定图片为参照预览，焦点值存 data-cl-key（collectCardsList 自动带上）。
+// label: 面板标题（如"图片1 焦点"/"图片2 焦点"）；focusKey: hidden 字段名（如 imageFocus1/imageFocus2）。
+function renderCardFocusPanel(label, focusKey, url, focusValue) {
+  const fv = String(focusValue || '50,50').trim();
+  const m = fv.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d+(?:\.\d+)?))?$/);
+  const fx = m ? m[1] : '50';
+  const fy = m ? m[2] : '50';
+  const fz = m && m[3] && parseFloat(m[3]) >= 1 ? parseFloat(m[3]).toFixed(1) : '1.0';
+  return `
+    <div class="img-focus" data-focus-bound="0">
+      <div class="img-focus-stage" style="aspect-ratio:722/546;">
+        <img class="img-focus-img" src="${esc(url)}" alt="" draggable="false" style="width:100%;height:100%;object-fit:cover;object-position:0 0;">
+      </div>
+      <input type="hidden" data-cl-key="${esc(focusKey)}" data-ftype="image-focus-value" value="${fx},${fy},${fz}">
+      <div class="img-focus-zoom">
+        <span>缩放</span>
+        <input type="range" class="img-focus-zoom-range" min="1" max="3" step="0.1" value="${fz}">
+        <span class="img-focus-zoom-val">${fz}×</span>
+      </div>
+      <div class="img-focus-hint">拖动调整显示区域 · 放大后可选局部画面（前台比例 722:546，${esc(label)}）</div>
+    </div>`;
+}
+
 function bindCardsListField(key, uid, setList) {
   const wrap = document.querySelector(`.list-field[data-lf="${key}"][data-uid="${uid}"]`);
   if (!wrap) return;
@@ -5659,8 +5792,42 @@ function bindCardsListField(key, uid, setList) {
   wrap.querySelectorAll('.dropzone[data-dz]').forEach((dz) => {
     const subKey = dz.dataset.dz;
     if (subKey.startsWith(key + '__')) {
-      bindImageFieldLegacy(subKey, () => writeList(collectCardsList(key, uid)));
+      // 特效双图卡片图上传传 sectionType='next-projects' → 服务器覆盖式缩到 722x546 比例框 1444x1092（2 倍余量支持焦点放大）
+      bindImageFieldLegacy(subKey, () => {
+        const list = collectCardsList(key, uid);
+        // 换新图后重置该卡对应焦点（旧图构图不再适用，与 team 头像换图行为一致）
+        const mm = subKey.match(/__img([12])_(\d+)_/);
+        if (mm && list[+mm[2]]) delete list[+mm[2]]['imageFocus' + mm[1]];
+        writeList(list);
+        // 整张列表重渲染：刷新焦点面板预览图（图片已更新），并重新绑定焦点面板
+        replaceListField(key, uid, renderCardsListField(key, list, uid));
+        bindCardsListField(key, uid, setList);
+      }, 'next-projects');
     }
+  });
+  // 双图独立焦点面板（每张图的 img-focus 按 data-cl-key 独立写入 imageFocus1/imageFocus2）
+  wrap.querySelectorAll('.img-focus').forEach((panel) => {
+    const itemEl = panel.closest('.list-field-item');
+    const idx = itemEl ? parseInt(itemEl.dataset.lfItem) : -1;
+    if (idx < 0) return;
+    const hiddenSel = panel.querySelector('[data-cl-key]');
+    const focusKey = hiddenSel ? hiddenSel.dataset.clKey : 'imageFocus';
+    bindFocusPanel(panel, `[data-cl-key="${focusKey}"]`, (val) => {
+      const list = collectCardsList(key, uid);
+      if (list[idx]) list[idx][focusKey] = val;
+      writeList(list);
+    }, [722, 546]);
+  });
+  // 双图焦点 Tab 页卡切换
+  wrap.querySelectorAll('.np-focus-tabs').forEach((tabBar) => {
+    tabBar.querySelectorAll('.np-focus-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const ft = parseInt(tab.dataset.npFt);
+        tabBar.querySelectorAll('.np-focus-tab').forEach(t => t.classList.toggle('active', t === tab));
+        const bodies = tabBar.nextElementSibling; // .np-focus-bodies
+        if (bodies) bodies.querySelectorAll('.np-focus-col').forEach((col, ci) => col.classList.toggle('active', ci === ft));
+      });
+    });
   });
   // 卡片排序（上移/下移）：交换组内两张卡片的顺序
   wrap.querySelectorAll('[data-lf-move]').forEach((btn) => {
@@ -5777,6 +5944,8 @@ function migrateNextProjectsToGroups(section) {
 
 // 记住每个 section 当前选中的组 Tab（避免上传/重渲染后跳回第 1 组）
 var groupsActiveTabs = {};
+// 组 Tab 拖动排序时记录被拖动的源索引
+var draggedGroupIndex = null;
 
 function renderGroupsListField(key, list, uid) {
   const groups = Array.isArray(list) ? list : [];
@@ -5788,7 +5957,7 @@ function renderGroupsListField(key, list, uid) {
     const gv = g || {};
     const count = Array.isArray(gv.cards) ? gv.cards.length : 0;
     const isActive = gi === activeIdx;
-    tabs.push(`<div class="np-tab${isActive ? ' active' : ''}" data-gl-tab="${gi}" role="tab">
+    tabs.push(`<div class="np-tab${isActive ? ' active' : ''}" data-gl-tab="${gi}" role="tab" draggable="true" title="拖动可调整组顺序">
       <span class="np-tab-name">组 #${gi + 1}</span>
       <span class="np-tab-count">${count} 张</span>
     </div>`);
@@ -5839,6 +6008,45 @@ function bindGroupsListField(key, uid) {
       wrap.querySelectorAll('.np-panel').forEach((p) => {
         p.classList.toggle('active', parseInt(p.dataset.glItem) === gi);
       });
+    });
+  });
+  // 组 Tab 拖动排序（组与组之间换位置）
+  wrap.querySelectorAll('[data-gl-tab]').forEach((tab) => {
+    const gi = parseInt(tab.dataset.glTab);
+    tab.addEventListener('dragstart', (e) => {
+      draggedGroupIndex = gi;
+      tab.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(gi));
+    });
+    tab.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      tab.classList.add('drag-over');
+    });
+    tab.addEventListener('dragleave', () => { tab.classList.remove('drag-over'); });
+    tab.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tab.classList.remove('drag-over');
+      const to = gi;
+      const from = draggedGroupIndex;
+      if (from === null || from === to) return;
+      const groups = collectGroupsList(key, uid);
+      const [moved] = groups.splice(from, 1);
+      groups.splice(to, 0, moved);
+      // 激活索引跟随：若原激活组被移动则指向新位置，否则若落点在原激活之前/之后做偏移
+      const prevActive = groupsActiveTabs[uid];
+      if (prevActive === from) groupsActiveTabs[uid] = to;
+      else if (from < prevActive && to >= prevActive) groupsActiveTabs[uid] = prevActive - 1;
+      else if (from > prevActive && to <= prevActive) groupsActiveTabs[uid] = prevActive + 1;
+      setGroups(groups);
+      rebind();
+      toast('已调整组顺序，记得保存');
+    });
+    tab.addEventListener('dragend', () => {
+      tab.classList.remove('dragging');
+      wrap.querySelectorAll('[data-gl-tab]').forEach((t) => t.classList.remove('drag-over'));
+      draggedGroupIndex = null;
     });
   });
   // 删除组（删除后激活索引回退到相邻组）
@@ -6681,6 +6889,60 @@ async function submitPgCopy() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+/* ===== 板块复制到页面（带数据 + 图片） ===== */
+let cpSourceIndex = -1;
+
+// 打开弹窗：填充目标页下拉（排除当前页），重置"移动"勾选
+async function openCopySectionModal(idx) {
+  cpSourceIndex = idx;
+  await ensurePageOptions();           // 确保 PAGE_OPTIONS 已加载
+  const sel = $('#cpTarget');
+  sel.innerHTML = pageSelectOptions('');
+  // 排除当前页（不能复制到自己）
+  Array.from(sel.options).forEach((o) => { if (o.value === CASE_KEY) o.remove(); });
+  if (!sel.options.length) {
+    toast('没有可复制的目标页面（需先存在其他页面）', 'error');
+    return;
+  }
+  $('#cpMove').checked = false;
+  openModal('cpModal');
+}
+
+async function submitCopySection() {
+  const idx = cpSourceIndex;
+  if (idx < 0 || idx >= state.sections.length) { closeModal('cpModal'); return; }
+  const target = $('#cpTarget').value;
+  if (!target) { toast('请选择目标页面'); return; }
+  const move = $('#cpMove').checked;
+  // 移动语义：源页删除发生在服务器端，必须保证本页内存 = 服务器文件，否则会漏删或误删
+  if (move && isDirty()) {
+    toast('移动前请先点顶部「保存」本页改动，再操作', 'error');
+    return;
+  }
+  const section = state.sections[idx];
+  const btn = $('#cpSubmit');
+  btn.disabled = true;
+  try {
+    const data = await apiGlobal('/api/cases/' + encodeURIComponent(target) + '/append-section', 'POST', {
+      section: section,
+      sourceKey: CASE_KEY,
+      removeSource: move
+    });
+    closeModal('cpModal');
+    if (move) {
+      toast('已移动到「' + target + '」，正在刷新本页…', 'success');
+      await loadState();              // 重新加载本页：源页该板块已从服务器移除
+      renderAll();
+    } else {
+      toast('已复制到「' + target + '」', 'success');
+    }
+  } catch (e) {
+    toast('操作失败：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 async function openPgEdit(key) {
   try {
     const data = await apiGlobal('/api/pages');
@@ -6784,6 +7046,7 @@ async function afterAuth() {
   $('#btnPgCopy').onclick = () => openPgCopy('');
   $('#pgNewSubmit').onclick = submitPgNew;
   $('#pgCopySubmit').onclick = submitPgCopy;
+  $('#cpSubmit').onclick = submitCopySection;
   $('#pgEditSubmit').onclick = submitPgEdit;
   $('#pgDelSubmit').onclick = submitPgDel;
   document.querySelectorAll('[data-close-modal]').forEach((b) => {

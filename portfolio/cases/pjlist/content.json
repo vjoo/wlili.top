@@ -4,9 +4,9 @@
     {
       "id": "smsx1fmxpu4zm",
       "type": "hero-banner",
-      "title": "PORTFOLIO 2026",
+      "title": "Wli PORTFOLIO",
       "labels": [
-        "WLi. Design Studio"
+        "2026. Design Studio"
       ],
       "description": "App Interface・Web System・Visual Identity・3D Scene Design",
       "videoType": "animated",
@@ -22,11 +22,11 @@
           "subtitle": ""
         }
       ],
-      "animatedEffect": "tunnel",
+      "animatedEffect": "molten",
       "animatedParams": {
-        "mouseInteraction": false,
-        "color1": "#3616b6",
-        "backgroundColor": "#272031"
+        "color1": "#0a0a0a",
+        "color2": "#4e54a6",
+        "backgroundColor": "#0a0a0a"
       },
       "textLayout": "center"
     },
@@ -36,7 +36,7 @@
       "title": "Projects",
       "copyright": "2010-2026©",
       "description": "We've helped businesses across industries achieve\ntheir goals. Here are some of our recent projects.",
-      "size": "124"
+      "size": "96"
     },
     {
       "id": "smsprwcl5kz27",
@@ -45,20 +45,24 @@
         {
           "cards": [
             {
-              "name": "中外运・跨境物流智能调度平台",
+              "name": "运营・自动蓝牙防盗门锁芯",
               "year": "",
               "href": "",
-              "linkPage": "reeoder",
-              "image1": "/portfolio/cases/pjlist/uploads/1786980450189.jpg",
-              "image2": "/portfolio/cases/pjlist/uploads/1786980457589.jpg"
+              "linkPage": "home",
+              "image1": "/portfolio/cases/pjlist/uploads/1787807676765.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1787807066280.jpg",
+              "imageFocus1": "100,50,1.0",
+              "imageFocus2": "50,95,1.0"
             },
             {
-              "name": "智能锁出租房运营产品",
+              "name": "IP・小水滴人",
               "year": "",
               "href": "",
-              "linkPage": "vjooProject",
-              "image1": "/portfolio/cases/pjlist/uploads/1787110553227.jpg",
-              "image2": "/portfolio/cases/pjlist/uploads/1786980471086.jpg"
+              "linkPage": "ipdesign",
+              "image1": "/portfolio/cases/pjlist/uploads/1787807814614.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1787807890426.jpg",
+              "imageFocus1": "50,50,1.0",
+              "imageFocus2": "100,50,1"
             }
           ]
         },
@@ -70,7 +74,9 @@
               "href": "",
               "linkPage": "",
               "image1": "/portfolio/cases/pjlist/uploads/1787034243511.jpg",
-              "image2": "/portfolio/cases/pjlist/uploads/1787058480831.jpg"
+              "image2": "/portfolio/cases/pjlist/uploads/1787058480831.jpg",
+              "imageFocus1": "50,50,1.0",
+              "imageFocus2": "50,50,1.0"
             },
             {
               "name": "智能锁蓝牙开门项目",
@@ -78,27 +84,33 @@
               "href": "",
               "linkPage": "",
               "image1": "/portfolio/cases/pjlist/uploads/1787110562983.jpg",
-              "image2": "/portfolio/cases/pjlist/uploads/1786980510585.jpg"
+              "image2": "/portfolio/cases/pjlist/uploads/1786980510585.jpg",
+              "imageFocus1": "50,50,1.0",
+              "imageFocus2": "50,50,1.0"
             }
           ]
         },
         {
           "cards": [
             {
-              "name": "",
+              "name": "中外运・跨境物流智能调度平台",
               "year": "",
               "href": "",
-              "linkPage": "",
-              "image1": "",
-              "image2": ""
+              "linkPage": "reeoder",
+              "image1": "/portfolio/cases/pjlist/uploads/1786980450189.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786980457589.jpg",
+              "imageFocus1": "50,50,1.0",
+              "imageFocus2": "50,50,1.0"
             },
             {
-              "name": "",
+              "name": "智能锁出租房运营产品",
               "year": "",
               "href": "",
-              "linkPage": "",
-              "image1": "",
-              "image2": ""
+              "linkPage": "vjooProject",
+              "image1": "/portfolio/cases/pjlist/uploads/1787110553227.jpg",
+              "image2": "/portfolio/cases/pjlist/uploads/1786980471086.jpg",
+              "imageFocus1": "50,50,1.0",
+              "imageFocus2": "50,50,1.0"
             }
           ]
         },

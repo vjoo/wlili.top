@@ -1404,6 +1404,39 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
 }
 
+/* 横图布局：媒体移到右侧横向显示（4:3），字段色块组移到左侧并上下单列排列
+   —— 解决视频在竖框里被左右切掉的问题；DOM 顺序不变（媒体先、内容后），用 order 重排 */
+.stats-layout.is-landscape {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 4rem;
+  align-items: end;
+}
+
+.stats-layout.is-landscape .stats-media {
+  order: 2;              /* 媒体靠右 */
+  aspect-ratio: 5 / 3;  /* 横向显示 */
+}
+
+.stats-layout.is-landscape .stats-content {
+  order: 1;             /* 文字 + 字段组靠左 */
+}
+
+.stats-layout.is-landscape .stats-grid {
+  grid-template-columns: 1fr;  /* 字段色块上下排列 */
+  gap: 14px;
+}
+
+/* 横图模式：卡片不再强制正方形，改为内容自适应高度 + 紧凑排列 */
+.stats-layout.is-landscape .stat-item {
+  aspect-ratio: none;           /* 解除正方形锁定 */
+  justify-content: flex-start;   /* 内容紧贴顶部，不向两端分散 */
+  padding: 1.5rem 1.875rem;     /* 上下略收紧 */
+}
+
+.stats-layout.is-landscape .stat-desc {
+  margin: 0.5rem 0 0 0;         /* 描述紧跟标题下方，不再推到底部 */
+}
+
 .stats-media {
   position: relative;
   aspect-ratio: 4 / 5;
@@ -1471,7 +1504,7 @@
   border-radius: 25px;
   padding: 1.875rem;
   min-width: 0;
-  aspect-ratio: 2 / 2;           /* 正方形数据卡片 */
+  /* aspect-ratio: 2 / 2;        正方形数据卡片 —— 横图模式下方块过高撑大左侧，由 .is-landscape 覆盖为 none；竖图模式内容自适应 */
 }
 
 .stat-value {

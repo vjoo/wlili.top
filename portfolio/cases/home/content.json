@@ -26,7 +26,7 @@
       "title": "Introduction",
       "copyright": "2010-26©",
       "description": "Stylized & Isometric scene：clay‑style 3D, 2.5D isometric illustration scene",
-      "size": "80",
+      "size": "96",
       "padding": "标准"
     },
     {
@@ -36,7 +36,7 @@
       "heading": "CGI Background Assets for Enterprise Platform UI",
       "subheading": "",
       "desc1": "企业端需要兼顾科技专业气质，严格把控画面对比、细节密度与色彩饱和度，同时输出适配明 / 暗色系统主题的多套版本。",
-      "desc2": "包含硬表面产品模型、2.5D 等轴测场景、氛围感商业主视觉，为产品展示、网页落地页、品牌营销、展会输出高保真 CGI 视觉成果。",
+      "desc2": "Blender 硬表面模型、2.5D 等轴测场景、氛围感商业主视觉，为产品展示、网页落地页、品牌营销、展会输出高保真 CGI 视觉成果。",
       "buttonText": "Wlili.top",
       "items": [
         {
@@ -46,8 +46,8 @@
         },
         {
           "name": "",
-          "photo": "/portfolio/cases/home/uploads/1787669723415.jpg",
-          "imageFocus": "29,48,1.8"
+          "photo": "/portfolio/cases/home/uploads/1787815826505.jpg",
+          "imageFocus": "25,39,1.4"
         },
         {
           "name": "",
@@ -56,8 +56,8 @@
         },
         {
           "name": "",
-          "photo": "/portfolio/cases/home/uploads/1787732182287.jpg",
-          "imageFocus": "24,54,1.4"
+          "photo": "/portfolio/cases/home/uploads/1787811385448.jpg",
+          "imageFocus": "26,45,1.5"
         }
       ],
       "avatarColorMode": "color"
@@ -81,20 +81,67 @@
       "images": []
     },
     {
+      "id": "smtb6uj438qsm",
+      "type": "masonry",
+      "label": "",
+      "heading": "",
+      "items": [
+        {
+          "image": "/portfolio/cases/home/uploads/1787816242836.jpg",
+          "title": "",
+          "tags": []
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787816246130.jpg",
+          "title": "",
+          "tags": []
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787816249207.jpg",
+          "title": "",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "id": "smtb7nu7q46hh",
+      "type": "stats",
+      "label": "3D AIGC",
+      "heading": "动画提示词生成",
+      "subtitle": "无缝循环动画，固定机位，严格保持原图构图、模型、材质、颜色和所有物体位置",
+      "videoUrl": "/portfolio/cases/home/uploads/1787817753756.mp4",
+      "videoType": "video",
+      "mediaRatio": "portrait",
+      "items": [
+        {
+          "value": "8",
+          "suffix": "s",
+          "title": "中心蓝色盾牌在一个周期内匀速旋转一圈 360°，同时轻微呼吸发光，盾牌不变形不消失。",
+          "desc": "两条独立蓝色圆环轨道全程永久完整可见，不能被圆球、光效或数据流抹除；圆球只沿其中一条轨道运动，经过另一条圆环时圆环保持连续可见"
+        },
+        {
+          "value": "-",
+          "suffix": "",
+          "title": "蓝色数据流脉冲从画外沿数据线路向内运动，汇聚到中心数据带尽头后消失，脉冲首尾状态闭环位置固定，不漂移。其余设备、人物、网格和建筑保持稳定，仅允许微弱灯光呼吸。",
+          "desc": "所有物体角度、位置、亮度、脉冲状态与第 0 秒完全一致，实现无缝循环。禁止圆环消失、禁止线条断裂、禁止模型形变、禁止镜头运动、禁止新增物体、禁止闪断跳帧。"
+        }
+      ]
+    },
+    {
       "id": "smt9z90dp3gj5",
       "type": "title",
       "title": "Introduction",
       "copyright": "2010-26©",
       "description": "Fully Automatic Bluetooth Anti-Theft Lock Cylinder (Indoor)，Upgrade to a fully automatic smart lock — without removing your existing lock.",
-      "size": "80",
+      "size": "96",
       "padding": "标准"
     },
     {
       "id": "smt9z9bq2owhg",
       "type": "team",
       "label": "",
-      "heading": "Bluetooth Smart Lock Cylinder",
-      "subheading": "",
+      "heading": "Bluetooth Smart",
+      "subheading": " —— Lock Cylinder",
       "desc1": "把家门装进手机里。全自动蓝牙防盗门锁芯专为传统机械锁升级而生，无需拆除原有锁体，五分钟即可完成安装，让普通门锁秒变全自动智能锁。",
       "desc2": "手机蓝牙一触即开，远程收发虚拟钥匙，纯铜 C 级锁芯守护安全，充一次电安心使用近一年。告别翻找钥匙的日常，从今天开始。",
       "buttonText": "Wlili.top",
@@ -123,6 +170,29 @@
       "avatarColorMode": "color"
     },
     {
+      "id": "smtb9dl9afavg",
+      "type": "masonry",
+      "label": "",
+      "heading": "",
+      "items": [
+        {
+          "image": "/portfolio/cases/home/uploads/1787819200079.jpg",
+          "title": "",
+          "tags": []
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787819206191.jpg",
+          "title": "",
+          "tags": []
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787819211461.jpg",
+          "title": "",
+          "tags": []
+        }
+      ]
+    },
+    {
       "id": "smta1gbgutdhq",
       "type": "stats",
       "label": "Unlock in Seconds",
@@ -144,7 +214,8 @@
           "desc": "开锁时间不超过 3 秒，快人一步，从容进出。高扭矩直流电机，轻松驱动锁芯，经超 10 万次开关测试，持久稳定耐用。"
         }
       ],
-      "imageFocus": "72,50,1"
+      "imageFocus": "72,50,1",
+      "mediaRatio": "portrait"
     },
     {
       "id": "smta2pbsoeogf",
@@ -178,6 +249,12 @@
           "tags": []
         }
       ]
+    },
+    {
+      "id": "s1a041fe0b109d611",
+      "type": "stats",
+      "title": "移动测试",
+      "image": "/portfolio/cases/home/uploads/1787669720322_xnlxbi.jpg"
     }
   ]
 }
