@@ -12,15 +12,19 @@
        ============================================================ -->
   <script>
     (function () {
-      // 4. 全站主题（浅色/深色）：head 最早执行，深色模式下避免首帧白屏闪烁
+      // 4. 全站主题（浅色/深色）：站点全局默认深色（cases.json 顶层 theme）。
+      //    外网不同 origin 时 localStorage 为空，这里同步默认深色，避免首帧白屏闪烁；
+      //    访客手动切浅色后存 localStorage，下次优先生效。
       try {
         var _th = localStorage.getItem('case_theme');
-        if (_th === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-theme', (_th === 'light') ? 'light' : 'dark');
       } catch (e) { /* ignore */ }
-      // 5. 全站加载动画（1=骨架屏 默认 / 2=黑遮罩）：尽早应用，避免首帧显示错误的加载动画
+      // 5. 全站加载动画（1=骨架屏 / 2=黑遮罩，站点全局默认 2，见 cases.json 顶层 loader）：
+      //    外网不同 origin 时 localStorage 为空，这里同步默认 2，消除与内容渲染（case-content-ready）
+      //    的竞态，保证外网首屏黑遮罩一定显示（否则遮罩易在 data-loader 设好前就 idle 滑走而看不到）。
       try {
         var _ld = localStorage.getItem('case_loader');
-        if (_ld === '1' || _ld === '2') document.documentElement.setAttribute('data-loader', _ld);
+        document.documentElement.setAttribute('data-loader', (_ld === '1' || _ld === '2') ? _ld : '2');
       } catch (e) { /* ignore */ }
       // 1. 关闭浏览器自动恢复滚动位置（自己在 site-shell.js 里用 sessionStorage 管理）
       try {
