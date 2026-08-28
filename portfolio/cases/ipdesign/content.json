@@ -19,15 +19,15 @@
       ],
       "products": [
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787832254046.jpg",
-          "imageFocus": "50,50,1.0",
+          "image": "/portfolio/cases/ipdesign/uploads/1787886305271.jpg",
+          "imageFocus": "11,0,1.5",
           "type": "",
           "name": "",
           "desc": ""
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787761517942.jpg",
-          "imageFocus": "64,0,1.1",
+          "image": "/portfolio/cases/ipdesign/uploads/1787886340658.jpg",
+          "imageFocus": "89,100,1.5",
           "type": "",
           "name": "",
           "desc": ""
@@ -185,6 +185,12 @@
         }
       ],
       "avatarColorMode": "color"
+    },
+    {
+      "id": "smtcnfwys5jux",
+      "type": "hero",
+      "videoUrl": "/portfolio/cases/ipdesign/uploads/1787903272655.mp4",
+      "videoType": "video"
     },
     {
       "id": "smta7f0wvax1a",
