@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>代码套壳样机 · 真圆角厚度 iPhone（灵动岛）</title>
+<style>
+  :root{
+    --bg:#0e0f12; --panel:#16181d; --line:#262a31;
+    --txt:#e8eaed; --sub:rgba(232,234,237,.6); --accent:#3b82f6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(120% 120% at 50% 0%,#15171c 0%,var(--bg) 60%);
+    color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:32px 20px 48px}
+  h1{font-size:18px;font-weight:600}
+  .hint{color:var(--sub);font-size:12.5px;margin-top:6px;text-align:center;max-width:600px}
+  .toolbar{display:flex;gap:10px;align-items:center;margin:22px 0 8px;flex-wrap:wrap;justify-content:center}
+  .seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:100px;overflow:hidden}
+  .seg button{background:none;border:0;color:var(--sub);padding:8px 16px;cursor:pointer;font-size:13px}
+  .seg button.on{background:var(--accent);color:#fff}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:8px 16px;border-radius:100px;cursor:pointer;font-size:13px}
+  .btn:hover{border-color:var(--accent)}
+
+  /* 舞台 */
+  .viewport{perspective:1200px;perspective-origin:50% 40%;width:min(720px,92vw);height:560px;
+    display:flex;align-items:center;justify-content:center;margin-top:14px;overflow:hidden}
+  .rig{transform-style:preserve-3d;will-change:transform}
+
+  /* 进场动画：从屏幕下方整圈（360°）旋转上升 → 落定 3/4 视角，播放一次 */
+  @keyframes introPhone{
+    0%{transform:translateY(480px) rotateX(22deg) rotateY(-382deg) scale(.9);opacity:0}
+    50%{opacity:1}
+    100%{transform:translateY(0) rotateX(8deg) rotateY(-22deg) scale(1);opacity:1}
+  }
+  @keyframes introLaptop{
+    0%{transform:translateY(480px) rotateX(30deg) rotateY(-384deg) scale(.9);opacity:0}
+    50%{opacity:1}
+    100%{transform:translateY(0) rotateX(16deg) rotateY(-24deg) scale(1);opacity:1}
+  }
+  .rig.play-intro.phone{animation:introPhone 1.8s cubic-bezier(.16,1,.3,1) forwards}
+  .rig.play-intro.laptop{animation:introLaptop 1.8s cubic-bezier(.16,1,.3,1) forwards}
+
+  /* ===== 手机：前面+后面双层（中间 16px 空隙 = 厚度） ===== */
+  .phone{position:relative;width:250px;height:520px;transform-style:preserve-3d}
+  .face-front,.face-back{position:absolute;inset:0;border-radius:42px;transform-style:preserve-3d}
+
+  /* 前面（屏幕玻璃面） */
+  .face-front{transform:translateZ(9px);
+    background:linear-gradient(150deg,#3a3d44,#15171b);
+    padding:9px;
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.14),       /* 顶部金属高光 */
+      inset 0 -1px 0 rgba(0,0,0,.5),               /* 底部暗边 */
+      inset 0 0 0 1px rgba(0,0,0,.4),              /* 内描边 */
+      0 25px 50px -15px rgba(0,0,0,.55);            /* 深度投影 */}
+  .screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;background:#000;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.8)}
+  .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:94px;height:27px;
+    background:#000;border-radius:100px;z-index:6}
+  .island::after{content:"";position:absolute;right:11px;top:50%;transform:translateY(-50%);
+    width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#2b3a55,#0a0e16)}
+  .gloss{position:absolute;inset:0;border-radius:34px;pointer-events:none;z-index:7;
+    background:linear-gradient(125deg,rgba(255,255,255,.12) 0%,rgba(255,255,255,0) 34%)}
+
+  /* 后面（金属后盖 + 摄像头模组） */
+  .face-back{transform:translateZ(-9px);
+    background:linear-gradient(150deg,#42454d,#1a1c20);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      inset 0 0 0 1px rgba(0,0,0,.4)}
+  .cam{position:absolute;top:18px;left:18px;width:80px;height:80px;border-radius:22px;
+    background:linear-gradient(150deg,#23262c,#0d0e11);
+    box-shadow:0 2px 6px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.05)}
+  .cam .lens{position:absolute;width:26px;height:26px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#3a4a63,#05070b);box-shadow:inset 0 0 0 2px #1b1e24}
+  .cam .lens.a{top:12px;left:12px}.cam .lens.b{top:12px;right:12px}.cam .lens.c{top:42px;left:27px}
+  .cam .flash{position:absolute;top:46px;right:16px;width:9px;height:9px;border-radius:50%;background:#f3e9c8}
+
+  /* 挤出体侧壁：沿 Z 轴堆叠的圆角薄片，旋转 360° 全程看得到厚度 */
+  .rim-layer{position:absolute;inset:0;border-radius:42px;
+    background:linear-gradient(150deg,#2a2d33,#0e0f12);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+
+  /* 侧键（电源 + 音量上下） */
+  .btn-key{position:absolute;background:linear-gradient(180deg,#5a5e67,#2a2d33);
+    box-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .btn-power{right:-2.5px;top:148px;width:3px;height:78px;border-radius:0 2px 2px 0}
+  .btn-vol-up{left:-2.5px;top:130px;width:3px;height:46px;border-radius:2px 0 0 2px}
+  .btn-vol-down{left:-2.5px;top:188px;width:3px;height:46px;border-radius:2px 0 0 2px}
+  /* 静音拨片（左侧顶部） */
+  .mute{position:absolute;left:-2.5px;top:88px;width:3px;height:24px;border-radius:2px 0 0 2px;
+    background:linear-gradient(180deg,#5a5e67,#2a2d33);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+
+  /* ===== 笔记本：屏幕面板双层 + 底座 ===== */
+  .laptop{position:relative;width:560px;height:360px;transform-style:preserve-3d;display:none}
+  .lap-screen{position:absolute;top:0;left:50%;width:520px;height:330px;
+    transform:translateX(-50%);transform-style:preserve-3d}
+  .lap-front,.lap-back{position:absolute;inset:0;border-radius:14px}
+  .lap-front{transform:translateZ(8px);
+    background:linear-gradient(150deg,#33363d,#0c0d10);padding:11px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(0,0,0,.4)}
+  .lap-back{transform:translateZ(-8px);
+    background:linear-gradient(150deg,#3c3f47,#17191e);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)}
+  .lap-screen-inner{position:relative;width:100%;height:100%;border-radius:6px;overflow:hidden;background:#000}
+  .gloss-l{position:absolute;inset:0;border-radius:6px;pointer-events:none;z-index:6;
+    background:linear-gradient(125deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,0) 30%)}
+  .lap-base{position:absolute;top:330px;left:50%;width:560px;height:18px;
+    transform:translateX(-50%) rotateX(82deg);transform-origin:top center;
+    background:linear-gradient(180deg,#2a2d33,#15171b);border-radius:0 0 14px 14px;
+    box-shadow:0 12px 30px -8px rgba(0,0,0,.6)}
+  .lap-base::after{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:120px;height:6px;border-radius:0 0 6px 6px;background:#0c0d10}
+  /* 笔记本摄像头（屏幕顶部中央） */
+  .lap-cam{position:absolute;top:11px;left:50%;transform:translateX(-50%);
+    width:6px;height:6px;border-radius:50%;background:#0a0b0d;box-shadow:inset 0 0 0 1px #2a2d33;z-index:5}
+
+  /* ===== 屏幕 UI ===== */
+  .ui{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+
+  /* 控制 */
+  .controls{width:min(720px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:16px 18px;margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px 20px}
+  .controls label{display:block;color:var(--sub);font-size:12px;margin-bottom:6px}
+  .controls input[type=range]{width:100%;accent-color:var(--accent)}
+  .controls .val{color:var(--txt);font-variant-numeric:tabular-nums}
+  .note{width:min(720px,92vw);color:var(--sub);font-size:12px;margin-top:14px;line-height:1.7}
+  .note code{background:#1b1e24;padding:1px 6px;border-radius:5px;color:#cdd6e4}
+  @media(max-width:560px){.controls{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+  <h1>代码套壳样机 · 真圆角厚度 iPhone（灵动岛）</h1>
+  <p class="hint">外壳为沿 Z 轴堆叠的圆角薄片挤出体，旋转 360° 全程看得到侧壁厚度与圆角、无方角；侧键齐全。进场从下方整圈旋转上升、播一次。</p>
+
+  <div class="toolbar">
+    <div class="seg" id="seg">
+      <button data-dev="phone" class="on">手机</button>
+      <button data-dev="laptop">笔记本</button>
+    </div>
+    <button class="btn" id="replay">重播进场动画</button>
+  </div>
+
+  <div class="viewport" id="viewport">
+    <div class="rig play-intro phone" id="rig">
+
+      <!-- 手机 -->
+      <div class="phone" id="dev-phone">
+        <!-- 后面（先渲染，z 靠后） -->
+        <div class="face-back">
+          <div class="cam">
+            <span class="lens a"></span><span class="lens b"></span><span class="lens c"></span><span class="flash"></span>
+          </div>
+        </div>
+        <!-- 前面 -->
+        <div class="face-front">
+          <div class="screen">
+            <img class="ui" src="img/门卡列表-2.png" alt="全民门卡 UI">
+            <div class="island"></div>
+            <div class="gloss"></div>
+          </div>
+        </div>
+        <!-- 侧键 -->
+        <span class="mute"></span>
+        <span class="btn-key btn-vol-up"></span>
+        <span class="btn-key btn-vol-down"></span>
+        <span class="btn-key btn-power"></span>
+      </div>
+
+      <!-- 笔记本 -->
+      <div class="laptop" id="dev-laptop">
+        <div class="lap-screen">
+          <div class="lap-back"></div>
+          <div class="lap-front">
+            <div class="lap-screen-inner">
+              <img class="ui" src="img/门卡列表-2.png" alt="全民门卡 UI" style="object-fit:contain;background:#000">
+              <div class="lap-cam"></div>
+              <div class="gloss-l"></div>
+            </div>
+          </div>
+        </div>
+        <div class="lap-base"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="controls">
+    <div><label>旋转 X · <span class="val" id="vrx">8</span>°</label><input type="range" id="rx" min="-40" max="40" value="8"></div>
+    <div><label>旋转 Y · <span class="val" id="vry">-22</span>°</label><input type="range" id="ry" min="-70" max="70" value="-22"></div>
+    <div><label>透视距离 · <span class="val" id="vp">1200</span>px</label><input type="range" id="p" min="500" max="2200" value="1200"></div>
+  </div>
+
+  <p class="note">
+    嵌入你的 UI：把屏幕里的 <code>&lt;img class="ui" src="..."&gt;</code> 的 <code>src</code> 换成你的图即可。切口、灵动岛、圆角厚度自动适配。<br>
+    侧壁厚度用「圆角薄片沿 Z 轴堆叠」实现（手机 28 层 / 笔记本 18 层），所以 360° 旋转时侧壁是连续的实心圆角边，不会像六面体那样露方角。<br>
+    进场「从下整圈旋转上升、播一次」：CSS <code>@keyframes</code> 用 <code>translateY(480px)→0</code> + <code>rotateY -382°→-22°</code>（正好转一圈）+ <code>forwards</code> 落定。<br>
+    动画库：单元素播一次 CSS 足够；要「滚进 banner 视口才播 / 多元素时间轴 / 弹性缓动」用 <b>GSAP + ScrollTrigger</b>（你指定的动效库），可随时转。
+  </p>
+
+<script>
+  const vp=document.getElementById('viewport'),rig=document.getElementById('rig');
+  const rx=document.getElementById('rx'),ry=document.getElementById('ry'),p=document.getElementById('p');
+  const vrx=document.getElementById('vrx'),vry=document.getElementById('vry'),vpv=document.getElementById('vp');
+  function applyManual(){rig.classList.remove('play-intro');
+    rig.style.transform=`rotateX(${rx.value}deg) rotateY(${ry.value}deg)`;vp.style.perspective=p.value+'px';
+    vrx.textContent=rx.value;vry.textContent=ry.value;vpv.textContent=p.value;}
+  [rx,ry,p].forEach(el=>el.addEventListener('input',applyManual));
+  document.getElementById('replay').addEventListener('click',()=>{rig.classList.remove('play-intro');void rig.offsetWidth;rig.classList.add('play-intro')});
+  document.getElementById('seg').addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    [...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));
+    const dev=b.dataset.dev;rig.classList.remove('play-intro');void rig.offsetWidth;
+    rig.className='rig play-intro '+dev;
+    document.getElementById('dev-phone').style.display=dev==='phone'?'':'none';
+    document.getElementById('dev-laptop').style.display=dev==='laptop'?'':'none';
+  });
+
+  /* 生成挤出体侧壁：沿 Z 轴堆叠圆角薄片，旋转 360° 全程可见厚度与圆角 */
+  function buildRim(sel,count,half,radius){
+    document.querySelectorAll(sel).forEach(box=>{
+      const frag=document.createDocumentFragment();
+      for(let i=0;i<count;i++){
+        const z=-half + (2*half)*(i/(count-1));
+        const d=document.createElement('div');
+        d.className='rim-layer';
+        d.style.transform=`translateZ(${z.toFixed(2)}px)`;
+        d.style.borderRadius=radius+'px';
+        frag.appendChild(d);
+      }
+      box.insertBefore(frag,box.firstChild);
+    });
+  }
+  buildRim('#dev-phone',28,8,42);            // 手机：28 层，半厚 8px
+  buildRim('#dev-laptop .lap-screen',18,7,14); // 笔记本：18 层，半厚 7px
+</script>
+</body>
+</html>

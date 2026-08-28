@@ -2,18 +2,34 @@
   "version": 2,
   "sections": [
     {
-      "id": "smt13nbz5erel",
+      "id": "smtct35ghr5l0",
       "type": "hero-banner",
-      "textLayout": "left",
-      "title": "",
-      "labels": [],
-      "description": "",
-      "videoType": "image",
-      "image": "/portfolio/cases/vjooProject/uploads/1787204920188.jpg",
+      "textLayout": "center",
+      "title": "智享租住新体验",
+      "labels": [
+        "Redefine Your Rental Experience"
+      ],
+      "description": "线上租期管理、蓝牙开锁、账单查询，一站式租房服务",
+      "videoType": "animated",
+      "image": "",
       "videoUrl": "",
       "effect": "slide",
       "autoplayDelay": "4000",
-      "images": []
+      "images": [],
+      "animatedEffect": "iridescence",
+      "animatedParams": {
+        "speed": 1.5,
+        "color": "#0555dc"
+      }
+    },
+    {
+      "id": "smtct4vsyjqu0",
+      "type": "title",
+      "title": "Projects",
+      "copyright": "2010-26©",
+      "description": "",
+      "size": "80",
+      "padding": "标准"
     },
     {
       "id": "s2",
@@ -51,7 +67,7 @@
           "value": "6 周"
         }
       ],
-      "label": "智能锁出租房运营产品",
+      "label": "多款智能锁出租房运营产品",
       "heading": ""
     },
     {
@@ -193,6 +209,76 @@
       "videoType": "image"
     },
     {
+      "id": "s12",
+      "type": "gallery",
+      "label": "",
+      "heading": "",
+      "screens": [
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg",
+        "../_shared/placeholder.svg"
+      ],
+      "colCount": "3",
+      "columns": [
+        {
+          "offsetRem": 5,
+          "images": [
+            {
+              "id": "smsnfqtl0v6x4",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912689244.jpg"
+            },
+            {
+              "id": "smso1at4ce0m0",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912664564.jpg"
+            },
+            {
+              "id": "smtcstieo0oir",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912512553.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 13,
+          "images": [
+            {
+              "id": "smso1bisicb9n",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912615374.jpg"
+            },
+            {
+              "id": "smso1bmzemkg4",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912629052.jpg"
+            },
+            {
+              "id": "smtcsyd78nwil",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912534227.jpg"
+            }
+          ]
+        },
+        {
+          "offsetRem": 0,
+          "images": [
+            {
+              "id": "smso1c0opm9ig",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912679840.jpg"
+            },
+            {
+              "id": "smswpkw2t5l7v",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912565482.jpg"
+            },
+            {
+              "id": "smtcsymmmrep5",
+              "src": "/portfolio/cases/vjooProject/uploads/1787912551886.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "s10",
       "type": "gallery",
       "label": "",
@@ -238,7 +324,7 @@
             },
             {
               "id": "smsnfvpsq229n",
-              "src": "/portfolio/cases/vjooProject/uploads/1786972645439.jpg"
+              "src": "/portfolio/cases/vjooProject/uploads/1787913119467.jpg"
             }
           ]
         }
@@ -259,68 +345,6 @@
       "desc": "在注册即收邮件的时代，我们不让通知淹没在收件箱里。钥匙到期、账单生成、续租提醒，每一封都精心设计，贴合品牌视觉。",
       "image": "/portfolio/cases/vjooProject/uploads/1787115162974.jpg",
       "videoType": "image"
-    },
-    {
-      "id": "s12",
-      "type": "gallery",
-      "label": "",
-      "heading": "",
-      "screens": [
-        "../_shared/placeholder.svg",
-        "../_shared/placeholder.svg",
-        "../_shared/placeholder.svg",
-        "../_shared/placeholder.svg",
-        "../_shared/placeholder.svg",
-        "../_shared/placeholder.svg",
-        "../_shared/placeholder.svg",
-        "../_shared/placeholder.svg"
-      ],
-      "colCount": "3",
-      "columns": [
-        {
-          "offsetRem": 5,
-          "images": [
-            {
-              "id": "smsnfqtl0v6x4",
-              "src": "/portfolio/cases/vjooProject/uploads/1786938177860.jpg"
-            },
-            {
-              "id": "smso1at4ce0m0",
-              "src": "/portfolio/cases/vjooProject/uploads/1786938183743.jpg"
-            },
-            {
-              "id": "smso1b0mec24z",
-              "src": "/portfolio/cases/vjooProject/uploads/1786938192906.jpg"
-            }
-          ]
-        },
-        {
-          "offsetRem": 13,
-          "images": [
-            {
-              "id": "smso1bisicb9n",
-              "src": "/portfolio/cases/vjooProject/uploads/1786938200806.jpg"
-            },
-            {
-              "id": "smso1bmzemkg4",
-              "src": "/portfolio/cases/vjooProject/uploads/1787111483958.jpg"
-            }
-          ]
-        },
-        {
-          "offsetRem": 0,
-          "images": [
-            {
-              "id": "smso1c0opm9ig",
-              "src": "/portfolio/cases/vjooProject/uploads/1787113529253.jpg"
-            },
-            {
-              "id": "smswpkw2t5l7v",
-              "src": "/portfolio/cases/vjooProject/uploads/1786939406918.jpg"
-            }
-          ]
-        }
-      ]
     }
   ]
 }

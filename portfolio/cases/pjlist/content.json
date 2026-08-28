@@ -24,7 +24,7 @@
       ],
       "animatedEffect": "molten",
       "animatedParams": {
-        "color1": "#0a0a0a",
+        "color1": "#3b3b3b",
         "color2": "#4e54a6",
         "backgroundColor": "#0a0a0a"
       },
@@ -62,7 +62,7 @@
               "image1": "/portfolio/cases/pjlist/uploads/1787807814614.jpg",
               "image2": "/portfolio/cases/pjlist/uploads/1787807890426.jpg",
               "imageFocus1": "50,50,1.0",
-              "imageFocus2": "100,50,1"
+              "imageFocus2": "100,50,1.0"
             }
           ]
         },
@@ -111,26 +111,6 @@
               "image2": "/portfolio/cases/pjlist/uploads/1786980471086.jpg",
               "imageFocus1": "50,50,1.0",
               "imageFocus2": "50,50,1.0"
-            }
-          ]
-        },
-        {
-          "cards": [
-            {
-              "name": "",
-              "year": "",
-              "href": "",
-              "linkPage": "",
-              "image1": "",
-              "image2": ""
-            },
-            {
-              "name": "",
-              "year": "",
-              "href": "",
-              "linkPage": "",
-              "image1": "",
-              "image2": ""
             }
           ]
         }
