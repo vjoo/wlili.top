@@ -19,20 +19,28 @@
       ],
       "products": [
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787886305271.jpg",
-          "imageFocus": "11,0,1.5",
+          "image": "/portfolio/cases/ipdesign/uploads/1787981569208.jpg",
+          "imageFocus": "50,50,1.0",
           "type": "",
           "name": "",
           "desc": ""
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787886340658.jpg",
-          "imageFocus": "89,100,1.5",
+          "image": "/portfolio/cases/ipdesign/uploads/1787982191416.jpg",
           "type": "",
           "name": "",
           "desc": ""
         }
       ]
+    },
+    {
+      "id": "smtcueog766k2",
+      "type": "title",
+      "title": "Design Concept",
+      "copyright": "2010-26©",
+      "description": "",
+      "size": "80",
+      "padding": "标准"
     },
     {
       "id": "smta7mkirpk2c",

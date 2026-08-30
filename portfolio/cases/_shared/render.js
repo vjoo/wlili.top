@@ -61,7 +61,8 @@ var CaseRenderer = (function () {
     'eyebrow-head':  renderEyebrowHead,// 导语头（居中：眉标签 + 标题 + 副标题，来自 scenes-head）
     'split-head':    renderSplitHead,  // 分栏头（左序号标题 + 右描述，来自 sec-head）
     'product-hero':  renderProductHero,// 产品首屏（左文案 + 右产品面板，来自 hero）
-    'scene-grid':    renderSceneGrid   // 场景网格（居中头 + 场景卡片网格，来自 scenes）
+    'scene-grid':    renderSceneGrid,  // 场景网格（居中头 + 场景卡片网格，来自 scenes）
+    'mockup-banner': renderMockupBanner // 3D 样机 Banner（手机/笔记本真 3D 旋转进场 + 标题/背景合成）
   };
 
   var TYPE_LABELS = {
@@ -89,7 +90,8 @@ var CaseRenderer = (function () {
     'eyebrow-head': '导语头',
     'split-head': '分栏头',
     'product-hero': '产品首屏',
-    'scene-grid': '场景网格'
+    'scene-grid': '场景网格',
+    'mockup-banner': '3D样机Banner'
   };
 
   function init() {
@@ -198,22 +200,25 @@ var CaseRenderer = (function () {
         console.warn('未知板块类型:', s.type);
       }
     });
-    // 渲染完成后触发下游脚本
-    if (typeof window.initHoverEffects === 'function') window.initHoverEffects();
+    // 渲染完成后触发下游脚本（逐个 try/catch 隔离：任一脚本抛错都不应阻断后续的 3D 样机进场动画注册）
+    function safeDownstream(fn, name) { try { fn(); } catch (e) { console.warn('[mockup] 下游脚本 ' + name + ' 出错，已跳过：', e); } }
+    if (typeof window.initHoverEffects === 'function') safeDownstream(window.initHoverEffects, 'initHoverEffects');
     // 焦点缩放应用（带 data-focus 的 img：图片加载完成后微信式缩放/平移定位；懒加载图由 load 委托补应用）
-    applyFocusZooms(container);
+    safeDownstream(function () { applyFocusZooms(container); }, 'applyFocusZooms');
     // hero-banner 滚动视差（scroll scrub + 平滑插值；prefers-reduced-motion 时自动跳过）
-    initHeroBannerParallax(container);
+    safeDownstream(function () { initHeroBannerParallax(container); }, 'initHeroBannerParallax');
     // 轮播图（carousel）：懒加载 Swiper 并初始化（无轮播板块时零开销）
-    initCarousels(container);
+    safeDownstream(function () { initCarousels(container); }, 'initCarousels');
     // fs 效果轮播（carousel 的 effect=fs）：GSAP 自动播放裁剪滑入（无此板块零开销）
-    initHeroFsCarousels(container);
+    safeDownstream(function () { initHeroFsCarousels(container); }, 'initHeroFsCarousels');
     // 全屏滑动轮播（swipe-slider）：GSAP 逐屏滑动 + 文字动画（无此板块零开销）
-    initSwipeSliders(container);
+    safeDownstream(function () { initSwipeSliders(container); }, 'initSwipeSliders');
     // 全屏切换轮播（fullscreen-slider）：GSAP Observer 逐屏切换 + 页面锁定（无此板块零开销）
-    initFullscreenSliders(container);
+    safeDownstream(function () { initFullscreenSliders(container); }, 'initFullscreenSliders');
     // 视口可见性：滚出视口暂停持续媒体/动画（视频解码、轮播自动播放），避免离屏消耗 GPU
-    initViewportMedia(container);
+    safeDownstream(function () { initViewportMedia(container); }, 'initViewportMedia');
+    // 3D 样机 Banner（mockup-banner）：建 3D 外壳 + 落在静止视角 + 注册「滚进视口播一次」的进场动画（务必最后且独立，保证一定执行）
+    safeDownstream(function () { initMockupBanners(); }, 'initMockupBanners');
     // 动画背景（animated）：延迟加载 ogl+引擎并启动所有 [data-animated-bg] 容器（无此板块零开销）
     if (container.querySelector('[data-animated-bg]')) ensureAnimatedBG();
     // 把新插入的所有板块注册进场动画（site-shell.js 暴露的接口）
@@ -2117,6 +2122,318 @@ var CaseRenderer = (function () {
 
     section.innerHTML = head + '<div class="pd-grid-body">' + grid + '</div>';
     return section;
+  }
+
+  // ===== 3D 样机 Banner（mockup-banner）=====
+  // 合成结构：.mockup-frame 三层叠加 = ①背景(主题渐变 / 纯色 / 图片) → ②标题+副标题 → ③手机方形舞台(左/中/右)
+  // 3D 外壳：手机 = 前玻璃面 + 后盖 + 「4 条直壁 + 4 角圆弧壁」真实垂直平面侧壁（正侧面 90° 也看得到实心厚度）
+  //
+  // ⚠️ 三条硬约束（踩过的坑，勿改）：
+  //   1) 进场旋转必须用 rAF 逐帧写内联 transform —— CSS @keyframes 在合成层跑会压平 preserve-3d
+  //      子元素，侧壁在动画中变纸片（停了才回主线程重绘冒出厚度）。
+  //   2) 动画目标元素不能加 opacity（opacity<1 同样强制 transform-style:flat，等价于纸片）。
+  //      进场感由「从下方升起 translateY + 整圈旋转 + 缩放」表达，不用淡入。
+  //   3) .rig 不能加 will-change:transform（强制升合成层，加重压平）；
+  //      但 .mk-face-front/.mk-face-back/.mk-screen 可以加（内部无 3D 子元素，提层不会压扁），
+  //      用于常驻 GPU 纹理，避免背面翻回正面时重新解码 UI 图造成单帧卡顿。
+  function mkNum(v, d) { var n = parseFloat(v); return isNaN(n) ? d : n; }
+  var MOCKUP_QUEUE = [];
+  // 响应式等比缩放回调池：initMockupBanners 里每个 section 注册一个 fit 函数，
+  // 窗口 resize（防抖 150ms）时统一重算，手机行始终等比适配相框（分辨率缩小/移动端不溢出）
+  var MOCKUP_FIT_FNS = [];
+
+  function renderMockupBanner(s) {
+    var section = sec('mockup-banner-section');
+    var isLap = s.device === 'laptop';
+    var list = Array.isArray(s.phones) ? s.phones.filter(function (x) { return x; }) : [];
+    if (!isLap && !list.length) {
+      // 未配任何手机时给一台空壳，保证后台/前台都能看到组件骨架
+      list = [{ ui: '', startRx: 22, startRy: -22, startTy: 480, endRx: 8, endRy: -22, endTy: 0, z: 0 }];
+    }
+
+    // ① 背景层
+    var bgType = s.bgType || 'theme';
+    var frameStyle = '';
+    var bgHtml = '';
+    if (bgType === 'color' && s.bgColor) {
+      frameStyle = ' style="background:' + esc(s.bgColor) + '"';
+    } else if (bgType === 'image' && s.bgImage) {
+      frameStyle = ' style="background:#0c0d10"';
+      // 首屏组件：不加 loading="lazy"，避免首帧才解码拖慢进场动画
+      bgHtml = '<img class="mockup-bg" src="' + esc(s.bgImage) + '" alt="">';
+    }
+
+    // ② 文字层（z-index：1=手机后方，5=手机前方；手机舞台恒为 2）
+    var titleHtml = s.title ? '<h2 class="mockup-title"' + (s.titleSize ? ' style="font-size:' + s.titleSize + 'px"' : '') + '>' + esc(s.title) + '</h2>' : '';
+    var subHtml = s.subtitle ? '<p class="mockup-subtitle"' + (s.subtitleSize ? ' style="font-size:' + s.subtitleSize + 'px"' : '') + '>' + esc(s.subtitle) + '</p>' : '';
+    var textHtml = '';
+    if (titleHtml || subHtml) {
+      var alignCls = (s.titleAlign === 'center') ? ' align-center' : ' align-left';
+      var zIdx = (s.titleZ === 'front') ? 5 : 1;
+      textHtml = '<div class="mockup-text' + alignCls + '" style="z-index:' + zIdx + '">' + titleHtml + subHtml + '</div>';
+    }
+
+    // ③ 手机/笔记本舞台（方形，左 / 中 / 右）
+    var pos = (s.stagePos === 'left' || s.stagePos === 'center') ? s.stagePos : 'right';
+    var size = mkNum(s.stageSize, 560);
+    var innerHtml = isLap
+      ? '<div class="mk-laptop">' +
+          '<div class="mk-lap-screen">' +
+            '<div class="mk-lap-back"></div>' +
+            '<div class="mk-lap-front"><div class="mk-lap-inner">' +
+              '<img class="mk-ui" src="' + esc(s.lapUi || '') + '" alt="" style="object-fit:contain">' +
+              '<span class="mk-lap-cam"></span><span class="mk-lap-gloss"></span>' +
+            '</div></div>' +
+          '</div>' +
+          '<span class="mk-lap-base"></span>' +
+        '</div>'
+      : '<div class="mk-phone-row"></div>';
+    var stageHtml = '<div class="mockup-stage pos-' + pos + '" style="width:' + size + 'px">' +
+      '<div class="mockup-viewport"><div class="mockup-rig">' + innerHtml + '</div></div></div>';
+
+    section.innerHTML = '<div class="mockup-frame"' + frameStyle + '>' + bgHtml + textHtml + stageHtml + '</div>';
+    // 进场「初始隐藏态」：同步加 .mockup-pre（在浏览器首次绘制前完成，无闪烁）；
+    // 若 JS 未执行 / 浏览器缓存旧文件，则无此类 → 文字按 CSS 默认可见，绝不会消失
+    var frameEl = section.querySelector('.mockup-frame');
+    if (frameEl) frameEl.classList.add('mockup-pre');
+    // 原始 section 数据与动画参数挂到元素上，交给 initMockupBanners 统一建壳 + 注册观察器
+    section._mockupS = s;
+    section._mockupPhones = isLap ? [] : list;
+    section._mockupIsLap = isLap;
+    MOCKUP_QUEUE.push(section);
+    return section;
+  }
+
+  /* 3D 外壳侧壁：4 条直壁 + 4 角圆弧壁（真实垂直平面，侧视 90° 实打实看得到厚度、圆角连续不断） */
+  function buildMockupShell(nodes, W, H, r, d, cn) {
+    (nodes || []).forEach(function (box) {
+      if (!box) return;
+      var frag = document.createDocumentFragment();
+      var straightH = H - 2 * r, straightW = W - 2 * r, segLen = r * (Math.PI / 2) / cn;
+      function add(x, y, tf, w, h) {
+        var e = document.createElement('div');
+        e.className = 'mk-wall';
+        e.style.width = w + 'px';
+        e.style.height = h + 'px';
+        e.style.transform = 'translate(-50%,-50%) translate(' + x + 'px,' + y + 'px) ' + tf;
+        frag.appendChild(e);
+      }
+      add(W / 2, 0, 'rotateY(90deg)', d, straightH);
+      add(-W / 2, 0, 'rotateY(90deg)', d, straightH);
+      add(0, -H / 2, 'rotateX(90deg)', straightW, d);
+      add(0, H / 2, 'rotateX(90deg)', straightW, d);
+      var corners = [
+        { cx: W / 2 - r, cy: -(H / 2 - r), a0: 0, a1: -90 },
+        { cx: -(W / 2 - r), cy: -(H / 2 - r), a0: -90, a1: -180 },
+        { cx: -(W / 2 - r), cy: (H / 2 - r), a0: -180, a1: -270 },
+        { cx: (W / 2 - r), cy: (H / 2 - r), a0: -270, a1: -360 }
+      ];
+      corners.forEach(function (c) {
+        for (var i = 0; i < cn; i++) {
+          var aMid = c.a0 + (c.a1 - c.a0) * (i + 0.5) / cn;
+          var a = aMid * Math.PI / 180;
+          add(c.cx + r * Math.cos(a), c.cy + r * Math.sin(a), 'rotateZ(' + aMid + 'deg) rotateY(90deg)', d, segLen);
+        }
+      });
+      box.insertBefore(frag, box.firstChild);
+    });
+  }
+
+  /* 把「配置对象 + DOM 节点」配对成动画单元 */
+  function mockupUnits(section, nodes) {
+    var s = section._mockupS || {};
+    if (section._mockupIsLap) {
+      return [{
+        node: section.querySelector('.mk-laptop'),
+        start: { rx: mkNum(s.lapStartRx, 30), ry: mkNum(s.lapStartRy, -24), ty: mkNum(s.lapStartTy, 480) },
+        end:   { rx: mkNum(s.lapEndRx, 16),   ry: mkNum(s.lapEndRy, -24),   ty: mkNum(s.lapEndTy, 0) },
+        z: 0
+      }];
+    }
+    var list = section._mockupPhones || [];
+    var tyScale = section._mockupTyScale || 1;   // 机身拉高后，起落距离等比放大，保证「从下方升起」仍完整离屏
+    return (nodes || []).map(function (n, i) {
+      var p = list[i] || {};
+      return {
+        node: n,
+        start: { rx: mkNum(p.startRx, 22), ry: mkNum(p.startRy, -22), ty: mkNum(p.startTy, 480) * tyScale },
+        end:   { rx: mkNum(p.endRx, 8),    ry: mkNum(p.endRy, -22),   ty: mkNum(p.endTy, 0) * tyScale },
+        z: mkNum(p.z, 0)
+      };
+    });
+  }
+
+  function mockupApply(u, ty, rx, ry, sc) {
+    if (!u.node) return;
+    u.node.style.transform = 'translateY(' + ty + 'px) translateZ(' + u.z + 'px) rotateX(' + rx +
+      'deg) rotateY(' + ry + 'deg)' + (sc ? ' scale(' + sc + ')' : '');
+  }
+
+  /* 建壳 + 落在静止视角 + 注册「滚进视口才播一次」的进场动画 */
+  function initMockupBanners() {
+    if (!MOCKUP_QUEUE.length) return;
+
+    MOCKUP_QUEUE.forEach(function (section) {
+      var s = section._mockupS || {};
+      var isLap = !!section._mockupIsLap;
+      var rig = section.querySelector('.mockup-rig');
+      if (!rig) return;
+      rig.style.transform = 'scale(' + mkNum(s.globalZoom, 1) + ')';
+
+      var nodes = [];
+      if (isLap) {
+        buildMockupShell([section.querySelector('.mk-lap-screen')], 520, 330, 14, 16, 6);
+        var lu = section.querySelector('.mk-ui');
+        if (lu && lu.decode) { try { lu.decode()['catch'](function () {}); } catch (e) {} }
+      } else {
+        var row = section.querySelector('.mk-phone-row');
+        var stage = section.querySelector('.mockup-stage');
+        var gap = mkNum(s.abGap, 48);
+        // 方案 A（自适应高度）：手机高度 = stageSize，宽按 1:2.08 机身高瘦比；舞台高度 = 手机高 × 1.2
+        // 容纳旋转时的外接矩形（避免被 overflow:hidden 裁掉上下沿），宽度由 row 自然撑开（不再锁死方形）。
+        // ⚠️ size 必须从 s.stageSize 重新取（renderMockupBanner 的局部变量在此作用域不存在，
+        //    直接引用会 ReferenceError 且被 safeDownstream 静默吞掉 → 手机一台都建不出来、前台空白）
+        var phoneH = mkNum(s.stageSize, 560);
+        var phoneW = phoneH / 2.08;
+        var tyScale = phoneH / 520;
+        section._mockupTyScale = tyScale;
+        if (row) {
+          row.style.width = (section._mockupPhones.length === 1 ? phoneW : (phoneW * 2 + gap)) + 'px';
+          row.style.height = phoneH + 'px';
+          // 高度交给 CSS：.mockup-stage 由 top:0+bottom:0 拉伸填满 .mockup-frame（不再用 phoneH*1.2 写死，
+          // 否则小视口会被 .mockup-frame 的 overflow:hidden 上下裁切；外接矩形宽度方向由 row.style.width 自然撑开）
+          row.innerHTML = '';
+          section._mockupPhones.forEach(function (p, i) {
+            var el = document.createElement('div');
+            el.className = 'mk-phone';
+            el.style.width = phoneW + 'px';
+            el.style.height = phoneH + 'px';
+            el.style.left = (i === 0 ? 0 : i * (phoneW + gap)) + 'px';
+            el.style.setProperty('--ph', phoneH + 'px');   /* 让 face/screen/island 圆角与 padding 随机身真实高度同步，杜绝固定 42px 圆角在缩放手机上露出的 4 角台阶 */
+            el.innerHTML =
+              '<div class="mk-face-back"><span class="mk-cam">' +
+                '<i class="mk-lens a"></i><i class="mk-lens b"></i><i class="mk-lens c"></i><i class="mk-flash"></i>' +
+              '</span></div>' +
+              '<div class="mk-face-front"><div class="mk-screen">' +
+                '<img class="mk-ui" src="' + esc(p.ui || '') + '" alt="">' +
+                '<span class="mk-island"></span><span class="mk-gloss"></span>' +
+              '</div></div>' +
+              '<span class="mk-mute"></span><span class="mk-key mk-vol-up"></span>' +
+              '<span class="mk-key mk-vol-down"></span><span class="mk-key mk-power"></span>';
+            row.appendChild(el);
+            nodes.push(el);
+          });
+          // 侧壁厚度 / 圆角随身高等比放大；厚度从 28 → 20 同步 CSS ±10/520*ph 的 face translateZ（保证侧壁总厚 20*tyScale = 2*translateZ，无错位）
+          buildMockupShell(nodes, phoneW, phoneH, 42 * tyScale, 20 * tyScale, 9);
+          // 提前解码 UI 图（光栅化进纹理），避免旋转回正面时首帧才解码造成单帧卡顿
+          Array.prototype.forEach.call(row.querySelectorAll('.mk-ui'), function (im) {
+            if (im.decode) { try { im.decode()['catch'](function () {}); } catch (e) {} }
+          });
+
+          // ===== 响应式等比缩放：相框（视口分辨率）变小时手机整体等比缩小 =====
+          // phoneW/phoneH 基准几何不动（侧壁/圆角/--ph 全部原样），只对整行加 CSS scale
+          // （.mk-phone-row 是 preserve-3d，scale 不压平 3D）。起点离屏 clamp 的 minTy 按
+          // 未缩放尺寸计算，缩放后手机更小、起点只会更靠下，仍然完全在相框外。
+          var fitRow = function () {
+            var fEl = section.querySelector('.mockup-frame');
+            if (!fEl || !row) return;
+            var fr = fEl.getBoundingClientRect();
+            if (!fr.height || !fr.width) return;   // 布局未就绪，等 resize 重算
+            var rowW = parseFloat(row.style.width) || row.offsetWidth || phoneW;
+            // 高度约束 0.88（上下各留 6% 容纳起点/终态旋转外接矩形）；宽度约束 0.92（左右留 8%）
+            var k = Math.min(1, (fr.height * 0.88) / phoneH, (fr.width * 0.92) / rowW);
+            if (!isFinite(k) || k <= 0) k = 1;
+            row.style.transformOrigin = '50% 50%';
+            row.style.transform = k < 0.999 ? 'scale(' + k + ')' : '';
+            section._mockupFitK = k;
+          };
+          fitRow();
+          // 首次布局可能未稳定（图片/字体未就绪），延迟补算一次
+          setTimeout(fitRow, 400);
+          MOCKUP_FIT_FNS.push(fitRow);
+        }
+      }
+
+      var units = mockupUnits(section, nodes);
+      // 「从屏幕外进入」保证：起点 ty 自动 clamp——舞台高度已自适应铺满 frame，
+      // 按实际 frame 高度算出「手机完全沉在 frame 底边之外」所需的最小 ty（row 垂直居中：
+      // phone top = (fh-ph)/2 + ty ≥ fh ⇔ ty ≥ (fh+ph)/2；×1.2 余量容纳起点旋转外接矩形）。
+      // 用户配置的 startTy 偏小时自动抬高，绝不出现「起点就在画面里」。
+      if (!isLap) {
+        var frameEl = section.querySelector('.mockup-frame');
+        var fh = frameEl ? (frameEl.getBoundingClientRect().height || 0) : 0;
+        var ph = mkNum(s.stageSize, 560);
+        if (fh > 0) {
+          var minTy = (fh + ph * 1.2) / 2;
+          units.forEach(function (u) { if (u.start.ty < minTy) u.start.ty = minTy; });
+        }
+      }
+      // 初始落在「静止（终点）视角」：即便 play 因任何原因未触发（如缓存旧 JS / 触发时机错过），手机也以可见的最终姿态停在画面中，绝不隐形。
+      // 进场动画 tryPlay → play 会从 start（隐藏在下）重新升起到 end，仍保留「从下方升起」的揭示感。
+      units.forEach(function (u) { mockupApply(u, u.end.ty, u.end.rx, u.end.ry, 1); });
+
+      var spins = mkNum(s.spins, 1), dur = mkNum(s.dur, 4200), raf = null, played = false;
+      function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+      function play() {
+        if (raf) cancelAnimationFrame(raf);
+        var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+        function frame(now) {
+          var k = (now - t0) / dur; if (k > 1) k = 1;
+          var e = easeInOutCubic(k), sc = 0.92 + 0.08 * e;
+          units.forEach(function (u) {
+            var ty = u.start.ty + (u.end.ty - u.start.ty) * e;
+            var rx = u.start.rx + (u.end.rx - u.start.rx) * e;
+            var ry = (u.start.ry - spins * 360) + ((u.end.ry - (u.start.ry - spins * 360)) * e);
+            mockupApply(u, ty, rx, ry, sc);
+          });
+          if (k < 1) raf = requestAnimationFrame(frame); else raf = null;
+        }
+        raf = requestAnimationFrame(frame);
+      }
+      var io = null;
+      function tryPlay() {
+        if (played) return;
+        played = true;
+        // 立即把手机切到「隐藏起点」姿态（在下框架外），再播放升起到终点，避免先闪一下最终姿态
+        units.forEach(function (u) { mockupApply(u, u.start.ty, u.start.rx, u.start.ry, 1); });
+        play();
+        // 节奏（用户要求）：背景图提前在手机动画约 50% 时淡入；手机约 70%（快完成）时标题从上、副标题从下进入
+        var frame = section.querySelector('.mockup-frame');
+        if (frame) {
+          setTimeout(function () { frame.classList.add('is-bg'); }, dur * 0.5);
+          setTimeout(function () { frame.classList.add('is-revealed'); }, dur * 0.7);
+        }
+        if (io) io.disconnect();
+      }
+      if ('IntersectionObserver' in window) {
+        io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) { if (en.isIntersecting) tryPlay(); });
+        }, { threshold: 0, rootMargin: '0px 0px -20% 0px' });
+        io.observe(section);
+        // 兜底：首屏已可见（顶部进入视口上部、底部在视口下）时立即播；用 getBoundingClientRect 补一次，
+        // 触发点限定在组件从底部上来约 20%（顶部位于视口 80% 高度以内），避免「刚露头就播完」
+        requestAnimationFrame(function () {
+          var r = section.getBoundingClientRect();
+          if (r.top < (window.innerHeight || 0) * 0.8 && r.bottom > 0) tryPlay();
+        });
+        // 终极保险：再延迟 250ms 补一次（覆盖 IO 与 rAF 都错过的极端情况，例如浏览器失焦恢复后 IO 没重发）
+        // 只在「从未播过」时生效（played 标志守住，避免反复回放到起点）
+        setTimeout(function () { if (!played) { var r2 = section.getBoundingClientRect(); if (r2.top < (window.innerHeight || 0) * 0.8 && r2.bottom > 0) tryPlay(); } }, 250);
+      } else { tryPlay(); }
+    });
+    MOCKUP_QUEUE.length = 0;
+
+    // 全局 resize（含旋转屏）防抖重算：所有样机行的等比缩放随相框实际尺寸更新
+    if (!initMockupBanners._fitBound) {
+      initMockupBanners._fitBound = true;
+      var rzTimer = null;
+      window.addEventListener('resize', function () {
+        if (rzTimer) clearTimeout(rzTimer);
+        rzTimer = setTimeout(function () {
+          MOCKUP_FIT_FNS.forEach(function (fn) { try { fn(); } catch (e) {} });
+        }, 150);
+      });
+    }
   }
 
   return { init: init, render: render, TYPE_LABELS: TYPE_LABELS };

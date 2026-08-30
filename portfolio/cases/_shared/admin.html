@@ -1888,6 +1888,15 @@ body.auth-pending .pages-view { visibility: hidden; }
   background: #e5484d; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .btn-danger:hover { background: #d43a3f; }
+
+/* 可视化编辑器入口卡片（表单顶部持久可见；放在顶层 style 里避免受 ensureMbVisDOM 懒注入影响） */
+.mbvis-launch{display:flex;align-items:center;gap:14px;background:linear-gradient(120deg,#1b2330,#16181d);border:1px solid #2b3a52;border-radius:14px;padding:14px 16px}
+.mbvis-launch-ico{font-size:22px}
+.mbvis-launch-tx{flex:1}
+.mbvis-launch-t{font-size:14px;font-weight:600;color:#e8eaed}
+.mbvis-launch-s{font-size:12px;color:rgba(232,234,237,.6);margin-top:3px}
+.mbvis-launch-btn{background:#3b82f6;color:#fff;border:0;border-radius:100px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+.mbvis-launch-btn:hover{filter:brightness(1.08)}
 </style>
 </head>
 <body class="auth-pending">
@@ -2298,7 +2307,8 @@ const TYPE_LABELS = {
   'eyebrow-head': '导语头',
   'split-head': '分栏头',
   'product-hero': '产品首屏',
-  'scene-grid': '场景网格'
+  'scene-grid': '场景网格',
+  'mockup-banner': '3D样机Banner'
 };
 
 /* ===== Type Descriptions ===== */
@@ -2327,7 +2337,8 @@ const TYPE_DESCS = {
   'eyebrow-head': '居中导语头：眉标签 + 标题 + 副标题（来自 scenes-head）',
   'split-head': '分栏头：左序号标题 + 右描述（来自 sec-head）',
   'product-hero': '产品首屏：左文案 + 右产品面板的 hero 布局（来自 hero）',
-  'scene-grid': '场景网格：居中头 + 场景卡片网格，卡片可新增/删除（来自 scenes）'
+  'scene-grid': '场景网格：居中头 + 场景卡片网格，卡片可新增/删除（来自 scenes）',
+  'mockup-banner': '3D 样机首屏：手机/笔记本真 3D 外壳（带厚度侧壁）整圈旋转进场，可叠加标题副标题与背景，手机可 1~2 台、各自设定起止视角'
 };
 
 /* ===== Type Icons (inline SVG paths) ===== */
@@ -2355,7 +2366,8 @@ const TYPE_ICONS = {
   'eyebrow-head': '<path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h7"/><circle cx="17" cy="12" r="0.6" fill="currentColor"/>',
   'split-head': '<line x1="4" y1="7" x2="13" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="9" y1="17" x2="16" y2="17"/>',
   'product-hero': '<rect x="3" y="4" width="9" height="16" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/>',
-  'scene-grid': '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/>'
+  'scene-grid': '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/>',
+  'mockup-banner': '<rect x="8" y="2" width="8" height="20" rx="2"/><line x1="11" y1="5" x2="13" y2="5"/><path d="M3 12a9 9 0 0 1 3-4"/><path d="M21 12a9 9 0 0 0-3-4"/>'
 };
 
 /* ===== 动画背景（animated）：效果与参数 =====
@@ -2807,6 +2819,65 @@ const TYPE_FIELDS = {
       { key: 'size', label: '卡片高度', type: 'select', options: ['tall', 'short'],
         optionLabels: { 'tall': '高（默认）', 'short': '矮' }, default: 'tall' }
     ] }
+  ],
+  'mockup-banner': [
+    { key: 'device', label: '设备类型', type: 'select', options: ['phone', 'laptop'],
+      optionLabels: { 'phone': '手机（1~2 台）', 'laptop': '笔记本（单台）' }, default: 'phone', popupOnly: true },
+
+    /* ---- 手机组（1~2 台，每台独立起止视角 / 升降 / 前后景深） ---- */
+    // flat 表单只保留 UI 截图上传（其余角度/升降/景深由弹窗可视化编辑器调）；itemFields 仅留 ui
+    { key: 'phones', label: '手机列表（可新增/删除，最多 2 台）',
+      type: 'items-list', itemLabel: '手机', max: 2,
+      dependsOn: { field: 'device', value: 'phone' }, itemFields: [
+        { key: 'ui', label: 'UI 截图（纯屏幕内容最佳，建议竖图 1170×2532 左右）', type: 'image' }
+      ] },
+    { key: 'abGap', label: 'A·B 间距（px，负=重叠）', type: 'text', placeholder: '48',
+      dependsOn: { field: 'device', value: 'phone' }, popupOnly: true,
+      hint: '仅 2 台时生效。设负值让两台重叠，再给第 2 台设正的前后景深，即成一前一后的景深摆放' },
+
+    /* ---- 笔记本组（单台） ---- */
+    { key: 'lapUi', label: '笔记本 UI 截图', type: 'image', dependsOn: { field: 'device', value: 'laptop' } },
+    { key: 'lapStartRx', label: '起点 X 旋转（°）', type: 'text', placeholder: '30', popupOnly: true,
+      dependsOn: { field: 'device', value: 'laptop' } },
+    { key: 'lapStartRy', label: '起点 Y 旋转（°）', type: 'text', placeholder: '-24', popupOnly: true,
+      dependsOn: { field: 'device', value: 'laptop' } },
+    { key: 'lapStartTy', label: '起点升降（px，正=从屏幕下方升起）', type: 'text', placeholder: '480', popupOnly: true,
+      dependsOn: { field: 'device', value: 'laptop' } },
+    { key: 'lapEndRx', label: '终点 X 旋转（° 停留视角）', type: 'text', placeholder: '16', popupOnly: true,
+      dependsOn: { field: 'device', value: 'laptop' } },
+    { key: 'lapEndRy', label: '终点 Y 旋转（° 停留视角）', type: 'text', placeholder: '-24', popupOnly: true,
+      dependsOn: { field: 'device', value: 'laptop' } },
+    { key: 'lapEndTy', label: '终点高低偏移（px）', type: 'text', placeholder: '0', popupOnly: true,
+      dependsOn: { field: 'device', value: 'laptop' } },
+
+    /* ---- 旋转 / 时长 ---- */
+    { key: 'spins', label: '整圈数（0=不转，0.5=半圈，1=转一圈，最大 3）', type: 'text', placeholder: '1', popupOnly: true,
+      hint: '进场时绕 Y 轴旋转的整圈数；终点始终落在「终点 Y 旋转」设定的角度上' },
+    { key: 'dur', label: '进场时长（毫秒，越大越慢）', type: 'text', placeholder: '4200', popupOnly: true },
+
+    /* ---- 背景 ---- */
+    { key: 'bgType', label: '背景类型', type: 'select', options: ['theme', 'color', 'image'], popupOnly: true,
+      optionLabels: { 'theme': '主题渐变（默认深色）', 'color': '纯色', 'image': '背景图' }, default: 'theme' },
+    { key: 'bgColor', label: '背景色', type: 'text', placeholder: '#0c0d10', popupOnly: true,
+      dependsOn: { field: 'bgType', value: 'color' } },
+    { key: 'bgImage', label: '背景大图（铺满相框，建议 16:9 横图）', type: 'image', popupOnly: true,
+      dependsOn: { field: 'bgType', value: 'image' } },
+
+    /* ---- 标题 / 副标题 ---- */
+    { key: 'title', label: '主标题（选填，留空则不显示）', type: 'text', placeholder: '全民门卡', popupOnly: true },
+    { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '一个 App，管理你所有的门禁卡片', popupOnly: true },
+    { key: 'titleZ', label: '标题遮挡关系', type: 'select', options: ['behind', 'front'], popupOnly: true,
+      optionLabels: { 'behind': '在手机后方（手机盖住标题）', 'front': '在手机前方（标题盖住手机）' }, default: 'behind',
+      hint: '与手机重叠时谁盖谁。后方=被手机遮挡更有层次；前方=标题压在手机上更醒目' },
+    { key: 'titleAlign', label: '标题对齐', type: 'select', options: ['left', 'center'], popupOnly: true,
+      optionLabels: { 'left': '居左', 'center': '居中' }, default: 'left' },
+
+    /* ---- 手机舞台 ---- */
+    { key: 'stagePos', label: '手机视窗位置', type: 'select', options: ['left', 'center', 'right'], popupOnly: true,
+      optionLabels: { 'left': '屏幕左侧', 'center': '屏幕中间', 'right': '屏幕右侧' }, default: 'right' },
+    { key: 'stageSize', label: '手机视窗大小（px，方形；前台相框 100vh）', type: 'text', placeholder: '560', popupOnly: true },
+    { key: 'globalZoom', label: '全局缩放（0.3~1.5）', type: 'text', placeholder: '1', popupOnly: true,
+      hint: '高低偏移/重叠导致手机超出相框被裁掉时，调小它可把设备整体收进画面' }
   ]
 };
 
@@ -2858,6 +2929,13 @@ function getDefaultSection(type) {
       { num: '004', title: '3D', desc: 'We create high-quality 3D animations and visuals for websites, apps, and videos – adding depth, motion, and a polished edge to your product.', categories: ['3D Animation', '3D Rendering', '3D Assets', 'Video & Motion Use'] }
     ] };
     case 'team': return { ...base, label: 'Join our mission', heading: 'Our team,', subheading: 'your vision', desc1: "If you're ready to create and collaborate, we'd love to hear from you.", desc2: 'We thrive on teamwork, turning individual strengths into shared success. Together, we turn ideas into digital products that solve real problems for real people.', buttonText: 'Apply now', items: [] };
+    case 'mockup-banner': return { ...base, device: 'phone', phones: [
+      { ui: '', startRx: '22', startRy: '-22', startTy: '480', endRx: '8', endRy: '-22', endTy: '0', z: '0' },
+      { ui: '', startRx: '22', startRy: '22', startTy: '480', endRx: '8', endRy: '22', endTy: '-30', z: '40' }
+    ], lapUi: '', lapStartRx: '30', lapStartRy: '-24', lapStartTy: '480', lapEndRx: '16', lapEndRy: '-24', lapEndTy: '0',
+      spins: '1', dur: '4200', abGap: '48', bgType: 'theme', bgColor: '#0c0d10', bgImage: '',
+      title: '', subtitle: '', titleZ: 'behind', titleAlign: 'left',
+      stagePos: 'right', stageSize: '560', globalZoom: '1' };
     default: return base;
   }
 }
@@ -3452,6 +3530,15 @@ function buildCardThumbnail(s) {
           <div style="font-size:12px;opacity:.6;margin-top:4px;">场景卡 ${cards.length} 张</div>
         </div>`;
       }
+      case 'mockup-banner': {
+        const isLap = s.device === 'laptop';
+        const n = isLap ? 1 : (Array.isArray(s.phones) ? s.phones.length : 0);
+        const posLabel = { left: '视窗居左', center: '视窗居中', right: '视窗居右' }[s.stagePos] || '视窗居右';
+        return `<div style="padding:8px 10px;">
+          <b style="font-size:14px;">${esc(s.title || '（未设置标题）')}</b>
+          <div style="font-size:12px;opacity:.6;margin-top:4px;">${isLap ? '笔记本 ×1' : '手机 ×' + n} · 转 ${esc(s.spins || '1')} 圈 · ${esc(posLabel)}</div>
+        </div>`;
+      }
       default:
         return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:12px;">（未知类型）</div>`;
     }
@@ -3501,6 +3588,14 @@ function buildCardPreviewText(s) {
     case 'stats': text = '数据统计：' + (Array.isArray(s.items) ? s.items.length : 0) + ' 项' + (s.heading ? ' · ' + s.heading : ''); break;
     case 'services': text = '服务列表：' + (Array.isArray(s.items) ? s.items.length : 0) + ' 项' + (s.heading ? ' · ' + s.heading : ''); break;
     case 'team': text = '团队成员：' + (Array.isArray(s.items) ? s.items.length : 0) + ' 人' + (s.heading ? ' · ' + s.heading : ''); break;
+    case 'mockup-banner': {
+      const isLap = s.device === 'laptop';
+      const n = isLap ? 1 : (Array.isArray(s.phones) ? s.phones.length : 0);
+      text = (isLap ? '3D 样机：笔记本 ×1' : '3D 样机：手机 ×' + n) +
+        (s.title ? ' · ' + s.title : '') +
+        ' · 转 ' + (s.spins || '1') + ' 圈';
+      break;
+    }
     default: text = '（未知类型）';
   }
   if (text && text.length > 80) text = text.slice(0, 80) + '...';
@@ -3608,6 +3703,7 @@ function renderEditorForm(section) {
   }
   // === 按 dependsOn 过滤：只有满足依赖条件的字段才显示 ===
   const fields = rawFields.filter(function(f) {
+    if (f.popupOnly) return false; // 弹窗编辑器已涵盖的参数，flat 表单不再重复展示
     if (!f.dependsOn) return true;
     var dep = f.dependsOn;
     return String(section[dep.field]) === String(dep.value);
@@ -3616,6 +3712,14 @@ function renderEditorForm(section) {
   const imageFieldsInSection = fields.filter(f => f.type === 'image');
   let imageFieldRenderIndex = 0;
   let html = '<div class="form-grid">';
+  // mockup-banner：在表单顶部提供一个「可视化编辑器」入口，打开弹窗式拖拽调参（视角/动画/背景/标题遮挡）
+  if (section.type === 'mockup-banner') {
+    html += '<div class="form-group full" style="margin:0 0 14px"><div class="mbvis-launch" id="mbvisLaunchBox">' +
+      '<div class="mbvis-launch-ico">🎬</div>' +
+      '<div class="mbvis-launch-tx"><div class="mbvis-launch-t">可视化编辑（视角 / 动画）</div>' +
+      '<div class="mbvis-launch-s">拖滑块实时调 3D 样机视角、进场动画、标题遮挡与背景，所见即所得，关闭即保存</div></div>' +
+      '<button type="button" class="mbvis-launch-btn" id="mbvisLaunchBtn">打开可视化编辑器</button></div></div>';
+  }
   fields.forEach((f) => {
     const isFull = ['textarea', 'image', 'image-list', 'video', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker', 'animated-params'].includes(f.type);
     html += `<div class="form-group${isFull ? ' full' : ''}">`;
@@ -3767,6 +3871,12 @@ function renderEditorForm(section) {
     else if (f.type === 'items-list') bindItemsListField(f, fieldUid);
     else if (f.type === 'animated-params') bindAnimatedParamsField(f, fieldUid, section);
   });
+
+  // mockup-banner：绑定顶部「可视化编辑器」入口按钮（弹窗式拖拽调参）
+  if (section.type === 'mockup-banner') {
+    const mbBtn = document.getElementById('mbvisLaunchBtn');
+    if (mbBtn) mbBtn.onclick = () => openMbVis();
+  }
 }
 
 function onSectionChanged() {
@@ -5086,7 +5196,12 @@ function bindItemImages(wrap, field, uid) {
       const idx = imgWrap.dataset.ilIdx;
       const fkey = imgWrap.dataset.ilKey;
       const list = collectItemsList(key, uid);
-      const item = list[idx] || {};
+      // ⚠️ 关键：DOM 收集项只含 flat 表单渲染的字段（如 mockup-banner 手机只有 ui 截图，
+      //    角度 startRx/startRy/.../z 由弹窗可视化编辑器写入 state、不在 DOM 里）。
+      //    若直接拿收集项回写会清掉弹窗调好的角度 → 上传图片后动画重置。
+      //    故以 state 中已有的同索引条目为底补全，再叠加本次 DOM 收集项（保留 ui 等），确保角度不丢。
+      const existing = (state.sections[selectedIndex][key] || [])[idx] || {};
+      const item = Object.assign({}, existing, list[idx] || {});
       item[fkey] = url;
       // 换新图后焦点重置（旧图焦点值不再适用）
       if (item.imageFocus) delete item.imageFocus;
@@ -7168,6 +7283,636 @@ async function init() {
   hideAuthOverlay();
   await afterAuth();
 }
+
+/* ============================================================
+   3D 样机 Banner · 可视化编辑弹窗（mockup-banner）
+   复刻 outputs/device-mockup-demo.html 的页卡 + 滑块交互，
+   直接读写 state.sections[selectedIndex]，关闭即生效。
+   ============================================================ */
+const MB_THEME_BG = 'radial-gradient(120% 120% at 50% 0%,#1c1f25 0%,#0c0d10 60%)';
+let mbVis = null;                 // 单例：{ mask, introRAF }
+let mbDev = 'phone', mbPhoneCount = 1, mbEditIdx = 0, mbActiveTab = 'start', mbOpZoom = 0.62, mbP = 1200;
+
+function mbS() { return state.sections[selectedIndex]; }
+function mbCommit() { onSectionChanged(); }
+/* ===== 动画预设：保存 / 应用 / 删除（免疫一切会清空视角的操作：上传 UI、增删手机、调序、保存） ===== */
+function mbPresets() {
+  var s = mbS(); if (!s) return [];
+  if (!s.mockupPresets) s.mockupPresets = [];
+  return s.mockupPresets;
+}
+function mbSnapshotConfig() {
+  var s = mbS(); if (!s) return null;
+  var phones = (Array.isArray(s.phones) ? s.phones : []).map(function (p) {
+    return { startRx: p.startRx, startRy: p.startRy, startTy: p.startTy, endRx: p.endRx, endRy: p.endRy, endTy: p.endTy, z: p.z };
+  });
+  var lap = { lapStartRx: s.lapStartRx, lapStartRy: s.lapStartRy, lapStartTy: s.lapStartTy, lapEndRx: s.lapEndRx, lapEndRy: s.lapEndRy, lapEndTy: s.lapEndTy };
+  var globals = { spins: s.spins, dur: s.dur, globalZoom: s.globalZoom, stageSize: s.stageSize };
+  return { device: (s.device === 'laptop' ? 'laptop' : 'phone'), phones: phones, lap: lap, global: globals };
+}
+function mbSavePreset() {
+  var s = mbS(); if (!s) return;
+  var nameEl = document.getElementById('mbvisPresetName');
+  var name = (nameEl ? nameEl.value : '') || '';
+  name = name.trim();
+  if (!name) { toast('请先输入预设名称', 'error'); return; }
+  var snap = mbSnapshotConfig(); if (!snap) return;
+  snap.name = name;
+  if (!s.mockupPresets) s.mockupPresets = [];
+  s.mockupPresets.push(snap);
+  if (nameEl) nameEl.value = '';
+  mbRenderPresetPanel();
+  mbCommit();
+  toast('已保存预设「' + name + '」', 'success');
+}
+function mbApplyPreset(idx) {
+  var s = mbS(); if (!s) return;
+  var arr = mbPresets(); var p = arr[idx]; if (!p) return;
+  if (p.global) {
+    ['spins', 'dur', 'globalZoom', 'stageSize'].forEach(function (k) { if (p.global[k] != null) s[k] = p.global[k]; });
+  }
+  if (s.device === 'laptop' && p.lap) {
+    ['lapStartRx', 'lapStartRy', 'lapStartTy', 'lapEndRx', 'lapEndRy', 'lapEndTy'].forEach(function (k) { if (p.lap[k] != null) s[k] = p.lap[k]; });
+  } else if (Array.isArray(p.phones)) {
+    if (!s.phones) s.phones = [];
+    p.phones.forEach(function (pp, i) {
+      if (!s.phones[i]) s.phones[i] = {};
+      ['startRx', 'startRy', 'startTy', 'endRx', 'endRy', 'endTy', 'z'].forEach(function (k) { if (pp[k] != null) s.phones[i][k] = pp[k]; });
+    });
+  }
+  mbSetPhoneCount(mbDev === 'laptop' ? 1 : mbPhoneCount);
+  mbUpdateTargetVisibility(); mbSyncTargetSegs();
+  mbSyncSliders('start'); mbSyncSpin(); mbSyncCompose();
+  mbRenderPresetPanel();
+  mbCommit();
+  toast('已应用预设「' + (p.name || '') + '」', 'success');
+}
+function mbDeletePreset(idx) {
+  var s = mbS(); if (!s || !s.mockupPresets) return;
+  s.mockupPresets.splice(idx, 1);
+  mbRenderPresetPanel();
+  mbCommit();
+}
+function mbRenderPresetPanel() {
+  var box = document.getElementById('mbvisPresetList'); if (!box) return;
+  var arr = mbPresets();
+  if (!arr.length) { box.innerHTML = '<div class="mbvis-preset-empty">暂无预设。调好视角 / 旋转后，点上方「＋ 保存当前为预设」即可留存。</div>'; return; }
+  box.innerHTML = arr.map(function (p, i) {
+    var dev = p.device === 'laptop' ? '笔记本' : ('手机 ×' + (Array.isArray(p.phones) ? p.phones.length : 0));
+    var meta = dev + ' · 转 ' + (p.global && p.global.spins ? p.global.spins : '1') + ' 圈';
+    return '<div class="mbvis-preset-item"><div><div class="pi-name">' + esc(p.name || ('预设 ' + (i + 1))) + '</div><div class="pi-meta">' + esc(meta) + '</div></div>' +
+      '<div class="pi-actions"><button class="pi-btn apply" data-preset-apply="' + i + '">应用</button><button class="pi-btn danger" data-preset-del="' + i + '">删除</button></div></div>';
+  }).join('');
+}
+function mbCap(p) { return p === 'rx' ? 'Rx' : (p === 'ry' ? 'Ry' : 'Ty'); }
+function mbAngleKey(tab, prop) { return (tab === 'start' ? 'start' : 'end') + mbCap(prop); }
+function mbReadAngle(tab, prop) {
+  var s = mbS(); if (!s) return 0;
+  if (mbDev === 'laptop') { var k = 'lap' + (tab === 'start' ? 'Start' : 'End') + mbCap(prop); return parseFloat(s[k] || 0) || 0; }
+  var idx = mbPhoneCount === 2 ? mbEditIdx : 0;
+  var ph = (s.phones && s.phones[idx]) || {};
+  return parseFloat(ph[mbAngleKey(tab, prop)] || 0) || 0;
+}
+function mbWriteAngle(tab, prop, val) {
+  var s = mbS(); if (!s) return; val = Math.round(val);
+  if (mbDev === 'laptop') { s['lap' + (tab === 'start' ? 'Start' : 'End') + mbCap(prop)] = String(val); return; }
+  var idx = mbPhoneCount === 2 ? mbEditIdx : 0;
+  if (!s.phones) s.phones = [];
+  if (!s.phones[idx]) s.phones[idx] = {};
+  s.phones[idx][mbAngleKey(tab, prop)] = String(val);
+}
+function mbReadZForIdx(idx) { var s = mbS(); var ph = (s.phones && s.phones[idx]) || {}; return parseFloat(ph.z || 0) || 0; }
+function mbWriteZ(val) {
+  var s = mbS(); if (!s || mbDev === 'laptop') return; val = Math.round(val);
+  var idx = mbPhoneCount === 2 ? 1 : 0;
+  if (!s.phones) s.phones = [];
+  if (!s.phones[idx]) s.phones[idx] = {};
+  s.phones[idx].z = String(val);
+}
+function mbCurIdx() { return mbPhoneCount === 2 ? mbEditIdx : 0; }
+
+/* ===== 3D 外壳（直壁 + 角圆弧壁，真实挤出体） ===== */
+function mbBuildShell(sel, W, H, r, d, cn) {
+  document.querySelectorAll(sel).forEach(function (box) {
+    var frag = document.createDocumentFragment();
+    var straightH = H - 2 * r, straightW = W - 2 * r, segLen = r * (Math.PI / 2) / cn;
+    function add(x, y, transform, w, h) {
+      var el = document.createElement('div'); el.className = 'mbvis-wall';
+      el.style.width = w + 'px'; el.style.height = h + 'px';
+      el.style.transform = 'translate(-50%,-50%) translate(' + x + 'px,' + y + 'px) ' + transform;
+      frag.appendChild(el);
+    }
+    add(W / 2, 0, 'rotateY(90deg)', d, straightH);
+    add(-W / 2, 0, 'rotateY(90deg)', d, straightH);
+    add(0, -H / 2, 'rotateX(90deg)', straightW, d);
+    add(0, H / 2, 'rotateX(90deg)', straightW, d);
+    var corners = [
+      { cx: W / 2 - r, cy: -(H / 2 - r), a0: 0, a1: -90 },
+      { cx: -(W / 2 - r), cy: -(H / 2 - r), a0: -90, a1: -180 },
+      { cx: -(W / 2 - r), cy: (H / 2 - r), a0: -180, a1: -270 },
+      { cx: (W / 2 - r), cy: (H / 2 - r), a0: -270, a1: -360 }
+    ];
+    corners.forEach(function (c) {
+      for (var i = 0; i < cn; i++) {
+        var aMid = c.a0 + (c.a1 - c.a0) * (i + 0.5) / cn, a = aMid * Math.PI / 180;
+        add(c.cx + r * Math.cos(a), c.cy + r * Math.sin(a), 'rotateZ(' + aMid + 'deg) rotateY(90deg)', d, segLen);
+      }
+    });
+    box.insertBefore(frag, box.firstChild);
+  });
+}
+function mbBuildPhone() {
+  var el = document.createElement('div'); el.className = 'mbvis-phone';
+  el.innerHTML =
+    '<div class="mbvis-face-back"><div class="mbvis-cam"><i class="mbvis-lens a"></i><i class="mbvis-lens b"></i><i class="mbvis-lens c"></i><i class="mbvis-flash"></i></div></div>' +
+    '<div class="mbvis-face-front"><div class="mbvis-screen"><img class="mbvis-ui" alt="UI"><div class="mbvis-island"></div><div class="mbvis-gloss"></div></div></div>' +
+    '<span class="mbvis-mute"></span><span class="mbvis-key mbvis-vol-up"></span><span class="mbvis-key mbvis-vol-down"></span><span class="mbvis-key mbvis-power"></span>';
+  return el;
+}
+function mbSetPhoneCount(n) {
+  var s = mbS(); var row = document.getElementById('mbvisRow'); var W = 250;
+  if (mbDev === 'laptop') {
+    row.style.display = 'none';
+    var lap = document.getElementById('mbvisLap'); lap.style.display = 'block';
+    var lui = document.getElementById('mbvisLapUi'); var lsrc = s.lapUi || '';
+    if (lsrc) { lui.src = lsrc; lui.style.display = 'block'; } else { lui.style.display = 'none'; }
+    if (lui.decode) { try { lui.decode().catch(function () {}); } catch (e) {} }
+    mbBuildShell('#mbvisLap .mbvis-lap-screen', 520, 330, 14, 16, 6);
+    return;
+  }
+  document.getElementById('mbvisLap').style.display = 'none';
+  row.style.display = 'block';
+  var gap = parseFloat(s.abGap || 48) || 48;
+  row.style.width = (n === 1 ? W : (W * 2 + gap)) + 'px';
+  row.style.height = (W * 2.08) + 'px';
+  row.innerHTML = '';
+  for (var i = 0; i < n; i++) {
+    var ph = mbBuildPhone();
+    ph.style.left = (i === 0 ? 0 : i * (W + gap)) + 'px';
+    row.appendChild(ph);
+    var ui = ph.querySelector('.mbvis-ui');
+    var src = ((s.phones && s.phones[i]) ? s.phones[i].ui : '') || '';
+    if (src) { ui.src = src; } else {
+      ui.style.display = 'none';
+      var nu = document.createElement('div'); nu.className = 'mbvis-noUi'; nu.textContent = '未设置 UI 截图';
+      ph.querySelector('.mbvis-screen').appendChild(nu);
+    }
+    if (ui.decode) { try { ui.decode().catch(function () {}); } catch (e) {} }
+  }
+  mbBuildShell('#mbvisRow .mbvis-phone', W, 520, 42, 18, 9);
+}
+function mbApplyGap() {
+  var s = mbS(); var gap = parseFloat(s.abGap || 48) || 48; var W = 250;
+  var row = document.getElementById('mbvisRow');
+  if (mbPhoneCount === 2) {
+    row.style.width = (W * 2 + gap) + 'px';
+    document.querySelectorAll('#mbvisRow .mbvis-phone').forEach(function (ph, i) { ph.style.left = (i === 0 ? 0 : i * (W + gap)) + 'px'; });
+  }
+}
+
+/* ===== 合成图层（背景 / 标题 / 手机舞台位置） ===== */
+function mbApplyCompose() {
+  var s = mbS(); if (!s) return;
+  var banner = document.getElementById('mbvisBanner'); var bg = document.getElementById('mbvisBg');
+  var bt = s.bgType || 'theme';
+  if (bt === 'image' && s.bgImage) { banner.style.background = '#0c0d10'; bg.src = s.bgImage; bg.style.display = 'block'; }
+  else if (bt === 'color') { banner.style.background = s.bgColor || '#0c0d10'; bg.style.display = 'none'; }
+  else { banner.style.background = MB_THEME_BG; bg.style.display = 'none'; }
+  document.getElementById('mbvisTitle').textContent = s.title || '';
+  document.getElementById('mbvisSub').textContent = s.subtitle || '';
+  var txt = document.getElementById('mbvisText');
+  txt.classList.toggle('align-center', (s.titleAlign || 'left') === 'center');
+  txt.classList.toggle('align-left', (s.titleAlign || 'left') === 'left');
+  txt.style.zIndex = (s.titleZ === 'front') ? 5 : 1;
+  document.getElementById('mbvisTitle').style.fontSize = (parseFloat(s.titleSize) || 0) ? s.titleSize + 'px' : '';
+  document.getElementById('mbvisSub').style.fontSize = (parseFloat(s.subtitleSize) || 0) ? s.subtitleSize + 'px' : '';
+  var stage = document.getElementById('mbvisPhoneStage');
+  stage.classList.remove('pos-left', 'pos-center', 'pos-right');
+  stage.classList.add('pos-' + (s.stagePos || 'right'));
+  stage.style.width = (parseFloat(s.stageSize || 560) || 560) + 'px';
+}
+function mbSyncCompose() {
+  var s = mbS(); if (!s) return;
+  document.querySelectorAll('#mbvisBgType button').forEach(function (b) { b.classList.toggle('on', b.dataset.bg === (s.bgType || 'theme')); });
+  document.getElementById('mbvisBgColorField').hidden = (s.bgType || 'theme') !== 'color';
+  document.getElementById('mbvisBgImgField').hidden = (s.bgType || 'theme') !== 'image';
+  document.getElementById('mbvisBgColor').value = s.bgColor || '#0c0d10';
+  document.getElementById('mbvisBgColorV').textContent = s.bgColor || '#0c0d10';
+  document.getElementById('mbvisTitleInput').value = s.title || '';
+  document.getElementById('mbvisSubInput').value = s.subtitle || '';
+  document.querySelectorAll('#mbvisZSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.z === (s.titleZ || 'behind')); });
+  document.querySelectorAll('#mbvisAlignSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.align === (s.titleAlign || 'left')); });
+  document.querySelectorAll('#mbvisPosSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.pos === (s.stagePos || 'right')); });
+  var ss = parseFloat(s.stageSize || 560) || 560;
+  document.getElementById('mbvisStageSize').value = ss;
+  document.getElementById('mbvisStageV').textContent = Math.round(ss);
+  var tsv = parseFloat(s.titleSize || 64) || 64; document.getElementById('mbvisTitleSize').value = tsv; document.getElementById('mbvisTitleSizeV').textContent = Math.round(tsv);
+  var ssv = parseFloat(s.subtitleSize || 28) || 28; document.getElementById('mbvisSubSize').value = ssv; document.getElementById('mbvisSubSizeV').textContent = Math.round(ssv);
+}
+function mbSyncSpin() {
+  var s = mbS(); if (!s) return;
+  var sp = parseFloat(s.spins || 1) || 1; document.getElementById('mbvisSpins').value = sp; document.getElementById('mbvisSpinsV').textContent = sp;
+  var dur = parseFloat(s.dur || 4200) || 4200; document.getElementById('mbvisDur').value = dur / 1000; document.getElementById('mbvisDurV').textContent = (dur / 1000).toFixed(1);
+  document.getElementById('mbvisP').value = mbP; document.getElementById('mbvisPV').textContent = mbP;
+  var gz = parseFloat(s.globalZoom || 1) || 1; document.getElementById('mbvisZoom').value = gz; document.getElementById('mbvisZoomV').textContent = gz.toFixed(2);
+  document.getElementById('mbvisRig').style.transform = 'scale(' + gz + ')';
+  var gap = parseFloat(s.abGap || 48) || 48; document.getElementById('mbvisGap').value = gap; document.getElementById('mbvisGapV').textContent = Math.round(gap);
+  var bz = mbReadZForIdx(mbPhoneCount === 2 ? 1 : 0); document.getElementById('mbvisBgz').value = bz; document.getElementById('mbvisBgzV').textContent = Math.round(bz);
+}
+
+/* ===== 单元渲染 / 页卡 / 动画 ===== */
+function mbRenderUnit(idx, tab) {
+  var s = mbS(); if (!s) return;
+  if (mbDev === 'laptop') {
+    var lap = document.getElementById('mbvisLap'); if (!lap) return;
+    var rx = mbReadAngle(tab, 'rx'), ry = mbReadAngle(tab, 'ry'), ty = mbReadAngle(tab, 'ty');
+    lap.style.transform = 'translateY(' + ty + 'px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+    return;
+  }
+  var ph = document.querySelectorAll('#mbvisRow .mbvis-phone')[idx]; if (!ph) return;
+  // 关键点：每台手机读自己 phone[idx] 的存储角度，不能用 mbEditIdx，否则两台永远同步显示当前选中的那台角度（切换 A/B 会让另一台看起来被改）
+  var p = (s.phones && s.phones[idx]) || {};
+  var rx = parseFloat(p[mbAngleKey(tab, 'rx')] || 0) || 0;
+  var ry = parseFloat(p[mbAngleKey(tab, 'ry')] || 0) || 0;
+  var ty = parseFloat(p[mbAngleKey(tab, 'ty')] || 0) || 0;
+  var z = mbReadZForIdx(idx);
+  ph.style.transform = 'translateY(' + ty + 'px) translateZ(' + z + 'px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+}
+function mbShowPoint(tab) {
+  if (mbVis.introRAF) { cancelAnimationFrame(mbVis.introRAF); mbVis.introRAF = null; }
+  if (mbDev === 'laptop') mbRenderUnit(0, tab);
+  else for (var i = 0; i < mbPhoneCount; i++) mbRenderUnit(i, tab);
+}
+function mbSyncSliders(tab) {
+  if (tab === 'start') {
+    document.getElementById('mbvisSx').value = mbReadAngle('start', 'rx'); document.getElementById('mbvisSxV').textContent = Math.round(mbReadAngle('start', 'rx'));
+    document.getElementById('mbvisSy').value = mbReadAngle('start', 'ry'); document.getElementById('mbvisSyV').textContent = Math.round(mbReadAngle('start', 'ry'));
+    document.getElementById('mbvisSty').value = mbReadAngle('start', 'ty'); document.getElementById('mbvisStyV').textContent = Math.round(mbReadAngle('start', 'ty'));
+  } else {
+    document.getElementById('mbvisEx').value = mbReadAngle('end', 'rx'); document.getElementById('mbvisExV').textContent = Math.round(mbReadAngle('end', 'rx'));
+    document.getElementById('mbvisEy').value = mbReadAngle('end', 'ry'); document.getElementById('mbvisEyV').textContent = Math.round(mbReadAngle('end', 'ry'));
+    document.getElementById('mbvisEty').value = mbReadAngle('end', 'ty'); document.getElementById('mbvisEtyV').textContent = Math.round(mbReadAngle('end', 'ty'));
+  }
+}
+function mbSetTab(tab) {
+  mbActiveTab = tab;
+  document.querySelectorAll('#mbvisTabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
+  document.querySelectorAll('.mbvis-panel').forEach(function (p) { p.hidden = p.dataset.panel !== tab; });
+  mbShowPoint(tab === 'start' ? 'start' : 'end');
+  mbSyncTargetSegs();
+  if (tab === 'compose') mbSyncCompose();
+}
+function mbUpdateTargetVisibility() {
+  var show = (mbDev === 'phone' && mbPhoneCount === 2);
+  document.getElementById('mbvisTgtStart').hidden = !show;
+  document.getElementById('mbvisTgtEnd').hidden = !show;
+  document.getElementById('mbvisPlaceGrp').hidden = !show;
+}
+function mbSyncTargetSegs() {
+  ['mbvisTgtStart', 'mbvisTgtEnd'].forEach(function (id) {
+    var seg = document.getElementById(id); if (!seg) return;
+    [].forEach.call(seg.children, function (x) { x.classList.toggle('on', +x.dataset.tgt === mbEditIdx); });
+  });
+}
+function mbSetEditIdx(idx) {
+  mbEditIdx = idx;
+  mbSyncTargetSegs();
+  mbSyncSliders(mbActiveTab); mbShowPoint(mbActiveTab);
+}
+function mbSetOpZoom() {
+  var banner = document.getElementById('mbvisBanner'); var stage = document.getElementById('mbvisStage');
+  var bh = banner.offsetHeight || 720;
+  banner.style.transform = mbOpZoom >= 1 ? 'none' : 'scale(' + mbOpZoom + ')';
+  stage.style.height = Math.round(bh * mbOpZoom) + 'px';
+}
+function mbPlayIntro() {
+  if (mbVis.introRAF) cancelAnimationFrame(mbVis.introRAF);
+  var s = mbS(); if (!s) return;
+  var dur = parseFloat(s.dur || 4200) || 4200, spins = parseFloat(s.spins || 1) || 1, t0 = performance.now();
+  function frame(now) {
+    var k = (now - t0) / dur; if (k > 1) k = 1;
+    var e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    var sc = 0.92 + 0.08 * e;
+    if (mbDev === 'laptop') {
+      var S = { rx: mbReadAngle('start', 'rx'), ry: mbReadAngle('start', 'ry'), ty: mbReadAngle('start', 'ty') };
+      var E = { rx: mbReadAngle('end', 'rx'), ry: mbReadAngle('end', 'ry'), ty: mbReadAngle('end', 'ty') };
+      var ry0 = S.ry - spins * 360, ry1 = E.ry;
+      var ty = S.ty + (E.ty - S.ty) * e, rxv = S.rx + (E.rx - S.rx) * e, ryv = ry0 + (ry1 - ry0) * e;
+      var lap = document.getElementById('mbvisLap');
+      if (lap) lap.style.transform = 'translateY(' + ty + 'px) rotateX(' + rxv + 'deg) rotateY(' + ryv + 'deg) scale(' + sc + ')';
+    } else {
+      for (var i = 0; i < mbPhoneCount; i++) {
+        var ph = (s.phones && s.phones[i]) || {};
+        var S = { rx: +ph.startRx || 0, ry: +ph.startRy || 0, ty: +ph.startTy || 480 };
+        var E = { rx: +ph.endRx || 0, ry: +ph.endRy || 0, ty: +ph.endTy || 0 };
+        var z = +ph.z || 0, ry0 = S.ry - spins * 360, ry1 = E.ry;
+        var ty = S.ty + (E.ty - S.ty) * e, rxv = S.rx + (E.rx - S.rx) * e, ryv = ry0 + (ry1 - ry0) * e;
+        var node = document.querySelectorAll('#mbvisRow .mbvis-phone')[i];
+        if (node) node.style.transform = 'translateY(' + ty + 'px) translateZ(' + z + 'px) rotateX(' + rxv + 'deg) rotateY(' + ryv + 'deg) scale(' + sc + ')';
+      }
+    }
+    if (k < 1) mbVis.introRAF = requestAnimationFrame(frame); else { mbVis.introRAF = null; mbSetTab('end'); }
+  }
+  mbVis.introRAF = requestAnimationFrame(frame);
+}
+function mbSetDev(dev) {
+  var s = mbS(); if (!s) return; s.device = dev; mbDev = dev;
+  document.querySelectorAll('#mbvisDev button').forEach(function (b) { b.classList.toggle('on', b.dataset.dev === dev); });
+  document.getElementById('mbvisCount').classList.toggle('mbvis-disabled', dev !== 'phone');
+  if (dev === 'laptop') { mbPhoneCount = 1; mbEditIdx = 0; }
+  else { mbPhoneCount = Math.min(2, Math.max(1, (Array.isArray(s.phones) ? s.phones.length : 1))); }
+  document.querySelectorAll('#mbvisCount button').forEach(function (b) { b.classList.toggle('on', +b.dataset.count === mbPhoneCount); });
+  mbApplyCompose(); mbSetPhoneCount(mbPhoneCount); mbUpdateTargetVisibility(); mbSyncTargetSegs();
+  mbSyncSliders(mbActiveTab); mbShowPoint(mbActiveTab === 'start' ? 'start' : 'end'); mbCommit();
+  setTimeout(function () { renderEditorForm(state.sections[selectedIndex]); }, 0);
+}
+function mbSetCount(n) {
+  var s = mbS(); if (!s || mbDev !== 'phone') return;
+  if (n === 2) {
+    if (!Array.isArray(s.phones)) s.phones = [];
+    if (s.phones.length < 2) s.phones.push({ ui: '', startRx: '22', startRy: '22', startTy: '480', endRx: '8', endRy: '22', endTy: '-30', z: '40' });
+    mbPhoneCount = 2;
+  } else {
+    if (Array.isArray(s.phones)) s.phones = s.phones.slice(0, 1);
+    mbPhoneCount = 1; mbEditIdx = 0;
+  }
+  document.querySelectorAll('#mbvisCount button').forEach(function (b) { b.classList.toggle('on', +b.dataset.count === mbPhoneCount); });
+  mbApplyCompose(); mbSetPhoneCount(mbPhoneCount); mbUpdateTargetVisibility(); mbSyncTargetSegs();
+  mbSyncSliders(mbActiveTab); mbShowPoint(mbActiveTab === 'start' ? 'start' : 'end'); mbCommit();
+  setTimeout(function () { renderEditorForm(state.sections[selectedIndex]); }, 0);
+}
+
+/* ===== 弹窗 DOM 创建 + 事件绑定（单例） ===== */
+function ensureMbVisDOM() {
+  if (mbVis) return mbVis;
+  var style = document.createElement('style');
+  style.textContent = [
+    '/* ===== 3D 样机可视化编辑弹窗 ===== */',
+    '.mbvis-mask{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:22px 14px;overflow:auto}',
+    '.mbvis-mask[hidden]{display:none}',
+    '.mbvis-modal{width:min(1000px,96vw);background:#16181d;border:1px solid #262a31;border-radius:18px;padding:16px 18px 22px;box-shadow:0 24px 60px -20px rgba(0,0,0,.7);margin-bottom:24px}',
+    '.mbvis-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}',
+    '.mbvis-title{font-size:15px;font-weight:600;color:#e8eaed}',
+    '.mbvis-sub{font-size:12px;color:rgba(232,234,237,.6);margin-top:3px;max-width:560px}',
+    '.mbvis-close{background:#262a31;border:1px solid #3a3f47;color:#e8eaed;padding:7px 16px;border-radius:100px;cursor:pointer;font-size:13px;white-space:nowrap}',
+    '.mbvis-close:hover{border-color:#3b82f6}',
+    '.mbvis-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}',
+    '.mbvis-seg{display:flex;background:#0e0f12;border:1px solid #262a31;border-radius:100px;overflow:hidden}',
+    '.mbvis-seg button{background:none;border:0;color:rgba(232,234,237,.6);padding:7px 15px;cursor:pointer;font-size:13px}',
+    '.mbvis-seg button.on{background:#3b82f6;color:#fff}',
+    '.mbvis-seg.mbvis-disabled{opacity:.35;pointer-events:none}',
+    '.mbvis-replay{margin-left:auto;background:#16181d;border:1px solid #262a31;color:#e8eaed;padding:7px 15px;border-radius:100px;cursor:pointer;font-size:13px}',
+    '.mbvis-replay:hover{border-color:#3b82f6}',
+    '.mbvis-stage{margin:0 auto 12px;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;background:radial-gradient(120% 120% at 50% 0%,#1c1f25 0%,#0c0d10 60%);border-radius:18px}',
+    '.mbvis-banner{position:relative;width:1440px;height:720px;flex:0 0 auto;transform-origin:top center;border-radius:25px;overflow:hidden;background:radial-gradient(120% 120% at 50% 0%,#1c1f25 0%,#0c0d10 60%)}',
+    '.mbvis-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0}',
+    '.mbvis-text{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:0 7%;z-index:3;pointer-events:none}',
+    '.mbvis-text.align-left{align-items:flex-start;text-align:left}',
+    '.mbvis-text.align-center{align-items:center;text-align:center}',
+    '.mbvis-title-t{font-size:56px;font-weight:700;line-height:1.1;color:#fff;margin:0;text-shadow:0 2px 24px rgba(0,0,0,.45)}',
+    '.mbvis-sub-t{font-size:20px;font-weight:400;color:rgba(255,255,255,.82);margin:0;text-shadow:0 1px 14px rgba(0,0,0,.45);max-width:32ch;line-height:1.55}',
+    '.mbvis-stage-phone{position:absolute;z-index:2;width:560px;height:560px;max-width:90vw;aspect-ratio:1;display:flex;align-items:center;justify-content:center}',
+    '.mbvis-stage-phone.pos-left{left:4%;right:auto;top:50%;transform:translateY(-50%)}',
+    '.mbvis-stage-phone.pos-center{left:50%;right:auto;top:50%;transform:translate(-50%,-50%)}',
+    '.mbvis-stage-phone.pos-right{right:4%;left:auto;top:50%;transform:translateY(-50%)}',
+    '.mbvis-viewport{perspective:1200px;perspective-origin:50% 40%;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}',
+    '.mbvis-rig{transform-style:preserve-3d;display:flex;align-items:center;justify-content:center;will-change:transform}',
+    '.mbvis-phone-row{position:relative;transform-style:preserve-3d}',
+    '.mbvis-phone{position:absolute;top:0;width:250px;height:520px;transform-style:preserve-3d}',
+    '.mbvis-face-front,.mbvis-face-back{position:absolute;inset:0;border-radius:42px;transform-style:preserve-3d;will-change:transform}',
+    '.mbvis-face-front{transform:translateZ(9px);background:linear-gradient(150deg,#3a3d44,#15171b);padding:9px;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.4),0 25px 50px -15px rgba(0,0,0,.55)}',
+    '.mbvis-screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;background:#000;box-shadow:inset 0 0 0 1px rgba(0,0,0,.8);will-change:transform}',
+    '.mbvis-ui{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;will-change:transform}',
+    '.mbvis-noUi{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4);font-size:13px}',
+    '.mbvis-island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:94px;height:27px;background:#000;border-radius:100px;z-index:6}',
+    '.mbvis-island:after{content:"";position:absolute;right:11px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#2b3a55,#0a0e16)}',
+    '.mbvis-gloss{position:absolute;inset:0;border-radius:34px;pointer-events:none;z-index:7;background:linear-gradient(125deg,rgba(255,255,255,.12) 0%,rgba(255,255,255,0) 34%)}',
+    '.mbvis-face-back{transform:translateZ(-9px);background:linear-gradient(150deg,#3c3f47,#191b1f);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),inset 0 0 0 1px rgba(0,0,0,.4)}',
+    '.mbvis-cam{position:absolute;top:18px;left:18px;width:80px;height:80px;border-radius:22px;background:linear-gradient(150deg,#23262c,#0d0e11);box-shadow:0 2px 6px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.05)}',
+    '.mbvis-cam .mbvis-lens{position:absolute;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a4a63,#05070b);box-shadow:inset 0 0 0 2px #1b1e24}',
+    '.mbvis-cam .a{top:12px;left:12px}.mbvis-cam .b{top:12px;right:12px}.mbvis-cam .c{top:42px;left:27px}',
+    '.mbvis-cam .mbvis-flash{position:absolute;top:46px;right:16px;width:9px;height:9px;border-radius:50%;background:#f3e9c8}',
+    '.mbvis-wall{position:absolute;top:50%;left:50%;border-radius:3px;background:linear-gradient(180deg,#3c3f47,#191b1f);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);backface-visibility:visible}',
+    '.mbvis-key{position:absolute;background:linear-gradient(180deg,#5a5e67,#2a2d33);box-shadow:0 1px 2px rgba(0,0,0,.4)}',
+    '.mbvis-power{right:-2.5px;top:148px;width:3px;height:78px;border-radius:0 2px 2px 0}',
+    '.mbvis-vol-up{left:-2.5px;top:130px;width:3px;height:46px;border-radius:2px 0 0 2px}',
+    '.mbvis-vol-down{left:-2.5px;top:188px;width:3px;height:46px;border-radius:2px 0 0 2px}',
+    '.mbvis-mute{position:absolute;left:-2.5px;top:88px;width:3px;height:24px;border-radius:2px 0 0 2px;background:linear-gradient(180deg,#5a5e67,#2a2d33);box-shadow:0 1px 2px rgba(0,0,0,.4)}',
+    '.mbvis-laptop{position:relative;width:560px;height:360px;transform-style:preserve-3d;display:none}',
+    '.mbvis-lap-screen{position:absolute;top:0;left:50%;width:520px;height:330px;transform:translateX(-50%);transform-style:preserve-3d}',
+    '.mbvis-lap-front,.mbvis-lap-back{position:absolute;inset:0;border-radius:14px;will-change:transform}',
+    '.mbvis-lap-front{transform:translateZ(8px);background:linear-gradient(150deg,#33363d,#0c0d10);padding:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(0,0,0,.4)}',
+    '.mbvis-lap-back{transform:translateZ(-8px);background:linear-gradient(150deg,#3c3f47,#17191e);box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)}',
+    '.mbvis-lap-screen-inner{position:relative;width:100%;height:100%;border-radius:6px;overflow:hidden;background:#000;will-change:transform}',
+    '.mbvis-gloss-l{position:absolute;inset:0;border-radius:6px;pointer-events:none;z-index:6;background:linear-gradient(125deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,0) 30%)}',
+    '.mbvis-lap-base{position:absolute;top:330px;left:50%;width:560px;height:18px;transform:translateX(-50%) rotateX(82deg);transform-origin:top center;background:linear-gradient(180deg,#2a2d33,#15171b);border-radius:0 0 14px 14px;box-shadow:0 12px 30px -8px rgba(0,0,0,.6)}',
+    '.mbvis-lap-base:after{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:6px;border-radius:0 0 6px 6px;background:#0c0d10}',
+    '.mbvis-lap-cam{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:#0a0b0d;box-shadow:inset 0 0 0 1px #2a2d33;z-index:5}',
+    '.mbvis-opzoom{display:flex;align-items:center;gap:10px;margin:0 auto 12px;width:min(760px,92vw)}',
+    '.mbvis-opzoom label{color:rgba(232,234,237,.6);font-size:12px;white-space:nowrap}',
+    '.mbvis-opzoom input[type=range]{flex:1;accent-color:#3b82f6}',
+    '.mbvis-tabs{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}',
+    '.mbvis-tabs button{background:#16181d;border:1px solid #262a31;color:rgba(232,234,237,.6);padding:9px 18px;border-radius:100px;cursor:pointer;font-size:13px}',
+    '.mbvis-tabs button.on{background:#3b82f6;color:#fff;border-color:#3b82f6}',
+    '.mbvis-panel{background:#16181d;border:1px solid #262a31;border-radius:16px;padding:14px 16px;margin-top:12px}',
+    '.mbvis-panel[hidden]{display:none}',
+    '.mbvis-grp{background:#101216;border:1px solid #262a31;border-radius:16px;padding:13px 15px;margin-bottom:12px}',
+    '.mbvis-grp:last-child{margin-bottom:0}',
+    '.mbvis-grp.mbvis-start{border-top:2px solid #3b82f6}',
+    '.mbvis-grp.mbvis-end{border-top:2px solid #22c55e}',
+    '.mbvis-grp.mbvis-spin{border-top:2px solid #f59e0b}',
+    '.mbvis-grp.mbvis-compose{border-top:2px solid #a855f7}',
+    '.mbvis-grp-h{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:600;color:#e8eaed;margin-bottom:11px;flex-wrap:wrap}',
+    '.mbvis-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
+    '.mbvis-target-seg{display:inline-flex;background:#0e0f12;border:1px solid #262a31;border-radius:100px;overflow:hidden}',
+    '.mbvis-target-seg button{background:none;border:0;color:rgba(232,234,237,.6);padding:4px 13px;cursor:pointer;font-size:12px}',
+    '.mbvis-target-seg button.on{background:#3b82f6;color:#fff}',
+    '.mbvis-target-seg[hidden]{display:none}',
+    '.mbvis-mirror{background:#22c55e;color:#04210f;border:0;border-radius:100px;padding:5px 12px;font-size:11.5px;cursor:pointer;white-space:nowrap;font-weight:600}',
+    '.mbvis-mirror:hover{filter:brightness(1.08)}',
+    '.mbvis-mirror[hidden]{display:none}',
+    '.mbvis-cap{background:#3b82f6;color:#fff;border:0;border-radius:100px;padding:5px 11px;font-size:11.5px;cursor:pointer;white-space:nowrap}',
+    '.mbvis-field{margin-bottom:10px}',
+    '.mbvis-field:last-child{margin-bottom:0}',
+    '.mbvis-field label{display:block;color:rgba(232,234,237,.6);font-size:11.5px;margin-bottom:4px}',
+    '.mbvis-field input[type=range]{width:100%;accent-color:#3b82f6}',
+    '.mbvis-field input[type=text]{width:100%;background:#0e0f12;border:1px solid #262a31;border-radius:8px;color:#e8eaed;padding:7px 10px;font-size:13px}',
+    '.mbvis-field input[type=file]{width:100%;color:rgba(232,234,237,.6);font-size:12px}',
+    '.mbvis-field input[type=color]{width:46px;height:30px;border:1px solid #262a31;border-radius:8px;background:#0e0f12;padding:2px;cursor:pointer;vertical-align:middle}',
+    /* ④ 合成图层：字段改 2 列网格（标题跨整行），避免设置过长需下拉；hidden 字段自动不占格 */
+    '.mbvis-panel[data-panel="compose"] .mbvis-grp{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;align-items:start}',
+    '.mbvis-panel[data-panel="compose"] .mbvis-grp > .mbvis-grp-h{grid-column:1 / -1;margin-bottom:0}',
+    '.mbvis-panel[data-panel="compose"] .mbvis-field{margin-bottom:0}',
+    '.mbvis-opzoom input[type=range]{flex:1;accent-color:#3b82f6}',
+    '.mbvis-tabs{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}',
+    /* ⑤ 动画预设 */
+    '.mbvis-preset-empty{color:rgba(232,234,237,.4);font-size:12px;padding:6px 2px}',
+    '.mbvis-preset-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}',
+    '.mbvis-preset-item{display:flex;align-items:center;gap:10px;background:#101216;border:1px solid #262a31;border-radius:12px;padding:10px 12px}',
+    '.mbvis-preset-item .pi-name{flex:1;font-size:13px;color:#e8eaed;font-weight:600}',
+    '.mbvis-preset-item .pi-meta{font-size:11px;color:rgba(232,234,237,.45);margin-top:2px}',
+    '.mbvis-preset-item .pi-actions{display:flex;gap:6px;flex-shrink:0}',
+    '.mbvis-preset-item .pi-btn{background:#1b1e24;border:1px solid #2b3038;color:#e8eaed;border-radius:100px;padding:5px 12px;cursor:pointer;font-size:12px;white-space:nowrap}',
+    '.mbvis-preset-item .pi-btn.apply{background:#3b82f6;border-color:#3b82f6;color:#fff}',
+    '.mbvis-preset-item .pi-btn:hover{filter:brightness(1.1)}',
+    '.mbvis-preset-item .pi-btn.danger{color:#ff6b6b}',
+  ].join('\n');
+  document.head.appendChild(style);
+
+  var mask = document.createElement('div');
+  mask.className = 'mbvis-mask';
+  mask.hidden = true;
+  mask.innerHTML = [
+    '<div class="mbvis-modal">',
+    '  <div class="mbvis-head"><div><div class="mbvis-title">可视化编辑 · 3D 样机 Banner</div><div class="mbvis-sub">拖滑块实时调视角 / 进场动画 / 标题遮挡 / 背景，关闭即保存到板块</div></div><button class="mbvis-close" id="mbvisClose">完成</button></div>',
+    '  <div class="mbvis-toolbar">',
+    '    <div class="mbvis-seg" id="mbvisDev"><button data-dev="phone" class="on">手机</button><button data-dev="laptop">笔记本</button></div>',
+    '    <div class="mbvis-seg mbvis-disabled" id="mbvisCount"><button data-count="1" class="on">1 台</button><button data-count="2">2 台</button></div>',
+    '    <button class="mbvis-replay" id="mbvisReplay">▶ 重播进场动画</button>',
+    '  </div>',
+    '  <div class="mbvis-stage" id="mbvisStage"><div class="mbvis-banner" id="mbvisBanner">',
+    '    <img class="mbvis-bg" id="mbvisBg" alt="">',
+    '    <div class="mbvis-text align-left" id="mbvisText"><h2 class="mbvis-title-t" id="mbvisTitle"></h2><p class="mbvis-sub-t" id="mbvisSub"></p></div>',
+    '    <div class="mbvis-stage-phone pos-right" id="mbvisPhoneStage"><div class="mbvis-viewport" id="mbvisViewport"><div class="mbvis-rig" id="mbvisRig"><div class="mbvis-phone-row" id="mbvisRow"></div><div class="mbvis-laptop" id="mbvisLap"><div class="mbvis-lap-screen"><div class="mbvis-lap-back"></div><div class="mbvis-lap-front"><div class="mbvis-lap-screen-inner"><img class="mbvis-ui" id="mbvisLapUi" alt=""><div class="mbvis-lap-cam"></div><div class="mbvis-gloss-l"></div></div></div></div><div class="mbvis-lap-base"></div></div></div></div></div>',
+    '  </div></div>',
+    '  <div class="mbvis-opzoom"><label>操作视窗缩放 · <span id="mbvisOpzoomVal">0.62</span></label><input type="range" id="mbvisOpzoom" min="0.40" max="1.00" step="0.02" value="0.62"></div>',
+    '  <div class="mbvis-tabs" id="mbvisTabs">',
+    '    <button data-tab="start" class="on">① 起点视角</button><button data-tab="end">② 终点静止</button><button data-tab="spin">③ 旋转设置</button><button data-tab="compose">④ 合成图层</button><button data-tab="preset">⑤ 动画预设</button>',
+    '  </div>',
+    '  <div class="mbvis-panel" data-panel="start"><div class="mbvis-grp mbvis-start"><div class="mbvis-grp-h">起点视角 · 进场最开始的样子<span class="mbvis-right"><span class="mbvis-target-seg" id="mbvisTgtStart" hidden><button data-tgt="0" class="on">手机 A</button><button data-tgt="1">手机 B</button></span></span></div>',
+    '    <div class="mbvis-field"><label>起点 X · <span id="mbvisSxV">22</span>°</label><input type="range" id="mbvisSx" min="-45" max="45" value="22"></div>',
+    '    <div class="mbvis-field"><label>起点 Y · <span id="mbvisSyV">-22</span>°</label><input type="range" id="mbvisSy" min="-180" max="180" value="-22"></div>',
+    '    <div class="mbvis-field"><label>升起高度 · <span id="mbvisStyV">480</span>px</label><input type="range" id="mbvisSty" min="0" max="700" value="480"></div>',
+    '  </div></div>',
+    '  <div class="mbvis-panel" data-panel="end" hidden><div class="mbvis-grp mbvis-end"><div class="mbvis-grp-h">终点静止 · 停留视角<span class="mbvis-right"><span class="mbvis-target-seg" id="mbvisTgtEnd" hidden><button data-tgt="0" class="on">手机 A</button><button data-tgt="1">手机 B</button></span></span></div>',
+    '    <div class="mbvis-field"><label>终点 X · <span id="mbvisExV">8</span>°</label><input type="range" id="mbvisEx" min="-45" max="45" value="8"></div>',
+    '    <div class="mbvis-field"><label>终点 Y · <span id="mbvisEyV">-22</span>°</label><input type="range" id="mbvisEy" min="-180" max="180" value="-22"></div>',
+    '    <div class="mbvis-field"><label>高低偏移 · <span id="mbvisEtyV">0</span>px</label><input type="range" id="mbvisEty" min="-160" max="160" value="0"></div>',
+    '  </div></div>',
+    '  <div class="mbvis-panel" data-panel="spin" hidden><div class="mbvis-grp mbvis-spin"><div class="mbvis-grp-h">旋转设置 · 整圈数 / 时长 / 透视 / 缩放</div>',
+    '    <div class="mbvis-field"><label>整圈数 · <span id="mbvisSpinsV">1</span> 圈</label><input type="range" id="mbvisSpins" min="0" max="3" step="0.5" value="1"></div>',
+    '    <div class="mbvis-field"><label>时长 · <span id="mbvisDurV">4.2</span> 秒</label><input type="range" id="mbvisDur" min="1" max="8" step="0.1" value="4.2"></div>',
+    '    <div class="mbvis-field"><label>透视距离 · <span id="mbvisPV">1200</span>px</label><input type="range" id="mbvisP" min="500" max="2200" value="1200"></div>',
+    '    <div class="mbvis-field"><label>全局缩放 · <span id="mbvisZoomV">1.00</span></label><input type="range" id="mbvisZoom" min="0.30" max="1.50" step="0.02" value="1"></div>',
+    '  </div><div class="mbvis-grp mbvis-spin" id="mbvisPlaceGrp" hidden><div class="mbvis-grp-h">摆放（仅 2 台）· 间距 / 前后景深</div>',
+    '    <div class="mbvis-field"><label>A·B 间距 · <span id="mbvisGapV">48</span>px（负=重叠）</label><input type="range" id="mbvisGap" min="-180" max="240" value="48"></div>',
+    '    <div class="mbvis-field"><label>B 前后深度 · <span id="mbvisBgzV">0</span>px（正=B 在前）</label><input type="range" id="mbvisBgz" min="-90" max="90" value="0"></div>',
+    '  </div></div>',
+    '  <div class="mbvis-panel" data-panel="compose" hidden><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">背景 · 色 / 图</div>',
+    '    <div class="mbvis-field"><label>背景类型</label><div class="mbvis-seg" id="mbvisBgType"><button data-bg="theme" class="on">主题渐变</button><button data-bg="color">纯色</button><button data-bg="image">图片</button></div></div>',
+    '    <div class="mbvis-field" id="mbvisBgColorField" hidden><label>背景色</label><div class="mbvis-row-inline"><input type="color" id="mbvisBgColor" value="#0c0d10"><span id="mbvisBgColorV">#0c0d10</span></div></div>',
+    '    <div class="mbvis-field" id="mbvisBgImgField" hidden><label>上传背景图</label><input type="file" id="mbvisBgImg" accept="image/*"><div class="mbvis-row-inline" style="margin-top:8px"><button class="mbvis-cap" id="mbvisBgReset">恢复默认主题</button></div></div>',
+    '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">标题 / 副标题</div>',
+    '    <div class="mbvis-field"><label>标题文字</label><input type="text" id="mbvisTitleInput" maxlength="40"></div>',
+    '    <div class="mbvis-field"><label>副标题文字</label><input type="text" id="mbvisSubInput" maxlength="80"></div>',
+    '    <div class="mbvis-field"><label>标题遮挡关系（相对手机）</label><div class="mbvis-seg" id="mbvisZSeg"><button data-z="behind" class="on">手机后方</button><button data-z="front">手机前方</button></div></div>',
+    '    <div class="mbvis-field"><label>标题对齐</label><div class="mbvis-seg" id="mbvisAlignSeg"><button data-align="center" class="on">居中</button><button data-align="left">居左</button></div></div>',
+    '    <div class="mbvis-field"><label>标题字号 · <span id="mbvisTitleSizeV">64</span>px（可调大）</label><input type="range" id="mbvisTitleSize" min="24" max="160" step="2" value="64"></div>',
+    '    <div class="mbvis-field"><label>副标题字号 · <span id="mbvisSubSizeV">28</span>px</label><input type="range" id="mbvisSubSize" min="14" max="90" step="2" value="28"></div>',
+    '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">手机视窗位置（方形）</div>',
+    '    <div class="mbvis-field"><label>屏幕内显示位置</label><div class="mbvis-seg" id="mbvisPosSeg"><button data-pos="left">左</button><button data-pos="center">中</button><button data-pos="right" class="on">右</button></div></div>',
+    '    <div class="mbvis-field"><label>方形视窗大小 · <span id="mbvisStageV">560</span>px</label><input type="range" id="mbvisStageSize" min="360" max="760" step="20" value="560"></div>',
+    '  </div></div>',
+    '  <div class="mbvis-panel" data-panel="preset" hidden><div class="mbvis-grp" style="border-top:2px solid #ec4899"><div class="mbvis-grp-h">动画预设 · 保存 / 还原整套进场动画</div>',
+    '    <div class="mbvis-field"><label>预设名称</label><input type="text" id="mbvisPresetName" placeholder="例如：经典旋转上升"></div>',
+    '    <div class="mbvis-row-inline"><button class="mbvis-cap" id="mbvisPresetSave">＋ 保存当前为预设</button></div>',
+    '    <div class="mbvis-preset-list" id="mbvisPresetList"></div>',
+    '    <div class="mbvis-hint" style="margin-top:10px;color:rgba(232,234,237,.45);font-size:11.5px;line-height:1.5">上传 UI 截图、增删手机或调整顺序都会清空已设的视角参数。调好动画后存为预设，需要时点「应用」即可一键还原本套动画。</div>',
+    '  </div></div>',
+    '</div>'
+  ].join('\n');
+  document.body.appendChild(mask);
+  mbVis = { mask: mask, introRAF: null };
+  bindMbVisEvents();
+  return mbVis;
+}
+
+function bindMbVisEvents() {
+  var $ = function (id) { return document.getElementById(id); };
+  $('mbvisClose').addEventListener('click', function () { mbVis.mask.hidden = true; });
+  mbVis.mask.addEventListener('click', function (e) { if (e.target === mbVis.mask) mbVis.mask.hidden = true; });
+
+  $('mbvisDev').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) mbSetDev(b.dataset.dev); });
+  $('mbvisCount').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && mbDev === 'phone') mbSetCount(+b.dataset.count); });
+  $('mbvisReplay').addEventListener('click', mbPlayIntro);
+
+  $('mbvisTabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) mbSetTab(b.dataset.tab); });
+
+  function bindTgt(segId) {
+    $(segId).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      mbSetEditIdx(+b.dataset.tgt);
+    });
+  }
+  bindTgt('mbvisTgtStart'); bindTgt('mbvisTgtEnd');
+
+  ['mbvisSx|start|rx', 'mbvisSy|start|ry', 'mbvisSty|start|ty', 'mbvisEx|end|rx', 'mbvisEy|end|ry', 'mbvisEty|end|ty'].forEach(function (spec) {
+    var p = spec.split('|'); var el = $(p[0]);
+    el.addEventListener('input', function () {
+      var v = +this.value; mbWriteAngle(p[1], p[2], v);
+      $(p[0] + 'V').textContent = Math.round(v);
+      if ((p[1] === 'start' && mbActiveTab === 'start') || (p[1] === 'end' && mbActiveTab === 'end')) mbRenderUnit(mbCurIdx(), p[1]);
+    });
+  });
+
+  $('mbvisSpins').addEventListener('input', function () { mbS().spins = String(this.value); $('mbvisSpinsV').textContent = this.value; mbCommit(); });
+  $('mbvisDur').addEventListener('input', function () { var v = +this.value; mbS().dur = String(Math.round(v * 1000)); $('mbvisDurV').textContent = v.toFixed(1); mbCommit(); });
+  $('mbvisP').addEventListener('input', function () { mbP = +this.value; $('mbvisPV').textContent = this.value; $('mbvisViewport').style.perspective = this.value + 'px'; });
+  $('mbvisZoom').addEventListener('input', function () { var v = +this.value; mbS().globalZoom = String(v); $('mbvisZoomV').textContent = v.toFixed(2); $('mbvisRig').style.transform = 'scale(' + v + ')'; mbCommit(); });
+  $('mbvisGap').addEventListener('input', function () { var v = +this.value; mbS().abGap = String(Math.round(v)); $('mbvisGapV').textContent = Math.round(v); mbApplyGap(); mbCommit(); });
+  $('mbvisBgz').addEventListener('input', function () { var v = +this.value; mbWriteZ(v); $('mbvisBgzV').textContent = Math.round(v); mbRenderUnit(1, mbActiveTab); mbCommit(); });
+
+  $('mbvisOpzoom').addEventListener('input', function () { mbOpZoom = +this.value; $('mbvisOpzoomVal').textContent = mbOpZoom.toFixed(2); mbSetOpZoom(); });
+
+  $('mbvisBgType').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().bgType = b.dataset.bg; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisBgColor').addEventListener('input', function () { mbS().bgColor = this.value; $('mbvisBgColorV').textContent = this.value; mbApplyCompose(); });
+  $('mbvisBgImg').addEventListener('change', function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    var r = new FileReader(); r.onload = function () { mbS().bgType = 'image'; mbS().bgImage = r.result; mbApplyCompose(); mbSyncCompose(); mbCommit(); };
+    r.readAsDataURL(f);
+  });
+  $('mbvisBgReset').addEventListener('click', function () { mbS().bgType = 'theme'; mbS().bgImage = ''; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisTitleInput').addEventListener('input', function () { mbS().title = this.value; $('mbvisTitle').textContent = this.value; mbCommit(); });
+  $('mbvisSubInput').addEventListener('input', function () { mbS().subtitle = this.value; $('mbvisSub').textContent = this.value; mbCommit(); });
+  $('mbvisZSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleZ = b.dataset.z; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisAlignSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleAlign = b.dataset.align; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisTitleSize').addEventListener('input', function () { var v = +this.value; mbS().titleSize = String(v); document.getElementById('mbvisTitleSizeV').textContent = v; mbApplyCompose(); mbCommit(); });
+  $('mbvisSubSize').addEventListener('input', function () { var v = +this.value; mbS().subtitleSize = String(v); document.getElementById('mbvisSubSizeV').textContent = v; mbApplyCompose(); mbCommit(); });
+  $('mbvisPosSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().stagePos = b.dataset.pos; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisStageSize').addEventListener('input', function () { var v = +this.value; mbS().stageSize = String(v); $('mbvisStageV').textContent = Math.round(v); mbApplyCompose(); mbCommit(); });
+
+  var presetSave = $('mbvisPresetSave');
+  if (presetSave) presetSave.addEventListener('click', mbSavePreset);
+  var presetList = $('mbvisPresetList');
+  if (presetList) {
+    presetList.addEventListener('click', function (e) {
+      var a = e.target.closest('[data-preset-apply]'); if (a) { mbApplyPreset(+a.dataset.presetApply); return; }
+      var d = e.target.closest('[data-preset-del]'); if (d) { mbDeletePreset(+d.dataset.presetDel); return; }
+    });
+  }
+}
+
+function openMbVis() {
+  ensureMbVisDOM();
+  var s = mbS();
+  if (!s || s.type !== 'mockup-banner') { toast('请先选中 3D 样机 Banner 板块'); return; }
+  mbDev = s.device === 'laptop' ? 'laptop' : 'phone';
+  mbPhoneCount = mbDev === 'phone' ? Math.min(2, Math.max(1, (Array.isArray(s.phones) ? s.phones.length : 1))) : 1;
+  mbEditIdx = 0; mbActiveTab = 'start'; mbOpZoom = 0.62; mbP = 1200;
+  [].forEach.call(document.querySelectorAll('#mbvisDev button'), function (b) { b.classList.toggle('on', b.dataset.dev === mbDev); });
+  document.getElementById('mbvisCount').classList.toggle('mbvis-disabled', mbDev !== 'phone');
+  [].forEach.call(document.querySelectorAll('#mbvisCount button'), function (b) { b.classList.toggle('on', +b.dataset.count === mbPhoneCount); });
+  document.getElementById('mbvisViewport').style.perspective = mbP + 'px';
+  mbApplyCompose();
+  mbSetPhoneCount(mbPhoneCount);
+  mbUpdateTargetVisibility(); mbSyncTargetSegs();
+  mbSyncSliders('start'); mbSyncSpin(); mbSyncCompose(); mbRenderPresetPanel();
+  mbSetTab('start');
+  mbVis.mask.hidden = false;
+  mbSetOpZoom();
+  requestAnimationFrame(mbSetOpZoom);
+}
+
 init();
 </script>
 </body>

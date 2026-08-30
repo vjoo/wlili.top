@@ -3226,6 +3226,449 @@
 }
 
 /* ================================================================
+   3D 样机 Banner（mockup-banner）
+   ─────────────────────────────────────────────────────────────
+   三层合成：①背景（主题渐变 / 纯色 / 图片）→ ②标题+副标题 → ③手机方形舞台（左/中/右）
+   手机外壳 = 前玻璃面 + 后盖 + 「4 条直壁 + 4 角圆弧壁」真实垂直平面侧壁
+
+   主题说明（无需 [data-theme="dark"] 覆盖）：本组件的相框底与设备本体在浅色/深色主题下
+   **恒为深色**（它是被展示的"物体"，不是页面文字容器），标题/副标题为白字压在深底上，
+   两主题下都正确，故这里不硬编码任何随主题翻转的文字色。
+
+   ⚠️ 勿改（踩过的坑，改动会使旋转中的侧壁压成 2D 纸片）：
+     · 进场旋转由 render.js 用 requestAnimationFrame 逐帧写内联 transform，不走 CSS @keyframes
+     · 动画目标（.mk-phone / .mk-laptop）不加 opacity、不加 animation
+     · .mockup-rig 不加 will-change:transform（会强制升合成层并压平 preserve-3d 子元素）
+   ================================================================ */
+.container.mockup-banner-section {
+  max-width: 100%;               /* 覆盖 site-shell .container 的宽度上限，与 .hero-banner-section 同策略 */
+}
+.mockup-banner-section {
+  height: 100vh;                /* 严格一屏（不超可视区）：与 nav(fixed)下方贴到屏幕底、左右由 .container 提供 36px */
+  display: flex;
+  align-items: stretch;
+  padding: 0.75rem;              /* 与 hero-banner 首屏一致的四周 12px 边距效果：圆角相框离视口四边留白 */
+  box-sizing: border-box;
+}
+.mockup-frame {
+  position: relative;
+  width: 100%;
+  /* ⚠️ 不能用 height:100%——父级 .mockup-banner-section 只有 min-height（非确定高度），
+     百分比解析为 auto，而 frame 内容全是绝对定位 → 高度塌成 0，前台整块空白。
+     改由父级 display:flex + align-items:stretch 拉伸撑满（section 高度恒 ≥ max(100vh,64rem)）。 */
+  height: auto;
+  flex: 1 1 auto;
+  align-self: stretch;
+  max-width: none;
+  border-radius: 25px;           /* 圆角统一 25px，对齐全站设计系统 */
+  overflow: hidden;
+  background: radial-gradient(120% 120% at 50% 0%, #1c1f25 0%, #0c0d10 60%);
+}
+/* ① 背景图（bgType=image 时显示，铺满相框） */
+.mockup-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 0;
+  opacity: 1;                /* 默认可见：JS 缺席 / 浏览器缓存旧文件也不会让文字或背景消失 */
+}
+/* ② 标题 / 副标题：可在手机后方(z:1)或前方(z:5) —— 由 render.js 写内联 z-index */
+.mockup-text {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.875rem;
+  padding: 0 7%;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.mockup-text.align-left   { align-items: flex-start; text-align: left; }
+.mockup-text.align-center { align-items: center;     text-align: center; }
+.mockup-title {
+  margin: 0;
+  font-size: clamp(32px, 4.6vw, 64px);
+  font-weight: 600;              /* 板块大标题字重 600，对齐 .team-title 规范 */
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+}
+.mockup-subtitle {
+  margin: 0;
+  max-width: 32ch;
+  font-size: clamp(14px, 1.6vw, 20px);
+  font-weight: 400;
+  line-height: 1.55;             /* 正文行高保持 1.4–1.6 */
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45);
+}
+/* 进场「初始隐藏态」：仅当 render.js 主动给 .mockup-frame 加 .mockup-pre 才生效（JS 缺位则保持上面的默认可见，安全） */
+.mockup-frame.mockup-pre .mockup-title {
+  opacity: 0;
+  transform: translateY(-28px);   /* 标题：从上往下进入 */
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.mockup-frame.mockup-pre .mockup-subtitle {
+  opacity: 0;
+  transform: translateY(28px);    /* 副标题：从下往上进入 */
+  transition: opacity 0.7s ease 0.12s, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s;
+  will-change: opacity, transform;
+}
+.mockup-frame.mockup-pre .mockup-bg {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+/* 进场「揭示态」：render.js 滚进视口播设备时先加 .is-bg（背景图提前淡入），约手机 70% 时加 .is-revealed（文字淡入），形成节奏层次 */
+.mockup-frame.is-revealed .mockup-title,
+.mockup-frame.is-revealed .mockup-subtitle {
+  opacity: 1;
+  transform: translateY(0);
+}
+.mockup-frame.is-bg .mockup-bg {
+  opacity: 1;
+}
+/* ③ 手机动画舞台：高度跟随 mockup-frame（不再硬编码 phoneH*1.2，避免被父容器裁切；宽度由 row 自然撑开） */
+.mockup-stage {
+  position: absolute;
+  z-index: 2;                    /* 恒为 2：标题 z=1 在其后、z=5 在其前 */
+  max-width: 94vw;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: auto;                  /* 由 top:0+bottom:0 拉伸铺满 mockup-frame，旋转 bbox 也装得下 */
+}
+/* 横向定位仍由 left/right 控制，垂直方向统一拉伸（top:0+bottom:0 由 .mockup-stage 自身的 height:auto 处理）*/
+.mockup-stage.pos-left   { left: 4%;   right: auto;  transform: none; }
+.mockup-stage.pos-center { left: 50%;  right: auto;  transform: translateX(-50%); }   /* 仅水平居中，保留用户配的 stageSize 含义 */
+.mockup-stage.pos-right  { right: 4%;  left: auto;   transform: none; }
+
+/* ===== 舞台内部（3D 透视） ===== */
+.mockup-viewport {
+  perspective: 1200px;
+  perspective-origin: 50% 40%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;              /* 「从下方升起」在相框内被干净裁切 */
+}
+.mockup-rig {
+  transform-style: preserve-3d;  /* ⚠️ 不能加 will-change / opacity / animation */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* ===== 手机本体（宽高由 render.js 按方形舞台高 × 1:2.08 比例注入，填满上下边） ===== */
+.mk-phone-row { position: relative; transform-style: preserve-3d; }
+.mk-phone { position: absolute; top: 0; transform-style: preserve-3d; --ph: 520px; }   /* --ph 由 render.js 注入为真实 phoneH，所有 face/screen 圆角与 padding 同步缩放，杜绝「face 圆角固定像素 vs 侧壁圆角按 tyScale 缩放」造成的 4 角台阶 */
+.mk-face-front,
+.mk-face-back {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--ph) * 42 / 520);   /* 与 buildMockupShell 的侧壁圆角半径 42*tyScale(=42*ph/520) 严格对齐，杜绝 4 角接缝 */
+  transform-style: preserve-3d;
+  will-change: transform;        /* 常驻 GPU 纹理：避免背面翻回正面时重绘/重解码造成单帧卡顿 */
+}
+.mk-face-front {
+  transform: translateZ(calc(var(--ph) * 10 / 520));   /* 总壳厚 20/520*ph（用户反馈"边框太粗"，从 28 减到 20 减幅 28%）；对应 JS buildMockupShell d=20*tyScale */
+  padding: calc(var(--ph) * 9 / 520);                  /* 边框内留白（保持 padding<z，正面看每侧露 10-9=1/520 金属边沿，无台阶，但视觉明显变细）*/
+  background:
+    /* 顶部倒角切割线——锐利高光 → 淡出，模拟金属 CNC 边沿 */
+    linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.10) 3%, rgba(255,255,255,0) 8%),
+    /* 底部反弹光——稍稍提亮，避免纯黑塌陷 */
+    linear-gradient(0deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 5%),
+    /* 横向金属反光：亮 → 中暗 → 亮（多 stop），告别"塑料双色" */
+    linear-gradient(105deg, #1d1f25 0%, #4d525b 22%, #363a42 50%, #4d525b 78%, #13151a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),       /* 顶边 rim，CAO 切割感 */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),            /* 底边阴影 */
+    inset 0 0 0 1px rgba(0, 0, 0, 0.7);            /* 整体边沿，区分与侧壁的层次 */
+}
+/* 🔑 锐利高光①：正面边框 1px 渐变描边环——沿圆角矩形走一圈的 CNC 倒角亮线（左上亮→右下暗→右下角反弹） */
+.mk-face-front::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--ph) * 2 / 520);
+  border-radius: calc(var(--ph) * 40 / 520);
+  padding: 1px;                                   /* 固定 1px：屏幕空间级锐利，不随 --ph 放大变糊 */
+  background: linear-gradient(165deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0.28) 16%,
+    rgba(255, 255, 255, 0.04) 38%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(255, 255, 255, 0.15) 80%,
+    rgba(255, 255, 255, 0.45) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;                    /* 只留边框 1px 环，中间镂空 */
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 8;
+}
+.mk-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--ph) * 34 / 520);
+  overflow: hidden;
+  background: #000;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.8);
+  will-change: transform;
+}.mk-ui {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  will-change: transform;
+}
+.mk-island {
+  position: absolute;
+  top: calc(var(--ph) * 12 / 520);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--ph) * 76 / 520);   /* 用户反馈"灵动岛太大"——从 94/520 缩到 76/520（约 14.6% 屏宽），比例更接近真机 */
+  height: calc(var(--ph) * 21 / 520);  /* 高度 21/520（约 4% 屏高）——细长胶囊感 */
+  border-radius: 100px;
+  background: #000;
+  z-index: 6;
+}
+.mk-island::after {
+  content: "";
+  position: absolute;
+  right: calc(var(--ph) * 10 / 520);
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(var(--ph) * 6 / 520);    /* 镜头直径缩到 6/520，等比同步缩 */
+  height: calc(var(--ph) * 6 / 520);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2b3a55, #0a0e16);
+}
+.mk-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--ph) * 34 / 520);
+  pointer-events: none;
+  z-index: 7;
+  /* 参考图风格：单一大斜光带（右上→中下偏左），右上白淡灰最强，左下转黑最深——玻璃环境反射 */
+  background:
+    linear-gradient(125deg,
+      rgba(255, 255, 255, 0.55) 0%,   /* 右上角最亮（接近纯白浅灰）*/
+      rgba(255, 255, 255, 0.35) 14%,
+      rgba(255, 255, 255, 0.18) 28%,
+      rgba(255, 255, 255, 0.04) 44%,
+      rgba(0, 0, 0, 0.05) 60%,        /* 中段过渡 */
+      rgba(0, 0, 0, 0.28) 78%,
+      rgba(0, 0, 0, 0.50) 100%        /* 左下角最深，深反射玻璃"漏光" */
+    );
+}
+/* 🔑 锐利高光②（辅助）：玻璃窄反光条——一道斜穿屏幕的锐利亮线，作为参考图主光带的辅助小光斑，alpha 降到 0.22 让主光带仍是视觉主角 */
+.mk-gloss::before {
+  content: "";
+  position: absolute;
+  top: -15%;
+  left: 9%;
+  width: calc(var(--ph) * 88 / 520);
+  height: 130%;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.03) 30%,
+    rgba(255, 255, 255, 0.22) 49%,
+    rgba(255, 255, 255, 0.22) 51%,
+    rgba(255, 255, 255, 0.03) 70%,
+    rgba(255, 255, 255, 0) 100%);
+  transform: rotate(24deg);
+  pointer-events: none;
+}
+.mk-face-back {
+  transform: translateZ(calc(var(--ph) * -10 / 520));   /* 与 front 严格对称（±10/520），后盖厚度同步 */
+  background:
+    /* 顶部 rim——后盖顶部微弱高光 */
+    linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 6%),
+    /* AG 磨砂金属底——比 face 多一点 stop，让后盖看起来"哑光但有反射"，不是黑色塑料 */
+    linear-gradient(155deg, #3d4048 0%, #1c1e23 50%, #2c2f36 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+/* 🔑 锐利高光③：后盖边框 1px 描边环（比正面弱一档，方向相反——右上来光） */
+.mk-face-back::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--ph) * 2 / 520);
+  border-radius: calc(var(--ph) * 40 / 520);
+  padding: 1px;
+  background: linear-gradient(165deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.30) 68%,
+    rgba(255, 255, 255, 0.55) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
+}
+.mk-cam {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  width: 80px;
+  height: 80px;
+  border-radius: 22px;
+  background: linear-gradient(150deg, #23262c, #0d0e11);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.mk-lens {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3a4a63, #05070b);
+  box-shadow: inset 0 0 0 2px #1b1e24;
+}
+.mk-lens.a { top: 12px; left: 12px; }
+.mk-lens.b { top: 12px; right: 12px; }
+.mk-lens.c { top: 42px; left: 27px; }
+.mk-flash {
+  position: absolute;
+  top: 46px;
+  right: 16px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #f3e9c8;
+}
+/* 侧壁：4 条直壁 + 4 角圆弧壁（真实垂直平面）。仅保留竖向金属渐变（顶亮→底暗），不再加横向 rim 亮线——用户反馈"壳中间有一条白线"突兀 */
+.mk-wall {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #5a5e67 0%, #2c2e34 50%, #15171b 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+  backface-visibility: visible;
+}
+/* 侧键：四件套位置/尺寸全部用 calc(var(--ph) * X / 520) 跟随机身真实高度缩放，避免 phoneH ≠ 520 时位置错位 */
+.mk-key {
+  position: absolute;
+  background: linear-gradient(180deg, #6e727b 0%, #3a3d44 50%, #15171b 100%);   /* 比 face 亮一档：明显金属 */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),     /* 顶 rim */
+    0 1px 3px rgba(0, 0, 0, 0.6);                /* 凸出投影 */
+}
+.mk-power     { right: calc(var(--ph) * -3 / 520); top: calc(var(--ph) * 158 / 520); width: calc(var(--ph) * 4 / 520); height: calc(var(--ph) * 78 / 520); border-radius: 0 calc(var(--ph) * 2 / 520) calc(var(--ph) * 2 / 520) 0; }
+.mk-vol-up    { left:  calc(var(--ph) * -3 / 520); top: calc(var(--ph) * 138 / 520); width: calc(var(--ph) * 4 / 520); height: calc(var(--ph) * 50 / 520); border-radius: calc(var(--ph) * 2 / 520) 0 0 calc(var(--ph) * 2 / 520); }
+.mk-vol-down  { left:  calc(var(--ph) * -3 / 520); top: calc(var(--ph) * 200 / 520); width: calc(var(--ph) * 4 / 520); height: calc(var(--ph) * 50 / 520); border-radius: calc(var(--ph) * 2 / 520) 0 0 calc(var(--ph) * 2 / 520); }
+.mk-mute      { position: absolute; left: calc(var(--ph) * -3 / 520); top: calc(var(--ph) * 96 / 520); width: calc(var(--ph) * 4 / 520); height: calc(var(--ph) * 26 / 520); border-radius: calc(var(--ph) * 2 / 520) 0 0 calc(var(--ph) * 2 / 520);
+                background: linear-gradient(180deg, #6e727b 0%, #3a3d44 50%, #15171b 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 3px rgba(0, 0, 0, 0.6); }
+
+/* ===== 笔记本本体 ===== */
+.mk-laptop { position: relative; width: 560px; height: 360px; transform-style: preserve-3d; }
+.mk-lap-screen {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 520px;
+  height: 330px;
+  transform: translateX(-50%);
+  transform-style: preserve-3d;
+}
+.mk-lap-front,
+.mk-lap-back { position: absolute; inset: 0; border-radius: 14px; will-change: transform; }
+.mk-lap-front {
+  transform: translateZ(8px);
+  padding: 11px;
+  background: linear-gradient(150deg, #33363d, #0c0d10);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.mk-lap-back {
+  transform: translateZ(-8px);
+  background: linear-gradient(150deg, #3c3f47, #17191e);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.mk-lap-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+  will-change: transform;
+}
+.mk-lap-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 6;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 30%);
+}
+.mk-lap-cam {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0a0b0d;
+  box-shadow: inset 0 0 0 1px #2a2d33;
+  z-index: 5;
+}
+.mk-lap-base {
+  position: absolute;
+  top: 330px;
+  left: 50%;
+  width: 560px;
+  height: 18px;
+  transform: translateX(-50%) rotateX(82deg);
+  transform-origin: top center;
+  background: linear-gradient(180deg, #2a2d33, #15171b);
+  border-radius: 0 0 14px 14px;
+  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6);
+}
+.mk-lap-base::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 6px;
+  border-radius: 0 0 6px 6px;
+  background: #0c0d10;
+}
+
+/* 移动端：相框定高（76vh 给下方留 24vh 给滚动提示），标题靠上、手机舞台水平居中 */
+@media (max-width: 768px) {
+  .mockup-banner-section { height: 76vh; padding: 0.75rem 1rem 0.75rem; }   /* 与 hero-banner 移动端同款边距（上下 12px，左右 16px）；76vh 保证严格一屏之内 */
+  .mockup-title { font-size: clamp(26px, 7vw, 38px); letter-spacing: -0.5px; }
+  .mockup-subtitle { max-width: 24ch; }
+  .mockup-stage.pos-left,
+  .mockup-stage.pos-center,
+  .mockup-stage.pos-right { left: 50%; right: auto; transform: translateX(-50%); }   /* 桌面版去掉了 top:50% / translateY(-50%)，此处同步去掉 Y 偏移，只保留水平居中 */
+  .mockup-text { justify-content: flex-start; padding-top: 12%; }
+}
+
+/* ================================================================
    可复用强调色（装饰文字 / 装饰元素通用工具类）
    ─────────────────────────────────────────────────────────────
    供所有组件复用：眉标、分栏头序号、场景卡序号、产品类型标……任意
