@@ -2164,13 +2164,46 @@ var CaseRenderer = (function () {
     }
 
     // ② 文字层（z-index：1=手机后方，5=手机前方；手机舞台恒为 2）
-    var titleHtml = s.title ? '<h2 class="mockup-title"' + (s.titleSize ? ' style="font-size:' + s.titleSize + 'px"' : '') + '>' + esc(s.title) + '</h2>' : '';
-    var subHtml = s.subtitle ? '<p class="mockup-subtitle"' + (s.subtitleSize ? ' style="font-size:' + s.subtitleSize + 'px"' : '') + '>' + esc(s.subtitle) + '</p>' : '';
+    function mkStyle(obj) {
+      var pairs = [];
+      for (var k in obj) {
+        if (obj[k] !== '' && obj[k] != null) pairs.push(k + ':' + obj[k]);
+      }
+      return pairs.length ? ' style="' + pairs.join(';') + '"' : '';
+    }
+    var titleCls = 'mockup-title';
+    if (s.titleFont === 'impact') titleCls += ' mockup-title-impact';
+    else if (s.titleFont === 'condensed') titleCls += ' mockup-title-condensed';
+    if (s.titleLetterSpacing === 'xtight') titleCls += ' ls-xtight';
+    else if (s.titleLetterSpacing === 'tight') titleCls += ' ls-tight';
+    else if (s.titleLetterSpacing === 'wide') titleCls += ' ls-wide';
+    if (s.titleFull) titleCls += ' mockup-full';
+    var titleStyle = {};
+    if (s.titleSize) titleStyle['font-size'] = s.titleSize + 'px';
+    if (s.titleWeight) titleStyle['font-weight'] = s.titleWeight;
+    if (s.titleLineHeight) titleStyle['line-height'] = s.titleLineHeight;
+    if (s.titleColor) titleStyle.color = s.titleColor;
+    if (s.titleUppercase) titleStyle['text-transform'] = 'uppercase';
+    if (s.titleNoWrap) titleStyle['white-space'] = 'nowrap';
+    var titleHtml = s.title ? '<h2 class="' + titleCls + '"' + mkStyle(titleStyle) + '>' + esc(s.title) + '</h2>' : '';
+
+    var subCls = 'mockup-subtitle';
+    if (s.subtitleNoWrap) subCls += ' no-wrap';
+    if (s.subtitleLetterSpacing === 'wide') subCls += ' ls-wide';
+    var subStyle = {};
+    if (s.subtitleSize) subStyle['font-size'] = s.subtitleSize + 'px';
+    if (s.subtitleWeight) subStyle['font-weight'] = s.subtitleWeight;
+    if (s.subtitleColor) subStyle.color = s.subtitleColor;
+    if (s.subtitleUppercase) subStyle['text-transform'] = 'uppercase';
+    var subHtml = s.subtitle ? '<p class="' + subCls + '"' + mkStyle(subStyle) + '>' + esc(s.subtitle) + '</p>' : '';
+
     var textHtml = '';
     if (titleHtml || subHtml) {
       var alignCls = (s.titleAlign === 'center') ? ' align-center' : ' align-left';
+      var vCls = (s.titleVAlign === 'top') ? ' v-top' : ((s.titleVAlign === 'bottom') ? ' v-bottom' : ' v-center');
+      var fullCls = s.titleFull ? ' mockup-full' : '';
       var zIdx = (s.titleZ === 'front') ? 5 : 1;
-      textHtml = '<div class="mockup-text' + alignCls + '" style="z-index:' + zIdx + '">' + titleHtml + subHtml + '</div>';
+      textHtml = '<div class="mockup-text' + alignCls + vCls + fullCls + '" style="z-index:' + zIdx + '">' + titleHtml + subHtml + '</div>';
     }
 
     // ③ 手机/笔记本舞台（方形，左 / 中 / 右）

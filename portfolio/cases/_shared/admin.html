@@ -2871,6 +2871,33 @@ const TYPE_FIELDS = {
       hint: '与手机重叠时谁盖谁。后方=被手机遮挡更有层次；前方=标题压在手机上更醒目' },
     { key: 'titleAlign', label: '标题对齐', type: 'select', options: ['left', 'center'], popupOnly: true,
       optionLabels: { 'left': '居左', 'center': '居中' }, default: 'left' },
+    { key: 'titleVAlign', label: '标题垂直位置', type: 'select', options: ['top', 'center', 'bottom'], popupOnly: true,
+      optionLabels: { 'top': '顶部', 'center': '居中', 'bottom': '底部' }, default: 'center' },
+    { key: 'titleFont', label: '标题字体', type: 'select', options: ['default', 'impact', 'condensed'], popupOnly: true,
+      optionLabels: { 'default': '默认', 'impact': 'Anton 冲击体', 'condensed': 'Oswald 压缩体' }, default: 'default',
+      hint: 'Impact 字体对应参考图中超大贴边标题效果' },
+    { key: 'titleSize', label: '主标题字号（px）', type: 'text', placeholder: '64', popupOnly: true },
+    { key: 'titleWeight', label: '主标题字重', type: 'select', options: ['400', '600', '700', '800', '900'], popupOnly: true, default: '600' },
+    { key: 'titleLineHeight', label: '主标题行高', type: 'text', placeholder: '1.1', popupOnly: true },
+    { key: 'titleLetterSpacing', label: '主标题字距', type: 'select', options: ['xtight', 'tight', 'normal', 'wide'], popupOnly: true,
+      optionLabels: { 'xtight': '极紧', 'tight': '紧凑', 'normal': '正常', 'wide': '宽松' }, default: 'normal' },
+    { key: 'titleColor', label: '主标题颜色', type: 'text', placeholder: '#ffffff', popupOnly: true },
+    { key: 'titleUppercase', label: '主标题大写', type: 'select', options: ['', '1'], popupOnly: true,
+      optionLabels: { '': '否', '1': '是' }, default: '' },
+    { key: 'titleNoWrap', label: '主标题不换行', type: 'select', options: ['', '1'], popupOnly: true,
+      optionLabels: { '': '否', '1': '是' }, default: '' },
+    { key: 'titleFull', label: '主标题贴边铺满', type: 'select', options: ['', '1'], popupOnly: true,
+      optionLabels: { '': '否', '1': '是（取消内缩、标题撑满）' }, default: '' },
+    { key: 'subtitleSize', label: '副标题字号（px）', type: 'text', placeholder: '20', popupOnly: true },
+    { key: 'subtitleWeight', label: '副标题字重', type: 'select', options: ['400', '600', '700'], popupOnly: true, default: '400' },
+    { key: 'subtitleColor', label: '副标题颜色', type: 'text', placeholder: 'rgba(255,255,255,0.8)', popupOnly: true },
+    { key: 'subtitleLetterSpacing', label: '副标题字距', type: 'select', options: ['normal', 'wide'], popupOnly: true,
+      optionLabels: { 'normal': '正常', 'wide': '宽松' }, default: 'normal' },
+    { key: 'subtitleUppercase', label: '副标题大写', type: 'select', options: ['', '1'], popupOnly: true,
+      optionLabels: { '': '否', '1': '是' }, default: '' },
+    { key: 'subtitleNoWrap', label: '副标题不换行', type: 'select', options: ['', '1'], popupOnly: true,
+      optionLabels: { '': '否', '1': '是' }, default: '',
+      hint: '强制副标题单行显示，配合字号可调出参考图底部小字效果' },
 
     /* ---- 手机舞台 ---- */
     { key: 'stagePos', label: '手机视窗位置', type: 'select', options: ['left', 'center', 'right'], popupOnly: true,
@@ -2934,7 +2961,11 @@ function getDefaultSection(type) {
       { ui: '', startRx: '22', startRy: '22', startTy: '480', endRx: '8', endRy: '22', endTy: '-30', z: '40' }
     ], lapUi: '', lapStartRx: '30', lapStartRy: '-24', lapStartTy: '480', lapEndRx: '16', lapEndRy: '-24', lapEndTy: '0',
       spins: '1', dur: '4200', abGap: '48', bgType: 'theme', bgColor: '#0c0d10', bgImage: '',
-      title: '', subtitle: '', titleZ: 'behind', titleAlign: 'left',
+      title: '', subtitle: '', titleZ: 'behind', titleAlign: 'left', titleVAlign: 'center',
+      titleFont: 'default', titleSize: '64', titleWeight: '600', titleLineHeight: '1.1',
+      titleLetterSpacing: 'normal', titleColor: '', titleUppercase: '', titleNoWrap: '', titleFull: '',
+      subtitleSize: '28', subtitleWeight: '400', subtitleColor: '', subtitleLetterSpacing: 'normal',
+      subtitleUppercase: '', subtitleNoWrap: '',
       stagePos: 'right', stageSize: '560', globalZoom: '1' };
     default: return base;
   }
@@ -7308,7 +7339,14 @@ function mbSnapshotConfig() {
   });
   var lap = { lapStartRx: s.lapStartRx, lapStartRy: s.lapStartRy, lapStartTy: s.lapStartTy, lapEndRx: s.lapEndRx, lapEndRy: s.lapEndRy, lapEndTy: s.lapEndTy };
   var globals = { spins: s.spins, dur: s.dur, globalZoom: s.globalZoom, stageSize: s.stageSize };
-  return { device: (s.device === 'laptop' ? 'laptop' : 'phone'), phones: phones, lap: lap, global: globals };
+  var text = {
+    titleVAlign: s.titleVAlign, titleFont: s.titleFont, titleSize: s.titleSize, titleWeight: s.titleWeight,
+    titleLineHeight: s.titleLineHeight, titleLetterSpacing: s.titleLetterSpacing, titleColor: s.titleColor,
+    titleUppercase: s.titleUppercase, titleNoWrap: s.titleNoWrap, titleFull: s.titleFull,
+    subtitleSize: s.subtitleSize, subtitleWeight: s.subtitleWeight, subtitleColor: s.subtitleColor,
+    subtitleLetterSpacing: s.subtitleLetterSpacing, subtitleUppercase: s.subtitleUppercase, subtitleNoWrap: s.subtitleNoWrap
+  };
+  return { device: (s.device === 'laptop' ? 'laptop' : 'phone'), phones: phones, lap: lap, global: globals, text: text };
 }
 function mbSavePreset() {
   var s = mbS(); if (!s) return;
@@ -7330,6 +7368,11 @@ function mbApplyPreset(idx) {
   var arr = mbPresets(); var p = arr[idx]; if (!p) return;
   if (p.global) {
     ['spins', 'dur', 'globalZoom', 'stageSize'].forEach(function (k) { if (p.global[k] != null) s[k] = p.global[k]; });
+  }
+  if (p.text) {
+    ['titleVAlign', 'titleFont', 'titleSize', 'titleWeight', 'titleLineHeight', 'titleLetterSpacing', 'titleColor',
+     'titleUppercase', 'titleNoWrap', 'titleFull', 'subtitleSize', 'subtitleWeight', 'subtitleColor',
+     'subtitleLetterSpacing', 'subtitleUppercase', 'subtitleNoWrap'].forEach(function (k) { if (p.text[k] != null) s[k] = p.text[k]; });
   }
   if (s.device === 'laptop' && p.lap) {
     ['lapStartRx', 'lapStartRy', 'lapStartTy', 'lapEndRx', 'lapEndRy', 'lapEndTy'].forEach(function (k) { if (p.lap[k] != null) s[k] = p.lap[k]; });
@@ -7478,14 +7521,42 @@ function mbApplyCompose() {
   if (bt === 'image' && s.bgImage) { banner.style.background = '#0c0d10'; bg.src = s.bgImage; bg.style.display = 'block'; }
   else if (bt === 'color') { banner.style.background = s.bgColor || '#0c0d10'; bg.style.display = 'none'; }
   else { banner.style.background = MB_THEME_BG; bg.style.display = 'none'; }
-  document.getElementById('mbvisTitle').textContent = s.title || '';
-  document.getElementById('mbvisSub').textContent = s.subtitle || '';
+  var titleEl = document.getElementById('mbvisTitle');
+  var subEl = document.getElementById('mbvisSub');
+  titleEl.textContent = s.title || '';
+  subEl.textContent = s.subtitle || '';
   var txt = document.getElementById('mbvisText');
   txt.classList.toggle('align-center', (s.titleAlign || 'left') === 'center');
   txt.classList.toggle('align-left', (s.titleAlign || 'left') === 'left');
+  txt.classList.remove('v-top', 'v-center', 'v-bottom');
+  txt.classList.add('v-' + (s.titleVAlign || 'center'));
+  txt.classList.toggle('mockup-full', !!s.titleFull);
   txt.style.zIndex = (s.titleZ === 'front') ? 5 : 1;
-  document.getElementById('mbvisTitle').style.fontSize = (parseFloat(s.titleSize) || 0) ? s.titleSize + 'px' : '';
-  document.getElementById('mbvisSub').style.fontSize = (parseFloat(s.subtitleSize) || 0) ? s.subtitleSize + 'px' : '';
+
+  /* 主标题风格 */
+  titleEl.className = 'mbvis-title-t';
+  if (s.titleFont === 'impact') titleEl.classList.add('mockup-title-impact');
+  else if (s.titleFont === 'condensed') titleEl.classList.add('mockup-title-condensed');
+  if (s.titleLetterSpacing === 'xtight') titleEl.classList.add('ls-xtight');
+  else if (s.titleLetterSpacing === 'tight') titleEl.classList.add('ls-tight');
+  else if (s.titleLetterSpacing === 'wide') titleEl.classList.add('ls-wide');
+  if (s.titleFull) titleEl.classList.add('mockup-full');
+  titleEl.style.fontSize = (parseFloat(s.titleSize) || 0) ? s.titleSize + 'px' : '';
+  titleEl.style.fontWeight = s.titleWeight || '';
+  titleEl.style.lineHeight = s.titleLineHeight || '';
+  titleEl.style.color = s.titleColor || '';
+  titleEl.style.textTransform = s.titleUppercase ? 'uppercase' : '';
+  titleEl.style.whiteSpace = s.titleNoWrap ? 'nowrap' : '';
+
+  /* 副标题风格 */
+  subEl.className = 'mbvis-sub-t';
+  if (s.subtitleNoWrap) subEl.classList.add('no-wrap');
+  if (s.subtitleLetterSpacing === 'wide') subEl.classList.add('ls-wide');
+  subEl.style.fontSize = (parseFloat(s.subtitleSize) || 0) ? s.subtitleSize + 'px' : '';
+  subEl.style.fontWeight = s.subtitleWeight || '';
+  subEl.style.color = s.subtitleColor || '';
+  subEl.style.textTransform = s.subtitleUppercase ? 'uppercase' : '';
+
   var stage = document.getElementById('mbvisPhoneStage');
   stage.classList.remove('pos-left', 'pos-center', 'pos-right');
   stage.classList.add('pos-' + (s.stagePos || 'right'));
@@ -7502,6 +7573,26 @@ function mbSyncCompose() {
   document.getElementById('mbvisSubInput').value = s.subtitle || '';
   document.querySelectorAll('#mbvisZSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.z === (s.titleZ || 'behind')); });
   document.querySelectorAll('#mbvisAlignSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.align === (s.titleAlign || 'left')); });
+  document.querySelectorAll('#mbvisVAlignSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === (s.titleVAlign || 'center')); });
+  document.querySelectorAll('#mbvisFontSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.font === (s.titleFont || 'default')); });
+  document.querySelectorAll('#mbvisTitleWeightSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.w === String(s.titleWeight || '600')); });
+  document.querySelectorAll('#mbvisTitleLSSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.ls === (s.titleLetterSpacing || 'normal')); });
+  document.querySelectorAll('#mbvisSubWeightSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.w === String(s.subtitleWeight || '400')); });
+  document.querySelectorAll('#mbvisSubLSSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.ls === (s.subtitleLetterSpacing || 'normal')); });
+  document.querySelectorAll('#mbvisTitleStyleSeg button').forEach(function (b) {
+    var k = b.dataset.style;
+    var on = (k === 'uppercase' && s.titleUppercase) || (k === 'nowrap' && s.titleNoWrap) || (k === 'full' && s.titleFull);
+    b.classList.toggle('on', !!on);
+  });
+  document.querySelectorAll('#mbvisSubStyleSeg button').forEach(function (b) {
+    var k = b.dataset.style;
+    b.classList.toggle('on', (k === 'uppercase' && s.subtitleUppercase) || (k === 'nowrap' && s.subtitleNoWrap));
+  });
+  document.getElementById('mbvisTitleLineHeight').value = s.titleLineHeight || '';
+  document.getElementById('mbvisTitleColor').value = s.titleColor || '#ffffff';
+  document.getElementById('mbvisTitleColorV').textContent = s.titleColor || '#ffffff';
+  document.getElementById('mbvisSubColor').value = s.subtitleColor || '#ffffff';
+  document.getElementById('mbvisSubColorV').textContent = s.subtitleColor || '#ffffff';
   document.querySelectorAll('#mbvisPosSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.pos === (s.stagePos || 'right')); });
   var ss = parseFloat(s.stageSize || 560) || 560;
   document.getElementById('mbvisStageSize').value = ss;
@@ -7670,7 +7761,13 @@ function ensureMbVisDOM() {
     '.mbvis-text.align-left{align-items:flex-start;text-align:left}',
     '.mbvis-text.align-center{align-items:center;text-align:center}',
     '.mbvis-title-t{font-size:56px;font-weight:700;line-height:1.1;color:#fff;margin:0;text-shadow:0 2px 24px rgba(0,0,0,.45)}',
+    '.mbvis-title-t.mockup-title-impact{font-family:"Impact","Haettenschweiler","Arial Narrow Bold","Franklin Gothic Bold",sans-serif;font-weight:400;letter-spacing:-0.02em;text-transform:uppercase}',
+    '.mbvis-title-t.mockup-title-condensed{font-family:"Arial Narrow","Franklin Gothic Medium","Impact","Haettenschweiler",sans-serif;font-weight:700;letter-spacing:-0.01em;text-transform:uppercase}',
+    '.mbvis-title-t.ls-xtight{letter-spacing:-0.05em}.mbvis-title-t.ls-tight{letter-spacing:-0.03em}.mbvis-title-t.ls-wide{letter-spacing:0.04em}',
+    '.mbvis-text.v-top{justify-content:flex-start;padding-top:6%}.mbvis-text.v-bottom{justify-content:flex-end;padding-bottom:6%}.mockup-text.v-center{justify-content:center}',
+    '.mbvis-text.mockup-full{padding-left:0;padding-right:0}.mbvis-title-t.mockup-full{width:100%;white-space:nowrap;overflow:hidden}',
     '.mbvis-sub-t{font-size:20px;font-weight:400;color:rgba(255,255,255,.82);margin:0;text-shadow:0 1px 14px rgba(0,0,0,.45);max-width:32ch;line-height:1.55}',
+    '.mbvis-sub-t.no-wrap{max-width:none;white-space:nowrap}.mbvis-sub-t.ls-wide{letter-spacing:0.06em}',
     '.mbvis-stage-phone{position:absolute;z-index:2;width:560px;height:560px;max-width:90vw;aspect-ratio:1;display:flex;align-items:center;justify-content:center}',
     '.mbvis-stage-phone.pos-left{left:4%;right:auto;top:50%;transform:translateY(-50%)}',
     '.mbvis-stage-phone.pos-center{left:50%;right:auto;top:50%;transform:translate(-50%,-50%)}',
@@ -7803,12 +7900,23 @@ function ensureMbVisDOM() {
     '    <div class="mbvis-field" id="mbvisBgColorField" hidden><label>背景色</label><div class="mbvis-row-inline"><input type="color" id="mbvisBgColor" value="#0c0d10"><span id="mbvisBgColorV">#0c0d10</span></div></div>',
     '    <div class="mbvis-field" id="mbvisBgImgField" hidden><label>上传背景图</label><input type="file" id="mbvisBgImg" accept="image/*"><div class="mbvis-row-inline" style="margin-top:8px"><button class="mbvis-cap" id="mbvisBgReset">恢复默认主题</button></div></div>',
     '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">标题 / 副标题</div>',
-    '    <div class="mbvis-field"><label>标题文字</label><input type="text" id="mbvisTitleInput" maxlength="40"></div>',
-    '    <div class="mbvis-field"><label>副标题文字</label><input type="text" id="mbvisSubInput" maxlength="80"></div>',
+    '    <div class="mbvis-field"><label>标题文字</label><input type="text" id="mbvisTitleInput" maxlength="60"></div>',
+    '    <div class="mbvis-field"><label>副标题文字</label><input type="text" id="mbvisSubInput" maxlength="100"></div>',
     '    <div class="mbvis-field"><label>标题遮挡关系（相对手机）</label><div class="mbvis-seg" id="mbvisZSeg"><button data-z="behind" class="on">手机后方</button><button data-z="front">手机前方</button></div></div>',
     '    <div class="mbvis-field"><label>标题对齐</label><div class="mbvis-seg" id="mbvisAlignSeg"><button data-align="center" class="on">居中</button><button data-align="left">居左</button></div></div>',
-    '    <div class="mbvis-field"><label>标题字号 · <span id="mbvisTitleSizeV">64</span>px（可调大）</label><input type="range" id="mbvisTitleSize" min="24" max="160" step="2" value="64"></div>',
+    '    <div class="mbvis-field"><label>标题垂直位置</label><div class="mbvis-seg" id="mbvisVAlignSeg"><button data-v="top">顶</button><button data-v="center" class="on">中</button><button data-v="bottom">底</button></div></div>',
+    '    <div class="mbvis-field"><label>标题字体</label><div class="mbvis-seg" id="mbvisFontSeg"><button data-font="default" class="on">默认</button><button data-font="impact">Anton</button><button data-font="condensed">Oswald</button></div></div>',
+    '    <div class="mbvis-field"><label>标题字号 · <span id="mbvisTitleSizeV">64</span>px（调大可贴边）</label><input type="range" id="mbvisTitleSize" min="24" max="240" step="2" value="64"></div>',
+    '    <div class="mbvis-field"><label>主标题行高</label><input type="text" id="mbvisTitleLineHeight" placeholder="1.1" style="width:100%"></div>',
+    '    <div class="mbvis-field"><label>标题字重</label><div class="mbvis-seg" id="mbvisTitleWeightSeg"><button data-w="400">400</button><button data-w="600" class="on">600</button><button data-w="700">700</button><button data-w="800">800</button><button data-w="900">900</button></div></div>',
+    '    <div class="mbvis-field"><label>标题字距</label><div class="mbvis-seg" id="mbvisTitleLSSeg"><button data-ls="xtight">极紧</button><button data-ls="tight">紧凑</button><button data-ls="normal" class="on">正常</button><button data-ls="wide">宽松</button></div></div>',
+    '    <div class="mbvis-field"><label>主标题颜色</label><div class="mbvis-row-inline"><input type="color" id="mbvisTitleColor" value="#ffffff"><span id="mbvisTitleColorV">#ffffff</span></div></div>',
+    '    <div class="mbvis-field"><label>标题风格</label><div class="mbvis-seg" id="mbvisTitleStyleSeg"><button data-style="uppercase">大写</button><button data-style="nowrap">不换行</button><button data-style="full">贴边铺满</button></div></div>',
     '    <div class="mbvis-field"><label>副标题字号 · <span id="mbvisSubSizeV">28</span>px</label><input type="range" id="mbvisSubSize" min="14" max="90" step="2" value="28"></div>',
+    '    <div class="mbvis-field"><label>副标题颜色</label><div class="mbvis-row-inline"><input type="color" id="mbvisSubColor" value="#ffffff"><span id="mbvisSubColorV">#ffffff</span></div></div>',
+    '    <div class="mbvis-field"><label>副标题字重</label><div class="mbvis-seg" id="mbvisSubWeightSeg"><button data-w="400" class="on">400</button><button data-w="600">600</button><button data-w="700">700</button></div></div>',
+    '    <div class="mbvis-field"><label>副标题字距</label><div class="mbvis-seg" id="mbvisSubLSSeg"><button data-ls="normal" class="on">正常</button><button data-ls="wide">宽松</button></div></div>',
+    '    <div class="mbvis-field"><label>副标题风格</label><div class="mbvis-seg" id="mbvisSubStyleSeg"><button data-style="uppercase">大写</button><button data-style="nowrap">不换行</button></div></div>',
     '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">手机视窗位置（方形）</div>',
     '    <div class="mbvis-field"><label>屏幕内显示位置</label><div class="mbvis-seg" id="mbvisPosSeg"><button data-pos="left">左</button><button data-pos="center">中</button><button data-pos="right" class="on">右</button></div></div>',
     '    <div class="mbvis-field"><label>方形视窗大小 · <span id="mbvisStageV">560</span>px</label><input type="range" id="mbvisStageSize" min="360" max="760" step="20" value="560"></div>',
@@ -7876,6 +7984,25 @@ function bindMbVisEvents() {
   $('mbvisSubInput').addEventListener('input', function () { mbS().subtitle = this.value; $('mbvisSub').textContent = this.value; mbCommit(); });
   $('mbvisZSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleZ = b.dataset.z; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
   $('mbvisAlignSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleAlign = b.dataset.align; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisVAlignSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleVAlign = b.dataset.v; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisFontSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleFont = b.dataset.font; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisTitleWeightSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleWeight = b.dataset.w; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisTitleLSSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleLetterSpacing = b.dataset.ls; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisTitleColor').addEventListener('input', function () { mbS().titleColor = this.value; $('mbvisTitleColorV').textContent = this.value; mbApplyCompose(); mbCommit(); });
+  $('mbvisTitleLineHeight').addEventListener('input', function () { mbS().titleLineHeight = this.value; mbApplyCompose(); mbCommit(); });
+  $('mbvisSubColor').addEventListener('input', function () { mbS().subtitleColor = this.value; $('mbvisSubColorV').textContent = this.value; mbApplyCompose(); mbCommit(); });
+  $('mbvisSubWeightSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().subtitleWeight = b.dataset.w; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisSubLSSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().subtitleLetterSpacing = b.dataset.ls; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  function bindStyleToggle(segId, map) {
+    $(segId).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      var key = map[b.dataset.style]; var s = mbS();
+      s[key] = s[key] ? '' : '1';
+      mbApplyCompose(); mbSyncCompose(); mbCommit();
+    });
+  }
+  bindStyleToggle('mbvisTitleStyleSeg', { uppercase: 'titleUppercase', nowrap: 'titleNoWrap', full: 'titleFull' });
+  bindStyleToggle('mbvisSubStyleSeg', { uppercase: 'subtitleUppercase', nowrap: 'subtitleNoWrap' });
   $('mbvisTitleSize').addEventListener('input', function () { var v = +this.value; mbS().titleSize = String(v); document.getElementById('mbvisTitleSizeV').textContent = v; mbApplyCompose(); mbCommit(); });
   $('mbvisSubSize').addEventListener('input', function () { var v = +this.value; mbS().subtitleSize = String(v); document.getElementById('mbvisSubSizeV').textContent = v; mbApplyCompose(); mbCommit(); });
   $('mbvisPosSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().stagePos = b.dataset.pos; mbApplyCompose(); mbSyncCompose(); mbCommit(); });

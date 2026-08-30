@@ -7,6 +7,8 @@
       site-shell.css → components.css
    ============================================ */
 
+/* 3D 样机 Banner 超大标题用系统压缩/冲击字体（Impact 等），避免引入外部字体被 CSP 拦截 */
+
 /* ========== HERO SECTION ========== */
 .hero-section {
   position: relative;
@@ -3308,6 +3310,45 @@
   color: rgba(255, 255, 255, 0.8);
   text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45);
 }
+
+/* ---- 标题 / 副标题 风格变体 ---- */
+/* 压缩冲击字体：参考 DramaOwns / SpeakerPortfolio 超大贴边标题 */
+.mockup-title.mockup-title-impact {
+  font-family: 'Impact', 'Haettenschweiler', 'Arial Narrow Bold', 'Franklin Gothic Bold', sans-serif;
+  font-weight: 400;              /* Impact 本身已极粗，保持 400 避免被系统回退字体错误拉伸 */
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.mockup-title.mockup-title-condensed {
+  font-family: 'Arial Narrow', 'Franklin Gothic Medium', 'Impact', 'Haettenschweiler', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+/* 贴边铺满：取消 .mockup-text 的水平内缩，标题撑满整行，必要时溢出相框边缘 */
+.mockup-text.mockup-full {
+  padding-left: 0;
+  padding-right: 0;
+}
+.mockup-title.mockup-full {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* 垂直位置 */
+.mockup-text.v-top    { justify-content: flex-start; padding-top: 6%; }
+.mockup-text.v-center { justify-content: center; }
+.mockup-text.v-bottom { justify-content: flex-end; padding-bottom: 6%; }
+/* 字距档位 */
+.mockup-title.ls-xtight { letter-spacing: -0.05em; }
+.mockup-title.ls-tight  { letter-spacing: -0.03em; }
+.mockup-title.ls-wide   { letter-spacing: 0.04em; }
+.mockup-subtitle.ls-wide { letter-spacing: 0.06em; }
+/* 副标题不换行 */
+.mockup-subtitle.no-wrap {
+  max-width: none;
+  white-space: nowrap;
+}
 /* 进场「初始隐藏态」：仅当 render.js 主动给 .mockup-frame 加 .mockup-pre 才生效（JS 缺位则保持上面的默认可见，安全） */
 .mockup-frame.mockup-pre .mockup-title {
   opacity: 0;
@@ -3666,6 +3707,9 @@
   .mockup-stage.pos-center,
   .mockup-stage.pos-right { left: 50%; right: auto; transform: translateX(-50%); }   /* 桌面版去掉了 top:50% / translateY(-50%)，此处同步去掉 Y 偏移，只保留水平居中 */
   .mockup-text { justify-content: flex-start; padding-top: 12%; }
+  /* 移动端贴边标题仍可大，但为了不撑破相框做适度缩放；副标题 no-wrap 在超窄屏允许压缩字距 */
+  .mockup-title.mockup-full { font-size: clamp(28px, 12vw, 56px); }
+  .mockup-subtitle.no-wrap { letter-spacing: -0.01em; }
 }
 
 /* ================================================================
