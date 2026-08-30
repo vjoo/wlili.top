@@ -3239,7 +3239,7 @@
 
    ⚠️ 勿改（踩过的坑，改动会使旋转中的侧壁压成 2D 纸片）：
      · 进场旋转由 render.js 用 requestAnimationFrame 逐帧写内联 transform，不走 CSS @keyframes
-     · 动画目标（.mk-phone / .mk-laptop）不加 opacity、不加 animation
+     · 动画目标（.mk-phone）不加 opacity、不加 animation
      · .mockup-rig 不加 will-change:transform（会强制升合成层并压平 preserve-3d 子元素）
    ================================================================ */
 .container.mockup-banner-section {
@@ -3325,10 +3325,10 @@
   letter-spacing: -0.01em;
   text-transform: uppercase;
 }
-/* 贴边铺满：取消 .mockup-text 的水平内缩，标题撑满整行，必要时溢出相框边缘 */
+/* 贴边铺满（不换行）：比默认 7% 收窄到 2%，标题撑满整行但仍留一点边距不顶死相框边缘 */
 .mockup-text.mockup-full {
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: 0%;
+  padding-right: 0%;
 }
 .mockup-title.mockup-full {
   width: 100%;
@@ -3349,28 +3349,61 @@
   max-width: none;
   white-space: nowrap;
 }
+/* ===== 横向无缝循环滚动字幕（mockup-banner 标题 / 副标题） =====
+   用法：section 配 titleMarquee:'rtl'|'ltr'（副标题同理 subtitleMarquee），
+   标题即变成无限横向滚动条。track 内两份相同拷贝，动画位移 -50% 即无缝循环。 */
+.mockup-title.mk-marquee,
+.mockup-subtitle.mk-marquee {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  /* 进场仍由 .mockup-frame.mockup-pre 控制（translateY + opacity），不影响横向滚动 */
+}
+.mockup-subtitle.mk-marquee { max-width: none; }   /* 副标题默认 32ch 限宽，跑马灯需全宽 */
+.mockup-marquee-track {
+  display: inline-flex;
+  width: max-content;
+  will-change: transform;
+  /* 滚动由 GSAP 驱动（render.js → setupMockupMarquee），不走 CSS @keyframes，
+     因此不受系统「减少动态」(prefers-reduced-motion) 的 !important 干扰，前台必滚。 */
+}
+.mockup-marquee-copy { flex: 0 0 auto; white-space: nowrap; }
 /* 进场「初始隐藏态」：仅当 render.js 主动给 .mockup-frame 加 .mockup-pre 才生效（JS 缺位则保持上面的默认可见，安全） */
-.mockup-frame.mockup-pre .mockup-title {
+/* 跑马灯标题/副标题：去掉上下进场（会与横向滚动视觉冲突），只保留淡入，动效完全交给跑马灯 */
+.mockup-frame.mockup-pre .mockup-title:not(.mk-marquee) {
   opacity: 0;
   transform: translateY(-28px);   /* 标题：从上往下进入 */
   transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
-.mockup-frame.mockup-pre .mockup-subtitle {
+.mockup-frame.mockup-pre .mockup-subtitle:not(.mk-marquee) {
   opacity: 0;
   transform: translateY(28px);    /* 副标题：从下往上进入 */
   transition: opacity 0.7s ease 0.12s, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s;
   will-change: opacity, transform;
+}
+.mockup-frame.mockup-pre .mockup-title.mk-marquee,
+.mockup-frame.mockup-pre .mockup-subtitle.mk-marquee {
+  opacity: 0;
+  transform: none;                /* 不上下移动 —— 避免与跑马灯横向滚动冲突 */
+  transition: opacity 0.6s ease;
+  will-change: opacity;
 }
 .mockup-frame.mockup-pre .mockup-bg {
   opacity: 0;
   transition: opacity 1s ease;
 }
 /* 进场「揭示态」：render.js 滚进视口播设备时先加 .is-bg（背景图提前淡入），约手机 70% 时加 .is-revealed（文字淡入），形成节奏层次 */
-.mockup-frame.is-revealed .mockup-title,
-.mockup-frame.is-revealed .mockup-subtitle {
+.mockup-frame.is-revealed .mockup-title:not(.mk-marquee),
+.mockup-frame.is-revealed .mockup-subtitle:not(.mk-marquee) {
   opacity: 1;
   transform: translateY(0);
+}
+.mockup-frame.is-revealed .mockup-title.mk-marquee,
+.mockup-frame.is-revealed .mockup-subtitle.mk-marquee {
+  opacity: 1;
+  transform: none;
 }
 .mockup-frame.is-bg .mockup-bg {
   opacity: 1;
@@ -3621,82 +3654,7 @@
 .mk-mute      { position: absolute; left: calc(var(--ph) * -3 / 520); top: calc(var(--ph) * 96 / 520); width: calc(var(--ph) * 4 / 520); height: calc(var(--ph) * 26 / 520); border-radius: calc(var(--ph) * 2 / 520) 0 0 calc(var(--ph) * 2 / 520);
                 background: linear-gradient(180deg, #6e727b 0%, #3a3d44 50%, #15171b 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 3px rgba(0, 0, 0, 0.6); }
 
-/* ===== 笔记本本体 ===== */
-.mk-laptop { position: relative; width: 560px; height: 360px; transform-style: preserve-3d; }
-.mk-lap-screen {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 520px;
-  height: 330px;
-  transform: translateX(-50%);
-  transform-style: preserve-3d;
-}
-.mk-lap-front,
-.mk-lap-back { position: absolute; inset: 0; border-radius: 14px; will-change: transform; }
-.mk-lap-front {
-  transform: translateZ(8px);
-  padding: 11px;
-  background: linear-gradient(150deg, #33363d, #0c0d10);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.4);
-}
-.mk-lap-back {
-  transform: translateZ(-8px);
-  background: linear-gradient(150deg, #3c3f47, #17191e);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
-}
-.mk-lap-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #000;
-  will-change: transform;
-}
-.mk-lap-gloss {
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  pointer-events: none;
-  z-index: 6;
-  background: linear-gradient(125deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 30%);
-}
-.mk-lap-cam {
-  position: absolute;
-  top: 11px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #0a0b0d;
-  box-shadow: inset 0 0 0 1px #2a2d33;
-  z-index: 5;
-}
-.mk-lap-base {
-  position: absolute;
-  top: 330px;
-  left: 50%;
-  width: 560px;
-  height: 18px;
-  transform: translateX(-50%) rotateX(82deg);
-  transform-origin: top center;
-  background: linear-gradient(180deg, #2a2d33, #15171b);
-  border-radius: 0 0 14px 14px;
-  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6);
-}
-.mk-lap-base::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 6px;
-  border-radius: 0 0 6px 6px;
-  background: #0c0d10;
-}
+/* 笔记本(mk-laptop) 样式已随分支移除 */
 
 /* 移动端：相框定高（76vh 给下方留 24vh 给滚动提示），标题靠上、手机舞台水平居中 */
 @media (max-width: 768px) {

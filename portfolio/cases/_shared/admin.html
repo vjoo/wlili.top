@@ -2153,6 +2153,7 @@ body.auth-pending .pages-view { visibility: hidden; }
   </div>
 </div>
 
+<script src="assets/lib-gsap.min.js"></script>
 <script>
 'use strict';
 
@@ -2821,34 +2822,14 @@ const TYPE_FIELDS = {
     ] }
   ],
   'mockup-banner': [
-    { key: 'device', label: '设备类型', type: 'select', options: ['phone', 'laptop'],
-      optionLabels: { 'phone': '手机（1~2 台）', 'laptop': '笔记本（单台）' }, default: 'phone', popupOnly: true },
-
     /* ---- 手机组（1~2 台，每台独立起止视角 / 升降 / 前后景深） ---- */
     // flat 表单只保留 UI 截图上传（其余角度/升降/景深由弹窗可视化编辑器调）；itemFields 仅留 ui
     { key: 'phones', label: '手机列表（可新增/删除，最多 2 台）',
-      type: 'items-list', itemLabel: '手机', max: 2,
-      dependsOn: { field: 'device', value: 'phone' }, itemFields: [
+      type: 'items-list', itemLabel: '手机', max: 2, itemFields: [
         { key: 'ui', label: 'UI 截图（纯屏幕内容最佳，建议竖图 1170×2532 左右）', type: 'image' }
       ] },
-    { key: 'abGap', label: 'A·B 间距（px，负=重叠）', type: 'text', placeholder: '48',
-      dependsOn: { field: 'device', value: 'phone' }, popupOnly: true,
+    { key: 'abGap', label: 'A·B 间距（px，负=重叠）', type: 'text', placeholder: '48', popupOnly: true,
       hint: '仅 2 台时生效。设负值让两台重叠，再给第 2 台设正的前后景深，即成一前一后的景深摆放' },
-
-    /* ---- 笔记本组（单台） ---- */
-    { key: 'lapUi', label: '笔记本 UI 截图', type: 'image', dependsOn: { field: 'device', value: 'laptop' } },
-    { key: 'lapStartRx', label: '起点 X 旋转（°）', type: 'text', placeholder: '30', popupOnly: true,
-      dependsOn: { field: 'device', value: 'laptop' } },
-    { key: 'lapStartRy', label: '起点 Y 旋转（°）', type: 'text', placeholder: '-24', popupOnly: true,
-      dependsOn: { field: 'device', value: 'laptop' } },
-    { key: 'lapStartTy', label: '起点升降（px，正=从屏幕下方升起）', type: 'text', placeholder: '480', popupOnly: true,
-      dependsOn: { field: 'device', value: 'laptop' } },
-    { key: 'lapEndRx', label: '终点 X 旋转（° 停留视角）', type: 'text', placeholder: '16', popupOnly: true,
-      dependsOn: { field: 'device', value: 'laptop' } },
-    { key: 'lapEndRy', label: '终点 Y 旋转（° 停留视角）', type: 'text', placeholder: '-24', popupOnly: true,
-      dependsOn: { field: 'device', value: 'laptop' } },
-    { key: 'lapEndTy', label: '终点高低偏移（px）', type: 'text', placeholder: '0', popupOnly: true,
-      dependsOn: { field: 'device', value: 'laptop' } },
 
     /* ---- 旋转 / 时长 ---- */
     { key: 'spins', label: '整圈数（0=不转，0.5=半圈，1=转一圈，最大 3）', type: 'text', placeholder: '1', popupOnly: true,
@@ -2898,6 +2879,15 @@ const TYPE_FIELDS = {
     { key: 'subtitleNoWrap', label: '副标题不换行', type: 'select', options: ['', '1'], popupOnly: true,
       optionLabels: { '': '否', '1': '是' }, default: '',
       hint: '强制副标题单行显示，配合字号可调出参考图底部小字效果' },
+
+    /* ---- 横向无缝循环滚动字幕 ---- */
+    { key: 'titleMarquee', label: '主标题滚动方向', type: 'select', options: ['', 'rtl', 'ltr'], popupOnly: true,
+      optionLabels: { '': '不滚动（静态）', 'rtl': '右→左（从右往左）', 'ltr': '左→右（从左往右）' }, default: '',
+      hint: '开启后主标题变为无限横向滚动条；可让主标题右→左、副标题左→右，形成两行反向滚动' },
+    { key: 'subtitleMarquee', label: '副标题滚动方向', type: 'select', options: ['', 'rtl', 'ltr'], popupOnly: true,
+      optionLabels: { '': '不滚动（静态）', 'rtl': '右→左', 'ltr': '左→右' }, default: '' },
+    { key: 'marqueeDuration', label: '滚动速度（秒/圈，越小越快）', type: 'text', placeholder: '20', popupOnly: true,
+      hint: '指「1000px 文字扫过所用时间」，两行自动同速——长短不同的标题滚动线速度一致、无缝循环' },
 
     /* ---- 手机舞台 ---- */
     { key: 'stagePos', label: '手机视窗位置', type: 'select', options: ['left', 'center', 'right'], popupOnly: true,
@@ -2956,16 +2946,17 @@ function getDefaultSection(type) {
       { num: '004', title: '3D', desc: 'We create high-quality 3D animations and visuals for websites, apps, and videos – adding depth, motion, and a polished edge to your product.', categories: ['3D Animation', '3D Rendering', '3D Assets', 'Video & Motion Use'] }
     ] };
     case 'team': return { ...base, label: 'Join our mission', heading: 'Our team,', subheading: 'your vision', desc1: "If you're ready to create and collaborate, we'd love to hear from you.", desc2: 'We thrive on teamwork, turning individual strengths into shared success. Together, we turn ideas into digital products that solve real problems for real people.', buttonText: 'Apply now', items: [] };
-    case 'mockup-banner': return { ...base, device: 'phone', phones: [
+    case 'mockup-banner': return { ...base, phones: [
       { ui: '', startRx: '22', startRy: '-22', startTy: '480', endRx: '8', endRy: '-22', endTy: '0', z: '0' },
       { ui: '', startRx: '22', startRy: '22', startTy: '480', endRx: '8', endRy: '22', endTy: '-30', z: '40' }
-    ], lapUi: '', lapStartRx: '30', lapStartRy: '-24', lapStartTy: '480', lapEndRx: '16', lapEndRy: '-24', lapEndTy: '0',
+    ],
       spins: '1', dur: '4200', abGap: '48', bgType: 'theme', bgColor: '#0c0d10', bgImage: '',
       title: '', subtitle: '', titleZ: 'behind', titleAlign: 'left', titleVAlign: 'center',
       titleFont: 'default', titleSize: '64', titleWeight: '600', titleLineHeight: '1.1',
       titleLetterSpacing: 'normal', titleColor: '', titleUppercase: '', titleNoWrap: '', titleFull: '',
       subtitleSize: '28', subtitleWeight: '400', subtitleColor: '', subtitleLetterSpacing: 'normal',
       subtitleUppercase: '', subtitleNoWrap: '',
+      titleMarquee: '', subtitleMarquee: '', marqueeDuration: '20',
       stagePos: 'right', stageSize: '560', globalZoom: '1' };
     default: return base;
   }
@@ -3562,12 +3553,11 @@ function buildCardThumbnail(s) {
         </div>`;
       }
       case 'mockup-banner': {
-        const isLap = s.device === 'laptop';
-        const n = isLap ? 1 : (Array.isArray(s.phones) ? s.phones.length : 0);
+        const n = (Array.isArray(s.phones) ? s.phones.length : 0);
         const posLabel = { left: '视窗居左', center: '视窗居中', right: '视窗居右' }[s.stagePos] || '视窗居右';
         return `<div style="padding:8px 10px;">
           <b style="font-size:14px;">${esc(s.title || '（未设置标题）')}</b>
-          <div style="font-size:12px;opacity:.6;margin-top:4px;">${isLap ? '笔记本 ×1' : '手机 ×' + n} · 转 ${esc(s.spins || '1')} 圈 · ${esc(posLabel)}</div>
+          <div style="font-size:12px;opacity:.6;margin-top:4px;">手机 ×${n} · 转 ${esc(s.spins || '1')} 圈 · ${esc(posLabel)}</div>
         </div>`;
       }
       default:
@@ -3620,9 +3610,8 @@ function buildCardPreviewText(s) {
     case 'services': text = '服务列表：' + (Array.isArray(s.items) ? s.items.length : 0) + ' 项' + (s.heading ? ' · ' + s.heading : ''); break;
     case 'team': text = '团队成员：' + (Array.isArray(s.items) ? s.items.length : 0) + ' 人' + (s.heading ? ' · ' + s.heading : ''); break;
     case 'mockup-banner': {
-      const isLap = s.device === 'laptop';
-      const n = isLap ? 1 : (Array.isArray(s.phones) ? s.phones.length : 0);
-      text = (isLap ? '3D 样机：笔记本 ×1' : '3D 样机：手机 ×' + n) +
+      const n = (Array.isArray(s.phones) ? s.phones.length : 0);
+      text = '3D 样机：手机 ×' + n +
         (s.title ? ' · ' + s.title : '') +
         ' · 转 ' + (s.spins || '1') + ' 圈';
       break;
@@ -7317,8 +7306,7 @@ async function init() {
 
 /* ============================================================
    3D 样机 Banner · 可视化编辑弹窗（mockup-banner）
-   复刻 outputs/device-mockup-demo.html 的页卡 + 滑块交互，
-   直接读写 state.sections[selectedIndex]，关闭即生效。
+   页卡 + 滑块交互，直接读写 state.sections[selectedIndex]，关闭即生效。
    ============================================================ */
 const MB_THEME_BG = 'radial-gradient(120% 120% at 50% 0%,#1c1f25 0%,#0c0d10 60%)';
 let mbVis = null;                 // 单例：{ mask, introRAF }
@@ -7337,7 +7325,6 @@ function mbSnapshotConfig() {
   var phones = (Array.isArray(s.phones) ? s.phones : []).map(function (p) {
     return { startRx: p.startRx, startRy: p.startRy, startTy: p.startTy, endRx: p.endRx, endRy: p.endRy, endTy: p.endTy, z: p.z };
   });
-  var lap = { lapStartRx: s.lapStartRx, lapStartRy: s.lapStartRy, lapStartTy: s.lapStartTy, lapEndRx: s.lapEndRx, lapEndRy: s.lapEndRy, lapEndTy: s.lapEndTy };
   var globals = { spins: s.spins, dur: s.dur, globalZoom: s.globalZoom, stageSize: s.stageSize };
   var text = {
     titleVAlign: s.titleVAlign, titleFont: s.titleFont, titleSize: s.titleSize, titleWeight: s.titleWeight,
@@ -7346,7 +7333,7 @@ function mbSnapshotConfig() {
     subtitleSize: s.subtitleSize, subtitleWeight: s.subtitleWeight, subtitleColor: s.subtitleColor,
     subtitleLetterSpacing: s.subtitleLetterSpacing, subtitleUppercase: s.subtitleUppercase, subtitleNoWrap: s.subtitleNoWrap
   };
-  return { device: (s.device === 'laptop' ? 'laptop' : 'phone'), phones: phones, lap: lap, global: globals, text: text };
+  return { phones: phones, global: globals, text: text };
 }
 function mbSavePreset() {
   var s = mbS(); if (!s) return;
@@ -7374,16 +7361,14 @@ function mbApplyPreset(idx) {
      'titleUppercase', 'titleNoWrap', 'titleFull', 'subtitleSize', 'subtitleWeight', 'subtitleColor',
      'subtitleLetterSpacing', 'subtitleUppercase', 'subtitleNoWrap'].forEach(function (k) { if (p.text[k] != null) s[k] = p.text[k]; });
   }
-  if (s.device === 'laptop' && p.lap) {
-    ['lapStartRx', 'lapStartRy', 'lapStartTy', 'lapEndRx', 'lapEndRy', 'lapEndTy'].forEach(function (k) { if (p.lap[k] != null) s[k] = p.lap[k]; });
-  } else if (Array.isArray(p.phones)) {
+  if (Array.isArray(p.phones)) {
     if (!s.phones) s.phones = [];
     p.phones.forEach(function (pp, i) {
       if (!s.phones[i]) s.phones[i] = {};
       ['startRx', 'startRy', 'startTy', 'endRx', 'endRy', 'endTy', 'z'].forEach(function (k) { if (pp[k] != null) s.phones[i][k] = pp[k]; });
     });
   }
-  mbSetPhoneCount(mbDev === 'laptop' ? 1 : mbPhoneCount);
+  mbSetPhoneCount(mbPhoneCount);
   mbUpdateTargetVisibility(); mbSyncTargetSegs();
   mbSyncSliders('start'); mbSyncSpin(); mbSyncCompose();
   mbRenderPresetPanel();
@@ -7401,7 +7386,7 @@ function mbRenderPresetPanel() {
   var arr = mbPresets();
   if (!arr.length) { box.innerHTML = '<div class="mbvis-preset-empty">暂无预设。调好视角 / 旋转后，点上方「＋ 保存当前为预设」即可留存。</div>'; return; }
   box.innerHTML = arr.map(function (p, i) {
-    var dev = p.device === 'laptop' ? '笔记本' : ('手机 ×' + (Array.isArray(p.phones) ? p.phones.length : 0));
+    var dev = '手机 ×' + (Array.isArray(p.phones) ? p.phones.length : 0);
     var meta = dev + ' · 转 ' + (p.global && p.global.spins ? p.global.spins : '1') + ' 圈';
     return '<div class="mbvis-preset-item"><div><div class="pi-name">' + esc(p.name || ('预设 ' + (i + 1))) + '</div><div class="pi-meta">' + esc(meta) + '</div></div>' +
       '<div class="pi-actions"><button class="pi-btn apply" data-preset-apply="' + i + '">应用</button><button class="pi-btn danger" data-preset-del="' + i + '">删除</button></div></div>';
@@ -7411,14 +7396,12 @@ function mbCap(p) { return p === 'rx' ? 'Rx' : (p === 'ry' ? 'Ry' : 'Ty'); }
 function mbAngleKey(tab, prop) { return (tab === 'start' ? 'start' : 'end') + mbCap(prop); }
 function mbReadAngle(tab, prop) {
   var s = mbS(); if (!s) return 0;
-  if (mbDev === 'laptop') { var k = 'lap' + (tab === 'start' ? 'Start' : 'End') + mbCap(prop); return parseFloat(s[k] || 0) || 0; }
   var idx = mbPhoneCount === 2 ? mbEditIdx : 0;
   var ph = (s.phones && s.phones[idx]) || {};
   return parseFloat(ph[mbAngleKey(tab, prop)] || 0) || 0;
 }
 function mbWriteAngle(tab, prop, val) {
   var s = mbS(); if (!s) return; val = Math.round(val);
-  if (mbDev === 'laptop') { s['lap' + (tab === 'start' ? 'Start' : 'End') + mbCap(prop)] = String(val); return; }
   var idx = mbPhoneCount === 2 ? mbEditIdx : 0;
   if (!s.phones) s.phones = [];
   if (!s.phones[idx]) s.phones[idx] = {};
@@ -7426,7 +7409,7 @@ function mbWriteAngle(tab, prop, val) {
 }
 function mbReadZForIdx(idx) { var s = mbS(); var ph = (s.phones && s.phones[idx]) || {}; return parseFloat(ph.z || 0) || 0; }
 function mbWriteZ(val) {
-  var s = mbS(); if (!s || mbDev === 'laptop') return; val = Math.round(val);
+  var s = mbS(); if (!s) return; val = Math.round(val);
   var idx = mbPhoneCount === 2 ? 1 : 0;
   if (!s.phones) s.phones = [];
   if (!s.phones[idx]) s.phones[idx] = {};
@@ -7474,16 +7457,6 @@ function mbBuildPhone() {
 }
 function mbSetPhoneCount(n) {
   var s = mbS(); var row = document.getElementById('mbvisRow'); var W = 250;
-  if (mbDev === 'laptop') {
-    row.style.display = 'none';
-    var lap = document.getElementById('mbvisLap'); lap.style.display = 'block';
-    var lui = document.getElementById('mbvisLapUi'); var lsrc = s.lapUi || '';
-    if (lsrc) { lui.src = lsrc; lui.style.display = 'block'; } else { lui.style.display = 'none'; }
-    if (lui.decode) { try { lui.decode().catch(function () {}); } catch (e) {} }
-    mbBuildShell('#mbvisLap .mbvis-lap-screen', 520, 330, 14, 16, 6);
-    return;
-  }
-  document.getElementById('mbvisLap').style.display = 'none';
   row.style.display = 'block';
   var gap = parseFloat(s.abGap || 48) || 48;
   row.style.width = (n === 1 ? W : (W * 2 + gap)) + 'px';
@@ -7513,6 +7486,45 @@ function mbApplyGap() {
   }
 }
 
+/* ===== 滚动字幕：把标题/副标题构建为无缝横向滚动 track =====
+   与 render.js 的 setupMockupMarquee 行为对齐：两份相同拷贝 + 填满视窗避免空隙 +
+   按「1000px/秒」换算时长让两行同速；并挂视口暂停。dir 为空则静态纯文本。 */
+function mbBuildMarquee(el, text, dir, durSec) {
+  el.innerHTML = '';
+  if (!text) return;
+  if (!dir) { el.textContent = text; return; }
+  var track = document.createElement('span');
+  track.className = 'mockup-marquee-track dir-' + dir;
+  track.setAttribute('data-dir', dir);
+  track.setAttribute('data-dur', durSec);
+  var c0 = document.createElement('span'); c0.className = 'mockup-marquee-copy'; c0.setAttribute('data-text', text); c0.textContent = text;
+  var c1 = c0.cloneNode(true); c1.setAttribute('aria-hidden', 'true');
+  track.appendChild(c0); track.appendChild(c1);
+  el.appendChild(track);
+  try {
+    var hostW = el.clientWidth || 0;
+    var oneW = c0.scrollWidth || 0;
+    var reps = oneW > 0 ? Math.max(2, Math.ceil((hostW * 1.5) / oneW) + 1) : 2;
+    var sep = '   ·   ';
+    var filled = (text + sep).repeat(reps);
+    filled = filled.slice(0, filled.length - sep.length);
+    c0.textContent = filled; c1.textContent = filled;
+    var copyW = c0.scrollWidth || oneW || hostW || 500;
+    if (!isFinite(copyW) || copyW <= 0) copyW = 500;
+    var duration = copyW / (1000 / durSec);
+    if (track._mqTween && typeof track._mqTween.kill === 'function') { try { track._mqTween.kill(); } catch (e) {} }
+    track._mqTween = null;
+    track.style.animation = 'none';
+    if (window.gsap && hostW > 0) {
+      if (dir === 'ltr') track._mqTween = gsap.fromTo(track, { x: -copyW }, { x: 0, duration: duration, ease: 'none', repeat: -1 });
+      else track._mqTween = gsap.to(track, { x: -copyW, duration: duration, ease: 'none', repeat: -1 });
+    }
+    track.setAttribute('data-vp-pausable', '1');
+    track.__pauseAuto = function () { if (track._mqTween) track._mqTween.pause(); };
+    track.__resumeAuto = function () { if (track._mqTween) track._mqTween.resume(); };
+  } catch (e) {}
+}
+
 /* ===== 合成图层（背景 / 标题 / 手机舞台位置） ===== */
 function mbApplyCompose() {
   var s = mbS(); if (!s) return;
@@ -7523,8 +7535,9 @@ function mbApplyCompose() {
   else { banner.style.background = MB_THEME_BG; bg.style.display = 'none'; }
   var titleEl = document.getElementById('mbvisTitle');
   var subEl = document.getElementById('mbvisSub');
-  titleEl.textContent = s.title || '';
-  subEl.textContent = s.subtitle || '';
+  var mqDur = parseFloat(s.marqueeDuration) || 20;
+  mbBuildMarquee(titleEl, s.title, s.titleMarquee, mqDur);
+  mbBuildMarquee(subEl, s.subtitle, s.subtitleMarquee, mqDur);
   var txt = document.getElementById('mbvisText');
   txt.classList.toggle('align-center', (s.titleAlign || 'left') === 'center');
   txt.classList.toggle('align-left', (s.titleAlign || 'left') === 'left');
@@ -7534,7 +7547,7 @@ function mbApplyCompose() {
   txt.style.zIndex = (s.titleZ === 'front') ? 5 : 1;
 
   /* 主标题风格 */
-  titleEl.className = 'mbvis-title-t';
+  titleEl.className = 'mbvis-title-t' + (s.titleMarquee ? ' mk-marquee' : '');
   if (s.titleFont === 'impact') titleEl.classList.add('mockup-title-impact');
   else if (s.titleFont === 'condensed') titleEl.classList.add('mockup-title-condensed');
   if (s.titleLetterSpacing === 'xtight') titleEl.classList.add('ls-xtight');
@@ -7549,7 +7562,7 @@ function mbApplyCompose() {
   titleEl.style.whiteSpace = s.titleNoWrap ? 'nowrap' : '';
 
   /* 副标题风格 */
-  subEl.className = 'mbvis-sub-t';
+  subEl.className = 'mbvis-sub-t' + (s.subtitleMarquee ? ' mk-marquee' : '');
   if (s.subtitleNoWrap) subEl.classList.add('no-wrap');
   if (s.subtitleLetterSpacing === 'wide') subEl.classList.add('ls-wide');
   subEl.style.fontSize = (parseFloat(s.subtitleSize) || 0) ? s.subtitleSize + 'px' : '';
@@ -7599,6 +7612,11 @@ function mbSyncCompose() {
   document.getElementById('mbvisStageV').textContent = Math.round(ss);
   var tsv = parseFloat(s.titleSize || 64) || 64; document.getElementById('mbvisTitleSize').value = tsv; document.getElementById('mbvisTitleSizeV').textContent = Math.round(tsv);
   var ssv = parseFloat(s.subtitleSize || 28) || 28; document.getElementById('mbvisSubSize').value = ssv; document.getElementById('mbvisSubSizeV').textContent = Math.round(ssv);
+  /* 滚动字幕 */
+  document.querySelectorAll('#mbvisTitleMarquee button').forEach(function (b) { b.classList.toggle('on', b.dataset.dir === (s.titleMarquee || '')); });
+  document.querySelectorAll('#mbvisSubMarquee button').forEach(function (b) { b.classList.toggle('on', b.dataset.dir === (s.subtitleMarquee || '')); });
+  var md = parseFloat(s.marqueeDuration || 20) || 20;
+  var mdEl = document.getElementById('mbvisMarqueeDur'); if (mdEl) { mdEl.value = md; document.getElementById('mbvisMarqueeDurV').textContent = Math.round(md); }
 }
 function mbSyncSpin() {
   var s = mbS(); if (!s) return;
@@ -7614,12 +7632,6 @@ function mbSyncSpin() {
 /* ===== 单元渲染 / 页卡 / 动画 ===== */
 function mbRenderUnit(idx, tab) {
   var s = mbS(); if (!s) return;
-  if (mbDev === 'laptop') {
-    var lap = document.getElementById('mbvisLap'); if (!lap) return;
-    var rx = mbReadAngle(tab, 'rx'), ry = mbReadAngle(tab, 'ry'), ty = mbReadAngle(tab, 'ty');
-    lap.style.transform = 'translateY(' + ty + 'px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
-    return;
-  }
   var ph = document.querySelectorAll('#mbvisRow .mbvis-phone')[idx]; if (!ph) return;
   // 关键点：每台手机读自己 phone[idx] 的存储角度，不能用 mbEditIdx，否则两台永远同步显示当前选中的那台角度（切换 A/B 会让另一台看起来被改）
   var p = (s.phones && s.phones[idx]) || {};
@@ -7631,8 +7643,7 @@ function mbRenderUnit(idx, tab) {
 }
 function mbShowPoint(tab) {
   if (mbVis.introRAF) { cancelAnimationFrame(mbVis.introRAF); mbVis.introRAF = null; }
-  if (mbDev === 'laptop') mbRenderUnit(0, tab);
-  else for (var i = 0; i < mbPhoneCount; i++) mbRenderUnit(i, tab);
+  for (var i = 0; i < mbPhoneCount; i++) mbRenderUnit(i, tab);
 }
 function mbSyncSliders(tab) {
   if (tab === 'start') {
@@ -7684,14 +7695,6 @@ function mbPlayIntro() {
     var k = (now - t0) / dur; if (k > 1) k = 1;
     var e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
     var sc = 0.92 + 0.08 * e;
-    if (mbDev === 'laptop') {
-      var S = { rx: mbReadAngle('start', 'rx'), ry: mbReadAngle('start', 'ry'), ty: mbReadAngle('start', 'ty') };
-      var E = { rx: mbReadAngle('end', 'rx'), ry: mbReadAngle('end', 'ry'), ty: mbReadAngle('end', 'ty') };
-      var ry0 = S.ry - spins * 360, ry1 = E.ry;
-      var ty = S.ty + (E.ty - S.ty) * e, rxv = S.rx + (E.rx - S.rx) * e, ryv = ry0 + (ry1 - ry0) * e;
-      var lap = document.getElementById('mbvisLap');
-      if (lap) lap.style.transform = 'translateY(' + ty + 'px) rotateX(' + rxv + 'deg) rotateY(' + ryv + 'deg) scale(' + sc + ')';
-    } else {
       for (var i = 0; i < mbPhoneCount; i++) {
         var ph = (s.phones && s.phones[i]) || {};
         var S = { rx: +ph.startRx || 0, ry: +ph.startRy || 0, ty: +ph.startTy || 480 };
@@ -7701,22 +7704,11 @@ function mbPlayIntro() {
         var node = document.querySelectorAll('#mbvisRow .mbvis-phone')[i];
         if (node) node.style.transform = 'translateY(' + ty + 'px) translateZ(' + z + 'px) rotateX(' + rxv + 'deg) rotateY(' + ryv + 'deg) scale(' + sc + ')';
       }
-    }
     if (k < 1) mbVis.introRAF = requestAnimationFrame(frame); else { mbVis.introRAF = null; mbSetTab('end'); }
   }
   mbVis.introRAF = requestAnimationFrame(frame);
 }
-function mbSetDev(dev) {
-  var s = mbS(); if (!s) return; s.device = dev; mbDev = dev;
-  document.querySelectorAll('#mbvisDev button').forEach(function (b) { b.classList.toggle('on', b.dataset.dev === dev); });
-  document.getElementById('mbvisCount').classList.toggle('mbvis-disabled', dev !== 'phone');
-  if (dev === 'laptop') { mbPhoneCount = 1; mbEditIdx = 0; }
-  else { mbPhoneCount = Math.min(2, Math.max(1, (Array.isArray(s.phones) ? s.phones.length : 1))); }
-  document.querySelectorAll('#mbvisCount button').forEach(function (b) { b.classList.toggle('on', +b.dataset.count === mbPhoneCount); });
-  mbApplyCompose(); mbSetPhoneCount(mbPhoneCount); mbUpdateTargetVisibility(); mbSyncTargetSegs();
-  mbSyncSliders(mbActiveTab); mbShowPoint(mbActiveTab === 'start' ? 'start' : 'end'); mbCommit();
-  setTimeout(function () { renderEditorForm(state.sections[selectedIndex]); }, 0);
-}
+/* 设备切换已移除：3D 样机仅手机，无笔记本分支 */
 function mbSetCount(n) {
   var s = mbS(); if (!s || mbDev !== 'phone') return;
   if (n === 2) {
@@ -7768,6 +7760,10 @@ function ensureMbVisDOM() {
     '.mbvis-text.mockup-full{padding-left:0;padding-right:0}.mbvis-title-t.mockup-full{width:100%;white-space:nowrap;overflow:hidden}',
     '.mbvis-sub-t{font-size:20px;font-weight:400;color:rgba(255,255,255,.82);margin:0;text-shadow:0 1px 14px rgba(0,0,0,.45);max-width:32ch;line-height:1.55}',
     '.mbvis-sub-t.no-wrap{max-width:none;white-space:nowrap}.mbvis-sub-t.ls-wide{letter-spacing:0.06em}',
+    /* 弹窗预览：横向无缝跑马灯（与 components.css 同名类保持行为一致） */
+    '.mbvis-title-t.mk-marquee,.mbvis-sub-t.mk-marquee{width:100%;display:block;overflow:hidden;white-space:nowrap;max-width:none}',
+    '.mockup-marquee-track{display:inline-flex;width:max-content;will-change:transform}',
+    '.mockup-marquee-copy{flex:0 0 auto;white-space:nowrap}',
     '.mbvis-stage-phone{position:absolute;z-index:2;width:560px;height:560px;max-width:90vw;aspect-ratio:1;display:flex;align-items:center;justify-content:center}',
     '.mbvis-stage-phone.pos-left{left:4%;right:auto;top:50%;transform:translateY(-50%)}',
     '.mbvis-stage-phone.pos-center{left:50%;right:auto;top:50%;transform:translate(-50%,-50%)}',
@@ -7795,16 +7791,7 @@ function ensureMbVisDOM() {
     '.mbvis-vol-up{left:-2.5px;top:130px;width:3px;height:46px;border-radius:2px 0 0 2px}',
     '.mbvis-vol-down{left:-2.5px;top:188px;width:3px;height:46px;border-radius:2px 0 0 2px}',
     '.mbvis-mute{position:absolute;left:-2.5px;top:88px;width:3px;height:24px;border-radius:2px 0 0 2px;background:linear-gradient(180deg,#5a5e67,#2a2d33);box-shadow:0 1px 2px rgba(0,0,0,.4)}',
-    '.mbvis-laptop{position:relative;width:560px;height:360px;transform-style:preserve-3d;display:none}',
-    '.mbvis-lap-screen{position:absolute;top:0;left:50%;width:520px;height:330px;transform:translateX(-50%);transform-style:preserve-3d}',
-    '.mbvis-lap-front,.mbvis-lap-back{position:absolute;inset:0;border-radius:14px;will-change:transform}',
-    '.mbvis-lap-front{transform:translateZ(8px);background:linear-gradient(150deg,#33363d,#0c0d10);padding:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(0,0,0,.4)}',
-    '.mbvis-lap-back{transform:translateZ(-8px);background:linear-gradient(150deg,#3c3f47,#17191e);box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)}',
-    '.mbvis-lap-screen-inner{position:relative;width:100%;height:100%;border-radius:6px;overflow:hidden;background:#000;will-change:transform}',
-    '.mbvis-gloss-l{position:absolute;inset:0;border-radius:6px;pointer-events:none;z-index:6;background:linear-gradient(125deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,0) 30%)}',
-    '.mbvis-lap-base{position:absolute;top:330px;left:50%;width:560px;height:18px;transform:translateX(-50%) rotateX(82deg);transform-origin:top center;background:linear-gradient(180deg,#2a2d33,#15171b);border-radius:0 0 14px 14px;box-shadow:0 12px 30px -8px rgba(0,0,0,.6)}',
-    '.mbvis-lap-base:after{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:6px;border-radius:0 0 6px 6px;background:#0c0d10}',
-    '.mbvis-lap-cam{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:#0a0b0d;box-shadow:inset 0 0 0 1px #2a2d33;z-index:5}',
+    /* 弹窗笔记本样式已随分支移除 */
     '.mbvis-opzoom{display:flex;align-items:center;gap:10px;margin:0 auto 12px;width:min(760px,92vw)}',
     '.mbvis-opzoom label{color:rgba(232,234,237,.6);font-size:12px;white-space:nowrap}',
     '.mbvis-opzoom input[type=range]{flex:1;accent-color:#3b82f6}',
@@ -7863,14 +7850,13 @@ function ensureMbVisDOM() {
     '<div class="mbvis-modal">',
     '  <div class="mbvis-head"><div><div class="mbvis-title">可视化编辑 · 3D 样机 Banner</div><div class="mbvis-sub">拖滑块实时调视角 / 进场动画 / 标题遮挡 / 背景，关闭即保存到板块</div></div><button class="mbvis-close" id="mbvisClose">完成</button></div>',
     '  <div class="mbvis-toolbar">',
-    '    <div class="mbvis-seg" id="mbvisDev"><button data-dev="phone" class="on">手机</button><button data-dev="laptop">笔记本</button></div>',
     '    <div class="mbvis-seg mbvis-disabled" id="mbvisCount"><button data-count="1" class="on">1 台</button><button data-count="2">2 台</button></div>',
     '    <button class="mbvis-replay" id="mbvisReplay">▶ 重播进场动画</button>',
     '  </div>',
     '  <div class="mbvis-stage" id="mbvisStage"><div class="mbvis-banner" id="mbvisBanner">',
     '    <img class="mbvis-bg" id="mbvisBg" alt="">',
     '    <div class="mbvis-text align-left" id="mbvisText"><h2 class="mbvis-title-t" id="mbvisTitle"></h2><p class="mbvis-sub-t" id="mbvisSub"></p></div>',
-    '    <div class="mbvis-stage-phone pos-right" id="mbvisPhoneStage"><div class="mbvis-viewport" id="mbvisViewport"><div class="mbvis-rig" id="mbvisRig"><div class="mbvis-phone-row" id="mbvisRow"></div><div class="mbvis-laptop" id="mbvisLap"><div class="mbvis-lap-screen"><div class="mbvis-lap-back"></div><div class="mbvis-lap-front"><div class="mbvis-lap-screen-inner"><img class="mbvis-ui" id="mbvisLapUi" alt=""><div class="mbvis-lap-cam"></div><div class="mbvis-gloss-l"></div></div></div></div><div class="mbvis-lap-base"></div></div></div></div></div>',
+    '    <div class="mbvis-stage-phone pos-right" id="mbvisPhoneStage"><div class="mbvis-viewport" id="mbvisViewport"><div class="mbvis-rig" id="mbvisRig"><div class="mbvis-phone-row" id="mbvisRow"></div></div></div></div>',
     '  </div></div>',
     '  <div class="mbvis-opzoom"><label>操作视窗缩放 · <span id="mbvisOpzoomVal">0.62</span></label><input type="range" id="mbvisOpzoom" min="0.40" max="1.00" step="0.02" value="0.62"></div>',
     '  <div class="mbvis-tabs" id="mbvisTabs">',
@@ -7917,6 +7903,10 @@ function ensureMbVisDOM() {
     '    <div class="mbvis-field"><label>副标题字重</label><div class="mbvis-seg" id="mbvisSubWeightSeg"><button data-w="400" class="on">400</button><button data-w="600">600</button><button data-w="700">700</button></div></div>',
     '    <div class="mbvis-field"><label>副标题字距</label><div class="mbvis-seg" id="mbvisSubLSSeg"><button data-ls="normal" class="on">正常</button><button data-ls="wide">宽松</button></div></div>',
     '    <div class="mbvis-field"><label>副标题风格</label><div class="mbvis-seg" id="mbvisSubStyleSeg"><button data-style="uppercase">大写</button><button data-style="nowrap">不换行</button></div></div>',
+    '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">滚动字幕（横向无缝循环）</div>',
+    '    <div class="mbvis-field"><label>主标题滚动</label><div class="mbvis-seg" id="mbvisTitleMarquee"><button data-dir="">关</button><button data-dir="rtl">右→左</button><button data-dir="ltr">左→右</button></div></div>',
+    '    <div class="mbvis-field"><label>副标题滚动</label><div class="mbvis-seg" id="mbvisSubMarquee"><button data-dir="">关</button><button data-dir="rtl">右→左</button><button data-dir="ltr">左→右</button></div></div>',
+    '    <div class="mbvis-field"><label>滚动速度 · <span id="mbvisMarqueeDurV">20</span> 秒/圈（越小越快）</label><input type="range" id="mbvisMarqueeDur" min="6" max="60" step="1" value="20"></div>',
     '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">手机视窗位置（方形）</div>',
     '    <div class="mbvis-field"><label>屏幕内显示位置</label><div class="mbvis-seg" id="mbvisPosSeg"><button data-pos="left">左</button><button data-pos="center">中</button><button data-pos="right" class="on">右</button></div></div>',
     '    <div class="mbvis-field"><label>方形视窗大小 · <span id="mbvisStageV">560</span>px</label><input type="range" id="mbvisStageSize" min="360" max="760" step="20" value="560"></div>',
@@ -7940,7 +7930,6 @@ function bindMbVisEvents() {
   $('mbvisClose').addEventListener('click', function () { mbVis.mask.hidden = true; });
   mbVis.mask.addEventListener('click', function (e) { if (e.target === mbVis.mask) mbVis.mask.hidden = true; });
 
-  $('mbvisDev').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) mbSetDev(b.dataset.dev); });
   $('mbvisCount').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && mbDev === 'phone') mbSetCount(+b.dataset.count); });
   $('mbvisReplay').addEventListener('click', mbPlayIntro);
 
@@ -8003,6 +7992,9 @@ function bindMbVisEvents() {
   }
   bindStyleToggle('mbvisTitleStyleSeg', { uppercase: 'titleUppercase', nowrap: 'titleNoWrap', full: 'titleFull' });
   bindStyleToggle('mbvisSubStyleSeg', { uppercase: 'subtitleUppercase', nowrap: 'subtitleNoWrap' });
+  $('mbvisTitleMarquee').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleMarquee = b.dataset.dir; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisSubMarquee').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().subtitleMarquee = b.dataset.dir; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisMarqueeDur').addEventListener('input', function () { var v = +this.value; mbS().marqueeDuration = String(v); $('mbvisMarqueeDurV').textContent = v; mbApplyCompose(); mbCommit(); });
   $('mbvisTitleSize').addEventListener('input', function () { var v = +this.value; mbS().titleSize = String(v); document.getElementById('mbvisTitleSizeV').textContent = v; mbApplyCompose(); mbCommit(); });
   $('mbvisSubSize').addEventListener('input', function () { var v = +this.value; mbS().subtitleSize = String(v); document.getElementById('mbvisSubSizeV').textContent = v; mbApplyCompose(); mbCommit(); });
   $('mbvisPosSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().stagePos = b.dataset.pos; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
@@ -8023,10 +8015,9 @@ function openMbVis() {
   ensureMbVisDOM();
   var s = mbS();
   if (!s || s.type !== 'mockup-banner') { toast('请先选中 3D 样机 Banner 板块'); return; }
-  mbDev = s.device === 'laptop' ? 'laptop' : 'phone';
-  mbPhoneCount = mbDev === 'phone' ? Math.min(2, Math.max(1, (Array.isArray(s.phones) ? s.phones.length : 1))) : 1;
+  mbDev = 'phone';
+  mbPhoneCount = Math.min(2, Math.max(1, (Array.isArray(s.phones) ? s.phones.length : 1)));
   mbEditIdx = 0; mbActiveTab = 'start'; mbOpZoom = 0.62; mbP = 1200;
-  [].forEach.call(document.querySelectorAll('#mbvisDev button'), function (b) { b.classList.toggle('on', b.dataset.dev === mbDev); });
   document.getElementById('mbvisCount').classList.toggle('mbvis-disabled', mbDev !== 'phone');
   [].forEach.call(document.querySelectorAll('#mbvisCount button'), function (b) { b.classList.toggle('on', +b.dataset.count === mbPhoneCount); });
   document.getElementById('mbvisViewport').style.perspective = mbP + 'px';

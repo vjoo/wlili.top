@@ -396,14 +396,23 @@ img {
   box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
+/* 收缩成白底胶囊后：文字（与下划线）改回当前的深色，与胶囊白底过渡同步 */
+.header-overlay.scrolled .nav-link {
+  color: #616161; /* 即原「未滚动」的灰色/黑色，收缩后还原 */
+}
+.header-overlay.scrolled .nav-link::after {
+  background: rgba(10, 10, 10, 0.32); /* 白底胶囊上用深色下划线 */
+}
+
 .nav-link {
   font-size: 16px;
   font-weight: 500;
   letter-spacing: -0.32px;
-  color: #616161; /* 胶囊导航链接色（用户指定） */
+  color: #ffffff; /* 未滚动（透明头部，铺在彩色 banner 上）→ 白色字 */
   position: relative;
   padding: 0.25rem 0;
   white-space: nowrap; /* 兜底：max-width 收缩动画任意中间帧都不允许文字换行（竖排） */
+  transition: color var(--transition-base); /* 白→黑 随胶囊收缩自然过渡 */
 }
 
 .nav-link::after {
@@ -415,8 +424,8 @@ img {
   height: 1px;
   min-height: 1px;
   opacity: 0;
-  background: rgba(10, 10, 10, 0.32);
-  transition: width var(--transition-base), opacity 0.2s ease-in-out;
+  background: rgba(255, 255, 255, 0.6); /* 未滚动：白色下划线配白字 */
+  transition: width var(--transition-base), opacity 0.2s ease-in-out, background-color var(--transition-base);
 }
 
 .nav-link:hover::after {
