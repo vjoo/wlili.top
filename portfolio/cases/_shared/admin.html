@@ -7487,8 +7487,8 @@ function mbApplyGap() {
 }
 
 /* ===== 滚动字幕：把标题/副标题构建为无缝横向滚动 track =====
-   与 render.js 的 setupMockupMarquee 行为对齐：两份相同拷贝 + 填满视窗避免空隙 +
-   按「1000px/秒」换算时长让两行同速；并挂视口暂停。dir 为空则静态纯文本。 */
+   与 render.js 的 setupMockupMarquee 行为对齐：单拷贝 + modifiers(wrap) 无缝循环（只填到视口宽+一个单位，
+   大幅缩小合成层避免巨宽层卡顿）+ 按「1000px/秒」换算时长让两行同速；并挂视口暂停。dir 为空则静态纯文本。 */
 function mbBuildMarquee(el, text, dir, durSec) {
   el.innerHTML = '';
   if (!text) return;
@@ -7498,26 +7498,28 @@ function mbBuildMarquee(el, text, dir, durSec) {
   track.setAttribute('data-dir', dir);
   track.setAttribute('data-dur', durSec);
   var c0 = document.createElement('span'); c0.className = 'mockup-marquee-copy'; c0.setAttribute('data-text', text); c0.textContent = text;
-  var c1 = c0.cloneNode(true); c1.setAttribute('aria-hidden', 'true');
-  track.appendChild(c0); track.appendChild(c1);
+  track.appendChild(c0);
   el.appendChild(track);
   try {
     var hostW = el.clientWidth || 0;
-    var oneW = c0.scrollWidth || 0;
-    var reps = oneW > 0 ? Math.max(2, Math.ceil((hostW * 1.5) / oneW) + 1) : 2;
     var sep = '   ·   ';
+    // 先量一个单位（text+sep）真实宽度 → 最小平移步进
+    c0.textContent = text + sep;
+    var unitW = c0.scrollWidth || 0;
+    if (!unitW || !isFinite(unitW) || unitW <= 0) unitW = (hostW || 500);
+    // 只填到「视口宽 + 一个单位」即可无缝（单拷贝 + wrap，避免巨宽层卡顿）
+    var reps = Math.max(2, Math.ceil((hostW + unitW) / unitW));
     var filled = (text + sep).repeat(reps);
     filled = filled.slice(0, filled.length - sep.length);
-    c0.textContent = filled; c1.textContent = filled;
-    var copyW = c0.scrollWidth || oneW || hostW || 500;
-    if (!isFinite(copyW) || copyW <= 0) copyW = 500;
-    var duration = copyW / (1000 / durSec);
+    c0.textContent = filled;
+    var duration = unitW / (1000 / durSec);
     if (track._mqTween && typeof track._mqTween.kill === 'function') { try { track._mqTween.kill(); } catch (e) {} }
     track._mqTween = null;
     track.style.animation = 'none';
-    if (window.gsap && hostW > 0) {
-      if (dir === 'ltr') track._mqTween = gsap.fromTo(track, { x: -copyW }, { x: 0, duration: duration, ease: 'none', repeat: -1 });
-      else track._mqTween = gsap.to(track, { x: -copyW, duration: duration, ease: 'none', repeat: -1 });
+    if (window.gsap && hostW > 0 && unitW > 0) {
+      var wrapX = function (x) { return gsap.utils.wrap(-unitW, 0, parseFloat(x)) + 'px'; };
+      if (dir === 'ltr') track._mqTween = gsap.fromTo(track, { x: -unitW }, { x: 0, duration: duration, ease: 'none', repeat: -1, force3D: true, modifiers: { x: wrapX } });
+      else track._mqTween = gsap.to(track, { x: -unitW, duration: duration, ease: 'none', repeat: -1, force3D: true, modifiers: { x: wrapX } });
     }
     track.setAttribute('data-vp-pausable', '1');
     track.__pauseAuto = function () { if (track._mqTween) track._mqTween.pause(); };
@@ -7963,10 +7965,22 @@ function bindMbVisEvents() {
 
   $('mbvisBgType').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().bgType = b.dataset.bg; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
   $('mbvisBgColor').addEventListener('input', function () { mbS().bgColor = this.value; $('mbvisBgColorV').textContent = this.value; mbApplyCompose(); });
-  $('mbvisBgImg').addEventListener('change', function (e) {
+  $('mbvisBgImg').addEventListener('change', async function (e) {
     var f = e.target.files[0]; if (!f) return;
-    var r = new FileReader(); r.onload = function () { mbS().bgType = 'image'; mbS().bgImage = r.result; mbApplyCompose(); mbSyncCompose(); mbCommit(); };
-    r.readAsDataURL(f);
+    var prog = toastProgress('正在上传背景图...');
+    try {
+      // 背景大图：传 sectionType='mockup-banner' → 服务器缩到 1680px 宽（全屏 cover 背景，与 hero-banner 同规则），不再读 base64 直塞 content.json
+      const url = await uploadImage(f, 'jpg', 'mockup-banner');
+      if (!url) throw new Error('服务器未返回 URL');
+      mbS().bgType = 'image';
+      mbS().bgImage = url;
+      mbApplyCompose(); mbSyncCompose(); mbCommit();
+      prog.close('背景图已上传', 'success');
+    } catch (err) {
+      prog.close('上传失败：' + (err && err.message ? err.message : err), 'error');
+    } finally {
+      e.target.value = '';   // 允许重复选同一文件再次触发 change
+    }
   });
   $('mbvisBgReset').addEventListener('click', function () { mbS().bgType = 'theme'; mbS().bgImage = ''; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
   $('mbvisTitleInput').addEventListener('input', function () { mbS().title = this.value; $('mbvisTitle').textContent = this.value; mbCommit(); });

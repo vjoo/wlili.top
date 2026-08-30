@@ -1124,6 +1124,7 @@ var CaseRenderer = (function () {
     (root || document).querySelectorAll('video[autoplay]').forEach(function (v) {
       items.push({
         el: v,
+        inView: false,
         pause: function () { try { if (!v.paused) v.pause(); } catch (e) {} },
         resume: function () {
           try {
@@ -1138,6 +1139,7 @@ var CaseRenderer = (function () {
       if (typeof box.__pauseAuto !== 'function' || typeof box.__resumeAuto !== 'function') return;
       items.push({
         el: box,
+        inView: false,
         pause: function () { try { box.__pauseAuto(); } catch (e) {} },
         resume: function () { try { box.__resumeAuto(); } catch (e) {} }
       });
@@ -1148,6 +1150,7 @@ var CaseRenderer = (function () {
       entries.forEach(function (en) {
         var it = en.target.__vpItem;
         if (!it) return;
+        it.inView = en.isIntersecting;
         if (en.isIntersecting) it.resume(); else it.pause();
       });
     }, { rootMargin: '100px' }); // 提前 100px 进入/离开视口，避免边缘抖动反复启停
@@ -1156,7 +1159,12 @@ var CaseRenderer = (function () {
       io.observe(it.el);
     });
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) items.forEach(function (it) { it.pause(); });
+      if (document.hidden) {
+        items.forEach(function (it) { it.pause(); });
+      } else {
+        // 切回页面：恢复当前处于视口内的项目（离屏的继续省电），避免切走再切回后动画永久停住
+        items.forEach(function (it) { if (it.inView) it.resume(); });
+      }
     });
   }
 
@@ -2262,37 +2270,39 @@ var CaseRenderer = (function () {
       var host = track.parentElement;
       var hostW = host ? host.clientWidth : 0;
       try {
-        copy0.textContent = text;
-        var oneW = copy0.scrollWidth || 0;
-        var reps = oneW > 0 ? Math.max(2, Math.ceil((hostW * 1.5) / oneW) + 1) : 2;
         var sep = '   ·   ';
+        // 先量「一个单位（text+sep）」的真实宽度 —— 这才是无缝循环的最小平移步进
+        copy0.textContent = text + sep;
+        var unitW = copy0.scrollWidth || 0;
+        if (!unitW || !isFinite(unitW) || unitW <= 0) unitW = (hostW || 500);
+        // 只需填到「视口宽 + 一个单位」即可无缝（不整段翻倍拷贝 → 大幅缩小合成层，避免巨宽层卡顿）
+        var reps = Math.max(2, Math.ceil((hostW + unitW) / unitW));
         var filled = (text + sep).repeat(reps);
         filled = filled.slice(0, filled.length - sep.length);
         copy0.textContent = filled;
-        var copy1 = track.children[1];
-        if (!copy1) { copy1 = copy0.cloneNode(true); copy1.setAttribute('aria-hidden', 'true'); track.appendChild(copy1); }
-        copy1.textContent = filled;
 
-        // 一份（含间隔）宽度即平移步进；宽度兜底保证非负、动画可见（绝不为 0）
-        var copyW = copy0.scrollWidth || oneW || hostW || 500;
-        if (!isFinite(copyW) || copyW <= 0) copyW = 500;
         var durSec = parseFloat(track.getAttribute('data-dur')) || 20;
-        var duration = copyW / (1000 / durSec);   // 单份文字扫过所用秒数
+        var duration = unitW / (1000 / durSec);   // 滚动一个单位所用秒数（与单位宽成正比 → 两行同速）
 
         // 杀掉旧 tween（幂等重跑），并关闭可能残留的 CSS 动画，避免与 GSAP 的 transform 冲突
         if (track._mqTween && typeof track._mqTween.kill === 'function') { try { track._mqTween.kill(); } catch (e) {} }
         track._mqTween = null;
         track.style.animation = 'none';
 
-        // 仅在已布局（hostW>0）后真正起 tween；预挂载态（render 阶段）只建结构 + 注册暂停钩子
-        if (window.gsap && hostW > 0) {
+        // 仅一份内容 + modifiers 把 x 锁在 [-unitW,0) 循环 → 横向无缝；force3D 强制 GPU 合成层，避免主线程每帧重绘
+        if (window.gsap && hostW > 0 && unitW > 0) {
           var dir = track.getAttribute('data-dir');
+          var wrapX = function (x) { return gsap.utils.wrap(-unitW, 0, parseFloat(x)) + 'px'; };
           if (dir === 'ltr') {
-            // 左→右：从「-一份宽」滑到 0（第二份补位），到 0 时无缝回跳
-            track._mqTween = gsap.fromTo(track, { x: -copyW }, { x: 0, duration: duration, ease: 'none', repeat: -1 });
+            // 左→右：从「-一个单位」滑到 0（内容周期性 → 循环无缝）
+            track._mqTween = gsap.fromTo(track, { x: -unitW }, {
+              x: 0, duration: duration, ease: 'none', repeat: -1, force3D: true, modifiers: { x: wrapX }
+            });
           } else {
-            // 右→左：从 0 滑到「-一份宽」，到 -一份宽 时无缝回跳
-            track._mqTween = gsap.to(track, { x: -copyW, duration: duration, ease: 'none', repeat: -1 });
+            // 右→左：从 0 滑到「-一个单位」
+            track._mqTween = gsap.to(track, {
+              x: -unitW, duration: duration, ease: 'none', repeat: -1, force3D: true, modifiers: { x: wrapX }
+            });
           }
         }
       } catch (e) {}
