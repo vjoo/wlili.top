@@ -257,6 +257,43 @@
       "type": "stats",
       "title": "移动测试",
       "image": "/portfolio/cases/home/uploads/1787669720322_xnlxbi.jpg"
+    },
+    {
+      "id": "adbnr_example",
+      "type": "ad-banner",
+      "images": [
+        {
+          "image": "/portfolio/cases/home/uploads/1787669720322.jpg",
+          "imageFocus": "50,35,1.5"
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787732154325.jpg"
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787744251384.png"
+        },
+        {
+          "image": "/portfolio/cases/home/uploads/1787811385448.jpg"
+        }
+      ],
+      "marqueeDir": "rtl",
+      "marqueeDuration": "20",
+      "title": "SELECTED WORKS",
+      "subtitleTop": "Collection Vol.2",
+      "subtitleBottom": "This case contains all the projects, concepts and experiments for the 2026 year.",
+      "titleFont": "impact",
+      "titleSize": "220",
+      "titleWeight": "800",
+      "titleLineHeight": "1.05",
+      "titleLetterSpacing": "-0.03",
+      "titleColor": "#ffffff",
+      "titleUppercase": "1",
+      "subtitleSize": "20",
+      "subtitleColor": "rgba(255,255,255,0.8)",
+      "splitGap": "0",
+      "bgType": "theme",
+      "bgColor": "#0c0d10",
+      "bgImage": ""
     }
   ]
 }

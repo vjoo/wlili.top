@@ -5,7 +5,7 @@
   "pages": [
     {
       "key": "vjooProject",
-      "title": "消费级端",
+      "title": "消费端",
       "type": "detail",
       "level": 1,
       "parent": null,
@@ -103,7 +103,7 @@
       "target": false
     },
     {
-      "label": "项目集",
+      "label": "UI设计",
       "href": "../pjlist/index.html",
       "target": false
     }

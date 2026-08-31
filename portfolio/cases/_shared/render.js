@@ -62,7 +62,8 @@ var CaseRenderer = (function () {
     'split-head':    renderSplitHead,  // 分栏头（左序号标题 + 右描述，来自 sec-head）
     'product-hero':  renderProductHero,// 产品首屏（左文案 + 右产品面板，来自 hero）
     'scene-grid':    renderSceneGrid,  // 场景网格（居中头 + 场景卡片网格，来自 scenes）
-    'mockup-banner': renderMockupBanner // 3D 样机 Banner（手机/笔记本真 3D 旋转进场 + 标题/背景合成）
+    'mockup-banner': renderMockupBanner, // 3D 样机 Banner（手机/笔记本真 3D 旋转进场 + 标题/背景合成）
+    'ad-banner': renderAdBanner          // 广告 Banner（大标题裂开 + 16:9 图片无缝跑马灯 + 上下副标题）
   };
 
   var TYPE_LABELS = {
@@ -91,7 +92,8 @@ var CaseRenderer = (function () {
     'split-head': '分栏头',
     'product-hero': '产品首屏',
     'scene-grid': '场景网格',
-    'mockup-banner': '3D样机Banner'
+    'mockup-banner': '3D样机Banner',
+    'ad-banner': '广告Banner'
   };
 
   function init() {
@@ -219,6 +221,13 @@ var CaseRenderer = (function () {
     safeDownstream(function () { initViewportMedia(container); }, 'initViewportMedia');
     // 3D 样机 Banner（mockup-banner）：建 3D 外壳 + 落在静止视角 + 注册「滚进视口播一次」的进场动画（务必最后且独立，保证一定执行）
     safeDownstream(function () { initMockupBanners(); }, 'initMockupBanners');
+    // 广告 Banner（ad-banner）：大标题合体出现 → 上下裂开 → 露出 16:9 图片无缝跑马灯（GSAP 驱动，无此板块零开销）
+    safeDownstream(function () {
+      // lib-gsap 可能晚于 DOMContentLoaded 注入：等 GSAP 就绪再跑进场，否则 play() 会走非 GSAP 分支被 played 守卫永久跳过
+      var runAB = function () { initAdBanners(); };
+      if (window.gsap) { runAB(); return; }
+      var _t = 0, _iv = setInterval(function () { _t++; if (window.gsap || _t > 50) { clearInterval(_iv); runAB(); } }, 60);
+    }, 'initAdBanners');
     // 动画背景（animated）：延迟加载 ogl+引擎并启动所有 [data-animated-bg] 容器（无此板块零开销）
     if (container.querySelector('[data-animated-bg]')) ensureAnimatedBG();
     // 把新插入的所有板块注册进场动画（site-shell.js 暴露的接口）
@@ -1918,8 +1927,9 @@ var CaseRenderer = (function () {
   function applyFocusZoom(img) {
     if (img.dataset.focusApplied === '1') return true;
     var d = String(img.getAttribute('data-focus') || '50,50,1').split(',').map(Number);
-    var x = Math.max(0, Math.min(100, d[0] || 50));
-    var y = Math.max(0, Math.min(100, d[1] || 50));
+    // ⚠️ 不能写 `d[0] || 50`：x=0（拖到最左/最上）时 0 是 falsy 会被替换成 50 → 前台位置错误
+    var x = (d[0] === 0 || d[0]) ? Math.max(0, Math.min(100, d[0])) : 50;
+    var y = (d[1] === 0 || d[1]) ? Math.max(0, Math.min(100, d[1])) : 50;
     var box = img.parentElement;
     if (!box || !img.naturalWidth || img.naturalWidth < 2) return false; // 未加载完，等 onload 再应用
     var W = box.clientWidth, H = box.clientHeight;
@@ -2145,6 +2155,17 @@ var CaseRenderer = (function () {
   //      但 .mk-face-front/.mk-face-back/.mk-screen 可以加（内部无 3D 子元素，提层不会压扁），
   //      用于常驻 GPU 纹理，避免背面翻回正面时重新解码 UI 图造成单帧卡顿。
   function mkNum(v, d) { var n = parseFloat(v); return isNaN(n) ? d : n; }
+  // 遮罩强度解析（0~1 数值）：'' / '0' / off → 0（关闭）；'1' / on / true → 默认 0.75（旧开关值兼容）；
+  // 数字字符串（如 '0.3'）→ 0~1 直接采用；非法值 → 0
+  function overlayStrength(v, def) {
+    if (v === undefined || v === null || v === '') return 0;
+    var s = String(v).trim().toLowerCase();
+    if (s === '0' || s === 'off' || s === 'false' || s === 'none') return 0;
+    if (s === '1' || s === 'on' || s === 'true' || s === 'yes') return def || 0.75;
+    var n = parseFloat(s);
+    if (isNaN(n)) return 0;
+    return Math.max(0, Math.min(1, n));
+  }
   var MOCKUP_QUEUE = [];
   // 响应式等比缩放回调池：initMockupBanners 里每个 section 注册一个 fit 函数，
   // 窗口 resize（防抖 150ms）时统一重算，手机行始终等比适配相框（分辨率缩小/移动端不溢出）
@@ -2158,7 +2179,7 @@ var CaseRenderer = (function () {
       list = [{ ui: '', startRx: 22, startRy: -22, startTy: 480, endRx: 8, endRy: -22, endTy: 0, z: 0 }];
     }
 
-    // ① 背景层
+    // ① 背景层（theme / color / image / video；img 与 video 共用 .mockup-bg class → 淡入逻辑（is-bg）自动生效）
     var bgType = s.bgType || 'theme';
     var frameStyle = '';
     var bgHtml = '';
@@ -2168,6 +2189,11 @@ var CaseRenderer = (function () {
       frameStyle = ' style="background:#0c0d10"';
       // 首屏组件：不加 loading="lazy"，避免首帧才解码拖慢进场动画
       bgHtml = '<img class="mockup-bg" src="' + esc(s.bgImage) + '" alt="">';
+    } else if (bgType === 'video' && s.bgVideo) {
+      frameStyle = ' style="background:#0c0d10"';
+      var mbOv = overlayStrength(s.bgOverlay);
+      bgHtml = '<video class="mockup-bg" autoplay muted loop playsinline preload="metadata" src="' + esc(s.bgVideo) + '"></video>' +
+        (mbOv > 0 ? '<div class="mockup-bg-overlay" style="background:rgba(0,0,0,' + mbOv + ')"></div>' : '');
     }
 
     // ② 文字层（z-index：1=手机后方，5=手机前方；手机舞台恒为 2）
@@ -2541,6 +2567,302 @@ var CaseRenderer = (function () {
         rzTimer = setTimeout(function () {
           MOCKUP_FIT_FNS.forEach(function (fn) { try { fn(); } catch (e) {} });
         }, 150);
+      });
+    }
+  }
+
+  // ===== 广告 Banner（ad-banner）=====
+  // 结构：.ad-frame（黑底/背景）> .ad-text > [上副标题] + .ad-title-wrap（标题上下两半 + 中间图片带）+ [下副标题]
+  // 进场：大标题合体淡入 → 上下两半裂开（GSAP translateY）→ 中间图片带 scaleX 展开 → 露出 16:9 图片无缝跑马灯
+  // 跑马灯：复用 mockup 的 GSAP「单组 + modifiers(wrap)」无缝逻辑，但对象是图片组（而非文字）。
+  var AD_QUEUE = [];
+
+  function renderAdBanner(s) {
+    var section = sec('ad-banner-section');
+    var imgs = Array.isArray(s.images) ? s.images.filter(function (x) { return x && x.image; }) : [];
+
+    // ① 背景层（theme 渐变 / color 纯色 / image 图片 / video 视频；img 与 video 共用 .ad-bg class，
+    //    由 play() 统一淡入进场，initViewportMedia 对 video[autoplay] 自动离屏暂停）
+    var bgType = s.bgType || 'theme';
+    var frameStyle = '';
+    var bgHtml = '';
+    if (bgType === 'color' && s.bgColor) {
+      frameStyle = ' style="background:' + esc(s.bgColor) + '"';
+    } else if (bgType === 'image' && s.bgImage) {
+      frameStyle = ' style="background:#0c0d10"';
+      bgHtml = '<img class="ad-bg" src="' + esc(s.bgImage) + '" alt="">';
+    } else if (bgType === 'video' && s.bgVideo) {
+      frameStyle = ' style="background:#0c0d10"';
+      var adOv = overlayStrength(s.bgVideoOverlay);
+      bgHtml = '<video class="ad-bg" autoplay muted loop playsinline preload="metadata" src="' + esc(s.bgVideo) + '"></video>' +
+        (adOv > 0 ? '<div class="ad-bg-overlay" style="background:rgba(0,0,0,' + adOv + ')"></div>' : '');
+    }
+
+    // ② 标题（上下两半重叠，用 clip-path 各显一半，合起来是完整标题）
+    function mkStyle(obj) {
+      var pairs = [];
+      for (var k in obj) { if (obj[k] !== '' && obj[k] != null) pairs.push(k + ':' + obj[k]); }
+      return pairs.length ? ' style="' + pairs.join(';') + '"' : '';
+    }
+    var titleCls = 'ad-title';
+    if (s.titleFont === 'impact') titleCls += ' ad-title-impact';
+    else if (s.titleFont === 'condensed') titleCls += ' ad-title-condensed';
+    if (s.titleUppercase) titleCls += ' ad-upper';
+    var titleStyle = {};
+    if (s.titleSize) titleStyle['font-size'] = s.titleSize + 'px';
+    if (s.titleWeight) titleStyle['font-weight'] = s.titleWeight;
+    if (s.titleLineHeight) titleStyle['line-height'] = s.titleLineHeight;
+    if (s.titleLetterSpacing) {
+      var ls = s.titleLetterSpacing;
+      titleStyle['letter-spacing'] = /%$|px$|em$/.test(ls) ? ls : (parseFloat(ls) + 'em');
+    }
+    if (s.titleColor) titleStyle.color = s.titleColor;
+    var tAttr = mkStyle(titleStyle);
+    var titleHtml = '';
+    if (s.title) {
+      var tEsc = esc(s.title);
+      titleHtml =
+        '<h2 class="' + titleCls + ' ad-title-top"' + tAttr + '>' + tEsc + '</h2>' +
+        '<h2 class="' + titleCls + ' ad-title-bottom"' + tAttr + '>' + tEsc + '</h2>';
+    }
+
+    // 副标题（上下副标题共用 subtitleSize / subtitleColor / subtitleLetterSpacing 样式）
+    function subHtml(key, cls) {
+      var v = s[key];
+      if (!v) return '';
+      var st = {};
+      if (s.subtitleSize) st['font-size'] = s.subtitleSize + 'px';
+      if (s.subtitleColor) st.color = s.subtitleColor;
+      if (s.subtitleLetterSpacing) {
+        var ls = String(s.subtitleLetterSpacing).trim();
+        st['letter-spacing'] = /%$|px$|em$/.test(ls) ? ls : (parseFloat(ls) + 'em');
+      }
+      return '<p class="ad-subtitle ' + cls + '"' + mkStyle(st) + '>' + esc(v) + '</p>';
+    }
+
+    // ③ 中间图片带（16:9 无缝跑马灯）
+    var dir = s.marqueeDir || 'rtl';
+    var dur = mkNum(s.marqueeDuration, 20);
+    var marqueeHtml = '';
+    if (imgs.length) {
+      var items = imgs.map(function (it) {
+        return '<div class="ad-marquee-item"><img src="' + esc(it.image) + '" alt="" loading="lazy"' +
+          (it.imageFocus ? ' data-focus="' + esc(it.imageFocus) + '"' : '') + '></div>';
+      }).join('');
+      marqueeHtml = '<div class="ad-marquee-pos"><div class="ad-marquee" data-dir="' + dir + '" data-dur="' + dur + '">' +
+        '<div class="ad-marquee-track">' + items + '</div></div></div>';
+    }
+
+    section.innerHTML =
+      '<div class="ad-frame"' + frameStyle + '>' + bgHtml +
+        '<div class="ad-text">' +
+          '<div class="ad-title-wrap">' +
+            subHtml('subtitleTop', 'ad-sub-top') +
+            '<div class="ad-title-stack">' + titleHtml + marqueeHtml + '</div>' +
+            subHtml('subtitleBottom', 'ad-sub-bottom') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var frameEl = section.querySelector('.ad-frame');
+    if (frameEl) frameEl.classList.add('ad-pre');   // 标记已接管；CSS 默认可见，GSAP 缺位也不消失
+    // ⚠️ _adS/_adImgs 必须在 setupAdBannerMarquee 之前赋值：预挂载时 baseImgs 为空会提前 return，
+    //    导致「data-vp-pausable + __pauseAuto」没设置，而 initViewportMedia 在 initAdBanners 之前跑 → 离屏不暂停 → 滚动抢主线程掉帧卡顿
+    section._adS = s;
+    section._adImgs = imgs;
+    setupAdBannerMarquee(section);                  // 预挂载测一次（宽=0，仅注册视口暂停钩子）
+    AD_QUEUE.push(section);
+    return section;
+  }
+
+  // 16:9 图片无缝跑马灯（GSAP 驱动：单组图片 + modifiers(wrap) 锁死 [-groupW,0) 循环；force3D 强制 GPU 合成）
+  function setupAdBannerMarquee(section) {
+    var marq = section.querySelector('.ad-marquee');
+    if (!marq) return;
+    var track = marq.querySelector('.ad-marquee-track');
+    if (!track) return;
+    var baseImgs = section._adImgs || [];
+    if (!baseImgs.length) return;
+
+    // 幂等：清掉旧克隆（只保留「一组」长度，多余的是上次复制的）
+    Array.prototype.forEach.call(track.querySelectorAll('.ad-marquee-item'), function (it, idx) {
+      if (idx >= baseImgs.length) it.parentNode.removeChild(it);
+    });
+
+    function buildOne() {
+      return baseImgs.map(function (it) {
+        return '<div class="ad-marquee-item"><img src="' + esc(it.image) + '" alt="" loading="lazy"' +
+          (it.imageFocus ? ' data-focus="' + esc(it.imageFocus) + '"' : '') + '></div>';
+      }).join('');
+    }
+    // 1) 先放一组测总宽
+    track.innerHTML = buildOne();
+    var host = marq.parentNode; // .ad-marquee-pos
+    var hostW = (host && host.clientWidth) || 0;
+    var groupW = track.scrollWidth || 0;
+    if (!groupW || !isFinite(groupW) || groupW <= 0) groupW = hostW || 1000;
+    // 2) 复制填满到「视口宽 + 一组宽」即无缝（滚动一个 groupW 回到起点）
+    var reps = Math.max(2, Math.ceil((hostW + groupW) / groupW));
+    var fill = '';
+    for (var r = 0; r < reps; r++) fill += buildOne();
+    track.innerHTML = fill;
+    // 3) 复制出来的新图片应用焦点（data-focus → 微信式 zoom×cover + translate；未加载完的由 onload 委托补）
+    try { applyFocusZooms(track); } catch (e) {}
+
+    var durSec = parseFloat(marq.getAttribute('data-dur')) || 20;
+    var duration = groupW / (1000 / durSec);   // 与 mockup 同基准：1000px/秒
+
+    if (track._mqTween && typeof track._mqTween.kill === 'function') { try { track._mqTween.kill(); } catch (e) {} }
+    track._mqTween = null;
+    track.style.animation = 'none';
+
+    if (window.gsap && hostW > 0 && groupW > 0) {
+      var d = marq.getAttribute('data-dir');
+      var wrapX = function (x) { return gsap.utils.wrap(-groupW, 0, parseFloat(x)) + 'px'; };
+      if (d === 'ltr') {
+        track._mqTween = gsap.fromTo(track, { x: -groupW }, {
+          x: 0, duration: duration, ease: 'none', repeat: -1, force3D: true, modifiers: { x: wrapX }
+        });
+      } else {
+        track._mqTween = gsap.to(track, {
+          x: -groupW, duration: duration, ease: 'none', repeat: -1, force3D: true, modifiers: { x: wrapX }
+        });
+      }
+    }
+    // 接入持续动画视口控制（离屏/隐藏暂停，回视口恢复）
+    // ⚠️ data-vp-pausable 必须与 __pauseAuto/__resumeAuto 挂同一元素（track）——
+    //    initViewportMedia 检查「data-vp-pausable 元素自身」是否有这两个函数，
+    //    挂到 marq 上会被跳过 → 离屏仍一直跑、滚动抢主线程掉帧卡顿（曾踩坑）
+    track.setAttribute('data-vp-pausable', '1');
+    track.__pauseAuto = function () { if (track._mqTween) track._mqTween.pause(); };
+    track.__resumeAuto = function () { if (track._mqTween) track._mqTween.resume(); };
+  }
+
+  /* 标题自适应：按配置字号渲染后测文字实际宽度，超出容器则等比缩到刚好贴边（避免两侧被 overflow 裁切）。
+     幂等——每次都从 s.titleSize 重置回基准值再测。未配置字号时交给 CSS clamp，不干预。 */
+  function fitAdBannerTitle(section) {
+    var wrap = section.querySelector('.ad-title-wrap');
+    var top = section.querySelector('.ad-title-top');
+    var bot = section.querySelector('.ad-title-bottom');
+    if (!wrap || !top) return;
+    var avail = wrap.clientWidth;
+    if (!avail) return;                                   // 尚无布局，放弃本轮
+    var s = section._adS || {};
+    var base = parseFloat(s.titleSize) || 0;
+    if (!base) return;                                    // 未配置 → 用 CSS clamp，不干预
+    top.style.fontSize = base + 'px';
+    if (bot) bot.style.fontSize = base + 'px';
+    var textW = 0;
+    try {
+      var rng = document.createRange();
+      rng.selectNodeContents(top);
+      textW = rng.getBoundingClientRect().width;
+    } catch (e) { textW = 0; }
+    if (!textW || !isFinite(textW) || textW <= avail) return;
+    var scaled = Math.floor(base * (avail / textW));
+    if (scaled > 8) {
+      top.style.fontSize = scaled + 'px';
+      if (bot) bot.style.fontSize = scaled + 'px';
+    }
+  }
+
+  /* 进场动画：标题合体淡入 → 上下裂开 → 图片带展开；滚进视口播一次 */
+  function initAdBanners() {
+    if (!AD_QUEUE.length) return;
+    AD_QUEUE.forEach(function (section) {
+      var s = section._adS || {};
+      var frame = section.querySelector('.ad-frame');
+      try { fitAdBannerTitle(section); } catch (e) {}      // 先定字号，后面的 tH / splitPx 才准
+      try { setupAdBannerMarquee(section); } catch (e) {}   // 真实宽度重测
+
+      var top = section.querySelector('.ad-title-top');
+      var bot = section.querySelector('.ad-title-bottom');
+      var marq = section.querySelector('.ad-marquee');
+      var subs = section.querySelectorAll('.ad-subtitle');
+      var bg = section.querySelector('.ad-bg');   // 背景图（bgType=image 时存在）
+
+      // 初始隐藏态（GSAP 接管；无 GSAP 时 .ad-pre 不隐藏，仍可见）
+      if (window.gsap) {
+        // 进场初始态：透明度 0 + 大幅上移 + 微缩放 + 模糊聚焦（多属性叠加，进场非常明显）
+        if (top) gsap.set(top, { opacity: 0, y: 60, scale: 0.96, filter: 'blur(10px)' });
+        if (bot) gsap.set(bot, { opacity: 0, y: 60, scale: 0.96, filter: 'blur(10px)' });
+        Array.prototype.forEach.call(subs, function (el) { gsap.set(el, { opacity: 0, y: 30, filter: 'blur(6px)' }); });
+        if (marq) gsap.set(marq, { opacity: 0 });            // 出场改为淡入（替代 scaleX 展开）
+        if (bg) gsap.set(bg, { opacity: 0 });                // 背景图淡入（参考 mockup is-bg）
+      }
+
+      var played = false;
+      function play() {
+        if (played) return;
+        played = true;
+        section._adPlayed = true;                 // 供 fonts.ready 判断还能否改字号
+        if (!window.gsap) { if (frame) frame.classList.remove('ad-pre'); return; }
+        var tH = top ? top.offsetHeight : 0;
+        var marH = marq ? marq.offsetHeight : 0;
+        // splitGap 为空/'0' 视为「自动」：至少让图片带能刚好卡在裂口中间（marH/2 + 小间隙），同时不小于标题高度的 42%
+        var sgRaw = (s.splitGap === '' || s.splitGap == null) ? '' : String(s.splitGap).trim();
+        var splitPx = (sgRaw === '' || parseFloat(sgRaw) === 0)
+          ? Math.max(Math.round(tH * 0.42), Math.round(marH / 2) + 4)
+          : parseFloat(sgRaw);
+        var subTop = section.querySelector('.ad-sub-top');
+        var subBot = section.querySelector('.ad-sub-bottom');
+        var tl = gsap.timeline();
+        // 段0：背景图淡入（参考 mockup 的 is-bg，先于主体浮现，0.8s power2.out）
+        if (bg) tl.to(bg, { opacity: 1, duration: 0.8, ease: 'power2.out' }, 0);
+        // 段1：标题 + 上下副标题「淡入进场」——1.2s 透明度 0→1 + 上移 60px + 微缩放 + 模糊聚焦，
+        //      多属性叠加保证进场非常明显；副标题晚 0.3s 错落跟进
+        if (top) tl.to(top, { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out' }, 0);
+        if (bot) tl.to(bot, { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out' }, 0);
+        if (subTop) tl.to(subTop, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'power2.out' }, 0.3);
+        if (subBot) tl.to(subBot, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'power2.out' }, 0.3);
+        // 段2：裂开前停留 0.8s。裂开瞬间先注入 clip-path 把完整标题切成上下两半
+        // （此前两半不裁剪、重叠显示 = 完整标题，无中间拼接缝），再平滑位移分开
+        var splitStart = 1.0, splitDur = 0.9;
+        if (top) {
+          tl.set(top, { clipPath: 'inset(0 0 50% 0)' }, splitStart);
+          tl.to(top, { y: -splitPx, duration: splitDur, ease: 'power3.inOut' }, splitStart);
+        }
+        if (bot) {
+          tl.set(bot, { clipPath: 'inset(50% 0 0 0)' }, splitStart);
+          tl.to(bot, { y: splitPx, duration: splitDur, ease: 'power3.inOut' }, splitStart);
+        }
+        if (subTop) tl.to(subTop, { y: -splitPx, duration: splitDur, ease: 'power3.inOut' }, splitStart);
+        if (subBot) tl.to(subBot, { y: splitPx, duration: splitDur, ease: 'power3.inOut' }, splitStart);
+        // 段3：跑马灯淡入出现——裂开开始后 0.8s（=2.8s，裂开接近完成时）淡入，避免空窗也不抢裂开
+        var marqStart = splitStart + 0.8;
+        if (marq) tl.to(marq, { opacity: 1, duration: 0.8, ease: 'power2.out' }, marqStart);
+        tl.add(function () { if (frame) frame.classList.remove('ad-pre'); }, 0);
+        tl.add(function () { if (frame) frame.classList.add('ad-revealed'); }, marqStart);
+      }
+
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) { if (en.isIntersecting) { play(); if (io) io.disconnect(); } });
+        }, { threshold: 0.05, rootMargin: '0px' });
+        io.observe(section);
+        requestAnimationFrame(function () {
+          var r = section.getBoundingClientRect();
+          if (r.top < (window.innerHeight || 0) * 0.95 && r.bottom > 0) play();
+        });
+        setTimeout(function () {
+          if (!played) { var r2 = section.getBoundingClientRect(); if (r2.top < (window.innerHeight || 0) * 0.95 && r2.bottom > 0) play(); }
+        }, 300);
+      } else { play(); }
+    });
+    AD_QUEUE.length = 0;
+
+    // 字体/图片就绪后重测跑马灯（幂等，不重复克隆）
+    if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        try {
+          document.querySelectorAll('.ad-banner-section .ad-marquee').forEach(function (m) {
+            var sec = m.closest('.ad-banner-section');
+            if (!sec) return;
+            // 动画已播过就别再改字号了，否则 splitPx 是按旧 tH 算的会对不上裂口
+            if (!sec._adPlayed) { try { fitAdBannerTitle(sec); } catch (e) {} }
+            setupAdBannerMarquee(sec);
+          });
+        } catch (e) {}
       });
     }
   }

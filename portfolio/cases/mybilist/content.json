@@ -2,21 +2,46 @@
   "version": 2,
   "sections": [
     {
-      "id": "smt0yv412txlb",
-      "type": "hero-banner",
-      "textLayout": "center",
-      "title": "通行服务一体化综合治理",
-      "labels": [
-        "30 + 研发周期，落地 10+ 省市区，创立于 2010 年"
+      "id": "smtfze6ebi1s7",
+      "type": "ad-banner",
+      "images": [
+        {
+          "image": "/portfolio/cases/mybilist/uploads/1788146027664.jpg",
+          "imageFocus": "50,50,1.0"
+        },
+        {
+          "image": "/portfolio/cases/mybilist/uploads/1788145805613.jpg",
+          "imageFocus": "50,64,1.0"
+        },
+        {
+          "image": "/portfolio/cases/mybilist/uploads/1788146107789.jpg"
+        },
+        {
+          "image": "/portfolio/cases/mybilist/uploads/1788145889882.jpg",
+          "imageFocus": "50,68,1.0"
+        }
       ],
-      "description": "我们将身份核验与硬件门禁管控，整合为统一便民服务生态。",
-      "videoType": "image",
-      "image": "/portfolio/cases/mybilist/uploads/1787205087556.jpg",
-      "videoUrl": "",
-      "effect": "slide",
-      "autoplayDelay": "4000",
-      "images": [],
-      "animatedEffect": "topography"
+      "marqueeDir": "rtl",
+      "marqueeDuration": "20",
+      "title": "Smart Digital",
+      "subtitleTop": "面向社区通行与人居服务的智慧便民数字化综合治理",
+      "subtitleBottom": "我们将身份核验与硬件门禁管控，整合为统一便民服务生态。",
+      "titleFont": "impact",
+      "titleSize": "240",
+      "titleWeight": "400",
+      "titleLineHeight": "1.05",
+      "titleLetterSpacing": "-0.03",
+      "titleColor": "#ffffff",
+      "titleUppercase": "1",
+      "subtitleSize": "14",
+      "subtitleColor": "",
+      "splitGap": "0",
+      "bgType": "video",
+      "bgColor": "#0c0d10",
+      "bgImage": "/portfolio/cases/mybilist/uploads/1788161640645.jpg",
+      "subtitleLetterSpacing": "0.5",
+      "bgVideo": "/portfolio/cases/mybilist/uploads/1788161942591.mp4",
+      "bgVideoOverlay": "1"
     },
     {
       "id": "smt7bih21b2u6",
@@ -68,19 +93,22 @@
       "items": [
         {
           "name": "",
-          "photo": "/portfolio/cases/mybilist/uploads/1787206203706.jpg"
+          "photo": "/portfolio/cases/mybilist/uploads/1788159809617.jpg",
+          "imageFocus": "50,50,1.0"
         },
         {
           "name": "",
-          "photo": "/portfolio/cases/mybilist/uploads/1787206321208.jpg"
+          "photo": "/portfolio/cases/mybilist/uploads/1788159826032.jpg",
+          "imageFocus": "50,50,1.0"
         },
         {
           "name": "",
-          "photo": "/portfolio/cases/mybilist/uploads/1787206303466.jpg"
+          "photo": "/portfolio/cases/mybilist/uploads/1788159831817.jpg",
+          "imageFocus": "50,50,1.0"
         },
         {
           "name": "",
-          "photo": "/portfolio/cases/mybilist/uploads/1787206386046.jpg"
+          "photo": "/portfolio/cases/mybilist/uploads/1788160381021.jpg"
         }
       ],
       "avatarColorMode": "color"
@@ -119,8 +147,24 @@
           "offsetRem": 0,
           "images": [
             {
-              "id": "smt14548su14u",
-              "src": "/portfolio/cases/mybilist/uploads/1787977797190.jpg"
+              "id": "smtgo1spoi8hz",
+              "src": "/portfolio/cases/mybilist/uploads/1788160888236.jpg"
+            },
+            {
+              "id": "smtgo2vqo3ot1",
+              "src": "/portfolio/cases/mybilist/uploads/1788159120852.jpg"
+            },
+            {
+              "id": "smtgo3ct7jwjp",
+              "src": "/portfolio/cases/mybilist/uploads/1788159125373.jpg"
+            },
+            {
+              "id": "smtgw2lth4azy",
+              "src": "/portfolio/cases/mybilist/uploads/1788159631990.jpg"
+            },
+            {
+              "id": "smtgx1e5apcq8",
+              "src": "/portfolio/cases/mybilist/uploads/1788161270711.jpg"
             }
           ]
         },
@@ -128,12 +172,24 @@
           "offsetRem": 5,
           "images": [
             {
-              "id": "smt142vgvfzfh",
-              "src": "/portfolio/cases/mybilist/uploads/1787975388078.jpg"
+              "id": "smt142qltl74t",
+              "src": "/portfolio/cases/mybilist/uploads/1788159147660.jpg"
             },
             {
-              "id": "smt142qltl74t",
-              "src": "/portfolio/cases/mybilist/uploads/1787976038880.jpg"
+              "id": "smtgwtvk4bp47",
+              "src": "/portfolio/cases/mybilist/uploads/1788160904219.jpg"
+            },
+            {
+              "id": "smtgvsf3jh3k2",
+              "src": "/portfolio/cases/mybilist/uploads/1788160943810.jpg"
+            },
+            {
+              "id": "smtgw2tl1cxta",
+              "src": "/portfolio/cases/mybilist/uploads/1788159640856.jpg"
+            },
+            {
+              "id": "smtgwv06hs7wg",
+              "src": "/portfolio/cases/mybilist/uploads/1788161148417.jpg"
             }
           ]
         }
@@ -255,6 +311,12 @@
           "size": "tall"
         }
       ]
+    },
+    {
+      "id": "smtgzv14yb7jp",
+      "type": "hero",
+      "videoUrl": "/portfolio/cases/mybilist/uploads/1788166008181.mp4",
+      "videoType": "video"
     }
   ]
 }

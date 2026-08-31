@@ -999,6 +999,16 @@ body {
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-width: 0; }
 .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .form-group.full { grid-column: 1 / -1; }
+/* 表单页卡（字段带 tab 属性时）：顶部页卡 + 面板 */
+.form-tabs { display: flex; gap: 6px; margin: 0 0 14px; padding: 4px; background: var(--bg-secondary, #f2f2f4); border-radius: 12px; width: fit-content; max-width: 100%; }
+.form-tab-btn {
+  padding: 7px 16px; border: 0; border-radius: 9px; background: transparent;
+  font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+  transition: background .18s ease, color .18s ease;
+}
+.form-tab-btn:hover { color: var(--text-primary); }
+.form-tab-btn.on { background: #fff; color: var(--text-primary); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+.form-tab-panel { min-width: 0; }
 #editorFormContainer, #editorFormContainer > * { max-width: 100%; box-sizing: border-box; }
 .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
 /* 字段辅助说明：标题旁圆圈感叹号，悬停弹出气泡（不占编辑界面空间） */
@@ -1141,6 +1151,10 @@ body {
   border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 .form-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--border-color); }
+/* range 行：滑块 + 数值显示 */
+.form-range-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.form-range-row .form-range { flex: 1; min-width: 0; margin: 8px 0 2px; }
+.form-range-val { font-size: 12px; color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 34px; text-align: right; }
 /* 颜色选择器 */
 .ani-color-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .ani-color-input {
@@ -2309,7 +2323,8 @@ const TYPE_LABELS = {
   'split-head': '分栏头',
   'product-hero': '产品首屏',
   'scene-grid': '场景网格',
-  'mockup-banner': '3D样机Banner'
+  'mockup-banner': '3D样机Banner',
+  'ad-banner': '广告Banner'
 };
 
 /* ===== Type Descriptions ===== */
@@ -2339,7 +2354,8 @@ const TYPE_DESCS = {
   'split-head': '分栏头：左序号标题 + 右描述（来自 sec-head）',
   'product-hero': '产品首屏：左文案 + 右产品面板的 hero 布局（来自 hero）',
   'scene-grid': '场景网格：居中头 + 场景卡片网格，卡片可新增/删除（来自 scenes）',
-  'mockup-banner': '3D 样机首屏：手机/笔记本真 3D 外壳（带厚度侧壁）整圈旋转进场，可叠加标题副标题与背景，手机可 1~2 台、各自设定起止视角'
+  'mockup-banner': '3D 样机首屏：手机/笔记本真 3D 外壳（带厚度侧壁）整圈旋转进场，可叠加标题副标题与背景，手机可 1~2 台、各自设定起止视角',
+  'ad-banner': '广告 Banner：大标题整屏出现后从中间上下裂开，露出 16:9 图片无缝跑马灯，上下各挂副标题'
 };
 
 /* ===== Type Icons (inline SVG paths) ===== */
@@ -2368,7 +2384,8 @@ const TYPE_ICONS = {
   'split-head': '<line x1="4" y1="7" x2="13" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="9" y1="17" x2="16" y2="17"/>',
   'product-hero': '<rect x="3" y="4" width="9" height="16" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/>',
   'scene-grid': '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/>',
-  'mockup-banner': '<rect x="8" y="2" width="8" height="20" rx="2"/><line x1="11" y1="5" x2="13" y2="5"/><path d="M3 12a9 9 0 0 1 3-4"/><path d="M21 12a9 9 0 0 0-3-4"/>'
+  'mockup-banner': '<rect x="8" y="2" width="8" height="20" rx="2"/><line x1="11" y1="5" x2="13" y2="5"/><path d="M3 12a9 9 0 0 1 3-4"/><path d="M21 12a9 9 0 0 0-3-4"/>',
+  'ad-banner': '<rect x="3" y="6" width="18" height="12" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M8 9l-3 3 3 3"/><path d="M16 9l3 3-3 3"/>'
 };
 
 /* ===== 动画背景（animated）：效果与参数 =====
@@ -2837,12 +2854,16 @@ const TYPE_FIELDS = {
     { key: 'dur', label: '进场时长（毫秒，越大越慢）', type: 'text', placeholder: '4200', popupOnly: true },
 
     /* ---- 背景 ---- */
-    { key: 'bgType', label: '背景类型', type: 'select', options: ['theme', 'color', 'image'], popupOnly: true,
-      optionLabels: { 'theme': '主题渐变（默认深色）', 'color': '纯色', 'image': '背景图' }, default: 'theme' },
+    { key: 'bgType', label: '背景类型', type: 'select', options: ['theme', 'color', 'image', 'video'], popupOnly: true,
+      optionLabels: { 'theme': '主题渐变（默认深色）', 'color': '纯色', 'image': '背景图', 'video': '背景视频' }, default: 'theme' },
     { key: 'bgColor', label: '背景色', type: 'text', placeholder: '#0c0d10', popupOnly: true,
       dependsOn: { field: 'bgType', value: 'color' } },
     { key: 'bgImage', label: '背景大图（铺满相框，建议 16:9 横图）', type: 'image', popupOnly: true,
       dependsOn: { field: 'bgType', value: 'image' } },
+    { key: 'bgVideo', label: '背景视频（铺满相框，自动循环）', type: 'video', popupOnly: true,
+      hint: '上传 mp4/webm 或填直链；自动静音循环播放，离屏自动暂停', dependsOn: { field: 'bgType', value: 'video' } },
+    { key: 'bgOverlay', label: '视频遮罩强度（压暗）', type: 'range', min: 0, max: 1, step: 0.05, default: '0.75', popupOnly: true,
+      hint: '滑块调压暗程度，0 = 关闭，0.75 = 默认，1 = 全黑', dependsOn: { field: 'bgType', value: 'video' } },
 
     /* ---- 标题 / 副标题 ---- */
     { key: 'title', label: '主标题（选填，留空则不显示）', type: 'text', placeholder: '全民门卡', popupOnly: true },
@@ -2895,6 +2916,42 @@ const TYPE_FIELDS = {
     { key: 'stageSize', label: '手机视窗大小（px，方形；前台相框 100vh）', type: 'text', placeholder: '560', popupOnly: true },
     { key: 'globalZoom', label: '全局缩放（0.3~1.5）', type: 'text', placeholder: '1', popupOnly: true,
       hint: '高低偏移/重叠导致手机超出相框被裁掉时，调小它可把设备整体收进画面' }
+  ],
+  'ad-banner': [
+    { key: 'images', label: '图片带（多张 16:9，中间无缝跑马灯）', type: 'items-list', itemLabel: '图片', itemFields: [
+      { key: 'image', label: '图片（16:9 横图，支持焦点调整）', type: 'image', focus: true, stageRatio: '16/9',
+        compress: { mode: 'maxSide', side: 800 } }
+    ], tab: '图片' },
+    { key: 'marqueeDir', label: '跑马灯方向', type: 'select', options: ['rtl', 'ltr', ''],
+      optionLabels: { 'rtl': '右→左（默认）', 'ltr': '左→右', '': '静止（不滚动）' }, default: 'rtl',
+      hint: '图片带横向循环滚动方向；选「静止」则图片固定排列、不滚动', tab: '跑马灯' },
+    { key: 'marqueeDuration', label: '滚动速度（秒/1000px，越小越快）', type: 'text', placeholder: '20',
+      hint: '指「1000px 图片扫过所用时间」，所有图片线速度一致、无缝循环', tab: '跑马灯' },
+    { key: 'title', label: '大标题（裂开露出图片带，整块显示）', type: 'text', placeholder: 'SELECTED WORKS', tab: '文字' },
+    { key: 'subtitleTop', label: '上副标题', type: 'text', placeholder: 'Collection Vol.2', tab: '文字' },
+    { key: 'subtitleBottom', label: '下副标题', type: 'text', placeholder: 'This case contains all the projects, concepts and experiments for the year.', tab: '文字' },
+    { key: 'titleFont', label: '标题字体', type: 'select', options: ['default', 'impact', 'condensed'],
+      optionLabels: { 'default': '默认', 'impact': 'Impact 冲击体', 'condensed': 'Oswald 压缩体' }, default: 'default',
+      hint: 'Impact 对应参考图超大贴边标题效果', tab: '文字' },
+    { key: 'titleSize', label: '标题字号（px）', type: 'text', placeholder: '110', tab: '文字' },
+    { key: 'titleWeight', label: '标题字重', type: 'select', options: ['400', '600', '700', '800', '900'], default: '800', tab: '文字' },
+    { key: 'titleLineHeight', label: '标题行高', type: 'text', placeholder: '1.05', tab: '文字' },
+    { key: 'titleLetterSpacing', label: '标题字距（em，如 -0.03）', type: 'text', placeholder: '-0.03', tab: '文字' },
+    { key: 'titleColor', label: '标题颜色', type: 'text', placeholder: '#ffffff', tab: '文字' },
+    { key: 'titleUppercase', label: '标题大写', type: 'select', options: ['', '1'], optionLabels: { '': '否', '1': '是' }, default: '', tab: '文字' },
+    { key: 'subtitleSize', label: '副标题字号（px）', type: 'text', placeholder: '20', tab: '文字' },
+    { key: 'subtitleColor', label: '副标题颜色', type: 'text', placeholder: 'rgba(255,255,255,0.8)', tab: '文字' },
+    { key: 'subtitleLetterSpacing', label: '副标题字距（em，如 0.02）', type: 'text', placeholder: '0', tab: '文字',
+      hint: '上下副标题共用；填负数收紧、正数拉开' },
+    { key: 'splitGap', label: '裂开位移（px，0=按标题高度自动）', type: 'text', placeholder: '0',
+      hint: '标题上下两半裂开的间距；0 时自动取标题高度的约 42%', tab: '文字' },
+    { key: 'bgType', label: '背景类型', type: 'select', options: ['theme', 'color', 'image', 'video'],
+      optionLabels: { 'theme': '主题渐变（默认深色）', 'color': '纯色', 'image': '背景图', 'video': '背景视频' }, default: 'theme', tab: '背景' },
+    { key: 'bgColor', label: '背景色', type: 'text', placeholder: '#0c0d10', dependsOn: { field: 'bgType', value: 'color' }, tab: '背景' },
+    { key: 'bgImage', label: '背景大图（铺满相框）', type: 'image', dependsOn: { field: 'bgType', value: 'image' }, tab: '背景' },
+    { key: 'bgVideo', label: '背景视频（铺满相框，自动循环）', type: 'video', hint: '上传 mp4/webm 或填直链；自动静音循环播放，离屏自动暂停', dependsOn: { field: 'bgType', value: 'video' }, tab: '背景' },
+    { key: 'bgVideoOverlay', label: '视频遮罩强度（压暗）', type: 'range', min: 0, max: 1, step: 0.05, default: '0.75',
+      hint: '滑块调压暗程度，0 = 关闭，0.75 = 默认，1 = 全黑', dependsOn: { field: 'bgType', value: 'video' }, tab: '背景' }
   ]
 };
 
@@ -2950,7 +3007,7 @@ function getDefaultSection(type) {
       { ui: '', startRx: '22', startRy: '-22', startTy: '480', endRx: '8', endRy: '-22', endTy: '0', z: '0' },
       { ui: '', startRx: '22', startRy: '22', startTy: '480', endRx: '8', endRy: '22', endTy: '-30', z: '40' }
     ],
-      spins: '1', dur: '4200', abGap: '48', bgType: 'theme', bgColor: '#0c0d10', bgImage: '',
+      spins: '1', dur: '4200', abGap: '48', bgType: 'theme', bgColor: '#0c0d10', bgImage: '', bgVideo: '', bgOverlay: '',
       title: '', subtitle: '', titleZ: 'behind', titleAlign: 'left', titleVAlign: 'center',
       titleFont: 'default', titleSize: '64', titleWeight: '600', titleLineHeight: '1.1',
       titleLetterSpacing: 'normal', titleColor: '', titleUppercase: '', titleNoWrap: '', titleFull: '',
@@ -2958,6 +3015,10 @@ function getDefaultSection(type) {
       subtitleUppercase: '', subtitleNoWrap: '',
       titleMarquee: '', subtitleMarquee: '', marqueeDuration: '20',
       stagePos: 'right', stageSize: '560', globalZoom: '1' };
+    case 'ad-banner': return { ...base, images: [], marqueeDir: 'rtl', marqueeDuration: '20',
+      title: 'SELECTED WORKS', subtitleTop: 'Collection Vol.2', subtitleBottom: 'This case contains all the projects, concepts and experiments for the year.',
+      titleFont: 'impact', titleSize: '220', titleWeight: '800', titleLineHeight: '1.05', titleLetterSpacing: '-0.03', titleColor: '#ffffff', titleUppercase: '1',
+      subtitleSize: '20', subtitleColor: '', subtitleLetterSpacing: '', splitGap: '0', bgType: 'theme', bgColor: '#0c0d10', bgImage: '', bgVideo: '', bgVideoOverlay: '' };
     default: return base;
   }
 }
@@ -3128,7 +3189,7 @@ function getFmtPick(scope) {
   return el && el.value ? el.value : 'jpg';
 }
 
-async function uploadMedia(file, fmt, sectionType) {
+async function uploadMedia(file, fmt, sectionType, compress) {
   if (!file) return '';
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   if (MEDIA_EXT_ALL.indexOf(ext) < 0) {
@@ -3147,6 +3208,9 @@ async function uploadMedia(file, fmt, sectionType) {
   const payload = { ext, dataBase64: b64, format: fmt || 'jpg' };
   // sectionType: 截图墙(gallery)→服务器缩到700px宽；展示区(showcase 焦点图)→覆盖式缩到铺满显示框 722x785
   if (sectionType) payload.sectionType = sectionType;
+  // 字段声明式压缩（2026-08-31）：图片字段定义里写 compress:{mode:'maxSide',side:N}|{mode:'coverBox',w,h}
+  // → 服务器优先用它；无则回退 sectionType 类型映射。新组件压缩规则不用再改 server.py
+  if (compress && typeof compress === 'object' && compress.mode) payload.compress = compress;
   const data = await api('/upload', 'POST', payload);
   return data.url || '';
 }
@@ -3616,6 +3680,11 @@ function buildCardPreviewText(s) {
         ' · 转 ' + (s.spins || '1') + ' 圈';
       break;
     }
+    case 'ad-banner': {
+      const n = (Array.isArray(s.images) ? s.images.filter(x => x && x.image).length : 0);
+      text = '广告Banner：图片 ×' + n + (s.title ? ' · ' + s.title : '');
+      break;
+    }
     default: text = '（未知类型）';
   }
   if (text && text.length > 80) text = text.slice(0, 80) + '...';
@@ -3731,7 +3800,26 @@ function renderEditorForm(section) {
   // 统计当前 section 里「image 类型字段」的数量（只看当前可见字段）
   const imageFieldsInSection = fields.filter(f => f.type === 'image');
   let imageFieldRenderIndex = 0;
-  let html = '<div class="form-grid">';
+  // === 页卡分组：字段带 tab 属性 → 顶部页卡 + 按 tab 分面板（无 tab 字段归入第一个 tab） ===
+  const hasTabs = fields.some((f) => f.tab);
+  const tabs = [];
+  fields.forEach((f) => { if (f.tab && tabs.indexOf(f.tab) < 0) tabs.push(f.tab); });
+  let html = '';
+  let curTabIdx = -1;
+  const openPanel = (tabOf, i) => {
+    if (curTabIdx === i) return;
+    if (curTabIdx >= 0) html += '</div></div>';  // 关上一个 panel + form-grid
+    if (hasTabs) html += `<div class="form-tab-panel" data-ftab-panel="${esc(tabOf)}"${i === 0 ? '' : ' style="display:none"'}>`;
+    html += '<div class="form-grid">';
+    curTabIdx = i;
+  };
+  if (hasTabs) {
+    html += '<div class="form-tabs" data-form-tabs="1">' + tabs.map((t, i) =>
+      `<button type="button" class="form-tab-btn${i === 0 ? ' on' : ''}" data-ftab="${esc(t)}">${esc(t)}</button>`
+    ).join('') + '</div>';
+  } else {
+    html += '<div class="form-grid">';
+  }
   // mockup-banner：在表单顶部提供一个「可视化编辑器」入口，打开弹窗式拖拽调参（视角/动画/背景/标题遮挡）
   if (section.type === 'mockup-banner') {
     html += '<div class="form-group full" style="margin:0 0 14px"><div class="mbvis-launch" id="mbvisLaunchBox">' +
@@ -3741,6 +3829,7 @@ function renderEditorForm(section) {
       '<button type="button" class="mbvis-launch-btn" id="mbvisLaunchBtn">打开可视化编辑器</button></div></div>';
   }
   fields.forEach((f) => {
+    if (hasTabs) openPanel(f.tab || tabs[0], tabs.indexOf(f.tab || tabs[0]));
     const isFull = ['textarea', 'image', 'image-list', 'video', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker', 'animated-params'].includes(f.type);
     html += `<div class="form-group${isFull ? ' full' : ''}">`;
     html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : ''}${(f.type === 'select' && f.default !== undefined) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>` : ''}</label>`;
@@ -3765,6 +3854,20 @@ function renderEditorForm(section) {
         });
         html += `</select>`;
         break;
+      case 'range': {
+        // 0~1 强度滑块（如遮罩）：滑块 + 数值实时显示；值 '' / '0' = 0（关闭），旧开关 '1' → 默认 f.default
+        const rv = String(val || '');
+        const rCur = (rv === '' || rv === '1' || rv === 'true' || rv === 'on')
+          ? (rv === '' ? 0 : parseFloat(f.default) || 0.75)
+          : (Math.min(1, Math.max(0, parseFloat(rv) || 0)));
+        html += `<div class="form-range-row">
+          <input class="form-range" data-bind-key="${esc(f.key)}" data-bind-ftype="range" type="range"
+            min="${f.min != null ? esc(String(f.min)) : '0'}" max="${f.max != null ? esc(String(f.max)) : '1'}"
+            step="${f.step != null ? esc(String(f.step)) : '0.05'}" value="${rCur}" id="${fieldUid}">
+          <span class="form-range-val">${rCur.toFixed(2)}</span>
+        </div>`;
+        break;
+      }
       case 'page-select':
         // 站内页选择：选项来自 /api/pages 缓存（PAGE_OPTIONS），留空=无跳转
         html += `<select class="form-select" data-bind-key="${esc(f.key)}" data-bind-ftype="page-select" data-page-select="1" id="${fieldUid}">${pageSelectOptions(val)}</select>`;
@@ -3833,8 +3936,25 @@ function renderEditorForm(section) {
     }
     html += `</div>`;
   });
-  html += '</div>';
+  if (hasTabs) {
+    html += '</div></div>';  // 关最后一个 panel + form-grid
+  } else {
+    html += '</div>';
+  }
   container.innerHTML = html;
+  // 页卡切换：点击 tab 显示对应面板（无 tab 组件此容器不存在，零开销）
+  const ftabBar = container.querySelector('[data-form-tabs="1"]');
+  if (ftabBar) {
+    ftabBar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.form-tab-btn');
+      if (!btn) return;
+      const t = btn.getAttribute('data-ftab');
+      ftabBar.querySelectorAll('.form-tab-btn').forEach((b) => b.classList.toggle('on', b === btn));
+      container.querySelectorAll('.form-tab-panel').forEach((p) => {
+        p.style.display = (p.getAttribute('data-ftab-panel') === t) ? '' : 'none';
+      });
+    });
+  }
   // 站内页下拉兜底刷新：PAGE_OPTIONS 可能晚于编辑器渲染完成，确保加载后用最新列表重填选项并保留选中值
   refreshPageSelects();
   ensurePageOptions().then(() => refreshPageSelects());
@@ -3845,7 +3965,13 @@ function renderEditorForm(section) {
     const ftype = inp.dataset.bindFtype;
     const willRebuild = inp.hasAttribute('data-rebuild-on-change') || inp.getAttribute('data-rebuild-on-change') === 'true';
     const handler = () => {
-      if (ftype === 'tags') {
+      if (ftype === 'range') {
+        // 滑块：实时写值 + 更新旁边数值显示（0=关闭）
+        const v = Math.min(1, Math.max(0, parseFloat(inp.value) || 0));
+        state.sections[selectedIndex][k] = String(v);
+        const span = inp.parentElement && inp.parentElement.querySelector('.form-range-val');
+        if (span) span.textContent = v.toFixed(2);
+      } else if (ftype === 'tags') {
         state.sections[selectedIndex][k] = inp.value.split(',').map((s) => s.trim()).filter(Boolean);
       } else {
         state.sections[selectedIndex][k] = inp.value;
@@ -3998,7 +4124,10 @@ function bindImageField(key, uid, writeFn, sharedSlot) {
       const upSecType = isFocusField ? 'showcase'
         : (curSec.type === 'hero-banner' ? 'hero-banner'
         : (curSec.type === 'double-image' ? 'double-image' : ''));
-      const url = sharedSlot ? await uploadSharedQr(sharedSlot, file) : await uploadImage(file, fmt, upSecType);
+      // 字段声明式压缩：图片字段定义里 compress → 服务器优先用；无则回退类型映射
+      const fDef = (TYPE_FIELDS[curSec.type] || []).find((f) => f.key === key);
+      const fCompress = (fDef && fDef.compress) || undefined;
+      const url = sharedSlot ? await uploadSharedQr(sharedSlot, file) : await uploadImage(file, fmt, upSecType, fCompress);
       if (!url) throw new Error('服务器未返回 URL');
       // 焦点字段（showcase 图片）上传后保留焦点视图：空态 dropzone 有 data-focus-field 标记
       setImageValue(key, uid, url, writeFn, !!dz.parentElement.querySelector('.img-focus') || dz.getAttribute('data-focus-field') === '1');
@@ -4113,7 +4242,8 @@ function bindFocusPanel(panel, hiddenSel, onPos, frontBox) {
   const parse = (v) => {
     const p = String(v || '50,50,1').split(',').map(Number);
     const z = (p[2] && p[2] >= 1) ? p[2] : 1;
-    return { x: p[0] || 50, y: p[1] || 50, z: z };
+    // ⚠️ 不能写 `p[0] || 50`：x=0（拖到边缘）时 0 是 falsy 会被替换成 50 → 前后台位置错位
+    return { x: (p[0] === 0 || p[0]) ? p[0] : 50, y: (p[1] === 0 || p[1]) ? p[1] : 50, z: z };
   };
   const writeHidden = (x, y) => {
     // zoom 保留 1 位小数，避免 hidden 值无限增长
@@ -5074,9 +5204,10 @@ function renderItemImageControl(fkey, url, idx, field, focusValue, fmtPick) {
   const fy = fm ? fm[2] : '50';
   const fz = fm && fm[3] && parseFloat(fm[3]) >= 1 ? parseFloat(fm[3]).toFixed(1) : '1.0';
   // 图片初始 100% cover 铺满（JS bindFocusPanel 加载自然尺寸后接管缩放/平移，避免初始跳变）
+  const stageRatio = (field && field.stageRatio) || '4/5';
   const focusPanel = focus && has ? `
     <div class="img-focus" data-focus-bound="0">
-      <div class="img-focus-stage" style="aspect-ratio:4/5;">
+      <div class="img-focus-stage" style="aspect-ratio:${stageRatio};">
         <img class="img-focus-img" src="${esc(url)}" alt="" draggable="false" style="width:100%;height:100%;object-fit:cover;object-position:0 0;">
       </div>
       <input type="hidden" data-il-key="imageFocus" data-il-type="focus" value="${fx},${fy},${fz}">
@@ -5085,7 +5216,7 @@ function renderItemImageControl(fkey, url, idx, field, focusValue, fmtPick) {
         <input type="range" class="img-focus-zoom-range" min="1" max="3" step="0.1" value="${fz}">
         <span class="img-focus-zoom-val">${fz}×</span>
       </div>
-      <div class="img-focus-hint">拖动调整显示区域 · 放大后可选局部画面（前台比例 4:5）</div>
+      <div class="img-focus-hint">拖动调整显示区域 · 放大后可选局部画面（前台比例 ${stageRatio.replace('/', ':')}）</div>
     </div>` : '';
   return `
     <div class="il-image${focus ? ' il-image-focus' : ''}" data-il-key="${esc(fkey)}" data-il-type="image" data-il-idx="${idx}"${focus ? ' data-il-focus="1"' : ''}>
@@ -5247,10 +5378,15 @@ function bindItemImages(wrap, field, uid) {
           // team 头像 → 'team'（640x800）；product-hero 产品图 → 'product-hero'（1024x1280）；
           // hero-banner 轮播图（images[]）→ 'hero-banner'（1680px 宽）；masonry 封面 → 'masonry'（800px 宽）
           const curSec = (state.sections && state.sections[selectedIndex]) || {};
-          const upSecType = isFocus ? (curSec.type === 'product-hero' ? 'product-hero' : 'team')
+          const upSecType = isFocus ? (curSec.type === 'product-hero' ? 'product-hero'
+            : (curSec.type === 'ad-banner' ? 'ad-banner' : 'team'))
             : (curSec.type === 'hero-banner' ? 'hero-banner'
             : (curSec.type === 'masonry' ? 'masonry' : ''));
-          const url = await uploadImage(file, getFmtPick(imgWrap), upSecType);
+          // 字段声明式压缩：图片字段定义 compress → 服务器优先用；无则回退类型映射
+          const ilFkey = imgWrap.dataset.ilKey;
+          const ilImgField = (field.itemFields || []).find((ff) => ff.key === ilFkey) || field;
+          const ilCompress = (ilImgField && ilImgField.compress) || undefined;
+          const url = await uploadImage(file, getFmtPick(imgWrap), upSecType, ilCompress);
           if (!url) throw new Error('服务器未返回 URL');
           setUrl(url);
           prog.close('图片已上传', 'success');
@@ -5269,10 +5405,14 @@ function bindItemImages(wrap, field, uid) {
         else if (v) toast('请输入有效的 https:// 图片直链', 'error');
       });
     }
-    // 焦点面板（team 头像拖动调整显示区域）：写入 item.imageFocus（items-list 级，区别于 section 级 imageFocus）
-    // team 组件：前台 cover 框 248×310（4:5 竖框桌面默认），z_max 按此算保证前台 1:1 像素不模糊
+    // 焦点面板（拖动调整显示区域）：写入 item.imageFocus（items-list 级，区别于 section 级 imageFocus）
+    // 前台框参考尺寸用于 z_max（保证前台 1:1 像素不模糊）：team 4:5 竖框 248×310；ad-banner 16:9 用 444×250
     const focusPanel = imgWrap.querySelector('.img-focus');
     if (focusPanel) {
+      // ⚠️ fkey 直接用 dataset 取（setUrl 内部的 fkey 是函数级 const，这里不可见，引用会 ReferenceError → 上传重渲染时报"上传失败"）
+      const ilKey = imgWrap.dataset.ilKey;
+      const imgField = (field.itemFields || []).find((ff) => ff.key === ilKey) || field;
+      const fBox = (imgField.stageRatio === '16/9') ? [444, 250] : [248, 310];
       bindFocusPanel(focusPanel, '[data-il-key="imageFocus"]', (val) => {
         const idx = parseInt(imgWrap.dataset.ilIdx);
         const list = collectItemsList(key, uid);
@@ -5281,7 +5421,7 @@ function bindItemImages(wrap, field, uid) {
         list[idx] = item;
         state.sections[selectedIndex][key] = list;
         if (typeof onSectionChanged === 'function') onSectionChanged();
-      }, [248, 310]);
+      }, fBox);
     }
   });
 }
@@ -7528,13 +7668,41 @@ function mbBuildMarquee(el, text, dir, durSec) {
 }
 
 /* ===== 合成图层（背景 / 标题 / 手机舞台位置） ===== */
+// 遮罩强度解析（0~1）：'' / '0' → 0（关闭）；旧开关 '1' → 0.75；数字字符串 → 直接采用
+function mbOverlayVal(v) {
+  if (v === undefined || v === null || v === '') return 0;
+  var s = String(v).trim().toLowerCase();
+  if (s === '0' || s === 'off' || s === 'false') return 0;
+  if (s === '1' || s === 'on' || s === 'true') return 0.75;
+  var n = parseFloat(s);
+  if (isNaN(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
 function mbApplyCompose() {
   var s = mbS(); if (!s) return;
-  var banner = document.getElementById('mbvisBanner'); var bg = document.getElementById('mbvisBg');
+  var banner = document.getElementById('mbvisBanner');
+  var bg = document.getElementById('mbvisBg');
+  var bgv = document.getElementById('mbvisBgV');
+  var ov = document.getElementById('mbvisBgOverlayEl');
   var bt = s.bgType || 'theme';
-  if (bt === 'image' && s.bgImage) { banner.style.background = '#0c0d10'; bg.src = s.bgImage; bg.style.display = 'block'; }
-  else if (bt === 'color') { banner.style.background = s.bgColor || '#0c0d10'; bg.style.display = 'none'; }
-  else { banner.style.background = MB_THEME_BG; bg.style.display = 'none'; }
+  if (bt === 'image' && s.bgImage) {
+    banner.style.background = '#0c0d10'; bg.src = s.bgImage; bg.style.display = 'block';
+    bgv.style.display = 'none'; try { bgv.pause(); } catch (e) {}
+  } else if (bt === 'color') {
+    banner.style.background = s.bgColor || '#0c0d10'; bg.style.display = 'none';
+    bgv.style.display = 'none'; try { bgv.pause(); } catch (e) {}
+  } else if (bt === 'video' && s.bgVideo) {
+    banner.style.background = '#0c0d10'; bg.style.display = 'none';
+    if (bgv.getAttribute('src') !== s.bgVideo) bgv.setAttribute('src', s.bgVideo);
+    bgv.style.display = 'block';
+    try { var pp = bgv.play(); if (pp && pp.catch) pp.catch(function () {}); } catch (e) {}
+  } else {
+    banner.style.background = MB_THEME_BG; bg.style.display = 'none';
+    bgv.style.display = 'none'; try { bgv.pause(); } catch (e) {}
+  }
+  var ovV = mbOverlayVal(s.bgOverlay);
+  ov.hidden = !(bt === 'video' && ovV > 0);
+  ov.style.background = ovV > 0 ? 'rgba(0,0,0,' + ovV + ')' : '';
   var titleEl = document.getElementById('mbvisTitle');
   var subEl = document.getElementById('mbvisSub');
   var mqDur = parseFloat(s.marqueeDuration) || 20;
@@ -7582,6 +7750,12 @@ function mbSyncCompose() {
   document.querySelectorAll('#mbvisBgType button').forEach(function (b) { b.classList.toggle('on', b.dataset.bg === (s.bgType || 'theme')); });
   document.getElementById('mbvisBgColorField').hidden = (s.bgType || 'theme') !== 'color';
   document.getElementById('mbvisBgImgField').hidden = (s.bgType || 'theme') !== 'image';
+  document.getElementById('mbvisBgVideoField').hidden = (s.bgType || 'theme') !== 'video';
+  document.getElementById('mbvisBgOverlayField').hidden = (s.bgType || 'theme') !== 'video';
+  var ovEl = document.getElementById('mbvisBgOverlay');
+  var ovV = mbOverlayVal(s.bgOverlay);
+  if (ovEl) ovEl.value = String(ovV);
+  document.getElementById('mbvisBgOverlayV').textContent = ovV.toFixed(2);
   document.getElementById('mbvisBgColor').value = s.bgColor || '#0c0d10';
   document.getElementById('mbvisBgColorV').textContent = s.bgColor || '#0c0d10';
   document.getElementById('mbvisTitleInput').value = s.title || '';
@@ -7751,6 +7925,7 @@ function ensureMbVisDOM() {
     '.mbvis-stage{margin:0 auto 12px;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;background:radial-gradient(120% 120% at 50% 0%,#1c1f25 0%,#0c0d10 60%);border-radius:18px}',
     '.mbvis-banner{position:relative;width:1440px;height:720px;flex:0 0 auto;transform-origin:top center;border-radius:25px;overflow:hidden;background:radial-gradient(120% 120% at 50% 0%,#1c1f25 0%,#0c0d10 60%)}',
     '.mbvis-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0}',
+    '.mbvis-bg-overlay{position:absolute;inset:0;z-index:0;background:rgba(0,0,0,.75);pointer-events:none}',
     '.mbvis-text{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:0 7%;z-index:3;pointer-events:none}',
     '.mbvis-text.align-left{align-items:flex-start;text-align:left}',
     '.mbvis-text.align-center{align-items:center;text-align:center}',
@@ -7857,6 +8032,8 @@ function ensureMbVisDOM() {
     '  </div>',
     '  <div class="mbvis-stage" id="mbvisStage"><div class="mbvis-banner" id="mbvisBanner">',
     '    <img class="mbvis-bg" id="mbvisBg" alt="">',
+    '    <video class="mbvis-bg" id="mbvisBgV" muted loop playsinline hidden></video>',
+    '    <div class="mbvis-bg-overlay" id="mbvisBgOverlayEl" hidden></div>',
     '    <div class="mbvis-text align-left" id="mbvisText"><h2 class="mbvis-title-t" id="mbvisTitle"></h2><p class="mbvis-sub-t" id="mbvisSub"></p></div>',
     '    <div class="mbvis-stage-phone pos-right" id="mbvisPhoneStage"><div class="mbvis-viewport" id="mbvisViewport"><div class="mbvis-rig" id="mbvisRig"><div class="mbvis-phone-row" id="mbvisRow"></div></div></div></div>',
     '  </div></div>',
@@ -7884,9 +8061,11 @@ function ensureMbVisDOM() {
     '    <div class="mbvis-field"><label>B 前后深度 · <span id="mbvisBgzV">0</span>px（正=B 在前）</label><input type="range" id="mbvisBgz" min="-90" max="90" value="0"></div>',
     '  </div></div>',
     '  <div class="mbvis-panel" data-panel="compose" hidden><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">背景 · 色 / 图</div>',
-    '    <div class="mbvis-field"><label>背景类型</label><div class="mbvis-seg" id="mbvisBgType"><button data-bg="theme" class="on">主题渐变</button><button data-bg="color">纯色</button><button data-bg="image">图片</button></div></div>',
+    '    <div class="mbvis-field"><label>背景类型</label><div class="mbvis-seg" id="mbvisBgType"><button data-bg="theme" class="on">主题渐变</button><button data-bg="color">纯色</button><button data-bg="image">图片</button><button data-bg="video">视频</button></div></div>',
     '    <div class="mbvis-field" id="mbvisBgColorField" hidden><label>背景色</label><div class="mbvis-row-inline"><input type="color" id="mbvisBgColor" value="#0c0d10"><span id="mbvisBgColorV">#0c0d10</span></div></div>',
     '    <div class="mbvis-field" id="mbvisBgImgField" hidden><label>上传背景图</label><input type="file" id="mbvisBgImg" accept="image/*"><div class="mbvis-row-inline" style="margin-top:8px"><button class="mbvis-cap" id="mbvisBgReset">恢复默认主题</button></div></div>',
+    '    <div class="mbvis-field" id="mbvisBgVideoField" hidden><label>上传背景视频</label><input type="file" id="mbvisBgVideo" accept="video/*"></div>',
+    '    <div class="mbvis-field" id="mbvisBgOverlayField" hidden><label>视频遮罩强度 · <span id="mbvisBgOverlayV">0.75</span></label><input type="range" id="mbvisBgOverlay" min="0" max="1" step="0.05" value="0.75"></div>',
     '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">标题 / 副标题</div>',
     '    <div class="mbvis-field"><label>标题文字</label><input type="text" id="mbvisTitleInput" maxlength="60"></div>',
     '    <div class="mbvis-field"><label>副标题文字</label><input type="text" id="mbvisSubInput" maxlength="100"></div>',
@@ -7982,7 +8161,29 @@ function bindMbVisEvents() {
       e.target.value = '';   // 允许重复选同一文件再次触发 change
     }
   });
-  $('mbvisBgReset').addEventListener('click', function () { mbS().bgType = 'theme'; mbS().bgImage = ''; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisBgReset').addEventListener('click', function () { mbS().bgType = 'theme'; mbS().bgImage = ''; mbS().bgVideo = ''; mbS().bgOverlay = ''; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
+  $('mbvisBgVideo').addEventListener('change', async function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    var prog = toastProgress('正在上传背景视频...');
+    try {
+      const url = await uploadVideo(f, 'mp4');
+      if (!url) throw new Error('服务器未返回 URL');
+      mbS().bgType = 'video';
+      mbS().bgVideo = url;
+      mbApplyCompose(); mbSyncCompose(); mbCommit();
+      prog.close('背景视频已上传', 'success');
+    } catch (err) {
+      prog.close('上传失败：' + (err && err.message ? err.message : err), 'error');
+    } finally {
+      e.target.value = '';   // 允许重复选同一文件再次触发 change
+    }
+  });
+  $('mbvisBgOverlay').addEventListener('input', function () {
+    var v = Math.min(1, Math.max(0, parseFloat(this.value) || 0));
+    mbS().bgOverlay = String(v);
+    $('mbvisBgOverlayV').textContent = v.toFixed(2);
+    mbApplyCompose(); mbSyncCompose(); mbCommit();
+  });
   $('mbvisTitleInput').addEventListener('input', function () { mbS().title = this.value; $('mbvisTitle').textContent = this.value; mbCommit(); });
   $('mbvisSubInput').addEventListener('input', function () { mbS().subtitle = this.value; $('mbvisSub').textContent = this.value; mbCommit(); });
   $('mbvisZSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleZ = b.dataset.z; mbApplyCompose(); mbSyncCompose(); mbCommit(); });

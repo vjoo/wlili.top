@@ -3277,6 +3277,14 @@
   z-index: 0;
   opacity: 1;                /* 默认可见：JS 缺席 / 浏览器缓存旧文件也不会让文字或背景消失 */
 }
+/* 背景视频遮罩：压暗视频让文字清晰（z-index 与 .mockup-bg 同 0、DOM 在其后 → 盖视频；文字 z1/5 在其上） */
+.mockup-bg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+}
 /* ② 标题 / 副标题：可在手机后方(z:1)或前方(z:5) —— 由 render.js 写内联 z-index */
 .mockup-text {
   position: absolute;
@@ -3695,6 +3703,165 @@
   --pd-accent-orange: #ff9300;
   --pd-accent-red: #eb0000;
   --pd-accent-green: #26ee00;
+}
+/* ===== 广告 Banner（ad-banner）=====
+   大标题整屏出现 → 从中间上下裂开 → 露出 16:9 图片无缝跑马灯 → 上下副标题 */
+.container.ad-banner-section {
+  max-width: 100%;
+}
+.ad-banner-section {
+  height: 100vh;
+  display: flex;
+  align-items: stretch;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+.ad-frame {
+  position: relative;
+  width: 100%;
+  height: auto;
+  flex: 1 1 auto;
+  align-self: stretch;
+  max-width: none;
+  border-radius: 25px;
+  overflow: hidden;
+  background: radial-gradient(120% 120% at 50% 0%, #1c1f25 0%, #0c0d10 60%);
+}
+.ad-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 0;
+  opacity: 1;
+}
+/* 背景视频遮罩：压暗视频让文字更清晰（z-index 与 .ad-bg 同为 0、DOM 在其后 → 盖在视频上；文字 z-index 1 在其上） */
+.ad-bg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+}
+.ad-text {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 0;                     /* 用户要求贴边铺满：无水平内缩 */
+  box-sizing: border-box;
+  text-align: center;
+  pointer-events: none;
+}
+.ad-subtitle {
+  position: relative;
+  z-index: 3;                    /* 始终压在图片带（z-index:2）之上，裂开时不被遮挡 */
+  margin: 0;
+  max-width: 100%;               /* 不再限制 44ch：单行贴边（用户要求不换行） */
+  font-size: clamp(14px, 1.6vw, 20px);
+  font-weight: 400;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;           /* 副标题不换行（用户 2026-08-31 要求，对齐 mockup .no-wrap） */
+}
+.ad-title-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.ad-title-stack {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.ad-title {
+  margin: 0;
+  width: 100%;                    /* 上下两半必须同宽，合体淡入时才不会错位 */
+  font-size: clamp(80px, 18vw, 280px);   /* 用户要求再大 1 倍 */
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  white-space: nowrap;
+}
+/* 标题上下两半：重叠在同一位置。淡入阶段【不裁剪】= 完整标题（无中间拼接缝）；
+   裂开瞬间由 GSAP 注入 clip-path 切成上下两半，再各自位移分开 */
+.ad-title-bottom {
+  position: absolute;
+  left: 0; top: 0; right: 0;
+}
+.ad-title.ad-title-impact {
+  font-family: 'Impact', 'Haettenschweiler', 'Arial Narrow Bold', 'Franklin Gothic Bold', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.ad-title.ad-title-condensed {
+  font-family: 'Arial Narrow', 'Franklin Gothic Medium', 'Impact', 'Haettenschweiler', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+.ad-upper { text-transform: uppercase; }
+/* 中间图片带：flex 居中；opacity 淡入由 GSAP 接管 */
+.ad-marquee-pos {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;                    /* 压在标题之上，形成「图片从标题中间露出」 */
+}
+.ad-marquee {
+  position: relative;
+  width: 100%;
+  /* 用 vh 而非 %：% 在「绝对定位父级 + flex 居中」下不向子级传递确定高度，会塌成图片内容高度（约 42px 细条）。
+     vh 始终确定，22vh 在 100vh 框内约等于标题高度的合理图片带，裂开时横穿标题中间 */
+  height: clamp(120px, 22vh, 220px);
+  overflow: hidden;
+}
+.ad-marquee-track {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  width: max-content;
+  will-change: transform;
+}
+/* 图片项 = 16:9 显示框 wrapper，内层 img 由 applyFocusZoom 接管（data-focus 微信式焦点，
+   zoom×cover 尺寸 + translate 平移，maxWidth:none）。wrapper 必须 overflow:hidden + relative */
+.ad-marquee-item {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  flex: 0 0 auto;
+  margin-right: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #14161a;            /* 图片未加载/留白时的占位色 */
+}
+.ad-marquee-item img {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* applyFocusZoom 加载后覆盖 width/height/maxWidth/transform/objectPosition */
 }
 .pd-accent-blue   { color: var(--pd-accent-blue); }
 .pd-accent-orange { color: var(--pd-accent-orange); }
