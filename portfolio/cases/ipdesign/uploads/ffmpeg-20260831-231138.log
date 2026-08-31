@@ -1,0 +1,1147 @@
+ffmpeg started on 2026-08-31 at 23:11:38
+Report written to "ffmpeg-20260831-231138.log"
+Log level: 56
+Command line:
+"C:\\ffmpeg\\bin\\ffmpeg.exe" -v trace -i 1787903272655.mp4 -f null -
+ffmpeg version 8.0-essentials_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-openal --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberba  libavutil      60.  8.100 / 60.  8.100
+  libavcodec     62. 11.100 / 62. 11.100
+  libavformat    62.  3.100 / 62.  3.100
+  libavdevice    62.  1.100 / 62.  1.100
+  libavfilter    11.  4.100 / 11.  4.100
+  libswscale      9.  1.100 /  9.  1.100
+  libswresample   6.  1.100 /  6.  1.100
+Splitting the commandline.
+Reading option '-v' ... matched as option 'v' (set logging level) with argument 'trace'.
+Reading option '-i' ... matched as input url with argument '1787903272655.mp4'.
+Reading option '-f' ... matched as option 'f' (force container format (auto-detected otherwise)) with argument 'null'.
+Reading option '-' ... matched as output url.
+Finished splitting the commandline.
+Parsing a group of options: global .
+Applying option v (set logging level) with argument trace.
+Successfully parsed a group of options.
+Parsing a group of options: input url 1787903272655.mp4.
+Successfully parsed a group of options.
+Opening an input file: 1787903272655.mp4.
+[AVFormatContext @ 00000177f72a7580] Opening '1787903272655.mp4' for reading
+[file @ 00000177f72a7a80] Setting default whitelist 'file,crypto,data'
+Probing mov,mp4,m4a,3gp,3g2,mj2 score:100 size:2048
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] Format mov,mp4,m4a,3gp,3g2,mj2 probed with size=2048 and score=100
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'ftyp' parent:'root' sz: 32 8 685136
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] ISO: File Type Major Brand: isom
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'moov' parent:'root' sz: 3204 40 685136
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'mvhd' parent:'moov' sz: 108 8 3196
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] time scale = 1000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'trak' parent:'moov' sz: 2931 116 3196
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'tkhd' parent:'trak' sz: 92 8 2923
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'edts' parent:'trak' sz: 36 100 2923
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'elst' parent:'edts' sz: 28 8 28
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] track[0].edit_count = 1
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] duration=8042 time=1024 rate=1.000000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'mdia' parent:'trak' sz: 2795 136 2923
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'mdhd' parent:'mdia' sz: 32 8 2787
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'hdlr' parent:'mdia' sz: 45 40 2787
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] ctype=[0][0][0][0]
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stype=vide
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'minf' parent:'mdia' sz: 2710 85 2787
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'vmhd' parent:'minf' sz: 20 8 2702
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'dinf' parent:'minf' sz: 36 28 2702
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'dref' parent:'dinf' sz: 28 8 28
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] Unknown dref type 0x206c7275 size 12
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'stbl' parent:'minf' sz: 2646 64 2702
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'stsd' parent:'stbl' sz: 194 8 2638
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] size=178 4CC=avc1 codec_type=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'avcC' parent:'stsd' sz: 56 8 92
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'pasp' parent:'stsd' sz: 16 64 92
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] pasp: hSpacing 1, vSpacing 1
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'btrt' parent:'stsd' sz: 20 80 92
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'stts' parent:'stbl' sz: 24 202 2638
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] track[0].stts.entries = 1
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] sample_count=193, sample_duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'stss' parent:'stbl' sz: 20 226 2638
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] keyframe_count = 1
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'ctts' parent:'stbl' sz: 1560 246 2638
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] track[0].ctts.entries = 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1536
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=2560
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1024
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=1536
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] count=1, duration=512
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] dts shift 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'stsc' parent:'stbl' sz: 28 1806 2638
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] track[0].stsc.entries = 1
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'stsz' parent:'stbl' sz: 792 1834 2638
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] sample_size = 0 sample_count = 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'stco' parent:'stbl' sz: 20 2626 2638
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 0, offset cb4, dts 0, size 32046, distance 0, keyframe 1
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 1, offset 89e2, dts 512, size 6413, distance 1, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 2, offset a2ef, dts 1024, size 960, distance 2, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 3, offset a6af, dts 1536, size 1140, distance 3, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 4, offset ab23, dts 2048, size 520, distance 4, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 5, offset ad2b, dts 2560, size 5622, distance 5, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 6, offset c321, dts 3072, size 1274, distance 6, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 7, offset c81b, dts 3584, size 1385, distance 7, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 8, offset cd84, dts 4096, size 515, distance 8, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 9, offset cf87, dts 4608, size 8016, distance 9, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 10, offset eed7, dts 5120, size 2709, distance 10, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 11, offset f96c, dts 5632, size 1851, distance 11, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 12, offset 100a7, dts 6144, size 1285, distance 12, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 13, offset 105ac, dts 6656, size 12018, distance 13, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 14, offset 1349e, dts 7168, size 3215, distance 14, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 15, offset 1412d, dts 7680, size 2616, distance 15, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 16, offset 14b65, dts 8192, size 1853, distance 16, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 17, offset 152a2, dts 8704, size 15089, distance 17, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 18, offset 18d93, dts 9216, size 4360, distance 18, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 19, offset 19e9b, dts 9728, size 4031, distance 19, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 20, offset 1ae5a, dts 10240, size 1974, distance 20, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 21, offset 1b610, dts 10752, size 14168, distance 21, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 22, offset 1ed68, dts 11264, size 3297, distance 22, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 23, offset 1fa49, dts 11776, size 2617, distance 23, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 24, offset 20482, dts 12288, size 1578, distance 24, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 25, offset 20aac, dts 12800, size 13919, distance 25, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 26, offset 2410b, dts 13312, size 2441, distance 26, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 27, offset 24a94, dts 13824, size 1996, distance 27, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 28, offset 25260, dts 14336, size 1103, distance 28, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 29, offset 256af, dts 14848, size 10643, distance 29, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 30, offset 28042, dts 15360, size 1455, distance 30, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 31, offset 285f1, dts 15872, size 1116, distance 31, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 32, offset 28a4d, dts 16384, size 735, distance 32, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 33, offset 28d2c, dts 16896, size 8193, distance 33, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 34, offset 2ad2d, dts 17408, size 1114, distance 34, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 35, offset 2b187, dts 17920, size 791, distance 35, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 36, offset 2b49e, dts 18432, size 508, distance 36, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 37, offset 2b69a, dts 18944, size 5188, distance 37, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 38, offset 2cade, dts 19456, size 655, distance 38, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 39, offset 2cd6d, dts 19968, size 508, distance 39, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 40, offset 2cf69, dts 20480, size 305, distance 40, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 41, offset 2d09a, dts 20992, size 3591, distance 41, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 42, offset 2dea1, dts 21504, size 426, distance 42, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 43, offset 2e04b, dts 22016, size 3868, distance 43, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 44, offset 2ef67, dts 22528, size 715, distance 44, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 45, offset 2f232, dts 23040, size 284, distance 45, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 46, offset 2f34e, dts 23552, size 571, distance 46, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 47, offset 2f589, dts 24064, size 4786, distance 47, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 48, offset 3083b, dts 24576, size 1135, distance 48, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 49, offset 30caa, dts 25088, size 412, distance 49, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 50, offset 30e46, dts 25600, size 739, distance 50, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 51, offset 31129, dts 26112, size 6430, distance 51, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 52, offset 32a47, dts 26624, size 1686, distance 52, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 53, offset 330dd, dts 27136, size 577, distance 53, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 54, offset 3331e, dts 27648, size 1033, distance 54, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 55, offset 33727, dts 28160, size 9254, distance 55, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 56, offset 35b4d, dts 28672, size 2528, distance 56, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 57, offset 3652d, dts 29184, size 857, distance 57, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 58, offset 36886, dts 29696, size 1535, distance 58, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 59, offset 36e85, dts 30208, size 10704, distance 59, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 60, offset 39855, dts 30720, size 3612, distance 60, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 61, offset 3a671, dts 31232, size 1202, distance 61, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 62, offset 3ab23, dts 31744, size 1938, distance 62, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 63, offset 3b2b5, dts 32256, size 10925, distance 63, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 64, offset 3dd62, dts 32768, size 3478, distance 64, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 65, offset 3eaf8, dts 33280, size 1300, distance 65, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 66, offset 3f00c, dts 33792, size 2343, distance 66, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 67, offset 3f933, dts 34304, size 11794, distance 67, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 68, offset 42745, dts 34816, size 4173, distance 68, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 69, offset 43792, dts 35328, size 1654, distance 69, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 70, offset 43e08, dts 35840, size 2535, distance 70, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 71, offset 447ef, dts 36352, size 12426, distance 71, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 72, offset 47879, dts 36864, size 4310, distance 72, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 73, offset 4894f, dts 37376, size 1653, distance 73, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 74, offset 48fc4, dts 37888, size 2725, distance 74, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 75, offset 49a69, dts 38400, size 12750, distance 75, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 76, offset 4cc37, dts 38912, size 3745, distance 76, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 77, offset 4dad8, dts 39424, size 1640, distance 77, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 78, offset 4e140, dts 39936, size 2258, distance 78, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 79, offset 4ea12, dts 40448, size 11807, distance 79, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 80, offset 51831, dts 40960, size 2860, distance 80, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 81, offset 5235d, dts 41472, size 1282, distance 81, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 82, offset 5285f, dts 41984, size 1769, distance 82, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 83, offset 52f48, dts 42496, size 8960, distance 83, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 84, offset 55248, dts 43008, size 1860, distance 84, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 85, offset 5598c, dts 43520, size 835, distance 85, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 86, offset 55ccf, dts 44032, size 953, distance 86, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 87, offset 56088, dts 44544, size 5323, distance 87, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 88, offset 57553, dts 45056, size 1281, distance 88, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 89, offset 57a54, dts 45568, size 527, distance 89, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 90, offset 57c63, dts 46080, size 698, distance 90, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 91, offset 57f1d, dts 46592, size 5008, distance 91, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 92, offset 592ad, dts 47104, size 1189, distance 92, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 93, offset 59752, dts 47616, size 518, distance 93, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 94, offset 59958, dts 48128, size 1059, distance 94, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 95, offset 59d7b, dts 48640, size 8113, distance 95, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 96, offset 5bd2c, dts 49152, size 2357, distance 96, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 97, offset 5c661, dts 49664, size 960, distance 97, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 98, offset 5ca21, dts 50176, size 1746, distance 98, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 99, offset 5d0f3, dts 50688, size 9821, distance 99, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 100, offset 5f750, dts 51200, size 3462, distance 100, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 101, offset 604d6, dts 51712, size 1409, distance 101, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 102, offset 60a57, dts 52224, size 2294, distance 102, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 103, offset 6134d, dts 52736, size 11705, distance 103, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 104, offset 64106, dts 53248, size 4057, distance 104, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 105, offset 650df, dts 53760, size 1535, distance 105, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 106, offset 656de, dts 54272, size 2519, distance 106, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 107, offset 660b5, dts 54784, size 13476, distance 107, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 108, offset 69559, dts 55296, size 4345, distance 108, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 109, offset 6a652, dts 55808, size 1653, distance 109, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 110, offset 6acc7, dts 56320, size 2487, distance 110, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 111, offset 6b67e, dts 56832, size 11938, distance 111, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 112, offset 6e520, dts 57344, size 4040, distance 112, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 113, offset 6f4e8, dts 57856, size 1560, distance 113, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 114, offset 6fb00, dts 58368, size 2054, distance 114, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 115, offset 70306, dts 58880, size 11991, distance 115, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 116, offset 731dd, dts 59392, size 3171, distance 116, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 117, offset 73e40, dts 59904, size 1183, distance 117, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 118, offset 742df, dts 60416, size 1381, distance 118, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 119, offset 74844, dts 60928, size 11026, distance 119, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 120, offset 77356, dts 61440, size 2498, distance 120, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 121, offset 77d18, dts 61952, size 1075, distance 121, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 122, offset 7814b, dts 62464, size 1124, distance 122, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 123, offset 785af, dts 62976, size 8356, distance 123, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 124, offset 7a653, dts 63488, size 1345, distance 124, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 125, offset 7ab94, dts 64000, size 594, distance 125, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 126, offset 7ade6, dts 64512, size 595, distance 126, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 127, offset 7b039, dts 65024, size 3732, distance 127, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 128, offset 7becd, dts 65536, size 745, distance 128, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 129, offset 7c1b6, dts 66048, size 308, distance 129, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 130, offset 7c2ea, dts 66560, size 484, distance 130, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 131, offset 7c4ce, dts 67072, size 4511, distance 131, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 132, offset 7d66d, dts 67584, size 1019, distance 132, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 133, offset 7da68, dts 68096, size 369, distance 133, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 134, offset 7dbd9, dts 68608, size 756, distance 134, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 135, offset 7decd, dts 69120, size 7097, distance 135, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 136, offset 7fa86, dts 69632, size 1996, distance 136, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 137, offset 80252, dts 70144, size 705, distance 137, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 138, offset 80513, dts 70656, size 1497, distance 138, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 139, offset 80aec, dts 71168, size 9143, distance 139, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 140, offset 82ea3, dts 71680, size 3204, distance 140, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 141, offset 83b27, dts 72192, size 1121, distance 141, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 142, offset 83f88, dts 72704, size 1768, distance 142, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 143, offset 84670, dts 73216, size 9852, distance 143, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 144, offset 86cec, dts 73728, size 3497, distance 144, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 145, offset 87a95, dts 74240, size 1267, distance 145, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 146, offset 87f88, dts 74752, size 2156, distance 146, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 147, offset 887f4, dts 75264, size 11145, distance 147, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 148, offset 8b37d, dts 75776, size 3605, distance 148, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 149, offset 8c192, dts 76288, size 1384, distance 149, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 150, offset 8c6fa, dts 76800, size 2127, distance 150, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 151, offset 8cf49, dts 77312, size 11069, distance 151, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 152, offset 8fa86, dts 77824, size 3322, distance 152, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 153, offset 90780, dts 78336, size 1244, distance 153, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 154, offset 90c5c, dts 78848, size 2041, distance 154, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 155, offset 91455, dts 79360, size 11041, distance 155, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 156, offset 93f76, dts 79872, size 3092, distance 156, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 157, offset 94b8a, dts 80384, size 1088, distance 157, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 158, offset 94fca, dts 80896, size 1652, distance 158, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 159, offset 9563e, dts 81408, size 12199, distance 159, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 160, offset 985e5, dts 81920, size 2654, distance 160, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 161, offset 99043, dts 82432, size 1122, distance 161, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 162, offset 994a5, dts 82944, size 1343, distance 162, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 163, offset 999e4, dts 83456, size 9386, distance 163, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 164, offset 9be8e, dts 83968, size 1680, distance 164, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 165, offset 9c51e, dts 84480, size 759, distance 165, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 166, offset 9c815, dts 84992, size 933, distance 166, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 167, offset 9cbba, dts 85504, size 8791, distance 167, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 168, offset 9ee11, dts 86016, size 1329, distance 168, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 169, offset 9f342, dts 86528, size 614, distance 169, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 170, offset 9f5a8, dts 87040, size 809, distance 170, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 171, offset 9f8d1, dts 87552, size 7904, distance 171, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 172, offset a17b1, dts 88064, size 1220, distance 172, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 173, offset a1c75, dts 88576, size 490, distance 173, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 174, offset a1e5f, dts 89088, size 718, distance 174, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 175, offset a212d, dts 89600, size 5761, distance 175, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 176, offset a37ae, dts 90112, size 1045, distance 176, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 177, offset a3bc3, dts 90624, size 381, distance 177, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 178, offset a3d40, dts 91136, size 604, distance 178, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 179, offset a3f9c, dts 91648, size 4314, distance 179, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 180, offset a5076, dts 92160, size 814, distance 180, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 181, offset a53a4, dts 92672, size 308, distance 181, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 182, offset a54d8, dts 93184, size 481, distance 182, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 183, offset a56b9, dts 93696, size 2690, distance 183, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 184, offset a613b, dts 94208, size 650, distance 184, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 185, offset a63c5, dts 94720, size 270, distance 185, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 186, offset a64d3, dts 95232, size 430, distance 186, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 187, offset a6681, dts 95744, size 1484, distance 187, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 188, offset a6c4d, dts 96256, size 573, distance 188, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 189, offset a6e8a, dts 96768, size 220, distance 189, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 190, offset a6f66, dts 97280, size 336, distance 190, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 191, offset a70b6, dts 97792, size 636, distance 191, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] AVIndex stream 0, sample 192, offset a7332, dts 98304, size 286, distance 192, keyframe 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] Processing st: 0, edit list 0 - media time: 1024, duration: 98820
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 0 ctts: 1024, tts_index: 0, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 512 ctts: 2560, tts_index: 1, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 1024 ctts: 1024, tts_index: 2, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 1536 ctts: 0, tts_index: 3, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 2048 ctts: 512, tts_index: 4, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 2560 ctts: 2560, tts_index: 5, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 3072 ctts: 1024, tts_index: 6, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 3584 ctts: 0, tts_index: 7, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 4096 ctts: 512, tts_index: 8, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 4608 ctts: 2560, tts_index: 9, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 5120 ctts: 1024, tts_index: 10, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 5632 ctts: 0, tts_index: 11, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 6144 ctts: 512, tts_index: 12, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 6656 ctts: 2560, tts_index: 13, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 7168 ctts: 1024, tts_index: 14, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 7680 ctts: 0, tts_index: 15, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 8192 ctts: 512, tts_index: 16, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 8704 ctts: 2560, tts_index: 17, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 9216 ctts: 1024, tts_index: 18, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 9728 ctts: 0, tts_index: 19, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 10240 ctts: 512, tts_index: 20, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 10752 ctts: 2560, tts_index: 21, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 11264 ctts: 1024, tts_index: 22, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 11776 ctts: 0, tts_index: 23, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 12288 ctts: 512, tts_index: 24, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 12800 ctts: 2560, tts_index: 25, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 13312 ctts: 1024, tts_index: 26, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 13824 ctts: 0, tts_index: 27, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 14336 ctts: 512, tts_index: 28, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 14848 ctts: 2560, tts_index: 29, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 15360 ctts: 1024, tts_index: 30, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 15872 ctts: 0, tts_index: 31, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 16384 ctts: 512, tts_index: 32, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 16896 ctts: 2560, tts_index: 33, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 17408 ctts: 1024, tts_index: 34, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 17920 ctts: 0, tts_index: 35, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 18432 ctts: 512, tts_index: 36, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 18944 ctts: 2560, tts_index: 37, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 19456 ctts: 1024, tts_index: 38, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 19968 ctts: 0, tts_index: 39, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 20480 ctts: 512, tts_index: 40, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 20992 ctts: 1536, tts_index: 41, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 21504 ctts: 512, tts_index: 42, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 22016 ctts: 2560, tts_index: 43, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 22528 ctts: 1024, tts_index: 44, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 23040 ctts: 0, tts_index: 45, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 23552 ctts: 512, tts_index: 46, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 24064 ctts: 2560, tts_index: 47, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 24576 ctts: 1024, tts_index: 48, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 25088 ctts: 0, tts_index: 49, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 25600 ctts: 512, tts_index: 50, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 26112 ctts: 2560, tts_index: 51, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 26624 ctts: 1024, tts_index: 52, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 27136 ctts: 0, tts_index: 53, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 27648 ctts: 512, tts_index: 54, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 28160 ctts: 2560, tts_index: 55, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 28672 ctts: 1024, tts_index: 56, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 29184 ctts: 0, tts_index: 57, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 29696 ctts: 512, tts_index: 58, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 30208 ctts: 2560, tts_index: 59, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 30720 ctts: 1024, tts_index: 60, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 31232 ctts: 0, tts_index: 61, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 31744 ctts: 512, tts_index: 62, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 32256 ctts: 2560, tts_index: 63, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 32768 ctts: 1024, tts_index: 64, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 33280 ctts: 0, tts_index: 65, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 33792 ctts: 512, tts_index: 66, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 34304 ctts: 2560, tts_index: 67, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 34816 ctts: 1024, tts_index: 68, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 35328 ctts: 0, tts_index: 69, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 35840 ctts: 512, tts_index: 70, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 36352 ctts: 2560, tts_index: 71, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 36864 ctts: 1024, tts_index: 72, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 37376 ctts: 0, tts_index: 73, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 37888 ctts: 512, tts_index: 74, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 38400 ctts: 2560, tts_index: 75, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 38912 ctts: 1024, tts_index: 76, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 39424 ctts: 0, tts_index: 77, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 39936 ctts: 512, tts_index: 78, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 40448 ctts: 2560, tts_index: 79, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 40960 ctts: 1024, tts_index: 80, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 41472 ctts: 0, tts_index: 81, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 41984 ctts: 512, tts_index: 82, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 42496 ctts: 2560, tts_index: 83, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 43008 ctts: 1024, tts_index: 84, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 43520 ctts: 0, tts_index: 85, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 44032 ctts: 512, tts_index: 86, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 44544 ctts: 2560, tts_index: 87, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 45056 ctts: 1024, tts_index: 88, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 45568 ctts: 0, tts_index: 89, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 46080 ctts: 512, tts_index: 90, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 46592 ctts: 2560, tts_index: 91, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 47104 ctts: 1024, tts_index: 92, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 47616 ctts: 0, tts_index: 93, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 48128 ctts: 512, tts_index: 94, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 48640 ctts: 2560, tts_index: 95, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 49152 ctts: 1024, tts_index: 96, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 49664 ctts: 0, tts_index: 97, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 50176 ctts: 512, tts_index: 98, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 50688 ctts: 2560, tts_index: 99, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 51200 ctts: 1024, tts_index: 100, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 51712 ctts: 0, tts_index: 101, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 52224 ctts: 512, tts_index: 102, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 52736 ctts: 2560, tts_index: 103, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 53248 ctts: 1024, tts_index: 104, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 53760 ctts: 0, tts_index: 105, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 54272 ctts: 512, tts_index: 106, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 54784 ctts: 2560, tts_index: 107, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 55296 ctts: 1024, tts_index: 108, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 55808 ctts: 0, tts_index: 109, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 56320 ctts: 512, tts_index: 110, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 56832 ctts: 2560, tts_index: 111, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 57344 ctts: 1024, tts_index: 112, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 57856 ctts: 0, tts_index: 113, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 58368 ctts: 512, tts_index: 114, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 58880 ctts: 2560, tts_index: 115, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 59392 ctts: 1024, tts_index: 116, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 59904 ctts: 0, tts_index: 117, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 60416 ctts: 512, tts_index: 118, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 60928 ctts: 2560, tts_index: 119, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 61440 ctts: 1024, tts_index: 120, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 61952 ctts: 0, tts_index: 121, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 62464 ctts: 512, tts_index: 122, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 62976 ctts: 2560, tts_index: 123, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 63488 ctts: 1024, tts_index: 124, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 64000 ctts: 0, tts_index: 125, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 64512 ctts: 512, tts_index: 126, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 65024 ctts: 2560, tts_index: 127, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 65536 ctts: 1024, tts_index: 128, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 66048 ctts: 0, tts_index: 129, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 66560 ctts: 512, tts_index: 130, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 67072 ctts: 2560, tts_index: 131, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 67584 ctts: 1024, tts_index: 132, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 68096 ctts: 0, tts_index: 133, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 68608 ctts: 512, tts_index: 134, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 69120 ctts: 2560, tts_index: 135, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 69632 ctts: 1024, tts_index: 136, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 70144 ctts: 0, tts_index: 137, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 70656 ctts: 512, tts_index: 138, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 71168 ctts: 2560, tts_index: 139, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 71680 ctts: 1024, tts_index: 140, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 72192 ctts: 0, tts_index: 141, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 72704 ctts: 512, tts_index: 142, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 73216 ctts: 2560, tts_index: 143, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 73728 ctts: 1024, tts_index: 144, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 74240 ctts: 0, tts_index: 145, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 74752 ctts: 512, tts_index: 146, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 75264 ctts: 2560, tts_index: 147, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 75776 ctts: 1024, tts_index: 148, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 76288 ctts: 0, tts_index: 149, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 76800 ctts: 512, tts_index: 150, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 77312 ctts: 2560, tts_index: 151, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 77824 ctts: 1024, tts_index: 152, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 78336 ctts: 0, tts_index: 153, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 78848 ctts: 512, tts_index: 154, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 79360 ctts: 2560, tts_index: 155, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 79872 ctts: 1024, tts_index: 156, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 80384 ctts: 0, tts_index: 157, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 80896 ctts: 512, tts_index: 158, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 81408 ctts: 2560, tts_index: 159, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 81920 ctts: 1024, tts_index: 160, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 82432 ctts: 0, tts_index: 161, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 82944 ctts: 512, tts_index: 162, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 83456 ctts: 2560, tts_index: 163, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 83968 ctts: 1024, tts_index: 164, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 84480 ctts: 0, tts_index: 165, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 84992 ctts: 512, tts_index: 166, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 85504 ctts: 2560, tts_index: 167, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 86016 ctts: 1024, tts_index: 168, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 86528 ctts: 0, tts_index: 169, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 87040 ctts: 512, tts_index: 170, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 87552 ctts: 2560, tts_index: 171, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 88064 ctts: 1024, tts_index: 172, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 88576 ctts: 0, tts_index: 173, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 89088 ctts: 512, tts_index: 174, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 89600 ctts: 2560, tts_index: 175, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 90112 ctts: 1024, tts_index: 176, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 90624 ctts: 0, tts_index: 177, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 91136 ctts: 512, tts_index: 178, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 91648 ctts: 2560, tts_index: 179, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 92160 ctts: 1024, tts_index: 180, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 92672 ctts: 0, tts_index: 181, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 93184 ctts: 512, tts_index: 182, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 93696 ctts: 2560, tts_index: 183, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 94208 ctts: 1024, tts_index: 184, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 94720 ctts: 0, tts_index: 185, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 95232 ctts: 512, tts_index: 186, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 95744 ctts: 2560, tts_index: 187, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 96256 ctts: 1024, tts_index: 188, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 96768 ctts: 0, tts_index: 189, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 97280 ctts: 512, tts_index: 190, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 97792 ctts: 1536, tts_index: 191, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stts: 98304 ctts: 512, tts_index: 192, tts_count: 193
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] Offset DTS by 1024 to make first pts zero.
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] Setting codecpar->delay to 2 for stream st: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'udta' parent:'moov' sz: 157 3047 3196
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'meta' parent:'udta' sz: 149 8 149
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'hdlr' parent:'meta' sz: 33 8 137
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] ctype=[0][0][0][0]
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stype=mdir
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'ilst' parent:'meta' sz: 104 41 137
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'[169]too' parent:'ilst' sz: 36 8 96
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'[169]cmt' parent:'ilst' sz: 60 44 96
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'free' parent:'root' sz: 8 3244 685136
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] type:'mdat' parent:'root' sz: 681892 3252 685136
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] on_parse_exit_offset=3252
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] Before avformat_find_stream_info() pos: 3252 bytes read:32768 seeks:0 nb_streams:1
+[h264 @ 00000177f72a90c0] nal_unit_type: 7(SPS), nal_ref_idc: 3
+[h264 @ 00000177f72a90c0] Decoding VUI
+[h264 @ 00000177f72a90c0] nal_unit_type: 8(PPS), nal_ref_idc: 3
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 0, dts -83333
+[h264 @ 00000177f72a90c0] nal_unit_type: 7(SPS), nal_ref_idc: 3
+[h264 @ 00000177f72a90c0] Decoding VUI
+[h264 @ 00000177f72a90c0] nal_unit_type: 8(PPS), nal_ref_idc: 3
+[h264 @ 00000177f72a90c0] nal_unit_type: 6(SEI), nal_ref_idc: 0
+[h264 @ 00000177f72a90c0] nal_unit_type: 5(IDR), nal_ref_idc: 3
+[h264 @ 00000177f72a90c0] Format yuv420p chosen by get_format().
+[h264 @ 00000177f72a90c0] Reinit context to 1472x640, pix_fmt: yuv420p
+[h264 @ 00000177f72a90c0] no picture 
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] All info found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0: start_time: 0 duration: 8.041667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] format: start_time: 0 duration: 8.041667 (estimate from stream) bitrate=681 kb/s
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] After avformat_find_stream_info() pos: 35298 bytes read:65536 seeks:0 frames:1
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '1787903272655.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.3.100
+    comment         : vid:v0d69cg10004da8g21i7dld13sqdqb5g
+  Duration: 00:00:08.04, start: 0.000000, bitrate: 681 kb/s
+  Stream #0:0[0x1](und), 1, 1/12288: Video: h264 (High), 1 reference frame (avc1 / 0x31637661), yuv420p(progressive, left), 1470x630 [SAR 1:1 DAR 7:3], 0/1, 678 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : [0][0][0][0]
+      encoder         : Lavc62.11.100 libx264
+Successfully opened the file.
+Parsing a group of options: output url -.
+Applying option f (force container format (auto-detected otherwise)) with argument null.
+Successfully parsed a group of options.
+Opening an output file: -.
+[out#0/null @ 00000177f72a82c0] No explicit maps, mapping streams automatically...
+[vost#0:0/wrapped_avframe @ 00000177f72bac40] Created video stream from input stream 0:0
+detected 32 logical cores
+[h264 @ 00000177f777c580] nal_unit_type: 7(SPS), nal_ref_idc: 3
+[h264 @ 00000177f777c580] Decoding VUI
+[h264 @ 00000177f777c580] nal_unit_type: 8(PPS), nal_ref_idc: 3
+Successfully opened the file.
+Stream mapping:
+  Stream #0:0 -> #0:0 (h264 (native) -> wrapped_avframe (native))
+[vost#0:0/wrapped_avframe @ 00000177f72bac40] Starting thread...
+[vf#0:0 @ 00000177f777abc0] Starting thread...
+[vist#0:0/h264 @ 00000177f72a90c0] [dec:h264 @ 00000177f777b080] Starting thread...
+[in#0/mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7380] Starting thread...
+Press [q] to stop, [?] for help
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 1, dts -41667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 2, dts 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 3, dts 41667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 4, dts 83333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 5, dts 125000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 6, dts 166667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 7, dts 208333
+[h264 @ 00000177f777c580] nal_unit_type: 6(SEI), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 8, dts 250000
+[h264 @ 00000177f777c580] nal_unit_type: 5(IDR), nal_ref_idc: 3
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 9, dts 291667
+[h264 @ 00000177f777c580] Format yuv420p chosen by get_format().
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 10, dts 333333
+[h264 @ 00000177f777c580] Reinit context to 1472x640, pix_fmt: yuv420p
+[h264 @ 00000177f777c580] no picture 
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 11, dts 375000
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f777cc00] no picture 
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 12, dts 416667
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 13, dts 458333
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 14, dts 500000
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 15, dts 541667
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 16, dts 583333
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 17, dts 625000
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 18, dts 666667
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 19, dts 708333
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 20, dts 750000
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 21, dts 791667
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 22, dts 833333
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 23, dts 875000
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 24, dts 916667
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 25, dts 958333
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 26, dts 1000000
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 27, dts 1041667
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 28, dts 1083333
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 29, dts 1125000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 30, dts 1166667
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[graph -1 input from stream 0:0 @ 00000177f752fc00] w:1470 h:630 pixfmt:yuv420p tb:1/12288 fr:24/1 sar:1/1 csp:unknown range:unknown
+Filter 'Parsed_null_0' formats:
+  in[0] 'default': yuv420p yuyv422 rgb24 bgr24 yuv422p yuv444p yuv410p yuv411p gray monow monob pal8 yuvj420p yuvj422p yuvj444p uyvy422 uyyvyy411 bgr8 bgr4 bgr4_byte rgb8 rgb4 rgb4_byte nv12 nv21 argb rgba abgr bgra gray16be gray16le yuv440p yuvj440p yuva420p rgb48be rgb48le rgb565be rgb565le rgb555be rgb555le bgr565be bgr565le bgr555be bgr555le vaapi yuv420p16le yuv420p16be yuv422p16le yuv422p16be yuv444p16le yuv444p16be dxva2_vld rgb444le rgb444be bgr444le bgr444be ya8 bgr48be bgr48le yuv420p9be yuv420p9le yuv420p10be yuv420p10le yuv422p10be yuv422p10le yuv444p9be yuv444p9le yuv444p10be yuv444p10le yuv422p9be yuv422p9le gbrp gbrp9be gbrp9le gbrp10be gbrp10le gbrp16be gbrp16le yuva422p yuva444p yuva420p9be yuva420p9le yuva422p9be yuva422p9le yuva444p9be yuva444p9le yuva420p10be yuva420p10le yuva422p10be yuva422p10le yuva444p10be yuva444p10le yuva420p16be yuva420p16le yuva422p16be yuva422p16le yuva444p16be yuva444p16le vdpau xyz12le xyz12be nv16 nv20le nv20be rgba64be rgba64le bgra64be bgra64le yvyu422 ya16be ya16le gbrap gbra[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 31, dts 1208333
+  out[0] 'default': nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+yuv420p yuyv422 rgb24 bgr24 yuv422p yuv444p yuv410p yuv411p gray monow monob pal8 yuvj420p yuvj422p yuvj444p uyvy422 uyyvyy411 bgr8 bgr4 bgr4_byte rgb8 rgb4 rgb4_byte nv12 nv21 argb rgba abgr bgra gray16be gray16le yuv440p yuvj440p yuva420p rgb48be rgb48le rgb565be rgb565le rgb555be rgb555le bgr565be bgr565le bgr555be bgr555le vaapi yuv420p16le yuv420p16be yuv422p16le yuv422p16be yuv444p16le yuv444p16be dxva2_vld rgb444le rgb444be bgr444le bgr444be ya8 bgr48be bgr48le yuv420p9be yuv420p9le yuv420p10be yuv420p10le yuv422p10be yuv422p10le yuv444p9be yuv444p9le yuv444p10be yuv444p10le yuv422p9be yuv422p9le gbrp gbrp9be gbrp9le gbrp10be gbrp10le gbrp16be gbrp16le yuva422p yuva444p yuva420p9be yuva420p9le yuva422p9be yuva422p9le yuva444p9be yuva444p9le yuva420p10be yuva420p10le yuva422p10be yuva422p10le yuva444p10be yuva444p10le yuva420p16be yuva420p16le yuva422p16be yuva422p16le yuva444p16be yuva444p16le vdpau xyz12le xyz12be nv16 nv20le nv20be rgba64be rgba64le bgra64be bgra64le yvyu422 ya16be ya16le gbrap gbraFilter 'graph -1 input from stream 0:0' formats:
+  out[0] 'default': yuv420p
+Filter 'out_#0:0' formats:
+  in[0] 'default': yuv420p yuyv422 rgb24 bgr24 yuv422p yuv444p yuv410p yuv411p gray monow monob pal8 yuvj420p yuvj422p yuvj444p uyvy422 uyyvyy411 bgr8 bgr4 bgr4_byte rgb8 rgb4 rgb4_byte nv12 nv21 argb rgba abgr bgra gray16be gray16le yuv440p yuvj440p yuva420p rgb48be rgb48le rgb565be rgb565le rgb555be rgb555le bgr565be bgr565le bgr555be bgr555le vaapi yuv420p16le yuv420p16be yuv422p16le yuv422p16be yuv444p16le yuv444p16be dxva2_vld rgb444le rgb444be bgr444le bgr444be ya8 bgr48be bgr48le yuv420p9be yuv420p9le yuv420p10be yuv420p10le yuv422p10be yuv422p10le yuv444p9be yuv444p9le yuv444p10be yuv444p10le yuv422p9be yuv422p9le gbrp gbrp9be gbrp9le gbrp10be gbrp10le gbrp16be gbrp16le yuva422p yuva444p yuva420p9be yuva420p9le yuva422p9be yuva422p9le yuva444p9be yuva444p9le yuva420p10be yuva420p10le yuva422p10be yuva422p10le yuva444p10be yuva444p10le yuva420p16be yuva420p16le yuva422p16be yuva422p16le yuva444p16be yuva444p16le vdpau xyz12le xyz12be nv16 nv20le nv20be rgba64be rgba64le bgra64be bgra64le yvyu422 ya16be ya16le gbrap gbra[AVFilterGraph @ 00000177fa43a7c0] query_formats: 3 queried, 6 merged, 0 already done, 0 delayed
+[graph -1 input from stream 0:0 @ 00000177f752fc00] video frame properties congruent with link at pts_time: 0
+Output #0, null, to 'pipe:':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    comment         : vid:v0d69cg10004da8g21i7dld13sqdqb5g
+    encoder         : Lavf62.3.100
+  Stream #0:0(und), 0, 1/24: Video: wrapped_avframe, 1 reference frame, yuv420p(progressive, left), 1470x630 [SAR 1:1 DAR 7:3], 0/1, q=2-31, 200 kb/s, 24 fps, 24 tbn (default)
+    Metadata:
+      encoder         : Lavc62.11.100 wrapped_avframe
+      handler_name    : VideoHandler
+      vendor_id       : [0][0][0][0]
+[out#0/null @ 00000177f72a82c0] Starting thread...
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 32, dts 1250000
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 33, dts 1291667
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 34, dts 1333333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 35, dts 1375000
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 36, dts 1416667
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 37, dts 1458333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 38, dts 1500000
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 39, dts 1541667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 40, dts 1583333
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 41, dts 1625000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 42, dts 1666667
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 43, dts 1708333
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 44, dts 1750000
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 45, dts 1791667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 46, dts 1833333
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 47, dts 1875000
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 48, dts 1916667
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 49, dts 1958333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 50, dts 2000000
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 51, dts 2041667
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 52, dts 2083333
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 53, dts 2125000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 54, dts 2166667
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 55, dts 2208333
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 56, dts 2250000
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 57, dts 2291667
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 58, dts 2333333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 59, dts 2375000
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 60, dts 2416667
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 61, dts 2458333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 62, dts 2500000
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 63, dts 2541667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 64, dts 2583333
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 65, dts 2625000
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 66, dts 2666667
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 67, dts 2708333
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 68, dts 2750000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 69, dts 2791667
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 70, dts 2833333
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 71, dts 2875000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 72, dts 2916667
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 73, dts 2958333
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 74, dts 3000000
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 75, dts 3041667
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 76, dts 3083333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 77, dts 3125000
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 78, dts 3166667
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 79, dts 3208333
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 80, dts 3250000
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 81, dts 3291667
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 82, dts 3333333
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 83, dts 3375000
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 84, dts 3416667
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 85, dts 3458333
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 86, dts 3500000
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 87, dts 3541667
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 88, dts 3583333
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 89, dts 3625000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 90, dts 3666667
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 91, dts 3708333
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 92, dts 3750000
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 93, dts 3791667
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 94, dts 3833333
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 95, dts 3875000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 96, dts 3916667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 97, dts 3958333
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 98, dts 4000000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 99, dts 4041667
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 100, dts 4083333
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 101, dts 4125000
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 102, dts 4166667
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 103, dts 4208333
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 104, dts 4250000
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 105, dts 4291667
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 106, dts 4333333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 107, dts 4375000
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 108, dts 4416667
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 109, dts 4458333
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 110, dts 4500000
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 111, dts 4541667
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 112, dts 4583333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 113, dts 4625000
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 114, dts 4666667
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 115, dts 4708333
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 116, dts 4750000
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 117, dts 4791667
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 118, dts 4833333
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 119, dts 4875000
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 120, dts 4916667
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 121, dts 4958333
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 122, dts 5000000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 123, dts 5041667
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 124, dts 5083333
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 125, dts 5125000
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 126, dts 5166667
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 127, dts 5208333
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 128, dts 5250000
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 129, dts 5291667
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 130, dts 5333333
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 131, dts 5375000
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 132, dts 5416667
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 133, dts 5458333
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 134, dts 5500000
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 135, dts 5541667
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 136, dts 5583333
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 137, dts 5625000
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 138, dts 5666667
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 139, dts 5708333
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 140, dts 5750000
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 141, dts 5791667
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 142, dts 5833333
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 143, dts 5875000
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 144, dts 5916667
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 145, dts 5958333
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 146, dts 6000000
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 147, dts 6041667
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 148, dts 6083333
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 149, dts 6125000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 150, dts 6166667
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 151, dts 6208333
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 152, dts 6250000
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 153, dts 6291667
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 154, dts 6333333
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 155, dts 6375000
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 156, dts 6416667
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 157, dts 6458333
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 158, dts 6500000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 159, dts 6541667
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 160, dts 6583333
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 161, dts 6625000
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 162, dts 6666667
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 163, dts 6708333
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 164, dts 6750000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 165, dts 6791667
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 166, dts 6833333
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 167, dts 6875000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 168, dts 6916667
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 169, dts 6958333
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 170, dts 7000000
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 171, dts 7041667
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 172, dts 7083333
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 173, dts 7125000
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 174, dts 7166667
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 175, dts 7208333
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 176, dts 7250000
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 177, dts 7291667
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 178, dts 7333333
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 179, dts 7375000
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 180, dts 7416667
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 181, dts 7458333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 182, dts 7500000
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 183, dts 7541667
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 184, dts 7583333
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 185, dts 7625000
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 186, dts 7666667
+[h264 @ 00000177f777cc00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 187, dts 7708333
+[h264 @ 00000177f73374c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 188, dts 7750000
+[h264 @ 00000177f74e2500] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 189, dts 7791667
+[h264 @ 00000177f736e400] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f736ea80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 190, dts 7833333
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 191, dts 7875000
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7580] stream 0, sample 192, dts 7916667
+[h264 @ 00000177f72fa980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f72fb000] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[in#0/mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7380] EOF while reading input
+[in#0/mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7380] Terminating thread with return code 0 (success)
+[h264 @ 00000177f78ed3c0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f78eda80] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f78ee100] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f78ee900] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f76be480] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f76bcac0] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f76bd980] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[h264 @ 00000177f76bdd00] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 2
+[h264 @ 00000177f777c580] nal_unit_type: 1(Coded slice of a non-IDR picture), nal_ref_idc: 0
+[vist#0:0/h264 @ 00000177f72a90c0] [dec:h264 @ 00000177f777b080] Decoder thread received EOF packet
+[vist#0:0/h264 @ 00000177f72a90c0] [dec:h264 @ 00000177f777b080] Decoder returned EOF, finishing
+[vist#0:0/h264 @ 00000177f72a90c0] [dec:h264 @ 00000177f777b080] Terminating thread with return code 0 (success)
+[out_#0:0 @ 00000177f87b3300] EOF on sink link out_#0:0:default.
+[vf#0:0 @ 00000177f777abc0] Filtergraph returned EOF, finishing
+[vf#0:0 @ 00000177f777abc0] All consumers returned EOF
+[vost#0:0/wrapped_avframe @ 00000177f72bac40] [enc:wrapped_avframe @ 00000177f728afc0] Encoder thread received EOF
+[vost#0:0/wrapped_avframe @ 00000177f72bac40] Terminating thread with return code 0 (success)
+[out#0/null @ 00000177f72a82c0] All streams finished
+[out#0/null @ 00000177f72a82c0] Terminating thread with return code 0 (success)
+[vf#0:0 @ 00000177f777abc0] Terminating thread with return code 0 (success)
+[out#0/null @ 00000177f72a82c0] Output file #0 (pipe:):
+[out#0/null @ 00000177f72a82c0]   Output stream #0:0 (video): 193 frames encoded; 193 packets muxed (80288 bytes); 
+[out#0/null @ 00000177f72a82c0]   Total: 193 packets (80288 bytes) muxed
+[out#0/null @ 00000177f72a82c0] video:78KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame=  193 fps=0.0 q=-0.0 Lsize=N/A time=00:00:08.04 bitrate=N/A speed= 175x elapsed=0:00:00.04    
+[in#0/mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7380] Input file #0 (1787903272655.mp4):
+[in#0/mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7380]   Input stream #0:0 (video): 193 packets read (681884 bytes); 193 frames decoded; 0 decode errors; 
+[in#0/mov,mp4,m4a,3gp,3g2,mj2 @ 00000177f72a7380]   Total: 193 packets (681884 bytes) demuxed
+[AVIOContext @ 00000177f72a7bc0] Statistics: 685136 bytes read, 0 seeks
+
+Exiting with exit code 0
