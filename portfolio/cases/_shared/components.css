@@ -400,6 +400,15 @@
   inset: 0;
 }
 
+/* 复用瀑布流(截图墙同款)图片鼠标经过放大规则：悬停时图片放大到 1.04，
+   容器 overflow:hidden 自动裁切。作用域排除带 data-focus 的图，避免与焦点系统内联 transform 冲突 */
+.block-img-placeholder img:not([data-focus]) {
+  transition: transform var(--transition-base);
+}
+.block-img-placeholder:hover img:not([data-focus]) {
+  transform: scale(1.04);
+}
+
 .block-img-placeholder::before {
   content: '';
   position: absolute;
