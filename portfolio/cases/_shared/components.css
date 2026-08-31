@@ -2693,11 +2693,19 @@
    ================================================================ */
 [data-theme="dark"] .project-card,
 [data-theme="dark"] .project-card-image,
-[data-theme="dark"] .client-logo,
 [data-theme="dark"] .stat-item,
 [data-theme="dark"] .team-card-wrap,
 [data-theme="dark"] .team-photo-card {
   background: #1a1a1a;
+}
+
+/* 客户 Logo 条：无论深色/浅色主题，卡片背景始终白色（Logo 漂浮在白底上）
+   同时固定文字 logo 颜色为深色，避免在白底上看不清 */
+[data-theme="dark"] .client-logo {
+  background: #ffffff;
+}
+[data-theme="dark"] .client-logo-text {
+  color: #1a1a1a;
 }
 /* 文字类硬编码 → 深色主题下的浅色 */
 [data-theme="dark"] .stat-value,
