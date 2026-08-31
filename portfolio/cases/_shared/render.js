@@ -2427,6 +2427,7 @@ var CaseRenderer = (function () {
           section._mockupPhones.forEach(function (p, i) {
             var el = document.createElement('div');
             el.className = 'mk-phone';
+            el.setAttribute('data-shell', s.shellColor || 'black');   // 外壳配色（CSS 变量覆盖 face/back/wall）
             el.style.width = phoneW + 'px';
             el.style.height = phoneH + 'px';
             el.style.left = (i === 0 ? 0 : i * (phoneW + gap)) + 'px';
@@ -2494,7 +2495,17 @@ var CaseRenderer = (function () {
       // （renderMockupBanner 里那次是预挂载态、宽高为 0，仅用于注册视口暂停钩子；这里才是真实时长计算）
       try { setupMockupMarquee(section); } catch (e) {}
 
+      // 手机进场动画开关：关闭时手机直接以终点姿态静止展示（不播、不重播、不注册视口观察）
+      if (s.phoneAnim === '' || s.phoneAnim === '0') {
+        var nf = section.querySelector('.mockup-frame');
+        if (nf) { nf.classList.remove('mockup-pre'); nf.classList.add('is-bg'); nf.classList.add('is-revealed'); }
+        return;
+      }
+
       var spins = mkNum(s.spins, 1), dur = mkNum(s.dur, 4200), raf = null, played = false;
+      // 自动重播：进场动画播完 → 静止 replaySec 秒（视口内）→ 再播一次，循环（0=只播一次）
+      var replaySec = mkNum(s.replayInterval, 0), replayTimer = null, inView = false;
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
       function play() {
         if (raf) cancelAnimationFrame(raf);
@@ -2508,13 +2519,52 @@ var CaseRenderer = (function () {
             var ry = (u.start.ry - spins * 360) + ((u.end.ry - (u.start.ry - spins * 360)) * e);
             mockupApply(u, ty, rx, ry, sc);
           });
-          if (k < 1) raf = requestAnimationFrame(frame); else raf = null;
+          if (k < 1) { raf = requestAnimationFrame(frame); }
+          else {
+            raf = null;
+            scheduleReplay();   // 播放完成 → 调度自动重播（仅视口内、非 reduce）
+          }
         }
         raf = requestAnimationFrame(frame);
       }
+      function clearReplay() { if (replayTimer) { clearTimeout(replayTimer); replayTimer = null; } }
+      // 倒放收回：手机从终点平滑滑回起点（屏幕外）——不用 opacity（.mk-phone 透明度<1 会 flatten preserve-3d 成纸片），
+      // 用反向 transform。时长与升起动画同速（dur），收回不突兀（0.6s 太快被用户反馈太奇怪）。
+      function playReverse(cb) {
+        if (raf) cancelAnimationFrame(raf);
+        var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+        var revDur = dur;   // 与进场同速：升起多慢、收回就多慢，视觉对称
+        function frame(now) {
+          var k = (now - t0) / revDur; if (k > 1) k = 1;
+          var e = easeInOutCubic(k), sc = 0.92 + 0.08 * (1 - e);
+          units.forEach(function (u) {
+            var ty = u.end.ty + (u.start.ty - u.end.ty) * e;
+            var rx = u.end.rx + (u.start.rx - u.end.rx) * e;
+            var ry = u.end.ry + ((u.start.ry - spins * 360) - u.end.ry) * e;
+            mockupApply(u, ty, rx, ry, sc);
+          });
+          if (k < 1) { raf = requestAnimationFrame(frame); }
+          else { raf = null; if (cb) cb(); }
+        }
+        raf = requestAnimationFrame(frame);
+      }
+      function scheduleReplay() {
+        clearReplay();
+        if (replaySec > 0 && inView && !reduceMotion && !raf) {
+          replayTimer = setTimeout(function () {
+            replayTimer = null;
+            // 重播循环：先倒放收回屏幕外 → 停 2s → 重新升起（避免「终点→起点」瞬间跳变的生硬感）
+            playReverse(function () {
+              setTimeout(function () {
+                if (inView) tryPlay();
+              }, 2000);
+            });
+          }, replaySec * 1000);
+        }
+      }
       var io = null;
       function tryPlay() {
-        if (played) return;
+        if (raf) return;                 // 播放中不重入（原 played 一次性守卫改为播放态守卫，支持重播）
         played = true;
         // 立即把手机切到「隐藏起点」姿态（在下框架外），再播放升起到终点，避免先闪一下最终姿态
         units.forEach(function (u) { mockupApply(u, u.start.ty, u.start.rx, u.start.ry, 1); });
@@ -2525,23 +2575,31 @@ var CaseRenderer = (function () {
           setTimeout(function () { frame.classList.add('is-bg'); }, dur * 0.5);
           setTimeout(function () { frame.classList.add('is-revealed'); }, dur * 0.7);
         }
-        if (io) io.disconnect();
+        // 注意：不再 io.disconnect()——重播需要 IO 持续维护 inView（离屏暂停重播调度）
       }
       if ('IntersectionObserver' in window) {
         io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (en) { if (en.isIntersecting) tryPlay(); });
+          entries.forEach(function (en) {
+            inView = en.isIntersecting;
+            if (en.isIntersecting) {
+              if (!played) tryPlay();      // 首次进视口 → 播
+              else scheduleReplay();       // 已播过 → 恢复重播调度（从视口外回来）
+            } else {
+              clearReplay();               // 离屏 → 停止重播计时
+            }
+          });
         }, { threshold: 0, rootMargin: '0px 0px -20% 0px' });
         io.observe(section);
         // 兜底：首屏已可见（顶部进入视口上部、底部在视口下）时立即播；用 getBoundingClientRect 补一次，
         // 触发点限定在组件从底部上来约 20%（顶部位于视口 80% 高度以内），避免「刚露头就播完」
         requestAnimationFrame(function () {
           var r = section.getBoundingClientRect();
-          if (r.top < (window.innerHeight || 0) * 0.8 && r.bottom > 0) tryPlay();
+          if (r.top < (window.innerHeight || 0) * 0.8 && r.bottom > 0) { inView = true; tryPlay(); }
         });
         // 终极保险：再延迟 250ms 补一次（覆盖 IO 与 rAF 都错过的极端情况，例如浏览器失焦恢复后 IO 没重发）
         // 只在「从未播过」时生效（played 标志守住，避免反复回放到起点）
         setTimeout(function () { if (!played) { var r2 = section.getBoundingClientRect(); if (r2.top < (window.innerHeight || 0) * 0.8 && r2.bottom > 0) tryPlay(); } }, 250);
-      } else { tryPlay(); }
+      } else { inView = true; tryPlay(); }
     });
     MOCKUP_QUEUE.length = 0;
 

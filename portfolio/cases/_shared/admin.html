@@ -2842,9 +2842,12 @@ const TYPE_FIELDS = {
     /* ---- 手机组（1~2 台，每台独立起止视角 / 升降 / 前后景深） ---- */
     // flat 表单只保留 UI 截图上传（其余角度/升降/景深由弹窗可视化编辑器调）；itemFields 仅留 ui
     { key: 'phones', label: '手机列表（可新增/删除，最多 2 台）',
-      type: 'items-list', itemLabel: '手机', max: 2, itemFields: [
+      type: 'items-list', itemLabel: '手机', max: 2, tab: '手机', itemFields: [
         { key: 'ui', label: 'UI 截图（纯屏幕内容最佳，建议竖图 1170×2532 左右）', type: 'image' }
       ] },
+    { key: 'shellColor', label: '手机外壳颜色', type: 'select', options: ['black', 'silver', 'white', 'titanium', 'blue'], tab: '手机',
+      optionLabels: { 'black': '曜石黑（默认）', 'silver': '银色', 'white': '白色', 'titanium': '钛金属', 'blue': '深空蓝' }, default: 'black',
+      hint: '机身外壳配色（正面边框 / 后盖 / 侧壁同步）' },
     { key: 'abGap', label: 'A·B 间距（px，负=重叠）', type: 'text', placeholder: '48', popupOnly: true,
       hint: '仅 2 台时生效。设负值让两台重叠，再给第 2 台设正的前后景深，即成一前一后的景深摆放' },
 
@@ -2852,62 +2855,67 @@ const TYPE_FIELDS = {
     { key: 'spins', label: '整圈数（0=不转，0.5=半圈，1=转一圈，最大 3）', type: 'text', placeholder: '1', popupOnly: true,
       hint: '进场时绕 Y 轴旋转的整圈数；终点始终落在「终点 Y 旋转」设定的角度上' },
     { key: 'dur', label: '进场时长（毫秒，越大越慢）', type: 'text', placeholder: '4200', popupOnly: true },
+    { key: 'replayInterval', label: '自动重播间隔（秒，0=只播一次）', type: 'text', placeholder: '8', popupOnly: true,
+      hint: '进场动画播完 → 静止 N 秒 → 自动再播一次，循环；0 或留空 = 只播一次（原行为）' },
+    { key: 'phoneAnim', label: '手机进场动画', type: 'select', options: ['1', ''], popupOnly: true,
+      optionLabels: { '1': '播放（旋转升起进场 + 可重播）', '': '关闭（直接静止展示）' }, default: '1',
+      hint: '关闭后手机不播进场动画、直接显示终点姿态——适合把 3D 样机当静态展示用' },
 
     /* ---- 背景 ---- */
-    { key: 'bgType', label: '背景类型', type: 'select', options: ['theme', 'color', 'image', 'video'], popupOnly: true,
+    { key: 'bgType', label: '背景类型', type: 'select', options: ['theme', 'color', 'image', 'video'], tab: '背景',
       optionLabels: { 'theme': '主题渐变（默认深色）', 'color': '纯色', 'image': '背景图', 'video': '背景视频' }, default: 'theme' },
-    { key: 'bgColor', label: '背景色', type: 'text', placeholder: '#0c0d10', popupOnly: true,
+    { key: 'bgColor', label: '背景色', type: 'text', placeholder: '#0c0d10', tab: '背景',
       dependsOn: { field: 'bgType', value: 'color' } },
-    { key: 'bgImage', label: '背景大图（铺满相框，建议 16:9 横图）', type: 'image', popupOnly: true,
+    { key: 'bgImage', label: '背景大图（铺满相框，建议 16:9 横图）', type: 'image', tab: '背景',
       dependsOn: { field: 'bgType', value: 'image' } },
-    { key: 'bgVideo', label: '背景视频（铺满相框，自动循环）', type: 'video', popupOnly: true,
+    { key: 'bgVideo', label: '背景视频（铺满相框，自动循环）', type: 'video', tab: '背景',
       hint: '上传 mp4/webm 或填直链；自动静音循环播放，离屏自动暂停', dependsOn: { field: 'bgType', value: 'video' } },
-    { key: 'bgOverlay', label: '视频遮罩强度（压暗）', type: 'range', min: 0, max: 1, step: 0.05, default: '0.75', popupOnly: true,
+    { key: 'bgOverlay', label: '视频遮罩强度（压暗）', type: 'range', min: 0, max: 1, step: 0.05, default: '0.75', tab: '背景',
       hint: '滑块调压暗程度，0 = 关闭，0.75 = 默认，1 = 全黑', dependsOn: { field: 'bgType', value: 'video' } },
 
     /* ---- 标题 / 副标题 ---- */
-    { key: 'title', label: '主标题（选填，留空则不显示）', type: 'text', placeholder: '全民门卡', popupOnly: true },
-    { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '一个 App，管理你所有的门禁卡片', popupOnly: true },
-    { key: 'titleZ', label: '标题遮挡关系', type: 'select', options: ['behind', 'front'], popupOnly: true,
+    { key: 'title', label: '主标题（选填，留空则不显示）', type: 'text', placeholder: '全民门卡', tab: '文字' },
+    { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '一个 App，管理你所有的门禁卡片', tab: '文字' },
+    { key: 'titleZ', label: '标题遮挡关系', type: 'select', options: ['behind', 'front'], tab: '文字',
       optionLabels: { 'behind': '在手机后方（手机盖住标题）', 'front': '在手机前方（标题盖住手机）' }, default: 'behind',
       hint: '与手机重叠时谁盖谁。后方=被手机遮挡更有层次；前方=标题压在手机上更醒目' },
-    { key: 'titleAlign', label: '标题对齐', type: 'select', options: ['left', 'center'], popupOnly: true,
+    { key: 'titleAlign', label: '标题对齐', type: 'select', options: ['left', 'center'], tab: '文字',
       optionLabels: { 'left': '居左', 'center': '居中' }, default: 'left' },
-    { key: 'titleVAlign', label: '标题垂直位置', type: 'select', options: ['top', 'center', 'bottom'], popupOnly: true,
+    { key: 'titleVAlign', label: '标题垂直位置', type: 'select', options: ['top', 'center', 'bottom'], tab: '文字',
       optionLabels: { 'top': '顶部', 'center': '居中', 'bottom': '底部' }, default: 'center' },
-    { key: 'titleFont', label: '标题字体', type: 'select', options: ['default', 'impact', 'condensed'], popupOnly: true,
+    { key: 'titleFont', label: '标题字体', type: 'select', options: ['default', 'impact', 'condensed'], tab: '文字',
       optionLabels: { 'default': '默认', 'impact': 'Anton 冲击体', 'condensed': 'Oswald 压缩体' }, default: 'default',
       hint: 'Impact 字体对应参考图中超大贴边标题效果' },
-    { key: 'titleSize', label: '主标题字号（px）', type: 'text', placeholder: '64', popupOnly: true },
-    { key: 'titleWeight', label: '主标题字重', type: 'select', options: ['400', '600', '700', '800', '900'], popupOnly: true, default: '600' },
-    { key: 'titleLineHeight', label: '主标题行高', type: 'text', placeholder: '1.1', popupOnly: true },
-    { key: 'titleLetterSpacing', label: '主标题字距', type: 'select', options: ['xtight', 'tight', 'normal', 'wide'], popupOnly: true,
+    { key: 'titleSize', label: '主标题字号（px）', type: 'text', placeholder: '64', tab: '文字' },
+    { key: 'titleWeight', label: '主标题字重', type: 'select', options: ['400', '600', '700', '800', '900'], tab: '文字', default: '600' },
+    { key: 'titleLineHeight', label: '主标题行高', type: 'text', placeholder: '1.1', tab: '文字' },
+    { key: 'titleLetterSpacing', label: '主标题字距', type: 'select', options: ['xtight', 'tight', 'normal', 'wide'], tab: '文字',
       optionLabels: { 'xtight': '极紧', 'tight': '紧凑', 'normal': '正常', 'wide': '宽松' }, default: 'normal' },
-    { key: 'titleColor', label: '主标题颜色', type: 'text', placeholder: '#ffffff', popupOnly: true },
-    { key: 'titleUppercase', label: '主标题大写', type: 'select', options: ['', '1'], popupOnly: true,
+    { key: 'titleColor', label: '主标题颜色', type: 'text', placeholder: '#ffffff', tab: '文字' },
+    { key: 'titleUppercase', label: '主标题大写', type: 'select', options: ['', '1'], tab: '文字',
       optionLabels: { '': '否', '1': '是' }, default: '' },
-    { key: 'titleNoWrap', label: '主标题不换行', type: 'select', options: ['', '1'], popupOnly: true,
+    { key: 'titleNoWrap', label: '主标题不换行', type: 'select', options: ['', '1'], tab: '文字',
       optionLabels: { '': '否', '1': '是' }, default: '' },
-    { key: 'titleFull', label: '主标题贴边铺满', type: 'select', options: ['', '1'], popupOnly: true,
+    { key: 'titleFull', label: '主标题贴边铺满', type: 'select', options: ['', '1'], tab: '文字',
       optionLabels: { '': '否', '1': '是（取消内缩、标题撑满）' }, default: '' },
-    { key: 'subtitleSize', label: '副标题字号（px）', type: 'text', placeholder: '20', popupOnly: true },
-    { key: 'subtitleWeight', label: '副标题字重', type: 'select', options: ['400', '600', '700'], popupOnly: true, default: '400' },
-    { key: 'subtitleColor', label: '副标题颜色', type: 'text', placeholder: 'rgba(255,255,255,0.8)', popupOnly: true },
-    { key: 'subtitleLetterSpacing', label: '副标题字距', type: 'select', options: ['normal', 'wide'], popupOnly: true,
+    { key: 'subtitleSize', label: '副标题字号（px）', type: 'text', placeholder: '20', tab: '文字' },
+    { key: 'subtitleWeight', label: '副标题字重', type: 'select', options: ['400', '600', '700'], tab: '文字', default: '400' },
+    { key: 'subtitleColor', label: '副标题颜色', type: 'text', placeholder: 'rgba(255,255,255,0.8)', tab: '文字' },
+    { key: 'subtitleLetterSpacing', label: '副标题字距', type: 'select', options: ['normal', 'wide'], tab: '文字',
       optionLabels: { 'normal': '正常', 'wide': '宽松' }, default: 'normal' },
-    { key: 'subtitleUppercase', label: '副标题大写', type: 'select', options: ['', '1'], popupOnly: true,
+    { key: 'subtitleUppercase', label: '副标题大写', type: 'select', options: ['', '1'], tab: '文字',
       optionLabels: { '': '否', '1': '是' }, default: '' },
-    { key: 'subtitleNoWrap', label: '副标题不换行', type: 'select', options: ['', '1'], popupOnly: true,
+    { key: 'subtitleNoWrap', label: '副标题不换行', type: 'select', options: ['', '1'], tab: '文字',
       optionLabels: { '': '否', '1': '是' }, default: '',
       hint: '强制副标题单行显示，配合字号可调出参考图底部小字效果' },
 
     /* ---- 横向无缝循环滚动字幕 ---- */
-    { key: 'titleMarquee', label: '主标题滚动方向', type: 'select', options: ['', 'rtl', 'ltr'], popupOnly: true,
+    { key: 'titleMarquee', label: '主标题滚动方向', type: 'select', options: ['', 'rtl', 'ltr'], tab: '跑马灯',
       optionLabels: { '': '不滚动（静态）', 'rtl': '右→左（从右往左）', 'ltr': '左→右（从左往右）' }, default: '',
       hint: '开启后主标题变为无限横向滚动条；可让主标题右→左、副标题左→右，形成两行反向滚动' },
-    { key: 'subtitleMarquee', label: '副标题滚动方向', type: 'select', options: ['', 'rtl', 'ltr'], popupOnly: true,
+    { key: 'subtitleMarquee', label: '副标题滚动方向', type: 'select', options: ['', 'rtl', 'ltr'], tab: '跑马灯',
       optionLabels: { '': '不滚动（静态）', 'rtl': '右→左', 'ltr': '左→右' }, default: '' },
-    { key: 'marqueeDuration', label: '滚动速度（秒/圈，越小越快）', type: 'text', placeholder: '20', popupOnly: true,
+    { key: 'marqueeDuration', label: '滚动速度（秒/圈，越小越快）', type: 'text', placeholder: '20', tab: '跑马灯',
       hint: '指「1000px 文字扫过所用时间」，两行自动同速——长短不同的标题滚动线速度一致、无缝循环' },
 
     /* ---- 手机舞台 ---- */
@@ -3007,7 +3015,7 @@ function getDefaultSection(type) {
       { ui: '', startRx: '22', startRy: '-22', startTy: '480', endRx: '8', endRy: '-22', endTy: '0', z: '0' },
       { ui: '', startRx: '22', startRy: '22', startTy: '480', endRx: '8', endRy: '22', endTy: '-30', z: '40' }
     ],
-      spins: '1', dur: '4200', abGap: '48', bgType: 'theme', bgColor: '#0c0d10', bgImage: '', bgVideo: '', bgOverlay: '',
+      spins: '1', dur: '4200', abGap: '48', replayInterval: '', phoneAnim: '1', shellColor: 'black', bgType: 'theme', bgColor: '#0c0d10', bgImage: '', bgVideo: '', bgOverlay: '',
       title: '', subtitle: '', titleZ: 'behind', titleAlign: 'left', titleVAlign: 'center',
       titleFont: 'default', titleSize: '64', titleWeight: '600', titleLineHeight: '1.1',
       titleLetterSpacing: 'normal', titleColor: '', titleUppercase: '', titleNoWrap: '', titleFull: '',
@@ -7747,52 +7755,10 @@ function mbApplyCompose() {
 }
 function mbSyncCompose() {
   var s = mbS(); if (!s) return;
-  document.querySelectorAll('#mbvisBgType button').forEach(function (b) { b.classList.toggle('on', b.dataset.bg === (s.bgType || 'theme')); });
-  document.getElementById('mbvisBgColorField').hidden = (s.bgType || 'theme') !== 'color';
-  document.getElementById('mbvisBgImgField').hidden = (s.bgType || 'theme') !== 'image';
-  document.getElementById('mbvisBgVideoField').hidden = (s.bgType || 'theme') !== 'video';
-  document.getElementById('mbvisBgOverlayField').hidden = (s.bgType || 'theme') !== 'video';
-  var ovEl = document.getElementById('mbvisBgOverlay');
-  var ovV = mbOverlayVal(s.bgOverlay);
-  if (ovEl) ovEl.value = String(ovV);
-  document.getElementById('mbvisBgOverlayV').textContent = ovV.toFixed(2);
-  document.getElementById('mbvisBgColor').value = s.bgColor || '#0c0d10';
-  document.getElementById('mbvisBgColorV').textContent = s.bgColor || '#0c0d10';
-  document.getElementById('mbvisTitleInput').value = s.title || '';
-  document.getElementById('mbvisSubInput').value = s.subtitle || '';
-  document.querySelectorAll('#mbvisZSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.z === (s.titleZ || 'behind')); });
-  document.querySelectorAll('#mbvisAlignSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.align === (s.titleAlign || 'left')); });
-  document.querySelectorAll('#mbvisVAlignSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === (s.titleVAlign || 'center')); });
-  document.querySelectorAll('#mbvisFontSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.font === (s.titleFont || 'default')); });
-  document.querySelectorAll('#mbvisTitleWeightSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.w === String(s.titleWeight || '600')); });
-  document.querySelectorAll('#mbvisTitleLSSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.ls === (s.titleLetterSpacing || 'normal')); });
-  document.querySelectorAll('#mbvisSubWeightSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.w === String(s.subtitleWeight || '400')); });
-  document.querySelectorAll('#mbvisSubLSSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.ls === (s.subtitleLetterSpacing || 'normal')); });
-  document.querySelectorAll('#mbvisTitleStyleSeg button').forEach(function (b) {
-    var k = b.dataset.style;
-    var on = (k === 'uppercase' && s.titleUppercase) || (k === 'nowrap' && s.titleNoWrap) || (k === 'full' && s.titleFull);
-    b.classList.toggle('on', !!on);
-  });
-  document.querySelectorAll('#mbvisSubStyleSeg button').forEach(function (b) {
-    var k = b.dataset.style;
-    b.classList.toggle('on', (k === 'uppercase' && s.subtitleUppercase) || (k === 'nowrap' && s.subtitleNoWrap));
-  });
-  document.getElementById('mbvisTitleLineHeight').value = s.titleLineHeight || '';
-  document.getElementById('mbvisTitleColor').value = s.titleColor || '#ffffff';
-  document.getElementById('mbvisTitleColorV').textContent = s.titleColor || '#ffffff';
-  document.getElementById('mbvisSubColor').value = s.subtitleColor || '#ffffff';
-  document.getElementById('mbvisSubColorV').textContent = s.subtitleColor || '#ffffff';
   document.querySelectorAll('#mbvisPosSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.pos === (s.stagePos || 'right')); });
   var ss = parseFloat(s.stageSize || 560) || 560;
   document.getElementById('mbvisStageSize').value = ss;
   document.getElementById('mbvisStageV').textContent = Math.round(ss);
-  var tsv = parseFloat(s.titleSize || 64) || 64; document.getElementById('mbvisTitleSize').value = tsv; document.getElementById('mbvisTitleSizeV').textContent = Math.round(tsv);
-  var ssv = parseFloat(s.subtitleSize || 28) || 28; document.getElementById('mbvisSubSize').value = ssv; document.getElementById('mbvisSubSizeV').textContent = Math.round(ssv);
-  /* 滚动字幕 */
-  document.querySelectorAll('#mbvisTitleMarquee button').forEach(function (b) { b.classList.toggle('on', b.dataset.dir === (s.titleMarquee || '')); });
-  document.querySelectorAll('#mbvisSubMarquee button').forEach(function (b) { b.classList.toggle('on', b.dataset.dir === (s.subtitleMarquee || '')); });
-  var md = parseFloat(s.marqueeDuration || 20) || 20;
-  var mdEl = document.getElementById('mbvisMarqueeDur'); if (mdEl) { mdEl.value = md; document.getElementById('mbvisMarqueeDurV').textContent = Math.round(md); }
 }
 function mbSyncSpin() {
   var s = mbS(); if (!s) return;
@@ -7801,6 +7767,7 @@ function mbSyncSpin() {
   document.getElementById('mbvisP').value = mbP; document.getElementById('mbvisPV').textContent = mbP;
   var gz = parseFloat(s.globalZoom || 1) || 1; document.getElementById('mbvisZoom').value = gz; document.getElementById('mbvisZoomV').textContent = gz.toFixed(2);
   document.getElementById('mbvisRig').style.transform = 'scale(' + gz + ')';
+  var rv = parseFloat(s.replayInterval || 0) || 0; document.getElementById('mbvisReplay').value = rv; document.getElementById('mbvisReplayV').textContent = Math.round(rv);
   var gap = parseFloat(s.abGap || 48) || 48; document.getElementById('mbvisGap').value = gap; document.getElementById('mbvisGapV').textContent = Math.round(gap);
   var bz = mbReadZForIdx(mbPhoneCount === 2 ? 1 : 0); document.getElementById('mbvisBgz').value = bz; document.getElementById('mbvisBgzV').textContent = Math.round(bz);
 }
@@ -8039,7 +8006,7 @@ function ensureMbVisDOM() {
     '  </div></div>',
     '  <div class="mbvis-opzoom"><label>操作视窗缩放 · <span id="mbvisOpzoomVal">0.62</span></label><input type="range" id="mbvisOpzoom" min="0.40" max="1.00" step="0.02" value="0.62"></div>',
     '  <div class="mbvis-tabs" id="mbvisTabs">',
-    '    <button data-tab="start" class="on">① 起点视角</button><button data-tab="end">② 终点静止</button><button data-tab="spin">③ 旋转设置</button><button data-tab="compose">④ 合成图层</button><button data-tab="preset">⑤ 动画预设</button>',
+    '    <button data-tab="start" class="on">① 起点视角</button><button data-tab="end">② 终点静止</button><button data-tab="spin">③ 旋转设置</button><button data-tab="compose">④ 舞台位置</button><button data-tab="preset">⑤ 动画预设</button>',
     '  </div>',
     '  <div class="mbvis-panel" data-panel="start"><div class="mbvis-grp mbvis-start"><div class="mbvis-grp-h">起点视角 · 进场最开始的样子<span class="mbvis-right"><span class="mbvis-target-seg" id="mbvisTgtStart" hidden><button data-tgt="0" class="on">手机 A</button><button data-tgt="1">手机 B</button></span></span></div>',
     '    <div class="mbvis-field"><label>起点 X · <span id="mbvisSxV">22</span>°</label><input type="range" id="mbvisSx" min="-45" max="45" value="22"></div>',
@@ -8056,39 +8023,12 @@ function ensureMbVisDOM() {
     '    <div class="mbvis-field"><label>时长 · <span id="mbvisDurV">4.2</span> 秒</label><input type="range" id="mbvisDur" min="1" max="8" step="0.1" value="4.2"></div>',
     '    <div class="mbvis-field"><label>透视距离 · <span id="mbvisPV">1200</span>px</label><input type="range" id="mbvisP" min="500" max="2200" value="1200"></div>',
     '    <div class="mbvis-field"><label>全局缩放 · <span id="mbvisZoomV">1.00</span></label><input type="range" id="mbvisZoom" min="0.30" max="1.50" step="0.02" value="1"></div>',
+    '    <div class="mbvis-field"><label>自动重播间隔 · <span id="mbvisReplayV">0</span> 秒（0=只播一次）</label><input type="range" id="mbvisReplay" min="0" max="30" step="1" value="0"></div>',
     '  </div><div class="mbvis-grp mbvis-spin" id="mbvisPlaceGrp" hidden><div class="mbvis-grp-h">摆放（仅 2 台）· 间距 / 前后景深</div>',
     '    <div class="mbvis-field"><label>A·B 间距 · <span id="mbvisGapV">48</span>px（负=重叠）</label><input type="range" id="mbvisGap" min="-180" max="240" value="48"></div>',
     '    <div class="mbvis-field"><label>B 前后深度 · <span id="mbvisBgzV">0</span>px（正=B 在前）</label><input type="range" id="mbvisBgz" min="-90" max="90" value="0"></div>',
     '  </div></div>',
-    '  <div class="mbvis-panel" data-panel="compose" hidden><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">背景 · 色 / 图</div>',
-    '    <div class="mbvis-field"><label>背景类型</label><div class="mbvis-seg" id="mbvisBgType"><button data-bg="theme" class="on">主题渐变</button><button data-bg="color">纯色</button><button data-bg="image">图片</button><button data-bg="video">视频</button></div></div>',
-    '    <div class="mbvis-field" id="mbvisBgColorField" hidden><label>背景色</label><div class="mbvis-row-inline"><input type="color" id="mbvisBgColor" value="#0c0d10"><span id="mbvisBgColorV">#0c0d10</span></div></div>',
-    '    <div class="mbvis-field" id="mbvisBgImgField" hidden><label>上传背景图</label><input type="file" id="mbvisBgImg" accept="image/*"><div class="mbvis-row-inline" style="margin-top:8px"><button class="mbvis-cap" id="mbvisBgReset">恢复默认主题</button></div></div>',
-    '    <div class="mbvis-field" id="mbvisBgVideoField" hidden><label>上传背景视频</label><input type="file" id="mbvisBgVideo" accept="video/*"></div>',
-    '    <div class="mbvis-field" id="mbvisBgOverlayField" hidden><label>视频遮罩强度 · <span id="mbvisBgOverlayV">0.75</span></label><input type="range" id="mbvisBgOverlay" min="0" max="1" step="0.05" value="0.75"></div>',
-    '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">标题 / 副标题</div>',
-    '    <div class="mbvis-field"><label>标题文字</label><input type="text" id="mbvisTitleInput" maxlength="60"></div>',
-    '    <div class="mbvis-field"><label>副标题文字</label><input type="text" id="mbvisSubInput" maxlength="100"></div>',
-    '    <div class="mbvis-field"><label>标题遮挡关系（相对手机）</label><div class="mbvis-seg" id="mbvisZSeg"><button data-z="behind" class="on">手机后方</button><button data-z="front">手机前方</button></div></div>',
-    '    <div class="mbvis-field"><label>标题对齐</label><div class="mbvis-seg" id="mbvisAlignSeg"><button data-align="center" class="on">居中</button><button data-align="left">居左</button></div></div>',
-    '    <div class="mbvis-field"><label>标题垂直位置</label><div class="mbvis-seg" id="mbvisVAlignSeg"><button data-v="top">顶</button><button data-v="center" class="on">中</button><button data-v="bottom">底</button></div></div>',
-    '    <div class="mbvis-field"><label>标题字体</label><div class="mbvis-seg" id="mbvisFontSeg"><button data-font="default" class="on">默认</button><button data-font="impact">Anton</button><button data-font="condensed">Oswald</button></div></div>',
-    '    <div class="mbvis-field"><label>标题字号 · <span id="mbvisTitleSizeV">64</span>px（调大可贴边）</label><input type="range" id="mbvisTitleSize" min="24" max="240" step="2" value="64"></div>',
-    '    <div class="mbvis-field"><label>主标题行高</label><input type="text" id="mbvisTitleLineHeight" placeholder="1.1" style="width:100%"></div>',
-    '    <div class="mbvis-field"><label>标题字重</label><div class="mbvis-seg" id="mbvisTitleWeightSeg"><button data-w="400">400</button><button data-w="600" class="on">600</button><button data-w="700">700</button><button data-w="800">800</button><button data-w="900">900</button></div></div>',
-    '    <div class="mbvis-field"><label>标题字距</label><div class="mbvis-seg" id="mbvisTitleLSSeg"><button data-ls="xtight">极紧</button><button data-ls="tight">紧凑</button><button data-ls="normal" class="on">正常</button><button data-ls="wide">宽松</button></div></div>',
-    '    <div class="mbvis-field"><label>主标题颜色</label><div class="mbvis-row-inline"><input type="color" id="mbvisTitleColor" value="#ffffff"><span id="mbvisTitleColorV">#ffffff</span></div></div>',
-    '    <div class="mbvis-field"><label>标题风格</label><div class="mbvis-seg" id="mbvisTitleStyleSeg"><button data-style="uppercase">大写</button><button data-style="nowrap">不换行</button><button data-style="full">贴边铺满</button></div></div>',
-    '    <div class="mbvis-field"><label>副标题字号 · <span id="mbvisSubSizeV">28</span>px</label><input type="range" id="mbvisSubSize" min="14" max="90" step="2" value="28"></div>',
-    '    <div class="mbvis-field"><label>副标题颜色</label><div class="mbvis-row-inline"><input type="color" id="mbvisSubColor" value="#ffffff"><span id="mbvisSubColorV">#ffffff</span></div></div>',
-    '    <div class="mbvis-field"><label>副标题字重</label><div class="mbvis-seg" id="mbvisSubWeightSeg"><button data-w="400" class="on">400</button><button data-w="600">600</button><button data-w="700">700</button></div></div>',
-    '    <div class="mbvis-field"><label>副标题字距</label><div class="mbvis-seg" id="mbvisSubLSSeg"><button data-ls="normal" class="on">正常</button><button data-ls="wide">宽松</button></div></div>',
-    '    <div class="mbvis-field"><label>副标题风格</label><div class="mbvis-seg" id="mbvisSubStyleSeg"><button data-style="uppercase">大写</button><button data-style="nowrap">不换行</button></div></div>',
-    '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">滚动字幕（横向无缝循环）</div>',
-    '    <div class="mbvis-field"><label>主标题滚动</label><div class="mbvis-seg" id="mbvisTitleMarquee"><button data-dir="">关</button><button data-dir="rtl">右→左</button><button data-dir="ltr">左→右</button></div></div>',
-    '    <div class="mbvis-field"><label>副标题滚动</label><div class="mbvis-seg" id="mbvisSubMarquee"><button data-dir="">关</button><button data-dir="rtl">右→左</button><button data-dir="ltr">左→右</button></div></div>',
-    '    <div class="mbvis-field"><label>滚动速度 · <span id="mbvisMarqueeDurV">20</span> 秒/圈（越小越快）</label><input type="range" id="mbvisMarqueeDur" min="6" max="60" step="1" value="20"></div>',
-    '  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">手机视窗位置（方形）</div>',
+    '  <div class="mbvis-panel" data-panel="compose" hidden><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">手机视窗位置（方形）</div>','  </div><div class="mbvis-grp mbvis-compose"><div class="mbvis-grp-h">手机视窗位置（方形）</div>',
     '    <div class="mbvis-field"><label>屏幕内显示位置</label><div class="mbvis-seg" id="mbvisPosSeg"><button data-pos="left">左</button><button data-pos="center">中</button><button data-pos="right" class="on">右</button></div></div>',
     '    <div class="mbvis-field"><label>方形视窗大小 · <span id="mbvisStageV">560</span>px</label><input type="range" id="mbvisStageSize" min="360" max="760" step="20" value="560"></div>',
     '  </div></div>',
@@ -8135,6 +8075,7 @@ function bindMbVisEvents() {
 
   $('mbvisSpins').addEventListener('input', function () { mbS().spins = String(this.value); $('mbvisSpinsV').textContent = this.value; mbCommit(); });
   $('mbvisDur').addEventListener('input', function () { var v = +this.value; mbS().dur = String(Math.round(v * 1000)); $('mbvisDurV').textContent = v.toFixed(1); mbCommit(); });
+  $('mbvisReplay').addEventListener('input', function () { var v = +this.value; mbS().replayInterval = String(v); $('mbvisReplayV').textContent = Math.round(v); mbCommit(); });
   $('mbvisP').addEventListener('input', function () { mbP = +this.value; $('mbvisPV').textContent = this.value; $('mbvisViewport').style.perspective = this.value + 'px'; });
   $('mbvisZoom').addEventListener('input', function () { var v = +this.value; mbS().globalZoom = String(v); $('mbvisZoomV').textContent = v.toFixed(2); $('mbvisRig').style.transform = 'scale(' + v + ')'; mbCommit(); });
   $('mbvisGap').addEventListener('input', function () { var v = +this.value; mbS().abGap = String(Math.round(v)); $('mbvisGapV').textContent = Math.round(v); mbApplyGap(); mbCommit(); });
@@ -8142,76 +8083,6 @@ function bindMbVisEvents() {
 
   $('mbvisOpzoom').addEventListener('input', function () { mbOpZoom = +this.value; $('mbvisOpzoomVal').textContent = mbOpZoom.toFixed(2); mbSetOpZoom(); });
 
-  $('mbvisBgType').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().bgType = b.dataset.bg; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisBgColor').addEventListener('input', function () { mbS().bgColor = this.value; $('mbvisBgColorV').textContent = this.value; mbApplyCompose(); });
-  $('mbvisBgImg').addEventListener('change', async function (e) {
-    var f = e.target.files[0]; if (!f) return;
-    var prog = toastProgress('正在上传背景图...');
-    try {
-      // 背景大图：传 sectionType='mockup-banner' → 服务器缩到 1680px 宽（全屏 cover 背景，与 hero-banner 同规则），不再读 base64 直塞 content.json
-      const url = await uploadImage(f, 'jpg', 'mockup-banner');
-      if (!url) throw new Error('服务器未返回 URL');
-      mbS().bgType = 'image';
-      mbS().bgImage = url;
-      mbApplyCompose(); mbSyncCompose(); mbCommit();
-      prog.close('背景图已上传', 'success');
-    } catch (err) {
-      prog.close('上传失败：' + (err && err.message ? err.message : err), 'error');
-    } finally {
-      e.target.value = '';   // 允许重复选同一文件再次触发 change
-    }
-  });
-  $('mbvisBgReset').addEventListener('click', function () { mbS().bgType = 'theme'; mbS().bgImage = ''; mbS().bgVideo = ''; mbS().bgOverlay = ''; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisBgVideo').addEventListener('change', async function (e) {
-    var f = e.target.files[0]; if (!f) return;
-    var prog = toastProgress('正在上传背景视频...');
-    try {
-      const url = await uploadVideo(f, 'mp4');
-      if (!url) throw new Error('服务器未返回 URL');
-      mbS().bgType = 'video';
-      mbS().bgVideo = url;
-      mbApplyCompose(); mbSyncCompose(); mbCommit();
-      prog.close('背景视频已上传', 'success');
-    } catch (err) {
-      prog.close('上传失败：' + (err && err.message ? err.message : err), 'error');
-    } finally {
-      e.target.value = '';   // 允许重复选同一文件再次触发 change
-    }
-  });
-  $('mbvisBgOverlay').addEventListener('input', function () {
-    var v = Math.min(1, Math.max(0, parseFloat(this.value) || 0));
-    mbS().bgOverlay = String(v);
-    $('mbvisBgOverlayV').textContent = v.toFixed(2);
-    mbApplyCompose(); mbSyncCompose(); mbCommit();
-  });
-  $('mbvisTitleInput').addEventListener('input', function () { mbS().title = this.value; $('mbvisTitle').textContent = this.value; mbCommit(); });
-  $('mbvisSubInput').addEventListener('input', function () { mbS().subtitle = this.value; $('mbvisSub').textContent = this.value; mbCommit(); });
-  $('mbvisZSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleZ = b.dataset.z; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisAlignSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleAlign = b.dataset.align; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisVAlignSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleVAlign = b.dataset.v; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisFontSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleFont = b.dataset.font; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisTitleWeightSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleWeight = b.dataset.w; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisTitleLSSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleLetterSpacing = b.dataset.ls; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisTitleColor').addEventListener('input', function () { mbS().titleColor = this.value; $('mbvisTitleColorV').textContent = this.value; mbApplyCompose(); mbCommit(); });
-  $('mbvisTitleLineHeight').addEventListener('input', function () { mbS().titleLineHeight = this.value; mbApplyCompose(); mbCommit(); });
-  $('mbvisSubColor').addEventListener('input', function () { mbS().subtitleColor = this.value; $('mbvisSubColorV').textContent = this.value; mbApplyCompose(); mbCommit(); });
-  $('mbvisSubWeightSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().subtitleWeight = b.dataset.w; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisSubLSSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().subtitleLetterSpacing = b.dataset.ls; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  function bindStyleToggle(segId, map) {
-    $(segId).addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      var key = map[b.dataset.style]; var s = mbS();
-      s[key] = s[key] ? '' : '1';
-      mbApplyCompose(); mbSyncCompose(); mbCommit();
-    });
-  }
-  bindStyleToggle('mbvisTitleStyleSeg', { uppercase: 'titleUppercase', nowrap: 'titleNoWrap', full: 'titleFull' });
-  bindStyleToggle('mbvisSubStyleSeg', { uppercase: 'subtitleUppercase', nowrap: 'subtitleNoWrap' });
-  $('mbvisTitleMarquee').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().titleMarquee = b.dataset.dir; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisSubMarquee').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().subtitleMarquee = b.dataset.dir; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
-  $('mbvisMarqueeDur').addEventListener('input', function () { var v = +this.value; mbS().marqueeDuration = String(v); $('mbvisMarqueeDurV').textContent = v; mbApplyCompose(); mbCommit(); });
-  $('mbvisTitleSize').addEventListener('input', function () { var v = +this.value; mbS().titleSize = String(v); document.getElementById('mbvisTitleSizeV').textContent = v; mbApplyCompose(); mbCommit(); });
-  $('mbvisSubSize').addEventListener('input', function () { var v = +this.value; mbS().subtitleSize = String(v); document.getElementById('mbvisSubSizeV').textContent = v; mbApplyCompose(); mbCommit(); });
   $('mbvisPosSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mbS().stagePos = b.dataset.pos; mbApplyCompose(); mbSyncCompose(); mbCommit(); });
   $('mbvisStageSize').addEventListener('input', function () { var v = +this.value; mbS().stageSize = String(v); $('mbvisStageV').textContent = Math.round(v); mbApplyCompose(); mbCommit(); });
 

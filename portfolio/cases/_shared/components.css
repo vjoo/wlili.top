@@ -3546,19 +3546,14 @@
   border-radius: calc(var(--ph) * 34 / 520);
   pointer-events: none;
   z-index: 7;
-  /* 参考图风格：单一大斜光带（右上→中下偏左），右上白淡灰最强，左下转黑最深——玻璃环境反射 */
+  /* 玻璃环境反射（柔和化）：顶部微亮带 + 右上柔光斑 + 底部微暗——不再用固定 125° 大斜光带，
+     任意旋转角度都自然（斜光带在手机 rotateY 到侧面时会显得「光没跟着走」，很假） */
   background:
-    linear-gradient(125deg,
-      rgba(255, 255, 255, 0.55) 0%,   /* 右上角最亮（接近纯白浅灰）*/
-      rgba(255, 255, 255, 0.35) 14%,
-      rgba(255, 255, 255, 0.18) 28%,
-      rgba(255, 255, 255, 0.04) 44%,
-      rgba(0, 0, 0, 0.05) 60%,        /* 中段过渡 */
-      rgba(0, 0, 0, 0.28) 78%,
-      rgba(0, 0, 0, 0.50) 100%        /* 左下角最深，深反射玻璃"漏光" */
-    );
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.04) 24%, rgba(255, 255, 255, 0) 42%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0) 20%),
+    radial-gradient(130% 70% at 80% 10%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0) 52%);
 }
-/* 🔑 锐利高光②（辅助）：玻璃窄反光条——一道斜穿屏幕的锐利亮线，作为参考图主光带的辅助小光斑，alpha 降到 0.22 让主光带仍是视觉主角 */
+/* 🔑 辅助反光（弱化）：细斜光条 alpha 0.22 → 0.09，作为极淡的玻璃环境光提示，不再抢视觉 */
 .mk-gloss::before {
   content: "";
   position: absolute;
@@ -3568,14 +3563,95 @@
   height: 130%;
   background: linear-gradient(90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.03) 30%,
-    rgba(255, 255, 255, 0.22) 49%,
-    rgba(255, 255, 255, 0.22) 51%,
-    rgba(255, 255, 255, 0.03) 70%,
+    rgba(255, 255, 255, 0.01) 30%,
+    rgba(255, 255, 255, 0.09) 49%,
+    rgba(255, 255, 255, 0.09) 51%,
+    rgba(255, 255, 255, 0.01) 70%,
     rgba(255, 255, 255, 0) 100%);
   transform: rotate(24deg);
   pointer-events: none;
 }
+/* ===== 外壳配色（data-shell 切换：正面边框 / 后盖 / 侧壁同步） ===== */
+.mk-phone[data-shell="silver"] .mk-face-front {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.18) 3%, rgba(255,255,255,0) 8%),
+    linear-gradient(0deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 5%),
+    linear-gradient(105deg, #c9cdd5 0%, #f0f2f6 22%, #d9dce3 50%, #f0f2f6 78%, #b5bbc7 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.32);
+}
+.mk-phone[data-shell="silver"] .mk-face-back {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 6%),
+    linear-gradient(155deg, #d8dbe1 0%, #b0b5bf 50%, #c4c8d1 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+}
+.mk-phone[data-shell="silver"] .mk-wall { background: linear-gradient(180deg, #e2e5ea 0%, #c0c4cc 50%, #9aa0aa 100%); }
+.mk-phone[data-shell="white"] .mk-face-front {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.25) 3%, rgba(255,255,255,0) 8%),
+    linear-gradient(0deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0) 5%),
+    linear-gradient(105deg, #e9eaec 0%, #fdfdfe 22%, #f0f1f3 50%, #fdfdfe 78%, #d8dade 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+.mk-phone[data-shell="white"] .mk-face-back {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 6%),
+    linear-gradient(155deg, #e8e9eb 0%, #c6c8cc 50%, #d5d7da 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.22);
+}
+.mk-phone[data-shell="white"] .mk-wall { background: linear-gradient(180deg, #f2f3f5 0%, #d4d6d9 50%, #b4b7bc 100%); }
+.mk-phone[data-shell="titanium"] .mk-face-front {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.12) 3%, rgba(255,255,255,0) 8%),
+    linear-gradient(0deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0) 5%),
+    linear-gradient(105deg, #7e848f 0%, #aab0ba 22%, #8d939e 50%, #aab0ba 78%, #6b717c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.mk-phone[data-shell="titanium"] .mk-face-back {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 6%),
+    linear-gradient(155deg, #9aa0ab 0%, #7c828d 50%, #8c929d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+.mk-phone[data-shell="titanium"] .mk-wall { background: linear-gradient(180deg, #aeb4be 0%, #848a95 50%, #616670 100%); }
+.mk-phone[data-shell="blue"] .mk-face-front {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 3%, rgba(255,255,255,0) 8%),
+    linear-gradient(0deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 5%),
+    linear-gradient(105deg, #253550 0%, #3f5578 22%, #2d4061 50%, #3f5578 78%, #1b2842 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+.mk-phone[data-shell="blue"] .mk-face-back {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 6%),
+    linear-gradient(155deg, #34496c 0%, #1f2e47 50%, #2a3c59 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+.mk-phone[data-shell="blue"] .mk-wall { background: linear-gradient(180deg, #45597b 0%, #2a3c59 50%, #18233a 100%); }
 .mk-face-back {
   transform: translateZ(calc(var(--ph) * -10 / 520));   /* 与 front 严格对称（±10/520），后盖厚度同步 */
   background:
