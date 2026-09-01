@@ -571,16 +571,13 @@
       if(hasStarted) return;
       hasStarted = true;
       
-      let restoreY = 0;
+      let restoreY = 0; // 始终从顶部（hero/banner）开始，不恢复历史滚动位置
       try {
-        const saved = sessionStorage.getItem('case_scroll_y');
-        const savedT = sessionStorage.getItem('case_scroll_t');
-        if (saved !== null) {
-          const ts = parseInt(savedT || '0', 10);
-          if (Date.now() - ts < 30000) restoreY = parseInt(saved, 10) || 0;
-          sessionStorage.removeItem('case_scroll_y');
-          sessionStorage.removeItem('case_scroll_t');
-        }
+        // 废弃「刷新恢复到底部」逻辑：脏数据/刷新会落到底部 Let's talk，
+        // 导致「黑屏后先见底部、过一会才出顶部 banner」的错位体验。
+        // 此处仅清理遗留标记，保证每次打开都从顶部 banner 起手。
+        sessionStorage.removeItem('case_scroll_y');
+        sessionStorage.removeItem('case_scroll_t');
       } catch (_) {}
 
       // 停止 3x3 动画
