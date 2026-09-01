@@ -383,13 +383,18 @@
   }
 
   function injectShell() {
-    if (document.getElementById('pageTransition') && document.getElementById('headerOverlay')) return;
+    // 已完整注入（headerOverlay 存在即视为壳已建好）则跳过；不影响遮罩复用
+    if (document.getElementById('headerOverlay')) return;
 
-    // 1. 过渡遮罩（放 body 最前）
-    var overlay = document.createElement('div');
-    overlay.className = 'page-transition-overlay';
-    overlay.id = 'pageTransition';
-    document.body.insertBefore(overlay, document.body.firstChild);
+    // 1. 过渡遮罩：优先复用 HTML 静态遮罩（head 内联脚本可独立兜底隐藏），
+    //    不存在时再创建（向后兼容旧版 HTML）。避免重复创建导致双遮罩。
+    var overlay = document.getElementById('pageTransition');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'page-transition-overlay';
+      overlay.id = 'pageTransition';
+      document.body.insertBefore(overlay, document.body.firstChild);
+    }
 
     var main = document.querySelector('main') || document.body;
     var wrapper = document.getElementById('pageWrapper');

@@ -62,6 +62,20 @@
           } catch (e) { /* ignore */ }
         }, 150);
       }, { passive: true });
+
+      // 加载遮罩极端兜底：不依赖任何外部脚本，最坏 3.5s 强制让遮罩离场
+      // （防 Three.js/render.js/site-shell.js 等任一加载失败或极慢导致永久黑屏）。
+      // #pageTransition 已在上方 HTML 静态存在；site-shell.js 正常流程会在内容就绪后淡出，
+      // 此处仅当遮罩仍可见（未 idle）时兜底隐藏，不与正常流程冲突。
+      window.addEventListener('DOMContentLoaded', function () {
+        setTimeout(function () {
+          var pt = document.getElementById('pageTransition');
+          if (pt && pt.style.display !== 'none' && !pt.classList.contains('idle')) {
+            pt.classList.add('idle');
+            setTimeout(function () { try { pt.style.display = 'none'; } catch (e) {} }, 900);
+          }
+        }, 3500);
+      });
     })();
   </script>
 
@@ -112,6 +126,10 @@
     </div>
   </div>
 
+  <!-- 过渡遮罩（黑遮罩 loader=2）：HTML 静态存在，由 site-shell.js 淡出，
+       head 内联脚本独立兜底（最坏 3.5s 强制隐藏，防脚本失败/慢加载导致永久黑屏） -->
+  <div id="pageTransition" class="page-transition-overlay"></div>
+
   <main>
     <!-- Page Wrapper -->
     <div class="page-wrapper" id="pageWrapper">
@@ -124,7 +142,7 @@
     window.CASE_KEY = 'home';
     // hover-effect 统一初始化见 ../_shared/hover-effects.js（cover 等比裁切，不拉伸变形）
   </script>
-  <script src="../_shared/assets/lib-three.min.js"></script>
+  <script async src="../_shared/assets/lib-three.min.js"></script>
   <script src="../_shared/assets/lib-gsap.min.js"></script>
   <script src="../_shared/assets/lib-scrolltrigger.min.js"></script>
   <script src="../_shared/assets/lib-hover-effect.umd.js"></script>
