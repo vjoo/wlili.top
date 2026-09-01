@@ -2129,10 +2129,6 @@ body.auth-pending .pages-view { visibility: hidden; }
             <button type="button" class="theme-btn" data-theme="light">浅色</button>
             <button type="button" class="theme-btn" data-theme="dark">深色</button>
           </div>
-          <div class="theme-switch" id="loaderSwitch" title="全站加载动画：1=首屏骨架屏（白logo+3×3方块动画，默认）；2=页面过渡黑遮罩。颜色固定不随主题">
-            <button type="button" class="theme-btn" data-loader="1">加载动画1</button>
-            <button type="button" class="theme-btn" data-loader="2">加载动画2</button>
-          </div>
         </div>
         <div style="display:flex; gap:10px;">
           <button class="btn-accent" id="btnPgNew">＋ 新建页面</button>
@@ -6647,35 +6643,6 @@ function bindThemeSwitch() {
   });
 }
 
-// 全站加载动画（存 cases.json 顶层 loader，后台「页面管理」主题旁切换；1=骨架屏 2=黑遮罩）
-async function loadLoaderState() {
-  try {
-    const data = await apiGlobal('/api/loader');
-    applyLoaderSwitch(data.loader === '2' ? '2' : '1');
-  } catch (e) {
-    applyLoaderSwitch('1');
-  }
-}
-function applyLoaderSwitch(l) {
-  document.querySelectorAll('#loaderSwitch .theme-btn').forEach((b) => {
-    b.classList.toggle('active', b.dataset.loader === l);
-  });
-}
-function bindLoaderSwitch() {
-  document.querySelectorAll('#loaderSwitch .theme-btn').forEach((b) => {
-    b.addEventListener('click', async () => {
-      const l = b.dataset.loader;
-      try {
-        await apiGlobal('/api/loader', 'POST', { loader: l });
-        applyLoaderSwitch(l);
-        toast('已切换为' + (l === '2' ? '加载动画2（黑遮罩）' : '加载动画1（骨架屏）') + '，前台全站生效', 'success');
-      } catch (e) {
-        toast('加载动画保存失败：' + e.message, 'error');
-      }
-    });
-  });
-}
-
 // 全站底部 Let's talk（公共存储，存 cases.json 顶层 letsTalk）
 // 与 navMenu 同级，admin.html 不再从 content.json 读取 letsTalk
 async function loadLetsTalkSharedState() {
@@ -7486,15 +7453,13 @@ async function afterAuth() {
     await loadNavMenuState();
     await loadLetsTalkSharedState();
     await loadThemeState();
-    await loadLoaderState();
     showView('pages');
     return;
   }
   loadState();
-  // 板块管理视图（?case=xxx）也要恢复顶部「主题 / 加载动画」选中态：
+  // 板块管理视图（?case=xxx）也要恢复顶部「主题」选中态：
   // 页面管理视图在上一分支已调用，此处补调，否则 active 类从未设置、按钮无选中效果
   loadThemeState();
-  loadLoaderState();
 }
 
 /* ===== Init（先鉴权，成功后再加载内容） ===== */
@@ -7503,7 +7468,6 @@ async function init() {
   $('#authPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') onLoginClick(); });
   $('#btnLogout').onclick = () => doLogout();
   bindThemeSwitch(); // 全站主题切换（页面管理 topbar），元素常驻 DOM，任何入口都可绑定
-  bindLoaderSwitch(); // 全站加载动画切换（页面管理 topbar，主题旁）
   // 字段说明气泡：靠顶（会顶到编辑面板顶部/顶部导航）时翻转向下，避免被裁切或遮挡
   // 判定基准 = 滚动容器（.editor-body）可见顶部，而非视口顶部：
   // 气泡默认朝上弹，若图标上方放不下完整气泡（会被 sticky 编辑头/顶部导航盖住）就翻转向下

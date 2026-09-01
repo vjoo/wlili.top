@@ -273,23 +273,6 @@
     if (cached) applyTheme(cached);
   } catch (_) {}
 
-  // 全站加载动画（后台「页面管理」主题旁切换，存 cases.json 顶层 loader）：
-  // '1'=首屏骨架屏（默认）/ '2'=页面过渡黑遮罩。显隐由 CSS [data-loader] 控制，颜色固定不随主题。
-  function applyLoader(loader) {
-    var l = (loader === '2') ? '2' : '1';
-    document.documentElement.setAttribute('data-loader', l);
-    try { localStorage.setItem('case_loader', l); } catch (_) {}
-  }
-  // 先同步应用本地缓存（防首帧错动画），再等 cases.json 权威值覆盖
-  try {
-    var cachedLoader = localStorage.getItem('case_loader');
-    if (cachedLoader === '1' || cachedLoader === '2') applyLoader(cachedLoader);
-  } catch (_) {}
-  function currentLoader() {
-    var attr = document.documentElement.getAttribute('data-loader');
-    return (attr === '2') ? '2' : '1';
-  }
-
   function applyNavMenu(items) {
     if (!Array.isArray(items)) return;
     var clean = items.map(function (l) {
@@ -319,8 +302,6 @@
         if (d && Array.isArray(d.navMenu)) applyNavMenu(d.navMenu);
         // 全站主题：cases.json 顶层 theme（后台「页面管理」顶部切换）
         if (d && (d.theme === 'dark' || d.theme === 'light')) applyTheme(d.theme);
-        // 全站加载动画：cases.json 顶层 loader（后台「页面管理」主题旁切换）
-        if (d && (d.loader === '1' || d.loader === '2')) applyLoader(d.loader);
         // 可配置首页：cases.json 顶层 homeKey（后台「页面管理」→ 设为首页）
         if (d && d.homeKey) applyHomeUrl('../' + d.homeKey + '/index.html');
         // 同时读取 cases.json 顶层的公共 letsTalk（后台「底部导航」编辑后保存在这里）
@@ -386,16 +367,6 @@
     // 已完整注入（headerOverlay 存在即视为壳已建好）则跳过；不影响遮罩复用
     if (document.getElementById('headerOverlay')) return;
 
-    // 1. 过渡遮罩：优先复用 HTML 静态遮罩（head 内联脚本可独立兜底隐藏），
-    //    不存在时再创建（向后兼容旧版 HTML）。避免重复创建导致双遮罩。
-    var overlay = document.getElementById('pageTransition');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'page-transition-overlay';
-      overlay.id = 'pageTransition';
-      document.body.insertBefore(overlay, document.body.firstChild);
-    }
-
     var main = document.querySelector('main') || document.body;
     var wrapper = document.getElementById('pageWrapper');
 
@@ -415,241 +386,24 @@
   }
 
   // =========================================
-  // 网格动画逻辑 (提取自加载动画)
+  // 1. 页面起始定位（已彻底移除加载动画）
   // =========================================
-  // 由于我们需要使用 WebGL，确保 ThreeJS 存在
-  let mosaicRenderer, mosaicMaterial, mosaicGeometry, mosaicMesh, mosaicScene, mosaicCamera, gridRafId;
+  // 全站已移除加载遮罩 / 骨架屏 / Three.js 马赛克：内容渲染即直接可见，无过渡、无锁滚动。
+  // 因此进场动画不必等待「遮罩掀起」，立即触发即可。
+  let maskLifted = true;
+  function runWhenRevealReady(fn) { try { fn(); } catch (_) {} }
+  function flushRevealReady() { maskLifted = true; }
 
-  function initGridAnimation() {
-    const blocks = document.querySelectorAll('#page-skeleton .block');
-    if (!blocks.length) return;
-
-    let loadingInterval = setInterval(() => {
-      blocks.forEach(block => {
-        const rand = Math.random();
-        if (rand > 0.6) {
-          block.style.opacity = '1';
-        } else if (rand > 0.3) {
-          block.style.opacity = '0.4';
-        } else {
-          block.style.opacity = '0';
-        }
-      });
-    }, 400);
-
-    const skeleton = document.getElementById('page-skeleton');
-    if (skeleton) {
-      skeleton.dataset.gridInterval = loadingInterval;
-    }
-
-    // 初始化 Three.js 马赛克幕布层 (如果有 Three.js)；加载动画=2（黑遮罩）时骨架屏隐藏，无需幕布
-    if (currentLoader() !== '2' && typeof THREE !== 'undefined' && typeof gsap !== 'undefined') {
-      try {
-        mosaicScene = new THREE.Scene();
-        mosaicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
-        mosaicCamera.position.z = 1;
-
-        mosaicRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        mosaicRenderer.setSize(window.innerWidth, window.innerHeight);
-        // 将 canvas 盖在整个网页的最上面（比 #page-skeleton z-index 更低，作为其背景；也可以做其兄弟节点）
-        Object.assign(mosaicRenderer.domElement.style, {
-          position: 'fixed',
-          top: '0',
-          left: '0',
-          zIndex: '99997', // 在 logo / 网格 (99998) 之下，作为背景遮罩
-          pointerEvents: 'none'
-        });
-        document.body.appendChild(mosaicRenderer.domElement);
-
-        const vertexShader = `
-          varying vec2 vUv;
-          void main() {
-              vUv = uv;
-              gl_Position = vec4(position, 1.0);
-          }
-        `;
-
-        const fragmentShader = `
-          uniform float uProgress;
-          uniform vec3 uColor;
-          uniform vec2 uResolution;
-          varying vec2 vUv;
-          
-          float random (vec2 st) {
-              return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-          }
-          
-          void main() {
-              float mosaicSize = 13.0;
-              vec2 grid = vec2(mosaicSize, mosaicSize / (uResolution.x / uResolution.y));
-              vec2 id = floor(vUv * grid);
-              float n = random(id);
-              float alpha = 1.0 - smoothstep(n, n + 0.2, uProgress);
-              gl_FragColor = vec4(uColor, alpha);
-          }
-        `;
-
-        mosaicGeometry = new THREE.PlaneGeometry(2, 2);
-        // 抓取当前的主题色用于幕布背景
-        const rootStyles = getComputedStyle(document.documentElement);
-        // 默认蓝色，如果能取到则转化为 hex (假设取到的是 rgb或 hex)
-        let themeColor = '#000000';/*#0100ff*/
-        mosaicMaterial = new THREE.ShaderMaterial({
-            vertexShader,
-            fragmentShader,
-            uniforms: {
-                uProgress: { value: 0.0 }, // 0: 满屏， 1: 完全消失
-                uColor: { value: new THREE.Color(themeColor) }, 
-                uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-            },
-            transparent: true,
-        });
-
-        mosaicMesh = new THREE.Mesh(mosaicGeometry, mosaicMaterial);
-        mosaicScene.add(mosaicMesh);
-
-        function renderMosaic() {
-          gridRafId = requestAnimationFrame(renderMosaic);
-          mosaicRenderer.render(mosaicScene, mosaicCamera);
-        }
-        renderMosaic();
-
-        // 绑定 resize (仅在幕布存活时有效)
-        window.addEventListener('resize', handleMosaicResize);
-
-      } catch (err) {
-        console.error("Grid ThreeJS layer failed:", err);
-      }
-    }
-  }
-
-  function handleMosaicResize() {
-    if (mosaicRenderer && mosaicMaterial) {
-      mosaicRenderer.setSize(window.innerWidth, window.innerHeight);
-      if (mosaicMaterial.uniforms.uResolution) {
-          mosaicMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
-      }
-    }
-  }
-
-  // 必须在脚本一开始就调用动画
-  initGridAnimation();
-
-  // =========================================
-  // 1. Page Transition + 滚动恢复
-  // =========================================
-  let maskLifted = false;
-  const revealReadyQueue = [];
-  function runWhenRevealReady(fn) {
-    if (maskLifted) { try { fn(); } catch (_) {} }
-    else { revealReadyQueue.push(fn); }
-  }
-  function flushRevealReady() {
-    maskLifted = true;
-    while (revealReadyQueue.length) {
-      try { (revealReadyQueue.shift())(); } catch (_) {}
-    }
-  }
-
-  function unlockScroll() {
-    try {
-      document.documentElement.classList.remove('scroll-lock');
-      document.body && document.body.classList.remove('scroll-lock');
-    } catch (_) {}
-  }
-
+  // 页面一律从顶部（banner）起手：
+  // 清理历史滚动恢复标记（避免刷新落到底部 Let's talk），内容就绪后再归零一次。
   function initPageTransition() {
-    const pageTransition = document.getElementById('pageTransition');
-    if (!pageTransition) {
-      unlockScroll();
-      flushRevealReady();
-      return;
-    }
-    // 极端兜底：如果没有触发事件，最少保证 loading 时长后滑走
-    let hasStarted = false;
-    const startTransition = () => {
-      if(hasStarted) return;
-      hasStarted = true;
-      
-      let restoreY = 0; // 始终从顶部（hero/banner）开始，不恢复历史滚动位置
-      try {
-        // 废弃「刷新恢复到底部」逻辑：脏数据/刷新会落到底部 Let's talk，
-        // 导致「黑屏后先见底部、过一会才出顶部 banner」的错位体验。
-        // 此处仅清理遗留标记，保证每次打开都从顶部 banner 起手。
-        sessionStorage.removeItem('case_scroll_y');
-        sessionStorage.removeItem('case_scroll_t');
-      } catch (_) {}
-
-      // 停止 3x3 动画
-      try {
-        const sk = document.getElementById('page-skeleton');
-        if (sk) {
-          if (sk.dataset.gridInterval) {
-            clearInterval(parseInt(sk.dataset.gridInterval, 10));
-          }
-          sk.classList.add('skeleton-leave');
-          setTimeout(() => {
-            try { sk.style.display = 'none'; } catch (_) {}
-          }, 450);
-        }
-      } catch (_) {}
-
-      // 停止 Three.js 马赛克消散动画
-      if (typeof gsap !== 'undefined' && mosaicMaterial && mosaicRenderer) {
-        gsap.to(mosaicMaterial.uniforms.uProgress, {
-          value: 1.2,
-          duration: 2.5,
-          ease: "power2.inOut",
-          onComplete: () => {
-            // 彻底清理 WebGL 资源
-            if (gridRafId) cancelAnimationFrame(gridRafId);
-            window.removeEventListener('resize', handleMosaicResize);
-            if (mosaicRenderer.domElement && mosaicRenderer.domElement.parentNode) {
-              mosaicRenderer.domElement.parentNode.removeChild(mosaicRenderer.domElement);
-            }
-            if(mosaicGeometry) mosaicGeometry.dispose();
-            if(mosaicMaterial) mosaicMaterial.dispose();
-            mosaicRenderer.dispose();
-          }
-        });
-      }
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          unlockScroll();
-          try {
-            window.scrollTo(0, restoreY);
-            if (document.documentElement) document.documentElement.scrollTop = restoreY;
-            if (document.body) document.body.scrollTop = restoreY;
-          } catch (_) {}
-
-          // 遮罩滑走的同时"点火"所有 defer 的进场动画
-          flushRevealReady();
-          pageTransition.classList.add('idle');
-          setTimeout(() => {
-            if (pageTransition && pageTransition.parentNode) pageTransition.style.display = 'none';
-          }, 900);
-        });
-      });
-    };
-
-    // 为了确保加载动画能被看清（至少显示 1.2秒左右，配合原逻辑的 1200ms）
-    const minLoadingTime = 1200;
-    const startTime = Date.now();
-
-    const attemptStartTransition = () => {
-      const elapsedTime = Date.now() - startTime;
-      const delay = Math.max(0, minLoadingTime - elapsedTime);
-      setTimeout(startTransition, delay);
-    };
-
-    // 1) 内容渲染完成（render.js 发 case-content-ready，且 footer 的 letsTalk 已应用）后才滑走遮罩。
-    //    这是唯一的正常掀遮罩路径——遮罩绝不提前揭开，避免露出「空内容 + footer 默认 4 二维码」的半成品页面
-    //    （即「先闪底部 4 码、再黑、再出顶部 banner」的错位体验）。
-    window.addEventListener('case-content-ready', attemptStartTransition, { once: true });
-    // 2) 不再设任何固定秒数兜底（原 3s / load 兜底会在慢网络下先于内容就绪掀遮罩，正是闪 footer 的根因）。
-    //    仅在 content.json 彻底卡死（fetch 永久挂起）时，由 head 内联脚本的 8s 计时强制掀遮罩作为最后保险，
-    //    正常/慢速加载都会先收到 case-content-ready，head 兜底此时已是 no-op。
+    try {
+      sessionStorage.removeItem('case_scroll_y');
+      sessionStorage.removeItem('case_scroll_t');
+    } catch (_) {}
+    window.addEventListener('case-content-ready', function () {
+      try { window.scrollTo(0, 0); } catch (_) {}
+    }, { once: true });
   }
 
   // 导航跳转前清除「刷新位置恢复」标记：

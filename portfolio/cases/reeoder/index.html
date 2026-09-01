@@ -5,77 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>企业端 — WANG LI Portfolio</title>
 
-  <!-- ============================================================
-       【第一优先级】滚动修复：必须在任何其他脚本/CSS/资源之前执行
-       浏览器的 scroll restoration（恢复上次滚动位置）发生得极早，
-       如果等 body 末尾的 site-shell.js 加载完再设置就太晚了。
-       ============================================================ -->
   <script>
+    // 【第一优先级】首帧设置：主题 + 关闭浏览器自动滚动恢复 + 从顶部起手
+    // 必须同步执行（早于任何外部脚本/CSS），避免深浅色闪烁与刷新落到底部。
+    // ⚠️ 全站已移除加载动画（骨架屏 / 黑遮罩 / Three.js 马赛克），内容渲染即直接可见。
     (function () {
-      // 4. 全站主题（浅色/深色）：站点全局默认深色（cases.json 顶层 theme）。
-      //    外网不同 origin 时 localStorage 为空，这里同步默认深色，避免首帧白屏闪烁；
-      //    访客手动切浅色后存 localStorage，下次优先生效。
+      // 全站主题（浅色/深色）：站点全局默认深色（cases.json 顶层 theme）。
       try {
         var _th = localStorage.getItem('case_theme');
         document.documentElement.setAttribute('data-theme', (_th === 'light') ? 'light' : 'dark');
       } catch (e) { /* ignore */ }
-      // 5. 全站加载动画（1=骨架屏 / 2=黑遮罩，站点全局默认 2，见 cases.json 顶层 loader）：
-      //    外网不同 origin 时 localStorage 为空，这里同步默认 2，消除与内容渲染（case-content-ready）
-      //    的竞态，保证外网首屏黑遮罩一定显示（否则遮罩易在 data-loader 设好前就 idle 滑走而看不到）。
-      try {
-        var _ld = localStorage.getItem('case_loader');
-        document.documentElement.setAttribute('data-loader', (_ld === '1' || _ld === '2') ? _ld : '2');
-      } catch (e) { /* ignore */ }
-      // 1. 关闭浏览器自动恢复滚动位置（自己在 site-shell.js 里用 sessionStorage 管理）
+      // 关闭浏览器自动恢复滚动位置
       try {
         if ('scrollRestoration' in window.history) {
           window.history.scrollRestoration = 'manual';
         }
       } catch (e) { /* ignore */ }
-
-      // 2. 立即抢跑：把滚动位置置 0（防止刷新瞬间看到底部 Let's talk）
-      try {
-        window.scrollTo(0, 0);
-      } catch (e) { /* ignore */ }
-
-      // 3. 过渡遮罩期间锁定滚动
-      var lock = function () {
-        try {
-          document.documentElement.classList.add('scroll-lock');
-          document.body && document.body.classList.add('scroll-lock');
-        } catch (e) { /* ignore */ }
-      };
-      if (document.documentElement) lock();
-      else if (document.addEventListener) {
-        document.addEventListener('DOMContentLoaded', lock, { once: true });
-      }
-
-      // 4. 保存滚动位置到 sessionStorage（防抖 150ms）
-      //    刷新前保存 → 内容渲染完毕后恢复 → 恢复完清除
-      var saveTimer = null;
-      window.addEventListener('scroll', function () {
-        if (saveTimer) clearTimeout(saveTimer);
-        saveTimer = setTimeout(function () {
-          try {
-            sessionStorage.setItem('case_scroll_y', String(window.scrollY));
-            sessionStorage.setItem('case_scroll_t', String(Date.now()));
-          } catch (e) { /* ignore */ }
-        }, 150);
-      }, { passive: true });
-
-      // 加载遮罩极端兜底：不依赖任何外部脚本，最坏 8s 强制让遮罩离场（仅 content.json 永久卡死时的最后保险；正常/慢速加载都由 case-content-ready 先掀遮罩，此处为 no-op）。
-      // （防 Three.js/render.js/site-shell.js 等任一加载失败或极慢导致永久黑屏）
-      // #pageTransition 已在上方 HTML 静态存在；site-shell.js 正常流程会在内容就绪后淡出。
-      // 此处计时从脚本执行时立即开始（早于 DCL），确保 content.json 永久卡死时遮罩也最多 8s 必消失（正常加载远早于此，此处为 no-op）。
-      // 关键：计时从本内联脚本执行时（页面初始解析、早于所有外部脚本）立即开始，
-      // 而非 DOMContentLoaded——后者会被同步库下载阻塞，使兜底失去意义。
-      setTimeout(function () {
-        var pt = document.getElementById('pageTransition');
-        if (pt && pt.style.display !== 'none' && !pt.classList.contains('idle')) {
-          pt.classList.add('idle');
-          setTimeout(function () { try { pt.style.display = 'none'; } catch (e) {} }, 900);
-        }
-      }, 8000);
+      // 立即把滚动位置置 0（防止刷新瞬间看到底部 Let's talk）
+      try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
     })();
   </script>
 
@@ -88,47 +35,8 @@
   <link rel="stylesheet" href="../_shared/components.css">
 </head>
 <body>
-  <!-- 头部导航 / 移动端菜单 / 底部 Let's Talk / 回到顶部火箭 / 过渡遮罩
+  <!-- 头部导航 / 移动端菜单 / 底部 Let's Talk / 回到顶部火箭
        由 site-shell.js 自动注入，无需在此手写 -->
-
-  <!-- 首屏骨架屏 + Loading：解决外网慢加载白屏问题。HTML 解析到 body 立即可见（不依赖任何 JS/CSS），
-       site-shell.js 加载完成 + case-content-ready 后淡出离场（与过渡遮罩同步）。 -->
-  <div id="page-skeleton" aria-hidden="true">
-    <div class="sk-loader">
-      <div class="grid-animation">
-          <!-- 3x3 网格，共 9 个方块 -->
-          <div class="block"></div>
-          <div class="block"></div>
-          <div class="block"></div>
-          <div class="block"></div>
-          <div class="block"></div>
-          <div class="block"></div>
-          <div class="block"></div>
-          <div class="block"></div>
-          <div class="block"></div>
-      </div>
-      <div class="logo-text">WLI</div>
-      <div class="subtitle-text">{ creative innovation studio }</div>
-    </div>
-    <div class="sk-inner">
-      <div class="sk-hero">
-        <div class="sk-hero-box"></div>
-        <div class="sk-line sk-line--title"></div>
-        <div class="sk-line sk-line--sub"></div>
-      </div>
-      <div class="sk-info">
-        <div class="sk-info-col"><div class="sk-label"></div><div class="sk-line"></div><div class="sk-line"></div></div>
-        <div class="sk-info-col"><div class="sk-label"></div><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line"></div></div>
-      </div>
-      <div class="sk-gallery">
-        <div class="sk-tile"></div><div class="sk-tile"></div><div class="sk-tile"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 过渡遮罩（黑遮罩 loader=2）：HTML 静态存在，由 site-shell.js 淡出，
-       head 内联脚本独立兜底（最坏 3.5s 强制隐藏，防脚本失败/慢加载导致永久黑屏） -->
-  <div id="pageTransition" class="page-transition-overlay"></div>
 
   <main>
     <!-- Page Wrapper -->

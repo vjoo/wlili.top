@@ -5,8 +5,7 @@
      <link rel="stylesheet" href="../_shared/site-shell.css">
    包含（规则来源：vjooProject 案例页 / Nixtio 复刻）：
      · 设计令牌 :root（颜色 / 字体 / 间距 / 过渡 / z-index / 动效）
-     · Reset & Base、滚动锁定
-     · 页面过渡遮罩（page-transition-overlay）
+     · Reset & Base
      · 头部导航（header-overlay / nav / logo / 联系我按钮 / 汉堡）
      · 按钮体系（btn-primary 双文本动效 / btn-outline / btn-small / btn-submit）
      · 移动端菜单（mobile-menu）
@@ -81,18 +80,6 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ============================================================
-   页面打开/刷新时的滚动锁定：防止浏览器 scroll restoration
-   把页面带到中间/底部（否则遮罩滑走后用户看到的是 footer）。
-   由 <head> 内联脚本添加，site-shell.js 在遮罩滑走时移除。
-   ============================================================ */
-html.scroll-lock,
-body.scroll-lock {
-  overflow: hidden !important;
-  /* 额外保险：强制 height 让页面无法产生滚动条 */
-  height: 100% !important;
-}
-
 body {
   font-family: var(--font-family);
   background: var(--color-background);
@@ -104,190 +91,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ============================================================
-   首屏骨架屏 + Loading（防止外网慢加载时的白屏）
-   ────────────────────────────────────────────────────────
-   在每个案例页的 <body> 开头内联一段 #page-skeleton DOM
-   （不需要等待任何 JS/CSS 下载，浏览器解析到 body 就立即可见）。
-   site-shell.js 在 case-content-ready → 进场动画启动时：
-   给 #page-skeleton 加 .skeleton-leave，触发淡出，
-   动画结束（400ms 后）display:none 移除占位。
-   ⚠️ 所有尺寸用百分比/vw，移动端 100% 适配，不依赖 content.json
-   ⚠️ 动画时长与过渡遮罩 page-mask 保持一致，视觉同步
-   ============================================================ */
-
-#page-skeleton {
-  position: fixed; /* Fix it covering the viewport */
-  inset: 0;
-  z-index: 99998; /* Just below ThreeJS canvas but above everything else */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-#page-skeleton .sk-loader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-#page-skeleton .grid-animation {
-  display: grid;
-  grid-template-columns: repeat(3, 20px);
-  grid-template-rows: repeat(3, 20px);
-  gap: 2px;
-  margin-bottom: 20px;
-}
-
-#page-skeleton .block {
-  width: 20px;
-  height: 20px;
-  background-color: var(--color-white); /* 改为白色 */
-  opacity: 0; 
-  transition: opacity 0.4s ease-in-out;
-}
-
-#page-skeleton .logo-text {
-  font-family: "Arial Black", Arial, sans-serif;
-  font-weight: 900;
-  font-size: 24px;
-  letter-spacing: 1px;
-  color: var(--color-white); /* 改为白色 */
-  margin-bottom: 8px;
-}
-
-#page-skeleton .subtitle-text {
-  font-family: monospace, sans-serif;
-  font-size: 12px;
-  color: var(--color-white); /* 改为白色 */
-}
-
-/* 骨架容器 - 旧版假排版样式（如 hero / info / gallery 等）已经用不到了，注释或删除 */
-#page-skeleton .sk-inner {
-  display: none;
-}
-
-/* Hero 区骨架：上方一个大方块（封面），下面两行文字 */
-#page-skeleton .sk-hero {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-#page-skeleton .sk-hero-box {
-  width: 100%;
-  aspect-ratio: 16 / 9;                 /* 16:9 封面比例 */
-  border-radius: 1.5rem;
-  background: linear-gradient(
-    110deg,
-    rgba(10, 10, 10, 0.06) 20%,
-    rgba(10, 10, 10, 0.10) 50%,
-    rgba(10, 10, 10, 0.06) 80%
-  );
-  background-size: 200% 100%;
-  animation: sk-shimmer 1400ms ease-in-out infinite;
-}
-#page-skeleton .sk-line {
-  height: 1.25rem;
-  border-radius: 8px;
-  background: linear-gradient(
-    110deg,
-    rgba(10, 10, 10, 0.06) 20%,
-    rgba(10, 10, 10, 0.10) 50%,
-    rgba(10, 10, 10, 0.06) 80%
-  );
-  background-size: 200% 100%;
-  animation: sk-shimmer 1400ms ease-in-out infinite;
-}
-#page-skeleton .sk-line--title {
-  height: 2.75rem;
-  width: 72%;
-  border-radius: 12px;
-  animation-delay: 80ms;
-}
-#page-skeleton .sk-line--sub {
-  width: 42%;
-  animation-delay: 160ms;
-}
-
-/* Intro / 文本区骨架：左右两列布局（仿 intro 的 info grid） */
-#page-skeleton .sk-info {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem 4rem;
-}
-#page-skeleton .sk-info-col {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-#page-skeleton .sk-label {
-  height: 0.9rem;
-  width: 38%;
-  border-radius: 6px;
-  background: rgba(10, 10, 10, 0.06);
-  animation: sk-shimmer 1400ms ease-in-out infinite;
-  animation-delay: 220ms;
-}
-#page-skeleton .sk-info-col .sk-line:nth-child(1) { width: 90%; animation-delay: 240ms; }
-#page-skeleton .sk-info-col .sk-line:nth-child(2) { width: 82%; animation-delay: 300ms; }
-#page-skeleton .sk-info-col .sk-line:nth-child(3) { width: 74%; animation-delay: 360ms; height: 1rem; }
-#page-skeleton .sk-info-col .sk-line:nth-child(4) { width: 60%; animation-delay: 420ms; height: 1rem; }
-
-/* Gallery / 截图墙骨架：3 个并排方块 */
-#page-skeleton .sk-gallery {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-#page-skeleton .sk-tile {
-  aspect-ratio: 4 / 3;
-  border-radius: 12px;
-  background: linear-gradient(
-    110deg,
-    rgba(10, 10, 10, 0.06) 20%,
-    rgba(10, 10, 10, 0.10) 50%,
-    rgba(10, 10, 10, 0.06) 80%
-  );
-  background-size: 200% 100%;
-  animation: sk-shimmer 1400ms ease-in-out infinite;
-}
-#page-skeleton .sk-tile:nth-child(1) { animation-delay: 480ms; }
-#page-skeleton .sk-tile:nth-child(2) { animation-delay: 540ms; }
-#page-skeleton .sk-tile:nth-child(3) { animation-delay: 600ms; }
-
-@keyframes sk-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* 移动端：Hero 区比例调整，info 改为单列，gallery 改为 2 列 */
-@media (max-width: 768px) {
-  #page-skeleton .sk-inner {
-    padding: 0 1rem;
-    padding-top: 18vh;
-    gap: 1.75rem;
-  }
-  #page-skeleton .sk-hero-box { aspect-ratio: 4 / 3; border-radius: 1rem; }
-  #page-skeleton .sk-line--title { height: 2rem; width: 86%; }
-  #page-skeleton .sk-line--sub { width: 60%; }
-  #page-skeleton .sk-info {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-  #page-skeleton .sk-gallery { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 480px) {
-  #page-skeleton .sk-loader { top: 2rem; }
-  #page-skeleton .sk-line--title { height: 1.5rem; }
-  #page-skeleton .sk-gallery .sk-tile:nth-child(3) { display: none; }
-}
-
 a {
   text-decoration: none;
   color: inherit;
@@ -297,21 +100,6 @@ img {
   max-width: 100%;
   height: auto;
   display: block;
-}
-
-/* ---- Page Transition ---- */
-.page-transition-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--color-black);
-  z-index: var(--z-modal);
-  transform: translateY(0);
-  transition: transform 0.8s var(--motion-easing-emphasized);
-  pointer-events: none;
-}
-
-.page-transition-overlay.idle {
-  transform: translateY(-100%);
 }
 
 /* ---- Header / Navbar ---- */
@@ -1126,30 +914,5 @@ img {
   --color-gray-border: rgba(255, 255, 255, 0.16);
   /* 头部/移动菜单/hero 等内部未显式设色的文字不继承 body 的深色浅字，还原为黑字 */
   color: var(--color-black);
-}
-
-/* 加载动画（首屏骨架屏 + 页面过渡黑遮罩）属品牌壳层，不参与主题变色：
-   骨架屏内白色 logo / 方块动画（var(--color-white)）与黑色过渡遮罩（var(--color-black)）
-   在深色主题下会被变量反转成深字深块 / 白遮罩，需还原为浅色主题原样 */
-[data-theme="dark"] #page-skeleton {
-  --color-white: #fff;
-  --color-black: #0a0a0a;
-}
-[data-theme="dark"] .page-transition-overlay {
-  background: #0a0a0a; /* 黑遮罩保持黑色（与 Let's talk 底色一致，深浅主题通用） */
-}
-
-/* ================================================================
-   加载动画选择（后台「页面管理」主题旁切换，全站共享，存 cases.json 顶层 loader）
-   1（默认）= 首屏骨架屏（白 logo + 3×3 方块 + 黑色马赛克幕布）→ 隐藏黑遮罩；
-   2 = 页面过渡黑遮罩（进场向上滑走的黑幕）→ 隐藏骨架屏。
-   动画颜色均为品牌壳层固定色（黑幕/白 logo），不随主题色变化。
-   ================================================================ */
-:root[data-loader="1"] .page-transition-overlay,
-:root:not([data-loader]) .page-transition-overlay {
-  display: none; /* 骨架屏模式：黑遮罩不参与（页面加载动画由骨架屏接管） */
-}
-:root[data-loader="2"] #page-skeleton {
-  display: none !important; /* 黑遮罩模式：骨架屏不显示 */
 }
 
