@@ -8,7 +8,7 @@
   <script>
     // 【第一优先级】首帧设置：主题 + 关闭浏览器自动滚动恢复 + 从顶部起手
     // 必须同步执行（早于任何外部脚本/CSS），避免深浅色闪烁与刷新落到底部。
-    // ⚠️ 全站已移除加载动画（骨架屏 / 黑遮罩 / Three.js 马赛克），内容渲染即直接可见。
+    // 首屏骨架屏（纯 CSS、零依赖）已在 #case-content 内联，内容 JSON 到达前即铺满布局，避免「中间空白」错觉。
     (function () {
       // 全站主题（浅色/深色）：站点全局默认深色（cases.json 顶层 theme）。
       try {
@@ -30,9 +30,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <!-- 1. 共享外壳样式（设计令牌/头部/底部/火箭/按钮/容器/进场动画/响应式） -->
-  <link rel="stylesheet" href="../_shared/site-shell.css?v=2607a2c">
+  <link rel="stylesheet" href="../_shared/site-shell.css?v=aeb789e">
   <!-- 2. 共享组件样式（内容板块组件，所有页面共用，迭代只改这一处） -->
-  <link rel="stylesheet" href="../_shared/components.css?v=2607a2c">
+  <link rel="stylesheet" href="../_shared/components.css?v=aeb789e">
 </head>
 <body>
   <!-- 头部导航 / 移动端菜单 / 底部 Let's Talk / 回到顶部火箭
@@ -42,7 +42,13 @@
     <!-- Page Wrapper -->
     <div class="page-wrapper" id="pageWrapper">
       <!-- 动态渲染容器：render.js 按 content.json 的 sections 数组遍历渲染 -->
-      <div id="case-content" class="case-content"></div>
+      <div id="case-content" class="case-content">
+        <!-- 首屏骨架屏：纯 CSS、零依赖，内容 JSON 到达前先铺满布局，避免「中间空白」错觉 -->
+        <section class="sk-hero sk"></section>
+        <section class="sk-block"><div class="sk-media sk"></div><div class="sk-text"><span class="sk-line tall sk"></span><span class="sk-line w90 sk"></span><span class="sk-line w70 sk"></span></div></section>
+        <section class="sk-block rev"><div class="sk-media sk"></div><div class="sk-text"><span class="sk-line tall sk"></span><span class="sk-line w90 sk"></span><span class="sk-line w70 sk"></span></div></section>
+        <section class="sk-logos"><span class="sk-logo sk"></span><span class="sk-logo sk"></span><span class="sk-logo sk"></span><span class="sk-logo sk"></span></section>
+      </div>
     </div>
   </main>
 
@@ -50,14 +56,14 @@
     window.CASE_KEY = 'mybilist';
     // hover-effect 统一初始化见 ../_shared/hover-effects.js（cover 等比裁切，不拉伸变形）
   </script>
-  <script async src="../_shared/assets/lib-three.min.js?v=2607a2c"></script>
-  <script src="../_shared/assets/lib-gsap.min.js?v=2607a2c"></script>
-  <script src="../_shared/assets/lib-scrolltrigger.min.js?v=2607a2c"></script>
+  <script async src="../_shared/assets/lib-three.min.js?v=aeb789e"></script>
+  <script src="../_shared/assets/lib-gsap.min.js?v=aeb789e"></script>
+  <script src="../_shared/assets/lib-scrolltrigger.min.js?v=aeb789e"></script>
   <!-- hover-effect 库改由 hover-effects.js 在 THREE 就绪后动态注入（避免 async Three.js 未就绪时库快照失效） -->
-  <script src="../_shared/hover-effects.js?v=2607a2c"></script>
+  <script src="../_shared/hover-effects.js?v=aeb789e"></script>
   <!-- 板块渲染器（共享版，全站唯一一份） -->
-  <script src="../_shared/render.js?v=2607a2c"></script>
+  <script src="../_shared/render.js?v=aeb789e"></script>
   <!-- 共享外壳脚本（注入壳 + 交互 + 进场动画观察器），必须在 render.js 之后 -->
-  <script src="../_shared/site-shell.js?v=2607a2c"></script>
+  <script src="../_shared/site-shell.js?v=aeb789e"></script>
 </body>
 </html>

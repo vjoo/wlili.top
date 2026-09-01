@@ -112,59 +112,72 @@ var CaseRenderer = (function () {
       });
   }
 
+  // 按组件类型返回布局骨架 HTML（纯 CSS .sk 微光，零依赖，无外部库）
+  function skeletonFor(type) {
+    var block = '<section class="sk-block"><div class="sk-media sk"></div><div class="sk-text"><span class="sk-line tall sk"></span><span class="sk-line w90 sk"></span><span class="sk-line w70 sk"></span></div></section>';
+    var logos = '<section class="sk-logos"><span class="sk-logo sk"></span><span class="sk-logo sk"></span><span class="sk-logo sk"></span><span class="sk-logo sk"></span></section>';
+    var textBlk = '<section class="sk-text-block"><span class="sk-line tall sk"></span><span class="sk-line w90 sk"></span><span class="sk-line w90 sk"></span><span class="sk-line w70 sk"></span></section>';
+    var hero = '<section class="sk-hero sk"></section>';
+    var grid = '<section class="sk-grid"><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div></section>';
+    switch (type) {
+      case 'intro': case 'hero': case 'hero-banner': case 'big-banner':
+      case 'title': case 'ad-banner': case 'mockup-banner': case 'double-banner':
+      case 'double-image': case 'masonry': case 'stats':
+        return hero;
+      case 'showcase': case 'image': case 'gallery': case 'carousel':
+      case 'scene-grid': case 'next-projects': case 'swipe-slider':
+      case 'fullscreen-slider':
+        return grid;
+      case 'brand-logo':
+        return logos;
+      case 'text': case 'paragraph': case 'rich-text':
+        return textBlk;
+      default:
+        return block;
+    }
+  }
+
   function render(data) {
     if (!container) container = document.getElementById('case-content');
     if (!container) return;
-    container.innerHTML = '';
     var sections = (data && data.sections) || [];
 
-    // 迁移 1：如果旧的 intro 板块里有 logoUrl（在 v3 之前 Logo 属于 intro），
-    //   就把它提取为独立的 brand-logo section（紧跟在原 intro 后面），避免用户数据丢失
-    // 迁移 2：即便 intro.logoUrl 为空——只要整个 sections 数组中还没有任何 type=brand-logo 的板块，
-    //   就在第一个 intro 的后面自动插入一个 brand-logo（带灰色占位缺省图），确保后台/前台能看到这个独立栏目
+    // 无内容（content.json 拉取失败 / 空配置）：保留骨架占位，避免「中间空白」错觉
+    if (!sections.length) {
+      container.innerHTML = '<section class="sk-note sk"></section>';
+      try {
+        if (typeof CustomEvent === 'function') {
+          window.dispatchEvent(new CustomEvent('case-content-ready', { detail: { count: 0 } }));
+        }
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    // 迁移 1：旧 intro.logoUrl → 独立 brand-logo（保持数据不丢）
     var migrated = [];
     var hasBrandLogo = sections.some(function (s) { return s && s.type === 'brand-logo'; });
     sections.forEach(function (s) {
       migrated.push(s);
       if (s && s.type === 'intro') {
         var existingLogoUrl = (typeof s.logoUrl === 'string' && s.logoUrl !== '') ? s.logoUrl : '';
-        // 情况 A：intro 里有 logoUrl → 一定生成 brand-logo（即便已经存在也再多一个，可以后续手动删）
         if (existingLogoUrl) {
-          migrated.push({
-            id: (s.id || 'intro') + '-brand-logo-migrated',
-            type: 'brand-logo',
-            logoUrl: existingLogoUrl
-          });
-          s.logoUrl = ''; // 迁移后原 intro 不再持有 logoUrl
+          migrated.push({ id: (s.id || 'intro') + '-brand-logo-migrated', type: 'brand-logo', logoUrl: existingLogoUrl });
+          s.logoUrl = '';
           hasBrandLogo = true;
         } else if (!hasBrandLogo) {
-          // 情况 B：intro 无 logoUrl 且全局没有任何 brand-logo → 插一个空的（显示缺省图）
-          migrated.push({
-            id: (s.id || 'intro') + '-brand-logo-auto',
-            type: 'brand-logo',
-            logoUrl: ''
-          });
+          migrated.push({ id: (s.id || 'intro') + '-brand-logo-auto', type: 'brand-logo', logoUrl: '' });
           hasBrandLogo = true;
         }
       }
     });
     sections = migrated;
 
-    // 迁移 3：旧组件内嵌标题 → 独立 title 组件（nixtio Projects 头部）
-    //   - hero（小Banner）里的 title → 标题组件（插在 hero 前，保持「标题 → 媒体」视觉顺序）
-    //   - next-projects（特效双图）里的 大标题/版权/"所有项目" → 标题组件（插在 next-projects 前）
-    //   只做渲染层提升：旧字段从原组件移除，生成一个 title section；已存在 title 组件则不再重复生成
+    // 迁移 3：旧组件内嵌标题 → 独立 title 组件
     var migratedTitle = [];
     var hasTitleSection = sections.some(function (s) { return s && s.type === 'title'; });
     sections.forEach(function (s) {
       if (s && s.type === 'hero' && s.title && !hasTitleSection) {
-        migratedTitle.push({
-          id: (s.id || 'hero') + '-title',
-          type: 'title',
-          title: s.title,
-          copyright: '',
-          description: ''
-        });
+        migratedTitle.push({ id: (s.id || 'hero') + '-title', type: 'title', title: s.title, copyright: '', description: '' });
         hasTitleSection = true;
         delete s.title;
       }
@@ -174,17 +187,9 @@ var CaseRenderer = (function () {
         var oldC = (s.copyright !== undefined && s.copyright !== null && s.copyright !== '') ? s.copyright : (g0 && g0.copyright);
         var oldA = (s.allProjectsText !== undefined && s.allProjectsText !== null && s.allProjectsText !== '') ? s.allProjectsText : (g0 && g0.allProjectsText);
         if (oldT || oldC || oldA) {
-          migratedTitle.push({
-            id: (s.id || 'np') + '-title',
-            type: 'title',
-            title: oldT || 'Projects',
-            copyright: oldC || '',
-            description: oldA || ''
-          });
+          migratedTitle.push({ id: (s.id || 'np') + '-title', type: 'title', title: oldT || 'Projects', copyright: oldC || '', description: oldA || '' });
           hasTitleSection = true;
-          delete s.title;
-          delete s.copyright;
-          delete s.allProjectsText;
+          delete s.title; delete s.copyright; delete s.allProjectsText;
           if (g0) { delete g0.title; delete g0.copyright; delete g0.allProjectsText; }
         }
       }
@@ -192,61 +197,61 @@ var CaseRenderer = (function () {
     });
     sections = migratedTitle;
 
-    sections.forEach(function (s) {
-      var fn = RENDERERS[s.type];
-      if (fn) {
-        var el = fn(s);
-        if (el) container.appendChild(el);
-      } else {
-        console.warn('未知板块类型:', s.type);
+    // 第一步：先铺「按组件布局」的骨架屏（内容真正构建前，让首屏有完整结构，与静态骨架无缝衔接）
+    container.innerHTML = sections.map(function (s) { return skeletonFor(s.type); }).join('');
+
+    // 第二步：等一帧让骨架绘制（慢网络/低端机可见骨架），再构建真实内容并触发下游
+    var built = false;
+    var buildReal = function () {
+      if (built) return;
+      built = true;
+      container.innerHTML = '';
+      sections.forEach(function (s) {
+        var fn = RENDERERS[s.type];
+        if (fn) {
+          var el = fn(s);
+          if (el) container.appendChild(el);
+        } else {
+          console.warn('未知板块类型:', s.type);
+        }
+      });
+      // 渲染完成后触发下游脚本（逐个 try/catch 隔离：任一脚本抛错都不应阻断后续进场动画注册）
+      function safeDownstream(fn, name) { try { fn(); } catch (e) { console.warn('[mockup] 下游脚本 ' + name + ' 出错，已跳过：', e); } }
+      if (typeof window.initHoverEffects === 'function') safeDownstream(window.initHoverEffects, 'initHoverEffects');
+      safeDownstream(function () { applyFocusZooms(container); }, 'applyFocusZooms');
+      safeDownstream(function () { initHeroBannerParallax(container); }, 'initHeroBannerParallax');
+      safeDownstream(function () { initParallaxOverlay(container); }, 'initParallaxOverlay');
+      safeDownstream(function () { initCarousels(container); }, 'initCarousels');
+      safeDownstream(function () { initHeroFsCarousels(container); }, 'initHeroFsCarousels');
+      safeDownstream(function () { initSwipeSliders(container); }, 'initSwipeSliders');
+      safeDownstream(function () { initFullscreenSliders(container); }, 'initFullscreenSliders');
+      safeDownstream(function () { initViewportMedia(container); }, 'initViewportMedia');
+      safeDownstream(function () { initMockupBanners(); }, 'initMockupBanners');
+      safeDownstream(function () {
+        var runAB = function () { initAdBanners(); };
+        if (window.gsap) { runAB(); return; }
+        var _t = 0, _iv = setInterval(function () { _t++; if (window.gsap || _t > 50) { clearInterval(_iv); runAB(); } }, 60);
+      }, 'initAdBanners');
+      if (container.querySelector('[data-animated-bg]')) ensureAnimatedBG();
+      if (typeof window.registerRevealElements === 'function') {
+        window.registerRevealElements(container);
       }
-    });
-    // 渲染完成后触发下游脚本（逐个 try/catch 隔离：任一脚本抛错都不应阻断后续的 3D 样机进场动画注册）
-    function safeDownstream(fn, name) { try { fn(); } catch (e) { console.warn('[mockup] 下游脚本 ' + name + ' 出错，已跳过：', e); } }
-    if (typeof window.initHoverEffects === 'function') safeDownstream(window.initHoverEffects, 'initHoverEffects');
-    // 焦点缩放应用（带 data-focus 的 img：图片加载完成后微信式缩放/平移定位；懒加载图由 load 委托补应用）
-    safeDownstream(function () { applyFocusZooms(container); }, 'applyFocusZooms');
-    // hero-banner 滚动视差（scroll scrub + 平滑插值；prefers-reduced-motion 时自动跳过）
-    safeDownstream(function () { initHeroBannerParallax(container); }, 'initHeroBannerParallax');
-    // 视差图对叠加层滚动浮动（.pio-overlay 随滚动 -2vw→+0.7vw；prefers-reduced-motion 时自动跳过）
-    safeDownstream(function () { initParallaxOverlay(container); }, 'initParallaxOverlay');
-    // 轮播图（carousel）：懒加载 Swiper 并初始化（无轮播板块时零开销）
-    safeDownstream(function () { initCarousels(container); }, 'initCarousels');
-    // fs 效果轮播（carousel 的 effect=fs）：GSAP 自动播放裁剪滑入（无此板块零开销）
-    safeDownstream(function () { initHeroFsCarousels(container); }, 'initHeroFsCarousels');
-    // 全屏滑动轮播（swipe-slider）：GSAP 逐屏滑动 + 文字动画（无此板块零开销）
-    safeDownstream(function () { initSwipeSliders(container); }, 'initSwipeSliders');
-    // 全屏切换轮播（fullscreen-slider）：GSAP Observer 逐屏切换 + 页面锁定（无此板块零开销）
-    safeDownstream(function () { initFullscreenSliders(container); }, 'initFullscreenSliders');
-    // 视口可见性：滚出视口暂停持续媒体/动画（视频解码、轮播自动播放），避免离屏消耗 GPU
-    safeDownstream(function () { initViewportMedia(container); }, 'initViewportMedia');
-    // 3D 样机 Banner（mockup-banner）：建 3D 外壳 + 落在静止视角 + 注册「滚进视口播一次」的进场动画（务必最后且独立，保证一定执行）
-    safeDownstream(function () { initMockupBanners(); }, 'initMockupBanners');
-    // 广告 Banner（ad-banner）：大标题合体出现 → 上下裂开 → 露出 16:9 图片无缝跑马灯（GSAP 驱动，无此板块零开销）
-    safeDownstream(function () {
-      // lib-gsap 可能晚于 DOMContentLoaded 注入：等 GSAP 就绪再跑进场，否则 play() 会走非 GSAP 分支被 played 守卫永久跳过
-      var runAB = function () { initAdBanners(); };
-      if (window.gsap) { runAB(); return; }
-      var _t = 0, _iv = setInterval(function () { _t++; if (window.gsap || _t > 50) { clearInterval(_iv); runAB(); } }, 60);
-    }, 'initAdBanners');
-    // 动画背景（animated）：延迟加载 ogl+引擎并启动所有 [data-animated-bg] 容器（无此板块零开销）
-    if (container.querySelector('[data-animated-bg]')) ensureAnimatedBG();
-    // 把新插入的所有板块注册进场动画（site-shell.js 暴露的接口）
-    if (typeof window.registerRevealElements === 'function') {
-      window.registerRevealElements(container);
+      try {
+        var ev = null;
+        if (typeof CustomEvent === 'function') ev = new CustomEvent('case-content-ready', { detail: { count: sections.length } });
+        else { ev = document.createEvent('Event'); ev.initEvent('case-content-ready', true, true); ev.detail = { count: sections.length }; }
+        window.dispatchEvent(ev);
+      } catch (e) { /* ignore */ }
+    };
+    // 双 rAF 确保骨架已绘制一帧；setTimeout 兜底（后台标签 rAF 不触发时也构建）
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(function () { requestAnimationFrame(buildReal); });
+    } else {
+      buildReal();
     }
-    try {
-      var ev = null;
-      if (typeof CustomEvent === 'function') ev = new CustomEvent('case-content-ready', { detail: { count: sections.length } });
-      else {
-        // IE/老环境兼容
-        ev = document.createEvent('Event');
-        ev.initEvent('case-content-ready', true, true);
-        ev.detail = { count: sections.length };
-      }
-      window.dispatchEvent(ev);
-    } catch (e) { /* ignore */ }
+    setTimeout(buildReal, 150);
   }
+
 
   // ===== 工具 =====
   function sec(cls) {

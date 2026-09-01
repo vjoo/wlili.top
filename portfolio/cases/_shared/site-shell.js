@@ -67,10 +67,16 @@
     homeUrl: '../home/index.html',
     brandText: 'W.',
     brandAria: '返回首页',
+    // 默认导航兜底：仅当 cases.json 的 navMenu 拉取失败/无配置时才使用。
+    // ⚠️ 必须与 cases.json 顶层 navMenu 保持一致，否则 fetch 失败时会出现错误默认项
+    // （历史上曾写死「作品集/关于/评价」三个错误默认，已修正为真实配置）。
     navLinks: [
-      { label: '作品集', href: '../home/index.html' },
-      { label: '关于', href: '../home/index.html' },
-      { label: '评价', href: '../home/index.html' }
+      { label: '3D设计', href: '../home/index.html', target: false },
+      { label: 'IP设计', href: '../ipdesign/index.html', target: false },
+      { label: '消费端', href: '../vjooProject/index.html', target: false },
+      { label: '企业端', href: '../reeoder/index.html', target: false },
+      { label: '政府端', href: '../mybilist/index.html', target: false },
+      { label: 'UI设计', href: '../pjlist/index.html', target: false }
     ],
     contactLabel: '联系我',
     contactHref: '../home/index.html',
