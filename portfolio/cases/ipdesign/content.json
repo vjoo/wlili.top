@@ -334,57 +334,6 @@
           "imageH": 432
         }
       ]
-    },
-    {
-      "id": "demo_iconwall",
-      "type": "icon-wall",
-      "heading": "动画图标墙",
-      "subheading": "GIF · APNG · Lottie 散落演示（可被删除）",
-      "frame": false,
-      "float": true,
-      "icons": [
-        {
-          "src": "/portfolio/cases/ipdesign/uploads/demo_icon.json",
-          "scale": 1.4,
-          "z": 3,
-          "delay": 0
-        },
-        {
-          "src": "/portfolio/cases/ipdesign/uploads/demo_spin.gif",
-          "scale": 1.0,
-          "z": 2,
-          "delay": 0.08
-        },
-        {
-          "src": "/portfolio/cases/ipdesign/uploads/demo_icon.json",
-          "scale": 0.9,
-          "z": 4,
-          "delay": 0.16
-        },
-        {
-          "src": "/portfolio/cases/ipdesign/uploads/demo_spin.gif",
-          "scale": 0.8,
-          "z": 1,
-          "delay": 0.24
-        },
-        {
-          "src": "/portfolio/cases/ipdesign/uploads/demo_icon.json",
-          "scale": 1.1,
-          "z": 2,
-          "delay": 0.32
-        },
-        {
-          "src": "/portfolio/cases/ipdesign/uploads/demo_spin.gif",
-          "scale": 0.7,
-          "z": 1,
-          "delay": 0.4
-        }
-      ],
-      "scatterMode": "vogel",
-      "scatterJitter": "0.2",
-      "scatterMinR": "14",
-      "scatterMaxR": "40",
-      "scatterPad": "12"
     }
   ]
 }
