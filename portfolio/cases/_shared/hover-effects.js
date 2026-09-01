@@ -6,6 +6,13 @@
      （722:546），长边裁掉、不拉伸变形；裁切结果转 dataURL 后
      交给 hover-effect 库做位移特效
    - 调用时机：render.js 渲染完成后调用 window.initHoverEffects()
+   - 加载时序（重要，2026-09-01 修）：
+     lib-hover-effect.umd.js 是 UMD 模块，会在「脚本执行瞬间」把
+     window.THREE 的当前值快照进内部引用。Three.js 现为 async 加载，
+     若 UMD 库在 THREE 就绪前就被静态 <script> 执行，则内部 THREE
+     引用永远为 undefined → new hoverEffect() 抛错 → 图片不显示。
+     因此本文件**不再依赖静态库 script**，而是在确认 window.THREE
+     已存在后，动态注入库脚本（此时快照到的 THREE 才有效），再初始化。
    ============================================================ */
 (function (global) {
   'use strict';
@@ -13,6 +20,12 @@
   // 卡片图容器固定比例（与 components.css .project-card-image 的 aspect-ratio: 722/546 保持一致）
   var TARGET_ASPECT = 722 / 546;   // 宽 / 高
   var MAX_WIDTH = 1800;            // 纹理最大宽度（约容器 2x DPR），控制内存与 dataURL 体积
+
+  // 库脚本相对「当前 case 页面」的路径（与各 index.html 原静态 script 的 src 一致）
+  var LIB_SRC = '../_shared/assets/lib-hover-effect.umd.js';
+
+  var libLoading = false;          // 库脚本是否正在动态加载
+  var initScheduled = false;       // initHoverEffects 是否已调度过异步流程（防重复）
 
   // 把图片按 cover 方式等比裁切到 targetAspect（宽/高），返回 dataURL；失败时回退原图
   // focus：可选 "x,y,zoom"（x,y = 微信式位移百分比，zoom = 缩放倍数默认 1）。
@@ -77,7 +90,8 @@
     });
   }
 
-  global.initHoverEffects = function () {
+  // 真实初始化（仅在 window.THREE 与 hoverEffect 库均就绪后调用）
+  function realInit() {
     var targets = document.querySelectorAll('[data-hover-effect]');
     if (!targets.length || typeof global.hoverEffect === 'undefined') return;
     targets.forEach(function (el) {
@@ -114,6 +128,45 @@
           console.warn('hover-effect init failed:', e);
         }
       });
+    });
+  }
+
+  // 等待 window.THREE 就绪（Three.js 现为 async 加载，可能滞后于本脚本执行）
+  function whenThreeReady(cb) {
+    if (typeof global.THREE !== 'undefined') { cb(); return; }
+    var tries = 0;
+    var iv = setInterval(function () {
+      tries++;
+      if (typeof global.THREE !== 'undefined') {
+        clearInterval(iv); cb();
+      } else if (tries > 800) {  // 约 40s 仍无 THREE，放弃（避免无限轮询）
+        clearInterval(iv);
+        console.warn('[hover-effects] THREE 超时未加载，特效双图初始化取消');
+      }
+    }, 50);
+  }
+
+  // 确保 hover-effect 库已注入并执行（库加载时会快照 window.THREE，故必须在 THREE 就绪后注入）
+  function ensureLib(cb) {
+    if (typeof global.hoverEffect !== 'undefined') { cb(); return; }
+    if (libLoading) { setTimeout(function () { ensureLib(cb); }, 120); return; }
+    libLoading = true;
+    var s = document.createElement('script');
+    s.src = LIB_SRC;
+    s.onload = function () { cb(); };
+    s.onerror = function () { console.warn('[hover-effects] 库加载失败:', LIB_SRC); };
+    (document.head || document.body).appendChild(s);
+  }
+
+  // 对外入口：render.js 渲染完成后调用。卡片为空直接返回；
+  // 否则等待 THREE 就绪 → 动态注入库 → 真实初始化。整个异步流程只调度一次。
+  global.initHoverEffects = function () {
+    var targets = document.querySelectorAll('[data-hover-effect]');
+    if (!targets.length) return;
+    if (initScheduled) return;
+    initScheduled = true;
+    whenThreeReady(function () {
+      ensureLib(realInit);
     });
   };
 })(window);
