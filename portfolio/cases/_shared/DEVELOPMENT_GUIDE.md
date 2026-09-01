@@ -30,6 +30,15 @@
 3. **一次一个任务**：避免多任务混合导致上下文膨胀
 4. **改完必自查**：样式/渲染只改 `_shared/*`，禁止复制副本到页面目录；间距遵守第六节规则（padding 不 margin、单位 rem、大间距 4rem/5rem）；新增板块类型按第十三节清单同步 4 处
 
+**⚠️ 安全红线（2026-09-02 新增，违反=隐私泄露）：**
+- **GitHub 仓库 `vjoo/wlili.top` 是公开仓库**，所有被 git 跟踪的文件 + 全部 git 历史公开可查；线上 EdgeOne 静态托管会**直接以 200 下载任何被跟踪的文件**（含 .py/.bat）。
+- **严禁提交含本机绝对路径的文件**（`D:\...` / `C:\Users\...` / 盘符+文件夹名）——已发生案例：一次性修复脚本（`fix_*.py` 等）把 `<PROJECT_ROOT>` 暴露在线上，任何人可下载。
+- **严禁提交本地运维脚本**：`*.bat`（启动/停止服务、防火墙规则）、`server.py`、`_restart_server.py`、`Thumbs.db`（Windows 缓存含路径元数据）。已在 `.gitignore` 加规则，`git add .` 不会误伤。
+- **一次性调试脚本用完即删**，不 commit（`fix_*.py` / `backfill_*.py` / `_probe_*.js` / `_apply_*.js` / `scripts/check_redundant_files.py` 已全量清除并加入 gitignore）。
+- **新写的脚本/文档禁止出现本机路径**，写 `<项目根目录>` 占位；`_bust_cache.py` 用法注释已按此改写。
+- 提交前自查：`git status` 若出现 `.bat` / `fix_*` / 根目录 `.py` / `Thumbs.db`，先删再提交。
+- `server.py` 的 `AUTH_SECRET` 是弱密钥（本地局域网用）：**永不提交**，且仅本机/局域网信任设备可访问 8080（防火墙规则.bat 只放行局域网，勿开放公网）。
+
 ---
 
 ## 一、目录结构 & 职责边界

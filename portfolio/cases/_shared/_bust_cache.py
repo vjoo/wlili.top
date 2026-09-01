@@ -8,8 +8,8 @@
 旧的 _shared/*.js。若只改 HTML 不刷新 ?v=，会出现「HTML 新版 + JS 旧版」错配（如旧默认
 二维码/导航残留）。每次推送前跑本脚本，HTML 一变 → 所有 ?v= 跟着变 → 强缓存全部失效。
 
-用法（cwd 为项目根 portfolio/cases 的「父目录」，即 wlili.top/）；
-  cd /d/<USER_FOLDER>/自创AI工具/wlili.top
+用法（cwd 为项目根，即 wlili.top/）：
+  cd <项目根目录>
   python3 portfolio/cases/_shared/_bust_cache.py
 
 注意：必须在 `git commit` 之前运行（这样 HTML 里的 ?v= 才会等于本次提交的 hash，

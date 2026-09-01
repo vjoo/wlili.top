@@ -16,5 +16,17 @@ __pycache__/
 # 本地 AI 配置
 .trae/
 
+# ⚠️ 安全红线：以下文件含本机绝对路径/本地运维信息，严禁提交（仓库公开时=泄露隐私路径）
+# 本地运维脚本（启动/停止服务、防火墙规则、局域网同步）
+*.bat
+# Windows 系统缓存（含本机路径元数据）
+Thumbs.db
+# 一次性调试/修复脚本（含硬编码本机路径 D:\... 或 C:\Users\...），用完即弃，禁止入库
+fix_*.py
+backfill_*.py
+_probe_*.js
+_apply_*.js
+scripts/check_redundant_files.py
+
 # WorkBuddy 本地工具数据（工作日志/会话记忆，仅本地使用，不上传部署）
 .workbuddy/
