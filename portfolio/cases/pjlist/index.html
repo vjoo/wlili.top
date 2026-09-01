@@ -30,9 +30,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <!-- 1. 共享外壳样式（设计令牌/头部/底部/火箭/按钮/容器/进场动画/响应式） -->
-  <link rel="stylesheet" href="../_shared/site-shell.css">
+  <link rel="stylesheet" href="../_shared/site-shell.css?v=fab7281">
   <!-- 2. 共享组件样式（内容板块组件，所有页面共用，迭代只改这一处） -->
-  <link rel="stylesheet" href="../_shared/components.css">
+  <link rel="stylesheet" href="../_shared/components.css?v=fab7281">
 </head>
 <body>
   <!-- 头部导航 / 移动端菜单 / 底部 Let's Talk / 回到顶部火箭
@@ -50,14 +50,14 @@
     window.CASE_KEY = 'pjlist';
     // hover-effect 统一初始化见 ../_shared/hover-effects.js（cover 等比裁切，不拉伸变形）
   </script>
-  <script async src="../_shared/assets/lib-three.min.js"></script>
-  <script src="../_shared/assets/lib-gsap.min.js"></script>
-  <script src="../_shared/assets/lib-scrolltrigger.min.js"></script>
+  <script async src="../_shared/assets/lib-three.min.js?v=fab7281"></script>
+  <script src="../_shared/assets/lib-gsap.min.js?v=fab7281"></script>
+  <script src="../_shared/assets/lib-scrolltrigger.min.js?v=fab7281"></script>
   <!-- hover-effect 库改由 hover-effects.js 在 THREE 就绪后动态注入（避免 async Three.js 未就绪时库快照失效） -->
-  <script src="../_shared/hover-effects.js"></script>
+  <script src="../_shared/hover-effects.js?v=fab7281"></script>
   <!-- 板块渲染器（共享版，全站唯一一份） -->
-  <script src="../_shared/render.js"></script>
+  <script src="../_shared/render.js?v=fab7281"></script>
   <!-- 共享外壳脚本（注入壳 + 交互 + 进场动画观察器），必须在 render.js 之后 -->
-  <script src="../_shared/site-shell.js"></script>
+  <script src="../_shared/site-shell.js?v=fab7281"></script>
 </body>
 </html>
