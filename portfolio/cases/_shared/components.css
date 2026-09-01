@@ -680,6 +680,12 @@
   transition: opacity .3s ease;
 }
 .media-reserve.loaded .media-reserve-img { opacity: 1; }
+/* gallery 等需要完整展示原图、不被裁切的场景 */
+.media-reserve-contain { background: transparent; }
+.media-reserve-contain .media-reserve-img {
+  object-fit: contain;
+  padding: 0;
+}
 .media-reserve .skeleton {
   position: absolute;
   inset: 0;

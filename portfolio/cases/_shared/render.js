@@ -272,8 +272,9 @@ var CaseRenderer = (function () {
     opts = opts || {};
     var w = dims ? (dims.w || dims.width) : 0;
     var h = dims ? (dims.h || dims.height) : 0;
-    var ar = (w && h) ? ('aspect-ratio:' + w + ' / ' + h + ';') : 'aspect-ratio:16 / 10;';
-    var cls = 'media-reserve' + (opts.cls ? ' ' + opts.cls : '');
+    var hasDims = !!(w && h);
+    var ar = hasDims ? ('aspect-ratio:' + w + ' / ' + h + ';') : 'aspect-ratio:16 / 10;';
+    var cls = 'media-reserve' + (opts.cls ? ' ' + opts.cls : '') + (opts.fit === 'contain' ? ' media-reserve-contain' : '');
     var imgCls = 'media-reserve-img' + (opts.imgCls ? ' ' + opts.imgCls : '');
     var alt = esc(opts.alt || '');
     var lazy = opts.eager ? '' : ' loading="lazy"';
@@ -1479,12 +1480,12 @@ var CaseRenderer = (function () {
       var firstSrc = first.src || '';
       var firstDims = dimsOf(first.w, first.h);
       var restHtml = bk.slice(1).map(function (it) {
-        return mediaReserve(it.src, dimsOf(it.w, it.h), { cls: 'screen-placeholder', alt: 'Screen' });
+        return mediaReserve(it.src, dimsOf(it.w, it.h), { cls: 'screen-placeholder', alt: 'Screen', fit: 'contain' });
       }).join('');
       var offsetRemAttr = (data.offsetRems && data.offsetRems[idx])
         ? ' data-offset-rem="' + data.offsetRems[idx] + '"' : '';
       return '<div class="screen-col" data-col-idx="' + idx + '" data-col-total="' + colCount + '"' + offsetRemAttr + '>' +
-        mediaReserve(firstSrc, firstDims, { cls: 'screen-placeholder sw-first-card', imgCls: 'sw-first-img', alt: 'Screen', eager: true }) +
+        mediaReserve(firstSrc, firstDims, { cls: 'screen-placeholder sw-first-card', imgCls: 'sw-first-img', alt: 'Screen', eager: true, fit: 'contain' }) +
         restHtml +
       '</div>';
     }).join('');
