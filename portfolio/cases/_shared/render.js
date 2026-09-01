@@ -57,13 +57,13 @@ var CaseRenderer = (function () {
     'stats':         renderStats,      // 数据统计（nixtio Why choose us）
     'services':      renderServices,   // 编号服务手风琴（nixtio Services）
     'team':          renderTeam,       // 团队成员卡片（nixtio Our team）
-    'eyebrow':       renderEyebrow,    // 眉标（胶囊标签，来自 scenes-tag）
     'eyebrow-head':  renderEyebrowHead,// 导语头（居中：眉标签 + 标题 + 副标题，来自 scenes-head）
     'split-head':    renderSplitHead,  // 分栏头（左序号标题 + 右描述，来自 sec-head）
     'product-hero':  renderProductHero,// 产品首屏（左文案 + 右产品面板，来自 hero）
     'scene-grid':    renderSceneGrid,  // 场景网格（居中头 + 场景卡片网格，来自 scenes）
     'mockup-banner': renderMockupBanner, // 3D 样机 Banner（手机/笔记本真 3D 旋转进场 + 标题/背景合成）
-    'ad-banner': renderAdBanner          // 广告 Banner（大标题裂开 + 16:9 图片无缝跑马灯 + 上下副标题）
+    'ad-banner': renderAdBanner,         // 广告 Banner（大标题裂开 + 16:9 图片无缝跑马灯 + 上下副标题）
+    'icon-wall': renderIconWall          // 图标动画墙（GIF/APNG/Lottie 散落全屏）
   };
 
   var TYPE_LABELS = {
@@ -87,7 +87,6 @@ var CaseRenderer = (function () {
     'stats': '数据统计',
     'services': '服务列表',
     'team': '团队成员',
-    'eyebrow': '眉标',
     'eyebrow-head': '导语头',
     'split-head': '分栏头',
     'product-hero': '产品首屏',
@@ -265,6 +264,29 @@ var CaseRenderer = (function () {
     i.alt = alt || '';
     i.loading = 'lazy';
     return i;
+  }
+  // 图片占位：按真实宽高预留 aspect-ratio，加载前显示骨架，加载后淡入。
+  // 彻底避免图片异步加载撑高导致页面长度变化（CLS / 滚动跳动）。
+  // dims: {w,h} 或 {width,height} 或 null。opts: {cls, alt, eager, imgCls}
+  function mediaReserve(src, dims, opts) {
+    opts = opts || {};
+    var w = dims ? (dims.w || dims.width) : 0;
+    var h = dims ? (dims.h || dims.height) : 0;
+    var ar = (w && h) ? ('aspect-ratio:' + w + ' / ' + h + ';') : 'aspect-ratio:16 / 10;';
+    var cls = 'media-reserve' + (opts.cls ? ' ' + opts.cls : '');
+    var imgCls = 'media-reserve-img' + (opts.imgCls ? ' ' + opts.imgCls : '');
+    var alt = esc(opts.alt || '');
+    var lazy = opts.eager ? '' : ' loading="lazy"';
+    return '<div class="' + cls + '" style="' + ar + '">' +
+      '<img src="' + esc(src) + '" alt="' + alt + '"' + lazy + ' class="' + imgCls + '" ' +
+      'onload="this.parentElement.classList.add(\'loaded\')">' +
+      '<div class="skeleton"></div></div>';
+  }
+  function dimsOf(a, b) {
+    // 从平行字段 w/h 取尺寸对象；a,b 可已是 {w,h} 或数字
+    if (a && typeof a === 'object') return a;
+    if (a && b) return { w: +a, h: +b };
+    return null;
   }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -1411,12 +1433,14 @@ var CaseRenderer = (function () {
       for (var ci = 0; ci < colCount; ci++) {
         var col = s.columns[ci] || {};
         var imgs = Array.isArray(col.images) ? col.images : [];
-        // 提取图片 src（兼容 {src:'...'} 或纯 string）
+        // 提取图片 src（兼容 {src:'...'} 或纯 string），并携带真实宽高用于前台占位预留（防 CLS）
         var bk = imgs.map(function (im) {
-          if (typeof im === 'string') return im;
-          if (im && typeof im.src === 'string') return im.src;
-          return '';
-        }).filter(Boolean);
+          var src = (typeof im === 'string') ? im : (im && im.src);
+          if (!src) return null;
+          var w = im && im.w ? +im.w : 0;
+          var h = im && im.h ? +im.h : 0;
+          return { src: src, w: w, h: h };
+        }).filter(function (x) { return x && x.src; });
         buckets.push(bk);
         // 用用户设置的 offsetRem 作为错落（如果用户填了就用，后续再和实际首图高做微调）
         // 把 rem 转成「相对于最大首卡高度的比例」方便 applyGalleryLayout 统一处理
@@ -1435,7 +1459,9 @@ var CaseRenderer = (function () {
     var buckets = [];
     var ptr = 0;
     for (var ci = 0; ci < cols; ci++) {
-      buckets.push(screens.slice(ptr, ptr + counts[ci]));
+      var part = screens.slice(ptr, ptr + counts[ci]);
+      // 旧数据无宽高信息，先包成 {src} 统一结构（无 dims → 前台不预留，回退加载后布局）
+      buckets.push(part.map(function (s) { return { src: s }; }));
       ptr += counts[ci];
     }
     return { mode: 'legacy', colCount: cols, buckets: buckets, offsetRems: null };
@@ -1449,14 +1475,16 @@ var CaseRenderer = (function () {
     var colsClass = colCount === 2 ? ' cols-2' : '';
 
     var colsHtml = buckets.map(function (bk, idx) {
-      var firstSrc = bk[0] || '';
-      var restHtml = bk.slice(1).map(function (src) {
-        return '<div class="screen-card screen-placeholder"><img src="' + esc(src) + '" alt="Screen" loading="lazy"></div>';
+      var first = bk[0] || { src: '' };
+      var firstSrc = first.src || '';
+      var firstDims = dimsOf(first.w, first.h);
+      var restHtml = bk.slice(1).map(function (it) {
+        return mediaReserve(it.src, dimsOf(it.w, it.h), { cls: 'screen-placeholder', alt: 'Screen' });
       }).join('');
       var offsetRemAttr = (data.offsetRems && data.offsetRems[idx])
         ? ' data-offset-rem="' + data.offsetRems[idx] + '"' : '';
       return '<div class="screen-col" data-col-idx="' + idx + '" data-col-total="' + colCount + '"' + offsetRemAttr + '>' +
-        '<div class="screen-card screen-placeholder sw-first-card"><img class="sw-first-img" src="' + esc(firstSrc) + '" alt="Screen"></div>' +
+        mediaReserve(firstSrc, firstDims, { cls: 'screen-placeholder sw-first-card', imgCls: 'sw-first-img', alt: 'Screen', eager: true }) +
         restHtml +
       '</div>';
     }).join('');
@@ -1577,7 +1605,7 @@ var CaseRenderer = (function () {
         (tagHtml ? '<div class="masonry-meta">' + tagHtml + '</div>' : '') +
       '</div>' : '';
       var cover = (it && it.image)
-        ? '<div class="masonry-cover"><img src="' + esc(it.image) + '" alt="' + esc(title) + '" loading="lazy"></div>'
+        ? mediaReserve(it.image, dimsOf(it.imageW, it.imageH), { cls: 'masonry-cover', alt: title, imgCls: 'masonry-cover-img' })
         : '<div class="masonry-cover masonry-cover-empty"></div>';
       return '<div class="masonry-card">' + cover + overlay + '</div>';
     }).join('');
@@ -1996,15 +2024,6 @@ var CaseRenderer = (function () {
         '<circle cx="30" cy="30" r="28" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>' +
         '<polygon points="25,18 25,42 43,30" fill="rgba(255,255,255,0.6)"/>' +
       '</svg></div></div>';
-  }
-
-  // ===== 14. Eyebrow (pill tag) =====
-  // Single field text; empty = no render
-  function renderEyebrow(s) {
-    if (!s || !s.text) return null;
-    var section = sec('pd-eyebrow-section');
-    section.innerHTML = '<span class="pd-eyebrow">' + esc(s.text) + '</span>';
-    return section;
   }
 
   // ===== 15. Intro Head (centered intro) =====
@@ -2731,6 +2750,171 @@ var CaseRenderer = (function () {
     setupAdBannerMarquee(section);                  // 预挂载测一次（宽=0，仅注册视口暂停钩子）
     AD_QUEUE.push(section);
     return section;
+  }
+
+  // ===== 图标动画墙 icon-wall（GIF/APNG/Lottie 散落全屏） =====
+  // 数据：s.icons = [{ src, scale, z, delay }]
+  //   - src 支持 .gif/.apng（<img> 原生播放）与 .json（Lottie，fetch 后用 lottie-web 渲染）
+  //   - x/y 不再由后台手动填写，而是由 scatterMode 自动按「从内到外」的轨迹生成
+  //   - scale 等比缩放（不冲突「原始尺寸」：img 用 max-width:none 按自然像素显示，lottie 按 JSON 内 w/h 显示，再乘 scale）
+
+  // 计算图标在屏幕中心附近的散落位置
+  //   mode=vogel：Vogel 螺旋（黄金角），像向日葵籽/截图圆点一样从内到外螺旋散开
+  //   mode=rings：同心圆环，每个图标落在不同半径的环上，角度错开
+  //   mode=random：在整个环形区域均匀随机（密度按面积校正，避免中心堆叠）
+  function computeIconWallScatter(icons, s) {
+    var n = icons.length;
+    if (!n) return [];
+    var mode = String(s.scatterMode || 'vogel').toLowerCase();
+    var jitter = mkNum(s.scatterJitter, 0.15);
+    if (jitter < 0) jitter = 0; if (jitter > 1) jitter = 1;
+    var minR = mkNum(s.scatterMinR, 14);
+    var maxR = mkNum(s.scatterMaxR, 40);
+    var pad = mkNum(s.scatterPad, 12);          // 边缘留白 %：防止图标被 overflow:hidden 切掉
+    if (minR < 0) minR = 0;
+    if (pad < 0) pad = 0; if (pad > 45) pad = 45;
+    // 最外圈不能超过 50 - pad，否则图标中心会贴边导致被切
+    var hardMax = 50 - pad;
+    if (maxR > hardMax) maxR = hardMax;
+    if (maxR < minR + 1) maxR = minR + 1;
+    var golden = 2.39996322972865332; // 黄金角（弧度）≈ 137.507764°
+    var rand01 = function (i) { return Math.abs(Math.sin(i * 12.9898 + 78.233) * 43758.5453) % 1; };
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var t = n <= 1 ? 0 : i / (n - 1); // 0 ~ 1
+      var r, theta;
+      if (mode === 'random') {
+        // 均匀面积分布：r ∝ sqrt(u)，避免中心过密
+        var ru = rand01(i * 7 + 1);
+        r = minR + (maxR - minR) * Math.sqrt(ru);
+        theta = rand01(i * 13 + 3) * Math.PI * 2;
+      } else if (mode === 'rings') {
+        // 同心圆环：半径按索引分层，角度用黄金角错开并加抖动
+        var ringCount = Math.max(2, Math.round(Math.sqrt(n * 1.6)));
+        var ring = i % ringCount;
+        r = minR + (maxR - minR) * (ring / (ringCount - 1));
+        theta = i * golden + rand01(i) * Math.PI * 0.6;
+      } else {
+        // Vogel 螺旋：r ∝ sqrt(i)，θ = i * 黄金角
+        var seq = Math.sqrt(i / Math.max(1, n - 1));
+        r = minR + (maxR - minR) * seq;
+        theta = i * golden;
+      }
+      // 抖动：在半径和角度上加入可控随机量，让分布看着更自然
+      if (jitter > 0) {
+        var jr = (rand01(i * 5 + 11) - 0.5) * 2 * jitter * (maxR - minR) * 0.12;
+        var jt = (rand01(i * 9 + 17) - 0.5) * 2 * jitter * Math.PI * 0.35;
+        r += jr;
+        theta += jt;
+      }
+      if (r < minR) r = minR; if (r > maxR) r = maxR;
+      var x = 50 + r * Math.cos(theta);
+      var y = 50 + r * Math.sin(theta);
+      // 二次保险：把中心点限制在 [pad%, 100-pad%] 内，避免任何方向贴边
+      var lo = pad, hi = 100 - pad;
+      if (x < lo) x = lo; if (x > hi) x = hi;
+      if (y < lo) y = lo; if (y > hi) y = hi;
+      out.push({ x: x, y: y });
+    }
+    return out;
+  }
+  function renderIconWall(s) {
+    var section = sec('icon-wall-section');
+    var icons = (Array.isArray(s.icons) ? s.icons : []).filter(function (it) { return it && it.src; });
+    var floatOn = s.float !== false;     // 默认开浮动
+    var frameOn = !!s.frame;             // 默认不显示卡片底
+    var positions = computeIconWallScatter(icons, s);
+
+    section.innerHTML = headHtml(s) + '<div class="iw-stage">' +
+      icons.map(function (it, idx) {
+        var isJson = /\.json(\?|#|$)/i.test(it.src);
+        var pos = positions[idx] || { x: 50, y: 50 };
+        var x = mkNum(it.x, pos.x);
+        var y = mkNum(it.y, pos.y);
+        // 若数据里仍残留 x/y，优先尊重；否则用自动散落位置
+        if (it.x === undefined || it.x === null || String(it.x).trim() === '') x = pos.x;
+        if (it.y === undefined || it.y === null || String(it.y).trim() === '') y = pos.y;
+        var scale = mkNum(it.scale, 1);
+        var z = mkNum(it.z, 1);
+        var delay = mkNum(it.delay, idx * 0.06);
+        var style = 'left:' + x.toFixed(2) + '%;top:' + y.toFixed(2) + '%;' +
+          '--iw-scale:' + scale + ';--iw-z:' + z + ';--iw-delay:' + delay + 's;';
+        var cls = 'iw-icon' + (frameOn ? ' framed' : '') + (isJson ? ' lottie' : '');
+        if (isJson) {
+          return '<div class="' + cls + '" data-src="' + esc(it.src) + '" style="' + style + '"></div>';
+        }
+        return '<div class="' + cls + '" style="' + style + '">' +
+          '<img src="' + esc(it.src) + '" alt="" loading="lazy"></div>';
+      }).join('') + '</div>';
+
+    // 浮动动画开关（reduced-motion 由 CSS 媒体查询处理）
+    if (!floatOn) {
+      Array.prototype.forEach.call(section.querySelectorAll('.iw-icon'), function (e) { e.style.animation = 'none'; });
+    }
+
+    // Lottie 异步加载（.json）
+    loadIconWallLottie(section);
+    return section;
+  }
+
+  function headHtml(s) {
+    if (!s.heading && !s.subheading) return '';
+    return '<div class="iw-head">' +
+      (s.heading ? '<h2 class="iw-title">' + esc(s.heading) + '</h2>' : '') +
+      (s.subheading ? '<p class="iw-sub">' + esc(s.subheading) + '</p>' : '') +
+      '</div>';
+  }
+
+  function loadIconWallLottie(section) {
+    var nodes = section.querySelectorAll('.iw-icon.lottie[data-src]');
+    if (!nodes.length) return;
+    // 懒加载 lottie-web（仅当区块含 Lottie 时才拉取 ~300KB 脚本，避免每个页面都加载）
+    ensureLottie(function () {
+      if (!window.lottie) return;   // 脚本加载失败则静默跳过
+      Array.prototype.forEach.call(nodes, function (node) {
+        var url = node.getAttribute('data-src');
+        if (!url) return;
+        fetch(url).then(function (r) {
+          if (!r.ok) throw new Error('lottie fetch ' + r.status);
+          return r.json();
+        }).then(function (data) {
+          if (!data || !data.w || !data.h) return;
+          node.style.width = data.w + 'px';
+          node.style.height = data.h + 'px';
+          window.lottie.loadAnimation({
+            container: node,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            animationData: data
+          });
+        }).catch(function () { /* Lottie 加载失败静默忽略 */ });
+      });
+    });
+  }
+
+  // 懒加载 lottie-web（路径相对 render.js：_shared/assets/lib-lottie.min.js）
+  var _lottieCbs = null;
+  function ensureLottie(cb) {
+    if (window.lottie) { try { cb(); } catch (e) {} return; }
+    if (_lottieCbs) { _lottieCbs.push(cb); return; }
+    _lottieCbs = [cb];
+    var base = '../_shared/';
+    try {
+      var cs = document.querySelector('script[src$="render.js"]');
+      if (cs && cs.src) base = cs.src.slice(0, cs.src.lastIndexOf('/') + 1);
+    } catch (e) { /* keep default */ }
+    var s = document.createElement('script');
+    s.src = base + 'assets/lib-lottie.min.js';
+    s.async = true;
+    var done = function () {
+      var cbs = _lottieCbs; _lottieCbs = null;
+      if (!cbs) return;
+      cbs.forEach(function (f) { try { f(); } catch (e) {} });
+    };
+    s.onload = done;
+    s.onerror = done;   // 失败也回调（window.lottie 仍为 undefined → 渲染内部静默跳过）
+    document.head.appendChild(s);
   }
 
   // 16:9 图片无缝跑马灯（GSAP 驱动：单组图片 + modifiers(wrap) 锁死 [-groupW,0) 循环；force3D 强制 GPU 合成）

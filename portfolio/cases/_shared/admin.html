@@ -1543,7 +1543,9 @@ body {
   border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 12px;
   background: var(--bg-secondary); display: flex; flex-direction: column; gap: 10px;
 }
-.list-field-item .lf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.list-field-item .lf-row { display: grid; grid-template-columns: repeat(var(--lf-cols, 2), 1fr); gap: 10px; }
+.list-field-item .lf-row .form-group { gap: 4px; }
+.list-field-item .lf-row .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
 .list-field-item .lf-head { display: flex; align-items: center; justify-content: space-between; }
 .list-field-item .lf-head-actions { display: flex; align-items: center; gap: 4px; }
 .list-field-item .lf-title { font-size: 12px; font-weight: 700; color: var(--text-muted); }
@@ -1682,6 +1684,14 @@ body {
   align-items: center; justify-content: center;
 }
 .il-image-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+/* Lottie JSON（矢量动画）预览占位：不走 <img>，用带播放图标的徽标提示，避免裂图 */
+.il-lottie-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 999px;
+  background: rgba(127,127,127,0.14); color: var(--text-secondary, #888);
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
+}
+.il-lottie-badge svg { width: 16px; height: 16px; }
 /* 条目内图片清除按钮：右上角 x 图标，与全局上传（.dz-clear）视觉统一 */
 .il-image-preview .il-img-clear {
   position: absolute; top: 8px; right: 8px;
@@ -1904,12 +1914,12 @@ body.auth-pending .pages-view { visibility: hidden; }
 .btn-danger:hover { background: #d43a3f; }
 
 /* 可视化编辑器入口卡片（表单顶部持久可见；放在顶层 style 里避免受 ensureMbVisDOM 懒注入影响） */
-.mbvis-launch{display:flex;align-items:center;gap:14px;background:linear-gradient(120deg,#1b2330,#16181d);border:1px solid #2b3a52;border-radius:14px;padding:14px 16px}
+.mbvis-launch{display:flex;align-items:center;gap:14px;background:linear-gradient(120deg,var(--bg-secondary),var(--bg-primary));border:1px solid var(--border-color);border-radius:14px;padding:14px 16px}
 .mbvis-launch-ico{font-size:22px}
 .mbvis-launch-tx{flex:1}
-.mbvis-launch-t{font-size:14px;font-weight:600;color:#e8eaed}
-.mbvis-launch-s{font-size:12px;color:rgba(232,234,237,.6);margin-top:3px}
-.mbvis-launch-btn{background:#3b82f6;color:#fff;border:0;border-radius:100px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+.mbvis-launch-t{font-size:14px;font-weight:600;color:var(--text-primary)}
+.mbvis-launch-s{font-size:12px;color:var(--text-secondary);margin-top:3px}
+.mbvis-launch-btn{background:var(--accent-color);color:#fff;border:0;border-radius:100px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
 .mbvis-launch-btn:hover{filter:brightness(1.08)}
 </style>
 </head>
@@ -2229,6 +2239,9 @@ function hideAuthOverlay() { $('#authOverlay').classList.remove('show'); }
 
 /* ===== State ===== */
 let state = { sections: [], letsTalk: null, navMenu: null };
+// 图片真实宽高注册表（同会话内上传图登记 url→{w,h}）；setUrl 写入数据项时同步落为 *W/*H 平行字段，
+// 随 content.json 持久化，使前台渲染按真实宽高预留占位尺寸，避免图片异步加载撑高导致页面跳动（CLS）。
+let IMG_DIMS = {};
 let originalSections = []; // for dirty tracking
 let originalLetsTalk = null;
 let originalNavMenu = null;
@@ -2318,13 +2331,13 @@ const TYPE_LABELS = {
   'stats': '数据统计',
   'services': '服务列表',
   'team': '团队区块',
-  'eyebrow': '眉标',
   'eyebrow-head': '导语头',
   'split-head': '分栏头',
   'product-hero': '产品首屏',
   'scene-grid': '场景网格',
   'mockup-banner': '3D样机Banner',
-  'ad-banner': '广告Banner'
+  'ad-banner': '广告Banner',
+  'icon-wall': '图标动画墙'
 };
 
 /* ===== Type Descriptions ===== */
@@ -2349,13 +2362,13 @@ const TYPE_DESCS = {
   'stats': '大数字数据统计',
   'services': '编号服务列表，点击展开描述与分类标签',
   'team': '团队区块：白色圆角卡片 + 左文字右 2×2 头像拼图',
-  'eyebrow': '胶囊标签：行业/分类小字标识（来自 scenes-tag）',
   'eyebrow-head': '居中导语头：眉标签 + 标题 + 副标题（来自 scenes-head）',
   'split-head': '分栏头：左序号标题 + 右描述（来自 sec-head）',
   'product-hero': '产品首屏：左文案 + 右产品面板的 hero 布局（来自 hero）',
   'scene-grid': '场景网格：居中头 + 场景卡片网格，卡片可新增/删除（来自 scenes）',
   'mockup-banner': '3D 样机首屏：手机/笔记本真 3D 外壳（带厚度侧壁）整圈旋转进场，可叠加标题副标题与背景，手机可 1~2 台、各自设定起止视角',
-  'ad-banner': '广告 Banner：大标题整屏出现后从中间上下裂开，露出 16:9 图片无缝跑马灯，上下各挂副标题'
+  'ad-banner': '广告 Banner：大标题整屏出现后从中间上下裂开，露出 16:9 图片无缝跑马灯，上下各挂副标题',
+  'icon-wall': '图标动画墙：GIF/APNG/Lottie 动画图标以原始尺寸散落铺满一整屏，可选中心标题与浮动，位置/大小后台可调'
 };
 
 /* ===== Type Icons (inline SVG paths) ===== */
@@ -2379,7 +2392,6 @@ const TYPE_ICONS = {
   'stats': '<path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7" rx=".5"/><rect x="12" y="6" width="3" height="11" rx=".5"/><rect x="17" y="13" width="3" height="4" rx=".5"/>',
   'services': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><circle cx="7" cy="6.5" r=".8"/><circle cx="10" cy="6.5" r=".8"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="16" x2="14" y2="16"/>',
   'team': '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5"/>',
-  'eyebrow': '<rect x="3" y="9" width="18" height="6" rx="3"/><line x1="7" y1="12" x2="17" y2="12"/>',
   'eyebrow-head': '<path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h7"/><circle cx="17" cy="12" r="0.6" fill="currentColor"/>',
   'split-head': '<line x1="4" y1="7" x2="13" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="9" y1="17" x2="16" y2="17"/>',
   'product-hero': '<rect x="3" y="4" width="9" height="16" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/>',
@@ -2790,9 +2802,6 @@ const TYPE_FIELDS = {
   ],
 
   /* ===== 产品详情类板块（来自 questek-detail，类名中文化） ===== */
-  'eyebrow': [
-    { key: 'text', label: '标签文字（留空则前台不显示该板块）', type: 'text', placeholder: '03 · INDUSTRY · 行业落地' }
-  ],
   'eyebrow-head': [
     { key: 'eyebrow', label: '眉标签（选填，留空则不显示）', type: 'text', placeholder: '03 · INDUSTRY · 行业落地' },
     { key: 'title', label: '标题', type: 'textarea', rows: 2 },
@@ -2960,6 +2969,35 @@ const TYPE_FIELDS = {
     { key: 'bgVideo', label: '背景视频（铺满相框，自动循环）', type: 'video', hint: '上传 mp4/webm 或填直链；自动静音循环播放，离屏自动暂停', dependsOn: { field: 'bgType', value: 'video' }, tab: '背景' },
     { key: 'bgVideoOverlay', label: '视频遮罩强度（压暗）', type: 'range', min: 0, max: 1, step: 0.05, default: '0.75',
       hint: '滑块调压暗程度，0 = 关闭，0.75 = 默认，1 = 全黑', dependsOn: { field: 'bgType', value: 'video' }, tab: '背景' }
+  ],
+  'icon-wall': [
+    { key: 'heading', label: '居中标题', type: 'text', placeholder: 'Animated Icons', tab: '内容' },
+    { key: 'subheading', label: '居中副标题', type: 'text', placeholder: 'GIF · APNG · Lottie', tab: '内容' },
+    { key: 'scatterMode', label: '散落模式', type: 'select', options: ['vogel', 'rings', 'random'], optionLabels: { vogel: 'Vogel 螺旋（推荐）', rings: '同心圆环', random: '随机均匀' }, default: 'vogel', tab: '内容',
+      hint: 'Vogel 螺旋像向日葵籽从内到外螺旋散开；同心圆环像截图中的圆点落在不同环上；随机均匀在整个区域随机分布' },
+    { key: 'scatterJitter', label: '位置抖动', type: 'text', placeholder: '0.15', default: '0.15', tab: '内容',
+      hint: '0 = 完全规律，1 = 最大抖动；建议 0.1~0.3，让分布看着随机又不乱' },
+    { key: 'scatterMinR', label: '最小半径 %', type: 'text', placeholder: '14', default: '14', tab: '内容',
+      hint: '中心留空半径，避免图标压住居中标题' },
+    { key: 'scatterMaxR', label: '最大半径 %', type: 'text', placeholder: '40', default: '40', tab: '内容',
+      hint: '最外圈半径，默认 40%；实际会被自动限制在「50% - 边缘留白」以内，防止图标贴边' },
+    { key: 'scatterPad', label: '边缘留白 %', type: 'text', placeholder: '12', default: '12', tab: '内容',
+      hint: '图标中心点到屏幕边缘的最小距离，防止图标被 overflow:hidden 切掉；图标越大/缩放越大，这里要调越大' },
+    { key: 'frame', label: '图标卡片底（圆角微反差卡）', type: 'checkbox', default: false, tab: '内容',
+      hint: '勾选后每个图标带一圈主题同色系圆角卡片底；不勾选则图标直接散落在底色上' },
+    { key: 'float', label: '浮动动画', type: 'checkbox', default: true, tab: '内容',
+      hint: '勾选后图标轻微上下浮动；关闭则静止' },
+    { key: 'icons', label: '散落图标（GIF / APNG / Lottie）', type: 'items-list', itemLabel: '图标', itemFields: [
+      { key: 'src', label: '动画文件（.gif / .apng / .json Lottie）', type: 'image',
+        accept: '.gif,.apng,.json', compress: { mode: 'none' },
+        hint: 'GIF/APNG 原生播放；.json 为 Lottie 动画（自动矢量渲染，无需压缩）' },
+      { key: 'scale', label: '等比缩放', type: 'text', placeholder: '1', inline: true,
+        hint: '1 = 原始尺寸，2 = 两倍，0.5 = 一半' },
+      { key: 'z', label: '层级', type: 'text', placeholder: '1', inline: true,
+        hint: '数字越大越在上层' },
+      { key: 'delay', label: '进场延迟 s', type: 'text', placeholder: '0', inline: true,
+        hint: '秒，错位淡入延迟' }
+    ], tab: '图标' }
   ]
 };
 
@@ -3027,6 +3065,7 @@ function getDefaultSection(type) {
       title: 'SELECTED WORKS', subtitleTop: 'Collection Vol.2', subtitleBottom: 'This case contains all the projects, concepts and experiments for the year.',
       titleFont: 'impact', titleSize: '220', titleWeight: '800', titleLineHeight: '1.05', titleLetterSpacing: '-0.03', titleColor: '#ffffff', titleUppercase: '1',
       subtitleSize: '20', subtitleColor: '', subtitleLetterSpacing: '', splitGap: '0', bgType: 'theme', bgColor: '#0c0d10', bgImage: '', bgVideo: '', bgVideoOverlay: '' };
+    case 'icon-wall': return { ...base, heading: '', subheading: '', scatterMode: 'vogel', scatterJitter: '0.15', scatterMinR: '14', scatterMaxR: '40', scatterPad: '12', frame: false, float: true, icons: [] };
     default: return base;
   }
 }
@@ -3169,8 +3208,8 @@ function genId() {
 }
 
 /* ===== Upload（图片/视频/动图统一：后端按扩展名存文件，前端不再区分） ===== */
-const MEDIA_EXT_ALL = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'bmp', 'tiff', 'tif', 'ico', 'apng', 'svg', 'mp4', 'webm', 'mov', 'm4v', 'ogv', 'ogg'];
-const MEDIA_ACCEPT = '.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp,.tiff,.tif,.ico,.apng,.svg,.mp4,.webm,.mov,.m4v,.ogv,.ogg';
+const MEDIA_EXT_ALL = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'bmp', 'tiff', 'tif', 'ico', 'apng', 'svg', 'json', 'mp4', 'webm', 'mov', 'm4v', 'ogv', 'ogg'];
+const MEDIA_ACCEPT = '.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp,.tiff,.tif,.ico,.apng,.svg,.json,.mp4,.webm,.mov,.m4v,.ogv,.ogg';
 
 /* 单次上传格式选择（放在每个上传控件旁）：
    优先级：控件上次选择（setUrl/setImageValue 重渲染时传入）> localStorage 全局记忆（pf_fmt_pick）> 默认 jpg。
@@ -3220,6 +3259,10 @@ async function uploadMedia(file, fmt, sectionType, compress) {
   // → 服务器优先用它；无则回退 sectionType 类型映射。新组件压缩规则不用再改 server.py
   if (compress && typeof compress === 'object' && compress.mode) payload.compress = compress;
   const data = await api('/upload', 'POST', payload);
+  // 登记图片真实宽高（server 已在上传时计算），供 setUrl 落进数据项，实现前台占位预留
+  if (data && data.url && data.width) {
+    IMG_DIMS[data.url] = { w: data.width, h: data.height };
+  }
   return data.url || '';
 }
 
@@ -3248,7 +3291,7 @@ async function pngQuantizeUpload(file) {
 }
 
 // 兼容旧调用点：图片/视频字段统一走 uploadMedia（fmt 为单次上传格式，默认 jpg）
-async function uploadImage(file, fmt, sectionType) { return uploadMedia(file, fmt, sectionType); }
+async function uploadImage(file, fmt, sectionType, compress) { return uploadMedia(file, fmt, sectionType, compress); }
 async function uploadVideo(file, fmt) { return uploadMedia(file, fmt); }
 
 // 公共二维码上传：覆盖 _shared/assets/qr-<slot>.png，全站底部二维码统一（改一次全站生效）
@@ -3271,6 +3314,13 @@ function isVideoUrl(url) {
   if (!url) return false;
   const ext = (String(url).split('?')[0].split('.').pop() || '').toLowerCase();
   return ['mp4', 'webm', 'mov', 'm4v', 'ogv', 'ogg'].indexOf(ext) >= 0;
+}
+
+// Lottie 动画：.json（Bodymovin）矢量文件，前台用 lottie-web 渲染，不走 <img>
+function isLottieUrl(url) {
+  if (!url) return false;
+  const ext = (String(url).split('?')[0].split('.').pop() || '').toLowerCase();
+  return ext === 'json';
 }
 
 /* ===== Load ===== */
@@ -3596,8 +3646,6 @@ function buildCardThumbnail(s) {
             : `<div class="ct-member-photo ct-member-empty">${esc((it && it.name && it.name[0]) || '?')}</div>`}<span>${esc((it && it.name) || '')}</span></div>`).join('') || '<span class="ct-muted">（未添加成员）</span>'}</div>
         </div>`;
       }
-      case 'eyebrow':
-        return `<div style="padding:8px 10px;"><span class="pd-eyebrow">${esc(s.text || '（未填写标签文字）')}</span></div>`;
       case 'eyebrow-head':
         return `<div style="padding:8px 10px;text-align:center;">
           ${s.eyebrow ? '<span class="pd-eyebrow">' + esc(s.eyebrow) + '</span><br>' : ''}
@@ -3836,6 +3884,11 @@ function renderEditorForm(section) {
       '<div class="mbvis-launch-s">拖滑块实时调 3D 样机视角、进场动画、标题遮挡与背景，所见即所得，关闭即保存</div></div>' +
       '<button type="button" class="mbvis-launch-btn" id="mbvisLaunchBtn">打开可视化编辑器</button></div></div>';
   }
+  // icon-wall：在表单顶部提供一个「可视化排版」入口，弹出与前台等比例的视窗，拖拽图标摆放位置（所见即所得）
+  if (section.type === 'icon-wall') {
+    html += '<div class="form-group full" style="margin:0 0 14px"><div class="mbvis-launch" id="iwvisLaunchBox">' +
+      '<button type="button" class="mbvis-launch-btn" id="iwvisLaunchBtn" style="flex:1">打开可视化排版</button></div></div>';
+  }
   fields.forEach((f) => {
     if (hasTabs) openPanel(f.tab || tabs[0], tabs.indexOf(f.tab || tabs[0]));
     const isFull = ['textarea', 'image', 'image-list', 'video', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker', 'animated-params'].includes(f.type);
@@ -4030,6 +4083,11 @@ function renderEditorForm(section) {
   if (section.type === 'mockup-banner') {
     const mbBtn = document.getElementById('mbvisLaunchBtn');
     if (mbBtn) mbBtn.onclick = () => openMbVis();
+  }
+  // icon-wall：绑定顶部「可视化排版」入口按钮（弹窗式拖拽摆放）
+  if (section.type === 'icon-wall') {
+    const iwBtn = document.getElementById('iwvisLaunchBtn');
+    if (iwBtn) iwBtn.onclick = () => openIconWallVisualEditor();
   }
 }
 
@@ -4956,7 +5014,13 @@ function bindGalleryColumnsEditor(key, sectionId) {
               var url = await uploadImage(file, fmtEl ? fmtEl.value : 'jpg', 'gallery');
               if (!url) throw new Error('服务器未返回 URL');
               if (section.columns && section.columns[ci] && section.columns[ci].images[idx]) {
-                section.columns[ci].images[idx].src = url;
+                var gd = IMG_DIMS[url];
+                section.columns[ci].images[idx] = {
+                  id: (list[idx] && list[idx].id) || genId(),
+                  src: url,
+                  w: gd ? gd.w : undefined,
+                  h: gd ? gd.h : undefined
+                };
               }
               prog.close('已覆盖替换该图', 'success');
               onSectionChanged();
@@ -4992,7 +5056,11 @@ function bindGalleryColumnsEditor(key, sectionId) {
         var url = await uploadImage(file, getFmtPick(dz.parentElement), 'gallery');
         if (!url) throw new Error('服务器未返回 URL');
         if (!section.columns[ci]) section.columns[ci] = { offsetRem: 0, images: [] };
-        section.columns[ci].images.push({ id: genId(), src: url });
+        var gd2 = IMG_DIMS[url];
+        section.columns[ci].images.push({
+          id: genId(), src: url,
+          w: gd2 ? gd2.w : undefined, h: gd2 ? gd2.h : undefined
+        });
         prog.close('已添加到本列末尾', 'success');
         onSectionChanged();
         setTimeout(function () { renderEditorForm(section); }, 0);
@@ -5138,9 +5206,10 @@ function renderItemsListField(field, list, uid) {
   const key = field.key;
   const itemLabel = field.itemLabel || '条目';
   const items = list.map((item, i) => {
-    // 渲染单个字段的 form-group；inline 字段会被打包进 .lf-row（两列同行）
+    // 渲染单个字段的 form-group；inline 字段会被打包进 .lf-row（同行多列）
     function itemFieldHtml(f) {
       const v = item ? item[f.key] : '';
+      const hintHtml = f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : '';
       let ctl = '';
       if (f.type === 'textarea') {
         ctl = `<textarea class="form-input form-textarea" data-il-key="${esc(f.key)}" data-il-type="textarea" data-il-idx="${i}">${esc(Array.isArray(v) ? v.join(', ') : (v || ''))}</textarea>`;
@@ -5160,21 +5229,26 @@ function renderItemsListField(field, list, uid) {
       } else {
         ctl = `<input class="form-input" data-il-key="${esc(f.key)}" data-il-type="text" data-il-idx="${i}" type="text" placeholder="${esc(f.placeholder || '')}" value="${esc(v || '')}">`;
       }
-      return `<div class="form-group"><label class="form-label">${esc(f.label)}</label>${ctl}</div>`;
+      return `<div class="form-group"><label class="form-label">${esc(f.label)}${hintHtml}</label>${ctl}</div>`;
     }
-    // body：字段定义带 inline:true 时，连续的 inline 字段打包进 .lf-row（两列同行）；
+    // body：字段定义带 inline:true 时，连续的 inline 字段打包进 .lf-row（同行多列）；
+    // inlineBreak:true 会强制开启新行，实现 2+3 等分组；列数由该行字段数量决定。
     // 其余字段独占一行（保持原纵向布局）。移动端 .lf-row 已有 1fr 单列回退。
     const fields = field.itemFields || [];
     let body = '';
     for (let fi = 0; fi < fields.length; fi++) {
       if (fields[fi].inline) {
         let rowHtml = '';
+        let rowCols = 0;
         while (fi < fields.length && fields[fi].inline) {
           rowHtml += itemFieldHtml(fields[fi]);
+          rowCols++;
           fi++;
+          // 下一个字段存在且标记了 inlineBreak，则结束当前行
+          if (fields[fi] && fields[fi].inlineBreak) break;
         }
         fi--; // while 循环多推进一位，回退
-        body += `<div class="lf-row">${rowHtml}</div>`;
+        body += `<div class="lf-row" style="--lf-cols:${rowCols}">${rowHtml}</div>`;
       } else {
         body += itemFieldHtml(fields[fi]);
       }
@@ -5229,7 +5303,7 @@ function renderItemImageControl(fkey, url, idx, field, focusValue, fmtPick) {
   return `
     <div class="il-image${focus ? ' il-image-focus' : ''}" data-il-key="${esc(fkey)}" data-il-type="image" data-il-idx="${idx}"${focus ? ' data-il-focus="1"' : ''}>
       <input type="hidden" class="il-image-value" value="${esc(url)}">
-      ${has ? `<div class="il-image-preview"><img src="${esc(url)}" alt="" loading="lazy"><button type="button" class="il-img-clear" title="清除图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>` : ''}
+      ${has ? `<div class="il-image-preview">${isLottieUrl(url) ? `<div class="il-lottie-badge"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg><span>Lottie JSON</span></div>` : `<img src="${esc(url)}" alt="" loading="lazy">`}<button type="button" class="il-img-clear" title="清除图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>` : ''}
       ${focusPanel}
       <div class="il-image-actions">
         <button type="button" class="btn-secondary il-img-upload" style="justify-content:center;">上传图片</button>
@@ -5362,6 +5436,12 @@ function bindItemImages(wrap, field, uid) {
       const existing = (state.sections[selectedIndex][key] || [])[idx] || {};
       const item = Object.assign({}, existing, list[idx] || {});
       item[fkey] = url;
+      // 上传成功后把真实宽高落进数据项（平行字段 *W/*H），前台渲染据此预留占位尺寸，避免加载跳动
+      const dims = IMG_DIMS[url];
+      if (dims && dims.w && dims.h) {
+        item[fkey + 'W'] = dims.w;
+        item[fkey + 'H'] = dims.h;
+      }
       // 换新图后焦点重置（旧图焦点值不再适用）
       if (item.imageFocus) delete item.imageFocus;
       list[idx] = item;
@@ -5378,7 +5458,9 @@ function bindItemImages(wrap, field, uid) {
       onSectionChanged();
     };
     imgWrap.querySelector('.il-img-upload').addEventListener('click', () => {
-      pickFile(MEDIA_ACCEPT).then(async (file) => {
+      const ilFkey = imgWrap.dataset.ilKey;
+      const ilImgField = (field.itemFields || []).find((ff) => ff.key === ilFkey) || field;
+      pickFile((ilImgField && ilImgField.accept) || MEDIA_ACCEPT).then(async (file) => {
         if (!file) return;
         const prog = toastProgress('正在上传图片...');
         try {
@@ -5437,9 +5519,14 @@ function bindItemImages(wrap, field, uid) {
 function collectItemsList(key, uid) {
   const wrap = document.querySelector(`.list-field[data-lf="${key}"][data-uid="${uid}"]`);
   if (!wrap) return [];
+  // 同 key 在 state 中已有的数组：弹窗可视化编辑器（如 icon-wall 拖拽位置、mockup-banner 角度）写入的
+  // 非 DOM 字段（x/y、imageFocus 等）不会出现在 DOM 收集结果里。以 existing 为底补全，再叠加 DOM 收集值，
+  // 避免「从表单重建」把弹窗调好的值清掉（与 bindItemImages 的 Object.assign 先例一致）。
+  const stateArr = (selectedIndex >= 0 && state.sections[selectedIndex] && state.sections[selectedIndex][key]) || [];
   const out = [];
-  wrap.querySelectorAll('.list-field-item').forEach((item) => {
-    const obj = {};
+  wrap.querySelectorAll('.list-field-item').forEach((item, idx) => {
+    const existing = stateArr[idx] || {};
+    const obj = Object.assign({}, existing);
     item.querySelectorAll('[data-il-key]').forEach((inp) => {
       const fkey = inp.dataset.ilKey;
       const ftype = inp.dataset.ilType;
@@ -8095,6 +8182,257 @@ function bindMbVisEvents() {
       var d = e.target.closest('[data-preset-del]'); if (d) { mbDeletePreset(+d.dataset.presetDel); return; }
     });
   }
+}
+
+/* ===== icon-wall 可视化排版弹窗（拖拽摆放图标位置） =====
+ * 视窗与网站前台 100vh 等比例：stage 用 window 的宽高比，图标按真实像素×scale 等比渲染，
+ * 拖拽时把中心点换算成 x%/y% 写回 state.icons[i].x/y，关闭即保存（与前台 render.js 的百分比定位一致）。
+ */
+function iwvisScatter(n, s) {
+  var minR = parseFloat(s.scatterMinR) || 14;
+  var maxR = parseFloat(s.scatterMaxR) || 40;
+  var pad = parseFloat(s.scatterPad) || 12;
+  var hardMax = Math.max(minR + 1, 50 - pad);
+  if (maxR > hardMax) maxR = hardMax;
+  var golden = 2.39996322972865332;
+  var out = [];
+  for (var i = 0; i < n; i++) {
+    var r = minR + (maxR - minR) * Math.sqrt(n <= 1 ? 0 : i / (n - 1));
+    var theta = i * golden;
+    var x = 50 + r * Math.cos(theta);
+    var y = 50 + r * Math.sin(theta);
+    x = Math.min(100 - pad, Math.max(pad, x));
+    y = Math.min(100 - pad, Math.max(pad, y));
+    out.push({ x: x, y: y });
+  }
+  return out;
+}
+
+function ensureLottieAdmin(cb) {
+  if (window.lottie) { cb(); return; }
+  var base = location.pathname.replace(/\/admin\.html.*$/, '');
+  var sc = document.createElement('script');
+  sc.src = base + '/assets/lib-lottie.min.js';
+  sc.onload = cb;
+  sc.onerror = function () { cb(); };
+  document.head.appendChild(sc);
+}
+
+function openIconWallVisualEditor() {
+  var section = (selectedIndex >= 0 && state.sections[selectedIndex]) || null;
+  if (!section || section.type !== 'icon-wall') { toast('请先选中图标动画墙区块', 'error'); return; }
+  var icons = section.icons || [];
+  if (!icons.length) { toast('还没有添加图标，请先在「图标」里上传', 'error'); return; }
+
+  // 注入一次样式
+  if (!document.getElementById('iwvisStyle')) {
+    var css = [
+      '.iwvis-mask{position:fixed;inset:0;z-index:99999;background:rgba(8,9,12,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;font-family:inherit}',
+      '.iwvis-modal{width:min(1100px,96vw);max-height:94vh;background:#111317;border:1px solid #262a31;border-radius:18px;box-shadow:0 30px 80px -20px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden}',
+      '.iwvis-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid #20242b}',
+      '.iwvis-title{font-size:15px;font-weight:600;color:#e8eaed}',
+      '.iwvis-sub{font-size:12px;color:rgba(232,234,237,.5);margin-top:3px}',
+      '.iwvis-close{background:#3b82f6;border:0;color:#fff;padding:8px 18px;border-radius:100px;cursor:pointer;font-size:13px;white-space:nowrap}',
+      '.iwvis-close:hover{filter:brightness(1.08)}',
+      '.iwvis-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid #20242b}',
+      '.iwvis-btn{background:#16181d;border:1px solid #262a31;color:#e8eaed;padding:7px 14px;border-radius:100px;cursor:pointer;font-size:12.5px}',
+      '.iwvis-btn:hover{border-color:#3b82f6}',
+      '.iwvis-hint{font-size:11.5px;color:rgba(232,234,237,.45);margin-left:auto}',
+      '.iwvis-body{display:flex;gap:16px;padding:16px 18px;overflow:auto}',
+      '.iwvis-stage-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-width:0}',
+      '.iwvis-stage{position:relative;background:radial-gradient(120% 120% at 50% 0%,#1c1f25 0%,#0c0d10 60%);border:1px solid #2a2f37;border-radius:14px;overflow:hidden;touch-action:none}',
+      '.iwvis-stage::before,.iwvis-stage::after{content:"";position:absolute;background:rgba(255,255,255,.06)}',
+      '.iwvis-stage::before{left:50%;top:0;bottom:0;width:1px;transform:translateX(-.5px)}',
+      '.iwvis-stage::after{top:50%;left:0;right:0;height:1px;transform:translateY(-.5px)}',
+      '.iwvis-headprev{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:1;padding:0 6%}',
+      '.iwvis-headprev .t{font-size:clamp(20px,3.4vw,34px);font-weight:500;letter-spacing:-.02em;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.4)}',
+      '.iwvis-headprev .s{margin-top:6px;font-size:12px;color:rgba(255,255,255,.7)}',
+      '.iwvis-dot{position:absolute;transform:translate(-50%,-50%);cursor:grab;z-index:2;will-change:left,top,transform;user-select:none}',
+      '.iwvis-dot img{max-width:none;display:block;border-radius:6px;pointer-events:none;box-shadow:0 6px 18px -6px rgba(0,0,0,.5)}',
+      '.iwvis-dot .lottie-box{max-width:none;display:block;border-radius:6px;box-shadow:0 6px 18px -6px rgba(0,0,0,.5)}',
+      '.iwvis-dot.sel{outline:2px solid #3b82f6;outline-offset:3px;border-radius:8px}',
+      '.iwvis-dot .badge{position:absolute;left:50%;top:-9px;transform:translateX(-50%);background:#3b82f6;color:#fff;font-size:10px;line-height:1;padding:2px 6px;border-radius:100px;pointer-events:none}',
+      '.iwvis-side{width:230px;flex:0 0 230px;background:#0e0f12;border:1px solid #20242b;border-radius:14px;padding:14px;align-self:flex-start}',
+      '.iwvis-sel-title{font-size:12.5px;font-weight:600;color:#e8eaed;margin-bottom:10px}',
+      '.iwvis-sel-empty{font-size:12px;color:rgba(232,234,237,.45)}',
+      '.iwvis-field{margin-bottom:12px}',
+      '.iwvis-field label{display:block;font-size:11.5px;color:rgba(232,234,237,.6);margin-bottom:5px}',
+      '.iwvis-field input[type=range]{width:100%;accent-color:#3b82f6}',
+      '.iwvis-field .val{float:right;color:#e8eaed;font-variant-numeric:tabular-nums}',
+      '.iwvis-count{font-size:11px;color:rgba(232,234,237,.45);margin-top:4px}'
+    ].join('\n');
+    var st = document.createElement('style'); st.id = 'iwvisStyle'; st.textContent = css;
+    document.head.appendChild(st);
+  }
+
+  // 本地显示位置：优先用已有的 x/y，否则先按 Vogel 散落占位（关闭时才写回 state）
+  var positions = icons.map(function (it) {
+    var x = parseFloat(it.x), y = parseFloat(it.y);
+    if (!isNaN(x) && !isNaN(y)) return { x: x, y: y };
+    return null;
+  });
+  var filled = iwvisScatter(icons.length, section);
+  positions = positions.map(function (p, i) { return p || filled[i]; });
+
+  // 视窗尺寸：与 window 等比例，确保与 100vh 前台对齐
+  var winW = window.innerWidth, winH = window.innerHeight;
+  var stageW = Math.min(winW - 80, 1000);
+  var maxH = winH * 0.74;
+  var stageH = stageW * (winH / winW);
+  if (stageH > maxH) { stageH = maxH; stageW = stageH * (winW / winH); }
+  var k = stageW / winW; // 模态→真实缩放比（WYSIWYG）
+
+  // 遮罩 + 弹窗
+  var mask = document.createElement('div');
+  mask.className = 'iwvis-mask';
+  mask.innerHTML =
+    '<div class="iwvis-modal">' +
+    '  <div class="iwvis-head"><div><div class="iwvis-title">可视化排版 · 图标动画墙</div>' +
+    '    <div class="iwvis-sub">拖拽图标摆放到目标位置，视窗与网站前台 100vh 等比例，关闭即保存</div></div>' +
+    '    <button class="iwvis-close" id="iwvisClose">完成</button></div>' +
+    '  <div class="iwvis-toolbar">' +
+    '    <button class="iwvis-btn" id="iwvisRescatter">重新散落</button>' +
+    '    <button class="iwvis-btn" id="iwvisFit">全部居中</button>' +
+    '    <span class="iwvis-hint">拖动图标摆放 · 点击图标可微调缩放</span>' +
+    '  </div>' +
+    '  <div class="iwvis-body">' +
+    '    <div class="iwvis-stage-wrap"><div class="iwvis-stage" id="iwvisStage">' +
+    '      <div class="iwvis-headprev" id="iwvisHeadPrev"></div>' +
+    '    </div></div>' +
+    '    <div class="iwvis-side" id="iwvisSide"><div class="iwvis-sel-empty">点击任意图标进行微调</div></div>' +
+    '  </div>' +
+    '</div>';
+  document.body.appendChild(mask);
+  var stage = mask.querySelector('#iwvisStage');
+  stage.style.width = stageW + 'px';
+  stage.style.height = stageH + 'px';
+  // 标题预览（让用户看到文字位置，避免图标压住标题）
+  var hp = stage.querySelector('#iwvisHeadPrev');
+  hp.innerHTML = (section.heading ? '<div class="t">' + esc(section.heading) + '</div>' : '') +
+    (section.subheading ? '<div class="s">' + esc(section.subheading) + '</div>' : '');
+
+  var dots = [];
+  var selIdx = -1;
+
+  function applyDot(i) {
+    var d = dots[i]; if (!d) return;
+    var p = positions[i]; var it = icons[i];
+    var sc = parseFloat(it.scale) || 1;
+    d.style.left = p.x + '%';
+    d.style.top = p.y + '%';
+    d.style.transform = 'translate(-50%,-50%) scale(' + (sc * k) + ')';
+    d.classList.toggle('sel', i === selIdx);
+  }
+
+  function buildSide() {
+    var side = mask.querySelector('#iwvisSide');
+    if (selIdx < 0) { side.innerHTML = '<div class="iwvis-sel-empty">点击任意图标进行微调</div>'; return; }
+    var it = icons[selIdx];
+    var p = positions[selIdx];
+    var sc = parseFloat(it.scale) || 1;
+    side.innerHTML =
+      '<div class="iwvis-sel-title">图标 #' + (selIdx + 1) + '</div>' +
+      '<div class="iwvis-field"><label>等比缩放 <span class="val">' + sc.toFixed(2) + '</span></label>' +
+      '<input type="range" id="iwvisScale" min="0.1" max="3" step="0.05" value="' + sc + '"></div>' +
+      '<div class="iwvis-field"><label>水平 X <span class="val">' + p.x.toFixed(1) + '%</span></label>' +
+      '<input type="range" id="iwvisX" min="0" max="100" step="0.5" value="' + p.x.toFixed(1) + '"></div>' +
+      '<div class="iwvis-field"><label>垂直 Y <span class="val">' + p.y.toFixed(1) + '%</span></label>' +
+      '<input type="range" id="iwvisY" min="0" max="100" step="0.5" value="' + p.y.toFixed(1) + '"></div>' +
+      '<div class="iwvis-count">来源：' + (it.src ? it.src.split('/').pop() : '—') + '</div>';
+    side.querySelector('#iwvisScale').addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value); icons[selIdx].scale = v;
+      side.querySelector('.iwvis-field .val').textContent = v.toFixed(2); applyDot(selIdx);
+    });
+    side.querySelector('#iwvisX').addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value); positions[selIdx].x = v;
+      side.querySelectorAll('.iwvis-field .val')[1].textContent = v.toFixed(1) + '%'; applyDot(selIdx);
+    });
+    side.querySelector('#iwvisY').addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value); positions[selIdx].y = v;
+      side.querySelectorAll('.iwvis-field .val')[2].textContent = v.toFixed(1) + '%'; applyDot(selIdx);
+    });
+  }
+
+  // 创建每个图标
+  icons.forEach(function (it, i) {
+    var d = document.createElement('div');
+    d.className = 'iwvis-dot';
+    d.innerHTML = '<span class="badge">' + (i + 1) + '</span>';
+    if (/\.json(\?|#|$)/i.test(it.src)) {
+      var box = document.createElement('div');
+      box.className = 'lottie-box';
+      d.appendChild(box);
+      dots.push(d); stage.appendChild(d); applyDot(i);
+      ensureLottieAdmin(function () {
+        if (!window.lottie) return;
+        fetch(it.src).then(function (r) { return r.json(); }).then(function (data) {
+          if (!data || !data.w) return;
+          box.style.width = data.w + 'px'; box.style.height = data.h + 'px';
+          window.lottie.loadAnimation({ container: box, renderer: 'svg', loop: true, autoplay: true, animationData: data });
+          applyDot(i);
+        }).catch(function () {});
+      });
+    } else {
+      var img = document.createElement('img');
+      img.src = it.src; img.draggable = false; img.alt = '';
+      d.appendChild(img);
+      dots.push(d); stage.appendChild(d); applyDot(i);
+    }
+    // 拖拽
+    d.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      var rect = stage.getBoundingClientRect();
+      var startX = e.clientX, startY = e.clientY;
+      var origX = positions[i].x, origY = positions[i].y;
+      var moved = false;
+      selIdx = i; buildSide(); dots.forEach(function (x, j) { x.classList.toggle('sel', j === i); });
+      function move(ev) {
+        var dx = (ev.clientX - startX) / rect.width * 100;
+        var dy = (ev.clientY - startY) / rect.height * 100;
+        if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 3) moved = true;
+        positions[i].x = Math.min(100, Math.max(0, origX + dx));
+        positions[i].y = Math.min(100, Math.max(0, origY + dy));
+        applyDot(i);
+        if (moved) { var sd = mask.querySelector('#iwvisSide'); if (sd) { var xs = sd.querySelectorAll('.iwvis-field .val'); if (xs[1]) xs[1].textContent = positions[i].x.toFixed(1) + '%'; if (xs[2]) xs[2].textContent = positions[i].y.toFixed(1) + '%'; } }
+      }
+      function up() {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        d.style.cursor = 'grab';
+      }
+      d.style.cursor = 'grabbing';
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+    });
+    // 点击选中（pointerup 后触发，配合拖拽判定由 moved 控制选中已在 down 设置）
+    d.addEventListener('click', function () { selIdx = i; buildSide(); dots.forEach(function (x, j) { x.classList.toggle('sel', j === i); }); });
+  });
+
+  // 工具：重新散落
+  mask.querySelector('#iwvisRescatter').addEventListener('click', function () {
+    positions = iwvisScatter(icons.length, section);
+    dots.forEach(function (d, i) { applyDot(i); });
+    if (selIdx >= 0) buildSide();
+    toast('已按 Vogel 螺旋重新散落', 'success');
+  });
+  // 工具：全部居中
+  mask.querySelector('#iwvisFit').addEventListener('click', function () {
+    positions = positions.map(function () { return { x: 50, y: 50 }; });
+    dots.forEach(function (d, i) { applyDot(i); });
+    if (selIdx >= 0) buildSide();
+  });
+  // 关闭并保存
+  function commit() {
+    icons.forEach(function (it, i) {
+      it.x = +positions[i].x.toFixed(2);
+      it.y = +positions[i].y.toFixed(2);
+    });
+    onSectionChanged();
+    if (mask.parentNode) mask.parentNode.removeChild(mask);
+    toast('图标位置已保存', 'success');
+  }
+  mask.querySelector('#iwvisClose').addEventListener('click', commit);
+  mask.addEventListener('pointerdown', function (e) { if (e.target === mask) commit(); });
 }
 
 function openMbVis() {

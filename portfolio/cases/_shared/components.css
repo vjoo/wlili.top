@@ -618,12 +618,6 @@
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.2); /* 微阴影：白色底图也能看到边界 */
 }
 
-.screen-placeholder img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
 /* ========== MASONRY SECTION（瀑布流卡片墙，prompt-library 风格） ========== */
 /* 封面图按原始比例自然排布（CSS 多列瀑布），卡片 = 白底圆角 + 底部渐变信息层（标题 + 标签） */
 .masonry-section {
@@ -660,18 +654,44 @@
   position: relative;
   background: var(--color-gray-ultra-light);
 }
-.masonry-cover img {
-  width: 100%;
-  height: auto;
-  display: block;
+.masonry-cover-img {
   transition: transform var(--transition-base);
 }
-.masonry-card:hover .masonry-cover img {
+.masonry-card:hover .masonry-cover-img {
   transform: scale(1.04);
 }
 .masonry-cover-empty {
   aspect-ratio: 4 / 3; /* 无图占位：浅灰块 */
 }
+
+/* ===== 图片占位 + 骨架（统一防 CLS：按真实宽高预留 aspect-ratio） ===== */
+.media-reserve {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-gray-ultra-light);
+}
+.media-reserve-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+.media-reserve.loaded .media-reserve-img { opacity: 1; }
+.media-reserve .skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, #ececef 30%, #f6f6f8 50%, #ececef 70%);
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.2s ease-in-out infinite;
+}
+.media-reserve.loaded .skeleton { display: none; }
+@keyframes skel-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+/* 深色主题：骨架与占位底色随主题翻转 */
+[data-theme="dark"] .media-reserve { background: rgba(255, 255, 255, 0.06); }
+[data-theme="dark"] .media-reserve .skeleton { background: linear-gradient(100deg, rgba(255,255,255,.05) 30%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.05) 70%); background-size: 200% 100%; }
 /* 底部渐变信息层：标题 + 标签胶囊 */
 .masonry-overlay {
   position: absolute;
@@ -2748,8 +2768,7 @@
 
      Class                  Origin (questek)
      ───────────────        ─────────────────
-     .pd-eyebrow            scenes-tag (pill label — the <span>, not the section)
-     .pd-eyebrow-section    eyebrow block wrapper (container)
+     .pd-eyebrow            scenes-tag (pill label — the <span>, reused by intro-head / split-head / scene-grid)
      .pd-intro-head-section scenes-head (centered intro)
      .pd-split-head-section sec-head (num + title | aside)
      .pd-hero-section       hero (left copy + right panel)
@@ -2792,6 +2811,8 @@
   align-items: center;
   gap: 1rem;
   text-align: center;
+  /* 统一上下边距：与其他板块一致，间距只由 section 的 padding-block 控制，左右内缩交给 .container */
+  padding-block: 5rem;
 }
 
 .pd-intro-title {
@@ -2820,6 +2841,8 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 2.5rem;
+  /* 统一上下边距：与其他板块一致，间距只由 section 的 padding-block 控制，左右内缩交给 .container */
+  padding-block: 5rem;
 }
 
 .pd-split-main {
@@ -3206,6 +3229,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
+    padding-block: 3rem;
   }
   .pd-split-aside,
   .pd-split-aside.wide { width: 100%; }
@@ -3227,6 +3251,9 @@
   .pd-scene-card,
   .pd-scene-card.tall,
   .pd-scene-card.short { min-height: auto; }
+
+  /* Intro head → 移动端统一上下边距（与桌面 5rem 同节奏，按比例收紧） */
+  .pd-intro-head-section { padding-block: 3rem; }
 }
 
 @media (max-width: 768px) {
@@ -3242,6 +3269,9 @@
   .pd-scene-grid-section { padding-block: 3rem; gap: 2.5rem; }
   .pd-scene-card { padding: 1.5rem; }
   .pd-card-title { font-size: 1.125rem; }
+
+  .pd-intro-head-section { padding-block: 2.5rem; }
+  .pd-split-head-section { padding-block: 2.5rem; }
 }
 
 /* ================================================================
@@ -3956,6 +3986,68 @@
   display: block;
   /* applyFocusZoom 加载后覆盖 width/height/maxWidth/transform/objectPosition */
 }
+/* ========== 图标动画墙 icon-wall（GIF/APNG/Lottie 散落全屏） ========== */
+.icon-wall-section.container { max-width: none; width: 100%; padding: 0; }
+.icon-wall-section {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--color-background);   /* 底色与主题一致 */
+}
+/* 中央标题（拼贴散落风格下，标题居中压在图标之上；pointer-events:none 不挡图标交互） */
+.iw-head {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 5;
+  pointer-events: none;
+  max-width: 86%;
+}
+.iw-title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+.iw-sub {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+/* 图标容器：绝对定位散落；left/top 为锚点中心点百分比（可 >100 或 <0 故意切到屏外做拼贴） */
+/* scale 经 CSS 变量等比缩放，不冲突「原始尺寸」：img 用 max-width:none 按自然像素显示，lottie 按 JSON w/h 显示，再乘 scale */
+.iw-icon {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(var(--iw-scale, 1));
+  transform-origin: center;
+  z-index: var(--iw-z, 1);
+  opacity: 1;                              /* 默认可见；仅当父级 .reveal 未就绪时隐藏，避免 JS 失效永久消失 */
+  will-change: transform, opacity;
+  transition: opacity 0.6s var(--motion-easing-enter);
+  transition-delay: var(--iw-delay, 0s);
+}
+/* 进场：父级带 .reveal 且尚未 .visible 时，图标按各自 delay 错位淡入 */
+.icon-wall-section.reveal:not(.visible) .iw-icon { opacity: 0; }
+.iw-icon img, .iw-icon svg { display: block; max-width: none; width: auto; height: auto; }
+.iw-icon.lottie svg { width: 100%; height: 100%; }
+/* 可选卡片底（frame=true）：主题同色系微反差圆角卡 */
+.iw-icon.framed {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(127, 127, 127, 0.10);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .iw-icon { animation: iwFloat 7s ease-in-out infinite; }
+}
+@keyframes iwFloat {
+  0%, 100% { transform: translate(-50%, -50%) scale(var(--iw-scale, 1)); }
+  50%      { transform: translate(-50%, calc(-50% - 10px)) scale(var(--iw-scale, 1)); }
+}
+
 .pd-accent-blue   { color: var(--pd-accent-blue); }
 .pd-accent-orange { color: var(--pd-accent-orange); }
 .pd-accent-red    { color: var(--pd-accent-red); }

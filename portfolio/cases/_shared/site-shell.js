@@ -827,8 +827,8 @@
     '.stats-section',     // 数据统计（nixtio）
     '.services-section',  // 编号服务手风琴（nixtio）
     '.team-section',      // 团队成员（nixtio）
+    '.icon-wall-section', // 图标动画墙（GIF/APNG/Lottie 散落全屏）
     // 产品详情类组件（pd- 命名空间，结构对齐上面的 -section 约定）
-    '.pd-eyebrow-section',
     '.pd-intro-head-section',
     '.pd-split-head-section',
     '.pd-hero-section',
