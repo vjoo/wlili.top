@@ -643,12 +643,13 @@
       setTimeout(startTransition, delay);
     };
 
-    // 1) 内容渲染完成（render.js 会发信号）后才滑走遮罩
+    // 1) 内容渲染完成（render.js 发 case-content-ready，且 footer 的 letsTalk 已应用）后才滑走遮罩。
+    //    这是唯一的正常掀遮罩路径——遮罩绝不提前揭开，避免露出「空内容 + footer 默认 4 二维码」的半成品页面
+    //    （即「先闪底部 4 码、再黑、再出顶部 banner」的错位体验）。
     window.addEventListener('case-content-ready', attemptStartTransition, { once: true });
-    // 2) 兜底：window load 后仍未触发时强制滑走
-    window.addEventListener('load', attemptStartTransition, { once: true });
-    // 3) 极端兜底：3s 后强制滑走（原先是 1.5s，但因为有了 minimumLoadingTime，放大一些作最后保险）
-    setTimeout(startTransition, 3000);
+    // 2) 不再设任何固定秒数兜底（原 3s / load 兜底会在慢网络下先于内容就绪掀遮罩，正是闪 footer 的根因）。
+    //    仅在 content.json 彻底卡死（fetch 永久挂起）时，由 head 内联脚本的 8s 计时强制掀遮罩作为最后保险，
+    //    正常/慢速加载都会先收到 case-content-ready，head 兜底此时已是 no-op。
   }
 
   // 导航跳转前清除「刷新位置恢复」标记：

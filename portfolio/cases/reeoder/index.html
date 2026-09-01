@@ -63,10 +63,10 @@
         }, 150);
       }, { passive: true });
 
-      // 加载遮罩极端兜底：不依赖任何外部脚本，最坏 3.5s 强制让遮罩离场。
+      // 加载遮罩极端兜底：不依赖任何外部脚本，最坏 8s 强制让遮罩离场（仅 content.json 永久卡死时的最后保险；正常/慢速加载都由 case-content-ready 先掀遮罩，此处为 no-op）。
       // （防 Three.js/render.js/site-shell.js 等任一加载失败或极慢导致永久黑屏）
       // #pageTransition 已在上方 HTML 静态存在；site-shell.js 正常流程会在内容就绪后淡出。
-      // 此处计时从脚本执行时立即开始（早于 DCL），确保无论下游多慢，遮罩最多 3.5s 必消失。
+      // 此处计时从脚本执行时立即开始（早于 DCL），确保 content.json 永久卡死时遮罩也最多 8s 必消失（正常加载远早于此，此处为 no-op）。
       // 关键：计时从本内联脚本执行时（页面初始解析、早于所有外部脚本）立即开始，
       // 而非 DOMContentLoaded——后者会被同步库下载阻塞，使兜底失去意义。
       setTimeout(function () {
@@ -75,7 +75,7 @@
           pt.classList.add('idle');
           setTimeout(function () { try { pt.style.display = 'none'; } catch (e) {} }, 900);
         }
-      }, 3500);
+      }, 8000);
     })();
   </script>
 
