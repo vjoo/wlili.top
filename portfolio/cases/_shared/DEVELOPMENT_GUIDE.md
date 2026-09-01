@@ -45,7 +45,7 @@ portfolio/
     │   ├── components.css    ← ⚠️ 所有内容板块组件样式（Hero/Intro/…/Clients/Stats/Services/Team）
     │   ├── hover-effects.js  ← 特效双图统一初始化（cover 等比裁切 + 位移特效）
     │   ├── admin.html        ← ⚠️ 后台编辑器（全站唯一一份，见第三节；默认编辑页由 URL ?case=<key> 指定）
-    │   ├── assets/           ← ⚠️ 共享资源唯一一份：lib 三件套（three/gsap/hover-effect）+ 10 张位移图 hover-dist-* + 默认二维码 qr-* + 4 张示例素材（hover-balloon/ice/ny/ramen，vjooProject 特效双图在用）
+    │   ├── assets/           ← ⚠️ 共享资源唯一一份：lib 三件套（three/gsap/hover-effect）+ 10 张位移图 hover-dist-* + 公共二维码 qr-wechat.png / qr-official.png（底部 Let's talk 在用；二维码已改为后台自由增删、图片存 uploads/，旧 xiaohongshu/douyin 固定文件已删）+ 4 张示例素材（hover-balloon/ice/ny/ramen，vjooProject 特效双图在用）
     │   └── DEVELOPMENT_GUIDE.md  ← 本指南
     ├── _template/            ← 新页母版（服务器「新建页面」时复制它，不含 admin.html）
     └── <key>/                ← 单个页面目录（只放差异化文件）
@@ -59,8 +59,8 @@ portfolio/
 - 页面 `index.html` 只引用共享 CSS/JS，目录内不再有 style.css
 - 新页一律由统一后台 `_shared/admin.html`（或 `/api/pages/*`）生成，**无需手写头部/底部/火箭，也无需手动复制目录**
 - 每个页面目录**只保留 2 个文件**：index.html / content.json（admin.html 已共享到 `_shared/` 唯一一份，勿在页面目录放副本；新页面由服务器生成时自动不带 admin.html）
-- **底部二维码是全站公共的**：存 `_shared/assets/qr-{wechat,official,xiaohongshu,douyin}.png`，所有页面统一引用；后台 Lets talk 编辑器上传二维码 = 覆盖公共文件，改一次全站生效（页面 content.json 的 letsTalk.qrCodes 已统一为公共路径）
-- **共享素材自动清理**：保存任意页面 content 时，server.py 会扫描全站 content.json，自动删除 `_shared/assets` 中不再被任何页面引用的内容素材（hover-*.jpg 等）；`lib-*` / `hover-dist-*` / `qr-*` 结构性文件永远保护不删
+- **底部二维码是全站公共的**：配置存于 `cases.json` 顶层 `letsTalk.qrCodes`（全站唯一，所有页面共用同一组），由后台「Let's talk 设置」编辑；数量 **1–4 自由增删**、名称（中/英）自填，图片走普通上传（存当前页面 `uploads/`），未上传 url 的卡片不显示。旧固定文件 `qr-xiaohongshu.png` / `qr-douyin.png` 已删除；现存的 `qr-wechat.png` / `qr-official.png` 仍被引用、保留。
+- **共享素材自动清理**：保存任意页面 content 时，server.py 会扫描全站 content.json，自动删除 `_shared/assets` 中不再被任何页面引用的内容素材（hover-*.jpg 等）；`lib-*` / `hover-dist-*` 结构性文件永远保护不删（二维码已改为后台自由上传、存各页面 `uploads/`，不再有固定命名的 `qr-*.png` 结构性文件）
 
 ---
 
@@ -208,7 +208,7 @@ portfolio/
 </script>
 ```
 
-**Let's talk（底部联系区块）**：由 `site-shell.js` 渲染为「纯黑 #0A0A0A 左右两栏」——左栏占 **70%**、右栏二维码区占 **30%**；主标题**强制两行**（按空格分词：如 "Let's talk" → 第一行 `Let's` / 第二行 `talk`，两行超大号粗体、`line-height: 0.95` 收紧）；下方 4 段文案自上而下（英文副标题 / 中文副标题 / 合作咨询行 / 英文标签行 / 中文说明行）；右栏 **2×2 田字形**白色卡片，**每张固定 150px 白框**（圆角 16px、`padding 14px`），二维码 + 双语标签（黑色文字）**都在白框内**，整体垂直居中。**正式配置入口是后台 admin.html 的「Let's talk 设置」**（存于 content.json 顶层 `letsTalk`，优先级高于 CASE_SHELL）。**宽度约束：`.footer-inner` / `.footer-bottom` 与 `.container` 同一宽度体系**（`max-width: 75.5rem` 1208px，≥1500px 时 95rem 1520px，padding 2.25rem/36px，移动 1rem/16px）——严禁写死 1440px（曾导致 Let's talk 内容比上方板块收窄错位，2026-08-17 修复）；≥1500px 的 `@media` 覆盖必须写在 `.footer-inner` 基础规则**之后**，否则被基础 max-width 反覆盖。
+**Let's talk（底部联系区块）**：由 `site-shell.js` 渲染为「纯黑 #0A0A0A 左右两栏」——左栏占 **70%**、右栏二维码区占 **30%**；主标题**强制两行**（按空格分词：如 "Let's talk" → 第一行 `Let's` / 第二行 `talk`，两行超大号粗体、`line-height: 0.95` 收紧）；下方 4 段文案自上而下（英文副标题 / 中文副标题 / 合作咨询行 / 英文标签行 / 中文说明行）；右栏 **2×2 田字形**白色卡片，**每张固定 150px 白框**（圆角 16px、`padding 14px`），二维码 + 双语标签（黑色文字）**都在白框内**，整体垂直居中。**正式配置入口是后台 admin.html 的「Let's talk 设置」**（全站公共配置存于 `cases.json` 顶层 `letsTalk`，所有页面共用、改一次全站生效；页面 `content.json` 可再作页面级覆盖，优先级 页面 content.json → cases.json 顶层 → CASE_SHELL 默认）。**宽度约束：`.footer-inner` / `.footer-bottom` 与 `.container` 同一宽度体系**（`max-width: 75.5rem` 1208px，≥1500px 时 95rem 1520px，padding 2.25rem/36px，移动 1rem/16px）——严禁写死 1440px（曾导致 Let's talk 内容比上方板块收窄错位，2026-08-17 修复）；≥1500px 的 `@media` 覆盖必须写在 `.footer-inner` 基础规则**之后**，否则被基础 max-width 反覆盖。
 
 ```json
 {
@@ -220,20 +220,16 @@ portfolio/
     "tags": "Product Design ｜ Mobile & Touch ｜ B2B / B2C / To G",
     "tagsZh": "面向产品、移动端、触控设备，覆盖消费、企业、政企多类型项目",
     "qrCodes": [
-      { "label": "微信好友", "labelEn": "WeChat", "url": "" },
-      { "label": "公众号", "labelEn": "Official Account", "url": "" },
-      { "label": "小红书", "labelEn": "Xiaohongshu", "url": "" },
-      { "label": "抖音号", "labelEn": "Douyin", "url": "" }
+      { "label": "微信好友", "labelEn": "WeChat", "url": "/portfolio/cases/_shared/assets/qr-wechat.png" }
     ]
   }
 }
 ```
 
-- 二维码未填 url 时前台显示灰色 QR 占位纹理（`is-empty`）
-- 缺失字段自动回退默认值（`site-shell.js` 的 `mergeLetsTalk` / admin 的 `normalizeLetsTalk`）
+- `qrCodes` 为 **1–4 个可变数组**：每项 `{ label（中文名，自填）, labelEn（英文名，自填）, url（上传图片路径；留空则该卡片不显示） }`；后台「Let's talk 设置」可随时新增 / 删除卡片、改名、换图（`LT_QR_MAX = 4`；1 个 = 1 列、2 个 = 一行 2 列、3–4 个 = 两行 2 列）
+- 二维码图片走**普通上传**（`admin.html` 的 `uploadImage` → `/upload`，存当前页面 `uploads/`），不再覆盖固定命名的 `_shared/assets/qr-*.png`；旧 `qr-xiaohongshu.png` / `qr-douyin.png` 已删除（现存 2 张微信/公众号仍引用历史路径 `_shared/assets/`，如需统一可后续重新上传迁移）
+- 配置存于 **`cases.json` 顶层 `letsTalk`（全站公共）**，所有页面共用同一组二维码，改一次全站生效；`content.json` 不再单独存 letsTalk。缺失字段自动回退默认值（`admin.html` 的 `normalizeLetsTalk`：二维码为空数组时回退 4 个空占位槽位，名称可改、图片须上传才显示）
 - 表单 / 验证码 / 社交链接行已删除，不再渲染
-
-**二维码"全站公用"机制**：`qrCodes[].url` 为空字符串时**自动回退全站公共默认**（`site-shell.js` `DEFAULT_LETS_TALK`，图片放 `_shared/assets/qr-*.png`），因此新建页面即使 content.json 里二维码全空，也会自动显示公共二维码（当前：微信/小红书/抖音已配，公众号待传）。**优先级**：页面 content.json `letsTalk.qrCodes`（非空 url）→ 全站公共默认 → 灰色占位。新增公共二维码：把真实图片放到 `_shared/assets/`（如 `qr-official.png`）并在 `DEFAULT_LETS_TALK.qrCodes` 填入 `/portfolio/cases/_shared/assets/qr-*.png` 路径即可全站生效。
 
 不定义则使用默认值（即 site-shell.js CONFIG：首页/作品集/项目设计/数字大屏 + 返回首页/W. Block/W. Studio 页脚 + W. Logo）。
 
@@ -311,6 +307,7 @@ portfolio/
 2. 在 `_shared/components.css` 写板块内部布局（引用第五节令牌）——所有页面自动生效，无需逐页同步
 3. 在 `admin.html`（vjooProject 为源，同步到 `_template`，新页面由服务器自动复制）加编辑器表单（如需要后台编辑）
 4. 如板块需要进场动画，把它的选择器加进 `site-shell.js` 的 `REVEAL_SECTIONS` / `REVEAL_CHILDREN`
+5. **必须配骨架屏**：在 `render.js` 的 `skeletonFor(type)` 增加该组件的骨架 HTML（见 §十一·21 高频教训），保证首屏在内容拉取完成前就有与真实布局一致的占位（避免「中间空白」错觉）；若新组件是首屏主体（如新 banner 类），同步更新对应 `index.html` 的 `#case-content` 内联静态骨架。
 
 ---
 
@@ -442,6 +439,12 @@ portfolio/
 18. **后台 admin.html 已共享化（2026-08-13）**：后台编辑器收敛为 `_shared/admin.html` **唯一一份**，页面目录不再持有副本；默认编辑页由 URL `?case=<key>` 指定（无则进页面管理视图）。**不要在页面目录重建 admin.html 副本**——那会回到"每新建一页复制一份框架"的老路；新页面由 server.py 生成时自动不带 admin.html（`pf_init_page_files` 只处理 index.html）
 19. **"悬停显示"类元素勿用 `:focus-within` 维持显隐**（2026-08-14，轮播箭头）：`.swiper:hover, .swiper:focus-within .swiper-nav { … }` 会导致用户**点击过箭头后按钮持有焦点**，鼠标移开时 `:hover` 消失但 `:focus-within` 仍匹配 → 箭头卡住不隐藏。显隐只由 `:hover` 控制；交互类改动交付前务必在浏览器实测「触发 → 结束」全流程
 20. **轮播 slide 文案会被全站 reveal 系统强加 `.reveal`/`.visible`，与 slide 级切换动画抢 opacity**（2026-08-14，大Banner轮播标题）：`registerRevealElements` 按 `REVEAL_CHILDREN` 选择器给所有 `.hero-banner-title/.hero-banner-stat/.hero-banner-description` 加 `.reveal`，其中 `.hero-banner-title.reveal.visible { opacity:1 }` 优先级高于轮播的 `opacity:0` → 标题先闪现全亮、动画延迟期后再掉回 0 淡入，进入/切换都不自然。**slide 内文案的显隐必须完全交给 `.swiper-slide-active` 规则**，用独立选择器（如 `.hero-banner-carousel .hero-banner-title.reveal`）中和 reveal 影响；进场动画统一 `fill-mode: both` 让延迟期停在 from 帧。**注意区分"有 slide 级动画的元素"和"没有的元素"**：标题/描述/标签容器（`.hero-banner-stats`）有自己的动画，中和规则应设 `opacity:0`；而单个标签 `.hero-banner-stat` 没有动画（动画在容器上），中和规则必须设 `opacity:1`，否则会被锁成 0 不显示
+
+21. **新增板块类型必须配「按组件布局」的骨架屏（纯 CSS `.sk`，零依赖）**：客户端渲染页面 `#case-content` 由 `render.js` 拉取 `content.json` 后填充；若首帧无任何占位，用户第一眼只看到「顶部导航 + 底部 Let's talk」，产生"已经加载完就这点内容"的错觉。两层骨架（缺一不可）：
+   - **index.html 内联静态骨架**（JS 未跑前首屏即有布局）：7 个页面入口的 `#case-content` 内都内联了一组 `<section class="sk-* sk">` 占位（hero / block / logos / text-block / grid）。
+   - **`render.js` 的 `skeletonFor(type)`**（拉到 sections 后、真实内容构建前再铺一次，与静态骨架无缝衔接）：按 `s.type` 返回对应布局骨架。
+   - 新增组件时：①在 `skeletonFor(type)` 的 `switch` 增加该 type 分支，返回与其真实 DOM 结构一致的骨架（已有可复用：`hero` 整屏 / `grid` 多图网格 / `logos` Logo 排 / `textBlk` 文本行 / `block` 图文块；无匹配再用 `default` 的 `block`）；②若新组件是首屏主体（如新 banner 类），在对应 `index.html` 的 `#case-content` 内联骨架里把首屏占位换成对应 `.sk-*` 形态。
+   - **禁止**用 Three.js / 大依赖做骨架（曾用 Three.js 马赛克骨架，依赖大、加载久，已废弃）；骨架必须纯 CSS、即时可见。内容构建时序：`render()` 先铺骨架 → 双 `requestAnimationFrame`（+ `setTimeout(buildReal, 150)` 兜底）→ 构建真实内容 → 派发 `case-content-ready` 触发下游（进场动画等）。
 
 ---
 

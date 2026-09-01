@@ -14,7 +14,8 @@
 (function () {
   'use strict';
 
-  // Let's talk 底部 CTA 的默认文案与二维码（后台可在 admin.html 的「Let's talk 设置」里编辑，存于 content.json 顶层 letsTalk）
+  // Let's talk 底部 CTA 的默认文案与二维码（全站公共配置存于 cases.json 顶层 letsTalk，后台「Let's talk 设置」编辑；
+  // 页面 content.json 可作页面级覆盖，优先级 页面 content.json → cases.json 顶层 → 本默认值）
   var DEFAULT_LETS_TALK = {
     title: 'Let\u0027s talk',
     subtitleEn: 'Have a project in mind? Let\u0027s create something meaningful together.',
@@ -392,7 +393,9 @@
   // =========================================
   // 1. 页面起始定位（已彻底移除加载动画）
   // =========================================
-  // 全站已移除加载遮罩 / 骨架屏 / Three.js 马赛克：内容渲染即直接可见，无过渡、无锁滚动。
+  // 全站已移除「加载遮罩 + Three.js 马赛克骨架」：内容渲染即直接可见，无过渡、无锁滚动。
+  // 注意：此处移除的是旧版加载动画用的 Three.js 马赛克骨架；按组件布局的纯 CSS 骨架屏
+  //（site-shell.css 的 .sk-* + render.js 的 skeletonFor）仍然保留，用于内容拉取前的首屏占位（见 §十一·21）。
   // 因此进场动画不必等待「遮罩掀起」，立即触发即可。
   let maskLifted = true;
   function runWhenRevealReady(fn) { try { fn(); } catch (_) {} }
@@ -792,7 +795,8 @@
     initContactScroll();
     initVideoPlaceholderHover();
 
-    // Let's talk 配置：content.json 顶层 letsTalk（后台编辑）优先于 CASE_SHELL 默认值。
+    // Let's talk 配置：页面 content.json 的 letsTalk（页面级覆盖，由 render.js 派发）优先于
+    // cases.json 顶层公共 letsTalk / CASE_SHELL 默认值。
     // render.js 渲染完成后会派发 case-content-loaded（并写入 window.CASE_CONTENT），
     // 这里两种情况都兜底：事件已错过（CASE_CONTENT 已存在）时直接应用。
     window.addEventListener('case-content-loaded', function (e) {
