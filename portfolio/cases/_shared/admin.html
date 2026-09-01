@@ -7860,6 +7860,9 @@ function mbSyncSpin() {
 }
 
 /* ===== 单元渲染 / 页卡 / 动画 ===== */
+// 编辑器预览手机固定 250×520 基准几何，而前台按 stageSize 缩放并乘 tyScale（=stageSize/520）折算位移，
+// 这里用同一 tyScale 让「起始/终点」滑块数值在前台与编辑器语义一致（700 在两侧都=完全沉出屏幕）。
+function mbTyScale() { var S = mbS(); var ss = parseFloat((S && S.stageSize) || 560) || 560; return ss / 520; }
 function mbRenderUnit(idx, tab) {
   var s = mbS(); if (!s) return;
   var ph = document.querySelectorAll('#mbvisRow .mbvis-phone')[idx]; if (!ph) return;
@@ -7867,7 +7870,7 @@ function mbRenderUnit(idx, tab) {
   var p = (s.phones && s.phones[idx]) || {};
   var rx = parseFloat(p[mbAngleKey(tab, 'rx')] || 0) || 0;
   var ry = parseFloat(p[mbAngleKey(tab, 'ry')] || 0) || 0;
-  var ty = parseFloat(p[mbAngleKey(tab, 'ty')] || 0) || 0;
+  var ty = parseFloat(p[mbAngleKey(tab, 'ty')] || 0) * mbTyScale() || 0;
   var z = mbReadZForIdx(idx);
   ph.style.transform = 'translateY(' + ty + 'px) translateZ(' + z + 'px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
 }
@@ -7927,8 +7930,8 @@ function mbPlayIntro() {
     var sc = 0.92 + 0.08 * e;
       for (var i = 0; i < mbPhoneCount; i++) {
         var ph = (s.phones && s.phones[i]) || {};
-        var S = { rx: +ph.startRx || 0, ry: +ph.startRy || 0, ty: +ph.startTy || 480 };
-        var E = { rx: +ph.endRx || 0, ry: +ph.endRy || 0, ty: +ph.endTy || 0 };
+        var S = { rx: +ph.startRx || 0, ry: +ph.startRy || 0, ty: (parseFloat(ph.startTy) || 480) * mbTyScale() };
+        var E = { rx: +ph.endRx || 0, ry: +ph.endRy || 0, ty: (parseFloat(ph.endTy) || 0) * mbTyScale() };
         var z = +ph.z || 0, ry0 = S.ry - spins * 360, ry1 = E.ry;
         var ty = S.ty + (E.ty - S.ty) * e, rxv = S.rx + (E.rx - S.rx) * e, ryv = ry0 + (ry1 - ry0) * e;
         var node = document.querySelectorAll('#mbvisRow .mbvis-phone')[i];

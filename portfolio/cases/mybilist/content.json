@@ -148,23 +148,33 @@
           "images": [
             {
               "id": "smtgo1spoi8hz",
-              "src": "/portfolio/cases/mybilist/uploads/1788160888236.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788160888236.jpg",
+              "w": 700,
+              "h": 394
             },
             {
               "id": "smtgo2vqo3ot1",
-              "src": "/portfolio/cases/mybilist/uploads/1788159120852.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788159120852.jpg",
+              "w": 700,
+              "h": 394
             },
             {
               "id": "smtgo3ct7jwjp",
-              "src": "/portfolio/cases/mybilist/uploads/1788159125373.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788159125373.jpg",
+              "w": 700,
+              "h": 394
             },
             {
               "id": "smtgw2lth4azy",
-              "src": "/portfolio/cases/mybilist/uploads/1788159631990.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788159631990.jpg",
+              "w": 700,
+              "h": 394
             },
             {
               "id": "smtgx1e5apcq8",
-              "src": "/portfolio/cases/mybilist/uploads/1788161270711.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788161270711.jpg",
+              "w": 700,
+              "h": 394
             }
           ]
         },
@@ -173,23 +183,33 @@
           "images": [
             {
               "id": "smt142qltl74t",
-              "src": "/portfolio/cases/mybilist/uploads/1788159147660.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788159147660.jpg",
+              "w": 700,
+              "h": 394
             },
             {
               "id": "smtgwtvk4bp47",
-              "src": "/portfolio/cases/mybilist/uploads/1788160904219.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788160904219.jpg",
+              "w": 700,
+              "h": 394
             },
             {
               "id": "smtgvsf3jh3k2",
-              "src": "/portfolio/cases/mybilist/uploads/1788160943810.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788160943810.jpg",
+              "w": 700,
+              "h": 394
             },
             {
               "id": "smtgw2tl1cxta",
-              "src": "/portfolio/cases/mybilist/uploads/1788159640856.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788159640856.jpg",
+              "w": 700,
+              "h": 394
             },
             {
               "id": "smtgwv06hs7wg",
-              "src": "/portfolio/cases/mybilist/uploads/1788161148417.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1788161148417.jpg",
+              "w": 700,
+              "h": 394
             }
           ]
         }
@@ -207,15 +227,21 @@
           "images": [
             {
               "id": "smt48skjgijyf",
-              "src": "/portfolio/cases/mybilist/uploads/1787395282493.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395282493.jpg",
+              "w": 700,
+              "h": 1516
             },
             {
               "id": "smt48u6hs12kc",
-              "src": "/portfolio/cases/mybilist/uploads/1787395016135.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395016135.jpg",
+              "w": 563,
+              "h": 1218
             },
             {
               "id": "smt48utj6vv3x",
-              "src": "/portfolio/cases/mybilist/uploads/1787395084774.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395084774.jpg",
+              "w": 700,
+              "h": 1516
             }
           ]
         },
@@ -224,15 +250,21 @@
           "images": [
             {
               "id": "smt48vwqgpv7j",
-              "src": "/portfolio/cases/mybilist/uploads/1787395194588.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395194588.jpg",
+              "w": 700,
+              "h": 1516
             },
             {
               "id": "smt48w48g60fd",
-              "src": "/portfolio/cases/mybilist/uploads/1787395101199.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395101199.jpg",
+              "w": 700,
+              "h": 1516
             },
             {
               "id": "smt48w8bwuabk",
-              "src": "/portfolio/cases/mybilist/uploads/1787395107770.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395107770.jpg",
+              "w": 700,
+              "h": 1516
             }
           ]
         },
@@ -241,15 +273,21 @@
           "images": [
             {
               "id": "smt48we1v5v6i",
-              "src": "/portfolio/cases/mybilist/uploads/1787395120702.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395120702.jpg",
+              "w": 700,
+              "h": 1661
             },
             {
               "id": "smt48wmo2bype",
-              "src": "/portfolio/cases/mybilist/uploads/1787395140748.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395140748.jpg",
+              "w": 700,
+              "h": 1516
             },
             {
               "id": "smt48wtc4yi2x",
-              "src": "/portfolio/cases/mybilist/uploads/1787395135781.jpg"
+              "src": "/portfolio/cases/mybilist/uploads/1787395135781.jpg",
+              "w": 700,
+              "h": 1516
             }
           ]
         }

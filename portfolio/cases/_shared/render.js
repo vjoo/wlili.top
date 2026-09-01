@@ -208,6 +208,8 @@ var CaseRenderer = (function () {
     safeDownstream(function () { applyFocusZooms(container); }, 'applyFocusZooms');
     // hero-banner 滚动视差（scroll scrub + 平滑插值；prefers-reduced-motion 时自动跳过）
     safeDownstream(function () { initHeroBannerParallax(container); }, 'initHeroBannerParallax');
+    // 视差图对叠加层滚动浮动（.pio-overlay 随滚动 -2vw→+0.7vw；prefers-reduced-motion 时自动跳过）
+    safeDownstream(function () { initParallaxOverlay(container); }, 'initParallaxOverlay');
     // 轮播图（carousel）：懒加载 Swiper 并初始化（无轮播板块时零开销）
     safeDownstream(function () { initCarousels(container); }, 'initCarousels');
     // fs 效果轮播（carousel 的 effect=fs）：GSAP 自动播放裁剪滑入（无此板块零开销）
@@ -628,6 +630,43 @@ var CaseRenderer = (function () {
         p = Math.max(0, Math.min(1, p));
         target = p;
         if (!raf) raf = requestAnimationFrame(tick);
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      onScroll();
+    });
+  }
+
+  // ===== 1.6b Parallax Overlay（叠加图随滚动浮动 · 模仿 nixtio 视差图对） =====
+  //   - 叠加图 .pio-overlay 在滚动时沿 Y 轴从 -2vw 线性插值到 +0.7vw（与原版 CSS 约定一致）
+  //   - scroll scrub + lerp 平滑插值（无生硬阶跃）；仅当前台区块在可视区间内计算
+  //   - prefers-reduced-motion 时完全不启用（保留 CSS 静态 -2vw 初值）
+  function initParallaxOverlay(root) {
+    var wraps = (root || document).querySelectorAll('.parallax-overlay-image');
+    if (!wraps.length) return;
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return; // 系统动效弱化：跳过视差
+    wraps.forEach(function (wrap) {
+      if (wrap.dataset.pxOverlayBound) return;
+      wrap.dataset.pxOverlayBound = 'true';
+      var overlay = wrap.querySelector('.pio-overlay');
+      if (!overlay) return;
+      var raf = null;
+      function apply() {
+        raf = null;
+        // 区块已从 DOM 移除（重建渲染）则停止计算
+        if (!document.body || !document.contains(wrap)) return;
+        var r = wrap.getBoundingClientRect();
+        var vh = window.innerHeight;
+        // p: 0 区块刚进视口底部 → 1 区块刚离视口顶部（全程 scrub）
+        var p = (vh - r.top) / (vh + r.height);
+        p = Math.max(0, Math.min(1, p));
+        var vw = window.innerWidth / 100;
+        var ty = (-2 + p * 2.7) * vw; // -2vw → +0.7vw（p: 0→1），随滚动即时跟手
+        overlay.style.transform = 'translate3d(0,' + ty + 'px,0)';
+      }
+      function onScroll() {
+        if (!raf) raf = requestAnimationFrame(apply);
       }
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
@@ -2416,6 +2455,28 @@ var CaseRenderer = (function () {
       'deg) rotateY(' + ry + 'deg)' + (sc ? ' scale(' + sc + ')' : '');
   }
 
+  /* 保证起点手机完整沉到相框底边之外（应对响应式 k 缩放 + 起始旋转导致分析式 clamp 残留露边）。
+     做法：临时摆成起点位姿 → 量包围盒 → 若顶部仍在相框内，按「视觉缺口 / k」换算回未缩放位移并补推，迭代至完全沉出。 */
+  function ensureStartHidden(section, units) {
+    var frame = section.querySelector('.mockup-frame');
+    if (!frame) return;
+    var fr = frame.getBoundingClientRect();
+    if (!fr.height) return;
+    var k = section._mockupFitK || 1;
+    units.forEach(function (u) {
+      if (!u.node) return;
+      var tryTy = u.start.ty;
+      for (var it = 0; it < 12; it++) {
+        mockupApply(u, tryTy, u.start.rx, u.start.ry, 1);
+        var topRel = u.node.getBoundingClientRect().top - fr.top;
+        if (topRel >= fr.height - 1) { u.start.ty = tryTy; return; }   // 顶部已越过相框底边 → 整体在框外
+        var deficit = (fr.height - topRel) / (k || 1) * 1.08;          // 视觉缺口换算回未缩放位移 + 安全余量
+        tryTy += deficit;
+      }
+      u.start.ty = tryTy;
+    });
+  }
+
   /* 建壳 + 落在静止视角 + 注册「滚进视口才播一次」的进场动画 */
   function initMockupBanners() {
     if (!MOCKUP_QUEUE.length) return;
@@ -2490,8 +2551,8 @@ var CaseRenderer = (function () {
             section._mockupFitK = k;
           };
           fitRow();
-          // 首次布局可能未稳定（图片/字体未就绪），延迟补算一次
-          setTimeout(fitRow, 400);
+          // 首次布局可能未稳定（图片/字体未就绪），延迟补算一次；布局稳定后按真实位姿复核起点是否已沉出相框外
+          setTimeout(function () { fitRow(); if (!played) ensureStartHidden(section, units); }, 400);
           MOCKUP_FIT_FNS.push(fitRow);
         }
 
@@ -2507,6 +2568,9 @@ var CaseRenderer = (function () {
         var minTy = (fh + ph * 1.2) / 2;
         units.forEach(function (u) { if (u.start.ty < minTy) u.start.ty = minTy; });
       }
+      // 起点沉出相框的「实测校正」：分析式 clamp 未折算响应式 k 与起始旋转，矮视口下会残留露边；
+      // 这里按真实位姿量包围盒补推，确保起点（及倒放终点）手机 100% 在相框外。
+      ensureStartHidden(section, units);
       // 初始落在「静止（终点）视角」：即便 play 因任何原因未触发（如缓存旧 JS / 触发时机错过），手机也以可见的最终姿态停在画面中，绝不隐形。
       // 进场动画 tryPlay → play 会从 start（隐藏在下）重新升起到 end，仍保留「从下方升起」的揭示感。
       units.forEach(function (u) { mockupApply(u, u.end.ty, u.end.rx, u.end.ry, 1); });

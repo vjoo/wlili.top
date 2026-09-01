@@ -92,7 +92,8 @@
       "subtitleNoWrap": "1",
       "bgVideo": "/portfolio/cases/vjooProject/uploads/1788170595960.mp4",
       "bgOverlay": "0.75",
-      "replayInterval": "20"
+      "replayInterval": "20",
+      "shellColor": "blue"
     },
     {
       "id": "smtct4vsyjqu0",
@@ -180,7 +181,7 @@
       "id": "s3",
       "type": "parallax",
       "baseImage": "/portfolio/cases/vjooProject/uploads/1787115133792.jpg",
-      "overlayImage": "/portfolio/cases/vjooProject/uploads/1787115087571.png",
+      "overlayImage": "/portfolio/cases/vjooProject/uploads/1788246677289.png",
       "videoType": "image"
     },
     {
@@ -196,7 +197,7 @@
       "id": "s5",
       "type": "parallax",
       "baseImage": "/portfolio/cases/vjooProject/uploads/1786414706002.jpg",
-      "overlayImage": "/portfolio/cases/vjooProject/uploads/1786438976074.png",
+      "overlayImage": "/portfolio/cases/vjooProject/uploads/1788246686279.png",
       "videoType": "image"
     },
     {
