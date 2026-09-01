@@ -22,12 +22,10 @@
     slogan: '合作咨询 / 约稿商单 / 作品集交流',
     tags: 'Product Design ｜ Mobile & Touch ｜ B2B / B2C / To G',
     tagsZh: '面向产品、移动端、触控设备，覆盖消费、企业、政企多类型项目',
-    qrCodes: [
-      { label: '微信好友', labelEn: 'WeChat', url: '/portfolio/cases/_shared/assets/qr-wechat.png' },
-      { label: '公众号', labelEn: 'Official Account', url: '/portfolio/cases/_shared/assets/qr-official.png' },
-      { label: '小红书', labelEn: 'Xiaohongshu', url: '/portfolio/cases/_shared/assets/qr-xiaohongshu.png' },
-      { label: '抖音号', labelEn: 'Douyin', url: '/portfolio/cases/_shared/assets/qr-douyin.png' }
-    ]
+    // 二维码完全由后台 Lets talk 配置（cases.json 顶层 letsTalk.qrCodes）驱动，
+    // 不再内置任何写死的槽位（旧版是 wechat/official/xiaohongshu/douyin 四张固定图）。
+    // 默认空数组：后台没配二维码 → 底部右侧不显示任何卡片（而不是显示占位图）。
+    qrCodes: []
   };
   var LETS_TALK_KEYS = ['title', 'subtitleEn', 'subtitleZh', 'slogan', 'tags', 'tagsZh'];
 

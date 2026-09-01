@@ -190,6 +190,27 @@ body {
   font-size: 13px; font-weight: 600; color: var(--text-secondary);
   margin-bottom: 10px;
 }
+/* 动态二维码卡片：名称自填 + 可删除 */
+.lt-qr-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.lt-qr-index { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.lt-qr-del {
+  border: 1px solid var(--border-color); background: transparent;
+  color: var(--text-secondary); border-radius: var(--radius-md);
+  padding: 3px 10px; font-size: 12px; cursor: pointer; line-height: 1.6;
+}
+.lt-qr-del:hover { border-color: #e24b4a; color: #e24b4a; }
+.lt-qr-name { margin-bottom: 8px; }
+.lt-qr-add {
+  margin-top: 14px; width: 100%;
+  border: 1px dashed var(--border-color); background: transparent;
+  color: var(--text-secondary); border-radius: var(--radius-md);
+  padding: 10px; font-size: 13px; cursor: pointer; line-height: 1.6;
+}
+.lt-qr-add:hover:not(:disabled) { border-color: var(--accent, #e8590c); color: var(--accent, #e8590c); }
+.lt-qr-add:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 900px) {
   .lt-qr-grid { grid-template-columns: 1fr; }
 }
@@ -3290,21 +3311,6 @@ async function pngQuantizeUpload(file) {
 async function uploadImage(file, fmt, sectionType, compress) { return uploadMedia(file, fmt, sectionType, compress); }
 async function uploadVideo(file, fmt) { return uploadMedia(file, fmt); }
 
-// 公共二维码上传：覆盖 _shared/assets/qr-<slot>.png，全站底部二维码统一（改一次全站生效）
-// slot: wechat / official / xiaohongshu / douyin
-// 兼容两种访问方式：admin.html 可以 /portfolio/cases/_shared/admin.html 或 /cases/_shared/admin.html 打开
-async function uploadSharedQr(slot, file) {
-  if (!file) return '';
-  const ext = (file.name.split('.').pop() || '').toLowerCase();
-  if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'].indexOf(ext) < 0) {
-    throw new Error('二维码请上传图片格式（jpg/png/webp/gif/avif）');
-  }
-  const b64 = await fileToBase64(file);
-  // 走 apiGlobal：和 /api/letstalk、/api/navmenu 一致，自动带 token，401/错误处理统一
-  const data = await apiGlobal('/api/shared/upload', 'POST', { ext, dataBase64: b64, slot });
-  return data.url || '';
-}
-
 // 按 URL 扩展名判断是否为视频（渲染/预览时自动识别，图片与视频字段通用）
 function isVideoUrl(url) {
   if (!url) return false;
@@ -4168,7 +4174,7 @@ function renderImageFieldWithUrl(key, url, uid, options) {
   return `${mediaHtml}${urlInputBlock}`;
 }
 
-function bindImageField(key, uid, writeFn, sharedSlot) {
+function bindImageField(key, uid, writeFn) {
   const dz = document.querySelector(`.dropzone[data-dz="${key}"][data-uid="${uid}"]`);
   if (!dz) return;
   const handler = async (file) => {
@@ -4189,7 +4195,7 @@ function bindImageField(key, uid, writeFn, sharedSlot) {
       // 字段声明式压缩：图片字段定义里 compress → 服务器优先用；无则回退类型映射
       const fDef = (TYPE_FIELDS[curSec.type] || []).find((f) => f.key === key);
       const fCompress = (fDef && fDef.compress) || undefined;
-      const url = sharedSlot ? await uploadSharedQr(sharedSlot, file) : await uploadImage(file, fmt, upSecType, fCompress);
+      const url = await uploadImage(file, fmt, upSecType, fCompress);
       if (!url) throw new Error('服务器未返回 URL');
       // 焦点字段（showcase 图片）上传后保留焦点视图：空态 dropzone 有 data-focus-field 标记
       setImageValue(key, uid, url, writeFn, !!dz.parentElement.querySelector('.img-focus') || dz.getAttribute('data-focus-field') === '1');
@@ -6506,7 +6512,7 @@ function renderLetsTalkEditor(right) {
       <div class="editor-header-left">
         <div class="editor-title-wrap">
           <div class="editor-title">Let's talk 设置</div>
-          <div class="editor-subtitle">网页底部联系区块：左侧文案 + 右侧四张二维码（白色圆角卡片）</div>
+          <div class="editor-subtitle">网页底部联系区块：左侧文案 + 右侧二维码（白色圆角卡片，最多 4 个，可自由增删）</div>
         </div>
       </div>
       <div class="editor-header-actions"></div>
@@ -6543,21 +6549,6 @@ function renderLetsTalkEditor(right) {
   });
   html += '</div>';
 
-  // 二维码：上传 / 直链，白色圆角卡片里展示（建议上传正方形图片）
-  // 公共二维码：上传覆盖 _shared/assets/qr-*.png，全站底部统一，改一次全站生效
-  // 灵活显示：未上传图片的二维码不显示；1个显示1列，2个一行2列，3-4个两行2列
-  html += '<div class="form-hint" style="margin-top:20px;margin-bottom:8px;">二维码（正方形图片，白色圆角卡片）</div>';
-  html += '<div class="form-hint" style="margin-top:-4px;margin-bottom:4px;color:var(--accent, #e8590c);">全站公共：上传会替换所有页面底部的对应二维码。</div>';
-  html += '<div class="form-hint" style="margin-top:-4px;margin-bottom:8px;">未上传图片的二维码不会显示。1个=1列，2个=一行2列，3-4个=两行2列。</div>';
-  html += '<div class="lt-qr-grid">';
-  lt.qrCodes.forEach((qr, i) => {
-    const uid = 'lt_qr' + i;
-    html += `<div class="lt-qr-box">
-      <div class="lt-qr-title">${esc(qr.label + ' / ' + qr.labelEn)}</div>
-      ${renderImageFieldWithUrl('qr' + i, qr.url || '', uid, { sepLabel: '', hideFmt: true })}
-    </div>`;
-  });
-  html += '</div>';
   form.innerHTML = html;
 
   // 文案双向绑定 → state.letsTalk[k]
@@ -6570,14 +6561,76 @@ function renderLetsTalkEditor(right) {
     inp.addEventListener('input', handler);
     inp.addEventListener('change', handler);
   });
-  // 二维码绑定 → state.letsTalk.qrCodes[i].url（公共上传：覆盖 _shared/assets/qr-*.png）
-  const QR_SLOTS = ['wechat', 'official', 'xiaohongshu', 'douyin'];
-  lt.qrCodes.forEach((qr, i) => {
-    bindImageField('qr' + i, 'lt_qr' + i, (url) => {
-      state.letsTalk.qrCodes[i].url = url;
+
+  // ===== 二维码：动态增删（1-4 个），名称自填 =====
+  // 旧版是 4 个写死槽位（wechat/official/xiaohongshu/douyin），上传会覆盖固定 qr-*.png。
+  // 改为自由增删：每张卡片的中文名 / 英文名自己填，图片走普通上传（存 uploads/）。
+  // 未上传图片的二维码不会显示。1个=1列，2个=一行2列，3-4个=两行2列。
+  const LT_QR_MAX = 4;
+  const qrBox = document.createElement('div');
+  form.appendChild(qrBox);
+  if (!Array.isArray(state.letsTalk.qrCodes)) state.letsTalk.qrCodes = [];
+
+  function renderLtQr() {
+    const codes = state.letsTalk.qrCodes;
+    let h = '<div class="form-hint" style="margin-top:20px;margin-bottom:8px;">二维码（正方形图片，白色圆角卡片）</div>';
+    h += '<div class="form-hint" style="margin-top:-4px;margin-bottom:8px;">最多 ' + LT_QR_MAX
+      + ' 个，可随时新增 / 删除；名称自己填。未上传图片的不会显示。1个=1列，2个=一行2列，3-4个=两行2列。</div>';
+    h += '<div class="lt-qr-grid">';
+    codes.forEach((qr, i) => {
+      const uid = 'lt_qr' + i;
+      h += `<div class="lt-qr-box">
+        <div class="lt-qr-head">
+          <span class="lt-qr-index">二维码 ${i + 1}</span>
+          <button type="button" class="lt-qr-del" data-qr-del="${i}">删除</button>
+        </div>
+        <input class="form-input lt-qr-name" type="text" placeholder="中文名，如 微信好友" value="${esc(qr.label || '')}" data-qr-label="${i}">
+        <input class="form-input lt-qr-name" type="text" placeholder="英文名，如 WeChat" value="${esc(qr.labelEn || '')}" data-qr-labelen="${i}" style="margin-bottom:8px;">
+        ${renderImageFieldWithUrl('qr' + i, qr.url || '', uid, { sepLabel: '', hideFmt: true })}
+      </div>`;
+    });
+    h += '</div>';
+    h += `<button type="button" class="lt-qr-add" id="btnLtQrAdd" ${codes.length >= LT_QR_MAX ? 'disabled' : ''}>＋ 新增二维码（${codes.length}/${LT_QR_MAX}）</button>`;
+    qrBox.innerHTML = h;
+    bindLtQr(codes);
+  }
+
+  function bindLtQr(codes) {
+    qrBox.querySelectorAll('[data-qr-label]').forEach((inp) => {
+      inp.addEventListener('input', () => {
+        state.letsTalk.qrCodes[+inp.dataset.qrLabel].label = inp.value;
+        onLetsTalkChanged();
+      });
+    });
+    qrBox.querySelectorAll('[data-qr-labelen]').forEach((inp) => {
+      inp.addEventListener('input', () => {
+        state.letsTalk.qrCodes[+inp.dataset.qrLabelen].labelEn = inp.value;
+        onLetsTalkChanged();
+      });
+    });
+    // 不传 sharedSlot → 走普通图片上传（存 uploads/），不再覆盖固定 qr-*.png
+    codes.forEach((qr, i) => {
+      bindImageField('qr' + i, 'lt_qr' + i, (url) => {
+        state.letsTalk.qrCodes[i].url = url;
+        onLetsTalkChanged();
+      });
+    });
+    qrBox.querySelectorAll('[data-qr-del]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.letsTalk.qrCodes.splice(+btn.dataset.qrDel, 1);
+        onLetsTalkChanged();
+        renderLtQr();
+      });
+    });
+    const addBtn = document.getElementById('btnLtQrAdd');
+    if (addBtn) addBtn.addEventListener('click', () => {
+      if (state.letsTalk.qrCodes.length >= LT_QR_MAX) return;
+      state.letsTalk.qrCodes.push({ label: '', labelEn: '', url: '' });
       onLetsTalkChanged();
-    }, QR_SLOTS[i]);
-  });
+      renderLtQr();
+    });
+  }
+  renderLtQr();
   $('#btnLetsTalkSave').onclick = saveAll;
   $('#btnCancelLetsTalk').onclick = cancelLetsTalkChanges;
   updateEditorFooterStatus();

@@ -125,16 +125,6 @@
         "label": "公众号",
         "labelEn": "Official Account",
         "url": "/portfolio/cases/_shared/assets/qr-official.png"
-      },
-      {
-        "label": "小红书",
-        "labelEn": "Xiaohongshu",
-        "url": ""
-      },
-      {
-        "label": "抖音号",
-        "labelEn": "Douyin",
-        "url": ""
       }
     ]
   },
