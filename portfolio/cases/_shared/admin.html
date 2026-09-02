@@ -4459,6 +4459,33 @@ function bindFocusPanel(panel, hiddenSel, onPos, frontBox) {
   }
 }
 
+// 透明屏检测：device-screen 的样机图必须是「屏幕区域抠成透明」的 PNG/WebP，
+// 否则嵌入的媒体在样机图下层会被不透明的机身/屏幕完全遮挡而看不见。
+// 上传后自动检测 alpha 通道：PNG/WebP 却无任何透明像素 → 提示先去抠图。
+function checkDeviceTransparency(url) {
+  if (!url) return;
+  if (!/\.(png|webp)(\?|$)/i.test(url)) return; // 仅 PNG/WebP 支持透明通道（JPG 无 alpha，不误报）
+  var img = new Image();
+  img.onload = function () {
+    try {
+      var w = Math.min(img.naturalWidth || 200, 200);
+      var h = Math.min(img.naturalHeight || 200, 200);
+      var c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      var ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var d = ctx.getImageData(0, 0, w, h).data;
+      var trans = 0;
+      for (var i = 3; i < d.length; i += 4) { if (d[i] < 250) { trans++; } }
+      if (trans === 0) {
+        toast('⚠️ 样机图屏幕未抠成透明：无任何透明像素，嵌入的图会被屏幕/机身遮挡看不见。请用 PNG 把屏幕区域抠掉后再上传', 'error');
+      }
+    } catch (e) { /* 跨域或不可读时静默 */ }
+  };
+  img.onerror = function () {};
+  img.src = url;
+}
+
 function setImageValue(key, uid, url, writeFn, withFocus) {
   const dz = document.querySelector(`.dropzone[data-dz="${key}"][data-uid="${uid}"]`);
   if (!dz) return;
@@ -4497,6 +4524,7 @@ function setImageValue(key, uid, url, writeFn, withFocus) {
     state.sections[selectedIndex][key] = url;
     onSectionChanged();
   }
+  if (key === 'deviceImage') checkDeviceTransparency(url);
 }
 
 /* ===== Video Field (single) with Direct URL input ===== */

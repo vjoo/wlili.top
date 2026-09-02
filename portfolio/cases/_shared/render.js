@@ -2904,7 +2904,7 @@ var CaseRenderer = (function () {
     section.innerHTML =
       '<div class="ds-frame"' + frameStyle + '>' +
         '<div class="ds-stage">' +
-          '<div class="ds-media"></div>' +
+          '<div class="ds-media">' + mediaHtml + '</div>' +
           (s.deviceImage ? '<img class="ds-device" src="' + esc(s.deviceImage) + '" alt="" draggable="false">' : '') +
         '</div>' +
         capHtml +
