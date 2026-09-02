@@ -4077,6 +4077,8 @@ function renderEditorForm(section) {
       } else {
         state.sections[selectedIndex][k] = inp.value;
       }
+      // 互斥上传组：分组选择器（mediaType / videoType 等）变化时，清理"依赖不再满足"的文件字段
+      cleanupInactiveDependentUploads(k, inp.value);
       // 需要重建表单的情况：
       //  1) colCount 改变 → 重排 columns → 重建（刷新 gallery-columns Tab 数）
       //  2) videoType 改变（Hero/Hero Banner/Showcase）→ 重建（切换 image / videoUrl / carousel 字段）
@@ -4486,6 +4488,43 @@ function checkDeviceTransparency(url) {
   img.src = url;
 }
 
+/* ===== 上传互斥组 / 重传 孤儿文件清理 ===== */
+// 判断值是否为本页 uploads 内的文件 URL（仅这类才允许清理）
+function isUploadPath(p) {
+  return typeof p === 'string' && /\/uploads\//.test(p);
+}
+// 统计某上传路径在本页所有板块中仍被引用的次数（用于"是否还有别处在使用"的安全判断）
+function pathRefCount(p) {
+  if (!p) return 0;
+  try {
+    const s = JSON.stringify(state.sections);
+    const re = new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    return (s.match(re) || []).length;
+  } catch (_) { return 0; }
+}
+// 调 server 删除本页 uploads 下的某个文件（幂等，失败静默）
+function deleteUploadFile(relPath) {
+  if (!isUploadPath(relPath)) return;
+  api('/delete-file', 'POST', { file: relPath }).catch(() => {});
+}
+// 互斥组清理：当分组选择器（如 mediaType / videoType）切到 newVal 时，
+// 把所有 dependsOn 该选择器且值不匹配的"文件字段"清空并删除其孤儿文件。
+// 仅作用于上传路径字段，不影响颜色/文本等，也不碰 items-list 多上传位（如 gallery/team/icon-wall）。
+function cleanupInactiveDependentUploads(ctrlKey, newVal) {
+  const sec = state.sections[selectedIndex];
+  if (!sec) return;
+  const fields = (TYPE_FIELDS[sec.type] || []);
+  fields.forEach(function (f) {
+    if (f.dependsOn && f.dependsOn.field === ctrlKey && String(f.dependsOn.value) !== String(newVal)) {
+      const old = sec[f.key];
+      if (old && isUploadPath(old)) {
+        sec[f.key] = '';
+        if (pathRefCount(old) === 0) deleteUploadFile(old);
+      }
+    }
+  });
+}
+
 function setImageValue(key, uid, url, writeFn, withFocus) {
   const dz = document.querySelector(`.dropzone[data-dz="${key}"][data-uid="${uid}"]`);
   if (!dz) return;
@@ -4521,8 +4560,13 @@ function setImageValue(key, uid, url, writeFn, withFocus) {
     return;
   }
   if (selectedIndex >= 0) {
+    const oldUrl = state.sections[selectedIndex][key];
     state.sections[selectedIndex][key] = url;
     onSectionChanged();
+    // 同字段重传：旧文件若本页已无任何其它引用则删除（避免 jpg→png 重传后旧 jpg 残留）
+    if (oldUrl && oldUrl !== url && isUploadPath(oldUrl) && pathRefCount(oldUrl) === 0) {
+      deleteUploadFile(oldUrl);
+    }
   }
   if (key === 'deviceImage') checkDeviceTransparency(url);
 }
@@ -4670,8 +4714,13 @@ function setVideoValue(key, uid, url) {
   }
   bindVideoField(key, uid);
   if (selectedIndex >= 0) {
+    const oldUrl = state.sections[selectedIndex][key];
     state.sections[selectedIndex][key] = url;
     onSectionChanged();
+    // 同字段重传：旧文件若本页已无任何其它引用则删除
+    if (oldUrl && oldUrl !== url && isUploadPath(oldUrl) && pathRefCount(oldUrl) === 0) {
+      deleteUploadFile(oldUrl);
+    }
   }
 }
 
