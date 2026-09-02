@@ -409,7 +409,7 @@ portfolio/
     - ⚠️ **透明 PNG 缩放必须预乘 alpha**（2026-08-26 修）：PIL 直接 LANCZOS 缩放 RGBA 时，透明像素的 RGB（导出工具常存白色）会混入边缘 → 半透明白边/锯齿。`pf_optimize_image` 缩放透明图走 `_premultiply_alpha`（rgb=rgb×alpha/255，ImageChops.multiply L 整数）→ resize → `_unpremultiply_alpha`（逐像素除 alpha，只处理 alpha∈(0,255)，alpha<8 归零避免除法噪声）。缩放过的透明图统一 RGBA 输出（P 索引色 8bit 展开 32bit，边缘平滑）。**PNG 分支「重编码不小于原图回退原字节」仅限未缩放（need_resize=false）**——曾因回退丢弃缩放结果导致透明图尺寸压缩失效。实测可见白边 12% → 2.7%。
     - 其他组件上传（无 sectionType 或非 gallery/showcase/team/hero-banner）：走默认 `max_side=2560` 兜底，不统一缩放。
     - **字段声明式压缩（2026-08-31 建立，新组件优先用，不用改 server.py）**：admin.html 的 `TYPE_FIELDS` 图片字段定义里直接写 `compress: {mode:'maxSide', side:2000}`（宽度上限）或 `compress: {mode:'coverBox', w:1440, h:1440}`（覆盖式）或 `compress: {mode:'none'}`（不压缩，原样上传）→ 上传时经 `uploadMedia(file, fmt, sectionType, compress)` 第四参带 `payload.compress` → server.py `/api/upload` 优先解析 `body.compress`（`'none'` 直接跳过 `pf_optimize_image`；`'coverBox'` 转 `cover_box`；`'maxSide'` 转 `max_side`），**无 compress 才回退 sectionType 类型映射**。新组件压缩规则零 server.py 改动。
-      - 例：device-screen 样机图 `{mode:'none'}`（PNG 透明屏必须原样保真）、嵌入的设计稿 `{mode:'maxSide', side:2000}`（屏幕显示框 <500px 不可用全屏 1680/2560 值，见 §十三 定值公式）、icon-wall 图标 `{mode:'none'}`（GIF/APNG/JSON 动图与 Lottie 原样写入）。
+      - 例：device-screen 样机图 `{mode:'maxSide', side:1600}`（透明 PNG 走 PNG 重编码保透明、仅当宽>1600 才缩，屏幕显示框数百 px 足够 Retina 2x）、嵌入的设计稿 `{mode:'maxSide', side:2000}`（屏幕显示框 <500px 不可用全屏 1680/2560 值，见 §十三 定值公式）、icon-wall 图标 `{mode:'none'}`（GIF/APNG/JSON 动图与 Lottie 原样写入）。
     - ⚠️ **Showcase/Team 不能用 700px 宽规则**：显示框都是竖框（showcase 722/785、team 4/5），object-fit:cover 按显示框裁切，按宽度压会把 16:9 横图高度压没、被前台拉伸变模糊；覆盖式保证显示时 1:1 像素映射不放大。
 
     **组件选择规则（render.js）**：

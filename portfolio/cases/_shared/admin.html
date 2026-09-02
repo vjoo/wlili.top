@@ -3020,8 +3020,8 @@ const TYPE_FIELDS = {
   ],
   'device-screen': [
     { key: 'deviceImage', label: '样机图（人物手持设备，屏幕区域已抠成透明/纯色）', type: 'image', tab: '内容',
-      accept: '.png,.webp,.jpg,.jpeg', compress: { mode: 'none' },
-      hint: '⚠️ 必须 PNG 透明屏（或屏幕为纯色的 JPG）才能正确嵌入。建议 1:1 方形、人物手部完整。上传后在「屏幕校准」里把 4 角拖到屏幕位置' },
+      accept: '.png,.webp,.jpg,.jpeg', compress: { mode: 'maxSide', side: 1600 },
+      hint: '⚠️ 必须 PNG 透明屏（或屏幕为纯色的 JPG）才能正确嵌入。建议 1:1 方形、人物手部完整。上传后自动压缩到宽 ≤1600px 并保持透明。上传后在「屏幕校准」里把 4 角拖到屏幕位置' },
     { key: 'mediaType', label: '屏幕内容类型', type: 'select', options: ['image', 'video'], tab: '内容',
       optionLabels: { 'image': '设计稿图片', 'video': '视频（自动循环）' }, default: 'image' },
     { key: 'media', label: '设计稿图片（嵌入屏幕）', type: 'image', tab: '内容',
