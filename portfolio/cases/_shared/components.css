@@ -4054,6 +4054,75 @@
   50%      { transform: translate(-50%, calc(-50% - 10px)) scale(var(--iw-scale, 1)); }
 }
 
+/* ===== 设备屏幕嵌入（device-screen）=====
+ * 人物手持样机图（iPad/笔记本等，屏幕区域抠成透明/纯色）+ 设计稿/视频透视贴合嵌入屏幕。
+ * 关键：媒体 .ds-media 在**下层**（z-index 0），样机图 .ds-device 在**上层**（z-index 1）——
+ * 手指/机身天然盖住媒体边缘，实现「手遮挡屏幕一角」的自然效果。
+ * 屏幕四角 s.corners（相对 stage 的 0~100% 坐标）由 render.js 算成 matrix3d 透视矩阵。
+ */
+.device-screen-section { padding-block: 4rem; }
+.device-screen-section .ds-frame {
+  position: relative;
+  border-radius: 25px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1b1e26 0%, #0c0d10 100%);
+  max-width: min(1520px, 100%);
+  margin-inline: auto;
+}
+[data-theme="light"] .device-screen-section .ds-frame { background: linear-gradient(135deg, #eef0f4 0%, #dfe2e8 100%); }
+.ds-stage { position: relative; }
+.ds-media {
+  position: absolute;
+  left: 0; top: 0;
+  z-index: 0;               /* 下层：媒体被样机图遮挡边缘 */
+  overflow: hidden;
+  will-change: transform;
+  pointer-events: none;
+}
+.ds-media-el {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+.ds-device {
+  position: relative;
+  z-index: 1;               /* 上层：样机图（含手）盖住媒体边缘 */
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+.ds-caption {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: clamp(24px, 5vh, 56px);
+  transform: translateX(-50%);
+  text-align: center;
+  padding: 0 24px;
+  max-width: 80%;
+}
+.ds-heading {
+  font-size: clamp(26px, 4.2vw, 52px);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-black);
+  margin: 0;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+}
+.ds-subheading {
+  margin: 10px 0 0;
+  font-size: clamp(13px, 1.6vw, 16px);
+  color: var(--color-text-secondary);
+}
+@media (max-width: 767px) {
+  .device-screen-section { padding-block: 2rem; }
+  .ds-caption { max-width: 92%; bottom: 16px; }
+}
+
 .pd-accent-blue   { color: var(--pd-accent-blue); }
 .pd-accent-orange { color: var(--pd-accent-orange); }
 .pd-accent-red    { color: var(--pd-accent-red); }

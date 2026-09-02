@@ -63,7 +63,8 @@ var CaseRenderer = (function () {
     'scene-grid':    renderSceneGrid,  // 场景网格（居中头 + 场景卡片网格，来自 scenes）
     'mockup-banner': renderMockupBanner, // 3D 样机 Banner（手机/笔记本真 3D 旋转进场 + 标题/背景合成）
     'ad-banner': renderAdBanner,         // 广告 Banner（大标题裂开 + 16:9 图片无缝跑马灯 + 上下副标题）
-    'icon-wall': renderIconWall          // 图标动画墙（GIF/APNG/Lottie 散落全屏）
+    'icon-wall': renderIconWall,          // 图标动画墙（GIF/APNG/Lottie 散落全屏）
+    'device-screen': renderDeviceScreen   // 设备屏幕嵌入（人物手持样机图 + 透视贴合嵌入设计稿/视频）
   };
 
   var TYPE_LABELS = {
@@ -92,7 +93,8 @@ var CaseRenderer = (function () {
     'product-hero': '产品首屏',
     'scene-grid': '场景网格',
     'mockup-banner': '3D样机Banner',
-    'ad-banner': '广告Banner'
+    'ad-banner': '广告Banner',
+    'device-screen': '设备屏幕嵌入'
   };
 
   function init() {
@@ -132,6 +134,9 @@ var CaseRenderer = (function () {
         return logos;
       case 'text': case 'paragraph': case 'rich-text':
         return textBlk;
+      case 'device-screen':
+        // 设备屏幕嵌入：整屏级组件（样机图 + 屏幕四边形媒体），用全宽媒体骨架
+        return '<section class="sk-hero sk" style="aspect-ratio:3/4;max-height:80vh"></section>';
       default:
         return block;
     }
@@ -2819,6 +2824,144 @@ var CaseRenderer = (function () {
     section._adImgs = imgs;
     setupAdBannerMarquee(section);                  // 预挂载测一次（宽=0，仅注册视口暂停钩子）
     AD_QUEUE.push(section);
+    return section;
+  }
+
+  // ===== 设备屏幕嵌入 device-screen（人物手持样机图 + 透视贴合嵌入设计稿/视频） =====
+  // 数据：
+  //   s.deviceImage  —— 样机图（人物手拿 iPad/笔记本等，屏幕区域已抠成透明/纯色，手部在样机图上=天然遮挡）
+  //   s.media / s.mediaType('image'|'video') / s.videoUrl —— 嵌入屏幕的内容（设计稿图 或 mp4 自动循环视频）
+  //   s.corners —— 屏幕四角（按样机图视口 0~100% 坐标）：[{x,y}×4]，顺序 左上→右上→右下→左下
+  //   s.objectFit('cover'|'contain') —— 内容在屏幕四边形内的填充方式
+  //   s.bgType/s.bgColor —— 背景（theme 渐变 / color 纯色）
+  //   s.heading/s.subheading —— 可选标题层（覆盖在样机图上方，不挡手）
+  // 渲染结构（关键：媒体在下层，样机图在上层，手/机身天然遮挡媒体边缘）：
+  //   <section.device-screen-section> → .ds-frame（背景+圆角）→
+  //     .ds-stage（相对定位，承载样机图比例）→
+  //       .ds-media（绝对定位，matrix3d 透视变形，z-index 0 在下层）
+  //       <img.ds-device>（样机图，z-index 1 在上层，透明屏幕区域露出下层媒体，手指/机身盖住媒体边缘）
+
+  // 4点透视矩阵：把 (0,0)-(w,h) 的矩形媒体映射到屏幕四边形（CSS matrix3d，经典 8 参数单应解法）
+  // 返回 16 个 matrix3d 参数数组；transform-origin 必须是 0 0，媒体绝对定位 left:0 top:0
+  // ⚠️ a、b 来自克莱姆法则解 (X)(Y) 两方程组：
+  //    (X) a(x3-x2) + b(x3-x4) = -sx
+  //    (Y) a(y3-y2) + b(y3-y4) = -sy
+  //    其中 a 与 m11/m12 配套（m13=a/w），b 与 m21/m22 配套（m23=b/h）。
+  //    历史曾错把 b 写成 (dx1*sy - dy1*sx)/s（dx1=x2-x4, dy1=y2-y4，与 (X) 无关），导致 4 角无法精确贴合。
+  function quadToMatrix3d(w, h, p1, p2, p3, p4) {
+    var x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y, x3 = p3.x, y3 = p3.y, x4 = p4.x, y4 = p4.y;
+    var dx1 = x2 - x4, dy1 = y2 - y4;
+    var dx2 = x3 - x4, dy2 = y3 - y4;
+    var s = dx1 * dy2 - dx2 * dy1;
+    if (Math.abs(s) < 1e-6) s = 1e-6;
+    var sx = x1 - x2 + x3 - x4;
+    var sy = y1 - y2 + y3 - y4;
+    // 克莱姆法则：a = (-sx*dy2 + sy*dx2) / (-s) = (sx*dy2 - sy*dx2) / s
+    var a = (sx * dy2 - sy * dx2) / s;
+    // b = (sx*(y3-y2) - sy*(x3-x2)) / det = (sx*(y3-y2) - sy*(x3-x2)) / (-s) = (sy*(x3-x2) - sx*(y3-y2)) / s
+    var b = (sy * (x3 - x2) - sx * (y3 - y2)) / s;
+    // matrix3d 列主序：m11..m14=col0, m21..m24=col1, ..., m31=x1,m32=y1,m33=0,m34=1=col3
+    var m11 = (x2 - x1 + a * x2) / w;       // x 方向线性项
+    var m12 = (y2 - y1 + a * y2) / w;       // y 分量（与 m13 共享 a）
+    var m13 = a / w;                        // x 方向透视项
+    var m21 = (x4 - x1 + b * x4) / h;       // x 分量（与 m23 共享 b）
+    var m22 = (y4 - y1 + b * y4) / h;       // y 方向线性项
+    var m23 = b / h;                        // y 方向透视项
+    return [
+      m11, m12, 0, m13,
+      m21, m22, 0, m23,
+      0, 0, 1, 0,
+      x1, y1, 0, 1
+    ];
+  }
+
+  function renderDeviceScreen(s) {
+    var section = sec('device-screen-section');
+    var bgType = s.bgType || 'theme';
+    var frameStyle = '';
+    if (bgType === 'color' && s.bgColor) {
+      frameStyle = ' style="background:' + esc(s.bgColor) + '"';
+    }
+    // 媒体层内容
+    var mediaType = s.mediaType === 'video' ? 'video' : 'image';
+    var mediaSrc = mediaType === 'video' ? (s.videoUrl || '') : (s.media || '');
+    var mediaHtml = '';
+    if (mediaSrc) {
+      if (mediaType === 'video') {
+        mediaHtml = '<video class="ds-media-el" autoplay muted loop playsinline preload="metadata" src="' + esc(mediaSrc) + '"></video>';
+      } else {
+        mediaHtml = '<img class="ds-media-el" src="' + esc(mediaSrc) + '" alt="" loading="lazy" draggable="false">';
+      }
+    }
+    // 标题层
+    var capHtml = '';
+    if (s.heading || s.subheading) {
+      capHtml = '<div class="ds-caption">' +
+        (s.heading ? '<h2 class="ds-heading">' + esc(s.heading) + '</h2>' : '') +
+        (s.subheading ? '<p class="ds-subheading">' + esc(s.subheading) + '</p>' : '') +
+      '</div>';
+    }
+    section.innerHTML =
+      '<div class="ds-frame"' + frameStyle + '>' +
+        '<div class="ds-stage">' +
+          '<div class="ds-media"></div>' +
+          (s.deviceImage ? '<img class="ds-device" src="' + esc(s.deviceImage) + '" alt="" draggable="false">' : '') +
+        '</div>' +
+        capHtml +
+      '</div>';
+
+    // ===== 透视贴合：等样机图加载后按屏幕四角（相对 stage 的 %）计算 matrix3d =====
+    var stage = section.querySelector('.ds-stage');
+    var mediaBox = section.querySelector('.ds-media');
+    var mediaEl = section.querySelector('.ds-media-el');
+    var devImg = section.querySelector('.ds-device');
+    var corners = (Array.isArray(s.corners) && s.corners.length === 4)
+      ? s.corners.map(function (c) { return { x: mkNum(c.x, 0), y: mkNum(c.y, 0) }; })
+      : [{ x: 12, y: 12 }, { x: 88, y: 12 }, { x: 88, y: 76 }, { x: 12, y: 76 }]; // 默认 iPad 近似
+    var objectFit = s.objectFit === 'contain' ? 'contain' : 'cover';
+
+    var applied = false;
+    function applyQuad() {
+      if (!stage || !mediaBox || !devImg) return;
+      var W = stage.offsetWidth, H = stage.offsetHeight;
+      if (!W || !H || !devImg.complete || !devImg.naturalWidth) return;
+      // 把 4 角 % 换算成 stage 内的绝对像素
+      var pts = corners.map(function (c) { return { x: c.x / 100 * W, y: c.y / 100 * H }; });
+      // 媒体元素铺满 stage 原始矩形（媒体盒尺寸=stage），再经 matrix3d 变形到四边形
+      mediaBox.style.width = W + 'px';
+      mediaBox.style.height = H + 'px';
+      mediaBox.style.transformOrigin = '0 0';
+      mediaBox.style.transform = 'matrix3d(' + quadToMatrix3d(W, H, pts[0], pts[1], pts[2], pts[3]).join(',') + ')';
+      if (mediaEl) {
+        mediaEl.style.width = '100%';
+        mediaEl.style.height = '100%';
+        mediaEl.style.objectFit = objectFit;
+        mediaEl.style.objectPosition = '50% 50%';
+      }
+      applied = true;
+    }
+    if (devImg) {
+      if (devImg.complete) applyQuad();
+      else devImg.onload = function () { applyQuad(); };
+    }
+    // 布局稳定后重算（图片/字体就绪、首屏渲染完成）
+    var retry = 0;
+    var t = setInterval(function () {
+      retry++;
+      if (applied || retry > 20) { clearInterval(t); }
+      else applyQuad();
+    }, 150);
+    var onResize = function () { applied = false; applyQuad(); };
+    window.addEventListener('resize', onResize);
+    section._dsCleanup = function () { window.removeEventListener('resize', onResize); };
+
+    // 视频视口暂停：挂 data-vp-pausable + 暂停/恢复钩子（与 ad-banner 同款，避免滚动掉帧）
+    var v = section.querySelector('video');
+    if (v) {
+      v.setAttribute('data-vp-pausable', '1');
+      v.__pauseAuto = function () { try { v.pause(); } catch (e) {} };
+      v.__resumeAuto = function () { try { var pr = v.play(); if (pr && pr['catch']) pr['catch'](function () {}); } catch (e) {} };
+    }
     return section;
   }
 
