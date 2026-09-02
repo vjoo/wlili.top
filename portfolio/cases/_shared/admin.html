@@ -4507,20 +4507,45 @@ function deleteUploadFile(relPath) {
   if (!isUploadPath(relPath)) return;
   api('/delete-file', 'POST', { file: relPath }).catch(() => {});
 }
-// 互斥组清理：当分组选择器（如 mediaType / videoType）切到 newVal 时，
+// 递归收集某个值（嵌套对象/数组）内所有上传路径字符串
+function collectUploadPathsIn(val, out) {
+  if (!val) return;
+  if (typeof val === 'string') {
+    if (isUploadPath(val)) out.push(val);
+    return;
+  }
+  if (Array.isArray(val)) {
+    val.forEach(function (v) { collectUploadPathsIn(v, out); });
+    return;
+  }
+  if (typeof val === 'object') {
+    Object.keys(val).forEach(function (k) { collectUploadPathsIn(val[k], out); });
+  }
+}
+// 互斥组清理：当分组选择器（如 mediaType / videoType / bgType）切到 newVal 时，
 // 把所有 dependsOn 该选择器且值不匹配的"文件字段"清空并删除其孤儿文件。
-// 仅作用于上传路径字段，不影响颜色/文本等，也不碰 items-list 多上传位（如 gallery/team/icon-wall）。
+// - 单文件字段（image/video）：清空字符串并删孤儿；
+// - items-list 字段（如 carousel 轮播图数组）：递归收集数组内所有上传路径，清空数组并删孤儿；
+// 不影响颜色/文本等，也不碰「无 dependsOn 互斥声明」的多上传位（如 gallery/team/icon-wall）。
 function cleanupInactiveDependentUploads(ctrlKey, newVal) {
   const sec = state.sections[selectedIndex];
   if (!sec) return;
   const fields = (TYPE_FIELDS[sec.type] || []);
   fields.forEach(function (f) {
-    if (f.dependsOn && f.dependsOn.field === ctrlKey && String(f.dependsOn.value) !== String(newVal)) {
-      const old = sec[f.key];
-      if (old && isUploadPath(old)) {
-        sec[f.key] = '';
-        if (pathRefCount(old) === 0) deleteUploadFile(old);
-      }
+    if (!(f.dependsOn && f.dependsOn.field === ctrlKey && String(f.dependsOn.value) !== String(newVal))) return;
+    const old = sec[f.key];
+    if (old == null) return;
+    if (f.type === 'items-list') {
+      const paths = [];
+      collectUploadPathsIn(old, paths);
+      if (!paths.length) return;
+      sec[f.key] = [];
+      paths.forEach(function (p) {
+        if (pathRefCount(p) === 0) deleteUploadFile(p);
+      });
+    } else if (typeof old === 'string' && isUploadPath(old)) {
+      sec[f.key] = '';
+      if (pathRefCount(old) === 0) deleteUploadFile(old);
     }
   });
 }
