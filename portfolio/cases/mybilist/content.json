@@ -216,6 +216,38 @@
       ]
     },
     {
+      "id": "smtjkxz48t0qz",
+      "type": "device-screen",
+      "deviceImage": "/portfolio/cases/mybilist/uploads/1788328640506.png",
+      "mediaType": "video",
+      "media": "/portfolio/cases/mybilist/uploads/1788322377125.png",
+      "videoUrl": "/portfolio/cases/mybilist/uploads/1788326780153.mp4",
+      "objectFit": "contain",
+      "corners": [
+        {
+          "x": 11.21,
+          "y": 12.92
+        },
+        {
+          "x": 66.93,
+          "y": 10.45
+        },
+        {
+          "x": 74.45,
+          "y": 77.94
+        },
+        {
+          "x": 17.41,
+          "y": 84.55
+        }
+      ],
+      "heading": "",
+      "subheading": "",
+      "bgType": "theme",
+      "bgColor": "#0c0d10",
+      "cornerLock": false
+    },
+    {
       "id": "smt48sh20l9jg",
       "type": "gallery",
       "label": "",
@@ -349,12 +381,6 @@
           "size": "tall"
         }
       ]
-    },
-    {
-      "id": "smtgzv14yb7jp",
-      "type": "hero",
-      "videoUrl": "/portfolio/cases/mybilist/uploads/1788166008181.mp4",
-      "videoType": "video"
     }
   ]
 }
