@@ -2408,24 +2408,35 @@ var CaseRenderer = (function () {
     });
   }
 
-  /* 3D 外壳侧壁：4 条直壁 + 4 角圆弧壁（真实垂直平面，侧视 90° 实打实看得到厚度、圆角连续不断） */
+  /* 3D 外壳侧壁：4 条直壁 + 4 角圆弧壁（真实垂直平面，侧视 90° 实打实看得到厚度、圆角连续不断）
+     A+ 连续金属高光：每片小面按「绕机身的绝对角」算余弦着色（模拟单一光源下弧面反光），
+     高光沿圆角连续包裹，彻底消除 9 段错开渐变造成的「瓦楞」褶皱。纯色 + 轻微竖向明暗，旋转无关。
+     --mk-shade(0..1) 由 JS 写入，外壳配色（--mk-hi/--mk-lo）由 CSS 变量提供，二者在 color-mix 里合成，
+     故银/白/钛/蓝等变体依旧生效，不受内联着色覆盖。 */
   function buildMockupShell(nodes, W, H, r, d, cn) {
     (nodes || []).forEach(function (box) {
       if (!box) return;
       var frag = document.createDocumentFragment();
       var straightH = H - 2 * r, straightW = W - 2 * r, segLen = r * (Math.PI / 2) / cn;
-      function add(x, y, tf, w, h) {
+      var lightAngle = -50; // 光源方向（度）：右上偏上，决定高光在机身的方位
+      function shadeFor(aMid) {
+        var b = Math.cos((aMid - lightAngle) * Math.PI / 180); // -1..1
+        return (0.5 + 0.35 * b).toFixed(3);                    // 0.15..0.85，中心 0.5，避免纯黑
+      }
+      function add(x, y, tf, w, h, shade) {
         var e = document.createElement('div');
         e.className = 'mk-wall';
         e.style.width = w + 'px';
         e.style.height = h + 'px';
         e.style.transform = 'translate(-50%,-50%) translate(' + x + 'px,' + y + 'px) ' + tf;
+        if (shade != null) e.style.setProperty('--mk-shade', shade);
         frag.appendChild(e);
       }
-      add(W / 2, 0, 'rotateY(90deg)', d, straightH);
-      add(-W / 2, 0, 'rotateY(90deg)', d, straightH);
-      add(0, -H / 2, 'rotateX(90deg)', straightW, d);
-      add(0, H / 2, 'rotateX(90deg)', straightW, d);
+      // 直壁：按朝向给固定着色（光来自右上），与角部余弦高光保持一致
+      add(W / 2, 0, 'rotateY(90deg)', d, straightH, '0.72');   // 右壁：迎光，亮
+      add(-W / 2, 0, 'rotateY(90deg)', d, straightH, '0.22');  // 左壁：背光，暗
+      add(0, -H / 2, 'rotateX(90deg)', straightW, d, '0.60');  // 顶壁：中亮
+      add(0, H / 2, 'rotateX(90deg)', straightW, d, '0.30');   // 底壁：暗
       var corners = [
         { cx: W / 2 - r, cy: -(H / 2 - r), a0: 0, a1: -90 },
         { cx: -(W / 2 - r), cy: -(H / 2 - r), a0: -90, a1: -180 },
@@ -2436,7 +2447,7 @@ var CaseRenderer = (function () {
         for (var i = 0; i < cn; i++) {
           var aMid = c.a0 + (c.a1 - c.a0) * (i + 0.5) / cn;
           var a = aMid * Math.PI / 180;
-          add(c.cx + r * Math.cos(a), c.cy + r * Math.sin(a), 'rotateZ(' + aMid + 'deg) rotateY(90deg)', d, segLen);
+          add(c.cx + r * Math.cos(a), c.cy + r * Math.sin(a), 'rotateZ(' + aMid + 'deg) rotateY(90deg)', d, segLen, shadeFor(aMid));
         }
       });
       box.insertBefore(frag, box.firstChild);
