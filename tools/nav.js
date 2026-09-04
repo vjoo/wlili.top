@@ -30,6 +30,7 @@
         { name: '图片压缩', href: './image-compress.html' },
         { name: '配图排版', href: './image-layout.html' },
         { name: '图片裁切', href: './image-cropper.html' },
+        { name: '证件照排版', href: './id-photo.html' },
         { name: 'AI 图片放大', href: './image-upscale.html' }
       ]
     },

@@ -2409,19 +2409,29 @@ var CaseRenderer = (function () {
   }
 
   /* 3D 外壳侧壁：4 条直壁 + 4 角圆弧壁（真实垂直平面，侧视 90° 实打实看得到厚度、圆角连续不断）
-     A+ 连续金属高光：每片小面按「绕机身的绝对角」算余弦着色（模拟单一光源下弧面反光），
-     高光沿圆角连续包裹，彻底消除 9 段错开渐变造成的「瓦楞」褶皱。纯色 + 轻微竖向明暗，旋转无关。
+     A+ 连续金属高光：每片小面按「绕机身的绝对角」算着色 = 漫反射余弦 + 镜面高光项 + 竖向天空/地面反射，
+     高光沿圆角连续包裹，彻底消除 9 段错开渐变造成的「瓦楞」褶皱。纯色（color-mix 合成），旋转无关。
      --mk-shade(0..1) 由 JS 写入，外壳配色（--mk-hi/--mk-lo）由 CSS 变量提供，二者在 color-mix 里合成，
-     故银/白/钛/蓝等变体依旧生效，不受内联着色覆盖。 */
+     故银/白/钛/蓝等变体依旧生效，不受内联着色覆盖。
+     下方 5 个常量可调：lightAngle 光源方位 / AMP 明暗振幅 / SPEC_POW 高光聚拢(越小越宽) / SPEC_STR 高光强度 / VAMP 竖向反射。 */
   function buildMockupShell(nodes, W, H, r, d, cn) {
     (nodes || []).forEach(function (box) {
       if (!box) return;
       var frag = document.createDocumentFragment();
       var straightH = H - 2 * r, straightW = W - 2 * r, segLen = r * (Math.PI / 2) / cn;
-      var lightAngle = -50; // 光源方向（度）：右上偏上，决定高光在机身的方位
-      function shadeFor(aMid) {
-        var b = Math.cos((aMid - lightAngle) * Math.PI / 180); // -1..1
-        return (0.5 + 0.35 * b).toFixed(3);                    // 0.15..0.85，中心 0.5，避免纯黑
+      // —— 可调金属光照参数（对照参考图连续反光微调）——
+      var lightAngle = -55;  // 光源方位（度）：右上偏上，决定高光在机身的方位
+      var AMP = 0.32;        // 漫反射明暗振幅（越大对比越强）
+      var SPEC_POW = 2.2;    // 镜面高光聚拢度（越小高光带越宽，越像连续反光）
+      var SPEC_STR = 0.40;   // 镜面高光强度（峰值亮度，>0 才出现"一道亮边"）
+      var VAMP = 0.07;       // 竖向反射调制（上方偏亮如天空、下方偏暗如地面）
+      function shadeFor(aMid, y) {
+        var a = (aMid - lightAngle) * Math.PI / 180;
+        var c = Math.cos(a);                                       // -1..1
+        var shade = 0.5 + AMP * c                                  // 漫反射：迎光亮、背光暗
+          + Math.pow(Math.max(c, 0), SPEC_POW) * SPEC_STR;         // 镜面高光：朝光源处一道连续亮边
+        shade += (-(y) / H) * VAMP;                                // 竖向：上半部偏亮、下半部偏暗
+        return Math.min(1, Math.max(0, shade)).toFixed(3);
       }
       function add(x, y, tf, w, h, shade) {
         var e = document.createElement('div');
@@ -2432,11 +2442,11 @@ var CaseRenderer = (function () {
         if (shade != null) e.style.setProperty('--mk-shade', shade);
         frag.appendChild(e);
       }
-      // 直壁：按朝向给固定着色（光来自右上），与角部余弦高光保持一致
-      add(W / 2, 0, 'rotateY(90deg)', d, straightH, '0.72');   // 右壁：迎光，亮
-      add(-W / 2, 0, 'rotateY(90deg)', d, straightH, '0.22');  // 左壁：背光，暗
-      add(0, -H / 2, 'rotateX(90deg)', straightW, d, '0.60');  // 顶壁：中亮
-      add(0, H / 2, 'rotateX(90deg)', straightW, d, '0.30');   // 底壁：暗
+      // 直壁：用同一套 shadeFor（按其法线朝向角 + 位置 y），与角部高光无缝衔接，消除壁/角接缝
+      add(W / 2, 0, 'rotateY(90deg)', d, straightH, shadeFor(0, 0));       // 右壁：法线 +X → aMid 0
+      add(-W / 2, 0, 'rotateY(90deg)', d, straightH, shadeFor(-180, 0));   // 左壁：法线 -X → aMid -180
+      add(0, -H / 2, 'rotateX(90deg)', straightW, d, shadeFor(-90, -H / 2)); // 顶壁：法线 -Y → aMid -90（偏亮）
+      add(0, H / 2, 'rotateX(90deg)', straightW, d, shadeFor(-270, H / 2)); // 底壁：法线 +Y → aMid -270（偏暗）
       var corners = [
         { cx: W / 2 - r, cy: -(H / 2 - r), a0: 0, a1: -90 },
         { cx: -(W / 2 - r), cy: -(H / 2 - r), a0: -90, a1: -180 },
@@ -2447,7 +2457,8 @@ var CaseRenderer = (function () {
         for (var i = 0; i < cn; i++) {
           var aMid = c.a0 + (c.a1 - c.a0) * (i + 0.5) / cn;
           var a = aMid * Math.PI / 180;
-          add(c.cx + r * Math.cos(a), c.cy + r * Math.sin(a), 'rotateZ(' + aMid + 'deg) rotateY(90deg)', d, segLen, shadeFor(aMid));
+          var y = c.cy + r * Math.sin(a);
+          add(c.cx + r * Math.cos(a), y, 'rotateZ(' + aMid + 'deg) rotateY(90deg)', d, segLen, shadeFor(aMid, y));
         }
       });
       box.insertBefore(frag, box.firstChild);
@@ -2548,7 +2559,7 @@ var CaseRenderer = (function () {
             nodes.push(el);
           });
           // 侧壁厚度 / 圆角随身高等比放大；厚度从 28 → 20 同步 CSS ±10/520*ph 的 face translateZ（保证侧壁总厚 20*tyScale = 2*translateZ，无错位）
-          buildMockupShell(nodes, phoneW, phoneH, 42 * tyScale, 20 * tyScale, 9);
+          buildMockupShell(nodes, phoneW, phoneH, 42 * tyScale, 20 * tyScale, 14);
           // 提前解码 UI 图（光栅化进纹理），避免旋转回正面时首帧才解码造成单帧卡顿
           Array.prototype.forEach.call(row.querySelectorAll('.mk-ui'), function (im) {
             if (im.decode) { try { im.decode()['catch'](function () {}); } catch (e) {} }

@@ -50,6 +50,17 @@
       "enabled": true
     },
     {
+      "id": "id-photo",
+      "name": "证件照排版",
+      "file": "id-photo.html",
+      "category": "image",
+      "icon": "crop",
+      "iconColor": "indigo",
+      "description": "一寸/二寸/签证等规格裁切与换底色，自动排版到 4×6 相纸并生成 300dpi 打印文件",
+      "keywords": ["证件照", "一寸", "二寸", "签证", "排版", "打印", "换底色", "抠图", "id photo", "passport"],
+      "enabled": true
+    },
+    {
       "id": "image-upscale",
       "name": "AI 图片放大",
       "file": "image-upscale.html",

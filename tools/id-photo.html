@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- Content Security Policy - WLi Tools（本页额外允许 jsdelivr / googleapis：ONNX Runtime 与 MediaPipe 模型） -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: data: https://cdn.jsdelivr.net https://storage.googleapis.com https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
+<link rel="stylesheet" href="common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W.-证件照排版打印</title>
+<style>
+/* ============================================
+   WLi Tools - 在线工具集
+   © 2025 WLi. All rights reserved.
+   Developer: WLi
+   ============================================ */
+  .page-head { margin: 0 0 var(--space-4); }
+  .page-head h1 { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.01em; margin: 0 0 var(--space-2); }
+  .page-head p { font-size: var(--fs-sm); color: var(--ink-tertiary); margin: 0; line-height: 1.6; }
+  .page-head code { font-size: var(--fs-sm); background: var(--bg-elevated); border-radius: 4px; padding: 1px 6px; }
+
+  .steps { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+  @media (max-width: 900px) { .steps { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+  }
+
+  /* Dropzone */
+  .drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); text-align: center; cursor: pointer; }
+  .drop-title { font-size: var(--fs-md); font-weight: 500; }
+  .drop-hint { font-size: var(--fs-sm); color: var(--ink-quaternary); }
+  .drop-ico { color: var(--ink-quaternary); margin-bottom: var(--space-1); }
+  .stage-wrap .drop { position: absolute; inset: 0; border: none; background: transparent; padding: 0; display: none; }
+  .stage-wrap.empty .drop { display: flex; }
+  .stage-wrap.empty { border: 1.5px dashed var(--border-light); }
+  .stage-wrap .drop.over { background: var(--bg-elevated); border-radius: var(--radius-md); }
+
+  /* Controls */
+  .ctl-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+  .ctl { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); color: var(--ink-secondary); flex: none; }
+  .ctl label { color: var(--ink-tertiary); white-space: nowrap; }
+  select, input[type="number"] {
+    height: 32px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+    padding: 0 var(--space-2); font-size: var(--fs-sm); color: var(--ink); background: var(--bg-white);
+    font-family: inherit;
+  }
+  input[type="range"] { width: 180px; accent-color: var(--ink); height: 32px; }
+  .btn {
+    height: 32px; padding: 0 var(--space-3);
+    border-radius: var(--radius-sm); border: 1px solid var(--border-light);
+    background: var(--bg-white); color: var(--ink);
+    font-size: var(--fs-sm); font-family: inherit; cursor: pointer;
+    transition: all .15s;
+  }
+  .btn:hover { border-color: var(--border); background: var(--bg); }
+  .btn-primary { background: var(--fill-black); border-color: var(--fill-black); color: #fff; }
+  .btn-primary:hover { opacity: .88; background: var(--fill-black); }
+  .btn[disabled] { opacity: .4; cursor: not-allowed; }
+  .switch { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); color: var(--ink-secondary); cursor: pointer; height: 32px; }
+  .switch input, input[type="checkbox"] { accent-color: var(--ink); width: 15px; height: 15px; margin: 0; }
+  .num-mm { width: 60px; }
+
+  /* 裁切区紧凑工具条：全部控件左对齐一排，gap 统一 */
+  .crop-toolbar { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); flex-wrap: wrap; }
+  .mini-btn { height: 32px; padding: 0 var(--space-3); font-size: var(--fs-sm); border-radius: var(--radius-sm); border: 1px solid var(--border-light); background: var(--bg-white); color: var(--ink); font-family: inherit; cursor: pointer; transition: all .15s; }
+  .mini-btn:hover { border-color: var(--border); background: var(--bg); }
+  /* 纸张下拉收起时限宽截断（…），展开的选项面板仍显示全部字段 */
+  #paper { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crop-bottom { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 150px; }
+  .grow input[type="range"] { width: 100%; }
+  .stage-wrap {
+    position: relative; width: 100%; max-width: 440px; aspect-ratio: 5 / 7;
+    margin-inline: auto;
+    background: var(--bg); border-radius: var(--radius-md); overflow: hidden;
+    touch-action: none; user-select: none;
+  }
+  .stage-wrap canvas { width: 100%; height: 100%; display: block; }
+  /* 更换照片：视窗左上角图标按钮，上传后（非 empty 态）才显示 */
+  .change-btn {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
+    width: 34px; height: 34px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.92); color: var(--ink-secondary);
+    border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+    cursor: pointer; transition: all .15s;
+  }
+  .change-btn:hover { background: #fff; color: var(--ink); border-color: var(--border); }
+  .stage-wrap.empty .change-btn { display: none; }
+  /* 空态提示改由 #drop 占位层提供（含上传图标） */
+  /* 左卡内容统一列宽居中，各行左右边缘对齐 */
+  .crop-toolbar, .crop-bottom, .commit-row, #cropInfo { max-width: 440px; margin-inline: auto; }
+  .commit-row { margin-top: var(--space-3); }
+  .commit-row .btn { width: 100%; }
+  .btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+  /* Sheet preview */
+  .sheet-wrap { background: var(--bg); border-radius: var(--radius-md); padding: var(--space-3); display: flex; justify-content: center; }
+  .sheet-wrap canvas { max-width: 100%; height: auto; display: block; border-radius: 2px; box-shadow: var(--shadow-md); background: #fff; }
+
+  .info {
+    font-size: var(--fs-sm); color: var(--ink-tertiary); line-height: 1.6;
+    background: var(--bg-elevated); border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3); margin-top: var(--space-3);
+  }
+  .info b { color: var(--ink); font-weight: 500; }
+  .warn { background: rgba(255,149,0,.1); color: #874d00; }
+  .status { font-size: var(--fs-sm); color: var(--ink-tertiary); margin-top: var(--space-3); }
+  .hidden { display: none !important; }
+  .val { width: 46px; color: var(--ink-quaternary); font-variant-numeric: tabular-nums; }
+  /* 排版卡：第一行 纸张+每行+DPI+下载，第二行 边距/间距/裁切线 居左排列 */
+  .layout-main { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); flex-wrap: wrap; }
+  .layout-sub { display: grid; grid-template-columns: repeat(3, max-content); justify-content: start; align-items: center; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-3); }
+  @media (max-width: 640px) { .layout-sub { grid-template-columns: repeat(2, max-content); justify-content: start; } }
+  .export-tip { margin-top: var(--space-3); }
+
+  @media (max-width: 600px) {
+    .page-head h1 { font-size: var(--fs-xl); }
+  }
+
+  /* ===== 页签 ===== */
+  .tabs { display: flex; gap: 8px; margin-bottom: var(--space-4); }
+  .tab {
+    height: 32px; padding: 0 18px; border-radius: 100px;
+    border: 1px solid var(--border-light); background: var(--bg-white);
+    color: var(--ink-secondary); font-size: var(--fs-sm); font-family: inherit;
+    cursor: pointer; transition: all .15s;
+  }
+  .tab:hover { border-color: var(--border); }
+  .tab.active { background: var(--fill-black); border-color: var(--fill-black); color: #fff; }
+
+  /* ===== 拼图打印（格子树布局） ===== */
+  #kOrient { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* 预设模板行 */
+  .k-tpl { display: flex; align-items: center; gap: 6px; max-width: 440px; margin: 0 auto var(--space-3); overflow-x: auto; padding: 2px; }
+  .k-tpl::-webkit-scrollbar { height: 6px; }
+  .k-tpl::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+  .k-tpl button {
+    flex: none; padding: 2px; font-size: 0; font-family: inherit;
+    border-radius: 6px; border: 1px solid var(--border-light);
+    background: var(--bg-white); cursor: pointer; transition: all .12s;
+  }
+  .k-tpl button:hover { border-color: var(--ink); }
+  .k-tpl .tp { position: relative; display: block; width: 40px; height: 40px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+  .k-tpl .tp i { position: absolute; display: block; background: #2b3041; border: 1px solid var(--bg); border-radius: 2px; }
+  .k-stage {
+    position: relative; width: 100%;
+    background: #fff; border: 1px solid var(--border-light);
+    border-radius: var(--radius-md); overflow: hidden;
+    touch-action: none; user-select: none;
+  }
+  .k-cell { position: absolute; overflow: hidden; background: #ececef; }
+  .k-cell canvas { position: absolute; max-width: none; display: block; cursor: grab; }
+  .k-cell.panning canvas { cursor: grabbing; }
+  .k-cell.empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    background: var(--bg); border: 1.5px dashed var(--border-light);
+    color: var(--ink-quaternary); font-size: 12px; cursor: pointer;
+  }
+  .k-cell.empty:hover { border-color: var(--ink-quaternary); color: var(--ink-secondary); }
+  .k-ops {
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%); z-index: 5;
+    display: flex; gap: 2px; padding: 2px;
+    background: rgba(43,48,65,.72); border-radius: 100px;
+    opacity: 0; transition: opacity .12s;
+  }
+  .k-cell:hover .k-ops { opacity: 1; }
+  .k-ops button {
+    height: 20px; padding: 0 8px; border: none; border-radius: 100px;
+    background: transparent; color: #fff; font-size: 11px; font-family: inherit;
+    line-height: 1; cursor: pointer; white-space: nowrap;
+  }
+  .k-ops button:hover { background: rgba(255,255,255,.22); }
+  .k-ops button[data-op="del"]:hover { background: rgba(235,0,0,.55); }
+  .k-cell.swap-hl { outline: 2px dashed #006fff; outline-offset: -2px; cursor: pointer; }
+  /* 悬停高亮 + 悬浮调整线框（纯指示层，不拦截指针） */
+  .k-cell.hov { outline: 2px solid rgba(0,111,255,.5); outline-offset: -2px; }
+  .k-frame {
+    position: absolute; z-index: 50; display: none; pointer-events: none;
+  }
+  .k-fr-line {
+    position: absolute; background: #006fff; border-radius: 3px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.65);
+  }
+  .k-fr-line.v { width: 3px; top: 0; bottom: 0; margin-left: -1.5px; }
+  .k-fr-line.h { height: 3px; left: 0; right: 0; margin-top: -1.5px; }
+  .k-fr-grip {
+    position: absolute; background: #fff; border: 1.5px solid #006fff;
+    border-radius: 5px; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  .k-fr-line.v .k-fr-grip { width: 9px; height: 26px; left: 50%; top: 50%; transform: translate(-50%,-50%); }
+  .k-fr-line.h .k-fr-grip { width: 26px; height: 9px; left: 50%; top: 50%; transform: translate(-50%,-50%); }
+</style>
+</head>
+<body>
+
+<section class="section">
+  <div class="section-inner">
+  <div class="page-head">
+    <h1>证件照排版打印</h1>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="photo" type="button">证件照排版</button>
+    <button class="tab" data-tab="collage" type="button">拼图打印</button>
+  </div>
+
+  <div id="tab-photo">
+  <div class="steps">
+
+    <!-- 3 裁切（含上传占位 + 紧凑工具条） -->
+    <section class="card">
+      <div class="crop-toolbar">
+        <div class="ctl"><label for="spec">规格</label><select id="spec"></select></div>
+        <button class="mini-btn" id="btnReset">复位</button>
+        <label class="switch"><input type="checkbox" id="guides" checked> 参考线</label>
+      </div>
+      <div class="crop-bottom">
+        <div class="ctl grow"><label for="zoom">缩放</label><input type="range" id="zoom" min="10" max="400" value="100"><span class="val" id="zoomVal">100%</span></div>
+        <div class="ctl grow"><label for="bright">亮度</label><input type="range" id="bright" min="50" max="150" value="100"><span class="val" id="brightVal">100%</span></div>
+      </div>
+      <div class="stage-wrap empty" id="stageWrap">
+        <canvas id="stage"></canvas>
+        <button class="change-btn" id="btnChange" title="更换照片" aria-label="更换照片">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 3l4 4-4 4"/>
+            <path d="M20 7H7a4 4 0 0 0-4 4"/>
+            <path d="m8 21-4-4 4-4"/>
+            <path d="M4 17h13a4 4 0 0 0 4-4"/>
+          </svg>
+        </button>
+        <div class="drop" id="drop">
+          <svg class="drop-ico" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 15V4M8 8l4-4 4 4"/>
+            <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+          </svg>
+          <div class="drop-title">点击或拖拽上传照片</div>
+          <div class="drop-hint">正面 · 光线均匀 · 肩部以上，越大越清晰</div>
+        </div>
+      </div>
+      <div class="commit-row">
+        <button class="btn btn-primary" id="btnCommit">提交排版</button>
+      </div>
+      <input type="file" id="file" accept="image/*" class="hidden">
+      <div class="info" id="cropInfo">裁切后按 300dpi 计算，示例：一寸 = 295×413px。</div>
+    </section>
+
+    <!-- 4 排版（含导出） -->
+    <section class="card">
+      <div class="layout-main">
+        <div class="ctl"><label for="paper">纸张</label><select id="paper"></select></div>
+        <div class="ctl"><label for="maxCols">每行</label>
+          <select id="maxCols">
+            <option value="0">自动</option>
+            <option value="1">1 张</option>
+            <option value="2" selected>2 张</option>
+            <option value="3">3 张</option>
+            <option value="4">4 张</option>
+          </select>
+        </div>
+        <div class="ctl"><label for="dpi">DPI</label>
+          <select id="dpi">
+            <option value="300" selected>300</option>
+            <option value="350">350</option>
+            <option value="600">600</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btnJpeg">下载</button>
+      </div>
+      <div class="layout-sub">
+        <div class="ctl"><label for="minMargin">边距</label><input type="number" id="minMargin" value="3" min="0" max="30" step="0.5" class="num-mm"> mm</div>
+        <div class="ctl"><label for="minGap">间距</label><input type="number" id="minGap" value="2" min="0" max="30" step="0.5" class="num-mm"> mm</div>
+        <label class="switch"><input type="checkbox" id="cutLines" checked> 裁切线</label>
+      </div>
+      <div class="sheet-wrap"><canvas id="sheet"></canvas></div>
+      <div class="info" id="layoutInfo"></div>
+      <div class="status" id="outStatus"></div>
+      <div class="info export-tip">下载后用<b>系统图片查看器 / 照片软件</b>打开打印，尺寸与颜色最稳（已实测）。</div>
+    </section>
+
+  </div>
+  </div>
+
+  <div id="tab-collage" class="hidden">
+  <div class="steps">
+
+    <!-- 拼图：左编辑 -->
+    <section class="card">
+      <div class="crop-toolbar">
+        <button class="mini-btn" id="btnAdd">＋ 添加图片</button>
+        <div class="ctl"><label for="kGap">格间距</label><input type="number" id="kGap" value="0" min="0" max="20" step="0.5" class="num-mm"> mm</div>
+        <div class="ctl"><label for="kOrient">方向</label>
+          <select id="kOrient">
+            <option value="p" selected>竖版</option>
+            <option value="l">横版</option>
+          </select>
+        </div>
+        <button class="mini-btn" id="btnClear">清空</button>
+      </div>
+      <div class="k-tpl" id="kTpl"></div>
+      <div class="k-stage" id="kStage"></div>
+      <div class="info" id="kHint">拖格子边缘调整大小（贴近其他边自动磁吸对齐）· 悬停格子：竖切 / 横切 / 交换 / 删除 · 格内拖动调焦点 · 滚轮缩放</div>
+      <input type="file" id="fileK" accept="image/*" multiple class="hidden">
+    </section>
+
+    <!-- 拼图：右输出 -->
+    <section class="card">
+      <div class="layout-main">
+        <div class="ctl"><label for="kDpi">DPI</label>
+          <select id="kDpi">
+            <option value="300" selected>300</option>
+            <option value="350">350</option>
+            <option value="600">600</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btnKJpeg" disabled>下载</button>
+      </div>
+      <div class="info export-tip">下载后用<b>系统图片查看器 / 照片软件</b>打开打印，尺寸与颜色最稳（已实测）。</div>
+      <div class="sheet-wrap"><canvas id="kSheet"></canvas></div>
+      <div class="info" id="kInfo">左侧添加图片后生成打印预览。</div>
+      <div class="status" id="kStatus"></div>
+    </section>
+
+  </div>
+  </div>
+</div>
+</section>
+
+<script src="nav.js"></script>
+
+<!-- ============================================================
+     核心层：纯函数，无 DOM 依赖（可单独做单元测试）
+     ============================================================ -->
+<script>
+window.IDPhotoCore = (function () {
+  'use strict';
+
+  var MM_PER_INCH = 25.4;
+
+  var SPECS = [
+    { id: '1cun',    name: '一寸 25×35mm',       w: 25, h: 35 },
+    { id: '1cun-s',  name: '小一寸 22×32mm',     w: 22, h: 32 },
+    { id: '2cun',    name: '二寸 35×49mm',       w: 35, h: 49 },
+    { id: '2cun-s',  name: '小二寸 33×48mm',     w: 33, h: 48 },
+    { id: 'passport',name: '护照/通行证 33×48mm', w: 33, h: 48 },
+    { id: 'visa-us', name: '签证 51×51mm',       w: 51, h: 51 },
+    { id: 'visa-uk', name: '英签 35×45mm',       w: 35, h: 45 },
+    { id: 'social',  name: '社保 26×37mm',       w: 26, h: 37 }
+  ];
+
+  var PAPERS = [
+    { id: '4x6', name: '4×6 英寸（6寸 / 4R）102×152mm', w: 102, h: 152 },
+    { id: '5x7', name: '5×7 英寸 127×178mm',            w: 127, h: 178 },
+    { id: 'a4',  name: 'A4 210×297mm',                  w: 210, h: 297 }
+  ];
+
+  /** 毫米 → 像素 */
+  function mmToPx(mm, dpi) { return Math.round(mm / MM_PER_INCH * dpi); }
+  /** 每毫米像素数 */
+  function scaleOf(dpi) { return dpi / MM_PER_INCH; }
+
+  /**
+   * 排版求解：在给定纸张上尽可能多排照片，优先保证外边距安全（防打印裁边）。
+   * 分配规则：先满足最小边距 + 最小间距，剩余空间优先给外边距，间距封顶 gapMax，
+   * 若外边距不足则压缩间距补足。
+   */
+  function solveLayout(paper, spec, opts) {
+    opts = opts || {};
+    var minMargin = opts.minMargin != null ? opts.minMargin : 3;
+    var minGap = opts.minGap != null ? opts.minGap : 2;
+    var gapMax = opts.gapMax != null ? opts.gapMax : 8;
+    var maxCols = opts.maxCols || 0;
+
+    function axis(paperLen, itemLen, hardMax) {
+      var best = null;
+      for (var n = 1; n <= 60; n++) {
+        if (hardMax && n > hardMax) break;
+        var free = paperLen - n * itemLen;
+        if (free < 2 * minMargin + (n - 1) * minGap) break;
+        // 均等分配时的理论间距
+        var gEqual = free / (n + 1);
+        // 间距：不超过 gapMax，且保证外边距 >= minMargin
+        var roomForGap = (n > 1) ? (free - 2 * minMargin) / (n - 1) : 0;
+        var gap = Math.min(gEqual, gapMax, roomForGap);
+        gap = Math.max(gap, minGap);
+        var margin = (free - (n - 1) * gap) / 2;
+        if (margin < minMargin - 1e-9) continue;
+        if (!best || n > best.n) best = { n: n, gap: gap, margin: margin };
+      }
+      return best;
+    }
+
+    var cx = axis(paper.w, spec.w, maxCols);
+    var cy = axis(paper.h, spec.h, 0);
+    if (!cx || !cy) return null;
+
+    var layout = {
+      cols: cx.n, rows: cy.n, count: cx.n * cy.n,
+      marginX: cx.margin, gapX: cx.gap,
+      marginY: cy.margin, gapY: cy.gap,
+      rects: []
+    };
+    for (var r = 0; r < layout.rows; r++) {
+      for (var c = 0; c < layout.cols; c++) {
+        layout.rects.push({
+          x: layout.marginX + c * (spec.w + layout.gapX),
+          y: layout.marginY + r * (spec.h + layout.gapY),
+          w: spec.w, h: spec.h
+        });
+      }
+    }
+    layout.cutLines = computeCutLines(layout, paper);
+    return layout;
+  }
+
+  /** 求区间的补集（用于裁切线只画在留白区） */
+  function complement(intervals, a, b, eps) {
+    eps = eps || 1e-6;
+    var sorted = intervals.slice().sort(function (p, q) { return p[0] - q[0]; });
+    var merged = [];
+    for (var i = 0; i < sorted.length; i++) {
+      var iv = sorted[i];
+      if (!merged.length || iv[0] > merged[merged.length - 1][1] + eps) merged.push([iv[0], iv[1]]);
+      else merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], iv[1]);
+    }
+    var out = [], cur = a;
+    for (var j = 0; j < merged.length; j++) {
+      if (merged[j][0] - cur > eps) out.push([cur, merged[j][0]]);
+      cur = Math.max(cur, merged[j][1]);
+    }
+    if (b - cur > eps) out.push([cur, b]);
+    return out;
+  }
+
+  /** 裁切线：照片边界向外延伸，去掉与照片边缘重合的线段 */
+  function computeCutLines(layout, paper) {
+    var eps = 1e-6;
+    var xs = [], ys = [], i, r;
+    for (i = 0; i < layout.rects.length; i++) {
+      r = layout.rects[i];
+      xs.push(r.x, r.x + r.w);
+      ys.push(r.y, r.y + r.h);
+    }
+    function uniq(arr) {
+      var out = [];
+      var s = arr.slice().sort(function (a, b) { return a - b; });
+      for (var k = 0; k < s.length; k++) if (!out.length || s[k] - out[out.length - 1] > eps) out.push(s[k]);
+      return out;
+    }
+    var v = uniq(xs).map(function (x) {
+      var blocked = layout.rects
+        .filter(function (q) { return Math.abs(q.x - x) < 1e-4 || Math.abs(q.x + q.w - x) < 1e-4; })
+        .map(function (q) { return [q.y, q.y + q.h]; });
+      return { x: x, segs: complement(blocked, 0, paper.h, eps) };
+    });
+    var h = uniq(ys).map(function (y) {
+      var blocked = layout.rects
+        .filter(function (q) { return Math.abs(q.y - y) < 1e-4 || Math.abs(q.y + q.h - y) < 1e-4; })
+        .map(function (q) { return [q.x, q.x + q.w]; });
+      return { y: y, segs: complement(blocked, 0, paper.w, eps) };
+    });
+    return { v: v, h: h };
+  }
+
+  /** 渲染整张相纸（scale = 每毫米像素数） */
+  function renderSheet(ctx, o) {
+    var paper = o.paper, layout = o.layout, spec = o.spec, scale = o.scale;
+    var W = Math.round(paper.w * scale), H = Math.round(paper.h * scale);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    if (o.photo) {
+      for (var i = 0; i < layout.rects.length; i++) {
+        var r = layout.rects[i];
+        ctx.drawImage(o.photo,
+          Math.round(r.x * scale), Math.round(r.y * scale),
+          Math.round(r.w * scale), Math.round(r.h * scale));
+      }
+    }
+    if (o.cut && layout.cutLines) {
+      ctx.strokeStyle = o.cutColor || 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = Math.max(0.5, (o.cutWidth || 0.2) * scale);
+      ctx.beginPath();
+      var s, k;
+      for (k = 0; k < layout.cutLines.v.length; k++) {
+        var lv = layout.cutLines.v[k];
+        for (s = 0; s < lv.segs.length; s++) {
+          ctx.moveTo(lv.x * scale, lv.segs[s][0] * scale);
+          ctx.lineTo(lv.x * scale, lv.segs[s][1] * scale);
+        }
+      }
+      for (k = 0; k < layout.cutLines.h.length; k++) {
+        var lh = layout.cutLines.h[k];
+        for (s = 0; s < lh.segs.length; s++) {
+          ctx.moveTo(lh.segs[s][0] * scale, lh.y * scale);
+          ctx.lineTo(lh.segs[s][1] * scale, lh.y * scale);
+        }
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+    return { w: W, h: H };
+  }
+
+  /* ---------------- ICC / sRGB（供导出 JPG 内嵌，确保打印色彩准确） ---------------- */
+  /* Chrome(Skia) 画布 JPEG 自带的精简 sRGB ICC（Google Inc. 2016，456B）。
+     实测：同一份像素数据，JPG（带 ICC）经系统图片查看器打印颜色正常，
+     而不带 ICC 的 JPEG 在不同软件 / 驱动下会被各自猜测色彩空间 → 偏色。
+     因此导出 JPG 时必须显式内嵌 sRGB ICC，保证看图软件按一致色彩管理打印。 */
+  var SRGB_ICC_B64 = 'AAAByAAAAAAEMAAAbW50clJHQiBYWVogB+AAAQABAAAAAAAAYWNzcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAPbWAAEAAAAA0y0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJZGVzYwAAAPAAAAAkclhZWgAAARQAAAAUZ1hZWgAAASgAAAAUYlhZWgAAATwAAAAUd3RwdAAAAVAAAAAUclRSQwAAAWQAAAAoZ1RSQwAAAWQAAAAoYlRSQwAAAWQAAAAoY3BydAAAAYwAAAA8bWx1YwAAAAAAAAABAAAADGVuVVMAAAAIAAAAHABzAFIARwBCWFlaIAAAAAAAAG+iAAA49QAAA5BYWVogAAAAAAAAYpkAALeFAAAY2lhZWiAAAAAAAAAkoAAAD4QAALbPWFlaIAAAAAAAAPbWAAEAAAAA0y1wYXJhAAAAAAAEAAAAAmZmAADypwAADVkAABPQAAAKWwAAAAAAAAAAbWx1YwAAAAAAAAABAAAADGVuVVMAAAAgAAAAHABHAG8AbwBnAGwAZQAgAEkAbgBjAC4AIAAyADAAMQA2';
+  var DEFAULT_ICC = (function () {
+    var map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    var clean = SRGB_ICC_B64.replace(/=+$/, '');
+    var out = new Uint8Array(Math.floor(clean.length * 3 / 4));
+    var bits = 0, acc = 0, p = 0, i;
+    for (i = 0; i < clean.length; i++) {
+      acc = (acc << 6) | map.indexOf(clean.charAt(i));
+      bits += 6;
+      if (bits >= 8) { bits -= 8; out[p++] = (acc >> bits) & 0xff; }
+    }
+    return out;
+  })();
+
+  /** 从 JPEG 字节中提取 APP2 ICC_PROFILE（多段自动合并），无则返回 null */
+  function extractIcc(a) {
+    var i = 2, found = [], n = 0, total = 0;
+    while (i + 4 < a.length && a[i] === 0xFF && a[i + 1] !== 0xDA) {
+      var marker = a[i + 1];
+      if (marker === 0xD8 || (marker >= 0xD0 && marker <= 0xD9)) { i += 2; continue; }
+      var len = (a[i + 2] << 8) | a[i + 3];
+      if (marker === 0xE2 &&
+          a[i + 4] === 0x49 && a[i + 5] === 0x43 && a[i + 6] === 0x43 && a[i + 7] === 0x5F &&
+          a[i + 8] === 0x50 && a[i + 9] === 0x52 && a[i + 10] === 0x4F) {
+        // 段结构：'ICC_PROFILE\0'(12) + 序号(1) + 总数(1) + 数据
+        n = a[i + 17];
+        found[a[i + 16]] = a.subarray(i + 18, i + 2 + len);
+        total++;
+        if (total === n) break;
+      }
+      i += 2 + len;
+    }
+    if (!total || total !== n) return null;
+    var size = 0, k;
+    for (k = 1; k <= n; k++) size += found[k] ? found[k].length : 0;
+    var out = new Uint8Array(size), p = 0;
+    for (k = 1; k <= n; k++) { if (!found[k]) return null; out.set(found[k], p); p += found[k].length; }
+    return out;
+  }
+
+  function jpegHasIcc(a) { return !!extractIcc(a); }
+
+  /** JPEG 无 ICC 时插入 APP2（单段，<64KB）；插在 APP0 之后 */
+  function injectIcc(a, icc) {
+    if (!icc || !icc.length || icc.length > 65000 || jpegHasIcc(a)) return a;
+    var seg = new Uint8Array(4 + 12 + 2 + icc.length);
+    var p = 0;
+    seg[p++] = 0xFF; seg[p++] = 0xE2;
+    var L = 2 + 12 + 2 + icc.length;
+    seg[p++] = (L >> 8) & 0xff; seg[p++] = L & 0xff;
+    'ICC_PROFILE\u0000'.split('').forEach(function (ch) { seg[p++] = ch.charCodeAt(0) & 0xff; });
+    seg[p++] = 1; seg[p++] = 1;
+    seg.set(icc, p);
+    var at = 2;
+    if (a[2] === 0xFF && a[3] === 0xE0) at = 2 + 2 + ((a[4] << 8) | a[5]);
+    var out = new Uint8Array(a.length + seg.length);
+    out.set(a.subarray(0, at), 0);
+    out.set(seg, at);
+    out.set(a.subarray(at), at + seg.length);
+    return out;
+  }
+
+  /** 取当前浏览器的画布 ICC（Chrome 会内嵌；拿不到就用内置兜底） */
+  function getCanvasIcc(cb) {
+    var cv = document.createElement('canvas');
+    cv.width = 2; cv.height = 2;
+    cv.getContext('2d').fillRect(0, 0, 2, 2);
+    cv.toBlob(function (blob) {
+      if (!blob) { cb(DEFAULT_ICC); return; }
+      blob.arrayBuffer().then(function (buf) {
+        cb(extractIcc(new Uint8Array(buf)) || DEFAULT_ICC);
+      }).catch(function () { cb(DEFAULT_ICC); });
+    }, 'image/jpeg', 0.9);
+  }
+
+  /**
+   * 写入 JPEG 的 JFIF 密度标记（units=1 表示 dpi），保证打印软件按 300dpi 解析
+   */
+  function setJpegDpi(bytes, dpi) {
+    var a = new Uint8Array(bytes);
+    if (a.length < 4 || a[0] !== 0xFF || a[1] !== 0xD8) return a;
+    var hi = (dpi >> 8) & 0xff, lo = dpi & 0xff;
+    if (a[2] === 0xFF && a[3] === 0xE0) {
+      var len = (a[4] << 8) | a[5];
+      // 布局：FFE0 len 'JFIF\0'(5) version(2) units(1) X(2) Y(2) thumb(2)
+      if (len >= 16 && a[6] === 0x4A && a[7] === 0x46 && a[8] === 0x49 && a[9] === 0x46) {
+        a[13] = 1; a[14] = hi; a[15] = lo; a[16] = hi; a[17] = lo;
+        return a;
+      }
+    }
+    // 没有 APP0 就插入一个标准 JFIF 段
+    var app0 = new Uint8Array([
+      0xFF, 0xE0, 0x00, 0x10,
+      0x4A, 0x46, 0x49, 0x46, 0x00,       // JFIF\0
+      0x01, 0x01,                          // version 1.1
+      0x01,                                // units = dpi
+      hi, lo, hi, lo,                      // X/Y density
+      0x00, 0x00                           // thumbnail
+    ]);
+    var out = new Uint8Array(2 + app0.length + (a.length - 2));
+    out.set(a.subarray(0, 2), 0);
+    out.set(app0, 2);
+    out.set(a.subarray(2), 2 + app0.length);
+    return out;
+  }
+
+  return {
+    MM_PER_INCH: MM_PER_INCH,
+    SPECS: SPECS, PAPERS: PAPERS,
+    DEFAULT_ICC: DEFAULT_ICC,
+    mmToPx: mmToPx, scaleOf: scaleOf,
+    solveLayout: solveLayout, computeCutLines: computeCutLines,
+    complement: complement, renderSheet: renderSheet,
+    setJpegDpi: setJpegDpi,
+    extractIcc: extractIcc, injectIcc: injectIcc, getCanvasIcc: getCanvasIcc
+  };
+})();
+</script>
+
+<!-- ============================================================
+     交互层
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+  var C = window.IDPhotoCore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var S = {
+    bitmap: null,        // 原图（ImageBitmap 或 HTMLImageElement）
+    srcW: 0, srcH: 0,
+    srcCanvas: null,     // 裁切基于的全图
+    committedPhoto: null, // 已提交的裁切快照（右侧预览与导出的唯一来源）
+    spec: C.SPECS[0],
+    paper: C.PAPERS[0],
+    view: { cx: 0, cy: 0, s: 1 },   // 裁切视图：源图中心点 + 缩放（stage px / src px）
+    baseS: 1,                        // 100% 对应的缩放（刚好铺满裁切框）
+    brightness: 100,                 // 亮度百分比（提交时烘焙进快照）
+    topGap: 0.08, headRatio: 0.70,
+    layout: null,
+    icc: C.DEFAULT_ICC    // sRGB ICC：JPEG 注入 APP2
+  };
+
+  /* ---------------- 初始化控件 ---------------- */
+  function fillSelect(sel, list, key) {
+    sel.innerHTML = '';
+    list.forEach(function (item) {
+      var o = document.createElement('option');
+      o.value = item.id; o.textContent = item.name;
+      sel.appendChild(o);
+    });
+    sel.value = key;
+  }
+  fillSelect($('spec'), C.SPECS, S.spec.id);
+  fillSelect($('paper'), C.PAPERS, S.paper.id);
+
+  /* ---------------- 上传 ---------------- */
+  var drop = $('drop'), fileInput = $('file');
+  drop.addEventListener('click', function () { fileInput.click(); });
+  var btnChange = $('btnChange');
+  if (btnChange) btnChange.addEventListener('click', function () { fileInput.click(); });
+  fileInput.addEventListener('change', function (e) {
+    if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+  });
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function (e) {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+  document.addEventListener('paste', function (e) {
+    var items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') === 0) {
+        var f = items[i].getAsFile();
+        if (!f) break;
+        // 拼图页签激活时，粘贴的图片交给拼图模式
+        if (document.body.classList.contains('mode-collage')) {
+          window.dispatchEvent(new CustomEvent('k-paste', { detail: f }));
+        } else {
+          loadFile(f);
+        }
+        break;
+      }
+    }
+  });
+
+  function loadFile(file) {
+    if (!file || !/^image\//.test(file.type)) { toast('请选择图片文件'); return; }
+    // createImageBitmap 可自动纠正 EXIF 方向
+    if (window.createImageBitmap) {
+      createImageBitmap(file, { imageOrientation: 'from-image' })
+        .then(useBitmap, function () { fallback(file); });
+    } else fallback(file);
+
+    function fallback(f) {
+      var url = URL.createObjectURL(f);
+      var img = new Image();
+      img.onload = function () { useBitmap(img); URL.revokeObjectURL(url); };
+      img.src = url;
+    }
+  }
+
+  function useBitmap(bmp) {
+    S.bitmap = bmp;
+    S.srcW = bmp.width; S.srcH = bmp.height;
+    S.brightness = 100;                       // 换新照片时亮度复位
+    $('bright').value = 100; $('brightVal').textContent = '100%';
+    $('stageWrap').classList.remove('empty');
+    S.srcCanvas = drawToCanvas(bmp, S.srcW, S.srcH);
+    afterSourceChange(true);
+  }
+
+  function drawToCanvas(src, w, h) {
+    var cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    var ctx = cv.getContext('2d');
+    ctx.drawImage(src, 0, 0, w, h);
+    return cv;
+  }
+
+  /* ---------------- 裁切编辑器 ---------------- */
+  var stage = $('stage'), sctx = stage.getContext('2d');
+  var stageRect = { x: 0, y: 0, w: 0, h: 0 };   // 裁切框在 stage 中的位置（CSS px）
+  var STAGE_W = 420, STAGE_H = 588;
+
+  function sizeStage() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var rect = $('stageWrap').getBoundingClientRect();
+    if (!rect.width) return;
+    STAGE_W = Math.round(rect.width);
+    STAGE_H = Math.round(rect.height);
+    stage.width = Math.round(STAGE_W * dpr);
+    stage.height = Math.round(STAGE_H * dpr);
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    computeCropRect();
+    renderStage();
+  }
+
+  function computeCropRect() {
+    var a = S.spec.w / S.spec.h;
+    var pad = 16;
+    var maxW = STAGE_W - pad * 2, maxH = STAGE_H - pad * 2;
+    var w = maxW, h = w / a;
+    if (h > maxH) { h = maxH; w = h * a; }
+    stageRect = { x: (STAGE_W - w) / 2, y: (STAGE_H - h) / 2, w: w, h: h };
+  }
+
+  /** 初始缩放：让图片刚好铺满裁切框（cover） */
+  function baseScale() {
+    if (!S.srcCanvas) return 1;
+    return Math.max(stageRect.w / S.srcW, stageRect.h / S.srcH);
+  }
+  function minScale() { return baseScale(); }
+  function maxScale() { return baseScale() * 6; }
+
+  function afterSourceChange(resetView) {
+    computeCropRect();
+    S.baseS = baseScale();
+    if (resetView || !S.view.s) {
+      S.view.s = S.baseS;
+      S.view.cx = S.srcW / 2;
+      S.view.cy = S.srcH / 2;
+    }
+    clampView();
+    updateZoomUI();
+    renderStage();
+    markStale();   // 照片或裁切基准变了，右侧排版置为过期
+  }
+
+  /* ---------------- 提交制：左侧调整 → 提交 → 右侧排版/下载 ---------------- */
+  function commitCrop() {
+    if (!S.srcCanvas) return toast('先上传照片');
+    // 用当前裁切结果重采样成固定高清快照（长边 1600px），右侧预览与导出都以它为准
+    var scale = 1600 / Math.max(S.spec.w, S.spec.h);
+    S.committedPhoto = renderPhoto(scale);
+    updateCommitUI();
+    renderSheetPreview();
+    toast('已提交排版，右侧可预览与下载');
+  }
+
+  /** 左侧发生新的调整：已提交快照作废，下载禁用，右侧显示提示 */
+  function markStale() {
+    if (!S.committedPhoto) return;
+    S.committedPhoto = null;
+    updateCommitUI();
+    renderSheetPreview();
+  }
+
+  function updateCommitUI() {
+    $('btnJpeg').disabled = !S.committedPhoto;
+  }
+
+  /** 把已提交快照缩放到目标尺寸（长边按 spec 比例） */
+  function scaledCommitted(scale) {
+    if (!S.committedPhoto) return null;
+    var w = Math.round(S.spec.w * scale), h = Math.round(S.spec.h * scale);
+    var cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    var ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(S.committedPhoto, 0, 0, w, h);
+    return cv;
+  }
+
+  function clampView() {
+    var s = S.view.s;
+    var halfW = stageRect.w / 2 / s;   // 裁切框半宽对应的源图宽度
+    var halfH = stageRect.h / 2 / s;
+    S.view.s = Math.max(minScale(), Math.min(maxScale(), s));
+    s = S.view.s;
+    halfW = stageRect.w / 2 / s;
+    halfH = stageRect.h / 2 / s;
+    if (S.srcW <= halfW * 2) S.view.cx = S.srcW / 2;
+    else S.view.cx = Math.max(halfW, Math.min(S.srcW - halfW, S.view.cx));
+    if (S.srcH <= halfH * 2) S.view.cy = S.srcH / 2;
+    else S.view.cy = Math.max(halfH, Math.min(S.srcH - halfH, S.view.cy));
+  }
+
+  function renderStage() {
+    sctx.clearRect(0, 0, STAGE_W, STAGE_H);
+    sctx.fillStyle = '#f5f5f7';
+    sctx.fillRect(0, 0, STAGE_W, STAGE_H);
+    if (!S.srcCanvas) return;
+
+    var s = S.view.s;
+    var tx = stageRect.x + stageRect.w / 2 - S.view.cx * s;
+    var ty = stageRect.y + stageRect.h / 2 - S.view.cy * s;
+
+    sctx.save();
+    sctx.beginPath();
+    sctx.rect(0, 0, STAGE_W, STAGE_H);
+    sctx.clip();
+    sctx.filter = 'brightness(' + S.brightness + '%)';
+    sctx.translate(tx, ty);
+    sctx.scale(s, s);
+    sctx.drawImage(S.srcCanvas, 0, 0);
+    sctx.restore();
+
+    // 遮罩：框外压暗
+    sctx.save();
+    sctx.fillStyle = 'rgba(0,0,0,.45)';
+    sctx.beginPath();
+    sctx.rect(0, 0, STAGE_W, STAGE_H);
+    sctx.rect(stageRect.x, stageRect.y, stageRect.w, stageRect.h);
+    sctx.fill('evenodd');
+    sctx.restore();
+
+    // 参考线
+    if ($('guides').checked) drawGuides(sctx, stageRect);
+
+    // 框线
+    sctx.strokeStyle = 'rgba(255,255,255,.9)';
+    sctx.lineWidth = 1;
+    sctx.strokeRect(stageRect.x + .5, stageRect.y + .5, stageRect.w - 1, stageRect.h - 1);
+
+    updateCropInfo();
+  }
+
+  function drawGuides(ctx, r) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,.45)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    // 三分线
+    for (var i = 1; i <= 2; i++) {
+      var x = r.x + r.w * i / 3;
+      var y = r.y + r.h * i / 3;
+      ctx.beginPath(); ctx.moveTo(x, r.y); ctx.lineTo(x, r.y + r.h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r.x, y); ctx.lineTo(r.x + r.w, y); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // 头顶线 / 眼线 / 下巴线
+    var top = r.y + r.h * S.topGap;
+    var chin = top + r.h * S.headRatio;
+    var eye = top + r.h * S.headRatio * 0.5;
+    ctx.strokeStyle = 'rgba(0,122,255,.85)';
+    ctx.beginPath(); ctx.moveTo(r.x, top); ctx.lineTo(r.x + r.w, top); ctx.stroke();
+    ctx.strokeStyle = 'rgba(52,199,89,.85)';
+    ctx.beginPath(); ctx.moveTo(r.x, eye); ctx.lineTo(r.x + r.w, eye); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,59,48,.85)';
+    ctx.beginPath(); ctx.moveTo(r.x, chin); ctx.lineTo(r.x + r.w, chin); ctx.stroke();
+    ctx.restore();
+  }
+
+  function updateCropInfo() {
+    var dpi = parseInt($('dpi').value, 10);
+    var w = C.mmToPx(S.spec.w, dpi), h = C.mmToPx(S.spec.h, dpi);
+    var eff = Math.round(dpi / (S.view.s / S.baseS));
+    var srcPx = Math.round((w / S.view.s));
+    var el = $('cropInfo');
+    var ok = eff >= 240;
+    el.className = 'info' + (ok ? '' : ' warn');
+    el.innerHTML = '输出 <b>' + w + ' × ' + h + 'px</b>（' + S.spec.name + ' @ ' + dpi + 'dpi）　' +
+      '实际采样分辨率约 <b>' + eff + 'dpi</b>' +
+      (ok ? '' : '　⚠️ 原图偏小，建议换更高像素的照片，或缩小裁切范围');
+    // srcPx 仅用于调试
+    void srcPx;
+  }
+
+  /* 拖拽 / 缩放 */
+  var drag = null;
+  stage.addEventListener('pointerdown', function (e) {
+    if (!S.srcCanvas) return;
+    markStale();
+    try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+    drag = { x: e.clientX, y: e.clientY, cx: S.view.cx, cy: S.view.cy };
+  });
+  stage.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    var dx = (e.clientX - drag.x) / S.view.s;
+    var dy = (e.clientY - drag.y) / S.view.s;
+    S.view.cx = drag.cx - dx;
+    S.view.cy = drag.cy - dy;
+    clampView();
+    renderStage();
+  });
+  ['pointerup', 'pointercancel'].forEach(function (ev) {
+    stage.addEventListener(ev, function () { drag = null; });
+  });
+  stage.addEventListener('wheel', function (e) {
+    if (!S.srcCanvas) return;
+    e.preventDefault();
+    markStale();
+    var k = Math.exp(-e.deltaY * 0.0015);
+    S.view.s *= k;
+    clampView();
+    updateZoomUI();
+    renderStage();
+  }, { passive: false });
+
+  // 双指缩放
+  var pinch = null;
+  stage.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 2) {
+      pinch = dist(e.touches);
+      drag = null;
+    }
+  }, { passive: true });
+  stage.addEventListener('touchmove', function (e) {
+    if (e.touches.length === 2 && pinch) {
+      e.preventDefault();
+      var d = dist(e.touches);
+      if (pinch > 0) { markStale(); S.view.s *= d / pinch; clampView(); updateZoomUI(); renderStage(); }
+      pinch = d;
+    }
+  }, { passive: false });
+  stage.addEventListener('touchend', function () { pinch = null; });
+  function dist(t) {
+    var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  $('zoom').addEventListener('input', function () {
+    var pct = parseInt(this.value, 10) / 100;
+    S.view.s = S.baseS * pct;
+    clampView();
+    $('zoomVal').textContent = this.value + '%';
+    renderStage();
+    markStale();
+  });
+  function updateZoomUI() {
+    var pct = Math.round(S.view.s / S.baseS * 100);
+    $('zoom').value = Math.max(10, Math.min(400, pct));
+    $('zoomVal').textContent = pct + '%';
+  }
+
+  $('guides').addEventListener('change', renderStage);
+  $('bright').addEventListener('input', function () {
+    S.brightness = parseInt(this.value, 10);
+    $('brightVal').textContent = S.brightness + '%';
+    renderStage();
+    markStale();
+  });
+  $('btnReset').addEventListener('click', function () {
+    afterSourceChange(true);
+  });
+  $('btnCommit').addEventListener('click', commitCrop);
+
+  /* ---------------- 排版预览 ---------------- */
+  var sheet = $('sheet'), sheetCtx = sheet.getContext('2d');
+
+  function renderPhoto(scale) {
+    var w = Math.round(S.spec.w * scale), h = Math.round(S.spec.h * scale);
+    var cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    var ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.filter = 'brightness(' + S.brightness + '%)';
+    if (S.srcCanvas && S.view.s) {
+      // 目标：把裁切框内容映射到 w×h
+      var k = w / stageRect.w;                 // stage px → 输出 px
+      var sOut = S.view.s * k;                 // 源图 px → 输出 px
+      var srcW = w / sOut, srcH = h / sOut;
+      ctx.drawImage(S.srcCanvas,
+        S.view.cx - srcW / 2, S.view.cy - srcH / 2, srcW, srcH,
+        0, 0, w, h);
+    }
+    ctx.filter = 'none';
+    return cv;
+  }
+
+  function renderSheetPreview() {
+    var maxCols = parseInt($('maxCols').value, 10) || 0;
+    var minMargin = parseFloat($('minMargin').value) || 0;
+    var minGap = parseFloat($('minGap').value) || 0;
+    var layout = C.solveLayout(S.paper, S.spec, { maxCols: maxCols, minMargin: minMargin, minGap: minGap });
+    S.layout = layout;
+
+    var info = $('layoutInfo');
+    if (!layout) {
+      info.className = 'info warn';
+      info.textContent = '当前纸张放不下一张「' + S.spec.name + '」，请更换纸张或减小边距。';
+      sheet.width = 10; sheet.height = 10;
+      return;
+    }
+
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var wrapW = (sheet.parentElement.clientWidth || 460) - 32;
+    var cssW = Math.max(200, Math.min(wrapW, 460));
+    var scale = cssW / S.paper.w;
+    sheet.style.width = cssW + 'px';
+    sheet.width = Math.round(S.paper.w * scale * dpr);
+    sheet.height = Math.round(S.paper.h * scale * dpr);
+    sheet.style.height = (S.paper.h * scale) + 'px';
+
+    var photo = scaledCommitted(scale * dpr);
+    sheetCtx.setTransform(1, 0, 0, 1, 0, 0);
+    C.renderSheet(sheetCtx, {
+      paper: S.paper, spec: S.spec, layout: layout, scale: scale * dpr,
+      photo: photo, cut: $('cutLines').checked, cutWidth: 0.2, cutColor: 'rgba(0,0,0,0.15)'
+    });
+
+    info.className = 'info';
+    if (!S.committedPhoto) {
+      info.innerHTML = '在左侧调整照片后，点「<b>提交排版</b>」生成此预览与下载。';
+    } else {
+      info.innerHTML = '<b>' + layout.cols + ' 列 × ' + layout.rows + ' 行 = ' + layout.count + ' 张</b>　' +
+        '外边距 ' + layout.marginX.toFixed(1) + ' / ' + layout.marginY.toFixed(1) + ' mm　' +
+        '间距 ' + (layout.cols > 1 ? layout.gapX.toFixed(1) : '—') + ' / ' + (layout.rows > 1 ? layout.gapY.toFixed(1) : '—') + ' mm　' +
+        '单张 ' + S.spec.w + '×' + S.spec.h + 'mm';
+    }
+    updateCropInfo();
+  }
+
+  ['paper', 'spec', 'maxCols', 'minMargin', 'minGap', 'cutLines'].forEach(function (id) {
+    var evt = (id === 'minMargin' || id === 'minGap') ? 'input' : 'change';
+    $(id).addEventListener(evt, function () {
+      if (id === 'spec') {
+        S.spec = C.SPECS.filter(function (s) { return s.id === this.value; }.bind(this))[0];
+        markStale();
+        computeCropRect();
+        S.baseS = baseScale();
+        S.view.s = S.baseS;
+        clampView(); updateZoomUI(); renderStage();
+      }
+      if (id === 'paper') {
+        S.paper = C.PAPERS.filter(function (p) { return p.id === this.value; }.bind(this))[0];
+      }
+      renderSheetPreview();
+    });
+  });
+  $('dpi').addEventListener('change', function () { updateCropInfo(); });
+
+  /* ---------------- 导出 ---------------- */
+  function getSheetJpeg(dpi) {
+    var scale = C.scaleOf(dpi);
+    var maxCols = parseInt($('maxCols').value, 10) || 0;
+    var layout = C.solveLayout(S.paper, S.spec, {
+      maxCols: maxCols,
+      minMargin: parseFloat($('minMargin').value) || 0,
+      minGap: parseFloat($('minGap').value) || 0
+    });
+    if (!layout) throw new Error('无法排版');
+    var cv = document.createElement('canvas');
+    cv.width = Math.round(S.paper.w * scale);
+    cv.height = Math.round(S.paper.h * scale);
+    var ctx = cv.getContext('2d');
+    C.renderSheet(ctx, {
+      paper: S.paper, spec: S.spec, layout: layout, scale: scale,
+      photo: scaledCommitted(scale), cut: $('cutLines').checked, cutWidth: 0.2, cutColor: 'rgba(0,0,0,0.15)'
+    });
+    return new Promise(function (resolve) {
+      cv.toBlob(function (blob) {
+        blob.arrayBuffer().then(function (buf) {
+          var bytes = C.injectIcc(C.setJpegDpi(new Uint8Array(buf), dpi), S.icc);
+          resolve({ bytes: bytes, canvas: cv, pxW: cv.width, pxH: cv.height });
+        });
+      }, 'image/jpeg', 0.95);
+    });
+  }
+
+  function kb(n) { return n > 1048576 ? (n / 1048576).toFixed(2) + ' MB' : Math.round(n / 1024) + ' KB'; }
+
+  function download(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  $('btnJpeg').addEventListener('click', function () {
+    if (!S.committedPhoto) return toast('请先在左侧点「提交排版」');
+    var dpi = parseInt($('dpi').value, 10);
+    $('outStatus').textContent = '生成中…';
+    getSheetJpeg(dpi).then(function (r) {
+      download(new Blob([r.bytes], { type: 'image/jpeg' }), fileName('jpg', dpi));
+      $('outStatus').textContent = '已导出 ' + r.pxW + '×' + r.pxH + 'px @ ' + dpi + 'dpi，' + kb(r.bytes.length) + '（已写入 DPI 标记）';
+    });
+  });
+
+  function fileName(ext, dpi) {
+    return 'idphoto_' + S.spec.id + '_' + S.paper.id + '_' + (S.layout ? S.layout.count : 0) + 'x_' + dpi + 'dpi.' + ext;
+  }
+
+  /* ---------------- 通用 ---------------- */
+  var toastTimer = null;
+  function toast(msg) {
+    var el = $('outStatus');
+    el.textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.textContent = ''; }, 2600);
+  }
+
+  window.addEventListener('resize', function () {
+    sizeStage();
+    renderSheetPreview();
+  });
+
+  /* ---------------- 页签切换 ---------------- */
+  $('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('.tab');
+    if (!b || b.classList.contains('active')) return;
+    [].forEach.call($('tabs').querySelectorAll('.tab'), function (t) { t.classList.toggle('active', t === b); });
+    var isCollage = b.dataset.tab === 'collage';
+    $('tab-photo').classList.toggle('hidden', isCollage);
+    $('tab-collage').classList.toggle('hidden', !isCollage);
+    document.body.classList.toggle('mode-collage', isCollage);
+    if (isCollage) window.dispatchEvent(new Event('k-tab-enter'));
+    else sizeStage();
+  });
+
+  /* ---------------- 启动 ---------------- */
+  sizeStage();
+  renderSheetPreview();
+  updateCommitUI();
+  // 用当前浏览器画布自带的 sRGB ICC 刷新（与导出 JPEG 的色彩语义保持同源）
+  C.getCanvasIcc(function (icc) { S.icc = icc; });
+
+})();
+</script>
+
+<!-- ============================================================
+     拼图打印模式（自由矩形拼贴，复用 IDPhotoCore 导出管线）
+     每个格子是独立矩形 {x,y,w,h,img}，铺满纸面互不重叠。
+     拖格子边缘=调整大小（L/R 邻格链式跟随 + 磁吸对齐其他边）；
+     悬停格子：竖切/横切/交换/删除（合并）；格内拖动=调焦点；滚轮=焦点缩放。
+     格间距以「各格内缩 gap/2」呈现，不参与几何模型。
+     横版时内容按 152×102 排列，输出自动旋转 90° 到竖版相纸。
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+  var C = window.IDPhotoCore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var MIN_MM = 10;    // 拖边时格子最小边 mm
+  var SPLIT_MIN = 24; // 切分时原格最小边 mm（对半后各 12）
+
+  var K = {
+    landscape: false,
+    gap: 0,               // 格间距 mm（视觉内缩，不进几何）
+    paper: null,          // 排列空间（横版=宽高互换），相纸固定 4×6
+    cells: [],            // {x,y,w,h,img,el}
+    drag: null,
+    pending: null,        // 等待上传的空格
+    swapSrc: null,        // 交换模式源格
+    hover: null           // 悬停格子（高亮 + 调整线框）
+  };
+
+  var stage = $('kStage'), sheet = $('kSheet'), sheetCtx = sheet.getContext('2d');
+  var fileInput = $('fileK');
+
+  /* ---------------- 相纸与方向（相纸固定 4×6 竖版 102×152） ---------------- */
+  function basePaper() { return C.PAPERS[0]; }
+  function applyPaper(prev) {
+    var base = basePaper();
+    K.paper = K.landscape
+      ? { id: base.id, name: base.name + ' 横', w: base.h, h: base.w }
+      : base;
+    // 方向切换时把现有格子按比例缩放进新排列空间
+    if (prev && prev.w !== K.paper.w) {
+      var kx = K.paper.w / prev.w, ky = K.paper.h / prev.h;
+      K.cells.forEach(function (c) {
+        c.x *= kx; c.w *= kx; c.y *= ky; c.h *= ky;
+      });
+    }
+  }
+  applyPaper();
+  K.cells = [{ x: 0, y: 0, w: K.paper.w, h: K.paper.h, img: null, el: null }];
+
+  $('kGap').addEventListener('input', function () {
+    var v = parseFloat(this.value);
+    K.gap = isNaN(v) ? 0 : clamp(v, 0, 20);
+    updateCells();
+    schedulePreview();
+  });
+  $('kOrient').addEventListener('change', function () {
+    K.landscape = this.value === 'l';
+    var prev = K.paper;
+    applyPaper(prev);
+    rebuild();
+    schedulePreview();
+  });
+
+  /* ---------------- 几何 ---------------- */
+  /** 视觉矩形：格间距以各格内缩 gap/2 呈现 */
+  function effRect(c) {
+    var g = Math.max(0, Math.min(K.gap / 2, (c.w - 2) / 2, (c.h - 2) / 2));
+    return { x: c.x + g, y: c.y + g, w: c.w - g * 2, h: c.h - g * 2 };
+  }
+
+  /** cover 基准（源px/mm）：取 min 让图片按其中一条边刚好铺满格子（k=1）；k>1 时 s 变小 = 继续放大 */
+  function coverScale(img, w, h) { return Math.min(img.iw / w, img.ih / h); }
+  function clampFocal(c) {
+    var r = effRect(c), img = c.img;
+    var s = coverScale(img, r.w, r.h) / img.k;
+    var vw = r.w * s, vh = r.h * s;
+    img.fx = vw >= img.iw ? img.iw / 2 : Math.max(vw / 2, Math.min(img.iw - vw / 2, img.fx));
+    img.fy = vh >= img.ih ? img.ih / 2 : Math.max(vh / 2, Math.min(img.ih - vh / 2, img.fy));
+  }
+
+  /* ---------------- DOM ---------------- */
+  function buildCell(c) {
+    var el = document.createElement('div');
+    el.className = 'k-cell' + (c.img ? '' : ' empty') + (c === K.swapSrc ? ' swap-hl' : '');
+    if (c.img) {
+      el.appendChild(c.img.cv);
+    } else {
+      el.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>上传</span>';
+    }
+    var ops = document.createElement('div');
+    ops.className = 'k-ops';
+    ops.innerHTML =
+      '<button type="button" data-op="vsplit" title="竖向切分（左右两格）">竖切</button>' +
+      '<button type="button" data-op="hsplit" title="横向切分（上下两格）">横切</button>' +
+      '<button type="button" data-op="swap" title="与另一格交换图片位置">交换</button>' +
+      '<button type="button" data-op="del" title="合并到相邻格并删除">删除</button>';
+    el.appendChild(ops);
+    c.el = el;
+    return el;
+  }
+
+  function rebuild() {
+    stage.innerHTML = '';
+    stage.style.aspectRatio = K.paper.w + ' / ' + K.paper.h;
+    K.cells.forEach(function (c) { stage.appendChild(buildCell(c)); });
+    var fr = document.createElement('div');
+    fr.className = 'k-frame';
+    fr.id = 'kFrame';
+    stage.appendChild(fr);
+    K.hover = null;
+    updateCells();
+  }
+
+  function updateCells() {
+    var P = K.paper;
+    K.cells.forEach(function (c) {
+      var r = effRect(c);
+      c.el.style.left = (r.x / P.w * 100) + '%';
+      c.el.style.top = (r.y / P.h * 100) + '%';
+      c.el.style.width = (r.w / P.w * 100) + '%';
+      c.el.style.height = (r.h / P.h * 100) + '%';
+      if (c.img) { clampFocal(c); updateCanvasStyle(c); }
+    });
+  }
+
+  function updateCanvasStyle(c) {
+    var r = effRect(c), img = c.img;
+    var s = coverScale(img, r.w, r.h) / img.k;
+    img.cv.style.width = (img.iw / s / r.w * 100) + '%';
+    img.cv.style.height = (img.ih / s / r.h * 100) + '%';
+    img.cv.style.left = (50 - img.fx / (s * r.w) * 100) + '%';
+    img.cv.style.top = (50 - img.fy / (s * r.h) * 100) + '%';
+  }
+
+  /* ---------------- 模板 / 清空 / 加图 ---------------- */
+  function tplRects(id) {
+    var W = K.paper.w, H = K.paper.h;
+    if (id === 'lbig') return [{ x: 0, y: 0, w: .62 * W, h: H }, { x: .62 * W, y: 0, w: .38 * W, h: H / 2 }, { x: .62 * W, y: H / 2, w: .38 * W, h: H / 2 }];
+    if (id === 'sbig') return [{ x: 0, y: 0, w: W, h: .62 * H }, { x: 0, y: .62 * H, w: W / 2, h: .38 * H }, { x: W / 2, y: .62 * H, w: W / 2, h: .38 * H }];
+    if (id === 'rbig') return [{ x: 0, y: 0, w: .38 * W, h: H / 2 }, { x: 0, y: H / 2, w: .38 * W, h: H / 2 }, { x: .38 * W, y: 0, w: .62 * W, h: H }];
+    if (id === 'mix')  return [
+      { x: 0, y: 0, w: .65 * W, h: 2 * H / 3 },
+      { x: .65 * W, y: 0, w: .35 * W, h: H / 3 },
+      { x: .65 * W, y: H / 3, w: .35 * W, h: H / 3 },
+      { x: 0, y: 2 * H / 3, w: W / 3, h: H / 3 },
+      { x: W / 3, y: 2 * H / 3, w: W / 3, h: H / 3 },
+      { x: 2 * W / 3, y: 2 * H / 3, w: W / 3, h: H / 3 }
+    ];
+    if (id === 'g3')   return [{ x: 0, y: 0, w: W / 3, h: H }, { x: W / 3, y: 0, w: W / 3, h: H }, { x: 2 * W / 3, y: 0, w: W / 3, h: H }];
+    if (id === 'g4')   return [{ x: 0, y: 0, w: W / 2, h: H / 2 }, { x: W / 2, y: 0, w: W / 2, h: H / 2 }, { x: 0, y: H / 2, w: W / 2, h: H / 2 }, { x: W / 2, y: H / 2, w: W / 2, h: H / 2 }];
+    if (id === 'g6') {
+      var out = [];
+      for (var r = 0; r < 2; r++) for (var q = 0; q < 3; q++)
+        out.push({ x: q * W / 3, y: r * H / 2, w: W / 3, h: H / 2 });
+      return out;
+    }
+    return null;
+  }
+
+  var TPLS = [['lbig', '左大右小'], ['sbig', '上大下小'], ['g4', '均等四格'], ['g6', '均等六格'], ['mix', '一大五小'], ['g3', '一行三格'], ['rbig', '左小右大']];
+  /** 预设按钮：正方形缩略色块由 tplRects 数据实时生成（不写死），名称走 title 悬停提示 */
+  function renderTpl() {
+    var W = K.paper.w, H = K.paper.h;
+    $('kTpl').innerHTML = TPLS.map(function (t) {
+      var blocks = tplRects(t[0]).map(function (r) {
+        return '<i style="left:' + (r.x / W * 100) + '%;top:' + (r.y / H * 100) + '%;width:' + (r.w / W * 100) + '%;height:' + (r.h / H * 100) + '%"></i>';
+      }).join('');
+      return '<button type="button" data-tpl="' + t[0] + '" title="' + t[1] + '" aria-label="' + t[1] + '">' +
+        '<span class="tp">' + blocks + '</span></button>';
+    }).join('');
+  }
+  renderTpl();
+
+  $('kTpl').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    var rects = tplRects(b.dataset.tpl);
+    if (!rects) return;
+    var imgs = K.cells.filter(function (c) { return c.img; })
+      .sort(function (a, b2) { return (a.y - b2.y) || (a.x - b2.x); })
+      .map(function (c) { return c.img; });
+    K.cells = rects.map(function (r, i) {
+      return { x: r.x, y: r.y, w: r.w, h: r.h, img: imgs[i] || null, el: null };
+    });
+    K.swapSrc = null;
+    if (imgs.length > rects.length) toastK('模板只有 ' + rects.length + ' 格，已省略 ' + (imgs.length - rects.length) + ' 张图片');
+    rebuild();
+    schedulePreview();
+  });
+
+  $('btnClear').addEventListener('click', function () {
+    K.cells = [{ x: 0, y: 0, w: K.paper.w, h: K.paper.h, img: null, el: null }];
+    K.pending = null;
+    K.swapSrc = null;
+    rebuild();
+    schedulePreview();
+  });
+
+  function toImg(bmp, src) {
+    var cv = document.createElement('canvas');
+    cv.width = bmp.width; cv.height = bmp.height;
+    cv.getContext('2d').drawImage(bmp, 0, 0);
+    return { cv: cv, iw: bmp.width, ih: bmp.height, k: 1, fx: bmp.width / 2, fy: bmp.height / 2, src: src || null };
+  }
+
+  /** 对半切一格，返回新格（不 rebuild）；dir 'v'=左右切 'h'=上下切 */
+  function splitCellRaw(c, dir) {
+    var nc = { x: c.x, y: c.y, w: c.w, h: c.h, img: null, el: null };
+    if (dir === 'v') { nc.x = c.x + c.w / 2; nc.w = c.w / 2; c.w = c.w / 2; }
+    else { nc.y = c.y + c.h / 2; nc.h = c.h / 2; c.h = c.h / 2; }
+    K.cells.push(nc);
+    return nc;
+  }
+
+  /** 放一张图：优先填最大的空格；没有空格就分裂面积最大的格 */
+  function placeImage(bmp, src) {
+    var img = toImg(bmp, src);
+    var empty = K.cells.filter(function (c) { return !c.img; })
+      .sort(function (a, b) { return b.w * b.h - a.w * a.h; })[0];
+    if (empty) { empty.img = img; return; }
+    var big = K.cells.slice().sort(function (a, b) { return b.w * b.h - a.w * a.h; })[0];
+    splitCellRaw(big, big.w >= big.h ? 'v' : 'h').img = img;
+  }
+
+  /** 解码图片文件 → { bmp, file }（file 原始 Blob 留作持久化源） */
+  function decodeFiles(list) {
+    var arr = [].slice.call(list).filter(function (f) { return /^image\//.test(f.type); });
+    return Promise.all(arr.map(function (f) {
+      if (window.createImageBitmap) {
+        return createImageBitmap(f, { imageOrientation: 'from-image' })
+          .then(function (b) { return { bmp: b, file: f }; })
+          .catch(function () { return null; });
+      }
+      return new Promise(function (res) {
+        var url = URL.createObjectURL(f);
+        var img = new Image();
+        img.onload = function () { res({ bmp: img, file: f }); URL.revokeObjectURL(url); };
+        img.onerror = function () { res(null); };
+        img.src = url;
+      });
+    }));
+  }
+
+  fileInput.addEventListener('change', function (e) {
+    var files = e.target.files;
+    if (!files || !files.length) return;
+    decodeFiles(files).then(function (bmps) {
+      var added = 0;
+      bmps.forEach(function (b) {
+        if (!b) return;
+        if (K.pending && !K.pending.img) { K.pending.img = toImg(b.bmp, b.file); K.pending = null; }
+        else placeImage(b.bmp, b.file);
+        added++;
+      });
+      if (!added) toastK('图片读取失败');
+      rebuild();
+      schedulePreview();
+    });
+    fileInput.value = '';
+  });
+
+  $('btnAdd').addEventListener('click', function () { K.pending = null; fileInput.click(); });
+  stage.addEventListener('dragover', function (e) { e.preventDefault(); });
+  stage.addEventListener('drop', function (e) {
+    e.preventDefault();
+    if (e.dataTransfer && e.dataTransfer.files.length) {
+      K.pending = null;
+      decodeFiles(e.dataTransfer.files).then(function (bmps) {
+        bmps.forEach(function (b) { if (b) placeImage(b.bmp, b.file); });
+        rebuild();
+        schedulePreview();
+      });
+    }
+  });
+  window.addEventListener('k-paste', function (e) {
+    if (e.detail) { K.pending = null; decodeFiles([e.detail]).then(function (bmps) { bmps.forEach(function (b) { if (b) placeImage(b.bmp, b.file); }); rebuild(); schedulePreview(); }); }
+  });
+  window.addEventListener('k-tab-enter', function () {
+    rebuild();
+    schedulePreview();
+  });
+
+  /* ---------------- 命中 ---------------- */
+  function mmAt(px, py) {
+    var rect = stage.getBoundingClientRect();
+    return { x: px / rect.width * K.paper.w, y: py / rect.height * K.paper.h };
+  }
+
+  function cellAt(px, py) {
+    var m = mmAt(px, py);
+    return K.cells.filter(function (c) {
+      return m.x >= c.x && m.x <= c.x + c.w && m.y >= c.y && m.y <= c.y + c.h;
+    })[0] || null;
+  }
+
+  function cellByEl(el) {
+    return K.cells.filter(function (c) { return c.el === el; })[0] || null;
+  }
+
+  /** 命中格子边缘（用于拖拽调整大小），返回最近的竖/横边 */
+  function edgeHit(px, py) {
+    var rect = stage.getBoundingClientRect();
+    var mppm = K.paper.w / rect.width;
+    var m = mmAt(px, py);
+    var TOL = Math.max(1.5, 9 * mppm);
+    var best = null;
+    K.cells.forEach(function (c) {
+      if (m.y >= c.y - TOL && m.y <= c.y + c.h + TOL) {
+        [c.x, c.x + c.w].forEach(function (ex) {
+          var d = Math.abs(m.x - ex);
+          if (d <= TOL && (!best || d < best.d)) best = { d: d, dir: 'v', pos: ex, cell: c };
+        });
+      }
+      if (m.x >= c.x - TOL && m.x <= c.x + c.w + TOL) {
+        [c.y, c.y + c.h].forEach(function (ey) {
+          var d2 = Math.abs(m.y - ey);
+          if (d2 <= TOL && (!best || d2 < best.d)) best = { d: d2, dir: 'h', pos: ey, cell: c };
+        });
+      }
+    });
+    return best;
+  }
+
+  /**
+   * 拖边时的联动分组：L=被拖边同侧、与抓取边连续相接的格子（整条线一起动），
+   * R=另一侧连续相接的格子。链式收集：从抓取格的边出发，逐段并入相邻段。
+   */
+  function edgeGroups(eh) {
+    function span(c) {
+      return eh.dir === 'v' ? { a: c.y, b: c.y + c.h } : { a: c.x, b: c.x + c.w };
+    }
+    function collect(side) {
+      var s0 = span(eh.cell), picked = [];
+      var segs = K.cells.filter(function (c) {
+        if (eh.dir === 'v') return side === 'L' ? Math.abs(c.x + c.w - eh.pos) < .01 : Math.abs(c.x - eh.pos) < .01;
+        return side === 'L' ? Math.abs(c.y + c.h - eh.pos) < .01 : Math.abs(c.y - eh.pos) < .01;
+      }).map(function (c) {
+        var s = span(c); return { a: s.a, b: s.b, c: c };
+      });
+      var changed = true;
+      while (changed) {
+        changed = false;
+        segs = segs.filter(function (s) {
+          if (s.a <= s0.b + .01 && s.b >= s0.a - .01) {
+            s0.a = Math.min(s0.a, s.a); s0.b = Math.max(s0.b, s.b);
+            picked.push(s.c); changed = true; return false;
+          }
+          return true;
+        });
+      }
+      return picked;
+    }
+    return { L: collect('L'), R: collect('R') };
+  }
+
+  /** 磁吸目标：所有格子的边坐标 + 纸边（排除被拖边自身位置） */
+  function snapCoords(dir, pos) {
+    var seen = {}, arr = [];
+    function add(v) {
+      v = Math.round(v * 100) / 100;
+      if (Math.abs(v - pos) > 0.01 && !seen[v]) { seen[v] = 1; arr.push(v); }
+    }
+    add(0); add(dir === 'v' ? K.paper.w : K.paper.h);
+    K.cells.forEach(function (c) {
+      if (dir === 'v') { add(c.x); add(c.x + c.w); }
+      else { add(c.y); add(c.y + c.h); }
+    });
+    return arr;
+  }
+
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  /* ---------------- 格子操作 ---------------- */
+  function refreshSwapHl() {
+    K.cells.forEach(function (c) { c.el.classList.toggle('swap-hl', c === K.swapSrc); });
+  }
+
+  function cellOp(c, op) {
+    if (op === 'vsplit' || op === 'hsplit') {
+      if ((op === 'vsplit' ? c.w : c.h) < SPLIT_MIN) { toastK('格子太小，无法切分'); return; }
+      splitCellRaw(c, op === 'vsplit' ? 'v' : 'h');
+    } else if (op === 'swap') {
+      K.swapSrc = (K.swapSrc === c) ? null : c;
+      refreshSwapHl();
+      if (K.swapSrc) toastK('再点另一个格子，交换两张图片的位置');
+      return;
+    } else if (op === 'del') {
+      deleteCell(c);
+      return;
+    }
+    rebuild();
+    schedulePreview();
+  }
+
+  /** 共享边长度（0=不相邻） */
+  function sharedLen(a, b) {
+    var ovV = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    var ovH = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+    if ((Math.abs(a.x + a.w - b.x) < .01 || Math.abs(b.x + b.w - a.x) < .01) && ovV > .01) return ovV;
+    if ((Math.abs(a.y + a.h - b.y) < .01 || Math.abs(b.y + b.h - a.y) < .01) && ovH > .01) return ovH;
+    return 0;
+  }
+
+  /** 删除格子：合并到共享边最长、且合并后不与其他格重叠的邻居 */
+  function deleteCell(c) {
+    if (K.swapSrc === c) { K.swapSrc = null; }
+    if (K.cells.length === 1) { c.img = null; rebuild(); schedulePreview(); return; }
+    var cands = K.cells.filter(function (o) { return o !== c; })
+      .map(function (o) { return { o: o, len: sharedLen(c, o) }; })
+      .filter(function (s) { return s.len > 0.01; })
+      .sort(function (a, b) { return b.len - a.len; });
+    for (var i = 0; i < cands.length; i++) {
+      var o = cands[i].o;
+      var u = {
+        x: Math.min(c.x, o.x), y: Math.min(c.y, o.y),
+        w: Math.max(c.x + c.w, o.x + o.w) - Math.min(c.x, o.x),
+        h: Math.max(c.y + c.h, o.y + o.h) - Math.min(c.y, o.y)
+      };
+      var bad = K.cells.some(function (t) {
+        if (t === c || t === o) return false;
+        return t.x < u.x + u.w - .01 && t.x + t.w > u.x + .01 &&
+               t.y < u.y + u.h - .01 && t.y + t.h > u.y + .01;
+      });
+      if (!bad) {
+        o.x = u.x; o.y = u.y; o.w = u.w; o.h = u.h;
+        K.cells.splice(K.cells.indexOf(c), 1);
+        rebuild();
+        schedulePreview();
+        return;
+      }
+    }
+    toastK('这格形状不规则，合并会压到别的图；可先切分或调整邻格后再删');
+  }
+
+  /* ---------------- 悬停高亮 + 悬浮调整线框 ---------------- */
+  /** 某侧是否有贴邻格（纸边一侧没有邻格 = 该边不可拖，不画线框） */
+  function hasNbr(c, side) {
+    var e = 0.01;
+    function ov(a1, a2, b1, b2) { return b1 < a2 - e && b2 > a1 + e; }
+    return K.cells.some(function (o) {
+      if (o === c) return false;
+      if (side === 'l') return Math.abs(o.x + o.w - c.x) < e && ov(c.y, c.y + c.h, o.y, o.y + o.h);
+      if (side === 'r') return Math.abs(o.x - (c.x + c.w)) < e && ov(c.y, c.y + c.h, o.y, o.y + o.h);
+      if (side === 't') return Math.abs(o.y + o.h - c.y) < e && ov(c.x, c.x + c.w, o.x, o.x + o.w);
+      return Math.abs(o.y - (c.y + c.h)) < e && ov(c.x, c.x + c.w, o.x, o.x + o.w);
+    });
+  }
+
+  /** 线框定位到格子，只画有邻格（可拖）的边；线与抓手浮在照片上层，纯指示不拦截指针 */
+  function positionFrame(c) {
+    var fr = $('kFrame');
+    if (!fr) return;
+    if (!c) { fr.style.display = 'none'; return; }
+    var P = K.paper;
+    // 用几何矩形（非视觉内缩），线正好落在 edgeHit 命中的共享边界上
+    fr.style.display = 'block';
+    fr.style.left = (c.x / P.w * 100) + '%';
+    fr.style.top = (c.y / P.h * 100) + '%';
+    fr.style.width = (c.w / P.w * 100) + '%';
+    fr.style.height = (c.h / P.h * 100) + '%';
+    var html = '';
+    if (hasNbr(c, 'l')) html += '<div class="k-fr-line v" style="left:0"><i class="k-fr-grip"></i></div>';
+    if (hasNbr(c, 'r')) html += '<div class="k-fr-line v" style="left:100%"><i class="k-fr-grip"></i></div>';
+    if (hasNbr(c, 't')) html += '<div class="k-fr-line h" style="top:0"><i class="k-fr-grip"></i></div>';
+    if (hasNbr(c, 'b')) html += '<div class="k-fr-line h" style="top:100%"><i class="k-fr-grip"></i></div>';
+    fr.innerHTML = html;
+  }
+
+  function setHover(c) {
+    if (K.hover === c) return;
+    if (K.hover && K.hover.el) K.hover.el.classList.remove('hov');
+    K.hover = c || null;
+    if (K.hover) K.hover.el.classList.add('hov');
+    positionFrame(K.hover);
+  }
+
+  /* ---------------- 交互 ---------------- */
+  stage.addEventListener('pointerdown', function (e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    var rect = stage.getBoundingClientRect();
+    var px = e.clientX - rect.left, py = e.clientY - rect.top;
+
+    var ob = e.target.closest && e.target.closest('.k-ops button');
+    if (ob) {
+      var c0 = cellByEl(e.target.closest('.k-cell'));
+      if (c0) cellOp(c0, ob.dataset.op);
+      return;
+    }
+
+    var eh = edgeHit(px, py);
+    if (eh) {
+      setHover(null);       // 拖边开始，隐藏线框与高亮（几何将变化）
+      var gr = edgeGroups(eh);
+      K.drag = { mode: 'edge', dir: eh.dir, pos: eh.pos, L: gr.L, R: gr.R, sx: px, sy: py };
+      try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+      return;
+    }
+
+    var c = cellAt(px, py);
+    if (!c) return;
+    if (K.swapSrc) {
+      if (c !== K.swapSrc) {
+        var t = c.img; c.img = K.swapSrc.img; K.swapSrc.img = t;
+        if (c.img) clampFocal(c);
+        if (K.swapSrc.img) clampFocal(K.swapSrc);
+        toastK('已交换');
+      }
+      K.swapSrc = null;
+      rebuild();
+      schedulePreview();
+      return;
+    }
+    if (!c.img) {           // 空格 = 上传入口
+      K.pending = c;
+      fileInput.click();
+      return;
+    }
+    K.drag = { mode: 'pan', cell: c, sx: px, sy: py, ofx: c.img.fx, ofy: c.img.fy };
+    c.el.classList.add('panning');
+    try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault();
+  });
+
+  stage.addEventListener('pointermove', function (e) {
+    var rect = stage.getBoundingClientRect();
+    var px = e.clientX - rect.left, py = e.clientY - rect.top;
+
+    if (!K.drag) {          // 悬停提示：可拖边 + 高亮当前格 + 悬浮调整线框
+      var eh = edgeHit(px, py);
+      stage.style.cursor = eh ? (eh.dir === 'v' ? 'ew-resize' : 'ns-resize') : '';
+      setHover(eh ? eh.cell : cellAt(px, py));
+      return;
+    }
+
+    if (K.drag.mode === 'edge') {
+      var mppm = K.paper.w / rect.width;
+      var dRaw = (K.drag.dir === 'v' ? px - K.drag.sx : py - K.drag.sy) * mppm;
+      var pos0 = K.drag.pos + dRaw;
+      // 磁吸：贴近其他边自动对齐
+      var thr = Math.max(1.5, 6 * mppm), best = null;
+      snapCoords(K.drag.dir, K.drag.pos).forEach(function (sc) {
+        var d = Math.abs(sc - pos0);
+        if (d <= thr && (!best || d < best.d)) best = { d: d, v: sc };
+      });
+      if (best) dRaw = best.v - K.drag.pos;
+      // 钳制：自身与联动格都不小于 MIN_MM，且不出纸边
+      var max = K.drag.dir === 'v' ? K.paper.w : K.paper.h;
+      var lo = -K.drag.pos, hi = max - K.drag.pos;
+      K.drag.L.forEach(function (c) {
+        lo = Math.max(lo, (K.drag.dir === 'v' ? c.x : c.y) + MIN_MM - K.drag.pos);
+      });
+      K.drag.R.forEach(function (c) {
+        var far = K.drag.dir === 'v' ? c.x + c.w : c.y + c.h;
+        hi = Math.min(hi, far - MIN_MM - K.drag.pos);
+      });
+      var d = clamp(dRaw, lo, hi);
+      K.drag.L.forEach(function (c) {
+        if (K.drag.dir === 'v') c.w = K.drag.pos + d - c.x;
+        else c.h = K.drag.pos + d - c.y;
+      });
+      K.drag.R.forEach(function (c) {
+        if (K.drag.dir === 'v') { var nw = c.x + c.w - (K.drag.pos + d); c.x = K.drag.pos + d; c.w = nw; }
+        else { var nh = c.y + c.h - (K.drag.pos + d); c.y = K.drag.pos + d; c.h = nh; }
+      });
+      updateCells();
+      schedulePreview();
+    } else {
+      var cell = K.drag.cell, r = effRect(cell);
+      var mppm2 = K.paper.w / rect.width;
+      var s = coverScale(cell.img, r.w, r.h) / cell.img.k;
+      cell.img.fx = K.drag.ofx - (px - K.drag.sx) * mppm2 * s;
+      cell.img.fy = K.drag.ofy - (py - K.drag.sy) * mppm2 * s;
+      clampFocal(cell);
+      updateCanvasStyle(cell);
+      schedulePreview();
+    }
+  });
+
+  ['pointerup', 'pointercancel'].forEach(function (ev) {
+    stage.addEventListener(ev, function () {
+      if (K.drag && K.drag.cell) K.drag.cell.el.classList.remove('panning');
+      K.drag = null;
+      setHover(null);       // 几何可能已变，清掉由下一次 pointermove 重建
+    });
+  });
+
+  stage.addEventListener('pointerleave', function () {
+    if (!K.drag) { setHover(null); stage.style.cursor = ''; }
+  });
+
+  stage.addEventListener('wheel', function (e) {
+    var rect = stage.getBoundingClientRect();
+    var c = cellAt(e.clientX - rect.left, e.clientY - rect.top);
+    if (!c || !c.img) return;
+    e.preventDefault();
+    c.img.k = clamp(c.img.k * Math.exp(-e.deltaY * 0.0012), 1, 10);
+    clampFocal(c);
+    updateCanvasStyle(c);
+    schedulePreview();
+  }, { passive: false });
+
+  /* ---------------- 输出 ---------------- */
+  /** 格子 → 排列空间画布（格间距留白） */
+  function renderGrid(ctx, scale) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    K.cells.forEach(function (c) {
+      if (!c.img) return;
+      var r = effRect(c);
+      var s = coverScale(c.img, r.w, r.h) / c.img.k;
+      ctx.drawImage(c.img.cv,
+        c.img.fx - r.w * s / 2, c.img.fy - r.h * s / 2, r.w * s, r.h * s,
+        r.x * scale, r.y * scale, r.w * scale, r.h * scale);
+    });
+  }
+
+  /** 输出到竖版相纸：横版内容旋转 90° */
+  function renderSheet(ctx, scale) {
+    var base = basePaper();
+    var off = document.createElement('canvas');
+    off.width = Math.round(K.paper.w * scale);
+    off.height = Math.round(K.paper.h * scale);
+    renderGrid(off.getContext('2d'), scale);
+
+    var W = Math.round(base.w * scale), H = Math.round(base.h * scale);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    if (K.landscape) {
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(off, -off.width / 2, -off.height / 2);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    } else {
+      ctx.drawImage(off, 0, 0);
+    }
+  }
+
+  var pvPending = false;
+  function schedulePreview() {
+    queueSave();
+    if (pvPending) return;
+    pvPending = true;
+    requestAnimationFrame(function () { pvPending = false; renderKPreview(); });
+  }
+
+  function renderKPreview() {
+    if ($('tab-collage').classList.contains('hidden')) return;
+    var base = basePaper();
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var wrapW = (sheet.parentElement.clientWidth || 460) - 32;
+    var cssW = Math.max(160, Math.min(wrapW, 460));
+    var scale = cssW / base.w;
+    sheet.style.width = cssW + 'px';
+    sheet.style.height = (base.h * scale) + 'px';
+    sheet.width = Math.round(base.w * scale * dpr);
+    sheet.height = Math.round(base.h * scale * dpr);
+    renderSheet(sheetCtx, scale * dpr);
+
+    var imgs = K.cells.filter(function (c) { return c.img; }).length;
+    $('kInfo').innerHTML = imgs
+      ? '<b>' + imgs + ' 张图片 / ' + K.cells.length + ' 格</b>　' + (K.landscape ? '横排（内容旋转 90° 打印）' : '竖排') + ' · 相纸 ' + base.w + '×' + base.h + 'mm'
+      : '添加图片后生成打印预览。';
+    $('btnKJpeg').disabled = !imgs;
+  }
+
+  var icc = C.DEFAULT_ICC;
+  C.getCanvasIcc(function (c) { icc = c; });
+
+  function kb(n) { return n > 1048576 ? (n / 1048576).toFixed(2) + ' MB' : Math.round(n / 1024) + ' KB'; }
+
+  $('btnKJpeg').addEventListener('click', function () {
+    var imgs = K.cells.filter(function (c) { return c.img; }).length;
+    if (!imgs) return;
+    var dpi = parseInt($('kDpi').value, 10);
+    $('kStatus').textContent = '生成中…';
+    var base = basePaper();
+    var scale = C.scaleOf(dpi);
+    var cv = document.createElement('canvas');
+    cv.width = Math.round(base.w * scale);
+    cv.height = Math.round(base.h * scale);
+    renderSheet(cv.getContext('2d'), scale);
+    cv.toBlob(function (blob) {
+      blob.arrayBuffer().then(function (buf) {
+        var bytes = C.injectIcc(C.setJpegDpi(new Uint8Array(buf), dpi), icc);
+        var url = URL.createObjectURL(new Blob([bytes], { type: 'image/jpeg' }));
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'collage_' + base.id + (K.landscape ? '-l' : '') + '_' + imgs + 'img_' + dpi + 'dpi.jpg';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+        $('kStatus').textContent = '已导出 ' + cv.width + '×' + cv.height + 'px @ ' + dpi + 'dpi，' + kb(bytes.length) + '（已写入 DPI 标记）';
+      });
+    }, 'image/jpeg', 0.95);
+  });
+
+  /* ---------------- 通用 ---------------- */
+  var toastTimer = null;
+  function toastK(msg) {
+    var el = $('kStatus');
+    el.textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.textContent = ''; }, 2600);
+  }
+
+  window.addEventListener('resize', function () {
+    if (document.body.classList.contains('mode-collage')) {
+      renderKPreview();
+    }
+  });
+
+  /* ---------------- 会话持久化：刷新不丢，页面关掉即清 ----------------
+     图片 Blob 存 IndexedDB（容量大、存原始文件不损画质）；
+     sessionStorage 标记「本页会话活跃」——刷新仍在，关掉页面标记消失即不再恢复。 */
+  var SS_FLAG = 'idphoto-collage-live';
+  var SAVE_KEY = 'state';
+  var idbHandle = null;
+  function idbOpen() {
+    return new Promise(function (res) {
+      if (idbHandle) return res(idbHandle);
+      if (!window.indexedDB) return res(null);
+      var rq = indexedDB.open('id-photo-collage', 1);
+      rq.onupgradeneeded = function () { rq.result.createObjectStore('kv'); };
+      rq.onsuccess = function () { idbHandle = rq.result; res(idbHandle); };
+      rq.onerror = function () { res(null); };
+    });
+  }
+  function idbPut(data) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (res) {
+        if (!db) return res();
+        try {
+          var tx = db.transaction('kv', 'readwrite');
+          tx.objectStore('kv').put(data, SAVE_KEY);
+          tx.oncomplete = function () { res(); };
+          tx.onerror = function () { res(); };
+        } catch (err) { res(); }
+      });
+    });
+  }
+  function idbGet() {
+    return idbOpen().then(function (db) {
+      return new Promise(function (res) {
+        if (!db) return res(null);
+        try {
+          var rq = db.transaction('kv').objectStore('kv').get(SAVE_KEY);
+          rq.onsuccess = function () { res(rq.result || null); };
+          rq.onerror = function () { res(null); };
+        } catch (err) { res(null); }
+      });
+    });
+  }
+  function idbDel() {
+    return idbOpen().then(function (db) {
+      return new Promise(function (res) {
+        if (!db) return res();
+        try {
+          var tx = db.transaction('kv', 'readwrite');
+          tx.objectStore('kv').delete(SAVE_KEY);
+          tx.oncomplete = function () { res(); };
+          tx.onerror = function () { res(); };
+        } catch (err) { res(); }
+      });
+    });
+  }
+
+  var saveTimer = null;
+  function queueSave() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveState, 800);
+  }
+  function saveState() {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    var blobs = [];
+    var cells = K.cells.map(function (c) {
+      var o = { x: c.x, y: c.y, w: c.w, h: c.h, img: null };
+      if (c.img) {
+        o.img = { k: c.img.k, fx: c.img.fx, fy: c.img.fy, bi: blobs.length };
+        blobs.push(c.img.src || c.img.cv);   // 优先原始文件，次选画布
+      }
+      return o;
+    });
+    Promise.all(blobs.map(function (src) {
+      if (src && src.toBlob) {
+        return new Promise(function (res) { src.toBlob(function (b) { res(b || null); }, 'image/jpeg', 0.92); });
+      }
+      return Promise.resolve(src instanceof Blob ? src : null);
+    })).then(function (arr) {
+      return idbPut({ v: 1, landscape: K.landscape, gap: K.gap, cells: cells, blobs: arr.filter(Boolean) });
+    }).then(function () {
+      try { sessionStorage.setItem(SS_FLAG, '1'); } catch (err) {}
+    });
+  }
+
+  function restoreState() {
+    var live = false;
+    try { live = !!sessionStorage.getItem(SS_FLAG); } catch (err) {}
+    if (!live) { idbDel(); return; }
+    idbGet().then(function (data) {
+      if (!data || !data.cells || !data.cells.length) return;
+      K.landscape = !!data.landscape;
+      try { $('kOrient').value = K.landscape ? 'l' : 'p'; } catch (err) {}
+      applyPaper();
+      K.gap = isNaN(parseFloat(data.gap)) ? 0 : clamp(parseFloat(data.gap), 0, 20);
+      try { $('kGap').value = K.gap; } catch (err) {}
+      K.cells = data.cells.map(function (o) {
+        return { x: o.x, y: o.y, w: o.w, h: o.h, img: null, el: null,
+          _bi: o.img ? o.img.bi : -1, _meta: o.img || null };
+      });
+      rebuild();
+      schedulePreview();
+      var arr = data.blobs || [];
+      Promise.all(arr.map(function (b) {
+        return createImageBitmap(b, { imageOrientation: 'from-image' }).catch(function () { return null; });
+      })).then(function (results) {
+        K.cells.forEach(function (c) {
+          if (c._bi >= 0 && results[c._bi]) {
+            var bmp = results[c._bi];
+            var cv = document.createElement('canvas');
+            cv.width = bmp.width; cv.height = bmp.height;
+            cv.getContext('2d').drawImage(bmp, 0, 0);
+            c.img = { cv: cv, iw: bmp.width, ih: bmp.height,
+              k: c._meta.k || 1, fx: c._meta.fx, fy: c._meta.fy, src: arr[c._bi] };
+          }
+          delete c._bi; delete c._meta;
+        });
+        rebuild();
+        renderKPreview();
+        if (K.cells.some(function (c) { return c.img; })) toastK('已恢复上次编辑内容（关闭页面后自动清除）');
+      });
+    });
+  }
+
+  /* ---------------- 启动 ---------------- */
+  rebuild();
+  renderKPreview();
+  restoreState();
+})();
+</script>
+</body>
+</html>
