@@ -216,6 +216,30 @@
       ]
     },
     {
+      "id": "smtoj1n2kovt5",
+      "type": "stats",
+      "label": "Why choose us",
+      "heading": "可复用地图可视化组件，赋能地理数据高效呈现",
+      "subtitle": "基于地理 JSON 数据源，拆解轮廓、厚度、发光描边、地表纹理多层视觉模块，组件化可快速生成全国任意区域三维地图。",
+      "videoUrl": "/portfolio/cases/mybilist/uploads/1788622800312.png",
+      "videoType": "video",
+      "mediaRatio": "landscape",
+      "items": [
+        {
+          "value": "7",
+          "suffix": "+",
+          "title": "多图层地图组件",
+          "desc": "拆解描边、厚度、纹理、填充独立视觉模块，全组件化自由组合"
+        },
+        {
+          "value": "100",
+          "suffix": "%",
+          "title": "快速区域生成",
+          "desc": "接入阿里云 DataV JSON 地理数据，Figma 内编辑，适配任意省市地域"
+        }
+      ]
+    },
+    {
       "id": "smtjkxz48t0qz",
       "type": "device-screen",
       "deviceImage": "/portfolio/cases/mybilist/uploads/1788328640506.png",
