@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="BVwBECY7yTSvHU4Zb2nDFv">
+<head data-page-node-id="Bm3FaYZpODaJmNj8Oogylv">
+  <meta charset="UTF-8" data-page-node-id="vtll3BRiwKaLb3ag4eJIw1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="3VidbdhhqbbKuFpe1vrE2j">
+  <meta name="robots" content="noindex, nofollow" data-page-node-id="tBSeaD77GpNrojqsc5DtNm">
+  <title>众乐乐 · 首页编辑</title>
+  <link rel="icon" href="../favicon.ico" data-page-node-id="A2eCoiPZIEUJFepDs2y0xV">
+  <!-- 前台舞台样式：后台「画面预览」监视器与前台共用同一份样式与同一份渲染代码，
+       所以预览里的文案排版天然等于前台（见 admin-ui.css 的 .pv-stage 说明） -->
+  <link rel="stylesheet" href="_shared/scrub.css?v=3" data-page-node-id="oQwLnjBvWZt2cmz4eRjCEt">
+  <link rel="stylesheet" href="_shared/admin-ui.css?v=7" data-page-node-id="deRrzaoyrYBXStFK3o5nzR">
+</head>
+<body data-page-node-id="GOpfe60QsagMNW1pLmew7j">
+
+<!-- ===== 登录遮罩 ===== -->
+<div class="login-mask" id="loginMask" hidden data-page-node-id="ZfZV2YRzCS6jGKICBz0Wcm">
+  <form class="login-card" id="loginForm" data-page-node-id="mZxVn5FBRQ7jCFAJ7DHeVe">
+    <h1 data-page-node-id="P5G9xWvpLM9TRe83RGJqBa">众乐乐后台</h1>
+    <p data-page-node-id="nCDlJdlrnvt3nkyN96xf79">请先登录后再编辑首页内容</p>
+    <div class="field" data-page-node-id="uzftJpfgPbixaCtdROacXL">
+      <label class="form-label" for="loginUser" data-page-node-id="BEiiDeIpsrzsRgGNWfszFS">账号</label>
+      <input type="text" id="loginUser" autocomplete="username" required data-page-node-id="d3hOGwvyCtpjYpPMkfXsDZ">
+    </div>
+    <div class="field" data-page-node-id="KGCZciQ6viSFk6pGz1rP1A">
+      <label class="form-label" for="loginPass" data-page-node-id="CugZuiiPTOhTURjlg94idM">密码</label>
+      <input type="password" id="loginPass" autocomplete="current-password" required data-page-node-id="HtNZPwre7ri1OGB0ayXWOA">
+    </div>
+    <div class="login-err" id="loginErr" data-page-node-id="k5mR6ZtBqXdYjdNAL78l1x"></div>
+    <button class="btn-accent" type="submit" style="width:100%;justify-content:center" data-page-node-id="5QZDdgTIzRQdGs66pyUHE0">登录</button>
+  </form>
+</div>
+
+<!-- ===== 顶栏 ===== -->
+<div class="top-nav" data-page-node-id="O1X014vv1xy0vUyHz9su4p">
+  <div class="top-title" data-page-node-id="qrQPHuhmyqQiw6eiPLWnlZ">众乐乐后台 <small data-page-node-id="v7uqqaf8R0OOFSGhGj9ydr">首页编辑</small></div>
+  <div class="top-spacer" data-page-node-id="yoWRrKUBXImGbdtf46eK6Q"></div>
+  <span class="save-state" id="saveState" data-page-node-id="hvcE0EHyMFSR7SRxjL8VnY">加载中…</span>
+  <button class="btn-secondary btn-sm" id="btnTheme" title="切换全站深浅色（写入 content.json）" data-page-node-id="BBCFkEnFhXZlAMMczgN6Qo">浅色</button>
+  <button class="btn-secondary btn-sm" id="btnPreviewToggle" title="窄窗口时显示/隐藏右侧画面预览" data-page-node-id="Wy1SayGXUJAw7dC5Gf7auM">预览</button>
+  <button class="btn-secondary btn-sm" id="btnOpenSite" data-page-node-id="aVaX3VdfGA15PbNOcuCwcJ">打开前台</button>
+  <button class="btn-accent btn-sm" id="btnSave" data-page-node-id="jDHrAllA9knvaJUmvGQjMp">保存</button>
+</div>
+
+<!-- ===== 工作区：① 一级菜单 ② 结构树/列表 ③ 表单 ④ 画面预览 + 时间轴 =====
+     时间轴不再横在页面顶部 —— 它属于「当前正在编辑的那段视频」，所以跟着预览一起放右侧。 -->
+<div class="workspace" id="workspace" data-view="structure" data-page-node-id="CTasphDrFGkJSr7G7tIwVh">
+
+  <!-- ① 一级菜单 -->
+  <nav class="side-menu" id="sideMenu" data-page-node-id="gGTdiugfKA3fEpEJsXAjOf">
+    <button class="side-item" type="button" data-view="structure" title="首页的视频段与场景层（增删 / 排序 / 编辑）" data-page-node-id="jdkaUSb0IzlKAJvKGml0zn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="ypVsW3WcAvx4NNp8uPKh4c"><rect x="3" y="3" width="18" height="18" rx="2" data-page-node-id="GGMk8PMF5zZpgvscxUZ8xA"/><line x1="3" y1="9" x2="21" y2="9" data-page-node-id="KrEiv2k7v3t6CkmpCy6gyG"/><line x1="9" y1="21" x2="9" y2="9" data-page-node-id="GY2gAZTUxWQrHqKLYCzdyk"/></svg>
+      首页结构
+    </button>
+    <button class="side-item" type="button" data-view="nav" title="前台顶部导航菜单（名称 / 链接 / 是否新窗口）" data-page-node-id="Un0iJjBvO7aSY9UzGpNs7i">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="O26uvVBkQYcnbgRRwkNzTd"><line x1="3" y1="12" x2="21" y2="12" data-page-node-id="byAIXDGpIvpZVLYGZrAkrQ"/><line x1="3" y1="6" x2="21" y2="6" data-page-node-id="YVUJPFjjstg2g2AGWvzRgd"/><line x1="3" y1="18" x2="21" y2="18" data-page-node-id="RgYzXP8uYeuZhZWuWJvSQu"/></svg>
+      顶部导航
+    </button>
+    <button class="side-item" type="button" data-view="footer" title="底部板块：Let's talk 文案 / 二维码 / 页脚链接 / 版权" data-page-node-id="WjrxcQaSho0LurULMpWUfF">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="LpfLtPZjxcXXaBqbNWXzZo"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" data-page-node-id="GiOqYcTEtPzDgCNUwCeWcR"/><path d="M8 9h8" data-page-node-id="MOxVZMLnGtKSPKcmVjBqYY"/><path d="M8 13h5" data-page-node-id="NEqSYEMMtTvZhWrlGJEjnA"/></svg>
+      底部板块
+    </button>
+    <button class="side-item" type="button" data-view="typo" title="所有场景层的基准字体、字号与颜色" data-page-node-id="6XwcieGHc2XC2Juh7k3N5d">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="KcgVaKscNhbjvcBURnaJzH"><polyline points="4 7 4 4 20 4 20 7" data-page-node-id="RoMcXQtIpHAcWKTveKFoql"/><line x1="9" y1="20" x2="15" y2="20" data-page-node-id="GrgShbKuGoVdpFvTHtgxwL"/><line x1="12" y1="4" x2="12" y2="20" data-page-node-id="AkvVJUUHuTvHrJcKGpLPZL"/></svg>
+      全局排版
+    </button>
+    <button class="side-item" type="button" data-view="site" title="浏览器标签标题、Logo 字母、导航按钮文字、全站深浅主题" data-page-node-id="QtdgioHFFRUYN4vvr7Ge7x">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="OPSZKNkOZXHvhqxXQKAeSA"><circle cx="12" cy="12" r="3" data-page-node-id="TxrEOsmBvxTNLZNGdEqVaD"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" data-page-node-id="VsGSWJtsdAQFwLXnVAdiTU"/></svg>
+      页面信息
+    </button>
+  </nav>
+
+  <!-- ② 结构树（只在「首页结构」视图下出现） -->
+  <aside class="pane-tree" id="paneTree" data-page-node-id="WGCsTLZdmwd388nLeS66NT"></aside>
+
+  <!-- ③ 表单 -->
+  <main class="pane-form" id="paneForm" data-page-node-id="lzHNaFF1azTsycSAsCLDZM"></main>
+
+  <!-- ③↔④ 分隔条：拖它调「预览栏」宽度（表单栏自动让位），双击恢复默认 -->
+  <div class="pane-split" id="paneSplit" role="separator" aria-orientation="vertical"
+       title="拖动调整预览栏宽度（双击恢复默认）" data-page-node-id="Yc2nQ7hbSxTdLmRoVfPzXe"></div>
+
+  <!-- ④ 画面预览 + 该视频的时间轴 -->
+  <aside class="pane-preview" id="panePreview" data-page-node-id="vgz15TBisRj5Nq4Ubit5Ip">
+    <div class="pv-head" data-page-node-id="YmHwPIO75hRxHhyO0QU4Xj">
+      <strong data-page-node-id="BCEt1Rsc7VOBo32PNiGRdr">画面预览</strong>
+      <span id="pvNote" data-page-node-id="pNTixF2FeUA0c5TPIY2yd8">—</span>
+      <span class="tl-spacer" data-page-node-id="HU9wFOkKgzYi8zFyafCd6X"></span>
+      <button class="btn-secondary btn-sm" id="pvPlay" title="循环播放当前这一屏的视频区间" data-page-node-id="HHo3cnKFWLgseu95B25NKB">▶ 播放本屏</button>
+    </div>
+    <div class="pv-body" id="pvBody" data-page-node-id="J7OBN6Tn5Wh94SlG06DgZT">
+      <!-- 监视器：逻辑视口固定 1280×800（与前台排版基准断点一致），整体等比缩放。
+           只含「视频 + 该屏文案 + 可读性遮罩」，不含头部与底部 —— 后台要看的就是这一屏的画面。 -->
+      <div class="pv-stage" id="pvStage" data-theme="light" data-page-node-id="a6Y80pzQN3ZEIag4p8u5Ic">
+        <video class="zl-video is-active" id="pvVideo" muted playsinline preload="auto" data-page-node-id="Tk3mQpVhLdC5wXb8sNvJeR"></video>
+        <div class="zl-fade" id="pvFade" data-pos="bottom" aria-hidden="true" data-page-node-id="Bq7dRzYhUn2fMsLpKxWaVt"></div>
+        <div class="zl-scenes" id="pvScenes" data-page-node-id="Hn4vTbKmEs9gQcJdUxZpAy"></div>
+        <div class="pv-empty" id="pvEmpty" data-page-node-id="Ws8kNjRmYp3hFvCdLqZxBu">这一段还没有上传视频</div>
+      </div>
+    </div>
+
+    <!-- 时间轴：属于「当前选中的那段视频」。胶片层画整段视频的帧，区间 = 该段的场景层 -->
+    <div class="pv-timeline" id="pvTimeline" data-page-node-id="Lz8P4K0AAGjmxAGpfi2Ah6">
+      <div class="tl-head" data-page-node-id="2bVCTGgQHA7Wu8Vhv98KTF">
+        <strong id="tlTitle" data-page-node-id="wFcZHd0F6pttOEqRKkikFt">时间轴</strong>
+        <span id="tlDur" data-page-node-id="rqE92wu8Un7CNjuOFqIZM6">—</span>
+        <span class="tl-spacer" data-page-node-id="IV2RmuHiTI1kVoZdpL4LNU"></span>
+        <button class="btn-secondary btn-sm" id="btnSplitEven" title="按场景层数把该段视频时长平均分配，并首尾相接" data-page-node-id="CJWHqgoib14B5anZUoyxo8">均分</button>
+        <button class="btn-secondary btn-sm" id="btnChain" title="把每屏的终点对齐到下一屏的起点，消除跳帧空隙" data-page-node-id="wo0RPRim9nVZAk0lWcO3ki">衔接</button>
+      </div>
+      <!-- 轨道 = 胶片层（整段视频的帧，JS 画一次）+ 内容层（区间/空隙/播放头，随数据重绘）
+           胶片层必须留在 #tlInner 之外：它只在换视频/改宽度时重画，不该跟着每次表单输入重建 -->
+      <div class="tl-track" id="tlTrack" data-page-node-id="n6wMsSft3MR0nyiDY9OD5z">
+        <canvas class="tl-film" id="tlFilm" data-page-node-id="Rv5nQdKtYxL2mBpWsHjEcA"></canvas>
+        <div class="tl-inner" id="tlInner" data-page-node-id="Mq9fTwZpVjRtNcGsdKbLxE"></div>
+      </div>
+      <div class="tl-ruler" id="tlRuler" data-page-node-id="M2swNetJjLZdTyk67rRiOp"></div>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast" data-page-node-id="xtQ9zc8vSWRvi8u9Wupgub"></div>
+<input type="file" id="filePicker" accept="video/*,image/*" data-page-node-id="WqH12PNiEF9CP1bXnbhKto">
+<!-- 隐藏探测器：读视频真实时长回填该段的 duration，并抽帧给时间轴做缩略图
+     （preload=auto：抽帧需要能解码画面，只有元信息不够） -->
+<video id="probeVideo" muted playsinline preload="auto" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-10px;top:-10px" data-page-node-id="owIeXpqVsNtfJkJzoyxfUF"></video>
+
+<!-- 字体注册表（唯一数据源） -->
+<script src="_shared/fonts.js?v=1"></script>
+<!-- 前台渲染器：后台借用它的默认常量与 buildScene()/buildOutro()（单屏渲染）；
+     无 #zl-home 容器时它不会启动，零副作用 -->
+<script src="_shared/scrub.js?v=4"></script>
+<script src="_shared/admin.js?v=8"></script>
+</body>
+</html>

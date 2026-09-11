@@ -1,0 +1,370 @@
+/* ============================================
+   Zhonglele Home — Scroll-Scrub 滚动叙事舞台
+   ─────────────────────────────────────────
+   多视频段 + sticky 固定 + 滚动驱动播放进度（scroll-scrub），
+   文字段落随滚动依次浮现，镜头连续飞越各段场景 —— Apple 产品页同款做法。
+
+   结构：页面 = 若干「视频段」，每段 = 1 个视频文件 + 遮罩 + N 个场景层 + 可选过渡屏。
+   扁平「屏序列」把各段场景依次排开，段末（若非最后一段且有过渡文案）插 1 屏过渡屏。
+
+   ⚠️ 几何契约（改动前先读，JS 侧 scrub.js 与此严格对齐）：
+     P = 总屏数 = Σ 场景层数 + Σ 过渡屏数
+     .zl-stage 总高 = P × vh
+       ├─ .zl-sticky   sticky top:0，height = 1 × vh（占据 stage 前 1 屏）
+       ├─ .zl-spacer   height = (P−1) × vh（JS 显式设高，撑起屏与屏之间的间隔）
+       └─ .zl-scenes   absolute top:0，内含 P 个「屏」（每个 1 屏高，自然堆叠）
+     ⇒ sticky 粘滞距离 = stage高 − vh = (P−1) × vh
+     ⇒ 屏 k（下标 0 起）在滚到第 k 屏时正好铺满视口；滚动终点那一刻**最后一屏**
+       铺满视口，再往下滚 footer 立刻顶上来 —— 舞台末尾**没有任何没有文字内容的
+       余量屏**，footer 直接接 stage 底。
+     ⇒ 滚动进度 p = (scrollY − stageTop) / ((P−1) × vh)，
+       屏坐标 u = p × (P−1)；视频时间按「段」独立映射（见 scrub.js 文件头）。
+     ⇒ P=1 时 spacer 为 0：单屏舞台，无滚动距离。
+
+     ⚠️ 最后一段之后**没有过渡屏**（踩过两次的坑，别再加回来）：
+       ① 在场景后多留 0.5~1 屏「视频冻结、只有背景色」的余量 → 用户感受是
+          「视频播完下面空出一大截」；
+       ② 用一屏"尾声屏"（"故事还在继续"）去填满那 1 屏 → 不空了，但仍是
+          「视频播完后还要再滚一屏」，用户明确要求去掉这一屏。
+       现在的过渡屏只存在于**段与段之间**（用来藏起换视频那一瞬的画面硬切），
+       页尾永远直接接 footer。
+
+   ⚠️ 视口高度统一走 --zl-vh（JS 注入 innerHeight px），**包括所有布局高度**：
+     不要在 CSS 里写 vh 做几何 —— 100vh 在部分环境（移动端地址栏伸缩、某些 headless
+     视口）≠ innerHeight，与 JS 混用会让各屏错开一截。
+
+   ⚠️ .zl-stage 必须 z-index:0 建立层叠上下文：
+     否则内部 .zl-scenes 的 z-index:1 会越出，压到 z-index:auto 的 footer 之上。
+   ============================================ */
+
+/* ---- 舞台令牌（随全站深浅主题翻转，与 site-shell.css 的 --color-* 同源思路） ---- */
+:root {
+  --zl-ink: #0a0a0a;                      /* 标题主色 */
+  --zl-ink-soft: rgba(10, 10, 10, 0.62);  /* 副标题 */
+  --zl-accent: #4d7cfe;                   /* 序号/强调（后台可改，JS 注入覆盖） */
+  --zl-stage-bg: #f5f5f5;                 /* 视频未铺满时的底 */
+  --zl-fade-strong: rgba(245, 245, 245, 0.94);
+  --zl-fade-mid: rgba(245, 245, 245, 0.56);
+  --zl-fade-none: rgba(245, 245, 245, 0);
+  --zl-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --zl-vh: 100vh;                         /* JS 覆盖为 innerHeight px */
+}
+
+[data-theme="dark"] {
+  --zl-ink: #f5f5f5;
+  --zl-ink-soft: rgba(245, 245, 245, 0.68);
+  --zl-stage-bg: #0a0a0a;
+  --zl-fade-strong: rgba(10, 10, 10, 0.94);
+  --zl-fade-mid: rgba(10, 10, 10, 0.56);
+  --zl-fade-none: rgba(10, 10, 10, 0);
+}
+
+/* 首屏占位：content.json 到达前先铺满一屏纯色，避免白闪（渲染时被 innerHTML 覆盖） */
+.zl-boot {
+  height: var(--zl-vh, 100vh);
+  background: var(--zl-stage-bg);
+}
+
+/* ============ 舞台骨架 ============ */
+.zl-stage {
+  position: relative;
+  z-index: 0;                 /* 见文件头「层叠上下文」契约，勿删 */
+  background: var(--zl-stage-bg);
+}
+
+.zl-sticky {
+  position: sticky;
+  top: 0;
+  height: var(--zl-vh, 100vh);
+  overflow: hidden;
+  background: var(--zl-stage-bg);
+}
+
+/* 每个视频段一个 <video>，全部叠在 sticky 里，靠 .is-active 切换可见 ——
+   不用「换 src」是为了让每段各自持有自己的缓冲：切段时画面不会因重新下载而黑一下。 */
+.zl-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: var(--zl-stage-bg);
+  opacity: 0;
+  transition: opacity 0.45s var(--zl-ease);
+}
+.zl-video.is-active { opacity: 1; }
+
+/* 视频未就绪时的占位（poster 已由 video 的 poster 属性接管，这里兜底纯色） */
+.zl-sticky.is-loading .zl-video.is-active { opacity: 0; }
+
+/* 可读性渐变遮罩：保证叠在视频上的文字可读。位置/高度由后台配置 */
+.zl-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+.zl-fade[data-pos="bottom"] {
+  bottom: 0;
+  background: linear-gradient(to top,
+    var(--zl-fade-strong) 0%,
+    var(--zl-fade-mid) 38%,
+    var(--zl-fade-none) 100%);
+}
+.zl-fade[data-pos="top"] {
+  top: 0;
+  background: linear-gradient(to bottom,
+    var(--zl-fade-strong) 0%,
+    var(--zl-fade-mid) 38%,
+    var(--zl-fade-none) 100%);
+}
+/* 整屏压暗（文字居中时更稳），强度走 --zl-scrim */
+.zl-fade[data-pos="full"] {
+  top: 0;
+  bottom: 0;
+  height: auto !important;
+  background: var(--zl-fade-strong);
+  opacity: var(--zl-scrim, 0.35);
+}
+.zl-fade[data-pos="none"] { display: none; }
+
+.zl-spacer { width: 100%; }
+
+/* ============ 场景文字层 ============ */
+.zl-scenes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;       /* 文字层不拦滚动，只有内部链接恢复可点 */
+}
+
+.zl-scene {
+  position: relative;         /* .zl-hint 的定位基准，勿删 */
+  height: var(--zl-vh, 100vh);
+  display: flex;
+  /* 顶部预留导航高度，底部沿用 demo 的观感留白 */
+  padding: calc(var(--zl-nav-h, 96px) + 24px) clamp(24px, 6vw, 92px) clamp(36px, 10vh, 110px);
+}
+
+.zl-scene[data-h="left"] { justify-content: flex-start; }
+.zl-scene[data-h="center"] { justify-content: center; }
+.zl-scene[data-h="right"] { justify-content: flex-end; }
+.zl-scene[data-v="top"] { align-items: flex-start; }
+.zl-scene[data-v="center"] { align-items: center; }
+.zl-scene[data-v="bottom"] { align-items: flex-end; }
+
+.zl-copy {
+  max-width: min(78vw, var(--zl-copy-max, 680px));
+  text-align: left;
+  /* 逐帧由 JS 写 opacity / translateY，勿加 transition（会与 rAF 打架成拖影） */
+  will-change: opacity, transform;
+}
+.zl-scene[data-h="center"] .zl-copy { text-align: center; }
+.zl-scene[data-h="right"] .zl-copy { text-align: right; }
+.zl-copy a { pointer-events: auto; }
+
+/* 字号三段式 clamp：JS 注入桌面基准值 --zl-*-size、等效 vw 值 --zl-*-vw、下限 --zl-*-min。
+   宽度 ≥ 基准断点时取桌面值（上限），窄屏按 vw 收缩，最窄不低于下限。 */
+.zl-num {
+  font-size: clamp(var(--zl-num-min, 11px), var(--zl-num-vw, 1.02vw), var(--zl-num-size, 13px));
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  color: var(--zl-scene-accent, var(--zl-accent));
+  font-family: var(--zl-scene-font, inherit);
+}
+
+.zl-title {
+  margin-top: 14px;
+  font-size: clamp(var(--zl-title-min, 26px), var(--zl-title-vw, 4.69vw), var(--zl-title-size, 60px));
+  font-weight: var(--zl-title-weight, 900);
+  line-height: var(--zl-title-lh, 1.18);
+  letter-spacing: var(--zl-title-ls, 0.01em);
+  text-wrap: balance;
+  color: var(--zl-scene-ink, var(--zl-ink));
+  font-family: var(--zl-scene-font, inherit);
+}
+
+.zl-sub {
+  margin-top: 16px;
+  font-size: clamp(var(--zl-sub-min, 13px), var(--zl-sub-vw, 1.41vw), var(--zl-sub-size, 18px));
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+  color: var(--zl-scene-soft, var(--zl-ink-soft));
+  font-family: var(--zl-scene-font, inherit);
+}
+
+/* 场景内的行动按钮（可选，后台每屏可填一个） */
+.zl-cta {
+  display: inline-block;
+  margin-top: 26px;
+  padding: 12px 30px;
+  border: 1px solid var(--zl-scene-accent, var(--zl-accent));
+  border-radius: 100px;      /* 全站按钮胶囊约定 */
+  color: var(--zl-scene-accent, var(--zl-accent));
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  pointer-events: auto;
+  transition: background var(--transition-base), color var(--transition-base);
+}
+.zl-cta:hover {
+  background: var(--zl-scene-accent, var(--zl-accent));
+  color: #fff;
+}
+
+/* ============ 过渡屏（段与段之间的衔接屏） ============
+   这段视频已滚到末帧并冻结，这里用一层半透明底色 + 居中大字，把「换成下一段视频」
+   那一瞬的画面硬切藏在有内容的静止画面里。它不是章节，不参与圆点导航。
+   ⚠️ 只有「后面还有视频段」时才出现（JS 决定），页尾永远不会多出空屏。 */
+.zl-transition::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--zl-stage-bg) 62%, transparent);
+}
+.zl-transition .zl-copy {
+  position: relative;        /* 压在 ::before 之上 */
+  z-index: 1;
+  max-width: min(84vw, var(--zl-copy-max, 680px));
+  text-align: center;
+}
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .zl-transition::before { background: var(--zl-stage-bg); }
+}
+
+/* ============ 首屏滚动提示（底部居中竖线，落点动画） ============ */
+.zl-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  z-index: 2;
+  pointer-events: none;
+}
+.zl-hint .zl-hint-line {
+  display: block;
+  width: 1px;
+  height: 28px;
+  background: color-mix(in srgb, var(--zl-ink) 35%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+.zl-hint .zl-hint-line::after {
+  content: "";
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: var(--zl-accent);
+  animation: zl-hint-drop 2.2s var(--zl-ease) infinite;
+}
+@keyframes zl-hint-drop {
+  0% { top: -60%; }
+  60% { top: 110%; }
+  100% { top: 110%; }
+}
+
+/* ============ 右侧圆点章节导航 ============ */
+.zl-dots {
+  position: fixed;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-sticky);   /* 1020，低于 header 的 1030 */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: opacity 0.35s var(--zl-ease);
+}
+.zl-dots.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.zl-dot {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.zl-dot i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--zl-ink) 24%, transparent);
+  transition: background 0.3s var(--zl-ease), width 0.3s var(--zl-ease);
+}
+.zl-dot:hover i { background: color-mix(in srgb, var(--zl-ink) 48%, transparent); }
+.zl-dot.is-active i {
+  background: var(--zl-accent);
+  width: 22px;
+}
+
+/* ============ footer 层级保护 ============
+   .zl-scenes 用了 z-index:1，虽然 .zl-stage 已建层叠上下文把它关住，
+   这里再给 footer 显式抬一层，双保险防止未来改动后被舞台压住。 */
+.footer { z-index: 2; }
+
+/* ============ 无视频时的空态（后台还没上传视频） ============ */
+.zl-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--zl-ink-soft);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: 24px;
+}
+.zl-empty strong {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--zl-ink);
+}
+
+/* ============ 响应式 ============ */
+@media (max-width: 1024px) {
+  .zl-scene { padding-left: clamp(24px, 5vw, 60px); padding-right: clamp(24px, 5vw, 60px); }
+}
+
+@media (max-width: 768px) {
+  .zl-dots { right: 12px; gap: 12px; }
+  .zl-dot { width: 24px; height: 24px; }
+  .zl-copy { max-width: 84vw; }
+  .zl-scene {
+    padding: calc(var(--zl-nav-h, 76px) + 20px) 24px clamp(56px, 12vh, 96px);
+  }
+}
+
+@media (max-width: 480px) {
+  .zl-scene { padding-left: 20px; padding-right: 20px; }
+  .zl-title { margin-top: 10px; }
+  .zl-sub { margin-top: 12px; }
+}
+
+/* 减弱动效：停掉装饰性提示动画（进场浮现由 JS 直接给终态，不受影响） */
+@media (prefers-reduced-motion: reduce) {
+  .zl-hint .zl-hint-line::after { animation: none; }
+}
+
+/* color-mix 兜底（老浏览器）：不支持时退回半透明黑/白 */
+@supports not (color: color-mix(in srgb, red 50%, transparent)) {
+  .zl-hint .zl-hint-line { background: rgba(128, 128, 128, 0.35); }
+  .zl-dot i { background: rgba(128, 128, 128, 0.3); }
+  .zl-dot:hover i { background: rgba(128, 128, 128, 0.5); }
+}
