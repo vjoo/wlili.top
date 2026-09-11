@@ -502,7 +502,6 @@
     btnProbe.disabled = true;
     btnProbe.textContent = '连接中…';
     prog('indet', 0, 0, '正在请求播放页…');
-    log('POST ' + API_BASE + '/api/probe-stream');
 
     consume(url).catch(function (e) {
       var msg = String((e && e.message) || e);
