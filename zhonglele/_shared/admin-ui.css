@@ -909,7 +909,6 @@ input[type="file"] { display: none; }
 .pv-stage .zl-copy { max-width: min(998.4px, var(--zl-copy-max, 680px)); } /* 78vw@1280 */
 .pv-stage .zl-title { font-size: var(--zl-title-size, 60px); }
 .pv-stage .zl-sub { font-size: var(--zl-sub-size, 18px); }
-.pv-stage .zl-num { font-size: var(--zl-num-size, 13px); }
 
 .pv-tip {
   padding: 7px 12px;

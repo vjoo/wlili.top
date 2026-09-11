@@ -66,14 +66,14 @@
     titleLineHeight: 1.18,
     titleSpacing: 0.01,   // em
     subSize: 18,
-    numSize: 13,
     copyMax: 680,         // 文案块最大宽度 px
     align: 'left',        // left | center | right
     vAlign: 'bottom',     // top | center | bottom
     accent: '#4d7cfe',
     ink: '',              // 空 = 跟随主题
     inkSoft: '',
-    titleAnim: 'rise'     // rise = 淡入时自下方 28px 浮起（默认）；fade = 原地淡入淡出、不位移
+    titleAnim: 'rise',    // 标题进场：rise = 淡入时自下方 28px 浮起（默认）；fade = 原地淡入淡出、不位移
+    subAnim: 'rise'       // 副标题进场：同上，可与标题分别设置
   };
 
   // 一个「视频段」的默认值。后台新增段 / 归一化缺字段都用它。
@@ -135,7 +135,6 @@
     var parts = [];
     var titleSize = num(t.titleSize, 60);
     var subSize = num(t.subSize, 18);
-    var numSize = num(t.numSize, 13);
     // clamp 三段：下限 px / 等效 vw（基准宽度处正好等于基准值）/ 桌面基准 px
     parts.push('--zl-title-size:' + titleSize + 'px');
     parts.push('--zl-title-vw:' + (titleSize / TYPE_BASE_W * 100).toFixed(3) + 'vw');
@@ -146,9 +145,6 @@
     parts.push('--zl-sub-size:' + subSize + 'px');
     parts.push('--zl-sub-vw:' + (subSize / TYPE_BASE_W * 100).toFixed(3) + 'vw');
     parts.push('--zl-sub-min:' + Math.max(12, Math.round(subSize * 0.72)) + 'px');
-    parts.push('--zl-num-size:' + numSize + 'px');
-    parts.push('--zl-num-vw:' + (numSize / TYPE_BASE_W * 100).toFixed(3) + 'vw');
-    parts.push('--zl-num-min:' + Math.max(10, Math.round(numSize * 0.82)) + 'px');
     parts.push('--zl-copy-max:' + num(t.copyMax, 680) + 'px');
     if (t.accent) parts.push('--zl-scene-accent:' + t.accent);
     if (t.ink) parts.push('--zl-scene-ink:' + t.ink);
@@ -193,7 +189,7 @@
 
   /** 过渡屏是否有内容（三项全空 ⇒ 不占位，避免交界处出现空白屏） */
   function outroHasContent(o) {
-    return !!(o && ((o.num || '').trim() || (o.title || '').trim() || (o.sub || '').trim()));
+    return !!(o && ((o.title || '').trim() || (o.sub || '').trim()));
   }
 
   /**
@@ -269,11 +265,14 @@
     return window.innerHeight || document.documentElement.clientHeight || 800;
   }
 
+  /** 进场动画 → data-anim 属性：rise = 自下方 28px 浮起；fade = 原地淡入淡出 */
+  function animAttr(v) { return ' data-anim="' + (v === 'fade' ? 'fade' : 'rise') + '"'; }
+
   /**
    * 单屏场景文案层。**前台渲染与后台预览共用本函数**（后台另导出为 ZLHome.buildScene）：
    * 后台监视器把它的输出塞进一个 1280×800 的逻辑视口，就得到与前台一致的画面。
    * @param {object} s          场景数据
-   * @param {number} k          扁平屏序号（决定「第 N 屏」兜底文案与首屏提示线）
+   * @param {number} k          扁平屏序号（决定「第 N 屏」兜底文案）
    * @param {object} globalTypo 全局排版（mergeTypo 会自动补 DEFAULT_TYPO）
    * @param {number} [vi]       来源段序号（写到 data 属性上，便于调试与后台定位）
    * @param {number} [si]       段内场景序号
@@ -285,24 +284,24 @@
     var cta = '';
     if (s.ctaText && s.ctaHref) {
       var blank = s.ctaBlank ? ' target="_blank" rel="noopener"' : '';
-      cta = '<a class="zl-cta" href="' + esc(s.ctaHref) + '"' + blank + '>' + esc(s.ctaText) + '</a>';
+      cta = '<a class="zl-cta" href="' + esc(s.ctaHref) + '"' + blank + animAttr(t.titleAnim) + '>' + esc(s.ctaText) + '</a>';
     }
-    var hint = (k === 0 && s.showHint !== false)
-      ? '<div class="zl-hint" aria-hidden="true"><span class="zl-hint-line"></span></div>' : '';
-    var label = s.num ? esc(s.num).replace(/<[^>]*>/g, '') : ('第 ' + (k + 1) + ' 屏');
-    // titleAnim 挂在 .zl-copy 的 data-anim 上：update() 逐帧读它决定「上浮」还是「原地」
+    var label = s.title
+      ? esc(s.title).replace(/<[^>]*>/g, '').split(/\r?\n/)[0]
+      : ('第 ' + (k + 1) + ' 屏');
+    // 进场动画逐元素挂 data-anim（标题/副标题可分别选「上浮/原地」），
+    // update() 逐帧读它写内联 opacity/transform
     return '<section class="zl-scene" data-kind="scene" data-i="' + k + '"' +
              (vi != null ? ' data-vi="' + vi + '"' : '') +
              (si != null ? ' data-si="' + si + '"' : '') +
              ' data-h="' + esc(t.align) + '" data-v="' + esc(t.vAlign) + '"' +
              ' style="' + esc(vars) + '"' +
              ' aria-label="' + esc(label) + '">' +
-             '<div class="zl-copy"' + (t.titleAnim === 'fade' ? ' data-anim="fade"' : '') + '>' +
-               (s.num ? '<p class="zl-num">' + escMultiline(s.num) + '</p>' : '') +
-               (s.title ? '<h2 class="zl-title">' + escMultiline(s.title) + '</h2>' : '') +
-               (s.sub ? '<p class="zl-sub">' + escMultiline(s.sub) + '</p>' : '') +
+             '<div class="zl-copy">' +
+               (s.title ? '<h2 class="zl-title"' + animAttr(t.titleAnim) + '>' + escMultiline(s.title) + '</h2>' : '') +
+               (s.sub ? '<p class="zl-sub"' + animAttr(t.subAnim) + '>' + escMultiline(s.sub) + '</p>' : '') +
                cta +
-             '</div>' + hint +
+             '</div>' +
            '</section>';
   }
 
@@ -320,9 +319,8 @@
              (vi != null ? ' data-vi="' + vi + '"' : '') +
              ' data-h="center" data-v="center" style="' + esc(vars) + '" aria-label="过渡屏">' +
              '<div class="zl-copy">' +
-               (o.num ? '<p class="zl-num">' + escMultiline(o.num) + '</p>' : '') +
-               (o.title ? '<h2 class="zl-title">' + escMultiline(o.title) + '</h2>' : '') +
-               (o.sub ? '<p class="zl-sub">' + escMultiline(o.sub) + '</p>' : '') +
+               (o.title ? '<h2 class="zl-title"' + animAttr(t.titleAnim) + '>' + escMultiline(o.title) + '</h2>' : '') +
+               (o.sub ? '<p class="zl-sub"' + animAttr(t.subAnim) + '>' + escMultiline(o.sub) + '</p>' : '') +
              '</div>' +
            '</section>';
   }
@@ -334,7 +332,7 @@
     screens.forEach(function (sc) {
       if (sc.kind !== 'scene') return;
       var s = sc.scene;
-      var label = s.num || s.title || ('第 ' + (idx + 1) + ' 屏');
+      var label = s.title || ('第 ' + (idx + 1) + ' 屏');
       out += '<button class="zl-dot' + (idx === 0 ? ' is-active' : '') + '" type="button"' +
              ' data-target="' + idx + '" data-screen="' + sc._k + '"' +
              ' aria-label="' + esc(label) + '"><i></i></button>';
@@ -468,6 +466,10 @@
     els.scenes = document.getElementById('zlScenes');
     els.dots = document.getElementById('zlDots');
     els.copies = Array.prototype.slice.call(host.querySelectorAll('.zl-copy'));
+    // 每个文案块里带 data-anim 的子元素（标题/副标题/按钮），进场动画逐元素驱动
+    els.animEls = els.copies.map(function (c) {
+      return Array.prototype.slice.call(c.querySelectorAll('[data-anim]'));
+    });
     videoEls = Array.prototype.slice.call(host.querySelectorAll('.zl-video'));
     els.videos = videoEls;
 
@@ -709,15 +711,20 @@
     var u = p * ss;
 
     // ---- 1. 文字浮现（逐帧内联，不依赖 CSS transition） ----
-    // titleAnim='fade'（原地淡入淡出）：只有透明度，不做 28px 上浮位移
+    // 进场动画逐元素生效：data-anim="rise" 淡入时自下方 28px 浮起；
+    // data-anim="fade"（原地淡入淡出）只有透明度、不做位移 —— 标题/副标题可各自不同
     for (var i = 0; i < els.copies.length; i++) {
       var lp = u - i;
       var a = state.reduce ? 1 : sceneAlpha(lp);
       var c = els.copies[i];
-      var ty = (!state.reduce && c.getAttribute('data-anim') !== 'fade' && a < 1 && lp < 0) ? (1 - a) * 28 : 0;
-      c.style.opacity = a.toFixed(3);
-      c.style.transform = ty ? ('translate3d(0,' + ty.toFixed(1) + 'px,0)') : 'translate3d(0,0,0)';
       c.style.visibility = a <= 0.001 ? 'hidden' : 'visible';
+      var kids = els.animEls && els.animEls[i] ? els.animEls[i] : [];
+      for (var j = 0; j < kids.length; j++) {
+        var el = kids[j];
+        var ty = (!state.reduce && el.getAttribute('data-anim') !== 'fade' && a < 1 && lp < 0) ? (1 - a) * 28 : 0;
+        el.style.opacity = a.toFixed(3);
+        el.style.transform = ty ? ('translate3d(0,' + ty.toFixed(1) + 'px,0)') : 'translate3d(0,0,0)';
+      }
     }
 
     // ---- 2. 视频进度（按段独立映射，见文件头） ----

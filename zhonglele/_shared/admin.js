@@ -210,11 +210,7 @@
 
   var SCENE_FIELDS = [
     { group: '文案', groupHint: '标题与副标题支持换行，换行会原样呈现在页面上。',
-      key: 'num', type: 'text', label: '序号 / 眉标', inline: true,
-      hint: '如「01 · 挥手」，留空则不显示这一行' },
-    { key: 'showHint', type: 'switch', label: '显示滚动提示线', inline: true,
-      hint: '底部竖线落点动画，仅整页第一屏生效' },
-    { key: 'title', type: 'textarea', label: '主标题', rows: 2, span: true },
+      key: 'title', type: 'textarea', label: '主标题', rows: 2, span: true },
     { key: 'sub', type: 'textarea', label: '副标题', rows: 2, span: true },
 
     { group: '视频区间',
@@ -231,15 +227,16 @@
     { key: 'titleWeight', type: 'palette', label: '标题字重', inline: true,
       palette: [{ v: 0, t: '继承' }, { v: 300, t: '300' }, { v: 400, t: '400' }, { v: 600, t: '600' }, { v: 700, t: '700' }, { v: 900, t: '900' }] },
     { key: 'subSize', type: 'range', label: '副标题字号', min: 0, max: 60, step: 1, unit: 'px', inline: true },
-    { key: 'numSize', type: 'range', label: '眉标字号', min: 0, max: 40, step: 1, unit: 'px', inline: true },
     { key: 'align', type: 'palette', label: '水平对齐', inline: true,
       palette: [{ v: '', t: '继承' }, { v: 'left', t: '左' }, { v: 'center', t: '居中' }, { v: 'right', t: '右' }] },
     { key: 'vAlign', type: 'palette', label: '垂直对齐', inline: true,
       palette: [{ v: '', t: '继承' }, { v: 'top', t: '上' }, { v: 'center', t: '中' }, { v: 'bottom', t: '下' }] },
-    { key: 'titleAnim', type: 'palette', label: '文字进场', inline: true,
-      palette: [{ v: '', t: '继承' }, { v: 'rise', t: '上浮' }, { v: 'fade', t: '原地' }],
-      hint: '上浮 = 淡入时从下方浮起；原地 = 只淡入淡出、不位移。留空继承「全局排版」' },
-    { key: 'accent', type: 'color', label: '眉标 / 强调色', inline: true },
+    { key: 'titleAnim', type: 'palette', label: '标题进场', inline: true,
+      palette: [{ v: '', t: '继承' }, { v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }],
+      hint: '上浮 = 淡入时从下方浮起；原地淡入淡出 = 只变透明度、不位移。留空继承「全局排版」' },
+    { key: 'subAnim', type: 'palette', label: '副标题进场', inline: true,
+      palette: [{ v: '', t: '继承' }, { v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }] },
+    { key: 'accent', type: 'color', label: '强调色', inline: true },
     { key: 'ink', type: 'color', label: '标题颜色', inline: true, hint: '留空跟随主题（浅色主题深字 / 深色主题浅字）' },
     { key: 'inkSoft', type: 'color', label: '副标题颜色', inline: true },
 
@@ -254,8 +251,7 @@
       groupHint: '插在这一段与下一段之间，占一屏。这一屏里本段视频冻结在末帧，' +
                  '用来把「换下一段视频」那一瞬的画面硬切藏在一屏有内容的静止画面里。' +
                  '⚠️ 三项全空则这一屏不出现（两段直接相接）；最后一段之后永远不会有过渡屏。',
-      key: 'num', type: 'text', label: '序号 / 眉标', inline: true },
-    { key: 'title', type: 'textarea', label: '主标题', rows: 2, span: true },
+      key: 'title', type: 'textarea', label: '主标题', rows: 2, span: true },
     { key: 'sub', type: 'textarea', label: '副标题', rows: 2, span: true }
   ];
 
@@ -325,16 +321,17 @@
     { key: 'titleLineHeight', type: 'range', label: '标题行高', min: 1, max: 2, step: 0.02, inline: true },
     { key: 'titleSpacing', type: 'range', label: '标题字距', min: -0.05, max: 0.3, step: 0.005, unit: 'em', inline: true },
     { key: 'subSize', type: 'range', label: '副标题字号', min: 10, max: 60, step: 1, unit: 'px', inline: true },
-    { key: 'numSize', type: 'range', label: '眉标字号', min: 9, max: 40, step: 1, unit: 'px', inline: true },
     { key: 'align', type: 'palette', label: '水平对齐', inline: true,
       palette: [{ v: 'left', t: '左' }, { v: 'center', t: '居中' }, { v: 'right', t: '右' }] },
     { key: 'vAlign', type: 'palette', label: '垂直对齐', inline: true,
       palette: [{ v: 'top', t: '上' }, { v: 'center', t: '中' }, { v: 'bottom', t: '下' }] },
-    { key: 'titleAnim', type: 'palette', label: '文字进场', inline: true,
+    { key: 'titleAnim', type: 'palette', label: '标题进场', inline: true,
       palette: [{ v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }],
       hint: '上浮 = 淡入时从下方轻轻浮起（默认）；原地淡入淡出 = 只有透明度变化、不位移' },
+    { key: 'subAnim', type: 'palette', label: '副标题进场', inline: true,
+      palette: [{ v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }] },
 
-    { group: '颜色', groupHint: '强调色同时作用于眉标、圆点导航与滚动提示线。标题/副标题颜色留空则跟随深浅主题。',
+    { group: '颜色', groupHint: '强调色同时作用于圆点导航。标题/副标题颜色留空则跟随深浅主题。',
       key: 'accent', type: 'color', label: '强调色', inline: true },
     { key: 'ink', type: 'color', label: '标题颜色', inline: true },
     { key: 'inkSoft', type: 'color', label: '副标题颜色', inline: true }
@@ -739,7 +736,7 @@
       if (!collapsed) {
         scenes.forEach(function (s, si) {
           var on = (S.sel.kind === 'scene' && currentVi() === vi && S.sel.si === si);
-          var nm = trimStr(s.title).split(/\r?\n/)[0] || trimStr(s.num) || ('场景 ' + (si + 1));
+          var nm = trimStr(s.title).split(/\r?\n/)[0] || ('场景 ' + (si + 1));
           children += '<div class="tree-node' + (on ? ' on' : '') + '" data-scene="1" data-vi="' + vi + '" data-si="' + si + '">' +
               '<span class="tn-idx">' + (si + 1) + '</span>' +
               '<span class="tn-name" title="' + esc(nm) + '">' + esc(nm) + '</span>' +
@@ -1142,7 +1139,7 @@
       if (headSpan) headSpan.textContent = '本段视频 ' + fmtSec(num(host.tStart, 0)) + ' → ' + fmtSec(num(host.tEnd, 0));
       seek(num(host[key], 0), true);      // 画面跟到刚改的那一端
     }
-    if (S.view === 'structure' && S.sel.kind === 'scene' && (key === 'title' || key === 'num')) renderTree();
+    if (S.view === 'structure' && S.sel.kind === 'scene' && key === 'title') renderTree();
     if (S.view === 'structure' && S.sel.kind === 'video' && key === 'name') renderTree();
     if (S.view === 'site' && key === 'theme') syncThemeBtn();
 
@@ -1276,10 +1273,9 @@
     return {
       id: 's' + Date.now().toString(36),
       tStart: num(a, 0), tEnd: num(b, a + 2),
-      num: '', title: '新的场景层', sub: '',
-      showHint: false,
+      title: '新的场景层', sub: '',
       align: '', vAlign: '', fontFamily: '',
-      titleSize: 0, titleWeight: 0, subSize: 0, numSize: 0,
+      titleSize: 0, titleWeight: 0, subSize: 0,
       accent: '', ink: '', inkSoft: '',
       ctaText: '', ctaHref: '', ctaBlank: false
     };
@@ -1294,7 +1290,7 @@
       fade: JSON.parse(JSON.stringify(DEFAULT_VIDEO.fade || { pos: 'bottom', height: 46, scrim: 0.35 })),
       loop: JSON.parse(JSON.stringify(DEFAULT_VIDEO.loop || { enabled: false, start: 0, end: 1.6, zone: 0.5 })),
       scenes: [newScene(n, 0, 2)],
-      outro: { num: '', title: '', sub: '' }
+      outro: { title: '', sub: '' }
     };
   }
 

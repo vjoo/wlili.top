@@ -142,7 +142,7 @@
 }
 
 .zl-scene {
-  position: relative;         /* .zl-hint 的定位基准，勿删 */
+  position: relative;
   height: var(--zl-vh, 100vh);
   display: flex;
   /* 顶部预留导航高度，底部沿用 demo 的观感留白 */
@@ -159,24 +159,14 @@
 .zl-copy {
   max-width: min(78vw, var(--zl-copy-max, 680px));
   text-align: left;
-  /* 逐帧由 JS 写 opacity / translateY，勿加 transition（会与 rAF 打架成拖影） */
-  will-change: opacity, transform;
 }
 .zl-scene[data-h="center"] .zl-copy { text-align: center; }
 .zl-scene[data-h="right"] .zl-copy { text-align: right; }
 .zl-copy a { pointer-events: auto; }
 
 /* 字号三段式 clamp：JS 注入桌面基准值 --zl-*-size、等效 vw 值 --zl-*-vw、下限 --zl-*-min。
-   宽度 ≥ 基准断点时取桌面值（上限），窄屏按 vw 收缩，最窄不低于下限。 */
-.zl-num {
-  font-size: clamp(var(--zl-num-min, 11px), var(--zl-num-vw, 1.02vw), var(--zl-num-size, 13px));
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  line-height: 1.4;
-  color: var(--zl-scene-accent, var(--zl-accent));
-  font-family: var(--zl-scene-font, inherit);
-}
-
+   宽度 ≥ 基准断点时取桌面值（上限），窄屏按 vw 收缩，最窄不低于下限。
+   进场动画由 JS 逐帧写子元素内联 opacity/transform，此处不写任何 transition。 */
 .zl-title {
   margin-top: 14px;
   font-size: clamp(var(--zl-title-min, 26px), var(--zl-title-vw, 4.69vw), var(--zl-title-size, 60px));
@@ -235,39 +225,6 @@
 }
 @supports not (background: color-mix(in srgb, red 50%, transparent)) {
   .zl-transition::before { background: var(--zl-stage-bg); }
-}
-
-/* ============ 首屏滚动提示（底部居中竖线，落点动画） ============ */
-.zl-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
-  z-index: 2;
-  pointer-events: none;
-}
-.zl-hint .zl-hint-line {
-  display: block;
-  width: 1px;
-  height: 28px;
-  background: color-mix(in srgb, var(--zl-ink) 35%, transparent);
-  position: relative;
-  overflow: hidden;
-}
-.zl-hint .zl-hint-line::after {
-  content: "";
-  position: absolute;
-  top: -100%;
-  left: 0;
-  width: 100%;
-  height: 50%;
-  background: var(--zl-accent);
-  animation: zl-hint-drop 2.2s var(--zl-ease) infinite;
-}
-@keyframes zl-hint-drop {
-  0% { top: -60%; }
-  60% { top: 110%; }
-  100% { top: 110%; }
 }
 
 /* ============ 右侧圆点章节导航 ============ */
@@ -357,14 +314,10 @@
   .zl-sub { margin-top: 12px; }
 }
 
-/* 减弱动效：停掉装饰性提示动画（进场浮现由 JS 直接给终态，不受影响） */
-@media (prefers-reduced-motion: reduce) {
-  .zl-hint .zl-hint-line::after { animation: none; }
-}
+/* 减弱动效：进场浮现由 JS 直接给终态，不受影响 */
 
 /* color-mix 兜底（老浏览器）：不支持时退回半透明黑/白 */
 @supports not (color: color-mix(in srgb, red 50%, transparent)) {
-  .zl-hint .zl-hint-line { background: rgba(128, 128, 128, 0.35); }
   .zl-dot i { background: rgba(128, 128, 128, 0.3); }
   .zl-dot:hover i { background: rgba(128, 128, 128, 0.5); }
 }
