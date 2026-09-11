@@ -470,6 +470,15 @@
     els.animEls = els.copies.map(function (c) {
       return Array.prototype.slice.call(c.querySelectorAll('[data-anim]'));
     });
+    // 刷新防闪烁：先给文案层全透明初值，下面的 update(true) 会在同一个 JS 任务里
+    // 按当前滚动位置写入真实透明度 —— 浏览器不会画到「默认不透明 → 半透明」的中间帧
+    //（否则刷新时若恢复的滚动位置落在淡出区间，文字会先以不透明闪现、再变半透明）
+    els.animEls.forEach(function (kids) {
+      kids.forEach(function (el) {
+        el.style.opacity = '0';
+        el.style.transform = 'translate3d(0,0,0)';
+      });
+    });
     videoEls = Array.prototype.slice.call(host.querySelectorAll('.zl-video'));
     els.videos = videoEls;
 
@@ -861,6 +870,11 @@
     // 后台 admin.html 也会引入本脚本，只为复用默认值与 buildScene()/buildOutro()。
     // 没有舞台容器就完全不启动（不绑事件、不拉 content.json），保证零副作用。
     if (!document.getElementById('zl-home')) return;
+
+    // 该页是滚动驱动的电影式首页（sticky + 全屏视频），刷新后从顶部重新开始。
+    // 关掉浏览器滚动恢复：否则「先按顶部渲染（文字全显）→ 浏览器再跳回旧滚动位置
+    // → 第一屏文字按曲线进入淡出区突然变半透明」，观感像 bug。
+    try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (_) {}
 
     bindGlobal();
 
