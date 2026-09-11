@@ -72,7 +72,8 @@
       "accent": "#4d7cfe",
       "ink": "",
       "inkSoft": "",
-      "titleAnim": "rise"
+      "titleAnim": "rise",
+      "subAnim": "rise"
     },
     "videos": [
       {
@@ -110,7 +111,9 @@
             "inkSoft": "",
             "ctaText": "",
             "ctaHref": "",
-            "ctaBlank": false
+            "ctaBlank": false,
+            "subAnim": "fade",
+            "titleAnim": "fade"
           },
           {
             "id": "s2",
@@ -129,7 +132,9 @@
             "inkSoft": "",
             "ctaText": "",
             "ctaHref": "",
-            "ctaBlank": false
+            "ctaBlank": false,
+            "subAnim": "fade",
+            "titleAnim": "fade"
           },
           {
             "id": "smtvndrrq",
@@ -148,7 +153,9 @@
             "inkSoft": "",
             "ctaText": "",
             "ctaHref": "",
-            "ctaBlank": false
+            "ctaBlank": false,
+            "titleAnim": "fade",
+            "subAnim": "fade"
           },
           {
             "id": "smtvnnux6",
@@ -167,10 +174,13 @@
             "inkSoft": "",
             "ctaText": "",
             "ctaHref": "",
-            "ctaBlank": false
+            "ctaBlank": false,
+            "subAnim": "fade",
+            "titleAnim": "fade"
           }
         ],
         "outro": {
+          "num": "",
           "title": "",
           "sub": ""
         }
