@@ -736,11 +736,15 @@
       if (!collapsed) {
         scenes.forEach(function (s, si) {
           var on = (S.sel.kind === 'scene' && currentVi() === vi && S.sel.si === si);
-          var nm = trimStr(s.title).split(/\r?\n/)[0] || ('场景 ' + (si + 1));
+          // 标题完整显示（含换行），时间单独一行 —— 列高充裕，不省略
+          var nmFull = trimStr(s.title) || ('场景 ' + (si + 1));
+          var nmHtml = esc(nmFull).replace(/\r?\n/g, '<br>');
           children += '<div class="tree-node' + (on ? ' on' : '') + '" data-scene="1" data-vi="' + vi + '" data-si="' + si + '">' +
               '<span class="tn-idx">' + (si + 1) + '</span>' +
-              '<span class="tn-name" title="' + esc(nm) + '">' + esc(nm) + '</span>' +
-              '<span class="tn-meta">' + fmtSec(num(s.tStart, 0)) + '→' + fmtSec(num(s.tEnd, 0)) + '</span>' +
+              '<span class="tn-main">' +
+                '<span class="tn-name" title="' + esc(nmFull) + '">' + nmHtml + '</span>' +
+                '<span class="tn-meta">' + fmtSec(num(s.tStart, 0)) + '→' + fmtSec(num(s.tEnd, 0)) + '</span>' +
+              '</span>' +
               '<span class="tn-ops">' +
                 '<button class="btn-icon" type="button" data-tnact="up" title="上移"' + (si === 0 ? ' disabled' : '') + '>↑</button>' +
                 '<button class="btn-icon" type="button" data-tnact="down" title="下移"' + (si === scenes.length - 1 ? ' disabled' : '') + '>↓</button>' +
