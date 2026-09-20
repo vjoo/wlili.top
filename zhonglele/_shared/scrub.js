@@ -73,7 +73,13 @@
     ink: '',              // 空 = 跟随主题
     inkSoft: '',
     titleAnim: 'rise',    // 标题进场：rise = 淡入时自下方 28px 浮起（默认）；fade = 原地淡入淡出、不位移
-    subAnim: 'rise'       // 副标题进场：同上，可与标题分别设置
+    subAnim: 'rise',      // 副标题进场：同上，可与标题分别设置
+    // ---- 文字时间轴 ----
+    // 文案「钉」在视口里不动（不再随滚动飞走），只按时间轴淡入 → 停留 → 淡出。
+    // 三个值都是占「本屏滚动区间」的百分比（0~100），本屏区间 = 视频从 tStart 走到 tEnd 的那段滚动。
+    textIn: 25,           // 淡入「完成」的位置（淡入从 textIn − textFade 开始）
+    textOut: 78,          // 开始淡出的位置
+    textFade: 16          // 淡入 / 淡出各占多少（两侧对称）
   };
 
   // 一个「视频段」的默认值。后台新增段 / 归一化缺字段都用它。
@@ -93,6 +99,9 @@
   var DEFAULT_HOME = {
     dots: true,
     smoothing: 0.18,      // 滚动阻尼：0=raw 直接跟随滚轮，1=极平滑；建议 0.12~0.25
+    // 每段滚动距离 ∝ 视频时长：每 1 秒视频对应的滚动屏数（1 屏 = 1 视口高）。
+    // 调大整体更慢更从容，调小更紧凑。各场景时长不均时，靠它把"快段/慢段"拉成匀速。
+    scrollScreensPerSec: 0.6,
     typography: DEFAULT_TYPO,
     videos: []
   };
@@ -235,6 +244,47 @@
     return segs;
   }
 
+  /**
+   * 布局：把「视频时长」换算成「滚动屏数」，让每段滚动距离 ∝ 视频时长，从而匀速。
+   * 不依赖像素高度（仅用“屏”为单位），所以 resize 时无需重算，measure() 只用 state.vh 把屏数转 px。
+   *
+   * ⚠️ 关键几何：屏盒高度 n 与视频 scrub 长度 p 不是同一个量，n = p + 1（末屏）或 n = p（非末屏）。
+   *    屏盒高 h 时，它「完整铺满视口」的滚动区间只有 h − 1 屏（视口自身占掉 1 屏）：
+   *      视口 [u, u+1] ⊆ 屏盒 [_u0, _u0+h]  ⟺  u ∈ [_u0, _u0+h−1]
+   *    所以 scrub 只能占前 p = h−1 屏，多出来的 1 屏是「末屏仍铺满视口」的余量。
+   *    这 1 屏余量在整条序列里只需要一份（由序列最后一屏承担），
+   *    否则每段各留 1 屏余量 → 段与段之间出现 1 屏的冻结空档（视频走走停停）。
+   *   · 末屏是场景：n = p + 1（自己承担余量）→ 总高 = Σp + 1，可滚 = 总高−1 = Σp，
+   *     末段 scrub 区间正好在滚到底时收尾 → 能滚到最后一帧。
+   *   · 末屏是过渡/收束屏：它本身就是 n = 1 的余量，各场景 n = p 即可。
+   * 匀速：speed = dur / p = dur / (dur×sps) = 1/sps（常数），与具体场景无关。
+   */
+  function computeLayout() {
+    var home = state.home || {};
+    var sps = clamp(num(home.scrollScreensPerSec, 0.6), 0.2, 3);
+    var MIN_P = 1;                       // 每段至少 1 屏 scrub 距离：短镜头不至于一闪而过
+    var last = state.screens.length - 1;
+    var cursor = 0;
+    state.screens.forEach(function (s, i) {
+      var n;
+      if (s.kind === 'scene') {
+        var dur = s.scene.tEnd - s.scene.tStart;
+        if (!isFinite(dur) || dur < 0) dur = 0;
+        var p = Math.max(dur * sps, MIN_P);   // 该场景的视频 scrub 长度（屏）
+        s._p = p;
+        n = (i === last) ? p + 1 : p;         // 只有序列最后一屏额外承担那 1 屏余量
+      } else {
+        n = 1;                                // 过渡/收束屏：本身就是「冻结末帧」的余量屏
+      }
+      s._u0 = cursor;
+      s._u1 = cursor + n;
+      // 文案峰值：屏盒中心与视口中心对齐的那个屏坐标（盒高 h → 中心在 _u0 + h/2，故 u = _u0 + (h−1)/2）
+      s._uc = cursor + (n - 1) / 2;
+      cursor += n;
+    });
+    state.totalScreens = Math.max(1, cursor);
+  }
+
   // =========================================
   // 渲染
   // =========================================
@@ -334,7 +384,7 @@
       var s = sc.scene;
       var label = s.title || ('第 ' + (idx + 1) + ' 屏');
       out += '<button class="zl-dot' + (idx === 0 ? ' is-active' : '') + '" type="button"' +
-             ' data-target="' + idx + '" data-screen="' + sc._k + '"' +
+             ' data-target="' + idx + '" data-u="' + (sc._uc != null ? sc._uc.toFixed(4) : idx) + '"' +
              ' aria-label="' + esc(label) + '"><i></i></button>';
       idx++;
     });
@@ -375,6 +425,7 @@
     state.screens = screens;
     state.segments = segments;
     state.P = screens.length;
+    computeLayout();            // 算出每场景滚动屏数与累计区间（state.totalScreens / _u0 _u1 _uc）
     state.sceneCount = screens.reduce(function (a, sc) { return a + (sc.kind === 'scene' ? 1 : 0); }, 0);
     state.reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     state.activeVi = -1;
@@ -411,6 +462,8 @@
 
     // 舞台 = sticky 视频层(1 屏) + spacer((P−1) 屏)，总高恰好 P 屏；
     // 屏序列绝对定位覆盖这 P 屏，末尾直接接 footer —— 没有独立的收束屏（见文件头契约）。
+    // ⚠️ .zl-scenes 必须放在 .zl-sticky 里面：文案是「钉在视口里」的（各屏互相叠在同一个
+    //    视口上，靠文字时间轴交叉淡入淡出）。放外面就会随文档滚走，文字一闪而过看不清。
     host.innerHTML =
       '<div class="zl-stage" id="zlStage">' +
         '<div class="zl-sticky" id="zlSticky">' +
@@ -418,16 +471,16 @@
           '<div class="zl-fade" id="zlFade" data-pos="' + esc(fade0.pos || 'bottom') + '"' +
             ' style="height:' + clamp(num(fade0.height, 46), 0, 100) + 'vh;--zl-scrim:' +
             clamp(num(fade0.scrim, 0.35), 0, 1) + '" aria-hidden="true"></div>' +
+          '<div class="zl-scenes" id="zlScenes">' +
+            screens.map(function (sc) {
+              return sc.kind === 'scene'
+                ? sceneHtml(sc.scene, sc._k, home.typography, sc.vi, sc.si)
+                : outroHtml(sc.video.outro, sc._k, home.typography, sc.vi);
+            }).join('') +
+          '</div>' +
           (hasVideo ? '' : emptyStateHtml()) +
         '</div>' +
         '<div class="zl-spacer" id="zlSpacer"></div>' +
-        '<div class="zl-scenes" id="zlScenes">' +
-          screens.map(function (sc) {
-            return sc.kind === 'scene'
-              ? sceneHtml(sc.scene, sc._k, home.typography, sc.vi, sc.si)
-              : outroHtml(sc.video.outro, sc._k, home.typography, sc.vi);
-          }).join('') +
-        '</div>' +
       '</div>';
 
     // 把复用池里的元素换回 DOM（按顺序一一对应）
@@ -466,18 +519,35 @@
     els.scenes = document.getElementById('zlScenes');
     els.dots = document.getElementById('zlDots');
     els.copies = Array.prototype.slice.call(host.querySelectorAll('.zl-copy'));
+    // 每屏文案块对应一个 section（场景或过渡屏）：文字时间轴把 opacity 写在 section 上，
+    // 子元素只负责「上浮」位移 —— 透明度只写一层，避免父子相乘导致淡入看起来过慢。
+    state.screenEls = els.copies.map(function (c) { return c.parentElement; });
+    // 每屏的文字时间轴：场景级字段覆盖全局排版（留空/0 = 继承），过渡屏直接吃全局
+    state.screenTl = screens.map(function (sc, i) {
+      var tl = textTl(sc.kind === 'scene' ? mergeTypo(home.typography, sc.scene) : home.typography);
+      // 第一屏特殊处理：页面刚打开时 u=0 正好是本屏起点，按原样会先看到一屏没字的画面。
+      // 把淡入段的一半挪到 frac<0（本屏开始之前），打开页面文字就已经在淡入中。
+      if (i === 0) tl.a0 = -(tl.a1 - tl.a0) * 0.5;
+      // 最后一屏：收尾文案要一直亮到舞台结束（滚到底时 footer 顶上来才交给它）。
+      // 否则「故事还没有结束」这类收尾句会在到底前一瞬先消失，像话没说完。
+      if (i === screens.length - 1 && tl.b0 < 1) {
+        var outSpan = tl.b1 - tl.b0;
+        tl.b0 = 1;
+        tl.b1 = 1 + outSpan;
+      }
+      return tl;
+    });
     // 每个文案块里带 data-anim 的子元素（标题/副标题/按钮），进场动画逐元素驱动
     els.animEls = els.copies.map(function (c) {
       return Array.prototype.slice.call(c.querySelectorAll('[data-anim]'));
     });
-    // 刷新防闪烁：先给文案层全透明初值，下面的 update(true) 会在同一个 JS 任务里
+    // 刷新防闪烁：先给每屏文案层全透明初值，下面的 update(true) 会在同一个 JS 任务里
     // 按当前滚动位置写入真实透明度 —— 浏览器不会画到「默认不透明 → 半透明」的中间帧
     //（否则刷新时若恢复的滚动位置落在淡出区间，文字会先以不透明闪现、再变半透明）
-    els.animEls.forEach(function (kids) {
-      kids.forEach(function (el) {
-        el.style.opacity = '0';
-        el.style.transform = 'translate3d(0,0,0)';
-      });
+    state.screenEls.forEach(function (el) {
+      if (!el) return;
+      el.style.visibility = 'hidden';
+      el.style.opacity = '0';
     });
     videoEls = Array.prototype.slice.call(host.querySelectorAll('.zl-video'));
     els.videos = videoEls;
@@ -511,12 +581,21 @@
       var h = Math.round(header.getBoundingClientRect().height) || 96;
       document.documentElement.style.setProperty('--zl-nav-h', h + 'px');
     }
-    // spacer 撑出「屏与屏之间的间隔」，共 (P−1) 屏；stage 自然高 = sticky(1 屏) + spacer = P 屏，
-    // 与屏序列总高（P 屏）严格相等。粘滞距离 = stage高 − 1 屏 = (P−1) 屏。
-    var spanScreens = Math.max(0, state.P - 1);
+    // spacer 撑出「屏与屏之间的间隔」= (总屏数 − 1) 屏；stage 自然高 = sticky(1 屏) + spacer，
+    // 与屏序列总高（各场景屏数之和）严格相等。粘滞距离 = stage高 − 1 屏。
+    var spanScreens = Math.max(0, state.totalScreens - 1);
     var spacerPx = spanScreens * state.vh;
     state.spanScreens = spanScreens;
     if (els.spacer) els.spacer.style.height = spacerPx + 'px';
+    // ⚠️ 这里不再给每屏设高度：文案层是「钉在视口里」的（.zl-scene 全部 absolute inset:0
+    //    叠在同一个视口上，靠文字时间轴交叉淡入淡出）。滚动距离只由 spacer 提供；
+    //    各屏的 _u0/_u1/_p 现在是纯数学量，只喂给 sceneAtU()（视频进度）与 textAlpha()（文字透明度）。
+    //    仍然清一次旧值，避免历史内联 height 残留把某一屏撑高。
+    if (state.screenEls) {
+      for (var si = 0; si < state.screenEls.length; si++) {
+        if (state.screenEls[si]) state.screenEls[si].style.height = '';
+      }
+    }
     if (els.stage) {
       var y = window.scrollY || document.documentElement.scrollTop || 0;
       state.stageTop = els.stage.getBoundingClientRect().top + y;
@@ -538,6 +617,9 @@
         s.tEnd = clamp(s.tEnd, s.tStart, d);
       });
     });
+    // 时长收敛后，各场景的滚动屏数随之变化，必须重算布局，否则匀速映射会错位
+    computeLayout();
+    if (typeof measure === 'function') measure();   // 同步重设每屏高度，避免视频真实时长与配置不符时错位
   }
 
   /** 挂载 / 复用时初始化每一段的视频元素 */
@@ -634,42 +716,66 @@
   // =========================================
   // 滚动驱动主循环
   // =========================================
-  // 屏局部进度 lp：-1 = 刚从视口下方进入，0 = 正好满屏，1 = 完全滚出顶部
-  function sceneAlpha(lp) {
-    if (lp <= -0.5 || lp >= 1) return 0;
-    if (lp < -0.05) return (lp + 0.5) / 0.45;    // 淡入：屏幕进入约一半才开始，接近满屏才完成（文字滚进视野时正在淡入，不会"直接出现"）
-    if (lp <= 0.35) return 1;                    // 稳定全显
-    return Math.max(0, (1 - lp) / 0.65);         // 淡出
+  // =========================================
+  // 文字时间轴：淡入 → 停留 → 淡出
+  // =========================================
+  // 文案层固定在视口里（不再随滚动上下飞），只按「本屏滚动区间」的百分比淡入淡出：
+  //   frac = (u − _u0) / _p，即本屏视频从 tStart 走到 tEnd 的进度（0=本屏开始，1=本屏结束）
+  //   [textIn−textFade, textIn]  淡入
+  //   [textIn, textOut]          稳定全显（可读窗口）
+  //   [textOut, textOut+textFade] 淡出
+  // 三段都可后台配置（全局排版定基准，单屏可覆盖），所以「文字什么时候出现、停留多久、
+  // 什么时候消失」完全由时间轴决定，与滚动速度解耦。
+  function textTl(t) {
+    var inn = clamp(num(t && t.textIn, DEFAULT_TYPO.textIn), 0, 100);
+    var out = clamp(num(t && t.textOut, DEFAULT_TYPO.textOut), 0, 100);
+    var f = clamp(num(t && t.textFade, DEFAULT_TYPO.textFade), 1, 100);
+    if (out < inn) out = inn;            // 淡出不能早于淡入完成，否则出现「还没显全就开始消失」
+    return { a0: (inn - f) / 100, a1: inn / 100, b0: out / 100, b1: (out + f) / 100 };
+  }
+
+  function textAlpha(frac, tl) {
+    if (frac <= tl.a0 || frac >= tl.b1) return 0;
+    if (frac < tl.a1) return (tl.a1 - tl.a0) > 1e-6 ? (frac - tl.a0) / (tl.a1 - tl.a0) : 1;
+    if (frac < tl.b0) return 1;
+    return (tl.b1 - tl.b0) > 1e-6 ? (tl.b1 - frac) / (tl.b1 - tl.b0) : 0;
+  }
+
+  /** u 落在哪个「屏」（扁平下标）：用于减弱动效时只显示当前屏 */
+  function screenIndexAtU(u) {
+    var scr = state.screens;
+    if (!scr || !scr.length) return -1;
+    for (var i = scr.length - 1; i >= 0; i--) {
+      if (u >= scr[i]._u0) return i;
+    }
+    return 0;
   }
 
   /**
-   * u（屏坐标）落在哪一段：返回该段的布局对象。
-   * ⚠️ 归属判据用的是「段的**第一屏**序号 off」，不是「最后一屏 last」。
-   *   过渡屏铺在上一段的末帧上（见 buildScreens），所以过渡屏的整段滚动区间必须仍归上一段；
-   *   若按 last 判，刚滚进过渡屏就会切到下一段 —— 过渡屏上会突然冒出下一段的第一帧，
-   *   既破坏「冻结桥接」，也让 timeInSegment 提前跳到 0。
+   * u（屏坐标，可小数）落在哪个场景：返回该场景的视频段序号、所在视频段 vi、以及应 seek 的视频时刻。
+   *
+   * ⚠️ 分母必须用「scrub 长度 _p」，不能用「屏盒高度 _u1−_u0」：
+   *    屏盒比 scrub 区间高 1 屏（视口自身），用盒高做分母会让末段的终点落到 u_max + 1，
+   *    而 u 最大只能到 u_max = 总高−1 → 末段永远滚不完，停在离最后一帧很远处（历史 bug）。
+   *    各场景的 [_u0, _u0+_p] 首尾相接，正好铺满 [0, u_max]，所以视频对滚动匀速推进：
+   *    dt/du = dur / p = dur / (dur×sps) = 1/sps（常数）。
+   * 落在过渡屏 / 收束屏时，frac 被夹到 1 → 冻结在末帧（buildScreens 的过渡屏契约）。
    */
-  function segmentAt(u) {
-    var segs = state.segments;
-    if (!segs.length) return null;
-    var cur = segs[0];
-    for (var i = 1; i < segs.length; i++) {
-      if (u + 1e-6 >= segs[i].off) cur = segs[i];
-      else break;                       // off 单调递增，后面的更不可能命中
+  function sceneAtU(u) {
+    var scr = state.screens;
+    if (!scr || !scr.length) return null;
+    var first = null, cur = null;
+    for (var i = 0; i < scr.length; i++) {
+      var s = scr[i];
+      if (s.kind !== 'scene') continue;
+      if (!first) first = s;
+      if (u >= s._u0) cur = s;       // _u0 单调递增：取「起点 ≤ u」的最后一个场景
     }
-    return cur;
-  }
-
-  /** 把某一段的滚动坐标映射成视频时刻（秒）；见文件头「视频时间映射」 */
-  function timeInSegment(seg, u) {
-    var S = seg.video.scenes.length;
-    if (!S) return 0;
-    var v = S <= 1 ? 0 : clamp((u - seg.off) / (S - 1), 0, 1);
-    var segPos = v * S;
-    var si = clamp(Math.floor(segPos), 0, S - 1);
-    var frac = segPos - si;
-    var sc = seg.video.scenes[si];
-    return sc.tStart + frac * (sc.tEnd - sc.tStart);
+    if (!cur) cur = first;
+    if (!cur) return null;
+    var p = Math.max(1e-6, num(cur._p, 1));
+    var frac = clamp((u - cur._u0) / p, 0, 1);
+    return { vi: cur.vi, si: cur.si, t: cur.scene.tStart + frac * (cur.scene.tEnd - cur.scene.tStart) };
   }
 
   /** 切换可见的视频元素，并把预加载推到「当前段 + 下一段」 */
@@ -720,39 +826,50 @@
     var u = p * ss;
 
     // ---- 1. 文字浮现（逐帧内联，不依赖 CSS transition） ----
-    // 进场动画逐元素生效：data-anim="rise" 淡入时自下方 28px 浮起；
-    // data-anim="fade"（原地淡入淡出）只有透明度、不做位移 —— 标题/副标题可各自不同
-    for (var i = 0; i < els.copies.length; i++) {
-      var lp = u - i;
-      var a = state.reduce ? 1 : sceneAlpha(lp);
-      var c = els.copies[i];
-      c.style.visibility = a <= 0.001 ? 'hidden' : 'visible';
+    // 文案层「钉」在视口里不随滚动移动，只按本屏的时间轴淡入 → 停留 → 淡出。
+    // frac = (u − _u0) / _p：0 = 本屏视频刚开始，1 = 本屏视频刚走完 —— 于是「文字什么时候
+    // 出现、停留多久、什么时候消失」成了可配置的时间轴，与滚动快慢解耦（不再一闪而过）。
+    // 进场位移逐元素生效：data-anim="rise" 淡入时自下方 28px 浮起；
+    // data-anim="fade"（原地淡入淡出）不做位移 —— 标题/副标题可各自不同。
+    var secs = state.screenEls || [];
+    var reduceIdx = state.reduce ? screenIndexAtU(u) : -1;
+    for (var i = 0; i < secs.length; i++) {
+      var sec = secs[i];
+      if (!sec) continue;
+      var scn0 = state.screens[i];
+      var tl = (state.screenTl && state.screenTl[i]) || textTl(null);
+      var frac = (u - num(scn0 && scn0._u0, 0)) / Math.max(1e-6, num(scn0 && scn0._p, 1));
+      var a = state.reduce ? (i === reduceIdx ? 1 : 0) : textAlpha(frac, tl);
+      sec.style.visibility = a <= 0.001 ? 'hidden' : 'visible';
+      sec.style.opacity = a.toFixed(3);
       var kids = els.animEls && els.animEls[i] ? els.animEls[i] : [];
       for (var j = 0; j < kids.length; j++) {
         var el = kids[j];
-        var ty = (!state.reduce && el.getAttribute('data-anim') !== 'fade' && a < 1 && lp < 0) ? (1 - a) * 28 : 0;
-        el.style.opacity = a.toFixed(3);
+        // rise 只在淡入段浮起，进入稳定全显就归位（否则停留期文字还在慢慢爬）
+        var ty = (!state.reduce && el.getAttribute('data-anim') !== 'fade' && a < 1 && frac < tl.a1)
+          ? (1 - a) * 28 : 0;
         el.style.transform = ty ? ('translate3d(0,' + ty.toFixed(1) + 'px,0)') : 'translate3d(0,0,0)';
       }
     }
 
-    // ---- 2. 视频进度（按段独立映射，见文件头） ----
-    var seg = segmentAt(u);
-    if (seg) {
-      activateVideo(seg.vi);
-      var v = videoEls[seg.vi];
+    // ---- 2. 视频进度（按每场景累计屏区间映射，匀速） ----
+    var cur = sceneAtU(u);
+    if (cur) {
+      activateVideo(cur.vi);
+      var v = videoEls[cur.vi];
       if (v) {
         if (state.reduce) {
           // 减弱动效：不做 scrub，停在段起点即可
           videoEls.forEach(function (el, k) {
-            if (k !== seg.vi || el.paused) return;
+            if (k !== cur.vi || el.paused) return;
             try { el.pause(); } catch (_) {}
           });
           if (state.lastT < 0 && v.readyState >= 1) {
-            state.lastT = seg.video.scenes.length ? seg.video.scenes[0].tStart : 0;
+            var sc0 = state.videos[cur.vi] && state.videos[cur.vi].scenes;
+            state.lastT = sc0 && sc0.length ? sc0[0].tStart : 0;
             try { v.currentTime = state.lastT; } catch (_) {}
           }
-        } else if (seg.vi === 0 && isAutoplayZone()) {
+        } else if (cur.vi === 0 && isAutoplayZone()) {
           // 首屏区间：自动循环播放（循环边界由 loopWatcher 负责）
           if (v.readyState >= 2 && v.paused && !document.hidden) {
             v.play().catch(function () { /* 自动播放被拦截时静默 */ });
@@ -760,7 +877,7 @@
         } else {
           // 下滑后：暂停自动播放，改由滚动位置驱动进度
           if (!v.paused) { try { v.pause(); } catch (_) {} }
-          var t = timeInSegment(seg, u);
+          var t = cur.t;
           // 变化超过阈值才 seek：过密的 seek 会让解码器抖动
           if ((force || Math.abs(t - state.lastT) > 0.03) && v.readyState >= 2) {
             state.lastT = t;
@@ -772,17 +889,18 @@
 
     // ---- 3. 圆点激活态 + 舞台结束后隐藏 ----
     if (els.dots) {
-      // 当前最近的满屏点落在哪个屏；如果那是过渡屏，就点亮它前面最后一个场景
-      var nearK = clamp(Math.round(u), 0, P - 1);
-      var activeScene = 0, seen = 0;
+      // 点亮离当前屏坐标最近的场景圆点（按各屏居中屏坐标 _uc 取最近）
+      var best = 0, bestD = Infinity, seenN = 0;
       for (var k = 0; k < P; k++) {
-        if (state.screens[k].kind !== 'scene') continue;
-        if (k <= nearK) activeScene = seen;
-        seen++;
+        var scn = state.screens[k];
+        if (!scn || scn.kind !== 'scene') continue;
+        var d = Math.abs(u - scn._uc);
+        if (d < bestD) { bestD = d; best = seenN; }
+        seenN++;
       }
       var btns = els.dots.children;
       for (var bi = 0; bi < btns.length; bi++) {
-        btns[bi].classList.toggle('is-active', bi === activeScene);
+        btns[bi].classList.toggle('is-active', bi === best);
       }
       // 滚到滚动终点（y = stageTop + span，即最后一屏铺满视口、footer 即将露头）就收起圆点：
       // 舞台到此结束，章节导航没有意义了。淡出有 0.35s 过渡（见 scrub.css）。
@@ -821,9 +939,10 @@
   function scrollToScene(i) {
     measure();
     var btn = els.dots ? els.dots.querySelector('.zl-dot[data-target="' + i + '"]') : null;
-    var k = btn ? parseInt(btn.getAttribute('data-screen'), 10) : i;
-    if (isNaN(k)) k = i;
-    var targetP = state.spanScreens > 0 ? clamp(k / state.spanScreens, 0, 1) : 0;
+    // data-u 存的是该场景居中屏坐标；u = p × spanScreens ⇒ p = u / spanScreens
+    var u = btn ? parseFloat(btn.getAttribute('data-u')) : NaN;
+    if (isNaN(u)) u = i;
+    var targetP = state.spanScreens > 0 ? clamp(u / state.spanScreens, 0, 1) : 0;
     var target = state.stageTop + targetP * state.span;
     if (window.SiteShell && typeof window.SiteShell.smoothScrollTo === 'function') {
       window.SiteShell.smoothScrollTo(target, 700);
@@ -911,7 +1030,7 @@
     normalizeVideos: normalizeVideos,
     buildScreens: buildScreens,
     buildSegments: buildSegments,
-    timeInSegment: timeInSegment,
+    computeLayout: computeLayout,
     render: render,
     measure: measure,
     update: update,

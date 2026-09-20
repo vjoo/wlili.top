@@ -204,6 +204,17 @@ button { font-family: inherit; }
   z-index: 2;
   box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px var(--accent-color);
 }
+/* 文字时间轴：区间底部那条白杠 = 该屏文字「淡入 → 停留 → 淡出」的可见范围。
+   白杠越长 = 文字停留越久；两端各自还含一次淡入淡出时长。 */
+.tl-seg .tl-text {
+  position: absolute;
+  bottom: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+  z-index: 1;
+}
 /* 段与段之间的空隙（未覆盖的视频时间）用条纹提示，避免播放时出现跳帧 */
 .tl-gap {
   position: absolute;

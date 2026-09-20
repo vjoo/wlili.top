@@ -298,12 +298,32 @@
     return btn;
   }
 
+  /**
+   * 调试开关：隐藏底部板块（Let's talk CTA + 版权条）。
+   * 用法：?nofooter=1 隐藏并记住；?nofooter=0 恢复并记住；不带参数则沿用上次的记忆。
+   * 用途：调视频滚动手感时，先撤掉底部整屏黑块，排除「交界处飞速滚过去」的干扰。
+   */
+  var NOFOOTER_KEY = 'zl_nofooter';
+  function isNoFooter() {
+    var pv = null;
+    try { pv = new URLSearchParams(location.search).get('nofooter'); } catch (_) {}
+    try {
+      if (pv === '1' || pv === 'true') { localStorage.setItem(NOFOOTER_KEY, '1'); return true; }
+      if (pv === '0' || pv === 'false') { localStorage.removeItem(NOFOOTER_KEY); return false; }
+      return localStorage.getItem(NOFOOTER_KEY) === '1';
+    } catch (_) {
+      return pv === '1' || pv === 'true';
+    }
+  }
+
   function injectShell() {
     if (document.getElementById('headerOverlay')) return;
     var main = document.querySelector('main') || document.body;
     var content = document.getElementById('zl-home');
     main.insertBefore(buildHeader(), content || main.firstChild);
-    main.appendChild(buildFooter());
+    // 底部板块可整体撤掉（见 isNoFooter）——它 min-height:100vh，撤掉后页面高度会明显变短，
+    // 便于单独观察视频 scrub 的收尾是否到位。
+    if (!isNoFooter()) main.appendChild(buildFooter());
     main.appendChild(buildBackToTop());
     calcAndSetNavScrolledMaxw();
   }

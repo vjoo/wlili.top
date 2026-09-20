@@ -81,7 +81,7 @@
         "name": "主视频",
         "src": "assets/video.mp4",
         "poster": "",
-        "duration": 10.04,
+        "duration": 10.06,
         "fade": {
           "pos": "none",
           "height": 46,
@@ -160,11 +160,11 @@
           {
             "id": "smtvnnux6",
             "tStart": 8,
-            "tEnd": 10.04,
+            "tEnd": 10.05,
             "title": "故事还没有结束",
             "sub": "",
-            "align": "center",
-            "vAlign": "center",
+            "align": "",
+            "vAlign": "",
             "fontFamily": "",
             "titleSize": 0,
             "titleWeight": 0,
@@ -176,7 +176,7 @@
             "ctaHref": "",
             "ctaBlank": false,
             "subAnim": "fade",
-            "titleAnim": "fade"
+            "titleAnim": ""
           }
         ],
         "outro": {

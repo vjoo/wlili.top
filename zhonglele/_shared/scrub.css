@@ -11,8 +11,9 @@
      P = 总屏数 = Σ 场景层数 + Σ 过渡屏数
      .zl-stage 总高 = P × vh
        ├─ .zl-sticky   sticky top:0，height = 1 × vh（占据 stage 前 1 屏）
-       ├─ .zl-spacer   height = (P−1) × vh（JS 显式设高，撑起屏与屏之间的间隔）
-       └─ .zl-scenes   absolute top:0，内含 P 个「屏」（每个 1 屏高，自然堆叠）
+       │    ├─ <video> × 段数 + .zl-fade（可读性遮罩）
+       │    └─ .zl-scenes  absolute inset:0，内含 P 个「屏」，**全部叠满同一个视口**
+       └─ .zl-spacer   height = (P−1) × vh（JS 显式设高，撑起屏与屏之间的间隔）
      ⇒ sticky 粘滞距离 = stage高 − vh = (P−1) × vh
      ⇒ 屏 k（下标 0 起）在滚到第 k 屏时正好铺满视口；滚动终点那一刻**最后一屏**
        铺满视口，再往下滚 footer 立刻顶上来 —— 舞台末尾**没有任何没有文字内容的
@@ -20,6 +21,12 @@
      ⇒ 滚动进度 p = (scrollY − stageTop) / ((P−1) × vh)，
        屏坐标 u = p × (P−1)；视频时间按「段」独立映射（见 scrub.js 文件头）。
      ⇒ P=1 时 spacer 为 0：单屏舞台，无滚动距离。
+
+     ⚠️ 文案「钉在视口里」，不再随滚动上下移动（2026-09 改）：
+       旧版各屏按自己的屏数堆叠、随文档滚过视口 → 用户反馈「文字很难看清，一会就飞不见了」。
+       现在所有 .zl-scene 一律 absolute inset:0 叠在同一个视口上，靠 scrub.js 的
+       「文字时间轴」（textIn / textOut / textFade，占本屏滚动区间的百分比）交叉淡入淡出。
+       屏盒高度因此不再参与布局，只保留 _u0 / _p 这两个纯数学量（喂 sceneAtU 与 textAlpha）。
 
      ⚠️ 最后一段之后**没有过渡屏**（踩过两次的坑，别再加回来）：
        ① 在场景后多留 0.5~1 屏「视频冻结、只有背景色」的余量 → 用户感受是
@@ -132,18 +139,21 @@
 .zl-spacer { width: 100%; }
 
 /* ============ 场景文字层 ============ */
+/* ⚠️ 必须挂在 .zl-sticky 里面（见 scrub.js render() 里的注释）：
+   文案是「钉在视口里」的，各屏互相叠满同一个视口，靠文字时间轴交叉淡入淡出。
+   挪到 stage 下就会随文档滚走，文字一闪而过。 */
 .zl-scenes {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   z-index: 1;
   pointer-events: none;       /* 文字层不拦滚动，只有内部链接恢复可点 */
 }
 
+/* 每一屏都铺满整个视口（不再各自堆叠、不再有屏盒高度）。
+   谁可见由 scrub.js 逐帧写内联 opacity 决定（文字时间轴），visibility 同步跟着关。 */
 .zl-scene {
-  position: relative;
-  height: var(--zl-vh, 100vh);
+  position: absolute;
+  inset: 0;
   display: flex;
   /* 顶部预留导航高度，底部沿用 demo 的观感留白 */
   padding: calc(var(--zl-nav-h, 96px) + 24px) clamp(24px, 6vw, 92px) clamp(36px, 10vh, 110px);

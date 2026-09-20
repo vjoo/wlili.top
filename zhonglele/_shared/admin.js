@@ -219,6 +219,17 @@
       key: 'tStart', type: 'range', label: '视频起点', min: 0, max: '@duration', step: 0.05, unit: 's', inline: true },
     { key: 'tEnd', type: 'range', label: '视频终点', min: 0, max: '@duration', step: 0.05, unit: 's', inline: true },
 
+    { group: '文字时间轴（只改这一屏）',
+      groupHint: '只调这一屏的文字出现/消失时机，单位是占本屏区间的百分比（轨道上那条白杠就是它）。' +
+                 '三项留 0 = 继承「默认排版」里的时间轴。文字钉在视口里不动，' +
+                 '所以「开始淡出 − 淡入完成」这段就是它稳定可读的时长。',
+      key: 'textIn', type: 'range', label: '淡入完成', min: 0, max: 100, step: 1, unit: '%', inline: true,
+      hint: '0 = 继承' },
+    { key: 'textOut', type: 'range', label: '开始淡出', min: 0, max: 100, step: 1, unit: '%', inline: true,
+      hint: '0 = 继承' },
+    { key: 'textFade', type: 'range', label: '淡入淡出时长', min: 0, max: 60, step: 1, unit: '%', inline: true,
+      hint: '0 = 继承' },
+
     { group: '这一屏的排版覆盖',
       groupHint: '留空 / 0 表示继承「全局排版」。只有需要单独调整的屏才填。',
       key: 'fontFamily', type: 'font', label: '字体', inline: true, allowInherit: true },
@@ -331,6 +342,16 @@
     { key: 'subAnim', type: 'palette', label: '副标题进场', inline: true,
       palette: [{ v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }] },
 
+    { group: '文字时间轴',
+      groupHint: '文案钉在视口里不动，只按时间轴「淡入 → 停留 → 淡出」（像剪影那样）。' +
+                 '三个值都是占「本屏滚动区间」的百分比：本屏区间 = 视频从本屏起点走到终点那一段滚动。' +
+                 '停留段越长越好读；想让文字早点收，把「开始淡出」调小。',
+      key: 'textIn', type: 'range', label: '淡入完成', min: 0, max: 100, step: 1, unit: '%', inline: true,
+      hint: '淡入从「淡入完成 − 淡入淡出时长」开始' },
+    { key: 'textOut', type: 'range', label: '开始淡出', min: 0, max: 100, step: 1, unit: '%', inline: true },
+    { key: 'textFade', type: 'range', label: '淡入淡出时长', min: 1, max: 60, step: 1, unit: '%', inline: true,
+      hint: '淡入与淡出各占这么长；调大更柔和，调小更干脆' },
+
     { group: '颜色', groupHint: '强调色同时作用于圆点导航。标题/副标题颜色留空则跟随深浅主题。',
       key: 'accent', type: 'color', label: '强调色', inline: true },
     { key: 'ink', type: 'color', label: '标题颜色', inline: true },
@@ -345,6 +366,15 @@
     { group: '章节导航',
       key: 'home.dots', type: 'switch', label: '显示右侧圆点导航', inline: true,
       hint: '整页两个以上场景层才会出现；滚到最后自动淡出' },
+    { group: '滚动手感',
+      groupHint: '每 1 秒视频对应多少「屏」的滚动距离（1 屏 = 一个视口高）。' +
+                 '调大 = 同一段视频要滚更久，整体更从容、文字停留更久；调小 = 更紧凑。' +
+                 '⚠️ 改的只是滚动距离：视频仍严格匀速跟手，各段不会因为时长不同忽快忽慢。' +
+                 '文字时间轴里的百分比是「相对本屏」，所以改这里不会打乱文字的出现时机。',
+      key: 'home.scrollScreensPerSec', type: 'range', label: '每秒视频对应屏数', min: 0.2, max: 3, step: 0.05, unit: '屏', inline: true,
+      hint: '默认 0.6。觉得文字一闪而过就往 1.0~1.5 调' },
+    { key: 'home.smoothing', type: 'range', label: '滚动阻尼', min: 0, max: 1, step: 0.02, inline: true,
+      hint: '0 = 完全跟手（生硬），1 = 极平滑（拖沓）。建议 0.12~0.25' },
     { group: '主题',
       key: 'theme', type: 'palette', label: '全站深浅色', span: true,
       palette: [{ v: 'light', t: '浅色（白底深字）' }, { v: 'dark', t: '深色（黑底浅字）' }],
@@ -790,6 +820,19 @@
   }
 
   // ---------- 时间轴（当前段） ----------
+  /**
+   * 某一屏「文字可见范围」占本屏区间的比例（含两端的淡入 / 淡出）。
+   * 与 scrub.js 的 textTl() 同一套取值规则（单屏覆盖优先，0/空 = 继承全局排版）。
+   */
+  function sceneTextSpan(s) {
+    var g = (S.content && S.content.home && S.content.home.typography) || {};
+    var inn = num(s.textIn, 0) || num(g.textIn, 25);
+    var out = num(s.textOut, 0) || num(g.textOut, 78);
+    var f = num(s.textFade, 0) || num(g.textFade, 16);
+    if (out < inn) out = inn;
+    return { t0: clamp((inn - f) / 100, 0, 1), t1: clamp((out + f) / 100, 0, 1) };
+  }
+
   function renderTimeline() {
     var available = (S.view === 'structure');
     var dur = durationOf(currentVi());
@@ -843,11 +886,17 @@
       var left = a / dur * 100;
       var w = Math.max((b - a) / dur * 100, 0.6);
       var on = (i === curSi);
+      // 白杠 = 文字从淡入到淡出的可见范围（占本屏区间；两端各含一次淡入淡出）
+      var ts = sceneTextSpan(s);
+      var txtBand = '<i class="tl-text" style="left:' + (ts.t0 * 100).toFixed(2) + '%;width:' +
+                    Math.max((ts.t1 - ts.t0) * 100, 1).toFixed(2) + '%"></i>';
       return '<div class="tl-seg' + (on ? ' on' : '') + '" data-i="' + i + '"' +
              ' style="left:' + left.toFixed(3) + '%;width:' + w.toFixed(3) + '%"' +
-             ' title="场景 ' + (i + 1) + ' ' + fmtSec(a) + ' → ' + fmtSec(b) + '">' +
+             ' title="场景 ' + (i + 1) + ' ' + fmtSec(a) + ' → ' + fmtSec(b) +
+             '&#10;文字 ' + fmtSec(a + (b - a) * ts.t0) + ' → ' + fmtSec(a + (b - a) * ts.t1) + '">' +
                '<span class="tl-handle l" data-side="l"></span>' +
                '<span>' + (i + 1) + '</span>' +
+               txtBand +
                '<span class="tl-handle r" data-side="r"></span>' +
              '</div>';
     }).join('') + gaps +
