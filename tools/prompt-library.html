@@ -277,6 +277,9 @@
 .modal-box.data-settings-box .data-settings-label { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 2px; }
 .modal-box.data-settings-box .data-settings-desc { font-size: 12px; color: var(--ink-tertiary); line-height: 1.4; }
 .modal-box.data-settings-box .data-settings-row .btn-action { font-size: 13px; padding: 6px 16px; flex-shrink: 0; }
+/* 危险操作行：与上方安全操作用分隔线隔开，标题用红色警示 */
+.modal-box.data-settings-box .data-settings-row.is-danger { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border-light); }
+.modal-box.data-settings-box .data-settings-row.is-danger .data-settings-label { color: var(--red); }
 .auto-backup-toggle {
   display: inline-flex;
   align-items: center;
@@ -1866,7 +1869,7 @@
       <div class="data-settings-row">
         <div class="data-settings-info">
           <div class="data-settings-label">导出数据</div>
-          <div class="data-settings-desc">将所有提示词下载为 JSON 文件保存到本地</div>
+          <div class="data-settings-desc">下载成 JSON 文件存到磁盘：无容量限制，可跨设备、长期保存，清浏览器数据也不丢</div>
         </div>
         <button class="btn-action secondary" id="btnExportData">导出</button>
       </div>
@@ -1880,7 +1883,7 @@
       <div class="data-settings-row">
         <div class="data-settings-info">
           <div class="data-settings-label">立即备份</div>
-          <div class="data-settings-desc">手动将当前数据备份到浏览器本地存储</div>
+          <div class="data-settings-desc">存进浏览器本地存储：容量仅 5~10MB，数据大时会失败，清浏览器数据即丢失——长期保存请用「导出」</div>
         </div>
         <button class="btn-action secondary" id="btnBackupNow">备份</button>
       </div>
@@ -1907,6 +1910,13 @@
           <div class="data-settings-desc" id="serverSyncDesc">双通道存储：本地 IndexedDB + 服务器文件备份（清理浏览器数据不丢）</div>
         </div>
         <span class="backup-status" id="serverSyncStatus"></span>
+      </div>
+      <div class="data-settings-row is-danger">
+        <div class="data-settings-info">
+          <div class="data-settings-label">清除数据</div>
+          <div class="data-settings-desc">清空全部提示词，并同时清除本地备份与服务器备份；执行前会自动下载一份 JSON 备份</div>
+        </div>
+        <button class="btn-action danger" id="btnClearData">清除</button>
       </div>
       <div class="backup-status" id="backupStatus"></div>
     </div>
@@ -2118,6 +2128,17 @@
     });
   }
 
+  // 清空全部记录（「清除数据」用）
+  function dbClearAll() {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(STORE_NAME, 'readwrite');
+      var store = tx.objectStore(STORE_NAME);
+      var req = store.clear();
+      req.onsuccess = function() { resolve(); };
+      req.onerror = function(e) { reject(e.target.error); };
+    });
+  }
+
   // 数据安全面板：显示当前服务器同步状态
   function updateServerSyncStatus() {
     var el = document.getElementById('serverSyncStatus');
@@ -2145,14 +2166,51 @@
     localStorage.setItem(AUTO_BACKUP_KEY, enabled ? '1' : '0');
   }
 
+  /* localStorage 按 UTF-16 计费（约 2 字节/字符），配额 5~10MB。
+     取 2M 字符（≈4MB）为安全线，留出余量。 */
+  var LS_SAFE_CHARS = 2 * 1024 * 1024;
+
+  /* 只累加各字段长度，不做 JSON.stringify —— 76MB 数据 stringify 会长时间阻塞主线程，
+     表现为点了按钮"毫无反应"。O(n) 扫长度即可判断能否备份。 */
+  function estimateDataChars() {
+    var chars = 0;
+    (allPrompts || []).forEach(function (r) {
+      chars += String(r.title || '').length + String(r.template || '').length;
+      (r.images || []).forEach(function (s) { chars += String(s).length; });
+    });
+    return chars;
+  }
+  function fmtMB(chars) { return (chars * 2 / 1024 / 1024).toFixed(1) + ' MB'; }
+
+  /* 本地备份是否可用；不可用则返回原因，供状态栏与按钮共用 */
+  function backupBlockReason() {
+    var est = estimateDataChars();
+    if (est > LS_SAFE_CHARS) {
+      return '本地备份不可用：数据约 ' + fmtMB(est) + '，超出浏览器本地存储上限（5~10MB）。请用「导出」保存 JSON 文件';
+    }
+    return '';
+  }
+
   function backupToLocalStorage() {
+    var blocked = backupBlockReason();
+    if (blocked) {
+      /* 数据量超限直接失败，不再尝试 stringify（既必然失败又会卡死界面） */
+      try { localStorage.removeItem(BACKUP_KEY); } catch (e0) { /* ignore */ }
+      return Promise.reject(new Error(blocked));
+    }
     return dbGetAll().then(function(list) {
       var payload = {
         version: 1,
         exportedAt: Date.now(),
         prompts: list || []
       };
-      localStorage.setItem(BACKUP_KEY, JSON.stringify(payload));
+      try {
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(payload));
+      } catch (e) {
+        /* 兜底：估算通过但实际写入仍超限（如浏览器配额更低） */
+        try { localStorage.removeItem(BACKUP_KEY); } catch (e2) { /* ignore */ }
+        throw new Error('浏览器本地存储容量不足（' + (list ? list.length : 0) + ' 条数据），请用「导出」保存 JSON 文件');
+      }
       return list ? list.length : 0;
     });
   }
@@ -2169,7 +2227,7 @@
   }
 
   function exportAllData() {
-    dbGetAll().then(function(list) {
+    return dbGetAll().then(function(list) {
       var payload = {
         version: 1,
         exportedAt: Date.now(),
@@ -2189,6 +2247,33 @@
     }).catch(function(err) {
       showToast('导出失败：' + (err.message || '未知错误'));
     });
+  }
+
+  /* 清除全部数据：
+     1) 先自动导出一份 JSON 备份（误操作可恢复）
+     2) 清空 IndexedDB
+     3) 移除 localStorage 本地备份
+     4) 向服务器推送空数组，覆盖服务器备份 */
+  function clearAllData() {
+    return Promise.resolve(exportAllData())
+      .then(function() { return dbClearAll(); })
+      .then(function() {
+        try { localStorage.removeItem(BACKUP_KEY); } catch (e) { console.error('[Clear] remove backup failed', e); }
+        return pushToServer();
+      })
+      .then(function() {
+        return loadAll().then(renderList);
+      })
+      .then(function() {
+        var ov = document.getElementById('dataSettingsOverlay');
+        if (ov) ov.classList.remove('active');
+        var status = document.getElementById('backupStatus');
+        if (status) status.textContent = '数据已清空，本地备份已移除';
+        showToast('已清除全部数据（备份文件已自动下载）');
+      })
+      .catch(function(err) {
+        showToast('清除失败：' + (err && err.message ? err.message : '未知错误'));
+      });
   }
 
   function importDataFromFile(file) {
@@ -2277,6 +2362,9 @@
       }
     }).catch(function(err) {
       console.error('[AutoBackup]', err);
+      /* 自动备份失败必须可见：否则用户以为有本地备份，清缓存后才发现没有 */
+      var st = document.getElementById('backupStatus');
+      if (st) st.textContent = '本地备份失败：' + (err && err.message ? err.message : '未知错误');
     });
   }
 
@@ -2300,23 +2388,11 @@
   }
 
   function showConfirm(title, desc, onConfirm) {
-    document.getElementById('modalTitle').textContent = title;
-    document.getElementById('modalDesc').textContent = desc;
-    document.getElementById('modalOverlay').style.display = 'flex';
-    var confirmBtn = document.getElementById('modalConfirm');
-    var cancelBtn = document.getElementById('modalCancel');
-    /* Clone to remove old listeners */
-    var newConfirm = confirmBtn.cloneNode(true);
-    var newCancel = cancelBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
-    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
-    newConfirm.addEventListener('click', function() {
-      document.getElementById('modalOverlay').style.display = 'none';
-      if (onConfirm) onConfirm();
-    });
-    newCancel.addEventListener('click', function() {
-      document.getElementById('modalOverlay').style.display = 'none';
-    });
+    /* 统一走 showModal 的 .active 机制：
+       旧实现用 inline style.display 控制，优先级高于 .modal-overlay.active，
+       跑过一次后 inline display:none 会永久压住后续弹窗；
+       且它会 clone 替换确认按钮，导致 4486 的常驻监听丢失。 */
+    showModal(title, desc, onConfirm);
   }
 
   function genId() {
@@ -2883,11 +2959,16 @@
     var idx = 0;
     function renderBatch() {
       var end = Math.min(idx + BATCH, filtered.length);
-      for (; idx < end; idx++) {
-        var p = filtered[idx];
+      var start = idx;
+      idx = end;
+      /* ⚠️ 必须用 forEach 回调捕获 p（每个回调有独立作用域）。
+         原写法 for (; idx < end; idx++) { var p = filtered[idx]; ...addEventListener(... p.id ...) }
+         里 var p 是函数级变量，本批所有卡片的回调共享同一个 p，循环结束后 p 停在本批最后一条，
+         导致点击这一批任意卡片都打开同一条记录，复制/编辑按钮也一并取错对象。 */
+      filtered.slice(start, end).forEach(function (p, k) {
         var card = document.createElement('div');
         card.className = 'prompt-card';
-        card.style.animationDelay = (idx * 0.04) + 's';
+        card.style.animationDelay = ((start + k) * 0.04) + 's';
 
         var coverImg = '';
         var cover = (p.images && p.images.length > 0) ? p.images[p.coverIndex || 0] : null;
@@ -2941,7 +3022,7 @@
 
         card.addEventListener('click', function() { goToDetail(p.id); });
         promptGrid.appendChild(card);
-      }
+      });
       if (idx < filtered.length) {
         requestAnimationFrame(renderBatch);
       } else {
@@ -3163,8 +3244,8 @@
       });
     }
 
-    /* Gallery */
-    galleryIndex = 0;
+    /* Gallery — 从封面那张开始，否则列表封面图（images[coverIndex]）与详情页首图不一致 */
+    galleryIndex = (p.coverIndex || 0);
     renderGallery();
 
     /* Preview */
@@ -3681,7 +3762,9 @@
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalDesc').textContent = desc;
     modalCallback = callback;
-    document.getElementById('modalOverlay').classList.add('active');
+    var ov = document.getElementById('modalOverlay');
+    ov.style.display = '';   /* 清掉可能残留的 inline display，否则压住 .active */
+    ov.classList.add('active');
   }
   function hideModal() {
     document.getElementById('modalOverlay').classList.remove('active');
@@ -4495,14 +4578,19 @@
   document.getElementById('btnDataSettings').addEventListener('click', function() {
     document.getElementById('dataSettingsOverlay').classList.add('active');
     /* Refresh backup status when opening */
-    if (isAutoBackupEnabled()) {
+    var status = document.getElementById('backupStatus');
+    var blocked = backupBlockReason();
+    if (blocked) {
+      /* 数据量超限时直接说明原因，否则状态栏永远是误导性的"尚未备份" */
+      if (status) status.textContent = blocked;
+    } else if (isAutoBackupEnabled()) {
       backupToLocalStorage().then(function(count) {
-        var status = document.getElementById('backupStatus');
         if (status) status.textContent = '自动备份已启用，' + count + ' 条已备份';
+      }).catch(function(err) {
+        if (status) status.textContent = '自动备份失败：' + (err && err.message ? err.message : '未知错误');
       });
     } else {
       var backup = getBackupFromLocalStorage();
-      var status = document.getElementById('backupStatus');
       if (status) {
         if (backup) {
           status.textContent = '上次备份 ' + backup.prompts.length + ' 条 (' + new Date(backup.exportedAt).toLocaleString() + ')';
@@ -4544,22 +4632,39 @@
     this.value = '';
   });
 
-  /* Backup now */
+  /* Backup now — 结果必须同时写进面板状态栏：用户是在面板里点的按钮，
+     只弹 toast 时若被遮挡/一闪而过，就会表现为"点了没反应"。 */
   document.getElementById('btnBackupNow').addEventListener('click', function() {
+    var status = document.getElementById('backupStatus');
+    if (status) status.textContent = '正在备份…';
     backupToLocalStorage().then(function(count) {
-      var status = document.getElementById('backupStatus');
-      if (status) {
-        var now = new Date();
-        status.textContent = '已备份 ' + count + ' 条 (' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0') + ')';
-      }
+      var now = new Date();
+      if (status) status.textContent = '已备份 ' + count + ' 条 (' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0') + ')';
       showToast('已备份 ' + count + ' 条数据到浏览器');
     }).catch(function(err) {
-      showToast('备份失败：' + (err.message || '未知错误'));
+      var msg = err && err.message ? err.message : '未知错误';
+      if (status) status.textContent = '备份失败：' + msg;
+      showToast('备份失败：' + msg);
     });
   });
 
   /* Compress existing images */
   document.getElementById('btnCompressImages').addEventListener('click', compressAllImages);
+
+  /* Clear all data (danger) */
+  document.getElementById('btnClearData').addEventListener('click', function() {
+    dbGetAll().then(function(list) {
+      var count = (list || []).length;
+      if (!count) { showToast('当前没有数据可清除'); return; }
+      showModal(
+        '清除全部数据',
+        '将清空 ' + count + ' 条提示词，并同时移除本地备份与服务器备份。确认后会先自动下载一份 JSON 备份，此操作不可撤销。',
+        function() { clearAllData(); }
+      );
+    }).catch(function(err) {
+      showToast('读取失败：' + (err && err.message ? err.message : '未知错误'));
+    });
+  });
 
   /* Auto backup toggle */
   var autoBackupToggle = document.getElementById('autoBackupToggle');
@@ -4567,10 +4672,24 @@
   autoBackupToggle.addEventListener('change', function() {
     setAutoBackupEnabled(this.checked);
     if (this.checked) {
+      var blockedMsg = backupBlockReason();
+      if (blockedMsg) {
+        /* 数据量超限时自动备份根本不可能成功，明确告知并回退开关，避免用户以为已开启 */
+        setAutoBackupEnabled(false);
+        this.checked = false;
+        var st = document.getElementById('backupStatus');
+        if (st) st.textContent = '无法开启：' + blockedMsg;
+        showToast('本地备份不可用，请用「导出」');
+        return;
+      }
       backupToLocalStorage().then(function(count) {
         var status = document.getElementById('backupStatus');
         if (status) status.textContent = '自动备份已启用，' + count + ' 条已备份';
         showToast('自动备份已开启');
+      }).catch(function(err) {
+        var status2 = document.getElementById('backupStatus');
+        if (status2) status2.textContent = '自动备份失败：' + (err && err.message ? err.message : '未知错误');
+        showToast('自动备份失败');
       });
     } else {
       document.getElementById('backupStatus').textContent = '自动备份已关闭';

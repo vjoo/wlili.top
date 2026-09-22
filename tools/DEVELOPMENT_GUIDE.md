@@ -627,6 +627,37 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - 数据文件放 `.gitignore`（用户私有数据不上云），由 server.py 运行时自动创建；文本类数据量级远小于 EdgeOne 25MB 单文件限制，无需担心部署；
     - 数据文件仅存非敏感数据（与 §九 安全规范一致）；
     - **新开发带数据保存的工具时，必须先向用户确认存储定位（方案 A 仅本地 / 方案 B 双通道），确认后再实现；单通道与双通道均不可自行默认。**
+30. **循环 / 分批渲染的事件绑定闭包规范**（强制，所有列表、网格、轮播等批量生成 DOM 的场景）：
+    - **禁止**在 `for` 循环内用 `var` 声明循环项变量、又在事件回调中引用它。例如 `for (; i < end; i++) { var p = list[i]; card.addEventListener('click', function(){ open(p.id); }); }` —— `var` 是**函数级**作用域，同批所有元素共享同一个变量引用，循环结束后它停在本批最后一项，**点击这一批任意元素都会指向同一条数据**；
+    - 正确写法二选一：① `list.forEach(function (p, i) { ... })`（回调参数天然独立作用域）；② 用 `let` 声明；
+    - 分批渲染（`requestAnimationFrame` 每帧 N 条）风险翻倍：每批都会把共享变量"重置"到本批末尾一次，表现为"前 8 项点开都是第 8 条，第 9~16 项点开都是第 16 条"；
+    - 连带影响：同一循环内的「复制 / 编辑 / 删除」按钮回调同样取错对象，**会用错的数据覆盖正确的记录**；
+    - 验证手法：写对照脚本收集 handler，**等渲染全部完成后再统一触发**——在创建元素时立即触发会假通过（那一刻变量还指向当前项）；
+    - **历史事故**：`prompt-library.html` 的 `renderList()` 因该 bug，点击任意卡片都打开第 16 条记录，复制/编辑按钮也作用到别人的条目上（2026-09-21）。参考实现见该文件 `renderList()` 的 `filtered.slice(start, end).forEach(...)`。
+31. **单一实现原则**（强制）：
+    - 同一用途的能力（确认弹窗、toast、数据读写、显隐控制）**全页面只允许一套实现**。两套并存时，改 A 不改 B 必然产生"改了却没生效"的假象；
+    - **显隐机制必须统一**：不要在同一批元素上混用 inline `style.display` 与 `classList.add/remove('active')` —— inline 优先级高于 class，一旦写过 `display:none`，后续加 `.active` 也再也显示不出来；
+    - 事件监听避免"clone 节点去除旧监听"的写法：它会让绑在旧节点上的常驻监听整体失效，后续调用全部失灵；需要替换回调就用变量存 callback 而非替换 DOM；
+    - **历史事故**：`prompt-library.html` 曾并存 `showModal`（class 机制）与 `showConfirm`（inline display + clone 按钮），后者运行过一次后，删除确认弹窗再也打不开（2026-09-21）。
+32. **本地存储容量与静默失败**（强制，所有用 localStorage / IndexedDB 的页面）：
+    - `localStorage` 配额仅 **5~10MB**，存图片 base64 **必然**抛 `QuotaExceededError`；`setItem` 必须包 `try/catch`，失败要**可见**（写进状态栏或 toast），并在失败时清掉可能写了一半的残留 key；
+    - 禁止"后台自动备份失败只 `console.error`"——用户会以为有备份，清缓存后才发现根本没有；
+    - 单条/整体数据超过约 1MB 就不要走 localStorage 备份，改用「导出 JSON 文件」；
+    - 全量同步（IndexedDB → server.py 全量 POST）失败必须提示，不能只 `return false` 静默吞掉；数据达几十 MB 时全量同步本身不可靠，先压缩图片再同步；
+    - **参考实现**：`prompt-library.html` 的 `backupToLocalStorage()` / `triggerAutoBackup()`。
+33. **改动后静态自检**（推荐，改完即跑）：
+    ```bash
+    node .workbuddy/tools/lint_pitfalls.js        # 输出 .workbuddy/tools/_lint_pitfalls.txt
+    node .workbuddy/tools/lint_pitfalls.js tools/xxx.html   # 只扫指定文件
+    ```
+    自动扫描范围 `tools/*.html|js`、`zhonglele/_shared/*.js`、`portfolio/cases/_shared/*.js`，检测项：
+    | 项 | 含义 | 处理 |
+    |---|---|---|
+    | P1 | 循环内 `var` + 事件回调闭包共享 | **必须清零**（本次事故类型） |
+    | P2 | 同名函数重复定义 | 人工确认是否同一作用域；不同闭包内同名内部函数属正常 |
+    | P3 | `localStorage.setItem` 无 try 保护 | 大数据量写入必须补 try + 可见失败提示 |
+    | P4 | `style.display` 与 `classList` 显隐混用 | 人工确认是否作用于同一元素 |
+    脚本已剥离注释后再匹配（否则注释中的示例代码会造成误报）。
 
 ---
 
