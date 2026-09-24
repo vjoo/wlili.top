@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>构图编辑器 · 尺度可视化 → 提示词 / Region 配置</title>
+<style>
+  :root{
+    --bg:#eef0f3; --panel:#ffffff; --line:#e2e5ea; --line2:#cfd4dc;
+    --ink:#22262b; --mut:#6b7280; --mut2:#9aa1ab;
+    --acc:#185fa5; --acc2:#0c447c;
+    --ok:#2e7d32; --okbg:#eaf3de; --bad:#c0392b; --badbg:#fcebeb;
+    --subj:#f3a847; --char:#378add; --sky:#9fb4c9; --fg:#6b5b73;
+    --r:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:13px;line-height:1.5;overflow:hidden}
+
+  /* ---------- header ---------- */
+  header{position:fixed;top:48px;left:0;right:0;height:52px;z-index:40;display:flex;align-items:center;gap:14px;
+    padding:0 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+  header h1{font-size:15px;font-weight:600;margin:0;letter-spacing:.3px}
+  header .sub{color:var(--mut);font-size:12px}
+  .spacer{flex:1}
+  .seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+  .seg button{border:0;background:#fff;padding:6px 11px;font-size:12px;color:var(--mut);cursor:pointer}
+  .seg button.on{background:var(--acc);color:#fff}
+  .btn{border:1px solid var(--line2);background:#fff;border-radius:8px;padding:6px 12px;
+    font-size:12px;cursor:pointer;color:var(--ink)}
+  .btn:hover{border-color:var(--acc);color:var(--acc)}
+  .btn.primary{background:var(--acc);color:#fff;border-color:var(--acc)}
+  /* 移动端：窄屏隐藏副标题并压缩控件，避免顶栏溢出撑破布局 */
+  @media (max-width:900px){
+    header{gap:10px;padding:0 12px}
+    header .sub{display:none}
+  }
+  @media (max-width:560px){
+    header{padding:0 8px;gap:6px;overflow:hidden}
+    .seg{min-width:0;flex:1;overflow-x:auto;scrollbar-width:none}
+    .seg::-webkit-scrollbar{display:none}
+    .seg button{padding:5px 6px;font-size:11px;white-space:nowrap}
+    .btn{padding:5px 8px;font-size:11px}
+    #loadEx{display:none}
+  }
+  /* 窄屏：画布中心左移半个 rail 宽，避免右侧被图标栏压住（fitWrap 的 innerWidth-80 上限在 ≤800px 生效） */
+  @media (max-width:800px){
+    .canvas-wrap{left:calc(50% - 28px)}
+  }
+
+  /* ---------- fullscreen stage ---------- */
+  .stage{position:fixed;inset:0;top:100px;overflow:hidden;cursor:grab;
+    background:
+      linear-gradient(#e7eaef,#e7eaef) 0 0/100% 100%,
+      repeating-linear-gradient(45deg,#eceef2,#eceef2 12px,#e9ebf0 12px,#e9ebf0 24px);
+    touch-action:none}
+  .stage:active{cursor:grabbing}
+  .canvas-wrap{position:absolute;left:50%;top:50%;transform-origin:center center;will-change:transform}
+  .frame{position:relative;width:100%;max-width:none;background:#fff;border:1.5px solid #b9c0ca;overflow:visible;
+    box-shadow:0 6px 26px rgba(20,30,45,.16)}
+  .frame::before{content:"";position:absolute;inset:0;
+    background-image:
+      linear-gradient(#dde3ec 1px,transparent 1px),
+      linear-gradient(90deg,#dde3ec 1px,transparent 1px),
+      linear-gradient(#c4cdda 1.4px,transparent 1.4px),
+      linear-gradient(90deg,#c4cdda 1.4px,transparent 1.4px);
+    background-size:32px 32px,32px 32px,160px 160px,160px 160px;
+    pointer-events:none;opacity:.9}
+  .box{position:absolute;border:2px solid;cursor:move;user-select:none;touch-action:none;
+    display:flex;align-items:flex-start;justify-content:flex-start;font-size:11px;color:#1c2530;font-weight:500;
+    padding:3px 5px;border-radius:4px;overflow:visible}
+  .box.sel{outline:2.5px solid var(--acc);outline-offset:2px;z-index:999!important}
+  .box .tag{position:absolute;top:-19px;left:0;font-size:10px;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none}
+  .box .pct{position:absolute;bottom:-18px;left:0;font-size:10px;color:#33414f;background:#fff;padding:0 4px;border-radius:3px;pointer-events:none}
+  .box.t-subj{background:rgba(243,168,71,.46);border-color:var(--subj)}
+  .box.t-subj .tag{background:var(--subj);color:#3a2600}
+  .box.t-char{background:rgba(55,138,221,.46);border-color:var(--char)}
+  .box.t-char .tag{background:var(--char);color:#fff}
+  .box.t-sky{background:rgba(159,180,201,.46);border-color:var(--sky)}
+  .box.t-sky .tag{background:var(--sky);color:#1c2a38}
+  .box.t-fg{background:rgba(107,91,115,.46);border-color:var(--fg)}
+  .box.t-fg .tag{background:var(--fg);color:#fff}
+  .hnd{position:absolute;width:11px;height:11px;background:#fff;border:1.5px solid var(--acc);border-radius:2px;z-index:5}
+  .hnd.nw{left:-6px;top:-6px;cursor:nwse-resize}.hnd.ne{right:-6px;top:-6px;cursor:nesw-resize}
+  .hnd.sw{left:-6px;bottom:-6px;cursor:nesw-resize}.hnd.se{right:-6px;bottom:-6px;cursor:nwse-resize}
+  .hnd.n{left:50%;top:-6px;margin-left:-5px;cursor:ns-resize}.hnd.s{left:50%;bottom:-6px;margin-left:-5px;cursor:ns-resize}
+  .hnd.w{left:-6px;top:50%;margin-top:-5px;cursor:ew-resize}.hnd.e{right:-6px;top:50%;margin-top:-5px;cursor:ew-resize}
+
+  /* zoom bar – top-left (avoid overlapping the right icon menu) */
+  .zoombar{position:fixed;left:18px;top:108px;z-index:36;display:flex;align-items:center;gap:6px;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 8px;box-shadow:0 4px 14px rgba(20,30,45,.12)}
+  .zoombar button{width:30px;height:28px;border:1px solid var(--line2);background:#fff;border-radius:7px;cursor:pointer;font-size:15px;color:var(--ink)}
+  .zoombar button:hover{border-color:var(--acc);color:var(--acc)}
+  .zoombar .zlabel{min-width:46px;text-align:center;font-size:12px;color:var(--mut)}
+  /* help FAB – bottom-left */
+  .helpFAB{position:fixed;left:18px;bottom:18px;z-index:36;width:40px;height:40px;border-radius:50%;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font-size:18px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(20,30,45,.12)}
+  .helpFAB:hover{border-color:var(--acc);color:var(--acc)}
+  .helpPop{position:fixed;left:18px;bottom:66px;z-index:36;max-width:300px;display:none;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 13px;
+    font-size:11px;line-height:1.7;color:var(--mut);box-shadow:0 6px 20px rgba(20,30,45,.16)}
+  .helpPop.show{display:block}
+
+  /* ---------- right activity bar + drawer (unified, VS Code style) ---------- */
+  .rail{position:fixed;top:100px;right:0;bottom:0;width:56px;z-index:46;display:flex;flex-direction:column;
+    align-items:center;gap:6px;padding:12px 0;background:var(--panel);border-left:1px solid var(--line)}
+  .rail button{position:relative;width:40px;height:40px;border-radius:10px;border:1px solid transparent;background:transparent;
+    cursor:pointer;color:var(--mut);display:flex;align-items:center;justify-content:center;transition:.15s;flex:0 0 auto}
+  .rail button svg{width:20px;height:20px}
+  .rail button .gl{font-size:16px;font-weight:700}
+  .rail button:hover{background:#f1f4f8;color:var(--ink)}
+  .rail button:active{transform:scale(.96)}
+  .rail button.on{background:var(--acc);color:#fff}
+  .rail button .tip{position:absolute;right:64px;background:#22262b;color:#fff;font-size:11px;padding:3px 8px;
+    border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:.15s}
+  .rail button:hover .tip{opacity:1}
+
+  /* drawer sits flush against the activity bar; hide transform fully clears it (bar width + shadow) */
+  .drawer{position:fixed;top:100px;right:56px;bottom:0;width:min(380px,calc(100vw - 56px));z-index:43;background:var(--panel);
+    border-left:1px solid var(--line);box-shadow:-10px 0 28px rgba(20,30,45,.12);
+    transform:translateX(calc(100% + 80px));transition:transform .22s ease;display:flex;flex-direction:column}
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .drawer-head h3{margin:0;font-size:14px;font-weight:600}
+  .drawer-head .x{border:0;background:#f1f3f6;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;color:var(--mut)}
+  .drawer-head .x:hover{background:#e6e9ee;color:var(--ink)}
+  .drawer-body{flex:1;overflow:auto;padding:16px}
+  .view{display:none}
+  .view.show{display:block}
+
+  /* module content */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:14px}
+  .card h2{font-size:13px;margin:0 0 10px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .chip{border:1px solid var(--line2);background:#fff;border-radius:7px;padding:6px 11px;font-size:12px;cursor:pointer}
+  .chip:hover{border-color:var(--acc);color:var(--acc)}
+  label.fld{display:block;margin-bottom:8px}
+  label.fld span{display:block;color:var(--mut);font-size:11px;margin-bottom:3px}
+  input[type=text],input[type=number],textarea,select{width:100%;min-width:0;border:1px solid var(--line2);border-radius:7px;
+    padding:6px 8px;font-size:12px;font-family:inherit;color:var(--ink);background:#fff}
+  textarea{resize:vertical;min-height:46px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:start}
+  .grid2>*{min-width:0}
+  .chk{list-style:none;margin:0;padding:0}
+  .chk li{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .chk li:last-child{border-bottom:0}
+  .dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:0 0 auto}
+  .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.opt{background:#e0a63a}
+  .chk .t{font-size:12px} .chk .d{font-size:11px;color:var(--mut)}
+  .empty{color:var(--mut2);font-size:12px;text-align:center;padding:14px 0}
+  .out{background:#0f1419;color:#d6e2ee;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:12px;line-height:1.6;border-radius:8px;padding:12px;max-height:46vh;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  .out.json{color:#bfe3c0}
+  .outwrap{position:relative}
+  .outwrap .copyic{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:7px;
+    border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.10);color:#d6e2ee;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;z-index:2}
+  .outwrap .copyic:hover{background:rgba(255,255,255,.24);color:#fff}
+  .outwrap .copyic svg{width:15px;height:15px}
+  .mini{border:1px solid var(--line2);background:#fff;border-radius:6px;padding:3px 9px;font-size:12px;cursor:pointer}
+  .mini:hover{border-color:var(--acc);color:var(--acc)}
+  .zoomrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--mut);font-size:12px}
+  .exbar{display:flex;gap:8px;margin-top:10px}
+  .note{font-size:11px;color:var(--mut);background:#f6f8fb;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:12px}
+
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;background:#22262b;color:#fff;
+    font-size:12px;padding:8px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s}
+  #toast.show{opacity:1}
+</style>
+<script src="nav.js"></script>
+</head>
+<body>
+<header>
+  <h1>构图编辑器</h1>
+  <span class="sub">全屏画布 · B·Region主输出 · A·文本副产出</span>
+  <div class="spacer"></div>
+  <div class="seg" id="aspectSeg">
+    <button data-ar="21:9" class="on">21:9 巨幅</button>
+    <button data-ar="16:9">16:9</button>
+    <button data-ar="2.39:1">2.39:1</button>
+    <button data-ar="9:16">9:16</button>
+    <button data-ar="1:1">1:1</button>
+  </div>
+  <button class="btn" id="loadEx">载入巨物白莲示例</button>
+</header>
+
+<!-- fullscreen canvas -->
+<div class="stage" id="stage">
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="frame" id="frame"></div>
+  </div>
+</div>
+<button class="helpFAB" id="helpFAB" title="操作帮助">?</button>
+<div class="helpPop" id="helpPop">双击画布添加「主体」框 · 拖拽移动 · 八向手柄缩放 · 拖出画框即「越框」 · 滚轮缩放 / 拖空白处平移 · 方块四边自动磁吸 32px 正方格</div>
+<div class="zoombar">
+  <button id="zoomOut" title="缩小">−</button>
+  <span class="zlabel" id="zoomLabel">100%</span>
+  <button id="zoomIn" title="放大">＋</button>
+  <button id="zoomReset" title="复位">⟳</button>
+</div>
+
+<!-- right icon rail -->
+<div class="rail" id="rail">
+  <button data-view="add" title="添加区域"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span class="tip">添加区域</span></button>
+  <button data-view="props" title="选中区域属性"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="6" r="2.4" fill="#fff" stroke="currentColor" stroke-width="2"/><circle cx="15" cy="12" r="2.4" fill="#fff" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="18" r="2.4" fill="#fff" stroke="currentColor" stroke-width="2"/></svg><span class="tip">选中区域属性</span></button>
+  <button data-view="text" title="A · 文本提示词"><span class="gl">A</span><span class="tip">A · 文本提示词（副产出）</span></button>
+  <button data-view="json" title="B · Region 配置"><span class="gl">B</span><span class="tip">B · Region 配置 JSON（主输出）</span></button>
+</div>
+
+<!-- right drawer -->
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3 id="drawerTitle">模块</h3>
+    <button class="x" id="drawerClose" title="关闭">×</button>
+  </div>
+  <div class="drawer-body">
+
+    <!-- ADD -->
+    <div class="view" data-view="add">
+      <div class="card">
+        <div class="row">
+          <span class="chip" data-add="subject">＋ 主体</span>
+          <span class="chip" data-add="character">＋ 人物</span>
+          <span class="chip" data-add="sky">＋ 空域</span>
+          <span class="chip" data-add="foreground">＋ 前景</span>
+        </div>
+        <div class="note">或直接双击画布任意处添加「主体」框。新框默认居中，拖到目标位置后缩放。</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);margin:6px 0">
+          <input type="checkbox" id="snapChk" checked> 磁吸对齐网格（32px 正方格）
+        </label>
+        <div class="row">
+          <button class="btn" id="delBtn" style="flex:1">删除选中</button>
+          <button class="btn" id="clearBtn" style="flex:1">清空</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="saveBtn" style="flex:1">存本地</button>
+          <button class="btn" id="loadBtn" style="flex:1">取本地</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>巨物尺度校验</h2>
+        <ul class="chk" id="checklist"></ul>
+      </div>
+    </div>
+
+    <!-- PROPS -->
+    <div class="view" data-view="props">
+      <div class="card">
+        <div id="propEmpty" class="empty">未选中区域（在画布上点选一个框）</div>
+        <div id="propBody" style="display:none">
+          <label class="fld"><span>类型</span>
+            <select id="pType">
+              <option value="subject">主体</option>
+              <option value="character">人物</option>
+              <option value="sky">空域</option>
+              <option value="foreground">前景</option>
+            </select>
+          </label>
+          <label class="fld"><span>名称</span><input type="text" id="pLabel" placeholder="如：巨型白莲"></label>
+          <label class="fld"><span>该区域提示词 · 中文（可丢给豆包 / 即梦 扩写）</span><textarea id="pPromptZh" placeholder="如：如绸缎般垂坠的巨型粉莲花瓣，半透绡纱质感，背光描出柔光边缘"></textarea></label>
+          <label class="fld"><span>该区域提示词 · English（for ComfyUI VLM / 英文模型）</span><textarea id="pPromptEn" placeholder="如：colossal pink lotus petals like draped silk fabric, sheer translucent satin, backlit glowing edges"></textarea></label>
+          <div class="grid2">
+            <label class="fld"><span>层级 z（大=前）</span><input type="number" id="pZ" value="1" min="0" max="99"></label>
+            <label class="fld"><span>强度 strength</span><input type="number" id="pStr" value="1" min="0" max="2" step="0.1"></label>
+          </div>
+          <div class="grid2">
+            <label class="fld"><span>左 x %</span><input type="number" id="pX" step="1"></label>
+            <label class="fld"><span>上 y %</span><input type="number" id="pY" step="1"></label>
+            <label class="fld"><span>宽 w %</span><input type="number" id="pW" step="1" min="1"></label>
+            <label class="fld"><span>高 h %</span><input type="number" id="pH" step="1" min="1"></label>
+          </div>
+          <label class="fld" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="pCross"> <span style="margin:0">越框（主体吞没画框）</span>
+          </label>
+          <div class="pct-readout" id="pctRead" style="font-size:11px;color:var(--mut)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEXT A -->
+    <div class="view" data-view="text">
+      <div class="card">
+        <div class="zoomrow" style="flex-wrap:wrap;gap:10px">
+          <span style="display:inline-flex;align-items:center;gap:6px">语言
+            <span class="seg" id="langSeg">
+              <button data-lang="zh" class="on">中文</button>
+              <button data-lang="en">EN</button>
+            </span>
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:6px;margin-left:auto">字号
+            <button class="mini" id="tSmall">A−</button>
+            <button class="mini" id="tBig">A+</button>
+          </span>
+        </div>
+        <div class="outwrap">
+          <pre class="out" id="textOut"></pre>
+          <button class="copyic" id="copyTextIc" title="复制文本"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
+        </div>
+        <div class="exbar">
+          <button class="btn primary" id="copyTextBtn">复制文本</button>
+        </div>
+      </div>
+      <div class="note">点上方「中文 / EN」切换：中文版给豆包 / 即梦 等文本 AI，几何已译成文字（越框 / 占高度% / 两层落差）；EN 版给 ComfyUI VLM / 英文模型。复制按钮复制当前语言版本。</div>
+    </div>
+
+    <!-- JSON B -->
+    <div class="view" data-view="json">
+      <div class="card">
+        <div class="zoomrow">
+          <span>字号</span>
+          <button class="mini" id="jSmall">A−</button>
+          <button class="mini" id="jBig">A+</button>
+        </div>
+        <div class="outwrap">
+          <pre class="out json" id="jsonOut"></pre>
+          <button class="copyic" id="copyJsonIc" title="复制 JSON"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
+        </div>
+        <div class="exbar">
+          <button class="btn primary" id="copyJsonBtn">复制 JSON</button>
+          <button class="btn" id="dlBtn">下载 JSON</button>
+        </div>
+      </div>
+      <div class="note">对接 ComfyUI Regional Prompter（mask 模式）/ GLIGEN（bbox 模式）；如走 VLM 扩写，可先导出标注图 + 此 JSON 作指令。</div>
+    </div>
+
+  </div>
+</aside>
+
+<div id="toast"></div>
+
+<script>
+const AR2PX = {"21:9":[1792,768],"16:9":[1536,864],"9:16":[768,1344],"1:1":[1024,1024],"2.39:1":[1912,800]};
+const TYPE_LABEL = {subject:"主体",character:"人物",sky:"空域",foreground:"前景"};
+const ARROW = {subject:"#f3a847",character:"#378add",sky:"#9fb4c9",foreground:"#6b5b73"};
+const GRID_PX = 32;
+
+let state = { aspect:"21:9", regions:[], sel:null, _id:1, snap:true, lang:"zh" };
+const frame = document.getElementById('frame');
+
+/* ---------- canvas camera (zoom / pan) ---------- */
+const stage=document.getElementById('stage');
+const canvasWrap=document.getElementById('canvasWrap');
+let cam={zoom:1,x:0,y:0};
+function fitWrap(){
+  const w=Math.min(window.innerWidth*0.9, 1180, window.innerWidth-80);
+  canvasWrap.style.width=w+'px';
+}
+function applyCam(){
+  canvasWrap.style.transform=`translate(-50%,-50%) translate(${cam.x}px,${cam.y}px) scale(${cam.zoom})`;
+  document.getElementById('zoomLabel').textContent=Math.round(cam.zoom*100)+'%';
+}
+function zoomAt(cx,cy,f){
+  const nz=Math.max(0.3,Math.min(6,cam.zoom*f));
+  cam.x=cx-(cx-cam.x)*(nz/cam.zoom);
+  cam.y=cy-(cy-cam.y)*(nz/cam.zoom);
+  cam.zoom=nz; applyCam();
+}
+stage.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=stage.getBoundingClientRect();
+  const cx=e.clientX-r.left-r.width/2, cy=e.clientY-r.top-r.height/2;
+  zoomAt(cx, cy, e.deltaY<0?1.12:1/1.12);
+},{passive:false});
+stage.addEventListener('pointerdown',e=>{
+  if(e.target.closest('.box')||e.target.closest('.hnd')) return;
+  const sx=e.clientX,sy=e.clientY,ox=cam.x,oy=cam.y;
+  const mv=ev=>{cam.x=ox+(ev.clientX-sx);cam.y=oy+(ev.clientY-sy);applyCam();};
+  const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+});
+document.getElementById('zoomIn').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.width/2,r.height/2,1.2);};
+document.getElementById('zoomOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.width/2,r.height/2,1/1.2);};
+document.getElementById('zoomReset').onclick=()=>{cam={zoom:1,x:0,y:0};applyCam();};
+document.getElementById('helpFAB').onclick=()=>document.getElementById('helpPop').classList.toggle('show');
+document.addEventListener('pointerdown',e=>{
+  if(e.target.closest('#helpFAB')||e.target.closest('#helpPop')) return;
+  document.getElementById('helpPop').classList.remove('show');
+});
+fitWrap(); applyCam();
+window.addEventListener('resize',fitWrap);
+
+/* ---------- render ---------- */
+function render(){
+  frame.style.aspectRatio = state.aspect.replace(':','/');
+  frame.innerHTML='';
+  const sorted=[...state.regions].sort((a,b)=>a.z-b.z);
+  for(const r of sorted){
+    const el=document.createElement('div');
+    el.className='box t-'+r.type+(r.id===state.sel?' sel':'');
+    el.style.left=r.x+'%'; el.style.top=r.y+'%';
+    el.style.width=r.w+'%'; el.style.height=r.h+'%';
+    el.dataset.id=r.id;
+    el.innerHTML=`<span class="tag">${TYPE_LABEL[r.type]}·${r.label||'未命名'}</span>`+
+      `<span class="pct">${Math.round(r.h)}%H</span>`+
+      ['nw','n','ne','e','se','s','sw','w'].map(h=>`<div class="hnd ${h}" data-h="${h}"></div>`).join('');
+    frame.appendChild(el);
+    bindBox(el,r);
+  }
+  renderChecklist();
+  renderProps();
+  renderExport();
+  saveLocal();
+}
+
+function updatePctRead(r){
+  document.getElementById('pctRead').textContent =
+    `占据画幅：宽 ${Math.round(r.w)}% · 高 ${Math.round(r.h)}% · 中心 (${Math.round(r.x+r.w/2)}, ${Math.round(r.y+r.h/2)})`+
+    (r.type==='character'? ` · 脚底 y≈${Math.round(r.y+r.h)}%（脚底越低离镜头越近，人物应越高）`:'');
+}
+function syncBoxById(id){
+  const r=state.regions.find(x=>x.id===id); if(!r) return;
+  const el=frame.querySelector(`.box[data-id="${id}"]`); if(!el) return;
+  el.className='box t-'+r.type+(r.id===state.sel?' sel':'');
+  el.style.left=r.x+'%';el.style.top=r.y+'%';el.style.width=r.w+'%';el.style.height=r.h+'%';
+  el.querySelector('.tag').textContent=`${TYPE_LABEL[r.type]}·${r.label||'未命名'}`;
+  el.querySelector('.pct').textContent=Math.round(r.h)+'%H';
+}
+function renderProps(){
+  const r = state.regions.find(x=>x.id===state.sel);
+  document.getElementById('propEmpty').style.display = r?'none':'block';
+  document.getElementById('propBody').style.display = r?'block':'none';
+  if(!r) return;
+  const setVal=(id,v)=>{const el=document.getElementById(id); if(document.activeElement!==el) el.value=v;};
+  setVal('pType', r.type);
+  setVal('pLabel', r.label||'');
+  setVal('pPromptZh', r.promptZh||'');
+  setVal('pPromptEn', r.promptEn||'');
+  setVal('pZ', r.z);
+  setVal('pStr', r.strength);
+  setVal('pX', Math.round(r.x));
+  setVal('pY', Math.round(r.y));
+  setVal('pW', Math.round(r.w));
+  setVal('pH', Math.round(r.h));
+  document.getElementById('pCross').checked=r.cross;
+  updatePctRead(r);
+}
+
+/* ---------- box interaction ---------- */
+function bindBox(el,r){
+  el.addEventListener('pointerdown',e=>{
+    if(e.target.classList.contains('hnd')) return;
+    e.preventDefault();
+    state.sel=r.id;
+    document.querySelectorAll('.frame .box').forEach(b=>b.classList.remove('sel'));
+    el.classList.add('sel');
+    renderProps();
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}
+    const fr=frame.getBoundingClientRect();
+    const sx=e.clientX, sy=e.clientY, ox=r.x, oy=r.y;
+    const mv=ev=>{
+      r.x=ox+(ev.clientX-sx)/fr.width*100;
+      r.y=oy+(ev.clientY-sy)/fr.height*100;
+      r.cross = r.x<0||r.y<0||r.x+r.w>100||r.y+r.h>100;
+      if(state.snap) snapBox(r,fr);
+      syncBoxEl(el,r); renderProps(); renderChecklist(); renderExport();
+    };
+    const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);};
+    document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+  });
+  el.querySelectorAll('.hnd').forEach(h=>{
+    h.addEventListener('pointerdown',e=>{
+      e.preventDefault();e.stopPropagation();
+      const dir=h.dataset.h;
+      const fr=frame.getBoundingClientRect();
+      const sx=e.clientX,sy=e.clientY,o={...r};
+      const mv=ev=>{
+        const dx=(ev.clientX-sx)/fr.width*100, dy=(ev.clientY-sy)/fr.height*100;
+        if(dir.includes('e')) r.w=o.w+dx;
+        if(dir.includes('w')){ r.x=o.x+dx; r.w=o.w-dx; }
+        if(dir.includes('s')) r.h=o.h+dy;
+        if(dir.includes('n')){ r.y=o.y+dy; r.h=o.h-dy; }
+        if(r.w<2)r.w=2; if(r.h<2)r.h=2;
+        r.cross = r.x<0||r.y<0||r.x+r.w>100||r.y+r.h>100;
+        if(state.snap) snapBox(r,fr);
+        syncBoxEl(el,r); renderProps(); renderChecklist(); renderExport();
+      };
+      const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);};
+      document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+    });
+  });
+}
+function syncBoxEl(el,r){
+  el.style.left=r.x+'%';el.style.top=r.y+'%';el.style.width=r.w+'%';el.style.height=r.h+'%';
+  el.querySelector('.pct').textContent=Math.round(r.h)+'%H';
+}
+function snapBox(r,fr){
+  const sx=GRID_PX/fr.width*100, sy=GRID_PX/fr.height*100;
+  const sn=(v,s)=>Math.round(v/s)*s;
+  r.x=sn(r.x,sx); r.y=sn(r.y,sy);
+  r.w=Math.max(sx, sn(r.w,sx)); r.h=Math.max(sy, sn(r.h,sy));
+}
+
+/* ---------- add / delete ---------- */
+function addRegion(type){
+  const r={id:state._id++,type,label:'',promptZh:'',promptEn:'',
+    x:30,y:30,w:40,h:40,z:state.regions.length+1,strength:1,cross:false};
+  state.regions.push(r); state.sel=r.id; render();
+}
+document.querySelectorAll('[data-add]').forEach(c=>c.onclick=()=>addRegion(c.dataset.add));
+frame.addEventListener('dblclick',e=>{ if(e.target===frame) addRegion('subject'); });
+document.getElementById('delBtn').onclick=()=>{
+  if(state.sel==null)return; state.regions=state.regions.filter(r=>r.id!==state.sel); state.sel=null; render();
+};
+document.getElementById('clearBtn').onclick=()=>{ if(confirm('清空所有区域？')){state.regions=[];state.sel=null;render();} };
+
+/* ---------- property inputs ---------- */
+function bindProp(id,fn){
+  const el=document.getElementById(id);
+  const onEdit=()=>{
+    const r=state.regions.find(x=>x.id===state.sel); if(!r)return;
+    fn(r,el.value);
+    syncBoxById(r.id);          // 实时同步画布上的框（位置/尺寸/类型色/标签）
+    renderChecklist();          // 实时刷新尺度校验
+    renderExport();            // 实时刷新 A·文本 / B·JSON 输出
+    updatePctRead(r);           // 实时刷新占比读数
+  };
+  el.addEventListener('input',onEdit);
+  el.addEventListener('change',onEdit);
+}
+bindProp('pType',(r,v)=>{r.type=v;});
+bindProp('pLabel',(r,v)=>{r.label=v;});
+bindProp('pPromptZh',(r,v)=>{r.promptZh=v;});
+bindProp('pPromptEn',(r,v)=>{r.promptEn=v;});
+bindProp('pZ',(r,v)=>{r.z=+v||1;});
+bindProp('pStr',(r,v)=>{r.strength=Math.max(0,Math.min(2,+v||1));});
+bindProp('pX',(r,v)=>{r.x=+v||0;r.cross=r.x<0||r.y<0||r.x+r.w>100||r.y+r.h>100;});
+bindProp('pY',(r,v)=>{r.y=+v||0;r.cross=r.x<0||r.y<0||r.x+r.w>100||r.y+r.h>100;});
+bindProp('pW',(r,v)=>{r.w=Math.max(2,+v||2);r.cross=r.x<0||r.y<0||r.x+r.w>100||r.y+r.h>100;});
+bindProp('pH',(r,v)=>{r.h=Math.max(2,+v||2);r.cross=r.x<0||r.y<0||r.x+r.w>100||r.y+r.h>100;});
+document.getElementById('pCross').onchange=e=>{const r=state.regions.find(x=>x.id===state.sel);if(r){r.cross=e.target.checked;syncBoxById(r.id);renderChecklist();renderExport();updatePctRead(r);}};
+
+/* ---------- checklist ---------- */
+function loc(r){
+  const isChar=r.type==='character';
+  const cx=r.x+r.w/2;
+  const cy=isChar? r.y+r.h : r.y+r.h/2;
+  const v = cy<33?'上':cy>66?'下':'中';
+  const h = cx<33?'左':cx>66?'右':'中';
+  let s=(v+h==='中中')?'中央':(v+h);
+  const edges=[];
+  if(r.x<0)edges.push('左'); if(r.y<0)edges.push('上');
+  if(r.x+r.w>100)edges.push('右'); if(r.y+r.h>100)edges.push('下');
+  if(edges.length) s+=`·越${edges.join('')}框`;
+  return s;
+}
+function locEn(r){
+  const isChar=r.type==='character';
+  const cx=r.x+r.w/2;
+  const cy=isChar? r.y+r.h : r.y+r.h/2;
+  const v = cy<33?'upper':cy>66?'lower':'middle';
+  const h = cx<33?'left':cx>66?'right':'center';
+  let s=(v+h==='middlecenter')?'center':(v+' '+h);
+  const edges=[];
+  if(r.x<0)edges.push('left'); if(r.y<0)edges.push('top');
+  if(r.x+r.w>100)edges.push('right'); if(r.y+r.h>100)edges.push('bottom');
+  if(edges.length) s+=`, crossing ${edges.join('/')} frame edge`;
+  return s;
+}
+function renderChecklist(){
+  const subj=state.regions.filter(r=>r.type==='subject');
+  const chars=state.regions.filter(r=>r.type==='character');
+  const skies=state.regions.filter(r=>r.type==='sky');
+  const rules=[];
+  const crossed=subj.filter(s=>s.cross);
+  rules.push({s:crossed.length>0?'ok':'bad',
+    t:'主体越框（≥1 主体吞没画框）',
+    d: crossed.length? `已越框主体：${crossed.map(s=>s.label||'未命名').join('、')}` : '至少让一个主体框拖出画框边缘'});
+  const onSubj=chars.filter(c=>subj.some(s=>c.x>s.x&&c.y>s.y&&c.x+c.w<s.x+s.w&&c.y+c.h<s.y+s.h));
+  rules.push({s:onSubj.length>0?'ok':'bad',
+    t:'人物上巨物（人物位于主体内部/之上）',
+    d: onSubj.length? `${onSubj.length} 个人物站在主体上` : '把人物框放进主体框范围内'});
+  const ys=chars.map(c=>c.y+c.h).sort((a,b)=>a-b);
+  const diff = ys.length>=2 ? ys[ys.length-1]-ys[0] : 0;
+  if(chars.length>=2 && diff>10){
+    rules.push({s:'ok', t:'两层人物落差（互证尺度）', d:`人物脚底纵向差 ${Math.round(diff)}%（脚底越低越近镜头）`});
+  }else if(chars.length===1){
+    rules.push({s:'opt', t:'两层人物落差（可选增强）', d:'单人也成立；再加一层人物（脚底高度错开）可互相印证尺度'});
+  }else{
+    rules.push({s:'opt', t:'两层人物落差（可选增强）', d:'可选：布置两层脚底高度错开的人物，尺度更有说服力'});
+  }
+  const topSky=skies.filter(s=>s.y<25);
+  rules.push({s:topSky.length>0?'ok':'bad',
+    t:'冷空域衬暖巨物（空域在顶部）',
+    d: topSky.length? '已布置顶部空域' : '加一个「空域」框放画面上方'});
+  document.getElementById('checklist').innerHTML = rules.map(r=>
+    `<li><span class="dot ${r.s}"></span><div><div class="t">${r.t}</div><div class="d">${r.d}</div></div></li>`).join('');
+}
+
+/* ---------- export ---------- */
+function buildText(lang){
+  const ar=state.aspect;
+  const ordered=[...state.regions].sort((a,b)=>a.z-b.z);
+  if(!ordered.length) return lang==='en'?'No regions yet.':'(尚无区域)';
+  if(lang==='en'){
+    let s=`${ar} ultra-wide frame. `;
+    for(const r of ordered){
+      const who=TYPE_LABEL[r.type];
+      const what=r.promptEn||r.label||'element';
+      const hPct=Math.round(r.h);
+      const cross=r.cross?' breaking out of the frame':'';
+      s+=` ${who} (${what}) is located ${locEn(r)}, occupying ~${hPct}% of frame height${cross}.`;
+    }
+    const subj=ordered.find(r=>r.type==='subject');
+    const chars=ordered.filter(r=>r.type==='character');
+    if(subj||chars.length){
+      s+=' Scale evidence: ';
+      if(subj) s+='the subject engulfs the frame; ';
+      if(chars.length) s+=`characters occupy ${chars.map(c=>Math.round(c.h)+'%').join('/')} of frame height and stand upon the megastructure; `;
+      s+='scale is defined by geometry, not adjectives.';
+    }
+    return s;
+  }
+  // zh
+  let s=`${ar} 巨幅画面。`;
+  for(const r of ordered){
+    const who=TYPE_LABEL[r.type];
+    const what=r.promptZh||r.label||'元素';
+    const hPct=Math.round(r.h);
+    const cross = r.cross? '，强行越出画框':'';
+    s+=` ${who}（${what}）位于${loc(r)}，占据画面高度约 ${hPct}%${cross}。`;
+  }
+  const subj=ordered.find(r=>r.type==='subject');
+  const chars=ordered.filter(r=>r.type==='character');
+  if(subj||chars.length){
+    s+=' 尺度证据：';
+    if(subj) s+=`主体吞没画框、`;
+    if(chars.length) s+=`人物占画面高度 ${chars.map(c=>Math.round(c.h)+'%').join('/')} 且立于巨物之上、`;
+    s+='以几何比例而非形容词定义巨物尺度。';
+  }
+  return s;
+}
+function renderTextOut(){ document.getElementById('textOut').textContent=buildText(state.lang); }
+function buildJSON(){
+  const [W,H]=AR2PX[state.aspect];
+  const regions=state.regions.map(r=>({
+    id:r.id, type:r.type, label:r.label||'',
+    x:+r.x.toFixed(2), y:+r.y.toFixed(2),
+    w:+r.w.toFixed(2), h:+r.h.toFixed(2),
+    cross_frame:!!r.cross,
+    prompt_zh:r.promptZh||'', prompt_en:r.promptEn||'',
+    strength:+r.strength.toFixed(2), z:r.z
+  }));
+  return {
+    target:"comfyui-region-prompter | gligen-bbox",
+    aspect:state.aspect, pixel:{width:W,height:H},
+    notes:"x/y/w/h 为相对画幅百分比(0-100)，可超出100表示越框；对接 Regional Prompter 用 mask 模式、GLIGEN 用 bbox 模式",
+    regions
+  };
+}
+function renderExport(){
+  renderTextOut();
+  document.getElementById('jsonOut').textContent=JSON.stringify(buildJSON(),null,2);
+}
+document.getElementById('copyTextBtn').onclick=()=>{navigator.clipboard.writeText(buildText(state.lang)).then(()=>toast('已复制文本'));};
+document.getElementById('copyJsonBtn').onclick=()=>{navigator.clipboard.writeText(JSON.stringify(buildJSON(),null,2)).then(()=>toast('已复制 JSON'));};
+document.getElementById('copyTextIc').onclick=()=>{navigator.clipboard.writeText(buildText(state.lang)).then(()=>toast('已复制文本'));};
+document.getElementById('copyJsonIc').onclick=()=>{navigator.clipboard.writeText(JSON.stringify(buildJSON(),null,2)).then(()=>toast('已复制 JSON'));};
+document.getElementById('dlBtn').onclick=()=>{
+  const blob=new Blob([JSON.stringify(buildJSON(),null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`region-${state.aspect.replace(':','x')}.json`;a.click();toast('已下载 JSON');
+};
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1500);}
+
+/* ---------- output font zoom ---------- */
+let outFont=12;
+function applyOutFont(){document.querySelectorAll('.out').forEach(o=>o.style.fontSize=outFont+'px');}
+document.getElementById('tBig').onclick=()=>{outFont=Math.min(22,outFont+1);applyOutFont();};
+document.getElementById('tSmall').onclick=()=>{outFont=Math.max(9,outFont-1);applyOutFont();};
+document.getElementById('jBig').onclick=()=>{outFont=Math.min(22,outFont+1);applyOutFont();};
+document.getElementById('jSmall').onclick=()=>{outFont=Math.max(9,outFont-1);applyOutFont();};
+
+/* ---------- drawer / rail ---------- */
+const VIEWS={
+  add:'添加区域 · 尺度校验', props:'选中区域属性',
+  text:'A · 文本提示词（副产出）', json:'B · Region 配置 JSON（主输出）'
+};
+let activeView=null;
+const drawer=document.getElementById('drawer');
+function openDrawer(v){
+  activeView=v;
+  drawer.classList.add('open');
+  document.body.classList.add('drawer-open');
+  document.getElementById('drawerTitle').textContent=VIEWS[v];
+  document.querySelectorAll('.view').forEach(el=>el.classList.toggle('show', el.dataset.view===v));
+  document.querySelectorAll('.rail button').forEach(b=>b.classList.toggle('on', b.dataset.view===v));
+  render(); // 刷新该视窗内容
+}
+function closeDrawer(){
+  activeView=null; drawer.classList.remove('open');
+  document.body.classList.remove('drawer-open');
+  document.querySelectorAll('.rail button').forEach(b=>b.classList.remove('on'));
+}
+document.querySelectorAll('.rail button').forEach(b=>b.onclick=()=>{
+  if(activeView===b.dataset.view) closeDrawer(); else openDrawer(b.dataset.view);
+});
+document.getElementById('drawerClose').onclick=closeDrawer;
+
+/* ---------- A·文本语言切换 ---------- */
+document.querySelectorAll('#langSeg button').forEach(b=>b.onclick=()=>{
+  state.lang=b.dataset.lang;
+  document.querySelectorAll('#langSeg button').forEach(x=>x.classList.toggle('on', x.dataset.lang===state.lang));
+  renderTextOut();
+});
+
+/* ---------- aspect ---------- */
+document.querySelectorAll('#aspectSeg button').forEach(b=>b.onclick=()=>{
+  state.aspect=b.dataset.ar;
+  document.querySelectorAll('#aspectSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); render();
+});
+
+/* ---------- persistence ---------- */
+const LS_KEY='comp-editor';
+function normalizeLoaded(s){
+  // 老数据兼容：单 prompt 字段拆成中英两框
+  s.regions.forEach(r=>{ if(r.prompt && !r.promptEn && !r.promptZh){ r.promptEn=r.prompt; r.promptZh=r.prompt; } });
+  if(!s.lang) s.lang='zh';
+  if(typeof s.snap!=='boolean') s.snap=true;
+  return s;
+}
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+function loadLocal(){
+  const s=localStorage.getItem(LS_KEY); if(!s) return false;
+  try{ state=normalizeLoaded(JSON.parse(s)); }catch(e){ return false; }
+  return true;
+}
+document.getElementById('saveBtn').onclick=()=>{saveLocal();toast('已存本地');};
+document.getElementById('loadBtn').onclick=()=>{
+  if(loadLocal()){render();toast('已载入');} else toast('无本地数据');
+};
+document.getElementById('snapChk').onchange=e=>{state.snap=e.target.checked;saveLocal();};
+
+/* ---------- example: 巨物白莲 (D4 构图基因) ---------- */
+document.getElementById('loadEx').onclick=()=>{
+  state.regions=[
+    {id:state._id++,type:'subject',label:'巨型粉莲',
+      promptZh:'如绸缎般垂坠的巨型粉莲花瓣，半透绡纱质感，背光描出柔光边缘，由浅粉到玫红渐变',
+      promptEn:'colossal pink lotus petals like draped silk fabric, sheer translucent satin with soft sheen, backlit glowing edges, gradient from blush pink to rose',
+      x:-6,y:40,w:112,h:66,z:1,strength:1.2,cross:true},
+    {id:state._id++,type:'character',label:'花瓣顶端·白衣',
+      promptZh:'身着白衣的宋代女子立于花瓣顶端',
+      promptEn:'Song-dynasty woman in white robe standing on petal peak',
+      x:28,y:38.5,w:2.8,h:5.5,z:2,strength:1,cross:false},
+    {id:state._id++,type:'character',label:'花瓣顶端·绯红',
+      promptZh:'身着绯红衣裙的宋代女子立于花瓣顶端',
+      promptEn:'Song-dynasty woman in crimson robe standing on petal peak',
+      x:33,y:38,w:2.8,h:5.5,z:2,strength:1,cross:false},
+    {id:state._id++,type:'character',label:'提篮上行·月白',
+      promptZh:'手提竹篮的宋代女子沿花瓣坡道上行',
+      promptEn:'Song-dynasty woman carrying bamboo basket, walking up petal slope',
+      x:38,y:70,w:3,h:6,z:2,strength:1,cross:false},
+    {id:state._id++,type:'character',label:'提篮上行·浅青',
+      promptZh:'身着淡青衣裙的宋代女子攀爬花瓣坡道',
+      promptEn:'Song-dynasty woman in pale cyan robe climbing petal slope',
+      x:43,y:69.5,w:3,h:6,z:2,strength:1,cross:false},
+    {id:state._id++,type:'sky',label:'大空域',
+      promptZh:'柔和粉调蓝天缀白云，远处朦胧的青蓝远山',
+      promptEn:'airy pastel blue sky with soft white clouds, distant hazy blue mountains',
+      x:0,y:-2,w:100,h:44,z:0,strength:0.8,cross:true}
+  ];
+  state.sel=null; render();toast('已载入巨物白莲示例');
+};
+
+loadLocal(); render(); applyOutFont();
+</script>
+</body>
+</html>

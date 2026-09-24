@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>构图编辑器 v2 · 设计概念</title>
+<style>
+  :root{--ink:#2C2C2A;--mut:#5F5E5A;--line:#B4B2A9;--blue:#378ADD;--amber:#BA7517;--pink:#D4537E;--green:#639922;--soft:#F1EFE8;}
+  *{box-sizing:border-box}
+  body{margin:0;background:#ffffff;color:var(--ink);font-family:system-ui,"Segoe UI",Arial,"PingFang SC","Microsoft YaHei";line-height:1.6}
+  .wrap{max-width:920px;margin:0 auto;padding:32px 24px 64px}
+  h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  .sub{color:var(--mut);font-size:14px;margin-bottom:28px}
+  h2{font-size:17px;font-weight:600;margin:38px 0 12px;padding-top:18px;border-top:1px solid #ECEAE4}
+  p{font-size:14px;margin:10px 0}
+  .muted{color:var(--mut)}
+  .card{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:18px;margin:16px 0}
+  svg{width:100%;height:auto;display:block}
+  .kpi{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+  th,td{border:1px solid #E1DFD8;padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#F6F4EF;font-weight:600}
+  code{background:#F1EFE8;padding:1px 5px;border-radius:4px;font-size:12px}
+  .note{background:#FBF3E6;border-left:3px solid var(--amber);padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;margin:14px 0}
+  .warn{background:#FCEBEB;border-left:3px solid #A32D2D;padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;margin:14px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>构图编辑器 v2 · 设计概念</h1>
+  <div class="sub">解决两个核心问题：① 主体内容（荷花/龙/天宫）不写死，由「种子词 + 知识库 + AI」生成；② 前景遮挡与画面纵深的可用控制。</div>
+
+  <h2>一、先把“在哪”和“是什么”拆开</h2>
+  <p class="muted">当前工具把几何和内容焊死在一个框里（框里直接写死 <code>giant white lotus…</code>）。正确做法是把一个区域拆成三层，只让内容和几何各自独立演化。</p>
+  <div class="card">
+    <svg viewBox="0 0 680 360" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,Segoe UI,Arial">
+      <rect x="24" y="40" width="300" height="84" rx="8" fill="#E6F1FB" stroke="#378ADD"/>
+      <text x="40" y="62" font-size="13" font-weight="600" fill="#0C447C">1 几何层（你拖的）</text>
+      <text x="40" y="82" font-size="12" fill="#5F5E5A">x/y/w/h · z层级 · 越框 · 深度档</text>
+      <text x="40" y="102" font-size="12" fill="#5F5E5A">纯空间，与“是什么”无关</text>
+      <rect x="24" y="140" width="300" height="76" rx="8" fill="#FAEEDA" stroke="#BA7517"/>
+      <text x="40" y="162" font-size="13" font-weight="600" fill="#633806">2 角色层（结构）</text>
+      <text x="40" y="182" font-size="12" fill="#5F5E5A">主体 / 人物 / 空域 / 前景</text>
+      <text x="40" y="202" font-size="12" fill="#5F5E5A">固定职能词，不写死内容</text>
+      <rect x="24" y="232" width="300" height="108" rx="8" fill="#FBEAF0" stroke="#D4537E"/>
+      <text x="40" y="254" font-size="13" font-weight="600" fill="#72243E">3 内容层（唯一可变量）</text>
+      <text x="40" y="276" font-size="12" fill="#5F5E5A">seed 关键词「龙 / 莲花 / 天宫」</text>
+      <text x="40" y="296" font-size="12" fill="#5F5E5A">+ 知识库风格锚点（材质行为词）</text>
+      <text x="40" y="316" font-size="12" fill="#5F5E5A">+ AI 扩写 → 可编辑成品提示词</text>
+      <rect x="360" y="40" width="296" height="300" rx="8" fill="#F1EFE8" stroke="#B4B2A9"/>
+      <text x="376" y="64" font-size="13" font-weight="600" fill="#2C2C2A">内容层专用：AI 扩写闭环</text>
+      <circle cx="420" cy="116" r="28" fill="#E6F1FB" stroke="#378ADD"/>
+      <text x="420" y="120" font-size="11" fill="#0C447C" text-anchor="middle">seed</text>
+      <circle cx="548" cy="116" r="28" fill="#EAF3DE" stroke="#639922"/>
+      <text x="548" y="112" font-size="10" fill="#27500A" text-anchor="middle">知识库</text>
+      <text x="548" y="125" font-size="10" fill="#27500A" text-anchor="middle">风格锚</text>
+      <circle cx="484" cy="204" r="32" fill="#FAEEDA" stroke="#BA7517"/>
+      <text x="484" y="200" font-size="11" fill="#633806" text-anchor="middle">LLM</text>
+      <text x="484" y="214" font-size="10" fill="#633806" text-anchor="middle">扩写</text>
+      <rect x="404" y="276" width="160" height="48" rx="6" fill="#FBEAF0" stroke="#D4537E"/>
+      <text x="484" y="296" font-size="11" fill="#72243E" text-anchor="middle">可编辑成品提示词</text>
+      <text x="484" y="314" font-size="10" fill="#888780" text-anchor="middle">角色+seed+锚点组装</text>
+      <path d="M448,116 L520,116" stroke="#888780" stroke-width="1.5"/>
+      <path d="M484,148 L484,172" stroke="#888780" stroke-width="1.5"/>
+      <path d="M484,236 L484,276" stroke="#888780" stroke-width="1.5"/>
+      <path d="M420,144 Q420,188 452,198" stroke="#888780" stroke-width="1.5" fill="none"/>
+      <path d="M548,144 Q548,188 516,198" stroke="#888780" stroke-width="1.5" fill="none"/>
+    </svg>
+  </div>
+
+  <h2>二、“是什么”的三条流程（内容层怎么填）</h2>
+  <p>工具只负责几何和角色，内容层有三种填法，从最轻到最智能：</p>
+  <table>
+    <tr><th>模式</th><th>用户做什么</th><th>AI 做什么</th><th>适用</th></tr>
+    <tr><td><b>角色词库</b></td><td>选角色 + 从下拉挑主体（莲花/古树/巨石/龙…）</td><td>不调用，按预设模板拼接</td><td>常见题材，离线、零延迟</td></tr>
+    <tr><td><b>种子 + 扩写</b></td><td>框里只写 <code>龙</code> 或 <code>莲花</code></td><td>角色 + seed + 知识库锚点 → 生成完整提示词，用户可改</td><td>默认模式，灵活且可控</td></tr>
+    <tr><td><b>一句话反推</b></td><td>写一句 brief（如“东方巨物，莲花上行走的宋装女子”）</td><td>拆解成区域 + 提议几何 → 用户在画布上微调</td><td>从想法起步，最顺手</td></tr>
+  </table>
+  <div class="note">关键：知识库（东方巨构材质词典、巨物奇境六维池）只作为“风格锚点”被引用，不写死在 JS。你更新知识库，未来所有扩写同步受益——内容永远活在你的知识库里，工具只是取用。</div>
+
+  <h2>三、前景遮挡 + 画面纵深的可用控制</h2>
+  <div class="card">
+    <svg viewBox="0 0 680 360" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,Segoe UI,Arial">
+      <rect x="40" y="48" width="372" height="170" rx="6" fill="#ffffff" stroke="#B4B2A9"/>
+      <rect x="40" y="48" width="372" height="44" fill="#E6F1FB" opacity="0.8"/>
+      <rect x="40" y="92" width="372" height="64" fill="#FBEAF0" opacity="0.6"/>
+      <rect x="40" y="156" width="372" height="62" fill="#EEEDFE" opacity="0.7"/>
+      <text x="50" y="74" font-size="11" fill="#0C447C">超远 · 空域（大气透视）</text>
+      <text x="50" y="128" font-size="11" fill="#72243E">中景 · 主体（英雄层）</text>
+      <text x="50" y="192" font-size="11" fill="#3C3489">前景 · 遮挡（浅景深/失焦）</text>
+      <rect x="178" y="118" width="14" height="26" fill="#378ADD" opacity="0.85" stroke="#0C447C"/>
+      <text x="185" y="160" font-size="9" fill="#0C447C" text-anchor="middle">人</text>
+      <path d="M300,118 L250,158" stroke="#A32D2D" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <text x="300" y="112" font-size="10" fill="#A32D2D">前景压住主体 → 真遮挡</text>
+      <rect x="448" y="48" width="208" height="296" rx="8" fill="#F1EFE8" stroke="#B4B2A9"/>
+      <text x="464" y="70" font-size="13" font-weight="600" fill="#2C2C2A">导出 = 深度有序层栈</text>
+      <rect x="464" y="84" width="176" height="40" rx="5" fill="#EEEDFE"/>
+      <text x="476" y="108" font-size="11" fill="#3C3489">L0 前景（最近·遮）</text>
+      <rect x="464" y="130" width="176" height="40" rx="5" fill="#FBEAF0"/>
+      <text x="476" y="154" font-size="11" fill="#72243E">L1 主体（英雄层）</text>
+      <rect x="464" y="176" width="176" height="40" rx="5" fill="#E6F1FB"/>
+      <text x="476" y="200" font-size="11" fill="#0C447C">L2 背景（大气透视）</text>
+      <text x="476" y="240" font-size="11" fill="#5F5E5A">→ ComfyUI 分层生成</text>
+      <text x="476" y="256" font-size="11" fill="#5F5E5A">后→前 逐层渲染</text>
+      <text x="476" y="272" font-size="11" fill="#5F5E5A">+ mask 合成 = 真遮挡</text>
+      <text x="476" y="304" font-size="10" fill="#A32D2D">单 pass 区域提示</text>
+      <text x="476" y="320" font-size="10" fill="#A32D2D">无法真遮挡（仅影响）</text>
+    </svg>
+  </div>
+  <p>把“深度”做成<strong>一等维度</strong>，而不是只用一个 z 整数：</p>
+  <div class="kpi">
+    <div class="chip"><b>深度档</b>：前景 / 中景 / 背景 / 超远，各自自动带透视语言</div>
+    <div class="chip"><b>前景遮挡</b>：类型=前景且压住后面区域(z 更高) → 自动加“浅景深 / 失焦 / 部分遮挡”</div>
+    <div class="chip"><b>纵深计</b>：统计层次数 + 重叠 + 尺度梯度 → 浅/中/深评分</div>
+  </div>
+  <p class="muted">纵深的 5 个可控制线索：① 遮挡重叠（重叠 + z）② 尺度梯度（同类物体沿退远轴缩小，如 D3 的百层柱列）③ 大气透视（深度档→雾化）④ 透视收敛（可拖一条“视线/灭点”轴线）⑤ 层次数量。</p>
+
+  <div class="warn"><b>诚实边界：单 pass 区域提示词无法真遮挡。</b>前景框压住主体，在一次扩散里模型只会“影响”而不会可靠地把后面的东西藏起来。真正的遮挡必须<strong>分层生成</strong>：从后往前逐层渲染、每层独立 pass + mask、再合成。所以 B 导出应是“深度有序的层栈（带 mask）”，对接 ComfyUI 分层工作流——这才是前景遮挡与纵深感的真正落地机制，也正是之前说“路径 B 才是目标”的硬理由。</div>
+
+  <h2>四、建议的区域数据模型</h2>
+  <table>
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td><code>role</code></td><td>枚举</td><td>subject / character / sky / foreground（结构层，固定）</td></tr>
+    <tr><td><code>seed</code></td><td>字符串</td><td>用户给的内容种子，如“龙”“莲花”（可空）</td></tr>
+    <tr><td><code>prompt</code></td><td>字符串</td><td>AI 扩写后的成品提示词，可编辑</td></tr>
+    <tr><td><code>geometry</code></td><td>对象</td><td>x/y/w/h(%), z, cross, depthTier</td></tr>
+    <tr><td><code>anchors</code></td><td>数组</td><td>从知识库拉取的风格锚点（材质行为词等）</td></tr>
+  </table>
+
+  <h2>五、下一步</h2>
+  <p>概念确认后，v2 的实际改动是：在现有编辑器上加「内容层（seed + AI 扩写按钮）」、「深度档选择器 + 纵深计」、「前景遮挡类型」，并把 B 导出从“平面 region”升级为“深度有序层栈（带 mask）”。要不要我直接动手做 v2 原型？</p>
+</div>
+</body>
+</html>
