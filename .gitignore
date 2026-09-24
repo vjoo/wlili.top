@@ -7,10 +7,10 @@ server_data.json
 tools/probe_server.py
 
 # 工具页双通道数据文件（规则 29：用户私有数据不上云，由 server.py 运行时创建）
-tools/prompt-library-data.json
-tools/prompt-library-data.json.tmp
-tools/seamless-pattern-data.json
-tools/seamless-pattern-data.json.tmp
+# ⚠️ 必须用通配，不要写精确文件名：曾经只写了 tools/prompt-library-data.json，
+#    漏掉了 tools/prompt-library-data.json.bak-20260923（76MB）被提交入库，
+#    触发 EdgeOne 单文件 25MB 上限导致部署失败、新工具上不了线（2026-09-24）
+tools/*-data.json*
 
 # 本地工具与运行时缓存
 _restart_server.py
