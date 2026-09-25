@@ -956,6 +956,9 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
       /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(h);
   }
   var FAVICON_BASE = 'https://icons.duckduckgo.com/ip3/';
+  /* 纯展示守卫（2026-09-25）：编辑入口/编辑模式仅本机（server.py / file://）可用。
+     外网静态部署下任何人按 Ctrl+Shift+E 也不会出现任何编辑 UI。 */
+  var IS_LOCAL = isLocalHost();
   var FAV_STORAGE_KEY = 'bm_favorites_v1';
   var FAV_CATEGORY_KEY = '_favorites';
   var EDIT_MODE_KEY = 'bm_edit_mode_v1';         // 是否处于编辑模式（session 级）
@@ -971,6 +974,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
   }
 
   function restoreEditState() {
+    if (!IS_LOCAL) return; /* 外网纯展示：无视 sessionStorage，不恢复任何编辑状态 */
     try {
       if (sessionStorage.getItem(EDIT_MODE_KEY) === '1') {
         state.editMode = true;
@@ -979,6 +983,10 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
         els.editBanner.style.display = '';
       } else if (sessionStorage.getItem(EDIT_ENTRY_SHOWN_KEY) === '1') {
         /* 未进入编辑模式，但入口按钮之前被 Ctrl+Shift+E 唤出过，保持显示 */
+        els.btnEdit.style.display = '';
+      } else {
+        /* 本机默认就显示维护入口：入口已严格限本机，不必再靠快捷键才能找到。
+           （外网走上面 IS_LOCAL 早退分支，按钮永远 display:none） */
         els.btnEdit.style.display = '';
       }
     } catch (e) {}
@@ -1478,6 +1486,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
      编辑模式
      ============================================ */
   function enterEditMode() {
+    if (!IS_LOCAL) return; /* 外网纯展示：禁止进入维护模式 */
     state.editMode = true;
     persistEditMode(true);
     setEditControls(true);
@@ -1497,9 +1506,10 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
     renderBookmarks();
   }
 
-  /* ===== 快捷键：Ctrl+Shift+E 唤出/隐藏编辑入口 ===== */
+  /* ===== 快捷键：Ctrl+Shift+E 唤出/隐藏编辑入口（仅本机生效） ===== */
   function setupEditShortcut() {
     document.addEventListener('keydown', function(e) {
+      if (!IS_LOCAL) return; /* 外网纯展示：快捷键无效 */
       if (e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e')) {
         e.preventDefault();
         if (!state.editMode) {

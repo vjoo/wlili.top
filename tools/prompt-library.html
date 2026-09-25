@@ -235,7 +235,7 @@
 
 /* ===== Data Settings Modal ===== */
 .modal-box.data-settings-box {
-  max-width: 440px;
+  max-width: 760px;
   text-align: left;
   padding: 0;
   overflow: hidden;
@@ -263,23 +263,32 @@
 }
 .modal-box.data-settings-box .data-settings-close:hover { background: var(--bg); color: var(--ink); }
 .modal-box.data-settings-box .data-settings-close svg { width: 16px; height: 16px; }
-.modal-box.data-settings-box .data-settings-body { padding: 8px 24px 20px; }
+.modal-box.data-settings-box .data-settings-body { padding: 12px 24px 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 14px; }
 .modal-box.data-settings-box .data-settings-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border-light);
-  gap: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  gap: 8px;
+  background: var(--bg-elevated);
 }
-.modal-box.data-settings-box .data-settings-row:last-of-type { border-bottom: none; }
+.modal-box.data-settings-box .data-settings-row .btn-action { align-self: flex-start; font-size: 13px; padding: 6px 16px; }
 .modal-box.data-settings-box .data-settings-info { flex: 1; min-width: 0; }
 .modal-box.data-settings-box .data-settings-label { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 2px; }
 .modal-box.data-settings-box .data-settings-desc { font-size: 12px; color: var(--ink-tertiary); line-height: 1.4; }
-.modal-box.data-settings-box .data-settings-row .btn-action { font-size: 13px; padding: 6px 16px; flex-shrink: 0; }
-/* 危险操作行：与上方安全操作用分隔线隔开，标题用红色警示 */
-.modal-box.data-settings-box .data-settings-row.is-danger { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border-light); }
+/* 危险操作行 + 状态行：跨满 3 列 */
+.modal-box.data-settings-box .data-settings-row.is-danger,
+.modal-box.data-settings-box .pl-op-status,
+.modal-box.data-settings-box .backup-status { grid-column: 1 / -1; }
+.modal-box.data-settings-box .data-settings-row.is-danger { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--border-light); }
 .modal-box.data-settings-box .data-settings-row.is-danger .data-settings-label { color: var(--red); }
+.modal-box.data-settings-box .pl-op-status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; line-height: 1.5; }
+.modal-box.data-settings-box .pl-op-status.is-working { color: var(--link); }
+.modal-box.data-settings-box .pl-op-status.is-ok { color: var(--green); }
+.modal-box.data-settings-box .pl-op-status.is-err { color: var(--red); }
 .auto-backup-toggle {
   display: inline-flex;
   align-items: center;
@@ -1624,6 +1633,27 @@
 }
 .back-to-top:active { transform: scale(0.92); }
 .back-to-top svg { width: 20px; height: 20px; }
+
+/* ===== 对外发布开关（编辑表单） ===== */
+.publish-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.publish-toggle-desc {
+  font-size: 12px;
+  color: var(--ink-quaternary);
+  line-height: 1.5;
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ===== 「仅本机」徽标（未发布记录，仅本机模式可见） ===== */
+.card-tag.card-tag-local {
+  background: rgba(255, 147, 0, 0.92);
+  color: #fff;
+}
 </style>
 </head>
 <body>
@@ -1793,6 +1823,16 @@
           <input type="text" class="form-input" id="editTitle" placeholder="给这个提示词起个名字">
         </div>
         <div class="form-group">
+          <label class="form-label">对外发布</label>
+          <div class="publish-toggle-row">
+            <label class="auto-backup-toggle">
+              <input type="checkbox" id="editPublishToggle">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="publish-toggle-desc" id="editPublishDesc">开启：随「生成发布快照」上线外网；关闭：仅本机可见</span>
+          </div>
+        </div>
+        <div class="form-group">
           <label class="form-label">标签（点击选择）</label>
           <div class="tags-select-row" id="editTagsRow"></div>
         </div>
@@ -1868,6 +1908,13 @@
     <div class="data-settings-body">
       <div class="data-settings-row">
         <div class="data-settings-info">
+          <div class="data-settings-label">生成发布快照</div>
+          <div class="data-settings-desc">把已发布的记录生成为外网展示数据（tools/data/prompt-library.json + imgs/pl-web/ 图片），git 提交推送后线上生效</div>
+        </div>
+        <button class="btn-action secondary" id="btnPublishSnapshot">生成</button>
+      </div>
+      <div class="data-settings-row">
+        <div class="data-settings-info">
           <div class="data-settings-label">导出数据</div>
           <div class="data-settings-desc">下载成 JSON 文件存到磁盘：无容量限制，可跨设备、长期保存，清浏览器数据也不丢</div>
         </div>
@@ -1882,32 +1929,8 @@
       </div>
       <div class="data-settings-row">
         <div class="data-settings-info">
-          <div class="data-settings-label">立即备份</div>
-          <div class="data-settings-desc">存进浏览器本地存储：容量仅 5~10MB，数据大时会失败，清浏览器数据即丢失——长期保存请用「导出」</div>
-        </div>
-        <button class="btn-action secondary" id="btnBackupNow">备份</button>
-      </div>
-      <div class="data-settings-row">
-        <div class="data-settings-info">
-          <div class="data-settings-label">压缩现有图片</div>
-          <div class="data-settings-desc">把存量超长边图片压缩到 2048px 内，可显著加快加载速度（视觉无损）</div>
-        </div>
-        <button class="btn-action secondary" id="btnCompressImages">压缩</button>
-      </div>
-      <div class="data-settings-row">
-        <div class="data-settings-info">
-          <div class="data-settings-label">自动备份</div>
-          <div class="data-settings-desc">每次增删改后自动备份到浏览器本地存储</div>
-        </div>
-        <label class="auto-backup-toggle">
-          <input type="checkbox" id="autoBackupToggle">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="data-settings-row">
-        <div class="data-settings-info">
           <div class="data-settings-label">服务器同步</div>
-          <div class="data-settings-desc" id="serverSyncDesc">双通道存储：本地 IndexedDB + 服务器文件备份（清理浏览器数据不丢）</div>
+          <div class="data-settings-desc" id="serverSyncDesc">双通道存储：本地 IndexedDB + 服务器文件备份（清理浏览器数据不丢）。旧的内联图片会在后台自动转存为文件。</div>
         </div>
         <span class="backup-status" id="serverSyncStatus"></span>
       </div>
@@ -1919,6 +1942,7 @@
         <button class="btn-action danger" id="btnClearData">清除</button>
       </div>
       <div class="backup-status" id="backupStatus"></div>
+      <div class="pl-op-status" id="plOpStatus"></div>
     </div>
   </div>
 </div>
@@ -1960,6 +1984,37 @@
 <script>
 (function() {
   'use strict';
+
+  /* ============================================
+     双模式（2026-09-25 改造）：本机全功能编辑 / 外网纯展示
+     - 本机/局域网（server.py）：IndexedDB 编辑 + server.py 同步，上传图片经
+       /api/pl/img 服务端压缩存文件，记录只存相对 URL（imgs/pl/xxx.webp）
+     - 外网（EdgeOne 静态部署）：只读展示，fetch 发布快照 tools/data/prompt-library.json
+       （图片为 imgs/pl-web/ 文件 URL，随仓库部署），隐藏一切编辑入口
+     - ?preview=1 可在本机强制进入展示模式预览外网效果
+     ============================================ */
+  function isLocalHost() {
+    var h = location.hostname;
+    return h === '' || h === 'localhost' || h === '127.0.0.1' || h === '::1' ||
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(h) ||
+      /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h) ||
+      /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(h);
+  }
+  var IS_PREVIEW = /[?&]preview=1/.test(location.search);
+  var IS_PUBLIC = IS_PREVIEW || !isLocalHost();
+  var PUBLIC_DATA_URL = './data/prompt-library.json';   // 发布快照（git push 后线上生效）
+
+  function loadPublicData() {
+    /* 展示模式：线上不加时间戳（保留 CDN 缓存，与 bookmark-manager 约定一致）；
+       本机 ?preview=1 预览时加时间戳，避免读到旧快照误判 */
+    var url = IS_PREVIEW ? PUBLIC_DATA_URL + '?t=' + Date.now() : PUBLIC_DATA_URL;
+    return fetch(url, { cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(d) {
+        allPrompts = (d && Array.isArray(d.records)) ? d.records : [];
+        return allPrompts.length;
+      });
+  }
 
   /* ============================================
      IndexedDB Data Layer
@@ -2069,6 +2124,7 @@
      ============================================ */
   var serverAvailable = false;
   var _syncTimer = null;
+  var _suppressSync = false; /* 图片转存等批量写期间压掉防抖全量同步（避免反复 POST ~80MB 旧数据） */
 
   function probeServer() {
     return fetch('/api/health', { method: 'GET', cache: 'no-store' })
@@ -2091,7 +2147,7 @@
   }
 
   function scheduleServerSync() {
-    if (!serverAvailable) return;
+    if (!serverAvailable || _suppressSync) return;
     clearTimeout(_syncTimer);
     _syncTimer = setTimeout(function() { pushToServer(); }, 800);
   }
@@ -2987,13 +3043,17 @@
             tagsHtml += '<span class="card-tag">' + escapeHtml(t) + '</span>';
           });
         }
+        /* 未发布记录：本机模式显示橙色「仅本机」徽标（快照会过滤，外网不可见） */
+        if (!IS_PUBLIC && p.published === false) {
+          tagsHtml += '<span class="card-tag card-tag-local">仅本机</span>';
+        }
 
         card.innerHTML =
           '<div class="card-cover">' + coverImg +
             (tagsHtml ? '<div class="card-cover-tags">' + tagsHtml + '</div>' : '') +
             '<div class="card-actions">' +
               '<button class="card-action-btn" data-action="copy" title="复制提示词"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
-              '<button class="card-action-btn" data-action="edit" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+              (IS_PUBLIC ? '' : '<button class="card-action-btn" data-action="edit" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>') +
             '</div>' +
             '<div class="card-cover-overlay">' +
               '<div class="card-overlay-title">' + escapeHtml(p.title || '未命名') + '</div>' +
@@ -3014,7 +3074,8 @@
             showToast('已复制提示词');
           });
         });
-        card.querySelector('[data-action="edit"]').addEventListener('click', function(e) {
+        var editBtn = card.querySelector('[data-action="edit"]');
+        if (editBtn) editBtn.addEventListener('click', function(e) {
           e.stopPropagation();
           document.getElementById('editTitle').dataset.new = '0';
           goToEdit(p);
@@ -3036,7 +3097,10 @@
      Detail View
      ============================================ */
   function goToDetail(id) {
-    dbGet(id).then(function(p) {
+    var fetchOne = IS_PUBLIC
+      ? Promise.resolve(allPrompts.find(function(r) { return r && r.id === id; }))
+      : dbGet(id);
+    fetchOne.then(function(p) {
       if (!p) return;
       currentPrompt = p;
       /* Reset translation state on new detail */
@@ -3362,8 +3426,8 @@
     counter.style.display = 'block';
     counter.textContent = (galleryIndex + 1) + ' / ' + imgs.length;
 
-    /* Cover button */
-    coverBtn.style.display = 'block';
+    /* Cover button（展示模式隐藏——只读不可改封面） */
+    coverBtn.style.display = IS_PUBLIC ? 'none' : 'block';
     if (galleryIndex === coverIdx) {
       coverBtn.classList.add('is-cover');
       coverBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>当前封面';
@@ -3402,6 +3466,8 @@
       document.getElementById('editTitle').value = prompt.title || '';
       document.getElementById('editPrompt').value = prompt.template || '';
       editTags = (prompt.tags && prompt.tags.slice()) || [];
+      var pubToggle = document.getElementById('editPublishToggle');
+      if (pubToggle) pubToggle.checked = prompt.published !== false; /* 旧数据无此字段默认发布 */
       editImages = (prompt.images && prompt.images.map(function(src, i) {
         return { dataURL: src, isCover: i === (prompt.coverIndex || 0) };
       })) || [];
@@ -3413,6 +3479,8 @@
       document.getElementById('editPrompt').value = '';
       editTags = [];
       editImages = [];
+      var pubToggleNew = document.getElementById('editPublishToggle');
+      if (pubToggleNew) pubToggleNew.checked = true; /* 新建默认对外发布 */
     }
     renderEditTags();
     renderEditImages();
@@ -3714,6 +3782,9 @@
       if (editImages[i].isCover) { coverIndex = i; break; }
     }
 
+    var pubToggleEl = document.getElementById('editPublishToggle');
+    var published = pubToggleEl ? pubToggleEl.checked : true;
+
     var now = Date.now();
     var isNew = !currentPrompt || !currentPrompt.id || isNewFlag;
 
@@ -3739,6 +3810,7 @@
       images: images,
       coverIndex: coverIndex,
       tags: editTags.slice(),
+      published: published,
       createdAt: (currentPrompt && currentPrompt.createdAt) ? currentPrompt.createdAt : now,
       updatedAt: now
     };
@@ -3790,6 +3862,7 @@
   }
 
   function loadAll() {
+    if (IS_PUBLIC) return Promise.resolve(); /* 展示模式：数据已在 allPrompts 内存中 */
     return dbGetAll().then(function(list) {
       allPrompts = list || [];
     });
@@ -3891,8 +3964,45 @@
     });
   }
 
-  /* 编辑视图图片处理：压缩后入列 */
+  /* 编辑视图图片处理：
+     - 本地服务可用：原图发 /api/pl/img 服务端压缩（PIL，最长边 1600 / WebP q82）→
+       存 tools/imgs/pl/ 文件，记录只存相对 URL（与作品集上传压缩同链路）
+     - 服务不可用（纯静态/未起服务）：回退本地 canvas 压缩为 base64（老行为），
+       下次服务可用后可用「图片转存为文件」瘦身 */
+  function uploadImageToServer(file) {
+    return fileToDataURL(file).then(function(dataURL) {
+      return fetch('/api/pl/img', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataURL: dataURL })
+      }).then(function(r) {
+        if (!r.ok) return r.json().catch(function() { return null; }).then(function(j) {
+          throw new Error(j && j.message ? j.message : '服务端返回 ' + r.status);
+        });
+        return r.json();
+      }).then(function(j) {
+        if (!j || j.status !== 'ok' || !j.url) throw new Error(j && j.message || '返回数据异常');
+        return j.url;
+      });
+    });
+  }
+
   function addEditImage(file) {
+    if (serverAvailable) {
+      uploadImageToServer(file).then(function(url) {
+        editImages.push({ dataURL: url, isCover: editImages.length === 0 });
+        renderEditImages();
+      }).catch(function(err) {
+        showToast('服务端上传失败，已改用本地压缩：' + (err.message || '未知错误'));
+        compressImageFile(file).then(function(dataURL) {
+          editImages.push({ dataURL: dataURL, isCover: editImages.length === 0 });
+          renderEditImages();
+        }).catch(function(err2) {
+          showToast('图片处理失败：' + (err2.message || '未知错误'));
+        });
+      });
+      return;
+    }
     compressImageFile(file).then(function(dataURL) {
       editImages.push({ dataURL: dataURL, isCover: editImages.length === 0 });
       renderEditImages();
@@ -4632,24 +4742,101 @@
     this.value = '';
   });
 
-  /* Backup now — 结果必须同时写进面板状态栏：用户是在面板里点的按钮，
-     只弹 toast 时若被遮挡/一闪而过，就会表现为"点了没反应"。 */
-  document.getElementById('btnBackupNow').addEventListener('click', function() {
-    var status = document.getElementById('backupStatus');
-    if (status) status.textContent = '正在备份…';
-    backupToLocalStorage().then(function(count) {
-      var now = new Date();
-      if (status) status.textContent = '已备份 ' + count + ' 条 (' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0') + ')';
-      showToast('已备份 ' + count + ' 条数据到浏览器');
+  /* 面板内持久状态行（转存/发布进度与结果） */
+  function setPlOp(text, cls) {
+    var el = document.getElementById('plOpStatus');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'pl-op-status' + (cls ? ' is-' + cls : '');
+    if (text) console.log('[PL]', text);
+  }
+  /* 图片转存为文件：旧内联 base64 → /api/pl/img 服务端压缩 → 存文件 → 记录改存 URL。
+     本机模式下检测到旧 base64 图片会自动后台跑一次（一次性，转完不再触发）；
+     也可手动调用（opts.auto=false）。转存后数据文件从 ~80MB 瘦到 KB 级。 */
+  function runMigrateLegacy(opts) {
+    opts = opts || {};
+    if (!serverAvailable) return Promise.resolve();
+    /* 自动触发时若用户正在编辑/查看详情，跳过本次，下次加载再试（避免改记录中途被换图） */
+    if (opts.auto && (currentView === 'edit' || currentView === 'detail')) return Promise.resolve();
+    return dbGetAll().then(function(list) {
+      var targets = (list || []).filter(function(r) {
+        return r && r.images && r.images.some(function(s) {
+          return typeof s === 'string' && s.indexOf('data:') === 0;
+        });
+      });
+      if (!targets.length) return 0;
+      var totalImgs = targets.reduce(function(n, r) {
+        return n + (r.images || []).filter(function(s) { return typeof s === 'string' && s.indexOf('data:') === 0; }).length;
+      }, 0);
+      var done = 0, imgsDone = 0;
+      var prefix = opts.auto ? '自动转存旧图片' : '转存中';
+      _suppressSync = true; /* 批量写期间压掉防抖全量同步，结束后显式推一次 */
+      setPlOp(prefix + '：0/' + targets.length + ' 条 / 0/' + totalImgs + ' 张图…', 'working');
+      return targets.reduce(function(chain, r) {
+        return chain.then(function() {
+          var imgChain = (r.images || []).reduce(function(pp, s, idx) {
+            return pp.then(function() {
+              if (typeof s !== 'string' || s.indexOf('data:') !== 0) return null;
+              return fetch('/api/pl/img', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dataURL: s })
+              }).then(function(resp) { return resp.json(); }).then(function(j) {
+                if (j && j.status === 'ok' && j.url) { r.images[idx] = j.url; imgsDone++; }
+              }).catch(function() { return null; });
+            }).then(function() {
+              setPlOp(prefix + '：' + done + '/' + targets.length + ' 条 / ' + imgsDone + '/' + totalImgs + ' 张图…', 'working');
+            });
+          }, Promise.resolve());
+          return imgChain.then(function() { return dbPut(r); }).then(function() {
+            done++;
+            setPlOp(prefix + '：' + done + '/' + targets.length + ' 条 / ' + imgsDone + '/' + totalImgs + ' 张图…', 'working');
+          });
+        });
+      }, Promise.resolve()).then(function() {
+        _suppressSync = false;
+        return pushToServer().then(function() { return loadAll(); });
+      }).then(function() {
+        renderList();
+        setPlOp((opts.auto ? '旧图片已自动转存' : '转存完成') + '：' + targets.length + ' 条 / ' + imgsDone + ' 张图已文件化', 'ok');
+        return targets.length;
+      });
     }).catch(function(err) {
-      var msg = err && err.message ? err.message : '未知错误';
-      if (status) status.textContent = '备份失败：' + msg;
-      showToast('备份失败：' + msg);
+      _suppressSync = false;
+      setPlOp('转存中断：' + (err && err.message ? err.message : '未知错误'), 'err');
+    });
+  }
+
+  /* 生成发布快照：全量推送最新数据 → 服务端过滤 published → 图片落 imgs/pl-web/ →
+     写 tools/data/prompt-library.json；git 提交推送后外网生效 */
+  document.getElementById('btnPublishSnapshot').addEventListener('click', function() {
+    var btn = this;
+    if (btn.disabled) return;
+    if (!serverAvailable) { setPlOp('需要本地服务运行（server.py）才能生成快照', 'err'); return; }
+    btn.disabled = true;
+    var origText = btn.textContent;
+    btn.textContent = '生成中…';
+    setPlOp('正在推送最新数据…', 'working');
+    dbGetAll().then(function(list) {
+      return fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: list || [] })
+      }).then(function(r) {
+        if (!r.ok) throw new Error('推送数据失败（HTTP ' + r.status + '）');
+        setPlOp('正在生成发布快照…', 'working');
+        return fetch('/api/pl/publish', { method: 'POST' });
+      }).then(function(r) { return r.json(); });
+    }).then(function(j) {
+      if (!j || j.status !== 'ok') throw new Error(j && j.message ? j.message : '生成失败');
+      setPlOp('快照已生成：' + j.count + ' 条 / ' + j.images + ' 张图（' + j.imageMB + 'MB）。git 提交推送后线上生效', 'ok');
+    }).catch(function(err) {
+      setPlOp('生成失败：' + (err && err.message ? err.message : '未知错误'), 'err');
+    }).then(function() {
+      btn.disabled = false;
+      btn.textContent = origText;
     });
   });
-
-  /* Compress existing images */
-  document.getElementById('btnCompressImages').addEventListener('click', compressAllImages);
 
   /* Clear all data (danger) */
   document.getElementById('btnClearData').addEventListener('click', function() {
@@ -4664,37 +4851,6 @@
     }).catch(function(err) {
       showToast('读取失败：' + (err && err.message ? err.message : '未知错误'));
     });
-  });
-
-  /* Auto backup toggle */
-  var autoBackupToggle = document.getElementById('autoBackupToggle');
-  autoBackupToggle.checked = isAutoBackupEnabled();
-  autoBackupToggle.addEventListener('change', function() {
-    setAutoBackupEnabled(this.checked);
-    if (this.checked) {
-      var blockedMsg = backupBlockReason();
-      if (blockedMsg) {
-        /* 数据量超限时自动备份根本不可能成功，明确告知并回退开关，避免用户以为已开启 */
-        setAutoBackupEnabled(false);
-        this.checked = false;
-        var st = document.getElementById('backupStatus');
-        if (st) st.textContent = '无法开启：' + blockedMsg;
-        showToast('本地备份不可用，请用「导出」');
-        return;
-      }
-      backupToLocalStorage().then(function(count) {
-        var status = document.getElementById('backupStatus');
-        if (status) status.textContent = '自动备份已启用，' + count + ' 条已备份';
-        showToast('自动备份已开启');
-      }).catch(function(err) {
-        var status2 = document.getElementById('backupStatus');
-        if (status2) status2.textContent = '自动备份失败：' + (err && err.message ? err.message : '未知错误');
-        showToast('自动备份失败');
-      });
-    } else {
-      document.getElementById('backupStatus').textContent = '自动备份已关闭';
-      showToast('自动备份已关闭');
-    }
   });
 
   /* ============================================
@@ -4804,35 +4960,66 @@
   /* ============================================
      Init
      ============================================ */
-  openDB().then(function() {
-    renderCategories();
-    renderFloatingCategories();
-    /* Check if DB is empty but localStorage has backup */
-    checkAndOfferRestore();
-    return loadAll();
-  }).then(function() {
-    renderList();
-    handleScrollVisibility();
-    /* 双通道同步（规则 29）：探测服务器 → 拉取合并（恢复场景）→ 本地有数据则推送备份 */
-    probeServer().then(function() {
-      return pullFromServer();
-    }).then(function(added) {
-      if (added > 0) {
-        return loadAll().then(function() { renderList(); handleScrollVisibility(); });
-      }
-      return null;
-    }).then(function() {
-      return dbGetAll();
-    }).then(function(list) {
-      if (list && list.length) pushToServer();
-      updateServerSyncStatus();
-    }).catch(function() {
-      updateServerSyncStatus();
+  if (IS_PUBLIC) {
+    /* ===== 展示模式（外网 / ?preview=1）：纯只读，隐藏一切编辑入口 ===== */
+    ['btnNewPrompt', 'btnDataSettings', 'detailEdit', 'detailDelete', 'btnSaveAsNew'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
     });
-  }).catch(function(err) {
-    console.error('Init error:', err);
-    showToast('初始化失败，请刷新重试');
-  });
+    var heroSub = document.querySelector('.hero-left p');
+    if (heroSub) heroSub.textContent = 'AI 绘画提示词模板精选，可复制即用';
+    var emptyBox = document.getElementById('emptyState');
+    if (emptyBox) {
+      var eh = emptyBox.querySelector('h3');
+      var ep = emptyBox.querySelector('p');
+      if (eh) eh.textContent = '内容准备中';
+      if (ep) ep.textContent = '提示词库正在整理，稍后再来看看';
+    }
+    loadPublicData().then(function() {
+      renderCategories();
+      renderFloatingCategories();
+      renderList();
+      handleScrollVisibility();
+    }).catch(function(err) {
+      console.error('[Public] 发布快照加载失败：', err);
+      if (skeletonGrid) skeletonGrid.style.display = 'none';
+      if (emptyBox) emptyBox.style.display = 'block';
+      if (promptGrid) promptGrid.style.display = 'none';
+    });
+  } else {
+    /* ===== 本机模式：全功能编辑 + 双通道同步（原有逻辑不变） ===== */
+    openDB().then(function() {
+      renderCategories();
+      renderFloatingCategories();
+      /* Check if DB is empty but localStorage has backup */
+      checkAndOfferRestore();
+      return loadAll();
+    }).then(function() {
+      renderList();
+      handleScrollVisibility();
+      /* 双通道同步（规则 29）：探测服务器 → 拉取合并（恢复场景）→ 本地有数据则推送备份 */
+      probeServer().then(function() {
+        return pullFromServer();
+      }).then(function(added) {
+        if (added > 0) {
+          return loadAll().then(function() { renderList(); handleScrollVisibility(); });
+        }
+        return null;
+      }).then(function() {
+        return dbGetAll();
+      }).then(function(list) {
+        if (list && list.length) pushToServer();
+        updateServerSyncStatus();
+        /* 检测到旧内联 base64 图片就后台自动转存为文件（一次性；转完不再触发） */
+        return runMigrateLegacy({ auto: true });
+      }).catch(function() {
+        updateServerSyncStatus();
+      });
+    }).catch(function(err) {
+      console.error('Init error:', err);
+      showToast('初始化失败，请刷新重试');
+    });
+  }
 
 })();
 </script>

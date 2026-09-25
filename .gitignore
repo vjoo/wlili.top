@@ -12,6 +12,9 @@ tools/probe_server.py
 #    触发 EdgeOne 单文件 25MB 上限导致部署失败、新工具上不了线（2026-09-24）
 tools/*-data.json*
 
+# 提示词库本机图片存储（server.py /api/pl/img 写入；发布快照会拷贝到 imgs/pl-web/ 再入库）
+tools/imgs/pl/
+
 # 本地工具与运行时缓存
 _restart_server.py
 __pycache__/
