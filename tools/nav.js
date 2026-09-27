@@ -8,6 +8,16 @@
  */
 (function() {
 
+  /* 本地/局域网访问判定（与 prompt-library.html 双模式同款标准；外网一律 false） */
+  function isLocalHost() {
+    var h = location.hostname;
+    return h === '' || h === 'localhost' || h === '127.0.0.1' || h === '::1' ||
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(h) ||
+      /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h) ||
+      /^172\.(1[6-9]|2\d|3[01])\.[0-9]{1,3}\.[0-9]{1,3}$/.test(h);
+  }
+  var IS_LOCAL = isLocalHost();
+
   function getCurrentFile() {
     var path = window.location.pathname;
     var decoded = decodeURIComponent(path);
@@ -16,7 +26,7 @@
   }
 
   var currentFile = getCurrentFile();
-  var SIDEBAR_PAGES = ['filament-manager.html', 'print-manager.html', 'seamless-pattern.html'];
+  var SIDEBAR_PAGES = ['admin.html'];
   var hasSidebar = SIDEBAR_PAGES.includes(currentFile);
 
   // ============================================
@@ -46,14 +56,12 @@
       tools: [
         { name: 'IP形象生成器', href: './ip-mascot.html' },
         { name: 'AI提示词库', href: './prompt-library.html' },
-        { name: '四方连图素材库', href: './seamless-pattern.html' },
         { name: '构图编辑器', href: './composition-editor.html' }
       ]
     },
     {
       label: '查询参考',
       tools: [
-        { name: '3D耗材管理', href: './filament-manager.html' },
         { name: '3D模型预览', href: './model-viewer.html' },
         { name: '音标速查', href: './phonetic-chart.html' },
         { name: '自助校历生成', href: './school-calendar.html' }
@@ -62,7 +70,6 @@
     {
       label: '效率管理',
       tools: [
-        { name: '打印管理器', href: './print-manager.html' },
         { name: '精选收藏夹', href: './bookmark-manager.html' }
       ]
     },
@@ -73,7 +80,12 @@
         { name: '免费代理订阅', href: './proxy-sub.html' }
       ]
     }
-  ];
+];
+
+  /* 数据暴露：统一后台（admin.html）直接消费这份人工分组数据 —— 单一数据源，勿在别处重写分组 */
+  window.ToolsNavData = { categories: TOOL_CATEGORIES, isLocal: IS_LOCAL };
+  /* 后台有自己的顶栏与菜单：admin.html 只取数据，不插入导航 DOM */
+  if (currentFile === 'admin.html') return;
 
   /* 内嵌 fallback 样式 */
   var FALLBACK_STYLE = '/* nav.js v2 fallback styles */\n' +
@@ -136,7 +148,7 @@
     // 构建分类网格 HTML
     var megaHTML = '';
     TOOL_CATEGORIES.forEach(function(cat) {
-      var items = cat.tools.map(function(t) {
+      var items = cat.tools.filter(function(t) { return !t.localOnly || IS_LOCAL; }).map(function(t) {
         var isActive = currentFile === t.href || currentFile === t.href.replace('./', '');
         var cls = isActive ? 'nav-mega-item active' : 'nav-mega-item';
         return '<a href="' + t.href + '" class="' + cls + '" data-name="' + t.name.toLowerCase() + '">' + t.name + '</a>';
@@ -172,6 +184,7 @@
     '<div class="nav-links">' +
       '<a href="../index.html" class="nav-link' + (isHomeActive ? ' active' : '') + '">Studio</a>' +
       '<a href="./index.html" class="nav-link' + (isToolsHomeActive ? ' active' : '') + '">Tools</a>' +
+      (IS_LOCAL ? '<a href="./_shared/admin.html" class="nav-link nav-admin-link' + (currentFile === 'admin.html' ? ' active' : '') + '" title="统一后台（仅本地/局域网可访问）">后台</a>' : '') +
       '<div class="nav-dropdown-wrap" id="navDropdownWrap">' +
         '<span class="nav-dropdown-trigger" id="navDropdownTrigger">' +
           'Tools ' +

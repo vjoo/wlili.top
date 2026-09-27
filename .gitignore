@@ -37,3 +37,15 @@ scripts/check_redundant_files.py
 
 # WorkBuddy 本地工具数据（工作日志/会话记忆，仅本地使用，不上传部署）
 .workbuddy/
+
+# ⚠️ 设计过程产物：仅本地留档，不上线（2026-09-27）
+# tools/_concept/ 含概念稿、探针页（单文件 4.6MB）、190+ 张设计截图、本地迁移脚本、__pycache__，共 ~37MB
+tools/_concept/
+# 根目录设计截图（授权表单等）
+_shots/
+# 本地归档的旧工具页（已从线上移除，仅本地回退备份，不对外提供）
+tools/_archive/
+
+# 一次性探针页 / 临时脚本与目录（含本机路径），用完即弃，禁止入库
+_probe_*.html
+_tmp_*

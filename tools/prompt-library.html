@@ -1673,9 +1673,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       新建
     </button>
-    <button class="btn-settings" id="btnDataSettings" title="数据安全">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
   </div>
 </div>
 
@@ -1896,57 +1893,6 @@
   </div>
 </div>
 
-<!-- Data Settings Modal -->
-<div class="modal-overlay" id="dataSettingsOverlay">
-  <div class="modal-box data-settings-box">
-    <div class="data-settings-header">
-      <span class="modal-title">数据安全</span>
-      <button class="data-settings-close" id="dataSettingsClose">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="data-settings-body">
-      <div class="data-settings-row">
-        <div class="data-settings-info">
-          <div class="data-settings-label">生成发布快照</div>
-          <div class="data-settings-desc">把已发布的记录生成为外网展示数据（tools/data/prompt-library.json + imgs/pl-web/ 图片），git 提交推送后线上生效</div>
-        </div>
-        <button class="btn-action secondary" id="btnPublishSnapshot">生成</button>
-      </div>
-      <div class="data-settings-row">
-        <div class="data-settings-info">
-          <div class="data-settings-label">导出数据</div>
-          <div class="data-settings-desc">下载成 JSON 文件存到磁盘：无容量限制，可跨设备、长期保存，清浏览器数据也不丢</div>
-        </div>
-        <button class="btn-action secondary" id="btnExportData">导出</button>
-      </div>
-      <div class="data-settings-row">
-        <div class="data-settings-info">
-          <div class="data-settings-label">导入数据</div>
-          <div class="data-settings-desc">从 JSON 文件导入，合并到现有数据（同名覆盖）</div>
-        </div>
-        <button class="btn-action secondary" id="btnImportData">导入</button>
-      </div>
-      <div class="data-settings-row">
-        <div class="data-settings-info">
-          <div class="data-settings-label">服务器同步</div>
-          <div class="data-settings-desc" id="serverSyncDesc">双通道存储：本地 IndexedDB + 服务器文件备份（清理浏览器数据不丢）。旧的内联图片会在后台自动转存为文件。</div>
-        </div>
-        <span class="backup-status" id="serverSyncStatus"></span>
-      </div>
-      <div class="data-settings-row is-danger">
-        <div class="data-settings-info">
-          <div class="data-settings-label">清除数据</div>
-          <div class="data-settings-desc">清空全部提示词，并同时清除本地备份与服务器备份；执行前会自动下载一份 JSON 备份</div>
-        </div>
-        <button class="btn-action danger" id="btnClearData">清除</button>
-      </div>
-      <div class="backup-status" id="backupStatus"></div>
-      <div class="pl-op-status" id="plOpStatus"></div>
-    </div>
-  </div>
-</div>
-<input type="file" id="importFileInput" accept=".json" style="display:none;">
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -2195,18 +2141,6 @@
     });
   }
 
-  // 数据安全面板：显示当前服务器同步状态
-  function updateServerSyncStatus() {
-    var el = document.getElementById('serverSyncStatus');
-    if (!el) return;
-    if (serverAvailable) {
-      el.textContent = '服务器同步已开启';
-      el.style.color = 'var(--green)';
-    } else {
-      el.textContent = '仅本地存储（未检测到本地服务器）';
-      el.style.color = 'var(--ink-quaternary)';
-    }
-  }
 
   /* ============================================
      Data Backup & Export / Import
@@ -2282,106 +2216,9 @@
     }
   }
 
-  function exportAllData() {
-    return dbGetAll().then(function(list) {
-      var payload = {
-        version: 1,
-        exportedAt: Date.now(),
-        tool: 'prompt-library',
-        prompts: list || []
-      };
-      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'prompt-library-backup-' + new Date().toISOString().slice(0,10) + '.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('已导出 ' + (list ? list.length : 0) + ' 条数据');
-    }).catch(function(err) {
-      showToast('导出失败：' + (err.message || '未知错误'));
-    });
-  }
 
-  /* 清除全部数据：
-     1) 先自动导出一份 JSON 备份（误操作可恢复）
-     2) 清空 IndexedDB
-     3) 移除 localStorage 本地备份
-     4) 向服务器推送空数组，覆盖服务器备份 */
-  function clearAllData() {
-    return Promise.resolve(exportAllData())
-      .then(function() { return dbClearAll(); })
-      .then(function() {
-        try { localStorage.removeItem(BACKUP_KEY); } catch (e) { console.error('[Clear] remove backup failed', e); }
-        return pushToServer();
-      })
-      .then(function() {
-        return loadAll().then(renderList);
-      })
-      .then(function() {
-        var ov = document.getElementById('dataSettingsOverlay');
-        if (ov) ov.classList.remove('active');
-        var status = document.getElementById('backupStatus');
-        if (status) status.textContent = '数据已清空，本地备份已移除';
-        showToast('已清除全部数据（备份文件已自动下载）');
-      })
-      .catch(function(err) {
-        showToast('清除失败：' + (err && err.message ? err.message : '未知错误'));
-      });
-  }
 
-  function importDataFromFile(file) {
-    return new Promise(function(resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          var data = JSON.parse(e.target.result);
-          if (!data || !Array.isArray(data.prompts)) {
-            reject(new Error('文件格式不正确'));
-            return;
-          }
-          resolve(data.prompts);
-        } catch (err) {
-          reject(new Error('无法解析 JSON 文件'));
-        }
-      };
-      reader.onerror = function() { reject(new Error('读取文件失败')); };
-      reader.readAsText(file);
-    });
-  }
 
-  function mergeImportRecords(records) {
-    var added = 0, updated = 0;
-    var promises = records.map(function(r) {
-      if (!r || !r.id) return Promise.resolve();
-      /* Ensure required fields */
-      var record = {
-        id: r.id,
-        title: r.title || '未命名',
-        template: r.template || '',
-        variables: r.variables || {},
-        images: r.images || [],
-        coverIndex: r.coverIndex || 0,
-        tags: r.tags || [],
-        createdAt: r.createdAt || Date.now(),
-        updatedAt: r.updatedAt || Date.now()
-      };
-      return dbGet(record.id).then(function(existing) {
-        if (existing) {
-          updated++;
-          return dbPut(record);
-        } else {
-          added++;
-          return dbAdd(record);
-        }
-      });
-    });
-    return Promise.all(promises).then(function() {
-      return { added: added, updated: updated };
-    });
-  }
 
   function replaceAllRecords(records) {
     /* Clear all existing */
@@ -4681,66 +4518,6 @@
     hideModal();
   });
 
-  /* ============================================
-     Data Management Event Listeners
-     ============================================ */
-  /* Settings button — open modal */
-  document.getElementById('btnDataSettings').addEventListener('click', function() {
-    document.getElementById('dataSettingsOverlay').classList.add('active');
-    /* Refresh backup status when opening */
-    var status = document.getElementById('backupStatus');
-    var blocked = backupBlockReason();
-    if (blocked) {
-      /* 数据量超限时直接说明原因，否则状态栏永远是误导性的"尚未备份" */
-      if (status) status.textContent = blocked;
-    } else if (isAutoBackupEnabled()) {
-      backupToLocalStorage().then(function(count) {
-        if (status) status.textContent = '自动备份已启用，' + count + ' 条已备份';
-      }).catch(function(err) {
-        if (status) status.textContent = '自动备份失败：' + (err && err.message ? err.message : '未知错误');
-      });
-    } else {
-      var backup = getBackupFromLocalStorage();
-      if (status) {
-        if (backup) {
-          status.textContent = '上次备份 ' + backup.prompts.length + ' 条 (' + new Date(backup.exportedAt).toLocaleString() + ')';
-        } else {
-          status.textContent = '尚未备份';
-        }
-      }
-    }
-  });
-  /* Close modal */
-  document.getElementById('dataSettingsClose').addEventListener('click', function() {
-    document.getElementById('dataSettingsOverlay').classList.remove('active');
-  });
-  document.getElementById('dataSettingsOverlay').addEventListener('click', function(e) {
-    if (e.target === this) this.classList.remove('active');
-  });
-
-  /* Export */
-  document.getElementById('btnExportData').addEventListener('click', exportAllData);
-
-  /* Import */
-  document.getElementById('btnImportData').addEventListener('click', function() {
-    document.getElementById('importFileInput').click();
-  });
-  document.getElementById('importFileInput').addEventListener('change', function(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    importDataFromFile(file).then(function(records) {
-      /* Default to merge (safest: keeps existing, overwrites same ID) */
-      mergeImportRecords(records).then(function(result) {
-        showToast('导入完成：新增 ' + result.added + ' 条，覆盖 ' + result.updated + ' 条');
-        loadAll().then(renderList);
-      }).catch(function(err) {
-        showToast('导入失败：' + (err.message || '未知错误'));
-      });
-    }).catch(function(err) {
-      showToast('导入失败：' + (err.message || '未知错误'));
-    });
-    this.value = '';
-  });
 
   /* 面板内持久状态行（转存/发布进度与结果） */
   function setPlOp(text, cls) {
@@ -4807,51 +4584,6 @@
     });
   }
 
-  /* 生成发布快照：全量推送最新数据 → 服务端过滤 published → 图片落 imgs/pl-web/ →
-     写 tools/data/prompt-library.json；git 提交推送后外网生效 */
-  document.getElementById('btnPublishSnapshot').addEventListener('click', function() {
-    var btn = this;
-    if (btn.disabled) return;
-    if (!serverAvailable) { setPlOp('需要本地服务运行（server.py）才能生成快照', 'err'); return; }
-    btn.disabled = true;
-    var origText = btn.textContent;
-    btn.textContent = '生成中…';
-    setPlOp('正在推送最新数据…', 'working');
-    dbGetAll().then(function(list) {
-      return fetch('/api/prompts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ records: list || [] })
-      }).then(function(r) {
-        if (!r.ok) throw new Error('推送数据失败（HTTP ' + r.status + '）');
-        setPlOp('正在生成发布快照…', 'working');
-        return fetch('/api/pl/publish', { method: 'POST' });
-      }).then(function(r) { return r.json(); });
-    }).then(function(j) {
-      if (!j || j.status !== 'ok') throw new Error(j && j.message ? j.message : '生成失败');
-      setPlOp('快照已生成：' + j.count + ' 条 / ' + j.images + ' 张图（' + j.imageMB + 'MB）。git 提交推送后线上生效', 'ok');
-    }).catch(function(err) {
-      setPlOp('生成失败：' + (err && err.message ? err.message : '未知错误'), 'err');
-    }).then(function() {
-      btn.disabled = false;
-      btn.textContent = origText;
-    });
-  });
-
-  /* Clear all data (danger) */
-  document.getElementById('btnClearData').addEventListener('click', function() {
-    dbGetAll().then(function(list) {
-      var count = (list || []).length;
-      if (!count) { showToast('当前没有数据可清除'); return; }
-      showModal(
-        '清除全部数据',
-        '将清空 ' + count + ' 条提示词，并同时移除本地备份与服务器备份。确认后会先自动下载一份 JSON 备份，此操作不可撤销。',
-        function() { clearAllData(); }
-      );
-    }).catch(function(err) {
-      showToast('读取失败：' + (err && err.message ? err.message : '未知错误'));
-    });
-  });
 
   /* ============================================
      Floating Category Bar & Back-to-Top
@@ -4962,7 +4694,7 @@
      ============================================ */
   if (IS_PUBLIC) {
     /* ===== 展示模式（外网 / ?preview=1）：纯只读，隐藏一切编辑入口 ===== */
-    ['btnNewPrompt', 'btnDataSettings', 'detailEdit', 'detailDelete', 'btnSaveAsNew'].forEach(function(id) {
+    ['btnNewPrompt', 'detailEdit', 'detailDelete', 'btnSaveAsNew'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
@@ -5009,12 +4741,9 @@
         return dbGetAll();
       }).then(function(list) {
         if (list && list.length) pushToServer();
-        updateServerSyncStatus();
         /* 检测到旧内联 base64 图片就后台自动转存为文件（一次性；转完不再触发） */
         return runMigrateLegacy({ auto: true });
-      }).catch(function() {
-        updateServerSyncStatus();
-      });
+      }).catch(function() {});
     }).catch(function(err) {
       console.error('Init error:', err);
       showToast('初始化失败，请刷新重试');
