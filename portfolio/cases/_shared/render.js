@@ -1983,8 +1983,8 @@ var CaseRenderer = (function () {
     var list = (root || document).querySelectorAll('img[data-focus]');
     for (var i = 0; i < list.length; i++) applyFocusZoom(list[i]);
   }
-  function applyFocusZoom(img) {
-    if (img.dataset.focusApplied === '1') return true;
+  function applyFocusZoom(img, force) {
+    if (!force && img.dataset.focusApplied === '1') return true;
     var d = String(img.getAttribute('data-focus') || '50,50,1').split(',').map(Number);
     // ⚠️ 不能写 `d[0] || 50`：x=0（拖到最左/最上）时 0 是 falsy 会被替换成 50 → 前台位置错误
     var x = (d[0] === 0 || d[0]) ? Math.max(0, Math.min(100, d[0])) : 50;
@@ -2056,6 +2056,19 @@ var CaseRenderer = (function () {
       applyFocusZoom(e.target);
     }
   }, true);
+
+  // 窗口尺寸变化（拖拽窗口/断点切换布局）→ 已应用的焦点图按新容器尺寸重算。
+  // applyFocusZoom 按 box.clientWidth/Height 实时计算并覆盖样式，force=true 重跑即幂等重算，
+  // 不删 data-focus-applied（避免触发 CSS 的 opacity:0 预隐藏造成闪烁）。150ms 防抖。
+  var _fzTimer = null;
+  window.addEventListener('resize', function () {
+    if (_fzTimer) clearTimeout(_fzTimer);
+    _fzTimer = setTimeout(function () {
+      _fzTimer = null;
+      var list = document.querySelectorAll('img[data-focus-applied="1"]');
+      for (var i = 0; i < list.length; i++) applyFocusZoom(list[i], true);
+    }, 150);
+  });
 
   // ===== 媒体渲染（图片/动图/视频统一：按 URL 扩展名自动识别，后台不再区分上传类型） =====
   function videoPlaceholder(type, url, alt, focus) {
@@ -2153,6 +2166,12 @@ var CaseRenderer = (function () {
     var products = Array.isArray(s.products) ? s.products : [];
     panel += '<div class="pd-product-stage">';
     products.forEach(function (p) {
+      // pd-product-info 仅在 type/name/desc 至少有一个有值时渲染（no-info 卡取消纵向拉伸防空白）。
+      // ⚠ infoHtml 必须在 card div 之前构建：曾放在用之后，no-info 判定读到的是「上一张卡」的值
+      var infoHtml = '';
+      if (p.type) infoHtml += '<span class="pd-product-type">' + esc(p.type) + '</span>';
+      if (p.name) infoHtml += '<div class="pd-product-name">' + esc(p.name) + '</div>';
+      if (p.desc) infoHtml += '<div class="pd-product-desc">' + esc(p.desc) + '</div>';
       panel += '<div class="pd-product-card' + (infoHtml ? '' : ' no-info') + '">';
       // 焦点（item.imageFocus "x,y" 或 "x,y,zoom"）：加 data-focus 标记，由 applyFocusZoom 在图片
       // 加载后用 transform 方案应用（object-position 百分比 + 缩放倍数）；默认 50% 50% 居中、1x
@@ -2162,11 +2181,6 @@ var CaseRenderer = (function () {
         if (fv) fp = ' data-focus="' + esc(fv[1] + ',' + fv[2] + (fv[3] ? ',' + fv[3] : '')) + '"';
       }
       panel += '<div class="pd-product-img">' + (p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.name || '') + '"' + fp + '>' : '') + '</div>';
-      // pd-product-info 仅在 type/name/desc 至少有一个有值时渲染，避免空容器占位占空间
-      var infoHtml = '';
-      if (p.type) infoHtml += '<span class="pd-product-type">' + esc(p.type) + '</span>';
-      if (p.name) infoHtml += '<div class="pd-product-name">' + esc(p.name) + '</div>';
-      if (p.desc) infoHtml += '<div class="pd-product-desc">' + esc(p.desc) + '</div>';
       if (infoHtml) panel += '<div class="pd-product-info">' + infoHtml + '</div>';
       panel += '</div>';
     });

@@ -1743,6 +1743,7 @@
 .team-card-wrap {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;      /* 通用兜底：文案区(min 240px)+图组(500px)放不下时自动换行成上下，无需新增断点 */
   justify-content: space-between;
   align-items: stretch;
   background: var(--color-white, #ffffff);
@@ -1751,8 +1752,14 @@
 }
 
 .team-text {
-  flex: 1 1 auto;
-  min-width: 0;
+  /* basis 必须为 0 而非 auto：auto = 标题的 max-content（超长标题会把 basis 撑到上千 px），
+     配合父级 flex-wrap 会被误判「放不下」而整行换行，破坏 PC 横排效果。
+     basis 0 + grow 1 = 取剩余空间（与原压缩行为一致）；换行决策只剩 min-width 240 参与。 */
+  flex: 1 1 0;
+  /* min-width:240px 防竖排底线：原 min-width:0 允许被右图组无限挤压，
+     容器不足时文字区被压到几十 px → 标题/描述一字一行竖排（布局事故）。
+     挤压应全部由右侧图组承担（见 .team-grid 的 flex-shrink:1）。 */
+  min-width: 240px;
   padding: 3.75rem;
   display: flex;
   flex-direction: column;
@@ -1836,8 +1843,12 @@
 }
 
 .team-grid {
-  flex: 0 0 auto;
-  width: 500px;
+  /* 原为 flex:0 0 auto + width:500px（拒绝收缩）——容器不足时把 .team-text 挤成竖排。
+     改为可收缩：flex-basis 500px、shrink:1，空间不足时由图组让位（text 有 min-width:240px 保底）；
+     1025~1279 中屏与 ≤1024 纵排档下 width:100%，此处 width:auto 交给 flex-basis。 */
+  flex: 0 1 500px;
+  min-width: 0;
+  width: auto;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--gap-4, 0.25rem);
@@ -2734,11 +2745,10 @@
   background: #1a1a1a;
 }
 
-/* 客户 Logo 条：无论深色/浅色主题，卡片背景始终白色（Logo 漂浮在白底上）
-   同时固定文字 logo 颜色为深色，避免在白底上看不清 */
-[data-theme="dark"] .client-logo {
-  background: var(--color-white, #ffffff);
-}
+/* 客户 Logo 条：卡片底色由 .client-logo 的 var(--client-logo-bg, #ffffff) 全主题统一负责
+   （默认白、后台 logoBg 可配）。⚠ 勿在此再写 var(--color-white) 来「保白」——该令牌在
+   深色主题下会被反转为 #1a1a1a，注释写着保白、实际翻黑（曾致深色页 Logo 白底消失，
+   且特异性更高会盖掉 --client-logo-bg）。仅固定文字 logo 颜色为深色，避免在白底上看不清 */
 [data-theme="dark"] .client-logo-text {
   color: #1a1a1a;
 }
@@ -2918,6 +2928,7 @@
 .pd-hero-section {
 
   display: flex;
+  flex-wrap: wrap;      /* 通用兜底：文案列(540px)+产品面板放不下时自动换行成上下，无需新增断点 */
   align-items: center;
   gap: 3rem;
   padding-block: 5rem;        /* 仅上下；左右 36px 内缩交给 .container（与 .stats-section 一致） */
@@ -2933,7 +2944,11 @@
   align-items: flex-start;
   gap: 1.75rem;
   justify-content: center;
-  flex-shrink: 0;
+  /* 原 flex-shrink:0（拒绝收缩）——容器不足时挤压全由右侧产品面板承担，把 4:5 图挤成小方块。
+     改为可收缩 + min(280px,100%) 保底：宽屏仍 540px 不变；窄屏由文案列让位；
+     min() 里的 100% 保证容器更窄时不溢出，配合 .pd-hero-section 的 flex-wrap 自动换行。 */
+  flex-shrink: 1;
+  min-width: min(280px, 100%);
 }
 
 .pd-hero-badge {
@@ -3237,6 +3252,9 @@
   .pd-hero-copy { width: 100%; }
   .pd-product-panel { width: 100%; }
   .pd-product-stage { flex-direction: column; }
+  /* stage 变纵排后 no-info 卡必须横向撑满：align-self:flex-start 是 PC 横排「防底部空白」的，
+     在纵排下作用于横向 → 卡片收缩成 min-height 小方块、右侧留大片空白（回归事故） */
+  .pd-product-card.no-info { align-self: stretch; }
 
   /* Scene grid → single column */
   .pd-scene-grid-section { padding-block: 4rem; }
@@ -3247,6 +3265,26 @@
 
   /* Intro head → 移动端统一上下边距（与桌面 5rem 同节奏，按比例收紧） */
   .pd-intro-head-section { padding-block: 3rem; }
+}
+
+/* 产品首屏（pd-hero）中屏档：1025~1279 已放不下「左文案 + 右面板」双栏，
+   改上下堆叠、产品两卡并排铺满全宽 —— 否则半栏宽会把 4:5 产品图挤成小方块（内容近乎不可见）。
+   ≤1024 的堆叠与两卡纵排由上一档负责。 */
+@media (max-width: 1279px) and (min-width: 768px) {
+  .pd-hero-section { flex-direction: column; min-height: auto; }
+  .pd-hero-copy { width: 100%; }
+  .pd-product-panel { width: 100%; }
+}
+
+/* 团队区块（team）中屏档：1025~1279 双栏放不下 —— 文字区(含 3.75rem 大内边距)+图组(500px)
+   同行挤压会把文字压成竖排。改上下堆叠：文案在上全宽、图组在下全宽两列大图。
+   ≤1024 的纵排由上一档负责；≥1280 保持 PC 横排。 */
+@media (max-width: 1279px) and (min-width: 1025px) {
+  .team-card-wrap { flex-direction: column; }
+  .team-text { padding: 1.75rem 1.5rem; gap: var(--gap-24, 1.5rem); }
+  .team-title { font-size: var(--fs-36, 2.25rem); }
+  .team-columns { grid-template-columns: 1fr; gap: var(--gap-20, 1.25rem); }
+  .team-grid { flex: 0 0 auto; width: 100%; }
 }
 
 @media (max-width: 767px) {

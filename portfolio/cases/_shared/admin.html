@@ -1896,6 +1896,9 @@ body.auth-pending .pages-view { visibility: hidden; }
   font-weight: 600;
   color: rgba(10, 10, 10, 0.55);
 }
+.form-color-row { display: flex; gap: 8px; align-items: center; }
+.form-color-dot { width: 42px; height: 34px; padding: 2px; border: 1px solid rgba(127,127,127,.4); border-radius: 8px; background: transparent; cursor: pointer; flex: none; }
+
 .accent-pick input[type="color"] {
   width: 26px;
   height: 26px;
@@ -3347,11 +3350,23 @@ function renderEditorForm(section) {
       html += `</div>`;
       return;
     }
-    html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : ''}${(f.type === 'select' && f.default !== undefined) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>` : ''}</label>`;
+    html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : ''}${((f.type === 'select' || f.type === 'color' || f.type === 'text') && f.default !== undefined) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>` : ''}</label>`;
     switch (f.type) {
       case 'text':
         html += `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="text" type="text" value="${esc(val || '')}" id="${fieldUid}">`;
         break;
+      case 'color': {
+        // 色卡选择器：系统色块 + 颜色文本框双联。文本框是唯一取值源（允许任意 CSS 颜色，含 rgba），
+        // 色块仅同步纯色部分（input[type=color] 不支持 alpha）；点击重置按钮后随表单重建自动回显。
+        const cv = String(val || '');
+        const m6 = /^#([0-9a-fA-F]{6})$/.exec(cv.trim());
+        const dotV = m6 ? cv.trim() : '#ffffff';
+        html += `<div class="form-color-row">` +
+          `<input type="color" class="form-color-dot" data-color-for="${esc(f.key)}" value="${esc(dotV)}" aria-label="${esc(f.label)}取色">` +
+          `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="text" type="text" placeholder="${esc(f.placeholder || '#ffffff')}" value="${esc(cv)}" id="${fieldUid}">` +
+          `</div>`;
+        break;
+      }
       case 'textarea':
         html += `<textarea class="form-textarea" data-bind-key="${esc(f.key)}" data-bind-ftype="textarea" id="${fieldUid}">${esc(val || '')}</textarea>`;
         break;
@@ -3543,6 +3558,20 @@ function renderEditorForm(section) {
     };
     inp.addEventListener('input', handler);
     inp.addEventListener('change', handler);
+  });
+
+  // 色卡（color 字段）双联联动：色块 → 写入同 key 文本框并触发保存；文本框填 6 位 hex → 同步色块
+  container.querySelectorAll('[data-color-for]').forEach((dot) => {
+    const txt = container.querySelector('[data-bind-key="' + dot.dataset.colorFor + '"]');
+    if (!txt) return;
+    dot.addEventListener('input', () => {
+      txt.value = dot.value;
+      txt.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    txt.addEventListener('input', () => {
+      const v = String(txt.value || '').trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) dot.value = v;
+    });
   });
 
   // 重置按钮：点击恢复 select 档位字段为默认值

@@ -93,13 +93,14 @@
       "bgVideo": "/portfolio/cases/vjooProject/uploads/1788170595960.mp4",
       "bgOverlay": "0.75",
       "replayInterval": "20",
-      "shellColor": "blue"
+      "shellColor": "blue",
+      "titleColor": "#ffffff"
     },
     {
       "id": "smtct4vsyjqu0",
       "type": "title",
       "title": "Projects",
-      "copyright": "2010-26©",
+      "copyright": "",
       "description": "",
       "size": "80",
       "padding": "标准"
