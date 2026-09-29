@@ -1170,6 +1170,12 @@ body {
 /* 触发器变体：胶囊 / 紧凑；空态提示 */
 .sel-trigger.pill { border-radius: 999px; padding-left: 14px; }
 .sel-trigger.compact { min-height: 28px; padding: 3px 26px 3px 10px; font-size: 12px; }
+/* 内联变体（紧凑筛选栏专用）：默认 .sel 是块级、trigger width:100%，塞进横向 flex/inline 筛选栏会把整行撑破。
+   解决办法：.sel 改 inline-block 让宽度收缩到内容，trigger 同步改 auto（min-width 兜底防窄内容抖动）；
+   面板仍相对 .sel 绝对定位，但改 max-content + 上限宽度，保证窄触发器下长选项也读得全。 */
+.sel.inline { display: inline-block; width: auto; vertical-align: middle; }
+.sel.inline .sel-trigger { width: auto; min-width: 88px; }
+.sel.inline .sel-panel { width: max-content; min-width: 100%; max-width: 300px; }
 .sel-label.is-empty { color: var(--text-muted); }
 /* 搜索框（sticky 吸顶，滚动时不被选项盖住） */
 .sel-search { position: sticky; top: 0; z-index: 1; padding: 0 0 4px; background: var(--bg-primary); }
@@ -3402,7 +3408,8 @@ function updateEditorFooterStatus() {
        multiple              → tags 多选模式（选完变可删除的芯片，面板不关闭便于连选）
        data-sel-search="…"   → 面板顶部 sticky 搜索框（值为 placeholder）
        data-sel-pill         → 触发器胶囊圆角
-       data-sel-compact      → 紧凑触发器
+       data-sel-compact      → 紧凑触发器（降高）
+       data-sel-inline       → 内联触发器：.sel 不占整行、宽度按内容自适应（紧凑筛选栏横排专用，避免撑破 flex/inline 行）
        data-sel-placeholder  → 多选空态提示
      配置写在每个 <option> 上：
        data-icon="home"      → 左侧图标：写**图标表键名**（见 SEL_ICONS），不要塞整段 SVG；
@@ -3444,13 +3451,14 @@ function updateEditorFooterStatus() {
     var searchPh = sel.dataset.selSearch || '';
 
     var wrap = document.createElement('div');
-    wrap.className = 'sel';
+    wrap.className = 'sel' + (sel.hasAttribute('data-sel-inline') ? ' inline' : '');
     sel.parentNode.insertBefore(wrap, sel);
     wrap.appendChild(sel);
 
     var trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.className = 'sel-trigger' + (sel.dataset.selPill ? ' pill' : '') + (sel.dataset.selCompact ? ' compact' : '');
+    /* 布尔型 data-* 属性：裸写（无值）时 dataset 取到 '' 是 falsy，用 dataset.xxx ? 判断会静默失效 —— 必须 hasAttribute */
+    trigger.className = 'sel-trigger' + (sel.hasAttribute('data-sel-pill') ? ' pill' : '') + (sel.hasAttribute('data-sel-compact') ? ' compact' : '');
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
     var label = document.createElement('span');

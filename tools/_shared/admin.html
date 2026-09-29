@@ -2021,7 +2021,7 @@ const KNOW = {
         <div class="fgroup"><label>现象描述 *</label><textarea id="k_phenomenon" rows="2">${it?it.phenomenon:''}</textarea></div>
         <div class="fgroup"><label>可信度 *</label><select id="k_credibility" class="form-select"><option value="">请选择</option>${CRED_LEVELS.map(c=>`<option value="${c.value}" ${it&&it.credibility===c.value?'selected':''}>${c.label} ${c.stars}</option>`).join('')}</select></div>
         <div class="fgroup"><label>解决方案 *</label><textarea id="k_solution" rows="4" style="min-height:100px">${it?it.solution:''}</textarea></div>
-        <div class="fgroup"><label>关联预设</label><select id="k_relatedPresets" multiple style="height:110px">${opts}</select><div class="param-path">按住 Ctrl/Cmd 可多选</div></div>
+        <div class="fgroup"><label>关联预设</label><select id="k_relatedPresets" class="form-select" multiple data-sel-placeholder="未关联预设">${opts}</select><div class="param-path">可多选；点芯片 × 移除</div></div>
         <div class="fgroup"><label>标签（用逗号分隔）</label><input type="text" id="k_tags" value="${it?(it.tags||[]).join(', '):''}" placeholder="例如：拉丝, PETG, 调参"></div>
         <div class="fgroup"><label>参考图片</label>
           <div onclick="document.getElementById('k_imageInput').click()" style="border:1px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:12.5px;cursor:pointer">点击上传图片（JPG/PNG · 最大 2MB）</div>
@@ -3081,10 +3081,10 @@ function viewFilamentStock(){
   const brands=[...new Set(FDATA.filaments.map(x=>x.brand))];
   const bar=`
     <div class="fbar">
-      <span class="flabel">品牌：</span><select onchange="FAPP.setFilter('brand',this.value)"><option value="">全部</option>${brands.map(b=>`<option value="${b}" ${f.brand===b?'selected':''}>${b}</option>`).join('')}</select>
-      <span class="flabel">类型：</span><select onchange="FAPP.setFilter('type',this.value)"><option value="">全部</option>${F_TYPES.map(t=>`<option value="${t}" ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
-      <span class="flabel">评分：</span><select onchange="FAPP.setFilter('rating',this.value)"><option value="">全部</option>${[5,4,3,2,1].map(r=>`<option value="${r}" ${f.rating===String(r)?'selected':''}>${r}星</option>`).join('')}</select>
-      <span class="flabel">排序：</span><select onchange="FAPP.setSort(this.value)"><option value="">默认</option><option value="price_asc" ${s.field==='price'&&s.order==='asc'?'selected':''}>价格 ↑</option><option value="price_desc" ${s.field==='price'&&s.order==='desc'?'selected':''}>价格 ↓</option></select>
+      <span class="flabel">品牌：</span><select class="form-select" data-sel-inline data-sel-compact data-sel-pill onchange="FAPP.setFilter('brand',this.value)"><option value="">全部</option>${brands.map(b=>`<option value="${b}" ${f.brand===b?'selected':''}>${b}</option>`).join('')}</select>
+      <span class="flabel">类型：</span><select class="form-select" data-sel-inline data-sel-compact data-sel-pill onchange="FAPP.setFilter('type',this.value)"><option value="">全部</option>${F_TYPES.map(t=>`<option value="${t}" ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
+      <span class="flabel">评分：</span><select class="form-select" data-sel-inline data-sel-compact data-sel-pill onchange="FAPP.setFilter('rating',this.value)"><option value="">全部</option>${[5,4,3,2,1].map(r=>`<option value="${r}" ${f.rating===String(r)?'selected':''}>${r}星</option>`).join('')}</select>
+      <span class="flabel">排序：</span><select class="form-select" data-sel-inline data-sel-compact data-sel-pill onchange="FAPP.setSort(this.value)"><option value="">默认</option><option value="price_asc" ${s.field==='price'&&s.order==='asc'?'selected':''}>价格 ↑</option><option value="price_desc" ${s.field==='price'&&s.order==='desc'?'selected':''}>价格 ↓</option></select>
     </div>`;
   if(data.length===0) return `${greetHead('耗材库','','<button class="add" title="新增耗材" onclick="FAPP.openForm(null)">'+ADD_IC+'</button>')}<div class="grid"><div class="card c12">${bar}<div class="fempty"><div class="big-ic">⛓</div><b>暂无耗材数据</b>当前筛选条件下没有记录，点击右上角「＋」新增。</div></div></div>`;
   const rows=data.map((item,idx)=>{
@@ -7765,6 +7765,9 @@ var BK = {
 
 
 
+
+
+
 <style>
 .sel { position: relative; }
 .sel > select.form-select { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
@@ -7810,6 +7813,12 @@ var BK = {
 /* 触发器变体：胶囊 / 紧凑；空态提示 */
 .sel-trigger.pill { border-radius: 999px; padding-left: 14px; }
 .sel-trigger.compact { min-height: 28px; padding: 3px 26px 3px 10px; font-size: 12px; }
+/* 内联变体（紧凑筛选栏专用）：默认 .sel 是块级、trigger width:100%，塞进横向 flex/inline 筛选栏会把整行撑破。
+   解决办法：.sel 改 inline-block 让宽度收缩到内容，trigger 同步改 auto（min-width 兜底防窄内容抖动）；
+   面板仍相对 .sel 绝对定位，但改 max-content + 上限宽度，保证窄触发器下长选项也读得全。 */
+.sel.inline { display: inline-block; width: auto; vertical-align: middle; }
+.sel.inline .sel-trigger { width: auto; min-width: 88px; }
+.sel.inline .sel-panel { width: max-content; min-width: 100%; max-width: 300px; }
 .sel-label.is-empty { color: var(--text-muted); }
 /* 搜索框（sticky 吸顶，滚动时不被选项盖住） */
 .sel-search { position: sticky; top: 0; z-index: 1; padding: 0 0 4px; background: var(--bg-primary); }
@@ -7934,13 +7943,14 @@ function upgradeSelect(sel) {
     var searchPh = sel.dataset.selSearch || '';
 
     var wrap = document.createElement('div');
-    wrap.className = 'sel';
+    wrap.className = 'sel' + (sel.hasAttribute('data-sel-inline') ? ' inline' : '');
     sel.parentNode.insertBefore(wrap, sel);
     wrap.appendChild(sel);
 
     var trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.className = 'sel-trigger' + (sel.dataset.selPill ? ' pill' : '') + (sel.dataset.selCompact ? ' compact' : '');
+    /* 布尔型 data-* 属性：裸写（无值）时 dataset 取到 '' 是 falsy，用 dataset.xxx ? 判断会静默失效 —— 必须 hasAttribute */
+    trigger.className = 'sel-trigger' + (sel.hasAttribute('data-sel-pill') ? ' pill' : '') + (sel.hasAttribute('data-sel-compact') ? ' compact' : '');
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
     var label = document.createElement('span');
