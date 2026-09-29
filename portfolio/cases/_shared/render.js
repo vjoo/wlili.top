@@ -68,36 +68,8 @@ var CaseRenderer = (function () {
     'device-screen': renderDeviceScreen   // 设备屏幕嵌入（人物手持样机图 + 透视贴合嵌入设计稿/视频）
   };
 
-  var TYPE_LABELS = {
-    'hero': '小Banner首屏',
-    'hero-banner': '大Banner首屏',
-    'swipe-slider': '全屏滑动轮播',
-    'fullscreen-slider': '全屏切换轮播',
-    'intro': '介绍区',
-    'brand-logo': '项目Logo栏目',
-    'parallax': '视差图对',
-    'text': '纯文本区',
-    'showcase': '展示区',
-    'gallery': '截图墙',
-  'masonry': '瀑布流',
-    'single-image': '单图全宽',
-    'double-image': '双图并排',
-    'testimonial': '客户评价',
-    'title': '标题栏',
-    'next-projects': '特效双图',
-    'clients': '客户 Logo 条',
-    'stats': '数据统计',
-    'services': '服务列表',
-    'team': '团队成员',
-    'eyebrow-head': '导语头',
-    'split-head': '分栏头',
-    'product-hero': '产品首屏',
-    'scene-grid': '场景网格',
-    'mockup-banner': '3D样机Banner',
-    'ad-banner': '广告Banner',
-    'text-fill-banner': '字图填充Banner',
-    'device-screen': '设备屏幕嵌入'
-  };
+  var TYPE_LABELS = {};
+  if (window.BLOCKS) { Object.keys(window.BLOCKS).forEach(function (t) { TYPE_LABELS[t] = window.BLOCKS[t].label; }); }
 
   function init() {
     container = document.getElementById('case-content');
@@ -1823,6 +1795,8 @@ var CaseRenderer = (function () {
   // logoStyle：'grayscale'（黑白，默认，悬停恢复彩色）/ 'color'（彩色，保留原色，.color-mode）
   function renderClients(s) {
     var section = sec('clients-section');
+    // Logo 卡片底色（后台 clients.logoBg）；未配置时不设该变量，CSS 回退默认白
+    if (s.logoBg) section.style.setProperty('--client-logo-bg', s.logoBg);
     var logos = Array.isArray(s.logos) ? s.logos : [];
     var logosHtml = logos.map(function (l) {
       var name = (l && l.name) || '';
@@ -2016,9 +1990,36 @@ var CaseRenderer = (function () {
     var x = (d[0] === 0 || d[0]) ? Math.max(0, Math.min(100, d[0])) : 50;
     var y = (d[1] === 0 || d[1]) ? Math.max(0, Math.min(100, d[1])) : 50;
     var box = img.parentElement;
-    if (!box || !img.naturalWidth || img.naturalWidth < 2) return false; // 未加载完，等 onload 再应用
+    if (!box) return false;
+    // 图片未加载完 / 容器暂无尺寸（刚插入尚未完成布局、父级暂时隐藏）→ 轮询重试，避免静默失败。
+    // 配合 site-shell.css 的「img[data-focus]:not([data-focus-applied]){opacity:0}」：
+    // 应用成功前图片不显示，消除「先按 CSS cover 居中显示一版 → 再跳到焦点区域」的错版闪烁。
+    var _notLoaded = (!img.naturalWidth || img.naturalWidth < 2);
+    if (_notLoaded) {
+      // 图片尚未就绪：team 头像等带 loading="lazy"，在视口外本就不会加载，滚动到才会加载。
+      // load 事件委托（下方）会在就绪时补应用；但首屏缓存图可能在「尚未插入文档」时就 load 完
+      // （事件丢失），故保留低频轮询兜底。绝不能在此处提前兜底，否则懒加载图会丢掉焦点定位。
+      var _n = Number(img.dataset.focusRetry || 0) + 1;
+      img.dataset.focusRetry = _n;
+      if (_n <= 3600) {
+        setTimeout(function () { applyFocusZoom(img); }, 200);   // 200ms × 3600 ≈ 12 分钟后放弃
+      } else {
+        img.dataset.focusApplied = '1';                          // 兜底：确保内容最终可见
+      }
+      return false;
+    }
+    if (!box.clientWidth || !box.clientHeight) {
+      // 图片已就绪、容器却暂无尺寸（刚插入尚未完成布局）→ 短促重试，尽快兜底，避免图片长期不显示
+      var _m = Number(img.dataset.focusRetry || 0) + 1;
+      img.dataset.focusRetry = _m;
+      if (_m <= 100) {
+        setTimeout(function () { applyFocusZoom(img); }, 50);    // ≈5s
+      } else {
+        img.dataset.focusApplied = '1';
+      }
+      return false;
+    }
     var W = box.clientWidth, H = box.clientHeight;
-    if (!W || !H) return false;
     var r = img.naturalWidth / img.naturalHeight;
     var cw = Math.max(W, H * r), ch = Math.max(H, W / r); // zoom=1 时 cover 显示尺寸
     // z 硬 clamp 到 [1, 图片 1:1 物理像素]：z_max = min(natW/cw, natH/ch)，

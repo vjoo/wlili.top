@@ -278,6 +278,32 @@
     if (cached) applyTheme(cached);
   } catch (_) {}
 
+  // 主色（一案例一主色，P2）：存 cases.json 的 pages[].accent，后台「页面管理」顶部取色器设置。
+  // 做法与 theme 同款——先应用本地缓存防首屏跳动，再等 cases.json 权威值覆盖。
+  // 未配置时不注入变量，CSS 里 var(--case-accent, 默认值) 自动回退，保证老站视觉零变化。
+  function applyAccent(key, accent) {
+    try {
+      var root = document.documentElement;
+      if (accent) {
+        root.style.setProperty('--case-accent', accent);
+        if (key) localStorage.setItem('case_accent_' + key, accent);
+      } else {
+        root.style.removeProperty('--case-accent');
+        if (key) localStorage.removeItem('case_accent_' + key);
+      }
+    } catch (_) {}
+  }
+  // 当前页 key：页面固定位于 /portfolio/cases/<key>/index.html
+  function currentPageKey() {
+    var m = location.pathname.match(/\/cases\/([^/]+)\//);
+    return m ? m[1] : '';
+  }
+  try {
+    var _ck = currentPageKey();
+    var _ca = _ck ? localStorage.getItem('case_accent_' + _ck) : null;
+    if (_ca) applyAccent(_ck, _ca);
+  } catch (_) {}
+
   function applyNavMenu(items) {
     if (!Array.isArray(items)) return;
     var clean = items.map(function (l) {
@@ -307,6 +333,14 @@
         if (d && Array.isArray(d.navMenu)) applyNavMenu(d.navMenu);
         // 全站主题：cases.json 顶层 theme（后台「页面管理」顶部切换）
         if (d && (d.theme === 'dark' || d.theme === 'light')) applyTheme(d.theme);
+        // 主色（一案例一主色，P2）：pages[] 中当前页的 accent（空 = 清除，回落默认强调色）
+        try {
+          var _k = currentPageKey();
+          var _pg = (_k && d && Array.isArray(d.pages))
+            ? d.pages.filter(function (p) { return p && p.key === _k; })[0]
+            : null;
+          applyAccent(_k, (_pg && typeof _pg.accent === 'string') ? _pg.accent : '');
+        } catch (_) {}
         // 可配置首页：cases.json 顶层 homeKey（后台「页面管理」→ 设为首页）
         if (d && d.homeKey) applyHomeUrl('../' + d.homeKey + '/index.html');
         // 同时读取 cases.json 顶层的公共 letsTalk（后台「底部导航」编辑后保存在这里）

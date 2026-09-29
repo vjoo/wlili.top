@@ -17,6 +17,73 @@
   --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px -10px rgba(16,24,40,.08);
   --rail-w:68px; --r-lg:20px; --r-md:14px;
 }
+
+/* ============================================================================
+   DESIGN SYSTEM 补全层 · 令牌（2026-09-27）
+   ① 令牌提升：原 `.sp-wrap` 作用域内的「common.css 遗产令牌」提升到 :root，
+      任意模块（不必包在 .sp-wrap 内）都能用同一套命名 —— 消除静默失效。
+      值与原 .sp-wrap 块逐项一致，⚠ 不改变既有渲染。
+   ② 补齐标尺：间距 / 字阶 / 动效 / 层级 —— 原代码用裸值散落，现统一命名。
+   ③ 深色主题补齐语义色底（浅色 14% 混白卡，深色需提高混合比才够对比度）。
+   ============================================================================ */
+:root{
+  /* —— common.css 遗产令牌 → 后台核心令牌（命名保留，便于旧页代码继续引用）—— */
+  --bg-white:var(--card); --bg-primary:var(--card); --bg-secondary:var(--card); --bg-elevated:var(--card);
+  --bg-sidebar:var(--panel); --bg-hover:var(--panel); --bg-active:var(--panel);
+  --text-primary:var(--ink); --text-secondary:var(--muted); --text-muted:var(--muted);
+  --border-color:var(--line); --border-light:var(--line);
+  --fill-white:var(--card);
+
+  /* —— 语义色（状态 / 反馈）：浅色底 = 14% 混卡面 —— */
+  --success:#16a34a; --success-bg:color-mix(in srgb,#16a34a 14%,var(--card));
+  --warning:#f59e0b; --warning-bg:color-mix(in srgb,#f59e0b 14%,var(--card));
+  --info:#2563eb;    --info-bg:color-mix(in srgb,#2563eb 14%,var(--card));
+  --danger:#e5484d;  --danger-bg:color-mix(in srgb,#e5484d 14%,var(--card));
+  /* 语义色描边（缺省态） */
+  --success-line:color-mix(in srgb,#16a34a 30%,transparent);
+  --warning-line:color-mix(in srgb,#f59e0b 30%,transparent);
+  --info-line:color-mix(in srgb,#2563eb 30%,transparent);
+  --danger-line:color-mix(in srgb,#e5484d 30%,transparent);
+
+  /* —— 圆角标尺：--r-* 为后台命名（卡片体系）；--radius-* 为遗产命名（旧页体系），
+        两者并存且各自延续原值，新代码一律用 --r-* / 单列尺寸令牌 —— */
+  --radius-sm:8px; --radius-md:10px; --radius-lg:14px; --radius-xl:16px; --radius-pill:999px;
+
+  /* —— 阴影标尺 —— */
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow-md:0 4px 10px rgba(16,24,40,.08);
+  --shadow-lg:0 10px 20px rgba(16,24,40,.12);
+
+  /* —— 间距标尺（以 2px 为最小步进；现存 3/5/7/9/11 等非标值逐步收敛到最近的档）—— */
+  --sp-0:0; --sp-1:2px; --sp-2:4px; --sp-3:6px; --sp-4:8px; --sp-5:10px;
+  --sp-6:12px; --sp-7:14px; --sp-8:16px; --sp-9:20px; --sp-10:24px; --sp-11:32px;
+
+  /* —— 字阶（正文 13 / 次要 12 / 卡片标题 15 / 页标题 27）—— */
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-15:15px;
+  --fs-22:22px; --fs-27:27px; --fs-34:34px;
+
+  /* —— 动效：时长 + 缓动 —— */
+  --dur-fast:.12s; --dur-base:.2s; --dur-slow:.3s; --dur-bar:.9s;
+  --ease-out:cubic-bezier(.22,.61,.36,1); --ease-inout:cubic-bezier(.32,.72,0,1);
+
+  /* —— 层级：现有裸值集中登记（rail 30 / drawer 80 / toast 99 / tooltip 999~1000）—— */
+  --z-base:1; --z-sticky:3; --z-rail:30; --z-drawer:80; --z-toast:99; --z-tooltip:1000;
+
+  /* —— 布局 —— */
+  --sidebar-width:240px;
+}
+
+/* 深色主题：语义色底提高混合比，保证深底上的状态可辨 */
+[data-theme="dark"]{
+  --success-bg:color-mix(in srgb,#16a34a 26%,var(--card));
+  --warning-bg:color-mix(in srgb,#f59e0b 26%,var(--card));
+  --info-bg:color-mix(in srgb,#2563eb 28%,var(--card));
+  --danger-bg:color-mix(in srgb,#e5484d 26%,var(--card));
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  --shadow-md:0 4px 10px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 20px rgba(0,0,0,.45);
+}
+
 [data-theme="dark"]{
   --bg:#08090b; --panel:#0e1114; --card:#161a1f; --ink:#e8eaee; --muted:#8b93a1;
   --line:#232a33; --accent-soft:#1c2410;
@@ -582,17 +649,8 @@ input:focus:not([type=checkbox]):not([type=radio]),select:focus,textarea:focus{b
 .fd-month td.on{color:var(--ink);background:color-mix(in srgb, var(--accent) 12%, transparent);border-radius:8px;}
 
 /* ===== 四方连图原版模块作用域（原 common.css 令牌映射到概念稿设计令牌 · 紫 accent 限本作用域） ===== */
-.sp-wrap{
-  --bg-white:var(--card); --bg-primary:var(--card); --bg-secondary:var(--card); --bg-elevated:var(--card);
-  --bg-sidebar:var(--panel); --bg-hover:var(--panel); --bg-active:var(--panel);
-  --text-primary:var(--ink); --text-secondary:var(--muted); --text-muted:var(--muted);
-  --border-color:var(--line); --border-light:var(--line);
-  --danger:#e5484d; --danger-bg:color-mix(in srgb,#e5484d 14%,var(--card)); --success:#16a34a; --success-bg:color-mix(in srgb,#16a34a 14%,var(--card));
-  --warning:#f59e0b; --warning-bg:color-mix(in srgb,#f59e0b 14%,var(--card)); --info:#2563eb; --info-bg:color-mix(in srgb,#2563eb 14%,var(--card)); --fill-white:var(--card);
-  --radius-sm:8px; --radius-md:10px; --radius-lg:14px; --radius-xl:16px; --radius-pill:999px;
-  --shadow-sm:0 1px 2px rgba(16,24,40,.05); --shadow-md:0 4px 10px rgba(16,24,40,.08); --shadow-lg:0 10px 20px rgba(16,24,40,.12);
-  --sidebar-width:240px; --z-tooltip:1000;
-}
+/* 令牌已提升到 :root（见上方 DESIGN SYSTEM 补全层）——此处不再重复定义，
+   否则会覆盖 :root 的深色语义色修正。作用域内组件规则（.sp-wrap xxx）保持不变。 */
 .sp-wrap .content-area{padding:0;background:transparent;min-height:auto;overflow:visible;}
 .sp-wrap{font-size:14px;}
 
@@ -694,6 +752,71 @@ input:focus:not([type=checkbox]):not([type=radio]),select:focus,textarea:focus{b
 .info-box{ background:var(--info-bg); border:1px solid rgba(99,102,241,0.2); border-radius:var(--radius-md); padding:10px 14px; font-size:13px; color:#4338ca; display:flex; align-items:center; gap:8px; margin-bottom:12px;}.sp-wrap /* Responsive */
 @media (max-width:1200px){.gen-layout{ grid-template-columns:1fr;}.gen-col-left{ display:block;}.gen-col-left > .gen-section:first-child{ flex:0 0 auto;}.gen-col-left > .gen-section:first-child > .gen-section-body{ overflow:visible; max-height:none;}.gen-col-output{ position:static; max-height:none;}.gen-col-output > .gen-section{ flex:0 0 auto;}.gen-col-output > .gen-section > .gen-section-body{ flex:0 0 auto;}.dash-recent-list{ grid-template-columns:repeat(3,1fr);}}@media (max-width:900px){.sp-wrap .sidebar{ transform:translateX(-100%); transition:transform 0.3s ease; width:280px;}.sp-wrap .sidebar.open{ transform:translateX(0);}.sp-wrap .main-content{ margin-left:0;}.sp-wrap .mobile-menu-btn{ display:flex;}.sp-wrap .stats-grid{ grid-template-columns:repeat(2,1fr);}.sp-wrap .gen-layout{ grid-template-columns:1fr;}.sp-wrap .gen-col-output{ position:static;}.sp-wrap .form-row{ grid-template-columns:1fr;}.sp-wrap .search-box{ width:auto; flex:1; min-width:0;}}@media (max-width:734px){.sp-wrap .content-area{ padding:14px;}.sp-wrap .stats-grid{ grid-template-columns:repeat(2,1fr); gap:10px;}.sp-wrap .stat-card-value{ font-size:22px;}.sp-wrap .pattern-grid{ grid-template-columns:repeat(2,1fr); gap:10px;}.sp-wrap .panel-header{ padding:10px 14px;}.sp-wrap .panel-body{ padding:14px;}.sp-wrap .top-bar{ padding:0 14px;}.modal{ max-width:100%;}.sp-wrap .config-row{ grid-template-columns:1fr;}.sp-wrap .palette-grid{ grid-template-columns:1fr;}.sp-wrap .psc-grid{ grid-template-columns:repeat(2,1fr); gap:10px;}.sp-wrap .psc-hero{ padding:10px;}.sp-wrap .psc-info{ padding:10px 12px;}.sp-wrap .dash-recent-list{ grid-template-columns:repeat(2,1fr);}.sp-wrap .dash-recent-list .pattern-thumb{ width:100%;}.sp-wrap /* 仪表台 Hero 窄屏适配 */
     .dash-hero{ padding:20px 22px;}.sp-wrap .dash-hero-title{ font-size:19px;}.sp-wrap .dash-hero-num{ font-size:30px;}.sp-wrap .dash-hero-stat{ padding-left:16px;}.sp-wrap .stat-card-mini{ padding:10px 12px;}}@media (max-width:480px){.sp-wrap .pattern-grid{ grid-template-columns:1fr;}.sp-wrap .filter-bar{ flex-direction:column; align-items:stretch;}.sp-wrap .filter-select{ width:100%;}.sp-wrap .psc-grid{ grid-template-columns:1fr;}}
+
+
+/* ============================================================================
+   DESIGN SYSTEM 补全层 · 交互态 / 无障碍 / 缺件组件（2026-09-27）
+   原代码：:focus-visible 0 处、::placeholder 0 处、::selection 0 处、
+   禁用态仅 .pg-btn 一处、无 sr-only、无通知条、无加载指示。
+   以下均为新增，未使用时不影响任何既有渲染。
+   ============================================================================ */
+
+/* —— 键盘焦点：只在键盘操作时出现（鼠标点击不触发，避免视觉噪音）—— */
+:where(a,button,select,textarea,input,summary,[tabindex]):focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+/* 输入类已有 accent 边框 + 12% 光环的 focus 态，键盘态只补一圈外描边区分 */
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid color-mix(in srgb,var(--accent) 55%,transparent);
+  outline-offset:1px;
+}
+
+/* —— 占位符 / 文本选中 —— */
+::placeholder{ color:var(--muted); opacity:1; }
+::selection{ background:color-mix(in srgb,var(--accent) 32%,transparent); color:var(--ink); }
+
+/* —— 禁用态：统一 45% 透明 + 禁止光标，并压掉 hover 位移/阴影 —— */
+.btn:disabled,.btn-primary:disabled,.mini-btn:disabled,.btn-icon:disabled,.add:disabled,
+.gen-tab:disabled,.gen-tab-reset:disabled,.pill:disabled,.cap:disabled,.r-item:disabled,
+.pg-size:disabled,.rbtn:disabled{
+  opacity:.45; cursor:not-allowed;
+  transform:none !important; filter:none !important; box-shadow:none !important;
+}
+
+/* —— 无障碍：仅屏幕阅读器可见 —— */
+.sr-only{
+  position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* —— 通知条 banner（原缺失）：info / success / warning / danger 四态 —— */
+.banner{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:12px 14px; border-radius:var(--r-md); border:1px solid var(--info-line);
+  background:var(--info-bg); color:var(--info); font-size:13px; line-height:1.6;
+}
+.banner > svg{ width:16px; height:16px; flex:none; margin-top:2px; }
+.banner .banner-body{ flex:1; min-width:0; color:var(--ink); }
+.banner-success{ background:var(--success-bg); border-color:var(--success-line); color:var(--success); }
+.banner-warning{ background:var(--warning-bg); border-color:var(--warning-line); color:var(--warning); }
+.banner-danger{ background:var(--danger-bg); border-color:var(--danger-line); color:var(--danger); }
+.banner-close{
+  margin-left:auto; border:none; background:transparent; color:inherit; cursor:pointer;
+  opacity:.6; font-size:15px; line-height:1; padding:2px 4px; border-radius:6px;
+}
+.banner-close:hover{ opacity:1; }
+
+/* —— 加载指示 spinner（原缺失）—— */
+.spinner{
+  width:16px; height:16px; display:inline-block; vertical-align:-3px;
+  border:2px solid color-mix(in srgb,var(--muted) 35%,transparent);
+  border-top-color:var(--accent); border-radius:50%;
+  animation:dsSpin .7s linear infinite;
+}
+.spinner-lg{ width:28px; height:28px; border-width:3px; }
+@keyframes dsSpin{ to{ transform:rotate(360deg); } }
+.spin-label{ display:inline-flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; }
 </style>
 </head>
 <body>
@@ -787,6 +910,8 @@ input:focus:not([type=checkbox]):not([type=radio]),select:focus,textarea:focus{b
 <div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightboxClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><img id="lightboxImg" src="" alt=""></div>
 <script>
 /* ================= 数据模型：工具 + 子菜单（收编各工具原有后台功能） ================= */
+/* ★ 本项目文档分层：通用规范 tools/DEVELOPMENT_GUIDE.md · 后台 UI 规范 tools/_shared/DESIGN_SYSTEM.md
+   · 后台实现备忘 tools/_docs/mod-admin.md · 模块备忘 tools/_docs/mod-*.md · 文档地图 tools/_docs/INDEX.md */
 const I = (p)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const ICONS = {
   grid:   I('<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>'),
@@ -1022,6 +1147,7 @@ const FILAMENT_PARAM_NAMES = ['耗材类型','品牌','颜色','线径','喷嘴�
 
 
 /* ================= 状态与渲染 ================= */
+/* ★ 文档：tools/_docs/mod-admin.md §一 路由模型 · §二 两条渲染路径（renderMain / app.render，动画都靠 runEntrance） */
 let state = { tool:'overview', sub:'dash' };
 const $ = s => document.querySelector(s);
 const tool = id => TOOLS.find(t=>t.id===id);
@@ -1691,6 +1817,7 @@ function viewPlaceholder(t, s){
 }
 
 /* ===================== 3D 耗材管理 · 预设 / 打印知识库（原 filament-manager 模块 1:1 迁移，写操作内存态+Toast） ===================== */
+/* ★ 文档：tools/_docs/mod-filament.md */
 function presDate(v){ return fmtDate(v); }
 function pathOf(name){
   if(PARAM_PATH[name]) return PARAM_PATH[name];
@@ -1958,6 +2085,7 @@ const KNOW = {
 };
 
 /* ===================== 打印管理器 · 纸张库存 / 墨水库存 / 打印记账（原 print-manager 模块 1:1 迁移，写操作内存态+Toast） ===================== */
+/* ★ 文档：tools/_docs/mod-print.md */
 const PP_SVG = {
   ok: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
   no: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
@@ -2574,6 +2702,7 @@ var ADMIN_LOCAL = (function(){
 })();
 
 /* ===================== 统一数据层 AD（DEVELOPMENT_GUIDE 规则 29 双通道）===================== */
+/* ★ 文档：tools/_docs/mod-admin.md §三 数据层（AD / DH / _syncStore；种子与空推两条铁律） */
 /* 时间戳统一格式化：前端 prompt-library 写入的是 Date.now() 数字（epoch ms），
    本后台早期按 ISO 字符串写 `(x||'').slice(0,10)` —— 数字没有 .slice 会抛 TypeError 并被
    catch 吞掉，导致整个列表静默变空（2026-09-27 真实事故）。这里两种形态都兼容。 */
@@ -3226,6 +3355,7 @@ function toggleMM(open){
 
 if(location.search.includes('theme=dark')) document.documentElement.dataset.theme='dark';
 /* ===================== 四方连图：原版 seamless-pattern.html 模块整段迁移（app 对象 1:1 保真） ===================== */
+/* ★ 文档：tools/_docs/mod-seamless.md（生成器 / 图库 / 授权 / 元素库；改元素前先读「改元素必做清单」） */
 function viewSeamlessModule(){
     var map={mdash:'dashboard',lib:'patternAssets',gen:'generator',lic:'licenses',elems:'elements',set:'settings'};
   var mod=map[state.sub]||'dashboard';
@@ -7334,6 +7464,7 @@ function viewPrintDash(t){
 }
 function printMoney(v){ return '¥'+(+v).toFixed(2); }
 /* ===================== AI 提示词库 ===================== */
+/* ★ 文档：tools/_docs/mod-prompt-lib.md（PRDATA 原始记录 ≠ PROMPTS 投影，时间戳为数字，须用 fmtDate） */
 /* 标签统一聚合：records 引用数 + customTags（新建未引用，计 0）——标签增删改后全站统计同步 */
 function tagAgg(){
   const m={};
@@ -7535,6 +7666,7 @@ function viewMarksCats(){
 }
 
 /* ============ 精选收藏夹：真实 CRUD（全量写回 /api/bookmarks） ============ */
+/* ★ 文档：tools/_docs/mod-bookmark.md */
 var BK = {
   editId: null, editCat: null,
   _post: function(payload){

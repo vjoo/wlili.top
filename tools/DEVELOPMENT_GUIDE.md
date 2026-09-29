@@ -12,6 +12,7 @@
 
 | 顺序 | 文件 | 读取方式 |
 |------|------|---------|
+| 0 | **任务涉及统一后台时先读** `tools/_shared/DESIGN_SYSTEM.md` | 后台自带独立设计系统（**不加载 `common.css`**），改后台样式**不要**用本指南 §二/§三 的工具页令牌 |
 | 1 | 本指南全文 | 全局规范/组件库/规则，读完长期复用 |
 | 2 | `common.css` | 只 Grep `:root` 看设计令牌（间距/字号/阴影/圆角）；组件按需读（如 `.btn-filled`） |
 | 3 | 目标页面 | Grep 锚点定位，只读与任务相关的常量/函数块（复杂页另有专属备忘，如第十一章） |
@@ -22,6 +23,19 @@
 3. **一次一个任务**：避免多任务混合导致上下文膨胀
 4. **改完必自查**：间距用 §2.6 刻度值；改元素/数据对照对应章节必做清单
 
+**文档分层（新内容该写哪里 —— 防止本指南无限膨胀）：**
+
+| 内容类型 | 写在哪 |
+|---|---|
+| 跨页面通用、长期稳定的规范（令牌 / 组件 / 结构 / 安全 / 部署） | **本指南**对应章 |
+| 只对某模块有效的约定、专属组件、算法规则、易腐信息（类名 / 函数锚点） | `tools/_docs/mod-<模块>.md` |
+| 「为什么会有这条规则」的事故叙事 | `tools/_docs/incidents.md` |
+| 后台 UI 规范（令牌 / 组件规格） | `tools/_shared/DESIGN_SYSTEM.md` |
+| 工具清单 / 文件树 / 图标色板等**可从配置派生**的清单 | **不写文档** → 读 `tools.json` / 目录 |
+
+> 硬约束：本指南**单条规则 ≤ 6 行**、**不写类名/函数名/行号**、**体积 ≤ 32,000 字符**；超了就下移内容。
+> 完整维护规则与自检命令见 [`_docs/INDEX.md`](_docs/INDEX.md)。
+
 ---
 
 ## 一、项目概述
@@ -31,38 +45,41 @@
 | 网站名称 | W. Studio (首页) / Studio Tools (工具集) |
 | 域名 | wlili.top |
 | 技术栈 | 纯静态 HTML/CSS/JS，无框架、无构建 |
-| 部署 | 推送 GitHub 即生效（GitHub Pages） |
+| 部署 | 推送 GitHub → **EdgeOne 自动构建**（分钟级延迟）→ `wlili.top` |
 
 ```
 wlili.top/
-├── index.html                  # 首页（W. Studio）
-├── .gitattributes              # LF 换行 + LFS 规则
-├── .gitignore                  # 忽略本地 server 文件
-└── tools/
-    ├── common.css              # 设计系统（变量、重置、组件）
-    ├── nav.js                  # 统一导航栏（自动注入）
-    ├── tools.json              # 工具配置（分类、图标、关键词）
-    ├── index.html              # 工具卡片列表页
-    ├── bookmark-manager.html   # 书签管理器（标准工具页）
-    ├── image-compress.html     # 图片压缩（标准工具页）
-    ├── image-cropper.html      # 图片裁切
-    ├── image-layout.html       # 配图排版
-    ├── image-upscale.html      # AI 图片放大
-    ├── unit-converter.html     # 在线换算
-    ├── password-gen.html       # 密码衍生器
-    ├── ip-mascot.html          # IP形象生成器
-    ├── phonetic-chart.html     # 音标速查
-    ├── print-manager.html      # 打印管理器（复杂页-侧边栏）
-    ├── prompt-library.html     # AI 提示词库（复杂页-双栏）
-    ├── filament-manager.html   # 3D耗材管理（复杂页-侧边栏）
-    ├── seamless-pattern.html   # 四方连图素材库（复杂页-侧边栏）
-    ├── proxy-sub.html          # 免费代理订阅（简单页）
-    ├── model-viewer.html       # 3D模型预览
+├── index.html            # 首页（W. Studio）
+├── portfolio/            # 作品集（案例页，自带 _shared 设计系统）
+├── zhonglele/            # 亲子站（v2 多视频段 scroll-scrub）
+├── js/                   # 第三方脚本（gsap 等）
+└── tools/                # ★ 工具集
+    ├── common.css        # 工具页设计系统：令牌 / 重置 / 组件
+    ├── nav.js            # 统一导航（注入式；对 admin.html 只暴露数据、不注入 DOM）
+    ├── tools.json        # ★ 工具清单「单一数据源」（id / 名称 / 文件 / 分类 / 图标色）
+    ├── index.html        # 工具卡片列表页
+    ├── *.html            # 各工具页 —— 清单见 tools.json，本指南不逐一罗列
+    ├── _shared/          # 统一后台 admin.html ＋ DESIGN_SYSTEM.md（后台 UI 规范）
+    ├── _docs/            # 维护者文档：模块备忘 mod-*.md ＋ 事故档案 ＋ INDEX（文档地图）
+    ├── _archive/         # 已下线工具页归档（本地留档，不上线）
+    └── _concept/         # 设计过程产物：概念稿 / 探针 / 截图（不上线）
 ```
+
+> - `tools/*-data.json*`、`tools/imgs/pl/` 为用户**私有数据**（`.gitignore`，不上云）
+> - `_archive/`、`_concept/`、`_docs/probe_*` 为**本地留档/过程产物**（`.gitignore`，不上线）
 
 ---
 
 ## 二、设计系统
+
+> ⚠ **本项目有两套并存的设计系统，不要混用**：
+>
+> | 体系 | 载体 | 令牌前缀 | 主色 | 规范文档 |
+> |---|---|---|---|---|
+> | **工具页体系** | `tools/*.html` + `common.css` | `--ink / --bg / --link / --space-* / --z-*` | 靛蓝 `#6366f1` | **本章（§二、§三）** |
+> | **后台体系** | `_shared/admin.html`（单文件内联样式） | `--ink / --card / --accent* / --sp-* / --r-*` | 绿 `#84cc16` | **`_shared/DESIGN_SYSTEM.md`** |
+>
+> `admin.html` **不加载 `common.css`**，它有自己的完整令牌与组件；改后台样式一律查 `DESIGN_SYSTEM.md`，改工具页才用本章。
 
 ### 2.1 颜色令牌（common.css :root）
 
@@ -114,13 +131,7 @@ wlili.top/
 | `--red` | `#ff3b30` | 错误/危险 |
 | `--orange` | `#ff9500` | 警告 |
 
-#### 页面专属色（非变量，硬编码于具体页面）
-
-| 色值 | 用途 | 来源 |
-|------|------|------|
-| `#B45F06` | 隐私提示文字色 | common.css `.nav-privacy-notice` |
-| `#FFF5E5` | 隐私提示背景色 | common.css `.nav-privacy-notice` |
-| `rgba(0,102,204,0.12)` | 输入框聚焦光晕 | common.css `.text-input:focus` |
+> 页面专属硬编码色（如导航隐私提示的橙 `#B45F06`）→ 见 [`_docs/mod-tools-misc.md`](_docs/mod-tools-misc.md)「页面专属色」。
 
 ### 2.2 圆角系统（4 档）
 
@@ -258,7 +269,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 | 类名 | 用途 | 关键属性 |
 |------|------|---------|
 | `.text-input` | 文本输入框 | `36px` 高，`--radius-md`，`80px` 宽 |
-| `.form-select` | 下拉选择框（**页面私有**，未入 common.css） | `appearance:none` + 自定义 SVG 箭头 `right 12px center`，`padding-right:32px`。仅存在于 `filament-manager.html` / `print-manager.html` 页面样式且两页实现略有差异；如需全站使用，先统一实现并提升进 common.css（详见规则 20） |
+| `.form-select` | 下拉选择框（**页面私有**，未入 common.css） | `appearance:none` + 自定义 SVG 箭头，`padding-right:36px`。统一实现已随旧页并入 `_shared/admin.html`（`.fgroup select` / `.drawer-body select`）；后台侧规范见 `_shared/DESIGN_SYSTEM.md` §3.5（详见规则 20） |
 | `.segmented-control` | 分段控件容器 | `flex`，`36px` 高，`pill` 形 |
 | `.segment-btn` | 分段按钮 | `.active` 为黑底白字 |
 
@@ -381,35 +392,13 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 - 空数据时：隐藏骨架屏 + 显示空状态（`.empty-state`），骨架屏与空状态互斥
 - 参考实现：`prompt-library.html` 的 `skeletonGrid` + `renderList()` 分批渲染
 
-### 3.9 图片存储与自动压缩规范（强制）
+### 3.9 图片存储与自动压缩（强制）
 
-图片以 base64 dataURL 存于 localStorage / IndexedDB 的工具页面，**必须在上传/粘贴时自动压缩**，禁止原图直存，否则数据量过大导致页面加载卡顿。
+图片以 base64 存于 localStorage / IndexedDB 的页面，**上传/粘贴时必须自动压缩**，禁止原图直存。
 
-**压缩规则**：
-| 规则 | 值 |
-|------|-----|
-| 最长边上限 | `MAX_EDGE = 2048`px，超限等比缩小 |
-| JPEG 质量 | `JPEG_QUALITY = 0.85` |
-| 小图阈值 | `< 500KB` 直接走原图，避免无谓解码开销 |
-| 透明图（PNG/WebP） | 保留原格式 `image/png`，不清除透明通道 |
-| GIF 动图 | **跳过不压**（canvas 会丢失动画帧） |
-| JPEG/BMP 等不透明图 | 转 `image/jpeg`，绘制前白底填充（`fillStyle='#fff'`）避免透明变黑 |
-
-**核心函数签名**（参考 `prompt-library.html`）：
-- `compressImageFile(file)`：上传文件 → 压缩 → dataURL（Promise）
-- `compressDataURL(src)`：存量 dataURL 压缩（用于"一键压缩现有图片"功能）
-- `compressImageToDataURL(img, keepAlpha)`：核心压缩逻辑（canvas drawImage）
-
-**实现要点**：
-- 用 `<canvas>` + `drawImage` 压缩：`URL.createObjectURL(file)` 载入图片 → 按 `MAX_EDGE` 等比缩放 → `canvas.toDataURL(...)`
-- 压缩后 dataURL 必须短于原图才回写，否则保留原图（`compressed.length < src.length` 判断）
-- 批量压缩存量图片时，临时关闭自动备份（`setAutoBackupEnabled(false)`），完成后统一备份一次，避免逐条写 localStorage 拖慢
-- 数据安全面板提供"压缩现有图片"按钮，一键遍历所有记录压缩超限大图并回写
-
-**性能规范**（大数据量列表页）：
-- 列表渲染必须**分批渲染**：每帧（`requestAnimationFrame`）渲染 8 条左右，避免一次性创建大量 DOM 阻塞主线程
-- 配合骨架屏（§3.8）：数据加载完成前显示骨架屏，渲染完成后再隐藏
-- 参考实现：`prompt-library.html` 的 `renderList()` 分批渲染 + 骨架屏
+- 压缩参数、服务端/客户端两套实现的选型与参考实现 → **见 §十二「图片处理统一选型」**（单一来源，勿在此重复）
+- 存量数据要提供「一键压缩现有图片」入口；批量压缩时临时关闭自动备份，完成后统一备份
+- 大列表必须**分批渲染**（`requestAnimationFrame` 每帧约 8 条）配合骨架屏（§3.8）
 
 ---
 
@@ -460,25 +449,13 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 ### 4.3 复杂工具页结构（侧边栏布局）
 
-适用于 `filament-manager.html`、`print-manager.html`、`seamless-pattern.html` 等需要持久导航的页面（对应 `nav.js` 的 `SIDEBAR_PAGES` 数组）：
+> **现状**：原三个侧栏页已全部下线（归档于 `tools/_archive/`），当前无现役侧栏页；
+> 后台 `admin.html` 用的是自己的**左轨 `.rail`**（不是 `.sidebar`）。以下为历史规范，**新建侧栏页时才适用**。
 
-- 需在 `nav.js` 的 `SIDEBAR_PAGES` 数组中注册文件名，以启用移动端侧边栏切换按钮
-- 左侧 `.sidebar`（`220px`）+ 右侧主内容区
-- `≤900px` 侧边栏收起为抽屉式（`transform: translateX(-100%)`），同时在全局导航栏显示菜单按钮（`.nav-mobile-menu-btn.has-sidebar`）
-- 菜单按钮点击触发 `window.toggleSidebar()`，侧边栏滑入并显示遮罩层 `.sidebar-overlay`
-- **关键规则**：侧边栏收起断点与菜单按钮显示断点必须一致（均为 `900px`），避免出现侧边栏已隐藏但无菜单按钮可打开的断档区间
-- **侧边栏结构规则（强制）**：`<aside class="sidebar">` 内部直接从 `<nav class="nav-menu">` 开始，**禁止添加 `sidebar-header`**（含图标+标题）。页面标题已在顶部栏 `.module-title` 中显示，侧边栏内不再重复。底部保留 `.sidebar-footer` 显示版权信息。结构如下：
-  ```html
-  <aside class="sidebar" id="sidebar">
-      <nav class="nav-menu">
-          <div class="nav-item active" data-module="dashboard">...</div>
-          <!-- 更多 nav-item -->
-      </nav>
-      <div class="sidebar-footer">
-          <div>© 2025 WLi</div>
-      </div>
-  </aside>
-  ```
+- 需在 `nav.js` 的 `SIDEBAR_PAGES` 登记文件名（`admin.html` 虽在册，但 nav 对其直接 `return`，实际空转）
+- 左侧 `.sidebar` + 右侧主内容区；`≤900px` 收起为抽屉（`translateX(-100%)`）+ 导航栏出现菜单按钮
+- **关键**：侧栏收起断点与菜单按钮显示断点**必须一致**（均 900px），否则出现"侧栏已隐藏但无按钮可打开"的断档
+- **禁止**在 `<aside class="sidebar">` 内加 `sidebar-header`（标题已在顶栏显示）；结构示例见 [`_docs/mod-admin.md`](_docs/mod-admin.md)
 
 ### 4.4 页面结构类型
 
@@ -486,7 +463,8 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 |------|------|------|
 | **简单页** | 展示/复制为主，无复杂交互 | `proxy-sub.html`、`model-viewer.html` |
 | **标准工具页** | `dropzone` + 操作按钮 + 结果展示 | `image-compress.html`、`image-cropper.html`、`password-gen.html` |
-| **复杂工具页** | 侧边栏布局（`nav.js` 中 `SIDEBAR_PAGES` 标记） | `filament-manager.html`、`print-manager.html`、`seamless-pattern.html` |
+| **复杂工具页** | 侧边栏布局（`nav.js` 中 `SIDEBAR_PAGES` 标记） | `prompt-library.html`（双栏）、`composition-editor.html` |
+| **统一后台** | 单文件集成多模块，自带顶栏 / 左轨 / 独立设计系统 | `_shared/admin.html`（规范见 `_shared/DESIGN_SYSTEM.md`） |
 
 ---
 
@@ -511,7 +489,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 1. **必须引用** `common.css` 和 `nav.js`（所有 `tools/` 下的页面），不得重复定义已有变量和组件
 2. **新工具开发完成前**，不要加到 `tools.json` 和 `tools/index.html`
 3. **换行符**：统一 LF（`.gitattributes` 已配置 `* text=auto eol=lf`）
-4. **大文件**：`.npz`、`.png` 用 Git LFS 管理（`.gitattributes` 已配置），LFS 上传走直连
+4. **大文件**：**不使用 Git LFS**——`.gitattributes` 现仅配置 LF 换行，`filter=lfs` 规则已移除（`.git/hooks` 里残留的 lfs hook 无实际作用）。单文件上限与处理办法见 §10.2
 5. **链接颜色**：用 `var(--link)`（`#6366f1` 靛蓝色），hover 用 `var(--link-hover)`（`#0077ed`），禁止硬编码
 6. **图标风格**：`viewBox="0 0 24 24"`, `fill="none"`, `stroke="currentColor"`, `stroke-width="2"`, `stroke-linecap="round"`, `stroke-linejoin="round"`
 7. **CSP**：每个页面必须有 `<meta http-equiv="Content-Security-Policy">`，按需白名单外部域名
@@ -534,34 +512,22 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - 统一过渡：`transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);`
     - **例外**：纯数据表格面板（`.panel-static`）显式禁用 hover，避免表格行 hover 与面板 hover 冲突
     - 新增卡片组件时，必须同步添加 hover 效果，不可依赖后续补丁
-18. **智能搭配算法规范**（`seamless-pattern.html`）：
-    - 主题包（`SMART_THEMES`）定义元素池+推荐色板+推荐布局+元素数量范围，确保搭配结果主题统一
-    - 每次搭配过滤掉最近2次使用的主题，保证新鲜感
-    - 色板和布局采用 70% 主题推荐 / 30% 随机 的概率策略，平衡一致性与多样性
-    - 指纹去重：对比已入库素材和最近10次搭配历史，8次尝试均重复则强制输出
-    - 主体元素选 1~3 个、装饰元素选 2~6 个，遵循"主次分明、疏密有致"的图案设计原理
-    - 新增主题包时，确保元素池中的元素名与 `DEFAULT_ELEMENTS` 中一致，避免选不到
-19. **四方连续提示词规范**（`seamless-pattern.html`）：
-    - 提示词开头加入英文语义锚点 `seamless tileable repeat pattern`，增强AI平台对无缝拼接的理解
-    - 必须包含"角图规则"描述：超出上边界的元素从下边延续，超出左边界的从右边延续，确保任意位置裁切可无缝拼接
-    - 必须包含方向变化指令：相同元素在不同位置作旋转和镜像变化，方向多样不统一，避免排列呆板
-    - 布局选项采用专业组织形式：散点式（疏/密）、连缀式、重叠式，不用模糊描述
-    - 结尾用"正方形无缝拼接单元"替代"正方形构图"，强调拼接属性
-    - 禁止使用"纺织印花"等暗示材质的词汇，避免AI添加布料纹理与纯色平整要求冲突
+18. **智能搭配算法规范**（四方连图模块专属）：
+    → 已移至 [`../_docs/mod-seamless.md`](_docs/mod-seamless.md) 第三节「该模块专属规则」。
+
+19. **四方连续提示词规范**（四方连图模块专属）：
+    → 已移至 [`../_docs/mod-seamless.md`](_docs/mod-seamless.md) 第三节「该模块专属规则」。
+
 20. **下拉框（select）样式规范**（强制，所有页面）：
     - 所有 `<select class="form-select">` 或自定义 select 必须使用 `appearance: none; -webkit-appearance: none; -moz-appearance: none;` 移除原生箭头
     - 必须添加自定义 SVG 箭头作为 `background` 图片，定位 `right 12px center`，距右边框保留 12px 间距
     - 必须设置 `padding-right: 32px`（或更大），为自定义箭头留出空间，防止内容与箭头重叠
     - `[multiple]` 属性的 select 需移除背景箭头（`background-image: none`）并恢复默认 `padding-right`
     - 统一 SVG 箭头样式：`width='10' height='6'`，`stroke='%236b7280'`（灰色），`stroke-width='1.5'`，`stroke-linecap='round'`
-    - 参考实现：`filament-manager.html`、`print-manager.html`、`seamless-pattern.html` 均已统一
-21. **可折叠面板规范**（`seamless-pattern.html` 及后续复杂表单页）：
-    - 使用 `data-section="name"` 属性标识每个可折叠区块
-    - 标题栏 `.gen-section-header` 添加 `onclick="app.toggleGenSection('name')"` 触发折叠
-    - CSS：`.gen-section.collapsed .gen-section-body { display:none; }`，标题栏添加 `cursor:pointer; user-select:none;`
-    - 折叠箭头使用 `<svg class="gen-section-toggle">`，CSS `transform:rotate(-90deg)` 实现收起动画
-    - 标题栏内的按钮需添加 `event.stopPropagation()` 防止点击按钮时触发折叠
-    - 全宽工具栏（`.gen-toolbar`）放在 2 列布局上方，确保两列顶部对齐
+    - 参考实现：`_shared/admin.html`（耗材 / 打印 / 四方连图三模块均已统一）
+21. **可折叠面板规范**（四方连图模块专属）：
+    → 已移至 [`../_docs/mod-seamless.md`](_docs/mod-seamless.md) 第三节「该模块专属规则」。
+
 22. **信息密集型卡片设计规范**（强制，所有含列表卡片的页面）：
     - **禁止平铺式 label-value 列表**：不得将所有字段以相同字重、相同间距的"标签：值"行堆叠，导致视觉平淡、阅读困难
     - **必须分层次设计**，卡片结构按以下四层组织（按需取舍）：
@@ -574,7 +540,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - **附加标签独立成行**：授权书、署名权等附加信息用 `.card-extra` 区域单独展示，不混入详情行
     - **视觉降级**：备注等次要信息用更小字体（12px）+ 更淡颜色（`var(--text-muted)`），与主信息形成层次
     - **空缩略图占位**：无图片时用 W. 占位符（详见 §3.7），保持卡片结构一致性
-    - 参考实现：`seamless-pattern.html` 的 `.license-card` 系列（`.license-card-top / .license-card-amount-bar / .license-card-body / .license-card-footer`）
+    - 参考实现：`_shared/admin.html` 的 `.license-card` 系列（`.license-card-top / .license-card-amount-bar / .license-card-body / .license-card-footer`）
 23. **详情页设计规范**（强制，所有二级详情页）：
     - **只读优先**：详情页默认为只读展示模式，不使用 input/select/textarea，用文本+badge 展示数据
     - **编辑入口**：右上角放编辑图标按钮（`btn-icon`），点击进入编辑模式二级页，保存后返回详情页
@@ -583,13 +549,13 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - **分区标题**：用 `.detail-section-title`（14px 600 + 底边框）分隔基本信息、设计元素、关联记录等区块
     - **大图预览**：图片宽度撑满左栏（`aspect-ratio:1`），点击可全屏查看
     - **移动端适配**：768px 以下变为单列，图片居中（`max-width:280px`），`position:static`
-    - 参考实现：`seamless-pattern.html` 的 `openPatternDetail()` 和 `.detail-layout` 系列 CSS
+    - 参考实现：`_shared/admin.html` 的 `openPatternDetail()` 和 `.detail-layout` 系列 CSS
 24. **图片缺失占位符规范**（强制，所有含图片展示的页面）：
     - 图片缺失时必须使用 **W. 占位符**（详见 §3.7），禁止使用纯文字提示或空白
     - 占位符结构：`.pattern-thumb-placeholder` > `.ph-logo`（"W."）+ `.ph-text`（描述文字）
     - 背景色统一 `#f0f0f3`，禁止使用页面变量
     - `ph-logo` 字号：dashboard 小卡片 `32px`，gallery 大图 `48px`
-    - 参考实现：`seamless-pattern.html`（小卡片）、`prompt-library.html`（`.card-cover-placeholder`，大图）
+    - 参考实现：`_shared/admin.html`（小卡片）、`prompt-library.html`（`.card-cover-placeholder`，大图）
 25. **骨架屏规范**（强制，所有异步读取数据的页面）：
     - 数据加载期间禁止空白区域，必须显示骨架屏（详见 §3.8），禁止使用纯 loading 文字
     - 骨架屏与空状态互斥：有数据前显示骨架屏，空数据显示 `.empty-state`，就绪后隐藏骨架屏
@@ -606,7 +572,7 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - **禁止**在全局或弹窗打开期间监听 `Escape` 键关闭弹窗；
     - 弹窗**只能通过弹窗内明确的按钮关闭**：右上角 `×`（`.modal-close`）、底部「取消」「关闭」「保存」「确认」「删除」按钮（监听必须绑在按钮自身或 `[data-close-modal]` 属性上）；
     - 例外：纯"看图/Lightbox"类弹窗（只有一张放大预览图）**必须先确保弹窗内有 × 关闭按钮**，再移除遮罩点击关闭，避免出现无法关闭的弹窗；
-    - 参考修正：`bookmark-manager.html`（editModal/batchClearModal）、`prompt-library.html`（confirmModal）、`filament-manager.html`（modalOverlay/imageModal）、`seamless-pattern.html`（modalOverlay）——以上页面已按本规则移除遮罩点击关闭。
+    - 参考修正：`bookmark-manager.html`（editModal/batchClearModal）、`prompt-library.html`（confirmModal）、`_shared/admin.html`（耗材模块 modalOverlay/imageModal、四方连图模块 modalOverlay）——以上均已按本规则移除遮罩点击关闭。
 28. **管理/编辑入口默认隐藏规范**（所有含维护操作 UI 的页面，如数据管理页）：
     - 任何"进入编辑模式 / 进入维护模式"的入口按钮默认隐藏（`style="display:none;"` 或 CSS 隐藏），避免外网访客误入；
     - 入口按钮只能通过**键盘快捷键**唤出（推荐 `Ctrl+Shift+E`），快捷键要做 `e.preventDefault()` 防止浏览器默认行为；
@@ -617,10 +583,10 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - 参考实现：`bookmark-manager.html` 的 `restoreEditState()` / `persistEditMode()` / `persistEditEntryShown()`。
 29. **数据持久化统一规范（强制，所有需要保存用户数据的工具页）**：
     - **开发前必须先询问用户选择哪种存储定位**（不可默认、不可替用户决定）：
-      - **方案 A：私人工具 → 仅本地存储**（localStorage / IndexedDB 单通道，不落盘服务端）。适用于数据是用户自己用、不想被外网/局域网他人访问的场景（如 `filament-manager.html` / `print-manager.html`，数据是用户私人耗材/打印记录）；
+      - **方案 A：私人工具 → 仅本地存储**（localStorage / IndexedDB 单通道，不落盘服务端）。适用于数据是用户自己用、不想被外网/局域网他人访问的场景（如 `_shared/admin.html` 的耗材 / 打印模块，数据是用户私人耗材与打印记录）；
       - **方案 B：素材库 / 共享数据 → 双通道**。适用于需要防丢、多设备共享、数据有长期价值的场景（如 `prompt-library.html`，历史教训：纯 IndexedDB 方案清理浏览器站点数据 / 切换 origin 后数据全丢，2026-08-23）；
     - 选 B 时数据「**双通道**」存储：浏览器本地（localStorage / IndexedDB）为主 + server.py 服务端文件同步兜底；
-    - 参考实现：`filament-manager.html` / `print-manager.html` 的 `_localStorage` 封装（`getItem`/`setItem` 内 fetch `/api/data` 全量同步 + `/api/health` 探测服务器可用性）；
+    - 参考实现：`_shared/admin.html` 的 `_localStorage` 封装（`getItem`/`setItem` 内 fetch `/api/data` 全量同步 + `/api/health` 探测服务器可用性）；
     - 服务端：server.py 已内置 `/api/data`（GET 全量读 / POST 全量写，落盘 `server_data.json`）。新工具的专属数据**写入独立 key 或独立数据文件**（如 `tools/prompt-library-data.json`），禁止与现有工具数据互相覆盖；
     - 回退规则：`/api/health` 探测失败（纯静态托管 / EdgeOne / GitHub Pages 云端部署无后端）时**静默降级为仅本地存储**，不影响使用；本地 server.py 环境自动启用双通道；
     - 备份：页面必须提供「导出 JSON / 导入 JSON」入口（`exportData()` / `importData()`），数据管理面板标注当前存储方式；
@@ -633,12 +599,12 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
     - 分批渲染（`requestAnimationFrame` 每帧 N 条）风险翻倍：每批都会把共享变量"重置"到本批末尾一次，表现为"前 8 项点开都是第 8 条，第 9~16 项点开都是第 16 条"；
     - 连带影响：同一循环内的「复制 / 编辑 / 删除」按钮回调同样取错对象，**会用错的数据覆盖正确的记录**；
     - 验证手法：写对照脚本收集 handler，**等渲染全部完成后再统一触发**——在创建元素时立即触发会假通过（那一刻变量还指向当前项）；
-    - **历史事故**：`prompt-library.html` 的 `renderList()` 因该 bug，点击任意卡片都打开第 16 条记录，复制/编辑按钮也作用到别人的条目上（2026-09-21）。参考实现见该文件 `renderList()` 的 `filtered.slice(start, end).forEach(...)`。
+    - **依据**：见 [`../_docs/incidents.md`](_docs/incidents.md)（规则 30 / 31 真实案例）。
 31. **单一实现原则**（强制）：
     - 同一用途的能力（确认弹窗、toast、数据读写、显隐控制）**全页面只允许一套实现**。两套并存时，改 A 不改 B 必然产生"改了却没生效"的假象；
     - **显隐机制必须统一**：不要在同一批元素上混用 inline `style.display` 与 `classList.add/remove('active')` —— inline 优先级高于 class，一旦写过 `display:none`，后续加 `.active` 也再也显示不出来；
     - 事件监听避免"clone 节点去除旧监听"的写法：它会让绑在旧节点上的常驻监听整体失效，后续调用全部失灵；需要替换回调就用变量存 callback 而非替换 DOM；
-    - **历史事故**：`prompt-library.html` 曾并存 `showModal`（class 机制）与 `showConfirm`（inline display + clone 按钮），后者运行过一次后，删除确认弹窗再也打不开（2026-09-21）。
+    - **依据**：见 [`../_docs/incidents.md`](_docs/incidents.md)（规则 30 / 31 真实案例）。
 32. **本地存储容量与静默失败**（强制，所有用 localStorage / IndexedDB 的页面）：
     - `localStorage` 配额仅 **5~10MB**，存图片 base64 **必然**抛 `QuotaExceededError`；`setItem` 必须包 `try/catch`，失败要**可见**（写进状态栏或 toast），并在失败时清掉可能写了一半的残留 key；
     - 禁止"后台自动备份失败只 `console.error`"——用户会以为有备份，清缓存后才发现根本没有；
@@ -663,21 +629,9 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 ## 七、工具清单与分类
 
-| ID | 名称 | 文件 | 分类 | 图标色 | 类型 |
-|----|------|------|------|--------|------|
-| image-compress | 图片压缩 | `image-compress.html` | image | blue | 标准工具页 |
-| image-layout | 配图排版 | `image-layout.html` | image | green | 标准工具页 |
-| image-cropper | 图片裁切 | `image-cropper.html` | image | indigo | 标准工具页 |
-| image-upscale | AI 图片放大 | `image-upscale.html` | image | blue | 标准工具页 |
-| unit-converter | 在线换算 | `unit-converter.html` | convert | orange | 标准工具页 |
-| password-generator | 密码生成器 | `password-gen.html` | security | purple | 标准工具页 |
-| ip-mascot | IP形象生成器 | `ip-mascot.html` | creative | pink | 标准工具页 |
-| 3d-filament | 3D 耗材及预设管理 | `filament-manager.html` | reference | teal | 复杂工具页 |
-| phonetic-chart | 48 音标速查表 | `phonetic-chart.html` | reference | red | 简单页 |
-| print-manager | 打印管理器 | `print-manager.html` | manage | cyan | 复杂工具页 |
-| prompt-library | AI 提示词库 | `prompt-library.html` | creative | purple | 复杂工具页（双栏） |
-| seamless-pattern | 四方连图素材库 | `seamless-pattern.html` | creative | pink | 复杂工具页 |
-| bookmark-manager | 书签管理器 | `bookmark-manager.html` | manage | blue | 标准工具页 |
+> **单一数据源 = `tools.json`**（id / name / file / category / iconColor / description）。
+> **本指南不抄写工具清单** —— 它会随开发不断变化，抄一遍就多一处要同步。
+> 新增/下线工具时改三处：`tools.json`、`tools/index.html` 卡片、`nav.js` 分组（`TOOL_CATEGORIES` 由 `tools.json` 派生，二者需保持一致）。
 
 ### 图标色板（9 色）
 
@@ -695,113 +649,23 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 ---
 
-## 八、页面专属组件索引
+## 八、模块备忘索引
 
-各工具页面独有的组件，标注来源文件与类名，方便定位修改。
+页面/模块专属的实现细节、专属组件、易腐信息（类名 / 函数锚点 / 「改哪里」清单）**一律不写在本指南**，
+按模块拆在 `tools/_docs/` —— 本指南只做索引：
 
-### bookmark-manager.html
+| 模块 | 备忘文档 |
+|---|---|
+| 统一后台（壳层 / 路由 / 两条渲染路径 / 数据层 / 技术债） | [`_docs/mod-admin.md`](_docs/mod-admin.md) |
+| 四方连图素材库（生成器 / 图库 / 授权 / 元素库） | [`_docs/mod-seamless.md`](_docs/mod-seamless.md) |
+| 3D 耗材管理（仪表台 / 预设 / 知识库 / 耗材库） | [`_docs/mod-filament.md`](_docs/mod-filament.md) |
+| 打印管理器（仪表台 / 纸张 / 墨水 / 记账） | [`_docs/mod-print.md`](_docs/mod-print.md) |
+| AI 提示词库（数据台 / 全部提示词 / 标签 / 发布） | [`_docs/mod-prompt-lib.md`](_docs/mod-prompt-lib.md) |
+| 精选收藏夹 | [`_docs/mod-bookmark.md`](_docs/mod-bookmark.md) |
+| 其它工具页专属组件（image-* / phonetic-chart / ip-mascot / password-gen） | [`_docs/mod-tools-misc.md`](_docs/mod-tools-misc.md) |
+| 文档地图与**维护规则**（新内容该写哪） | [`_docs/INDEX.md`](_docs/INDEX.md) |
 
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 弹窗体系 | `.modal-overlay / .modal-box / .modal-header / .modal-body / .modal-footer` | 完整模态弹窗，含遮罩、关闭按钮、表单区域 |
-| 标签输入芯片 | `.modal-tags-input / .modal-tag-chip` | 可添加/删除的标签输入组件 |
-| 书签卡片 | `.bm-card / .bm-cover / .bm-info` | 含截图封面、Favicon占位、标签的卡片 |
-| shimmer 骨架屏 | `.bm-cover.loading::after` | 加载中的闪烁动画占位 |
-| 浮动分类栏 | `.floating-cat-bar` | 滚动时悬浮的类型筛选栏 |
-
-### filament-manager.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 侧边栏应用壳 | `.sidebar / .sidebar-header / .sidebar-footer` | 完整的侧边栏导航布局，含可折叠 |
-| 颜色色板网格 | `repeat(8,1fr)` 色板 | 8 列耗材颜色选择网格 |
-| 统计卡片 | `.stat-card-icon / .stat-card-value` | 带图标的统计卡片，含消耗量进度 |
-| 标签徽章 | `.tag-badge` | 耗材标签徽章组件 |
-
-### print-manager.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 数据表格 | `.data-table` | 带排序、操作的打印记录表格 |
-| 柱状图 | `.chart-bar / .chart-tip` | CSS 柱状图 + 悬浮工具提示 |
-| 开关切换 | `.op-switch / .slider` | 运营成本开关，滑动式切换 |
-| 抽屉式侧栏 | `translateX(-100%)` | 移动端侧边栏抽屉动画 |
-
-### prompt-library.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 封面图体系 | `.card-cover / .card-cover-overlay` | 提示词卡片的封面图+渐变叠层+标题 |
-| 10 色变量标签 | `.var-tag.c0~c9` | 10 种颜色的变量标签，各有 bg/border/text |
-| 详情双栏 | `1fr 520px` | 左侧列表+右侧 520px 详情面板 |
-| 开关组件 | `.toggle-slider` | iOS 风格开关切换 |
-| 按钮组容器 | `.button-group` | 按钮放入框中，竖线分隔 |
-| 骨架屏 | `.skeleton-grid / .skeleton-card / .skeleton-cover / .skeleton-bar` | 数据加载期间的 shimmer 占位（详见 §3.8） |
-| 图片自动压缩 | `compressImageFile() / compressDataURL() / compressAllImages()` | 上传/粘贴/存量图片 canvas 压缩（详见 §3.9） |
-| 分批渲染 | `renderList()` + `requestAnimationFrame` | 每帧 8 条渲染卡片，避免阻塞主线程 |
-
-### image-layout.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 6 套拼图模板 | `grid-template` 预设 | `2fr 1fr 1fr` / `1.5fr 1fr` 等多种拼图版式 |
-| 工具栏 | `.toolbar / .toolbar-ratio-group` | 比例选择+操作按钮的工具栏 |
-
-### image-compress.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 进度条 | `.progress-bar-bg / .progress-bar-fill` | 压缩进度条，`width 0.3s` 动画 |
-| 文件卡片 | `.card-thumb / .card-info` | 缩略图+信息+操作的内联网格卡片 |
-
-### image-upscale.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 进度环 | `.progress-ring / .progress-text` | SVG 环形进度指示器 |
-| 状态点 | `.dot.ready / .dot.error` | 模型状态指示点，含 `pulse` 动画 |
-
-### phonetic-chart.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 三色编码系统 | `--vowel红 / --consonant蓝 / --diphthong绿` | 元音/辅音/双元音的颜色分类 |
-| 音标卡片 | `.card / .card-upper / .card-lower` | 上下分层的音标展示卡 |
-
-### ip-mascot.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| Google 字体引入 | `Outfit + Noto Sans SC` | 唯一引入外部字体的页面 |
-| 发光阴影 | `--shadow-glow` | 独有发光阴影效果 |
-
-### seamless-pattern.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 智能搭配按钮 | `.btn-smart-match` | 渐变紫色按钮，点击触发主题随机搭配 |
-| 主题标签栏 | `.theme-badge-bar / .theme-badge` | 显示当前搭配主题名称和描述 |
-| 清空选择按钮 | `.btn-clear-select` | 清空已选元素，hover 红色警示 |
-| 元素选择芯片 | `.element-chip.selected` | 选中态紫色填充+入场动画 |
-| 色板卡片 | `.palette-card.selected` | 选中态紫色边框+浅紫背景 |
-| 提示词输出 | `.prompt-output` | 深色背景代码框，支持滚动 |
-| 平台跳转按钮 | `.platform-btn` | 即梦/豆包/Gemini 一键跳转 |
-| 指纹去重 | `makeFingerprint()` | 元素排序+色板+布局生成唯一指纹 |
-| 智能搭配算法 | `smartMatch()` | 10个主题包随机选+去重+70/30概率色板布局 |
-| 信息密集型卡片 | `.license-card-top / .license-card-amount-bar / .license-card-body / .license-card-footer` | 四层结构：缩略图标题区+金额数据栏+详情行+操作栏（详见规则22） |
-| 快速付款按钮 | `.pay-btn / .pay-btn-done` | 未付款可点击变已付款，已付款灰掉disabled |
-| 只读详情页 | `.detail-layout / .detail-img-col / .detail-info-col` | 两栏布局：左图右信息，只读展示模式（详见规则23） |
-| 详情信息行 | `.detail-info-row / .detail-info-label / .detail-info-value` | 表格式只读字段展示，底边框分隔 |
-| 图片全屏预览 | `openImagePreview()` | 点击图片弹出全屏遮罩查看 |
-| 二级页编辑模式 | `openPatternEdit()` | 从详情页进入编辑，保存后返回详情页 |
-
-### password-gen.html
-
-| 组件 | 类名 | 说明 |
-|------|------|------|
-| 强度徽章 | `.badge-red / .badge-blue / .badge-orange` | 密码强度三色等级徽章 |
-
----
+> 新增模块备忘：在 `_docs/` 建 `mod-<模块>.md`（套现有文件的头部框架）→ 在上表补一行 → 在代码模块分隔处加指向注释。
 
 ## 九、安全规范
 
@@ -851,7 +715,16 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
   2. 配置自定义域名时添加 HSTS（可选，需了解其不可逆性）
   3. 定期审查第三方 CDN 脚本版本
 
-### 10.1 文件大小限制（强制规范）
+### 10.1 EdgeOne 部署实测要点（2026-09-27）
+
+- **构建有延迟（分钟级）**：刚 `push` 完立刻访问新路径可能返回 404 —— **先等 1~2 分钟再判**，不要据此认为"目录/文件被平台忽略"而去改名或加 `.nojekyll`。
+- **下划线开头的目录可正常服务**：`tools/_shared/`、`portfolio/cases/_shared/` 实测均 200，无需 `.nojekyll`。
+- **后台入口**：`tools/nav.js`（本地/局域网判定）与 `tools/tools.json` 指向 `_shared/admin.html`；`tools/index.html`（公开工具卡片）**有意不含后台入口**。
+- **`admin.html` 禁止内嵌 base64 图片**：曾有 2 条种子数据的缩略图以内联 base64 存在（PNG 4.20MB + JPEG 77KB），使单文件达 4.67MB；已清空为 `""` 降至 0.59MB。此类内容一旦提交就永久留在 git 历史里，**首次提交前必须清干净**。
+- **提交前必跑**：`node .workbuddy/tools/_git_bigfiles.js`（查 >25MB 与数据文件误入库）。
+- **提交方式**：用**显式路径** `git add <file>...`，**禁止 `git add .`**（工作区含 37MB 设计产物，见 `.gitignore` 的 `tools/_concept/`、`tools/_archive/`、`_shots/`、`_probe_*.html`、`_tmp_*`）。
+
+### 10.2 文件大小限制（强制规范）
 
 - **EdgeOne Pages 单文件上限：25 MB**，超过此大小的文件会导致部署失败
 - 开发新工具时，**必须**检查所有引入的资源文件（模型、图片、视频、数据文件等）大小
@@ -863,124 +736,13 @@ cubic-bezier(0.22, 0.61, 0.36, 1)
 
 ---
 
-## 十一、seamless-pattern.html 专属开发备忘
+## 十一、四方连图生成器备忘 → `_docs/mod-seamless.md`
 
-> 本章节供 AI 交接使用，包含关键代码索引、提示词生成规则、改元素必做清单。
-> **行号会随代码变动偏移，使用时请先 Grep 确认实际位置。**
+原「四方连图生成器专属开发备忘」（元素库索引 / 提示词生成规则 `buildPrompt()` / 改元素必做清单 / 省 Token 读取路径）
+**整章已移至** [`_docs/mod-seamless.md`](_docs/mod-seamless.md) 第二节 —— 它属于模块实现备忘（易腐信息），不占本指南篇幅。
 
-### 12.1 关键代码区域索引
-
-| 功能 | 关键标识 | 说明 |
-|------|----------|------|
-| 数据版本号 | `const DATA_VERSION` | 改元素必须升版（v5→v6），否则旧用户缓存不刷新 |
-| 元素库 | `const DEFAULT_ELEMENTS` | 主体/配饰/装饰三大类，所有可选元素定义于此 |
-| 布局选项 | `const LAYOUTS` | 5 种布局：散点疏/密、分层带状、重叠 |
-| 画风选项 | `const STYLES` | 4 种画风：治愈绘本、韩系奶油简笔、简约线条、水彩 |
-| 智能搭配主题包 | `const SMART_THEMES` | 11 个主题，每个含 subjectPool/decorationPool/outfitPool |
-| genState 持久化 | `genState` + `saveGenState` | 选择状态存 localStorage，刷新不丢，关页或重置才清 |
-| 数据初始化 | `initData()` | 版本不匹配时强制注入 DEFAULT_ELEMENTS |
-| 智能搭配算法 | `smartMatch()` | 随机选主题→取元素→70/30概率色板布局→指纹去重 |
-| 提示词生成核心 | `buildPrompt()` | 根据选择元素拼装完整提示词，含冲突规避/风格/色板 |
-| 生成/复制 | `generatePrompt()` / `copyPrompt()` | 触发生成和复制到剪贴板 |
-| 清空数据 | `clearAllData()` | 清空所有 localStorage，需同步清 genState |
-| 元素选中/取消 | `toggleGenElement()` | 处理职业套装互斥、头饰分配等交互逻辑 |
-
-### 12.2 提示词生成规则（buildPrompt）
-
-**主体元素三类处理：**
-
-| 类型 | 检测方式 | 生成描述 |
-|------|----------|----------|
-| 头像系列 | `cat.category === '头像系列'` | 仅绘制头部，无身体、无肢体、无站姿动作，仅做轻微镜像和大小变化 |
-| 融合角色 | `cat.category === '融合角色'` | 动物+自然元素结合，保留头部特征，身体融合云朵/星光等，梦幻漂浮感 |
-| 普通主体 | 非头像非融合 | 多个时"独立角色严禁融合"，单个时"不同位置不同姿态重复出现" |
-
-**配饰处理规则：**
-- 职业套装与普通配饰互斥（选职业套装清空普通配饰，反之亦然）
-- 头饰不叠加：多选时分配给不同角色，每只仅戴一种
-- 围巾眼镜独立分类，可与任何头饰自由搭配
-- 配饰按前缀分组生成自然语言：穿/戴/系/架/拿/背/挎/推/骑/捧/抱
-
-**结构线描述（选中弧形灯串线等触发）：**
-- 多条独立分段短弧形横向分层错落排布
-- 每段是独立短弧线，不是一条长贯通曲线
-- 挂绳上悬挂五角星与小圆珠，轻盈稀疏
-
-**提示词结构顺序（权重从高到低）：**
-1. 无缝拼接 + 风格 + 元素列表 + 布局
-2. 主体描述（头像/融合/普通分别处理）
-3. 配饰描述（职业套装/头饰分配）
-4. 结构线描述（如有）
-5. 无缝拼接规则 + 旋转镜像变化
-6. 色板 + 线条 + 明度 + 饱和度
-7. 圆润造型 + 五官简化
-8. 矢量平涂 + 无纹理噪点
-9. 疏密留白 + 禁止堆砌
-10. 无水印 8K 正方形
-
-### 12.3 改元素必做清单
-
-修改 `DEFAULT_ELEMENTS` 后必须同步以下 5 项：
-
-1. **升级 DATA_VERSION**：如 `v5` → `v6`，否则旧用户 localStorage 不刷新
-2. **更新 initData() 注释**：说明本次升级内容
-3. **同步 SMART_THEMES**：新增元素如需加入智能搭配，更新对应主题的 pool
-4. **检查 buildPrompt**：新增分类（如新增"融合角色"分类时）需在 buildPrompt 中加检测逻辑
-5. **检查 clearAllData**：确保清空数据时同步清除 genState
-
-### 12.4 常见修改场景
-
-| 场景 | 修改位置 | 注意事项 |
-|------|----------|----------|
-| 新增主体元素 | DEFAULT_ELEMENTS.subjects 对应分类 | 统一"小"前缀命名 |
-| 新增配饰 | DEFAULT_ELEMENTS.outfits 对应分类 | 注意前缀（穿/戴/系等）决定分组 |
-| 新增装饰元素 | DEFAULT_ELEMENTS.decorations 对应分类 | 结构线类元素会触发 buildPrompt 特殊描述 |
-| 新增智能搭配主题 | SMART_THEMES 追加 | 元素名必须与 DEFAULT_ELEMENTS 完全一致 |
-| 修改画风 | STYLES 数组 | 韩系简笔 ≠ 日系卡通，用词影响 AI 输出风格 |
-| 修改布局 | LAYOUTS 数组 | 分层带状 ≠ 连缀式，措辞影响 AI 排布逻辑 |
-| 修改色板 | DEFAULT_PALETTES | 5 色限制，lineColor 为轮廓色 |
-
-### 12.5 AI 交接省 Token 指南（自引导版）
-
-> **给接手本页面的新 AI**：用户只会对你说"先读 DEVELOPMENT_GUIDE.md"。
-> 读到本节后，请**自行按下方流程执行**，无需用户再补充任何指示。
-> 原则：**不全文通读 seamless-pattern.html**，只按"代码地图"用 Grep 定位锚点、读取最小必要范围。
-
-**第一步 建立全局认知（只读一次，长期复用）：**
-
-| 顺序 | 文件 | 读取方式 |
-|------|------|---------|
-| 1 | `DEVELOPMENT_GUIDE.md`（本文件） | 全文读完，掌握规范/组件库/规则 |
-| 2 | `common.css` | 只 Grep `:root` 看设计令牌；组件按需读（如 `.btn-filled`） |
-
-**第二步 读 seamless-pattern.html 代码（上手只读这 3 处）：**
-
-| 代码块 | Grep 定位锚点 | 读取范围 |
-|--------|--------------|---------|
-| 元素库 | `const DEFAULT_ELEMENTS` | 该常量完整定义（约 30 行，含主体/配饰/装饰） |
-| 提示词生成 | `buildPrompt: function` | 该方法完整块（到下一个方法定义止，约 200 行） |
-| 智能搭配 | `smartMatch: function` | 该方法完整块（约 60 行，涉及主题/搭配时才读） |
-
-> 行号会随代码变动漂移，**永远先用 Grep 锚点定位再 Read 最小范围**，不要用行号硬读。
-
-**第三步 按任务选最小读取路径（改哪读哪，不读无关代码）：**
-
-| 你的任务 | 需要读 | 必须同步 |
-|---------|--------|---------|
-| 新增/修改元素 | `DEFAULT_ELEMENTS` | §12.3 清单 5 项（升 DATA_VERSION 等） |
-| 修改提示词规则 | `buildPrompt` | §12.2 三类主体/配饰/结构线规则 |
-| 修改布局/画风/色板 | `LAYOUTS` / `STYLES` / `DEFAULT_PALETTES` | 措辞影响 AI 输出，参照 §12.4 备注 |
-| 修改智能搭配主题 | `SMART_THEMES` + `smartMatch` | 元素名必须与 DEFAULT_ELEMENTS 完全一致 |
-| 修改交互/持久化 | `saveGenState` / `initData` / `genState` | 版本不匹配会强制注入默认数据 |
-| 改页面 UI 样式 | 页面 `<style>` 内对应类 + common.css | 间距必须用 §2.6 刻度值 |
-
-**省 Token 铁律：**
-1. **用 Grep 定位，不靠行号**：行号会漂移，先 `Grep 锚点` 再 Read 最小范围
-2. **不贴大段代码**：回复用户时只贴改动行及其上下文（≤10 行），改动位置用「文件 + 锚点」描述，如"seamless-pattern.html 的 `function buildPrompt` 内结构线描述"而不是行号
-3. **一次一个任务**：避免多任务混在一起导致上下文膨胀
-4. **改完必自查**：§12.3 必做清单（尤其 DATA_VERSION 升版），并在回复中说明已同步哪些项
-
----
+> 改该模块前必读那份文档；其中「**改元素必做清单**」（升 `DATA_VERSION` → 同步 `SMART_THEMES` →
+> 检查 `buildPrompt` 与 `clearAllData`）仍是**强制**要求。
 
 ## 十二、图片处理统一选型与已有实现索引
 

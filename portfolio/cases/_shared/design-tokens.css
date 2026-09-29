@@ -1,0 +1,293 @@
+/* ============================================================================
+ * design-tokens.css — wlili.top 设计 Token 权威层（已落地 · 单一源）
+ * ----------------------------------------------------------------------------
+ * 目的：把散落在 site-shell.css、components.css 内联 --pd-*、以及硬编码圆角/阴影
+ *       的取值，收口成一份「单一可发现」的 Token 权威源。
+ *
+ * 当前状态（已按方案 A + 盲区补漏 落地，2026-09-28）：
+ *   [已落地·本文件权威源] 全局色/字/间距/动效/z-index + 深色 [data-theme=dark] 反转
+ *   [已落地·本文件权威源] --pd-accent-* 四色 + --pd-* 块级 24 个（§8）
+ *   [已落地·已接线] 圆角 --radius-* / 阴影 --shadow-*（§4/§5）
+ *   [已落地·已接线] 盲区 A–L：字号 --fs-* / 行高 --lh-* / 字距 --ls-* / 字重 --fw-* /
+ *                       间距 --gap-* / 容器 --container-* / 透明度 --opacity-* /
+ *                       宽高比 --ratio-* / 深色表面 --surface-* / 渐变 --gradient-* /
+ *                       断点 --bp-* / 交互态 --state-*（§10–§21）
+ *   [已落地·已接线] 全部替换带 fallback（var(--token, 原值)），前台缺引自动回退 → 零漂移
+ *
+ * 接入方式（已生效）：每个案例页 index.html 在 site-shell.css 之前引
+ *   <link rel="stylesheet" href="../_shared/design-tokens.css（版本号见各前台页 ?v，等于本文件内容 md5）">
+ * 约束：零构建单文件前端，不引入 Tailwind / 任何框架。Token 即 CSS 变量。
+ * ========================================================================== */
+
+
+/* ============================ 1. 颜色 · 品牌与中性 ============================ */
+:root {
+  /* —— 主色 / 中性 —— */
+  --color-primary: #000;            /* 主强调（按钮、关键线） */
+  --color-black: #0a0a0a;           /* 近黑，正文/标题主色 */
+  --color-white: #fff;
+
+  /* —— 背景 —— */
+  --color-background: #f5f5f5;       /* 浅色模式页面底 */
+  --color-background-dark: #0a0a0a;  /* 深色模式页面底 */
+
+  /* —— 文本 —— */
+  --color-text: #0a0a0a;                       /* 主文本 */
+  --color-text-secondary: rgba(10, 10, 10, 0.6);   /* 次级文本 */
+  --color-text-tertiary: rgba(255, 255, 255, 0.6); /* 深色底上的三级文本（浅色模式禁用！） */
+
+  /* —— 边框 / 分割 —— */
+  --color-gray-border: rgba(255, 255, 255, 0.16);       /* 深色底分割线（浅色模式慎用） */
+  --color-gray-ultra-light: rgba(10, 10, 10, 0.04);     /* 浅色模式极淡边框/底纹 */
+
+  /* —— 状态色 —— */
+  --color-green: #40a53c;            /* 成功 / 已保存态 */
+}
+
+/* ============================ 2. 排版 ============================ */
+:root {
+  --font-family: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+}
+
+/* ============================ 3. 间距尺度 ============================ */
+:root {
+  --padding-xl: 11.875rem;
+  --padding-lg: 10rem;
+  --padding-md: 7.5rem;
+  --padding-sm: 2.25rem;
+}
+
+/* ============================ 4. 圆角（已落地 · 已接线） ============================ */
+/* 提取自 components.css 硬编码聚类：25px(×14)、100px/980px/50%(pill)、18px(×3)、6px(×1)
+ * 接线后把这些硬编码替换为对应变量即可，不改视觉。 */
+:root {
+  --radius-pill: 6.25rem;   /* 药丸标签 / 完全圆角（980px、50% 同意图，统一到此） */
+  --radius-circle: 50%;   /* 圆形 / 头像 */
+  --radius-xl: 1.5625rem;      /* 大圆角卡片（== 1.5625rem，最高频） */
+  --radius-lg: 1.125rem;      /* 中圆角（20px/1.25rem 归入此类） */
+  --radius-sm: 0.375rem;       /* 小圆角（3/4/5px 归入此类） */
+}
+
+/* ============================ 5. 阴影（已落地 · 已接线） ============================ */
+/* 实测阴影多为一次性定制（ROI 低），仅把最通用两档提为 token；其余保持硬编码。 */
+:root {
+  --shadow-card: 0 0.75rem 2rem rgba(0, 0, 0, 0.12);  /* 通用卡片浮起 */
+  --shadow-sm: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.06);      /* 极淡描边感 */
+}
+
+/* ============================ 6. 动效 ============================ */
+:root {
+  --transition-base: 0.3s ease-in-out;
+  --transition-fast: 0.15s ease-in-out;
+  --transition-slow: 0.5s ease-in-out;
+
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-slow: 500ms;
+  --motion-easing-enter: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --motion-easing-exit: cubic-bezier(0.4, 0.0, 1, 1);
+  --motion-easing-emphasized: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* ============================ 7. 层级 z-index ============================ */
+:root {
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* ============================ 8. 块级 Token · --pd-* 家族（现状：内联于 components.css） ============================ */
+/* 以下为「产品设计（pd）」板块的局部 token，目前写在各自 .pd-* 选择器里。
+ * 收口目标：将来统一提到本文件或 components.css 顶部 :root，便于全局调整。
+ * 注：多数值引用了上面的全局 token（如 var(--color-black)），属正确做法。 */
+
+/* 8.1 强调色板（components.css :root，pd 板块配色预设） */
+:root {
+  --pd-accent-blue: #006fff;
+  --pd-accent-orange: #ff9300;
+  --pd-accent-red: #eb0000;
+  --pd-accent-green: #26ee00;
+  /* 深色模式同值（已是明色，深浅通用） */
+}
+
+/* 8.2 各板块局部 token（已从 components.css 各 .pd-* 选择器迁入，本区为单一权威源）
+ * 命名保持原样（--pd- 前缀）；值原样保留，仅改变义位置 → 视觉零漂移。
+ * 组件内只『消费』（var(--pd-*)）不『定义』；想统一调某类块视觉，改这里一处即可。 */
+:root {
+  /* —— eyebrow —— */
+  --pd-eyebrow-color: #888888;
+
+  /* —— intro-head —— */
+  --pd-intro-fg: var(--color-black);
+  --pd-intro-fg2: var(--color-text-secondary);
+
+  /* —— split-head —— */
+  --pd-split-accent: #888888;
+  --pd-split-fg: var(--color-black);
+  --pd-split-fg2: var(--color-text-secondary);
+
+  /* —— hero —— */
+  --pd-hero-accent: #888888;
+  --pd-hero-bg: var(--color-background);
+  --pd-hero-bg2: var(--color-white);
+  --pd-hero-card-bg: var(--color-gray-ultra-light);
+  --pd-hero-img-bg: var(--color-gray-ultra-light);
+  --pd-hero-fg: var(--color-black);
+  --pd-hero-fg2: var(--color-text-secondary);
+  --pd-hero-fg3: var(--color-text-secondary);
+  --pd-hero-border: var(--color-gray-ultra-light);
+  --pd-hero-border-strong: var(--color-gray-ultra-light);
+  --pd-hero-divider: var(--color-gray-ultra-light);
+  --pd-hero-divider2: var(--color-gray-ultra-light);
+
+  /* —— scene-grid —— */
+  --pd-grid-accent: #888888;
+  --pd-grid-fg: var(--color-black);
+  --pd-grid-fg2: var(--color-text-secondary);
+  --pd-grid-fg3: var(--color-text-secondary);
+  --pd-grid-card-bg: var(--color-white);
+  --pd-grid-border: var(--color-gray-ultra-light);
+}
+
+/* ============================ 10. 字号阶梯（盲区 A · 已落地·已接线） ============================ */
+/* 提取自 components.css / site-shell.css 的静态字号。令牌值现已是 rem（px 折算：16px → 1rem = --fs-16）。
+ * 响应式 clamp(...) 流体字号属设计意图，暂未抽（见 §22 说明）。 */
+:root {  --fs-12: 0.75rem;  --fs-14: 0.875rem;
+  --fs-16: 1rem;  --fs-18: 1.125rem;  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;  --fs-30: 1.875rem;
+  --fs-36: 2.25rem;  --fs-48: 3rem;  --fs-56: 3.5rem;  --fs-80: 5rem;  --fs-96: 6rem;
+  --fs-144: 9rem;
+  --fs-200: 12.5rem;   /* 超大标题/特例字号 */
+}
+
+/* ============================ 11. 行高（盲区 B · 已落地·已接线） ============================ */
+/* 仅收口无量纲（unitless）行高阶梯；精确 px 行高（如 162.8px）为垂直居中专用，保留裸写。 */
+:root {
+  --lh-090: 0.9;   --lh-095: 0.95;  --lh-100: 1;  --lh-105: 1.05;  --lh-110: 1.1;  --lh-115: 1.15;  --lh-120: 1.2;
+  --lh-130: 1.3;   --lh-140: 1.4;   --lh-145: 1.45;  --lh-150: 1.5;   --lh-155: 1.55;
+  --lh-160: 1.6;   --lh-170: 1.7;   --lh-180: 1.8;
+}
+
+/* ============================ 12. 字距（盲区 C · 已落地·已接线） ============================ */
+/* 收口相对字距（em）与高频 px 字距；美术字距（如 -7.4px 巨标题收紧）一并纳入便于统一调。 */
+:root {
+  /* 相对 em */
+  --ls-005: -0.005em;  --ls-01: -0.01em;  --ls-02: -0.02em;  --ls-03: -0.03em;  --ls-045: -0.045em;
+  --ls-05: -0.05em;    --ls-04: 0.04em;   --ls-06: 0.06em;   --ls-08: 0.08em;   --ls-12: 0.12em;
+  --ls-040: -0.04em;   /* 补充：components 高频相对字距 */
+  /* 高频 px（按字号等比收紧） */
+  --ls-02px: -0.0125rem;   --ls-028: -0.0175rem; --ls-03px: -0.01875rem; --ls-032: -0.02rem; --ls-04px: -0.025rem;
+  --ls-048: -0.03rem;   --ls-08px: -0.05rem; --ls-088: -0.055rem; --ls-12px: -0.075rem; --ls-15px: -0.09375rem;
+  --ls-18px: -0.1125rem;   --ls-2px: -0.125rem;    --ls-24px: -0.15rem; --ls-25px: -0.15625rem; --ls-28px: -0.175rem;
+  --ls-288: -0.18rem;   --ls-4px: -0.25rem;    --ls-48px: -0.3rem; --ls-72px: -0.45rem; --ls-74px: -0.4625rem;
+  --ls-1px: -0.0625rem;      /* 补充：components 高频字距 */
+  --ls-05px: -0.03125rem;    /* 补充：components 高频字距（盲区 C） */
+  --ls-02px_pos: 0.0125rem; --ls-04px_pos: 0.025rem;
+}
+
+/* ============================ 13. 字重（盲区 D · 已落地·已接线） ============================ */
+:root {
+  --fw-300: 300;  --fw-400: 400;  --fw-500: 500;  --fw-600: 600;
+  --fw-700: 700;  --fw-800: 800;  --fw-900: 900;
+  --fw-normal: 400;  /* normal → 400，统一字重语义 */
+}
+
+/* ============================ 14. 间距尺度（盲区 E · 已落地·已接线） ============================ */
+/* 收口 gap / column-gap / row-gap 的裸值（px 与 rem 折算到同一 px token）。 */
+:root {
+  --gap-4: 0.25rem;   --gap-6: 0.375rem;   --gap-8: 0.5rem;   --gap-10: 0.625rem;  --gap-12: 0.75rem; --gap-14: 0.875rem; --gap-16: 1rem; --gap-20: 1.25rem;  --gap-24: 1.5rem;
+  --gap-32: 2rem; --gap-36: 2.25rem; --gap-40: 2.5rem; --gap-48: 3rem;
+  --gap-64: 4rem;
+  --gap-96: 6rem;   /* 左文/右二维码大间距（刻意，6rem） */
+}
+
+/* ============================ 15. 容器宽度（盲区 F · 已落地·已接线） ============================ */
+:root {
+  --container-page: 95rem;   /* 全站通栏上限 */
+  --container-read: 42.5rem;    /* 阅读栏（正文/副标题限宽） */
+  --container-card: 32.5rem;    /* 卡片/焦点预览面板 */
+  --container-mock: 33.75rem;    /* mockup 副标题限宽 */
+  --container-mock2: 35rem;   /* mockup 副标题限宽（变体） */
+}
+
+/* ============================ 16. 透明度层级（盲区 G · 已落地·已接线） ============================ */
+:root {
+  --opacity-hide: 0;     /* 入场/隐藏态 */
+  --opacity-dim: 0.5;    /* 半透（占位/蒙层） */
+  --opacity-dim2: 0.55;  /* 半透（变体） */
+  --opacity-dim3: 0.6;   /* 半透（变体） */
+  --opacity-show: 1;     /* 完全显示 */
+  --opacity-085: 0.85;  /* 特例半透 */
+  --opacity-04: 0.4;    /* 特例半透 */
+}
+
+/* ============================ 17. 宽高比（盲区 K · 已落地·已接线） ============================ */
+/* 仅收口可复用的通用比例；精确像素比例（如 1136/608 为图片原始比例）保留裸写。 */
+:root {
+  --ratio-4-3: 4 / 3;
+  --ratio-4-5: 4 / 5;
+  --ratio-5-3: 5 / 3;
+  --ratio-16-9: 16 / 9;
+}
+
+/* ============================ 18. 深色表面色（盲区 H · 已落地·已接线） ============================ */
+/* 暗色主题下组件/深块表面色，此前散落裸 hex，无法一处调；现集中管理。 */
+:root {
+  --surface-d1: #0f0f11;  /* 最深表面（hero 深块底色） */
+  --surface-d2: #14161a;  /* 深占位/留白色 */
+  --surface-d3: #1c1c22;  /* 深前景文字/描边 */
+  --surface-d4: #2a2a2a;  /* 深装饰面 */
+}
+
+/* ============================ 19. 渐变（盲区 I · 仅收口可复用项） ============================ */
+/* 注：3D 产品 mockup 的美术渐变（金属/玻璃/屏幕）为逐件设计，刻意不抽，保留裸写。
+ * 仅把「图片蒙层 scrim」与「骨架屏 shimmer」这类可复用渐变抽象为 token。 */
+:root {
+  --gradient-scrim: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 55%, transparent 100%);
+  --gradient-scrim-strong: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.35) 60%, transparent 100%);
+  --gradient-shimmer: linear-gradient(100deg, #ececef 30%, #f6f6f8 50%, #ececef 70%);
+}
+
+/* ============================ 20. 响应式断点（盲区 J · 已落地·已接线） ============================ */
+/* 统一断点，消除 767/768 同时使用的 off-by-one 隐患（一律以 max-width:767px 表示「平板及以下」）。 */
+:root {
+  --bp-tablet: 767px;   /* ≤767px = 移动/平板竖屏 */
+  --bp-mobile: 560px;   /* ≤560px = 手机 */
+}
+
+/* ============================ 21. 交互态（盲区 L · 已落地·已接线） ============================ */
+/* hover / focus / active 若用纯色，统一走下方 token（组件已大量复用 --color-*，此处补明色强调）。 */
+:root {
+  --state-hover-bg: rgba(0, 0, 0, 0.04);
+  --state-focus-ring: rgba(0, 0, 0, 0.12);
+}
+
+/* ============================ 22. 暂未抽（设计意图，保留裸写） ============================ */
+/* 以下属「故意保留」，非遗漏：
+ *  · 流体字号 clamp(...)：响应式设计意图，抽成 token 无收益且易误改。
+ *  · 精确 px 行高（162.8px 等）：特定标题垂直居中专用，抽 token 反增噪音。
+ *  · 精确像素宽高比（1136/608 等）：图片原始比例，必须原样。
+ *  · 美术渐变（mockup 金属/玻璃/屏幕）：逐件设计，抽 token 破坏表现。 */
+
+/* ============================ 9. 主题覆盖（深色）· 已落地 ============================ */
+/* 来源：原 site-shell.css 全局暗色 token 反转块（已迁入，本文件为权威源）。
+ * 语义（与 site-shell.css 豁免区配合）：只反转「页面背景 / 文字 / 卡片底」；
+ *   顶部导航 / 移动菜单 / 底部 footer / hero / services / testimonials / 轮播
+ *   等通过 site-shell.css 内的 [data-theme="dark"] .header-overlay{...} 豁免区
+ *   保持浅色逻辑，不参与反转（用户要求）。 */
+[data-theme="dark"] {
+  --color-background: #0a0a0a;                       /* 页面底 → 与 Let's talk 底色一致 */
+  --color-text: #f5f5f5;
+  --color-text-secondary: rgba(245, 245, 245, 0.72);
+  --color-text-tertiary: rgba(245, 245, 245, 0.5);
+  --color-black: #f5f5f5;                            /* 主文字/深填充 → 浅色 */
+  --color-white: #1a1a1a;                            /* 白卡底 → 深卡 */
+  --color-gray-ultra-light: rgba(255, 255, 255, 0.06);
+  --color-gray-border: rgba(255, 255, 255, 0.16);
+  --color-primary: #f5f5f5;
+  color-scheme: dark;
+}

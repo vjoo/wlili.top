@@ -23,14 +23,14 @@ WLi Tools 是一个纯前端静态工具集，无后端服务、无用户认证�
 - `ip-mascot.html` — 动作芯片渲染
 - `password-gen.html` — 密码结果渲染
 - `unit-converter.html` — 单位选项渲染
-- `filament-manager.html` — 多处动态内容渲染
+- `_shared/admin.html` — 多处动态内容渲染（含原 filament-manager / print-manager / seamless-pattern 三模块）
 - `image-compress.html` — 图片列表渲染
 - `image-layout.html` — 布局编辑器渲染
 - `image-cropper.html` — 裁剪参数 / 预览渲染
 - `image-upscale.html` — 放大结果渲染
 - `prompt-library.html` — 提示词模板渲染
 - `bookmark-manager.html` — 收藏条目渲染
-- `seamless-pattern.html` — 素材卡片渲染
+- `_shared/admin.html`（四方连图模块）— 素材卡片渲染
 - `model-viewer.html` — 模型信息渲染
 - `proxy-sub.html` — 订阅解析结果渲染
 - `nav.js` — 导航栏注入
@@ -54,7 +54,7 @@ WLi Tools 是一个纯前端静态工具集，无后端服务、无用户认证�
 **状态**: 可接受 ✅
 
 **涉及文件**:
-- `filament-manager.html` — 存储耗材/预设/知识库数据
+- `_shared/admin.html`（耗材模块）— 存储耗材/预设/知识库数据
 - `image-layout.html` — 存储布局状态
 
 **分析**:
