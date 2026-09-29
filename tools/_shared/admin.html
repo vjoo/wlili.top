@@ -895,7 +895,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
     <div class="field"><label>标题</label><input id="fTitle" value="赛博朋克城市夜景"></div>
     <div class="field"><label>标签</label><input id="fTags" value="场景, 夜景, 赛博朋克"></div>
     <div class="field"><label>提示词内容</label><textarea id="fBody">cyberpunk city at night, neon signs, rain reflections, cinematic lighting, ultra detailed, 8k…</textarea></div>
-    <div class="field"><label>状态</label><select id="fStatus"><option>已发布</option><option>草稿</option></select></div>
+    <div class="field"><label>状态</label><select id="fStatus" class="form-select"><option>已发布</option><option>草稿</option></select></div>
     <div class="field"><label>备注</label><input placeholder="可选"></div>
   </div>
   <div class="drawer-foot">
@@ -2019,7 +2019,7 @@ const KNOW = {
       <div class="fmodal-body">
         <div class="fgroup"><label>标题 *</label><input type="text" id="k_title" value="${it?it.title:''}"></div>
         <div class="fgroup"><label>现象描述 *</label><textarea id="k_phenomenon" rows="2">${it?it.phenomenon:''}</textarea></div>
-        <div class="fgroup"><label>可信度 *</label><select id="k_credibility"><option value="">请选择</option>${CRED_LEVELS.map(c=>`<option value="${c.value}" ${it&&it.credibility===c.value?'selected':''}>${c.label} ${c.stars}</option>`).join('')}</select></div>
+        <div class="fgroup"><label>可信度 *</label><select id="k_credibility" class="form-select"><option value="">请选择</option>${CRED_LEVELS.map(c=>`<option value="${c.value}" ${it&&it.credibility===c.value?'selected':''}>${c.label} ${c.stars}</option>`).join('')}</select></div>
         <div class="fgroup"><label>解决方案 *</label><textarea id="k_solution" rows="4" style="min-height:100px">${it?it.solution:''}</textarea></div>
         <div class="fgroup"><label>关联预设</label><select id="k_relatedPresets" multiple style="height:110px">${opts}</select><div class="param-path">按住 Ctrl/Cmd 可多选</div></div>
         <div class="fgroup"><label>标签（用逗号分隔）</label><input type="text" id="k_tags" value="${it?(it.tags||[]).join(', '):''}" placeholder="例如：拉丝, PETG, 调参"></div>
@@ -2164,8 +2164,8 @@ const PAPR = {
           <div class="fgroup"><label>规格</label><input type="text" id="ppSpec" value="${it?it.spec:'A4'}"></div>
           <div class="fgroup"><label>克重 (g)</label><input type="number" id="ppWeight" min="1" value="${it?it.weight:70}" placeholder="如 70"></div>
           <div class="fgroup"><label>总价 (元)</label><input type="number" id="ppPrice" step="0.01" min="0" value="${it?it.buyPrice:''}" placeholder="如 66"></div>
-          <div class="fgroup"><label>状态</label><select id="ppStatus"><option value="stock" ${it&&it.status==='stock'?'selected':''}>库存中</option><option value="in-use" ${it&&it.status==='in-use'?'selected':''}>使用中</option><option value="empty" ${it&&it.status==='empty'?'selected':''}>已用完</option></select></div>
-          <div class="fgroup"><label>购买方式</label><select id="ppPackType" onchange="PAPR.onPackType(this.value)"><option value="single">单包</option><option value="pack" ${it&&it.packType==='pack'?'selected':''}>多包套装</option></select></div>
+          <div class="fgroup"><label>状态</label><select id="ppStatus" class="form-select"><option value="stock" ${it&&it.status==='stock'?'selected':''}>库存中</option><option value="in-use" ${it&&it.status==='in-use'?'selected':''}>使用中</option><option value="empty" ${it&&it.status==='empty'?'selected':''}>已用完</option></select></div>
+          <div class="fgroup"><label>购买方式</label><select id="ppPackType" class="form-select" onchange="PAPR.onPackType(this.value)"><option value="single">单包</option><option value="pack" ${it&&it.packType==='pack'?'selected':''}>多包套装</option></select></div>
           <div class="fgroup"><label>每包张数</label><input type="number" id="ppSheetsPerPack" min="1" value="${it?(it.sheetsPerPack||500):500}" oninput="PAPR.total()"></div>
           <div class="fgroup" id="ppTotalGroup" style="display:none"><label>总张数</label><input type="number" id="ppTotalSheets" readonly style="background:var(--panel);color:var(--muted)" placeholder="自动计算"></div>
           <div class="fgroup" id="ppRemGroup"><label>剩余百分比 <span id="ppRemLabel" style="color:var(--muted);font-weight:400">${it?(it.remPercent!=null?it.remPercent:100):100}%</span></label><input type="range" id="ppRem" min="0" max="100" value="${it?(it.remPercent!=null?it.remPercent:100):100}" oninput="document.getElementById('ppRemLabel').textContent=this.value+'%'" style="padding:0;height:10px;background:var(--panel)"></div>
@@ -2340,8 +2340,8 @@ const PIKR = {
       <div class="fmodal-head"><div class="fmodal-title">${it?'编辑墨水':'添加墨水'}</div><button class="fmodal-x" onclick="closeModal()">✕</button></div>
       <div class="fmodal-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="fgroup"><label>类型</label><select id="ikType" onchange="PIKR.onType(this.value)"><option value="black" ${it&&it.colorType==='black'?'selected':''}>单支黑色</option><option value="color" ${it&&it.colorType==='color'?'selected':''}>单支彩色</option><option value="set" ${it&&it.isSet?'selected':''}>套装</option></select></div>
-          <div class="fgroup"><label>状态</label><select id="ikStatus"><option value="stock" ${it&&it.status==='stock'?'selected':''}>库存中</option><option value="in-use" ${it&&it.status==='in-use'?'selected':''}>使用中</option><option value="empty" ${it&&it.status==='empty'?'selected':''}>已用完</option></select></div>
+          <div class="fgroup"><label>类型</label><select id="ikType" class="form-select" onchange="PIKR.onType(this.value)"><option value="black" ${it&&it.colorType==='black'?'selected':''}>单支黑色</option><option value="color" ${it&&it.colorType==='color'?'selected':''}>单支彩色</option><option value="set" ${it&&it.isSet?'selected':''}>套装</option></select></div>
+          <div class="fgroup"><label>状态</label><select id="ikStatus" class="form-select"><option value="stock" ${it&&it.status==='stock'?'selected':''}>库存中</option><option value="in-use" ${it&&it.status==='in-use'?'selected':''}>使用中</option><option value="empty" ${it&&it.status==='empty'?'selected':''}>已用完</option></select></div>
           <div class="fgroup"><label>品牌/型号</label><input type="text" id="ikModel" value="${it?it.model:''}" placeholder="如 EPSON 004"></div>
           <div class="fgroup"><label>购入价 (元)</label><input type="number" id="ikPrice" step="0.01" min="0" value="${it?it.buyPrice:''}"></div>
           <div class="fgroup" id="ikCapGroup"><label>容量 (ml)</label><input type="number" id="ikCapacity" min="1" value="${it?(it.capacity||''):''}" placeholder="如 130"></div>
@@ -2606,8 +2606,8 @@ function viewPrintLedger(){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
         <div class="fgroup"><label>彩色 / 黑白</label>${seg('黑白','彩色','bw','color',LPG.colorMode,'LPGP.setColor')}</div>
-        <div class="fgroup"><label>使用纸张</label><select id="rPaper" style="${PM_INP_SEL}" onchange="LPGP.preview()">${LPGP.paperOpts()}</select></div>
-        <div class="fgroup"><label>使用墨水</label><select id="rInk" style="${PM_INP_SEL}" onchange="LPGP.preview()">${LPGP.inkOpts()}</select></div>
+        <div class="fgroup"><label>使用纸张</label><select id="rPaper" class="form-select" style="${PM_INP_SEL}" onchange="LPGP.preview()">${LPGP.paperOpts()}</select></div>
+        <div class="fgroup"><label>使用墨水</label><select id="rInk" class="form-select" style="${PM_INP_SEL}" onchange="LPGP.preview()">${LPGP.inkOpts()}</select></div>
       </div>
       <div style="display:flex;align-items:center;margin-top:2px">
         <div style="color:var(--muted);font-size:13px" id="costPreview">${prev0}</div>
@@ -7695,7 +7695,7 @@ var BK = {
       <div class="fmodal-body">
         <div class="fgroup"><label>标题</label><input type="text" id="bkTitle" value="${it?FUTIL.esc(it.title||''):''}" placeholder="如 Figma"></div>
         <div class="fgroup"><label>链接</label><input type="url" id="bkUrl" value="${it?FUTIL.esc(it.url||''):''}" placeholder="https://"></div>
-        <div class="fgroup"><label>分类</label><select id="bkCat">${opts}</select></div>
+        <div class="fgroup"><label>分类</label><select id="bkCat" class="form-select">${opts}</select></div>
         <div class="fgroup"><label>描述（可选）</label><input type="text" id="bkDesc" value="${it?FUTIL.esc(it.desc||''):''}" placeholder="一句话说明"></div>
       </div>
       <div class="fmodal-foot"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="BK.saveForm()">保存</button></div>`;
@@ -7754,6 +7754,7 @@ var BK = {
   }
 };
 </script>
+
 
 
 
