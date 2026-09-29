@@ -569,6 +569,7 @@ h3 .hint-i{margin-left:6px;}
 .add svg{width:18px;height:18px;}
 .preset-param-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
 .preset-param-row select{flex:1;min-width:120px;}
+.preset-param-row .sel{flex:1;min-width:120px;}
 .param-path{font-size:11px;color:var(--muted);margin-top:4px;}
 .seg-btn{border:none;background:var(--card);padding:9px 16px;font-size:12.5px;color:var(--muted);cursor:pointer;}
 .seg-btn.on{background:var(--accent);color:#fff;}
@@ -1577,7 +1578,7 @@ function pager(total, page, size, goFn, sizeFn){
   return `<div class="pager">
     <span class="pg-info">第 ${(cur-1)*size+1}–${Math.min(cur*size,total)} 条 · 共 ${total} 条</span>
     <label style="font-size:12px;color:var(--muted)">每页</label>
-    <select class="pg-size" onchange="${sizeFn}(this.value)">${[10,20,50].map(n=>`<option value="${n}" ${n===size?'selected':''}>${n}</option>`).join('')}</select>
+    <select class="pg-size form-select" data-sel-inline data-sel-compact onchange="${sizeFn}(this.value)">${[10,20,50].map(n=>`<option value="${n}" ${n===size?'selected':''}>${n}</option>`).join('')}</select>
     <button class="pg-btn" ${cur<=1?'disabled':''} onclick="${goFn}(${cur-1})">‹</button>
     ${nums.map(n=>`<button class="pg-btn ${n===cur?'on':''}" onclick="${goFn}(${n})">${n}</button>`).join('')}
     <button class="pg-btn" ${cur>=pages?'disabled':''} onclick="${goFn}(${cur+1})">›</button>
@@ -1890,7 +1891,7 @@ const PAPP = {
     const div = document.createElement('div');
     div.className = 'preset-param-row';
     div.innerHTML = `
-      <select class="pp-name" onchange="PAPP.nameChange(this)">
+      <select class="pp-name form-select" onchange="PAPP.nameChange(this)">
         ${names.map(n=>`<option value="${n}" ${n===name?'selected':''}>${n}</option>`).join('')}
         <option value="自定义" ${isCustom?'selected':''}>自定义</option>
       </select>
@@ -1971,7 +1972,7 @@ function viewFilamentKnowledge(){
   return `${greetHead('打印知识库','','<button class="add" title="新增知识" onclick="KNOW.openForm(null)">'+ADD_IC+'</button>')}
   <div class="grid"><div class="card c12">
     <div class="fbar">
-      <span class="flabel">可信度：</span><select onchange="KNOW.setF('cred',this.value)"><option value="">全部</option>${CRED_LEVELS.map(c=>`<option value="${c.value}" ${f.cred===c.value?'selected':''}>${c.label} ${c.stars}</option>`).join('')}</select>
+      <span class="flabel">可信度：</span><select class="form-select" data-sel-inline data-sel-compact data-sel-pill onchange="KNOW.setF('cred',this.value)"><option value="">全部</option>${CRED_LEVELS.map(c=>`<option value="${c.value}" ${f.cred===c.value?'selected':''}>${c.label} ${c.stars}</option>`).join('')}</select>
       <span class="flabel">标签：</span><input type="text" value="${f.tag}" placeholder="搜索标签..." style="width:150px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13px;outline:none" onchange="KNOW.setF('tag',this.value)">
       <button class="mini-btn" onclick="KNOW.docs()">查官方文档</button>
     </div>
@@ -2205,7 +2206,7 @@ const PAPR = {
     const div = document.createElement('div');
     div.className = 'pack-row';
     div.style.cssText = 'display:flex;gap:10px;align-items:center';
-    div.innerHTML = '<div style="flex:.8"><select class="pack-status" style="'+PM_INP_SEL+'padding:8px 28px 8px 10px"><option value="ok"'+(status==='used'?'':' selected')+'>剩余</option><option value="used"'+(status==='used'?' selected':'')+'>已用完</option></select></div>'+
+    div.innerHTML = '<div style="flex:.8"><select class="pack-status form-select" style="'+PM_INP_SEL+'padding:8px 28px 8px 10px"><option value="ok"'+(status==='used'?'':' selected')+'>剩余</option><option value="used"'+(status==='used'?' selected':'')+'>已用完</option></select></div>'+
       '<div style="flex:.9"><input type="number" class="pack-sheets" min="1" value="'+dS+'" style="'+PM_INP+'padding:8px 10px" oninput="PAPR.total()"></div>'+
       '<div style="flex:.9"><input type="number" class="pack-weight" min="1" value="'+dW+'" placeholder="g" style="'+PM_INP+'padding:8px 10px"></div>'+
       '<div style="width:28px;flex:none"><button type="button" class="btn-icon del" title="删除" onclick="this.closest(\'.pack-row\').remove();PAPR.total()">×</button></div>';
@@ -2378,7 +2379,7 @@ const PIKR = {
     const div = document.createElement('div');
     div.className = 'set-row';
     div.style.cssText = 'display:flex;gap:10px;align-items:center';
-    div.innerHTML = '<div style="flex:1.2"><select class="set-color" style="'+PM_INP_SEL+'padding:8px 28px 8px 10px"><option value="黑色"'+(name==='黑色'?' selected':'')+'>黑色</option><option value="青色"'+(name==='青色'?' selected':'')+'>青色</option><option value="红色"'+(name==='红色'?' selected':'')+'>红色</option><option value="黄色"'+(name==='黄色'?' selected':'')+'>黄色</option></select></div>'+
+    div.innerHTML = '<div style="flex:1.2"><select class="set-color form-select" style="'+PM_INP_SEL+'padding:8px 28px 8px 10px"><option value="黑色"'+(name==='黑色'?' selected':'')+'>黑色</option><option value="青色"'+(name==='青色'?' selected':'')+'>青色</option><option value="红色"'+(name==='红色'?' selected':'')+'>红色</option><option value="黄色"'+(name==='黄色'?' selected':'')+'>黄色</option></select></div>'+
       '<div style="flex:.6"><input type="number" class="set-count" min="1" value="'+(count||1)+'" style="'+PM_INP+'padding:8px 10px" oninput="PIKR.total()"></div>'+
       '<div style="flex:.7"><input type="number" class="set-cap" min="1" value="'+(cap||(isBlack?130:75))+'" style="'+PM_INP+'padding:8px 10px" oninput="PIKR.total()"></div>'+
       '<div style="flex:1"><input type="number" class="set-pages" min="1" value="'+(pages||(isBlack?15000:8000))+'" style="'+PM_INP+'padding:8px 10px" oninput="PIKR.total()"></div>'+
@@ -3150,7 +3151,7 @@ Object.assign(FAPP,{
       <div class="fgrid">
         <div class="fgroup"><label>品牌 <span class="req">*</span></label>
           <div class="row2">
-            <select id="f_brandSelect" required onchange="FAPP.onBrandChange(this.value)">
+            <select id="f_brandSelect" class="form-select" required onchange="FAPP.onBrandChange(this.value)">
               <option value="">请选择</option>
               ${F_BRANDS.filter(b=>b!=='其他').map(b=>`<option value="${b}" ${d.brand===b?'selected':''}>${b}</option>`).join('')}
               <option value="自定义" ${!F_BRANDS.includes(d.brand)&&d.brand?'selected':''}>自定义</option>
@@ -3159,12 +3160,12 @@ Object.assign(FAPP,{
           </div><input type="hidden" id="f_brand" value="${FUTIL.esc(d.brand||'')}"></div>
         <div class="fgroup"><label>名称</label>
           <div class="row2">
-            <select id="f_nameSelect" onchange="FAPP.onNameChange(this.value)"><option value="">请选择品牌后选择名称</option></select>
+            <select id="f_nameSelect" class="form-select" onchange="FAPP.onNameChange(this.value)"><option value="">请选择品牌后选择名称</option></select>
             <input type="text" id="f_nameInput" value="${FUTIL.esc(d.name||'')}" placeholder="输入自定义名称" style="display:none" oninput="FAPP.onNameInputChange(this.value)">
           </div><input type="hidden" id="f_name" value="${FUTIL.esc(d.name||'')}"></div>
         <div class="fgroup"><label>类型 <span class="req">*</span></label>
           <div class="row2">
-            <select id="f_typeSelect" onchange="FAPP.onTypeChange(this.value)">
+            <select id="f_typeSelect" class="form-select" onchange="FAPP.onTypeChange(this.value)">
               <option value="">请选择</option>
               ${F_TYPES.filter(t=>t!=='其他').map(t=>`<option value="${t}" ${d.type===t?'selected':''}>${t}</option>`).join('')}
               <option value="自定义" ${!F_TYPES.includes(d.type)&&d.type?'selected':''}>自定义</option>
@@ -3184,7 +3185,7 @@ Object.assign(FAPP,{
             <div id="f_colorPreview" class="cpick-swatch" title="点击选择颜色" onclick="FAPP.togglePicker(event,this.closest('.cpick-wrap'))"></div></div>
             <div class="cpick-panel" id="f_colorPanel"></div></div></div>
         <div class="fgroup"><label>购买渠道</label>
-          <select id="f_purchaseChannel">
+          <select id="f_purchaseChannel" class="form-select">
             <option value="" ${!d.purchaseChannel?'selected':''}>请选择</option>
             ${['京东','拼哆哆','天猫','淘宝','1688','闲鱼'].map(c=>`<option value="${c}" ${d.purchaseChannel===c?'selected':''}>${c}</option>`).join('')}
           </select></div>
@@ -3196,7 +3197,7 @@ Object.assign(FAPP,{
           <button type="button" class="btn" style="margin-top:8px" onclick="FAPP.addBundleItem()">＋ 添加一盘</button></div>
         <div class="fgroup full"><div class="row2">
           <div><label>价格 (元)</label><input type="number" id="f_price" value="${d.price||''}" step="0.1" min="0"></div>
-          <div><label>评分</label><select id="f_rating"><option value="">未评分</option>${[5,4,3,2,1].map(r=>`<option value="${r}">${r}星</option>`).join('')}</select></div>
+          <div><label>评分</label><select id="f_rating" class="form-select"><option value="">未评分</option>${[5,4,3,2,1].map(r=>`<option value="${r}">${r}星</option>`).join('')}</select></div>
         </div></div>
         <div class="fgroup full"><label>购买日期</label><input type="date" id="f_purchaseDate" value="${d.purchaseDate||new Date().toISOString().split('T')[0]}"></div>
         <div class="fgroup full"><label>备注</label><textarea id="f_notes">${FUTIL.esc(d.notes||'')}</textarea></div>
@@ -4264,11 +4265,11 @@ return html;
             var html = '<div class="filter-bar">';
             html += '<div class="search-box"><span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" placeholder="搜索素材名称或元素..." value="'+escapeHtml(self.searchQuery)+'" oninput="app.onSearch(this.value)"></div>';
             if (!isChar) {
-                html += '<select class="filter-select" onchange="app.onFilterStatus(this.value)"><option value="">全部状态</option>';
+                html += '<select class="filter-select form-select" data-sel-inline onchange="app.onFilterStatus(this.value)"><option value="">全部状态</option>';
                 Object.keys(PATTERN_STATUS).forEach(function(k){ html += '<option value="'+k+'" '+(self.filterStatus===k?'selected':'')+'>'+PATTERN_STATUS[k].name+'</option>'; });
                 html += '</select>';
             }
-            html += '<select class="filter-select" onchange="app.onFilterPlatform(this.value)"><option value="">全部平台</option>';
+            html += '<select class="filter-select form-select" data-sel-inline onchange="app.onFilterPlatform(this.value)"><option value="">全部平台</option>';
             Object.keys(PLATFORMS).forEach(function(k){ html += '<option value="'+k+'" '+(self.filterPlatform===k?'selected':'')+'>'+PLATFORMS[k].name+'</option>'; });
             html += '</select>';
             html += '<span style="font-size:12px;color:var(--text-muted);margin-left:auto;">共 '+filtered.length+' 个素材</span>';
@@ -7754,6 +7755,7 @@ var BK = {
   }
 };
 </script>
+
 
 
 

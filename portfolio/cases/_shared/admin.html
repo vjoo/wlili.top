@@ -2280,7 +2280,7 @@ body.auth-pending .pages-view { visibility: hidden; }
       <div class="page-header" data-page-node-id="Wba06jiJJHxYaK0HAp1LBw">
         <div class="page-title" title="拖拽排序 · 增删板块 · 左侧点击 / 卡片点击进入编辑" data-page-node-id="pXQwc0meHwrqfSABd9e0Lr">板块管理</div>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-left:auto;" data-page-node-id="1kJZGHxb4Ayqswq0rkfltP">
-          <select class="page-switcher" title="切换编辑页面（有未保存修改时会先确认）" data-page-node-id="gvS8knlTNEcYAU4t2pBzCj"></select>
+          <select class="page-switcher form-select" data-sel-inline title="切换编辑页面（有未保存修改时会先确认）" data-page-node-id="gvS8knlTNEcYAU4t2pBzCj"></select>
           <span style="font-size:13px; color:var(--text-muted);" data-page-node-id="dWgqFmzrWbByCAmoM07rOs">共 <b id="sectionCount" style="color:var(--text-primary);" data-page-node-id="9yzXYR5KM6ILGB1gY8CQ75">0</b> 个板块</span>
           <span class="save-status" id="saveStatus" data-page-node-id="9tG7PVQ2rEMcSUppneulCY"><span class="spinner" data-page-node-id="gMuw99mUVWiOc4yvWVUrKe"></span><span class="save-text" data-page-node-id="oCxnhx5oYuCG8ySKXHas7r"></span></span>
           <button class="btn-primary" id="btnSave" title="保存当前案例的板块、Let's talk 与顶部导航修改 (Ctrl+S)" data-page-node-id="O5Aif3BOCcfdNx0Xfp6QSd">
@@ -9640,7 +9640,7 @@ function openDeviceScreenCalib() {
           '<div class="dsvis-field"><label>内容填充 <span class="val">' + fit + '</span></label>' +
           '<input type="range" id="dsvisFit" min="0" max="1" step="1" value="' + (fit === 'cover' ? 0 : 1) + '"></div>' +
           '<div class="dsvis-field"><label>参考屏幕宽高比</label>' +
-          '<select id="dsvisPreset" class="dsvis-btn" style="width:100%;text-align:left">' +
+          '<select id="dsvisPreset" class="dsvis-btn form-select" data-sel-pill style="width:100%;text-align:left">' +
             '<option value="">— 手动 / 不套用 —</option>' +
             '<option value="4:3">iPad 4:3</option>' +
             '<option value="3:4">iPad 竖握 3:4</option>' +
