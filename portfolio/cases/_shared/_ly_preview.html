@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>布局骨架预览 · .ly-split / .ly-grid</title>
+<link rel="stylesheet" href="design-tokens.css">
+<link rel="stylesheet" href="components.css">
+<style>
+  body{margin:0;padding:2rem 0 4rem;background:#f5f5f5;font-family:system-ui,"PingFang SC","Microsoft YaHei";color:#0a0a0a;line-height:1.6}
+  .wrap{max-width:1208px;margin:0 auto;padding:0 36px}
+  h1{font-size:20px;font-weight:600;margin:0 0 4px}
+  .lead{font-size:13px;color:#5F5E5A;margin:0 0 8px}
+  h2{font-size:15px;font-weight:600;margin:30px 0 10px;padding-top:16px;border-top:1px solid #ddd}
+  .demo{background:#fff;border:1px solid #ddd;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+  .tag{display:inline-block;font-size:11px;background:#F1EFE8;border-radius:6px;padding:2px 8px;margin-bottom:10px;color:#5F5E5A}
+  .box{background:#E6F1FB;border:1px solid #378ADD;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#0C447C;padding:1.25rem;min-height:56px;text-align:center}
+  .box.amber{background:#FAEEDA;border-color:#BA7517;color:#633806}
+  .tall{min-height:140px}
+  .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:1rem;font-size:12px}
+  .card b{display:block;font-size:13px;margin-bottom:4px}
+  .card span{color:#5F5E5A}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>布局骨架预览</h1>
+  <p class="lead">规格翻译自 Preline UI（grid-cols-1 lg:grid-cols-2 / gap-6 lg:gap-8），已换算为本项目令牌。拖动窗口宽度看自动降级。</p>
+
+  <h2>A · 双列 .ly-split</h2>
+
+  <div class="demo" data-name="split 等分">
+    <span class="tag">.ly-split（默认：&lt;1024 单列，≥1024 等分双列）</span>
+    <div class="ly-split" data-probe>
+      <div class="box">文案区</div>
+      <div class="box amber tall">图片 / 内容区</div>
+    </div>
+  </div>
+
+  <div class="demo" data-name="split 2:1">
+    <span class="tag">.ly-split.r-2-1（文字占 2/3）</span>
+    <div class="ly-split r-2-1" data-probe>
+      <div class="box">文案区（2fr）</div>
+      <div class="box amber">图（1fr）</div>
+    </div>
+  </div>
+
+  <div class="demo" data-name="split flip">
+    <span class="tag">.ly-split.flip（图左文右）+ .top（顶部对齐）</span>
+    <div class="ly-split flip top" data-probe>
+      <div class="box">文案（会排到右侧）</div>
+      <div class="box amber tall">图（会排到左侧）</div>
+    </div>
+  </div>
+
+  <h2>B · 卡片网格 .ly-grid</h2>
+
+  <div class="demo" data-name="grid 默认">
+    <span class="tag">.ly-grid（2 列 → ≥768 三列 → ≥1024 四列）</span>
+    <div class="ly-grid" data-probe>
+      <div class="card"><b>卡片 1</b><span>说明文字</span></div>
+      <div class="card"><b>卡片 2</b><span>说明文字</span></div>
+      <div class="card"><b>卡片 3</b><span>说明文字</span></div>
+      <div class="card"><b>卡片 4</b><span>说明文字</span></div>
+      <div class="card"><b>卡片 5</b><span>说明文字</span></div>
+      <div class="card"><b>卡片 6</b><span>说明文字</span></div>
+    </div>
+  </div>
+
+  <div class="demo" data-name="grid c3">
+    <span class="tag">.ly-grid.c3（最多三列）</span>
+    <div class="ly-grid c3" data-probe>
+      <div class="card"><b>卡片 1</b><span>说明</span></div>
+      <div class="card"><b>卡片 2</b><span>说明</span></div>
+      <div class="card"><b>卡片 3</b><span>说明</span></div>
+      <div class="card"><b>卡片 4</b><span>说明</span></div>
+    </div>
+  </div>
+
+  <div class="demo" data-name="grid auto">
+    <span class="tag">.ly-grid.auto（auto-fit，卡片少时自动铺满）</span>
+    <div class="ly-grid auto" data-probe>
+      <div class="card"><b>卡片 1</b><span>说明</span></div>
+      <div class="card"><b>卡片 2</b><span>说明</span></div>
+      <div class="card"><b>卡片 3</b><span>说明</span></div>
+    </div>
+  </div>
+
+  <div class="demo" data-name="grid gap-tight">
+    <span class="tag">.ly-grid.gap-tight（图集紧密间距）</span>
+    <div class="ly-grid gap-tight" data-probe>
+      <div class="box">图 1</div><div class="box">图 2</div>
+      <div class="box">图 3</div><div class="box">图 4</div>
+      <div class="box">图 5</div><div class="box">图 6</div>
+    </div>
+  </div>
+
+  <div class="demo" data-name="grid gap-loose">
+    <span class="tag">.ly-grid.gap-loose（卡片宽松间距）</span>
+    <div class="ly-grid gap-loose" data-probe>
+      <div class="card"><b>卡片 1</b><span>说明</span></div>
+      <div class="card"><b>卡片 2</b><span>说明</span></div>
+      <div class="card"><b>卡片 3</b><span>说明</span></div>
+      <div class="card"><b>卡片 4</b><span>说明</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var out = [];
+  out.push('视口宽=' + document.documentElement.clientWidth);
+  document.querySelectorAll('.demo').forEach(function (d) {
+    var el = d.querySelector('[data-probe]');
+    if (!el) return;
+    var cs = getComputedStyle(el);
+    out.push('  ' + (d.dataset.name || '?') + ' → cols=' + cs.gridTemplateColumns + ' | gap=' + cs.gap);
+  });
+  var pre = document.createElement('pre');
+  pre.id = 'probe';
+  pre.textContent = out.join('\n');
+  document.body.appendChild(pre);
+})();
+</script>
+</body>
+</html>

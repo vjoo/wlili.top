@@ -610,6 +610,15 @@
   width: 29.625rem;
 }
 
+/* 768~1024（平板）：列宽固定 273px 会溢出 —— 3 列 ×273 + 2×60 gap = 939px，
+   而 768 视口的容器仅约 696px。改为等分自适应；≤767 沿用下方既有的移动端规则。 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .screen-col,
+  .screen-wall.cols-2 .screen-col { width: auto; flex: 1 1 0; min-width: 0; }
+  .screen-columns,
+  .screen-wall { gap: 2rem; }
+}
+
 .screen-placeholder {
   width: 100%;
   display: block;
@@ -3158,14 +3167,21 @@
   gap: 1.5rem;
 }
 
+/* 场景网格行：原为 flex + ≤1024 一刀切 column —— 平板 768~1024 会只剩单列，
+   单张卡片被拉到 880px 宽（项目档案里 2026-09-27 就记录过此问题）。
+   改 grid 递进：单列 → ≥768 两列 → ≥1024 三列（与 renderSceneGrid 每行 3 张一致）。 */
 .pd-grid-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
 }
+@media (min-width: 768px)  { .pd-grid-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .pd-grid-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* ---- Single scene card ---- */
 .pd-scene-card {
-  flex: 1;
+  flex: 1;            /* grid 布局下不再生效，仅为兼容保留 */
+  min-width: 0;       /* grid 子项默认 min-width:auto，长标题会撑破列宽 */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -3258,7 +3274,8 @@
 
   /* Scene grid → single column */
   .pd-scene-grid-section { padding-block: 4rem; }
-  .pd-grid-row { flex-direction: column; }
+  /* Scene grid：列数已由 .pd-grid-row 的 grid 递进接管（1 → ≥768 两列 → ≥1024 三列），
+     此处不再需要 flex-direction:column（旧写法会让平板 768~1024 只剩单列、卡片过宽） */
   .pd-scene-card,
   .pd-scene-card.tall,
   .pd-scene-card.short { min-height: auto; }
@@ -4267,3 +4284,68 @@
 .pd-accent-orange { color: var(--pd-accent-orange); }
 .pd-accent-red    { color: var(--pd-accent-red); }
 .pd-accent-green  { color: var(--pd-accent-green); }
+
+
+/* ============================================================================
+   布局骨架 · .ly-*（新板块起手用 · 不改动、不影响任何现有板块）
+   ────────────────────────────────────────────────────────────────────────────
+   规格翻译自 Preline UI 的 feature-sections / gallery-grids：
+     grid-cols-1 lg:grid-cols-2 · gap-6 lg:gap-8 · px-4 sm:px-6 lg:px-8
+   （其断点 sm640/md768/lg1024，已换算为本项目令牌与断点档 768/1024）
+   ────────────────────────────────────────────────────────────────────────────
+   ⚠ 核心决策：双列一律用 grid，不要用 flex。
+     换列是 grid 的天然能力，不存在 flex 的 basis / flex-wrap / min-width
+     三者纠缠 —— team（500px 固定侧把文字挤成竖排）与 pd-hero（basis:auto
+     把换行决策撑爆）两次布局事故均源于 flex 那一套。
+     列宽由 minmax(0,1fr) 均分：天生不会挤瘪，也不需要 flex-wrap 兜底。
+   ============================================================================ */
+
+/* grid 子项默认 min-width:auto，长内容会撑破列宽 → 必须归零 */
+.ly-split > *,
+.ly-grid  > * { min-width: 0; }
+
+/* ---- A. 双列（左文 / 右图，或任意两栏内容）---- */
+.ly-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap-32, 2rem);
+  align-items: center;
+}
+@media (min-width: 768px)  { .ly-split { gap: 2.5rem; } }
+@media (min-width: 1024px) { .ly-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3rem; } }
+
+/* 比例变体（仅 ≥1024 双列时生效） */
+@media (min-width: 1024px) {
+  .ly-split.r-2-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .ly-split.r-3-2 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+  .ly-split.r-1-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+  /* 图左文右 */
+  .ly-split.flip > :first-child { order: 2; }
+  .ly-split.flip > :last-child  { order: 1; }
+}
+/* 顶部对齐（默认垂直居中；两栏不等高时改用它） */
+.ly-split.top { align-items: start; }
+
+/* ---- B. 卡片网格 ---- */
+.ly-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap-16, 1rem);
+}
+@media (min-width: 768px)  { .ly-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; } }
+@media (min-width: 1024px) { .ly-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; } }
+
+/* 列数上限档（覆盖上面的默认递进） */
+.ly-grid.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 768px)  { .ly-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .ly-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* 自动填充：卡片少时自动铺满一行，列数随宽度浮动，无需指定档位。
+   min() 里的 100% 是防溢出关键 —— 窄屏时 minmax 的下限不能超过容器宽。 */
+.ly-grid.auto { grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); }
+
+/* 间距档：紧密（图集）/ 常规（默认）/ 宽松（卡片） */
+.ly-grid.gap-tight { gap: 0.5rem; }
+@media (min-width: 1024px) { .ly-grid.gap-tight { gap: 0.75rem; } }
+.ly-grid.gap-loose { gap: 1.5rem; }
+@media (min-width: 1024px) { .ly-grid.gap-loose { gap: 2rem; } }
