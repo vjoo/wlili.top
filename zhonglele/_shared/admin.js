@@ -593,7 +593,7 @@
           '</div>';
       }
       case 'font':
-        return '<select>' + fontOptionsHtml(val, f.allowInherit) + '</select>';
+        return '<select class="form-select">' + fontOptionsHtml(val, f.allowInherit) + '</select>';
       case 'media':
         return mediaBoxHtml(f, val);
       default:

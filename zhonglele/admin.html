@@ -10,6 +10,8 @@
        所以预览里的文案排版天然等于前台（见 admin-ui.css 的 .pv-stage 说明） -->
   <link rel="stylesheet" href="_shared/scrub.css?v=5" data-page-node-id="oQwLnjBvWZt2cmz4eRjCEt">
   <link rel="stylesheet" href="_shared/admin-ui.css?v=11" data-page-node-id="deRrzaoyrYBXStFK3o5nzR">
+  <!-- 全站统一下拉组件 .sel（单一来源 tools/_shared/ui-select.css，跟随 --accent-color 主题） -->
+  <link rel="stylesheet" href="../tools/_shared/ui-select.css" data-page-node-id="zhonglele-sel">
 </head>
 <body data-page-node-id="GOpfe60QsagMNW1pLmew7j">
 
@@ -130,6 +132,8 @@
 <!-- 前台渲染器：后台借用它的默认常量与 buildScene()/buildOutro()（单屏渲染）；
      无 #zl-home 容器时它不会启动，零副作用 -->
 <script src="_shared/scrub.js?v=9"></script>
+<!-- 全站统一下拉组件 .sel：自动升级 select.form-select（含动态渲染的字体下拉） -->
+<script src="../tools/_shared/ui-select.js"></script>
 <script src="_shared/admin.js?v=11"></script>
 </body>
 </html>
