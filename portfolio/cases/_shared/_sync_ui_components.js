@@ -40,6 +40,8 @@ const fnSel = fn('function upgradeSelect(sel) {');
 const fnDate = fn('function upgradeDate(inp) {');
 const fnRange = fn('function upgradeDateRange(inpS, inpE) {');
 const fnUI = fn('function upgradeUI(root) {');
+const fnFloat = fn('function floatPanel(panel, wrap) {');
+const fnUnfloat = fn('function unfloatPanel(panel, wrap) {');
 
 const BOOT = `
 /* 自研表单组件：下拉 .sel-* / 日期 .cal-* / 范围 .cal-range（与作品集后台同源，配色走各分支 --accent）
@@ -69,7 +71,7 @@ const BOOT = `
     });
     order.forEach(function (g) { if (groups[g].length >= 2) upgradeDateRange(groups[g][0], groups[g][1]); });
   }
-  visit(document);
+  upgradeUI(document);
   if (window.MutationObserver) {
     var timer = null, pending = [];
     new MutationObserver(function (muts) {
@@ -87,6 +89,8 @@ ${compCss}
 <script>
 ${compConsts}
 ${selIcons}
+${fnFloat}
+${fnUnfloat}
 ${fnSel}
 ${fnDate}
 ${fnRange}
@@ -107,7 +111,8 @@ if (oldStart >= 0) {
 }
 const bi = dst.lastIndexOf('</body>');
 if (bi < 0) throw new Error('tools 后台未找到 </body>');
-dst = dst.slice(0, bi) + snippet + dst.slice(bi);
+/* 幂等：把 </body> 前的换行收敛成恰好一个，并去掉 snippet 自带的前导换行，避免每次同步多出一个空行 */
+dst = dst.slice(0, bi).replace(/\n+$/, '') + '\n' + snippet.replace(/^\n+/, '') + dst.slice(bi);
 const tmp = DST + '.tmp';
 const fd = fs.openSync(tmp, 'w');
 fs.writeFileSync(fd, dst, 'utf8');
@@ -131,7 +136,7 @@ const sIdx = page.lastIndexOf('<script>');
 const eIdx = page.indexOf('</script>', sIdx);
 if (sIdx < 0 || eIdx < 0) throw new Error('演示页未找到组件脚本块');
 const demoScript = [
-  compConsts, selIcons, fnSel, fnDate, fnRange, fnUI,
+  compConsts, selIcons, fnFloat, fnUnfloat, fnSel, fnDate, fnRange, fnUI,
   `try { upgradeUI(document); } catch (e) { window.__errs.push('upgradeUI: ' + e.message); }
 document.getElementById('err').textContent = window.__errs.length ? ('脚本错误：' + window.__errs.join(' | ')) : '';`
 ].join('\n\n');

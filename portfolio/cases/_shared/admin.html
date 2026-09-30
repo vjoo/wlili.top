@@ -1227,6 +1227,8 @@ body {
   padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0,0,0,.12), 0 8px 10px -6px rgba(0,0,0,.08); }
 .cal-panel[hidden] { display: none; }
+/* 面板在空间不足时向上展开，避免在 .fmodal-body 等滚动容器里触发滚动条 */
+.sel-panel.is-above, .cal-panel.is-above { top: auto; bottom: calc(100% + 4px); }
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .cal-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 .cal-nav { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
@@ -3443,7 +3445,55 @@ function updateEditorFooterStatus() {
     layers:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>"
   };
 
-  function upgradeSelect(sel) {
+  function floatPanel(panel, wrap) {
+  var r = wrap.getBoundingClientRect();
+  if (panel.parentNode !== document.body) document.body.appendChild(panel);
+  panel.style.position = 'fixed';
+  panel.style.zIndex = '9999';
+  panel.style.top = '-99999px';           /* 先离屏量尺寸，避免闪烁 */
+  panel.style.left = '0px';
+  if (panel.classList.contains('sel-panel')) {
+    if (wrap.classList.contains('inline')) {
+      panel.style.width = 'max-content';
+      panel.style.minWidth = Math.round(r.width) + 'px';
+      panel.style.maxWidth = 'min(300px, calc(100vw - 16px))';
+    } else {
+      panel.style.width = Math.round(r.width) + 'px';
+      panel.style.minWidth = '';
+      panel.style.maxWidth = 'calc(100vw - 16px)';
+    }
+  } else {                                 /* .cal-panel / .cal-panel.range 自带固定宽度，保留 */
+    panel.style.width = '';
+    panel.style.minWidth = '';
+    panel.style.maxWidth = 'calc(100vw - 16px)';
+  }
+  var ph = panel.offsetHeight, pw = panel.offsetWidth;
+  var left = r.left;
+  if (left + pw > window.innerWidth - 8) left = Math.max(8, window.innerWidth - 8 - pw);
+  var top = r.bottom + 4;
+  /* 垂直：默认向下，下方空间不足且上方够则向上展开 */
+  if (top + ph > window.innerHeight - 8 && r.top - 4 - ph >= 8) top = r.top - 4 - ph;
+  panel.style.left = Math.round(left) + 'px';
+  panel.style.top = Math.round(top) + 'px';
+  if (!wrap.__refloat) {
+    wrap.__refloat = function () { floatPanel(panel, wrap); };
+    window.addEventListener('scroll', wrap.__refloat, true);
+    window.addEventListener('resize', wrap.__refloat);
+  }
+}
+
+function unfloatPanel(panel, wrap) {
+  if (wrap && wrap.__refloat) {
+    window.removeEventListener('scroll', wrap.__refloat, true);
+    window.removeEventListener('resize', wrap.__refloat);
+    wrap.__refloat = null;
+  }
+  if (panel.parentNode === document.body && wrap) wrap.appendChild(panel);
+  panel.style.position = ''; panel.style.top = ''; panel.style.left = '';
+  panel.style.width = ''; panel.style.minWidth = ''; panel.style.maxWidth = ''; panel.style.zIndex = '';
+}
+
+function upgradeSelect(sel) {
     if (!sel || sel.dataset.selUpgraded === '1') return;
     sel.dataset.selUpgraded = '1';
     sel.tabIndex = -1;
@@ -3642,11 +3692,12 @@ function updateEditorFooterStatus() {
       }
     }
     function fire() { sel.dispatchEvent(new Event('change', { bubbles: true })); }
-    function onDocDown(e) { if (!wrap.contains(e.target)) close(); }
+    function onDocDown(e) { if (!wrap.contains(e.target) && !panel.contains(e.target)) close(); }
     function open() {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
+      floatPanel(panel, wrap);
       if (search) { search.value = ''; filter(''); setTimeout(function () { search.focus(); }, 0); }
       var idx = 0;
       items.forEach(function (it, i) { if (it.getAttribute('aria-selected') === 'true') idx = i; });
@@ -3655,6 +3706,7 @@ function updateEditorFooterStatus() {
     }
     function close() {
       panel.hidden = true;
+      unfloatPanel(panel, wrap);
       wrap.classList.remove('is-open');
       trigger.setAttribute('aria-expanded', 'false');
       document.removeEventListener('mousedown', onDocDown, true);
@@ -3832,7 +3884,7 @@ function updateEditorFooterStatus() {
       sync();
     }
     function pick(key) { setVal(key); close(); trigger.focus(); }
-    function onDocDown(e) { if (!wrap.contains(e.target)) close(); }
+    function onDocDown(e) { if (!wrap.contains(e.target) && !panel.contains(e.target)) close(); }
     function open() {
       var d = parse(inp.value) || new Date();
       curY = d.getFullYear(); curM = d.getMonth();
@@ -3840,11 +3892,13 @@ function updateEditorFooterStatus() {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
+      floatPanel(panel, wrap);
       moveCursorByDate(inp.value || todayStr);
       setTimeout(function () { document.addEventListener('mousedown', onDocDown, true); }, 0);
     }
     function close() {
       panel.hidden = true;
+      unfloatPanel(panel, wrap);
       wrap.classList.remove('is-open');
       trigger.setAttribute('aria-expanded', 'false');
       document.removeEventListener('mousedown', onDocDown, true);
@@ -4097,7 +4151,7 @@ function updateEditorFooterStatus() {
     function moveCursorByDate(key) {
       for (var i = 0; i < cells.length; i++) { if (cells[i].dataset.date === key) { moveCursor(i); return; } }
     }
-    function onDocDown(e) { if (!wrap.contains(e.target)) close(); }
+    function onDocDown(e) { if (!wrap.contains(e.target) && !panel.contains(e.target)) close(); }
     function open() {
       var d = parse(inpS.value) || new Date();
       /* 每次打开以「已确认值」为起点：上次未确认就关掉的选择自动作废 */
@@ -4107,11 +4161,13 @@ function updateEditorFooterStatus() {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
+      floatPanel(panel, wrap);
       moveCursorByDate(inpS.value || todayStr);
       setTimeout(function () { document.addEventListener('mousedown', onDocDown, true); }, 0);
     }
     function close() {
       panel.hidden = true;
+      unfloatPanel(panel, wrap);
       wrap.classList.remove('is-open');
       trigger.setAttribute('aria-expanded', 'false');
       document.removeEventListener('mousedown', onDocDown, true);
