@@ -2763,6 +2763,11 @@ var AD = {
     var empty = function(x){ return x == null || (Array.isArray(x) && !x.length) || (typeof x === 'object' && !Array.isArray(x) && !Object.keys(x).length); };
     var val = !empty(local) ? local : (!empty(server) ? server : seed);
     if(val == null) val = seed;
+    /* 防别名：seed 往往就是 assign 里会被就地清空的同一个数组（如 PSET / PKNOW）。
+       若直接把 seed 传下去，assign 的 `X.length = 0` 会把 val 一起截断，
+       forEach 遍历到空数组 → 内置种子数据被自己抹光（预设/知识库曾因此永远为空）。
+       这里先做一份快照，清空的是原数组、遍历的是快照。 */
+    if(val === seed && Array.isArray(val)) val = val.slice();
     assign(val);
     try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
     if(AD.up && empty(local) && empty(server)) AD.pushKey(key, val);
