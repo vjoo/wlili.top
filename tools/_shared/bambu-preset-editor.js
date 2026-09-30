@@ -1,10 +1,13 @@
 /* ============================================================
  * 打印参数预设编辑器 · 复刻 Bambu Studio 工艺预设
  * 数据来源：
- *   bambu-params-schema.js   255 项参数（PrintConfig.cpp 类型/枚举/默认值 + Tab.cpp 顺序）
- *   bambu-process-rules.js   显隐/置灰规则（ConfigManipulation::toggle_print_fff_options）
+ *   bambu-params-schema.js     260 项参数（PrintConfig.cpp 类型/枚举/默认值 + Tab.cpp 顺序）
+ *   bambu-process-rules.js     显隐/置灰规则（ConfigManipulation::toggle_print_fff_options）
+ *   bambu-pattern-icons.js     图案预览图标（resources/images/param_*.svg，颜色已转 currentColor）
  * 特性：
- *   5 页卡 / 分组 2 列（中间分隔线）/ 多喷头 L: R: 多字段 /
+ *   5 页卡 / 分组 2 列（中间分隔线）/
+ *   多喷头向量参数按「主：标准 / 辅助：标准」分列（复刻 MultiVariantTextCtrl）/
+ *   图案参数带图案预览，悬停显示英文名 /
  *   依赖联动（改值 → 无关参数隐藏、不可用参数置灰）/ 修改态（标题变橙 + ↺ 重置 + 计数 + 一键全重置）
  * 依赖：admin.html 的 PSET / AD / renderMain / closeModal / toast / pgenId / presDate
  * ============================================================ */
@@ -77,15 +80,38 @@
     return n;
   }
 
-  /* ---------- 多喷头字段布局 ---------- */
-  // 向量参数（每喷头一个值）在软件里显示为 L: / R: 多个输入框
-  function vecSlots(len) {
-    var sp = Math.max(1, Math.round(len / EXTRUDERS));
-    var out = [];
-    for (var i = 0; i < EXTRUDERS; i++) out.push(Math.min(i * sp, len - 1));
+  /* ---------- 多喷头字段布局（复刻 Bambu MultiVariantTextCtrl） ----------
+     软件里向量参数不是「一行逗号值」，而是按「挤出机 × 喷嘴变体」拆成多个输入框
+     （Field.cpp MultiVariantTextCtrl::get_current_layout）。X2D 双挤出机装标准喷嘴时
+     是两列：主：标准 / 辅助：标准。
+     列 -> 向量下标的映射来自 schema.meta.extruder_columns（生成自
+     print_extruder_variant + printer_extruder_id），不能让编辑器自己猜。 */
+  var EX_COLUMNS = (SCHEMA.meta && SCHEMA.meta.extruder_columns) || null;
+  function vecColumns(len) {
+    if (EX_COLUMNS && EX_COLUMNS.length) {
+      var ok = EX_COLUMNS.filter(function (c) { return c.idx >= 0 && c.idx < len; });
+      if (ok.length) return ok;
+    }
+    var sp = Math.max(1, Math.round(len / EXTRUDERS)), out = [];
+    for (var i = 0; i < EXTRUDERS; i++) {
+      out.push({ label: i === 0 ? "主" : (i === 1 ? "辅助" : "喷头" + (i + 1)), idx: Math.min(i * sp, len - 1) });
+    }
     return out;
   }
-  function slotLabel(i) { return i === 0 ? "L:" : (i === 1 ? "R:" : "E" + (i + 1) + ":"); }
+
+  /* ---------- 图案预览图标（Bambu 下拉框左侧的小图案） ---------- */
+  var PICONS = window.BAMBU_PATTERN_ICONS || null;
+  var PICON_IDX = null;
+  function iconKey(v) { return String(v == null ? "" : v).toLowerCase().replace(/[-_\s]/g, ""); }
+  function iconFor(v) {
+    if (!PICONS) return "";
+    if (!PICON_IDX) {
+      PICON_IDX = {};
+      Object.keys(PICONS).forEach(function (k) { PICON_IDX[iconKey(k)] = k; });
+    }
+    var k = PICON_IDX[iconKey(v)];
+    return k ? PICONS[k] : "";
+  }
 
   /* ---------- 控件 ---------- */
   function unitHTML(p, val) {
@@ -100,9 +126,23 @@
   }
   function enumHTML(p, val) {
     var opts = p.enum.map(function (o) {
-      return '<option value="' + esc(o.value) + '"' + (o.value === norm(val) ? " selected" : "") + ">" + esc(o.label) + "</option>";
+      var en = (o.en && o.en !== o.label) ? ' data-en="' + esc(o.en) + '"' : "";
+      return '<option value="' + esc(o.value) + '"' + (o.value === norm(val) ? " selected" : "") + en + ">" + esc(o.label) + "</option>";
     }).join("");
-    return '<select class="form-select bp-ctrl" data-bp-enum>' + opts + "</select>";
+    // 图案类参数在下拉框左侧挂一个图案预览（原生 select 里塞不进图片，只能贴在外面）
+    return '<span class="bp-pick"><span class="bp-pic"></span>' +
+      '<select class="form-select bp-ctrl" data-bp-enum>' + opts + "</select></span>";
+  }
+  /* 图案预览 + 英文名：随选中项同步（悬停显示英文） */
+  function syncPick(sel) {
+    var o = sel.options[sel.selectedIndex];
+    var en = o ? (o.getAttribute("data-en") || o.textContent) : "";
+    sel.title = en;
+    var pic = sel.parentNode ? sel.parentNode.querySelector(".bp-pic") : null;
+    if (!pic) return;
+    var svg = iconFor(sel.value);
+    if (svg) { pic.innerHTML = svg; pic.title = en; }
+    else { pic.innerHTML = ""; pic.removeAttribute("title"); }
   }
   var DL_ID = 0;
   function enumOpenHTML(p, val, key) {
@@ -120,15 +160,17 @@
   function controlHTML(p, val) {
     if (p.vec) {
       var parts = splitVec(val); if (!parts.length) parts = [""];
-      var slots = vecSlots(parts.length);
-      var cells = slots.map(function (slot, i) {
-        var v = parts[slot] == null ? "" : parts[slot];
+      var cols = vecColumns(parts.length);
+      var cells = cols.map(function (c) {
+        var v = parts[c.idx] == null ? "" : parts[c.idx];
         var inner = (p.type === "bool")
-          ? boolHTML(v, 'data-slot="' + slot + '"')
-          : numHTML(p, v, 'data-slot="' + slot + '"');
-        return '<label class="bp-mv"><span class="bp-mvi">' + slotLabel(i) + "</span>" + inner + "</label>";
+          ? boolHTML(v, 'data-slot="' + c.idx + '"')
+          : numHTML(p, v, 'data-slot="' + c.idx + '"');
+        return '<label class="bp-mv"><span class="bp-mvi">' + esc(c.label) + "</span>" + inner + "</label>";
       }).join("");
-      return '<div class="bp-multi">' + cells + "</div>";
+      // 控件列只有 ~180px，两行各带一个单位（长单位如「mm/s 或 %」）会溢出并被分组框 overflow:hidden 裁掉，
+      // 所以单位挂在整块上做悬停提示；详情页仍逐行带单位。
+      return '<div class="bp-multi"' + (p.unit ? ' title="单位：' + esc(p.unit) + '"' : "") + ">" + cells + "</div>";
     }
     if (p.type === "bool") return boolHTML(val, "");
     if (p.type === "enum") return enumHTML(p, val);
@@ -256,10 +298,30 @@
         var rows = list.map(function (p) {
           var val = (p.key in vals) ? vals[p.key] : norm(p.default);
           var mod = squash(val) !== squash(def[p.key]);
-          var unit = (p.unit && norm(val).slice(-p.unit.length) !== p.unit) ? " " + p.unit : "";
+          var suffix = function (v) {
+            return (p.unit && norm(v).slice(-p.unit.length) !== p.unit) ? " " + p.unit : "";
+          };
+          var body;
+          if (p.vec) {
+            // 向量参数逐喷头列出（主：标准 / 辅助：标准）。以前把整条逗号值挤成一行，
+            // 4 个值里有 3 个相同，看着像数据重复出错了。
+            var parts = splitVec(val), cols = vecColumns(parts.length);
+            body = cols.map(function (c) {
+              var v = parts[c.idx] == null ? "" : parts[c.idx];
+              return '<span class="bp-vv"><b>' + esc(c.label) + "</b>" + esc(v) + esc(suffix(v)) + "</span>";
+            }).join("");
+          } else {
+            body = esc(val) + esc(suffix(val));
+            var ic = (p.enum && p.enum.length) ? iconFor(val) : "";
+            if (ic) {
+              var cur = null;
+              p.enum.forEach(function (o) { if (o.value === norm(val)) cur = o; });
+              body = '<span class="bp-pic" title="' + esc(cur ? (cur.en || cur.label) : "") + '">' + ic + "</span>" + body;
+            }
+          }
           return '<div class="bp-row ro' + (mod ? " modified" : "") + '">' +
             '<div class="bp-label">' + esc(p.label) + "</div>" +
-            '<div class="bp-ctrlwrap bp-ro-val">' + esc(val) + esc(unit) + "</div></div>";
+            '<div class="bp-ctrlwrap bp-ro-val' + (p.vec ? " bp-rovec" : "") + '">' + body + "</div></div>";
         }).join("");
         tabHtml += '<div class="bp-group"><div class="bp-group-head static"><span class="bp-gtitle">' +
           esc(gn) + '</span></div><div class="bp-group-body"><div class="bp-cols' +
@@ -364,6 +426,7 @@
     }
     function refreshAll() {
       root.querySelectorAll(".bp-row").forEach(refreshRow);
+      root.querySelectorAll("[data-bp-enum]").forEach(syncPick);
       applyRules();
       updateCount();
     }
@@ -405,6 +468,7 @@
     function onEdit(e) {
       var row = e.target.closest(".bp-row");
       if (!row) return;
+      if (e.target.hasAttribute && e.target.hasAttribute("data-bp-enum")) syncPick(e.target);
       refreshRow(row);
       applyRules();
       updateCount();
@@ -480,7 +544,10 @@
       ".bp-ctrl{width:150px;max-width:100%;text-align:right;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-family:inherit}" +
       ".bp-ctrl:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
       ".bp-row.modified .bp-ctrl{color:var(--bp-warn);border-color:var(--warning-line,var(--bp-warn))}" +
-      ".bp-numwrap{display:flex;align-items:center;gap:6px;min-width:0}" +
+      // 控件列只有 ~180px：数字框固定 150px 时，遇到长单位（mm/s 或 %）会被分组框裁掉，
+      // 所以给数字框留可收缩的余地（flex-basis 150 起，空间不够时收窄）
+      ".bp-numwrap{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}" +
+      ".bp-numwrap .bp-ctrl{flex:0 1 150px;min-width:56px}" +
       ".bp-unit{color:var(--muted);font-size:11.5px;white-space:nowrap}" +
       /* 下拉框/组合框撑满控件列：原生弹层宽度跟随元素宽度，
          太窄会出现横向滚动条与换行（选项文字比控件宽时） */
@@ -492,23 +559,34 @@
       ".bp-switch input:checked + .bp-track{background:var(--accent)}" +
       ".bp-track::before{content:'';position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 2px rgba(0,0,0,.2)}" +
       ".bp-switch input:checked + .bp-track::before{transform:translateX(17px)}" +
-      /* —— 多喷头 L:/R: —— */
+      /* —— 多喷头「主：标准 / 辅助：标准」（软件里就是竖排的多列）—— */
       ".bp-multi{display:flex;flex-direction:column;gap:4px;min-width:0}" +
-      ".bp-mv{display:flex;align-items:center;gap:6px}" +
-      ".bp-mvi{color:var(--muted);font-size:11.5px;width:20px;flex:none}" +
-      ".bp-mv input.bp-ctrl{width:122px}" +
+      ".bp-mv{display:flex;align-items:center;gap:6px;min-width:0}" +
+      ".bp-mvi{color:var(--muted);font-size:11.5px;flex:none;white-space:nowrap;min-width:56px}" +
+      ".bp-mv input.bp-ctrl{width:104px;flex:none}" +
+      /* —— 图案预览图标（原生 select 塞不进图片，贴在它左侧）—— */
+      ".bp-pick{display:inline-flex;align-items:center;gap:8px;min-width:0;max-width:100%}" +
+      ".bp-pic{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ink);opacity:.85}" +
+      ".bp-pic:empty{display:none}" +
+      ".bp-pic svg{width:16px;height:16px;display:block}" +
       /* —— 置灰（参数不可用）—— */
       ".bp-row.disabled .bp-label{color:var(--muted)}" +
       ".bp-row.disabled .bp-ctrl,.bp-row.disabled .bp-track{opacity:.5}" +
       ".bp-row.disabled .bp-ctrl{cursor:not-allowed;background:var(--panel)}" +
       ".bp-row.disabled .bp-switch{cursor:not-allowed}" +
       ".bp-row.disabled .bp-unit,.bp-row.disabled .bp-mvi{opacity:.6}" +
+      ".bp-row.disabled .bp-pic{opacity:.35}" +
       /* .bp-readonly 是 .bp-editor 的兄弟节点，--bp-warn 不会继承过来，
          不在这里重新定义，详情页「偏离默认」的黄色标题就解析不出来（实测 bug） */
       ".bp-readonly{--bp-warn:var(--warning,#f59e0b);padding-top:6px}" +
       ".bp-section-title{font-size:13px;font-weight:700;color:var(--ink);margin:14px 0 8px}" +
       ".bp-readonly .bp-group{margin-bottom:10px}" +
       ".bp-ro-val{color:var(--ink)}" +
+      /* 详情页的向量参数：逐喷头一行 */
+      ".bp-rovec{flex-direction:column;align-items:flex-start;gap:2px}" +
+      ".bp-vv{white-space:nowrap}" +
+      ".bp-vv b{font-weight:600;color:var(--muted);font-size:11.5px;margin-right:6px}" +
+      ".bp-readonly .bp-pic svg{width:14px;height:14px;margin-right:1px}" +
       ".bp-row.ro.modified .bp-label,.bp-row.ro.modified .bp-ro-val{color:var(--bp-warn)}" +
       /* 视口不够宽时退回单列，避免控件被组容器裁掉 */
       "@media (max-width:960px){.bp-cols{columns:1;column-rule:none}}";

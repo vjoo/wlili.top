@@ -7,6 +7,16 @@ window.BAMBU_PROCESS_SCHEMA = {
   "source_preset": "0.10mm Standard @BBL X2D 0.2 nozzle.json",
   "bambu_version": "02.08.00.05",
   "total_params": 260,
+  "extruder_columns": [
+   {
+    "label": "主：标准",
+    "idx": 0
+   },
+   {
+    "label": "辅助：标准",
+    "idx": 2
+   }
+  ],
   "generated_by": "build_schema.py"
  },
  "tabs_order": [
@@ -189,19 +199,23 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "nearest",
-       "label": "最近"
+       "label": "最近",
+       "en": "Nearest"
       },
       {
        "value": "aligned",
-       "label": "对齐"
+       "label": "对齐",
+       "en": "Aligned"
       },
       {
        "value": "back",
-       "label": "背面"
+       "label": "背面",
+       "en": "Back"
       },
       {
        "value": "random",
-       "label": "随机"
+       "label": "随机",
+       "en": "Random"
       }
      ],
      "default": "aligned",
@@ -332,15 +346,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "none",
-       "label": "无"
+       "label": "无",
+       "en": "None"
       },
       {
        "value": "external",
-       "label": "轮廓"
+       "label": "轮廓",
+       "en": "Contour"
       },
       {
        "value": "all",
-       "label": "轮廓和孔"
+       "label": "轮廓和孔",
+       "en": "Contour and hole"
       }
      ],
      "default": "none",
@@ -573,19 +590,23 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "no ironing",
-       "label": "不熨烫"
+       "label": "不熨烫",
+       "en": "No ironing"
       },
       {
        "value": "top",
-       "label": "顶面"
+       "label": "顶面",
+       "en": "Top surfaces"
       },
       {
        "value": "topmost",
-       "label": "最顶面"
+       "label": "最顶面",
+       "en": "Topmost surface"
       },
       {
        "value": "solid",
-       "label": "所有实心层"
+       "label": "所有实心层",
+       "en": "All solid layer"
       }
      ],
      "default": "no ironing",
@@ -604,11 +625,13 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "concentric",
-       "label": "同心"
+       "label": "同心",
+       "en": "Concentric"
       },
       {
        "value": "zig-zag",
-       "label": "直线"
+       "label": "直线",
+       "en": "Rectilinear"
       }
      ],
      "default": "zig-zag",
@@ -699,11 +722,13 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "classic",
-       "label": "经典"
+       "label": "经典",
+       "en": "Classic"
       },
       {
        "value": "arachne",
-       "label": "Arachne"
+       "label": "Arachne",
+       "en": "Arachne"
       }
      ],
      "default": "classic",
@@ -808,15 +833,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "inner wall/outer wall",
-       "label": "内墙/外墙"
+       "label": "内墙/外墙",
+       "en": "inner/outer"
       },
       {
        "value": "outer wall/inner wall",
-       "label": "外墙/内墙"
+       "label": "外墙/内墙",
+       "en": "outer/inner"
       },
       {
        "value": "inner-outer-inner wall",
-       "label": "内墙/外墙/内墙"
+       "label": "内墙/外墙/内墙",
+       "en": "inner wall/outer wall/inner wall"
       }
      ],
      "default": "inner wall/outer wall",
@@ -877,15 +905,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "none",
-       "label": "无"
+       "label": "无",
+       "en": "None"
       },
       {
        "value": "partiallybridge",
-       "label": "部分桥接"
+       "label": "部分桥接",
+       "en": "Partially bridged"
       },
       {
        "value": "sacrificiallayer",
-       "label": "牺牲层"
+       "label": "牺牲层",
+       "en": "Sacrificial layer"
       }
      ],
      "default": "none",
@@ -946,15 +977,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "not apply",
-       "label": "不使用"
+       "label": "不使用",
+       "en": "Not apply"
       },
       {
        "value": "all top",
-       "label": "顶面"
+       "label": "顶面",
+       "en": "Top surfaces"
       },
       {
        "value": "topmost",
-       "label": "最顶面"
+       "label": "最顶面",
+       "en": "Topmost surface"
       }
      ],
      "default": "all top",
@@ -1175,35 +1209,43 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "concentric",
-       "label": "同心"
+       "label": "同心",
+       "en": "Concentric"
       },
       {
        "value": "zig-zag",
-       "label": "直线"
+       "label": "直线",
+       "en": "Rectilinear"
       },
       {
        "value": "monotonic",
-       "label": "单调"
+       "label": "单调",
+       "en": "Monotonic"
       },
       {
        "value": "monotonicline",
-       "label": "单调线"
+       "label": "单调线",
+       "en": "Monotonic line"
       },
       {
        "value": "alignedrectilinear",
-       "label": "直线排列"
+       "label": "直线排列",
+       "en": "Aligned Rectilinear"
       },
       {
        "value": "hilbertcurve",
-       "label": "希尔伯特曲线"
+       "label": "希尔伯特曲线",
+       "en": "Hilbert Curve"
       },
       {
        "value": "archimedeanchords",
-       "label": "阿基米德螺旋"
+       "label": "阿基米德螺旋",
+       "en": "Archimedean Chords"
       },
       {
        "value": "octagramspiral",
-       "label": "八角螺旋"
+       "label": "八角螺旋",
+       "en": "Octagram Spiral"
       }
      ],
      "default": "monotonicline",
@@ -1271,11 +1313,52 @@ window.BAMBU_PROCESS_SCHEMA = {
      "label": "底面图案",
      "tab": "强度",
      "group": "顶部/底部外壳",
-     "type": "text",
+     "type": "enum",
      "unit": "",
      "min": null,
      "max": null,
-     "enum": [],
+     "enum": [
+      {
+       "value": "concentric",
+       "label": "同心",
+       "en": "Concentric"
+      },
+      {
+       "value": "zig-zag",
+       "label": "直线",
+       "en": "Rectilinear"
+      },
+      {
+       "value": "monotonic",
+       "label": "单调",
+       "en": "Monotonic"
+      },
+      {
+       "value": "monotonicline",
+       "label": "单调线",
+       "en": "Monotonic line"
+      },
+      {
+       "value": "alignedrectilinear",
+       "label": "直线排列",
+       "en": "Aligned Rectilinear"
+      },
+      {
+       "value": "hilbertcurve",
+       "label": "希尔伯特曲线",
+       "en": "Hilbert Curve"
+      },
+      {
+       "value": "archimedeanchords",
+       "label": "阿基米德螺旋",
+       "en": "Archimedean Chords"
+      },
+      {
+       "value": "octagramspiral",
+       "label": "八角螺旋",
+       "en": "Octagram Spiral"
+      }
+     ],
      "default": "monotonic",
      "mode": "simple",
      "vec": false
@@ -1355,11 +1438,52 @@ window.BAMBU_PROCESS_SCHEMA = {
      "label": "内部实心填充图案",
      "tab": "强度",
      "group": "顶部/底部外壳",
-     "type": "text",
+     "type": "enum",
      "unit": "",
      "min": null,
      "max": null,
-     "enum": [],
+     "enum": [
+      {
+       "value": "concentric",
+       "label": "同心",
+       "en": "Concentric"
+      },
+      {
+       "value": "zig-zag",
+       "label": "直线",
+       "en": "Rectilinear"
+      },
+      {
+       "value": "monotonic",
+       "label": "单调",
+       "en": "Monotonic"
+      },
+      {
+       "value": "monotonicline",
+       "label": "单调线",
+       "en": "Monotonic line"
+      },
+      {
+       "value": "alignedrectilinear",
+       "label": "直线排列",
+       "en": "Aligned Rectilinear"
+      },
+      {
+       "value": "hilbertcurve",
+       "label": "希尔伯特曲线",
+       "en": "Hilbert Curve"
+      },
+      {
+       "value": "archimedeanchords",
+       "label": "阿基米德螺旋",
+       "en": "Archimedean Chords"
+      },
+      {
+       "value": "octagramspiral",
+       "label": "八角螺旋",
+       "en": "Octagram Spiral"
+      }
+     ],
      "default": "zig-zag",
      "mode": "simple",
      "vec": false
@@ -1406,91 +1530,113 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "concentric",
-       "label": "同心"
+       "label": "同心",
+       "en": "Concentric"
       },
       {
        "value": "zig-zag",
-       "label": "直线"
+       "label": "直线",
+       "en": "Rectilinear"
       },
       {
        "value": "grid",
-       "label": "网格"
+       "label": "网格",
+       "en": "Grid"
       },
       {
        "value": "line",
-       "label": "线"
+       "label": "线",
+       "en": "Line"
       },
       {
        "value": "cubic",
-       "label": "立方体"
+       "label": "立方体",
+       "en": "Cubic"
       },
       {
        "value": "triangles",
-       "label": "三角形"
+       "label": "三角形",
+       "en": "Triangles"
       },
       {
        "value": "tri-hexagon",
-       "label": "内六边形"
+       "label": "内六边形",
+       "en": "Tri-hexagon"
       },
       {
        "value": "gyroid",
-       "label": "螺旋体"
+       "label": "螺旋体",
+       "en": "Gyroid"
       },
       {
        "value": "honeycomb",
-       "label": "蜂窝"
+       "label": "蜂窝",
+       "en": "Honeycomb"
       },
       {
        "value": "adaptivecubic",
-       "label": "自适应立方体"
+       "label": "自适应立方体",
+       "en": "Adaptive Cubic"
       },
       {
        "value": "alignedrectilinear",
-       "label": "直线排列"
+       "label": "直线排列",
+       "en": "Aligned Rectilinear"
       },
       {
        "value": "3dhoneycomb",
-       "label": "3D 蜂窝"
+       "label": "3D 蜂窝",
+       "en": "3D Honeycomb"
       },
       {
        "value": "hilbertcurve",
-       "label": "希尔伯特曲线"
+       "label": "希尔伯特曲线",
+       "en": "Hilbert Curve"
       },
       {
        "value": "archimedeanchords",
-       "label": "阿基米德螺旋"
+       "label": "阿基米德螺旋",
+       "en": "Archimedean Chords"
       },
       {
        "value": "octagramspiral",
-       "label": "八角螺旋"
+       "label": "八角螺旋",
+       "en": "Octagram Spiral"
       },
       {
        "value": "supportcubic",
-       "label": "支撑立方体"
+       "label": "支撑立方体",
+       "en": "Support Cubic"
       },
       {
        "value": "lightning",
-       "label": "闪电"
+       "label": "闪电",
+       "en": "Lightning"
       },
       {
        "value": "crosshatch",
-       "label": "交叉层叠"
+       "label": "交叉层叠",
+       "en": "Cross Hatch"
       },
       {
        "value": "zigzag",
-       "label": "Zig Zag"
+       "label": "Zig Zag",
+       "en": "Zig Zag"
       },
       {
        "value": "crosszag",
-       "label": "Cross Zag"
+       "label": "Cross Zag",
+       "en": "Cross Zag"
       },
       {
        "value": "lockedzag",
-       "label": "Locked Zag"
+       "label": "Locked Zag",
+       "en": "Locked Zag"
       },
       {
        "value": "2dlattice",
-       "label": "二维晶格"
+       "label": "二维晶格",
+       "en": "2D Lattice"
       }
      ],
      "default": "grid",
@@ -1509,71 +1655,88 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "concentric",
-       "label": "同心"
+       "label": "同心",
+       "en": "Concentric"
       },
       {
        "value": "zig-zag",
-       "label": "直线"
+       "label": "直线",
+       "en": "Rectilinear"
       },
       {
        "value": "grid",
-       "label": "网格"
+       "label": "网格",
+       "en": "Grid"
       },
       {
        "value": "line",
-       "label": "线"
+       "label": "线",
+       "en": "Line"
       },
       {
        "value": "cubic",
-       "label": "立方体"
+       "label": "立方体",
+       "en": "Cubic"
       },
       {
        "value": "triangles",
-       "label": "三角形"
+       "label": "三角形",
+       "en": "Triangles"
       },
       {
        "value": "tri-hexagon",
-       "label": "内六边形"
+       "label": "内六边形",
+       "en": "Tri-hexagon"
       },
       {
        "value": "gyroid",
-       "label": "螺旋体"
+       "label": "螺旋体",
+       "en": "Gyroid"
       },
       {
        "value": "honeycomb",
-       "label": "蜂窝"
+       "label": "蜂窝",
+       "en": "Honeycomb"
       },
       {
        "value": "alignedrectilinear",
-       "label": "直线排列"
+       "label": "直线排列",
+       "en": "Aligned Rectilinear"
       },
       {
        "value": "3dhoneycomb",
-       "label": "3D 蜂窝"
+       "label": "3D 蜂窝",
+       "en": "3D Honeycomb"
       },
       {
        "value": "hilbertcurve",
-       "label": "希尔伯特曲线"
+       "label": "希尔伯特曲线",
+       "en": "Hilbert Curve"
       },
       {
        "value": "archimedeanchords",
-       "label": "阿基米德螺旋"
+       "label": "阿基米德螺旋",
+       "en": "Archimedean Chords"
       },
       {
        "value": "octagramspiral",
-       "label": "八角螺旋"
+       "label": "八角螺旋",
+       "en": "Octagram Spiral"
       },
       {
        "value": "crosshatch",
-       "label": "交叉层叠"
+       "label": "交叉层叠",
+       "en": "Cross Hatch"
       },
       {
        "value": "zigzag",
-       "label": "Zig Zag"
+       "label": "Zig Zag",
+       "en": "Zig Zag"
       },
       {
        "value": "crosszag",
-       "label": "Cross Zag"
+       "label": "Cross Zag",
+       "en": "Cross Zag"
       }
      ],
      "default": "crosszag",
@@ -1606,71 +1769,88 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "concentric",
-       "label": "同心"
+       "label": "同心",
+       "en": "Concentric"
       },
       {
        "value": "zig-zag",
-       "label": "直线"
+       "label": "直线",
+       "en": "Rectilinear"
       },
       {
        "value": "grid",
-       "label": "网格"
+       "label": "网格",
+       "en": "Grid"
       },
       {
        "value": "line",
-       "label": "线"
+       "label": "线",
+       "en": "Line"
       },
       {
        "value": "cubic",
-       "label": "立方体"
+       "label": "立方体",
+       "en": "Cubic"
       },
       {
        "value": "triangles",
-       "label": "三角形"
+       "label": "三角形",
+       "en": "Triangles"
       },
       {
        "value": "tri-hexagon",
-       "label": "内六边形"
+       "label": "内六边形",
+       "en": "Tri-hexagon"
       },
       {
        "value": "gyroid",
-       "label": "螺旋体"
+       "label": "螺旋体",
+       "en": "Gyroid"
       },
       {
        "value": "honeycomb",
-       "label": "蜂窝"
+       "label": "蜂窝",
+       "en": "Honeycomb"
       },
       {
        "value": "alignedrectilinear",
-       "label": "直线排列"
+       "label": "直线排列",
+       "en": "Aligned Rectilinear"
       },
       {
        "value": "3dhoneycomb",
-       "label": "3D 蜂窝"
+       "label": "3D 蜂窝",
+       "en": "3D Honeycomb"
       },
       {
        "value": "hilbertcurve",
-       "label": "希尔伯特曲线"
+       "label": "希尔伯特曲线",
+       "en": "Hilbert Curve"
       },
       {
        "value": "archimedeanchords",
-       "label": "阿基米德螺旋"
+       "label": "阿基米德螺旋",
+       "en": "Archimedean Chords"
       },
       {
        "value": "octagramspiral",
-       "label": "八角螺旋"
+       "label": "八角螺旋",
+       "en": "Octagram Spiral"
       },
       {
        "value": "crosshatch",
-       "label": "交叉层叠"
+       "label": "交叉层叠",
+       "en": "Cross Hatch"
       },
       {
        "value": "zigzag",
-       "label": "Zig Zag"
+       "label": "Zig Zag",
+       "en": "Zig Zag"
       },
       {
        "value": "crosszag",
-       "label": "Cross Zag"
+       "label": "Cross Zag",
+       "en": "Cross Zag"
       }
      ],
      "default": "zigzag",
@@ -1829,27 +2009,33 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "0",
-       "label": "0 (无铆线)"
+       "label": "0 (无铆线)",
+       "en": "0 (no open anchors)"
       },
       {
        "value": "1",
-       "label": "1000（无限制）"
+       "label": "1000（无限制）",
+       "en": "1000 (unlimited)"
       },
       {
        "value": "2",
-       "label": "2"
+       "label": "2",
+       "en": "2"
       },
       {
        "value": "5",
-       "label": "5"
+       "label": "5",
+       "en": "5"
       },
       {
        "value": "10",
-       "label": "10"
+       "label": "10",
+       "en": "10"
       },
       {
        "value": "1000",
-       "label": "1000"
+       "label": "1000",
+       "en": "1000"
       }
      ],
      "default": "400%",
@@ -1868,27 +2054,33 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "0",
-       "label": "0（无）"
+       "label": "0（无）",
+       "en": "0 (not anchored)"
       },
       {
        "value": "1",
-       "label": "1000（无限制）"
+       "label": "1000（无限制）",
+       "en": "1000 (unlimited)"
       },
       {
        "value": "2",
-       "label": "2"
+       "label": "2",
+       "en": "2"
       },
       {
        "value": "5",
-       "label": "5"
+       "label": "5",
+       "en": "5"
       },
       {
        "value": "10",
-       "label": "10"
+       "label": "10",
+       "en": "10"
       },
       {
        "value": "1000",
-       "label": "1000"
+       "label": "1000",
+       "en": "1000"
       }
      ],
      "default": "20",
@@ -2021,15 +2213,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "disabled",
-       "label": "关闭"
+       "label": "关闭",
+       "en": "Disabled"
       },
       {
        "value": "partial",
-       "label": "部分"
+       "label": "部分",
+       "en": "Partial"
       },
       {
        "value": "enabled",
-       "label": "打开"
+       "label": "打开",
+       "en": "Enabled"
       }
      ],
      "default": "enabled",
@@ -2778,19 +2973,23 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "normal(auto)",
-       "label": "普通(自动)"
+       "label": "普通(自动)",
+       "en": "normal(auto)"
       },
       {
        "value": "tree(auto)",
-       "label": "树状(自动)"
+       "label": "树状(自动)",
+       "en": "tree(auto)"
       },
       {
        "value": "normal(manual)",
-       "label": "普通(手动)"
+       "label": "普通(手动)",
+       "en": "normal(manual)"
       },
       {
        "value": "tree(manual)",
-       "label": "树状(手动)"
+       "label": "树状(手动)",
+       "en": "tree(manual)"
       }
      ],
      "default": "tree(auto)",
@@ -2809,31 +3008,38 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "default",
-       "label": "默认"
+       "label": "默认",
+       "en": "Default"
       },
       {
        "value": "grid",
-       "label": "网格"
+       "label": "网格",
+       "en": "Grid"
       },
       {
        "value": "snug",
-       "label": "紧贴"
+       "label": "紧贴",
+       "en": "Snug"
       },
       {
        "value": "tree_slim",
-       "label": "苗条树"
+       "label": "苗条树",
+       "en": "Tree Slim"
       },
       {
        "value": "tree_strong",
-       "label": "粗壮树"
+       "label": "粗壮树",
+       "en": "Tree Strong"
       },
       {
        "value": "tree_hybrid",
-       "label": "混合树"
+       "label": "混合树",
+       "en": "Tree Hybrid"
       },
       {
        "value": "tree_organic",
-       "label": "有机树"
+       "label": "有机树",
+       "en": "Tree Organic"
       }
      ],
      "default": "default",
@@ -3012,11 +3218,13 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "concentric",
-       "label": "同心"
+       "label": "同心",
+       "en": "Concentric"
       },
       {
        "value": "zig-zag",
-       "label": "直线"
+       "label": "直线",
+       "en": "Rectilinear"
       }
      ],
      "default": "zig-zag",
@@ -3149,15 +3357,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "0",
-       "label": "0 (soluble)"
+       "label": "0 (soluble)",
+       "en": "0 (soluble)"
       },
       {
        "value": "0.1",
-       "label": "0.1 (semi-detachable)"
+       "label": "0.1 (semi-detachable)",
+       "en": "0.1 (semi-detachable)"
       },
       {
        "value": "0.2",
-       "label": "0.2 (detachable)"
+       "label": "0.2 (detachable)",
+       "en": "0.2 (detachable)"
       }
      ],
      "default": "0.1",
@@ -3190,27 +3401,33 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "default",
-       "label": "默认"
+       "label": "默认",
+       "en": "Default"
       },
       {
        "value": "rectilinear",
-       "label": "直线"
+       "label": "直线",
+       "en": "Rectilinear"
       },
       {
        "value": "rectilinear-grid",
-       "label": "直线网格"
+       "label": "直线网格",
+       "en": "Rectilinear grid"
       },
       {
        "value": "honeycomb",
-       "label": "蜂窝"
+       "label": "蜂窝",
+       "en": "Honeycomb"
       },
       {
        "value": "lightning",
-       "label": "闪电"
+       "label": "闪电",
+       "en": "Lightning"
       },
       {
        "value": "hollow",
-       "label": "空心"
+       "label": "空心",
+       "en": "Hollow"
       }
      ],
      "default": "default",
@@ -3257,19 +3474,23 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "0",
-       "label": "0"
+       "label": "0",
+       "en": "0"
       },
       {
        "value": "1",
-       "label": "1"
+       "label": "1",
+       "en": "1"
       },
       {
        "value": "2",
-       "label": "2"
+       "label": "2",
+       "en": "2"
       },
       {
        "value": "3",
-       "label": "3"
+       "label": "3",
+       "en": "3"
       }
      ],
      "default": "2",
@@ -3288,7 +3509,8 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "-1",
-       "label": "和顶部相同"
+       "label": "和顶部相同",
+       "en": "Same as top"
       }
      ],
      "default": "2",
@@ -3307,23 +3529,28 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "auto",
-       "label": "默认"
+       "label": "默认",
+       "en": "Default"
       },
       {
        "value": "rectilinear",
-       "label": "直线"
+       "label": "直线",
+       "en": "Rectilinear"
       },
       {
        "value": "concentric",
-       "label": "同心"
+       "label": "同心",
+       "en": "Concentric"
       },
       {
        "value": "rectilinear_interlaced",
-       "label": "交叠的直线"
+       "label": "交叠的直线",
+       "en": "Rectilinear Interlaced"
       },
       {
        "value": "grid",
-       "label": "网格"
+       "label": "网格",
+       "en": "Grid"
       }
      ],
      "default": "auto",
@@ -3586,15 +3813,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "disabled",
-       "label": "关闭"
+       "label": "关闭",
+       "en": "Disabled"
       },
       {
        "value": "limited",
-       "label": "Limited"
+       "label": "Limited",
+       "en": "Limited"
       },
       {
        "value": "enabled",
-       "label": "打开"
+       "label": "打开",
+       "en": "Enabled"
       }
      ],
      "default": "disabled",
@@ -3613,27 +3843,33 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "auto_brim",
-       "label": "自动"
+       "label": "自动",
+       "en": "Auto"
       },
       {
        "value": "brim_ears",
-       "label": "绘制"
+       "label": "绘制",
+       "en": "Painted"
       },
       {
        "value": "outer_only",
-       "label": "仅外侧"
+       "label": "仅外侧",
+       "en": "Outer brim only"
       },
       {
        "value": "inner_only",
-       "label": "仅内侧"
+       "label": "仅内侧",
+       "en": "Inner brim only"
       },
       {
        "value": "outer_and_inner",
-       "label": "内侧和外侧"
+       "label": "内侧和外侧",
+       "en": "Outer and inner brim"
       },
       {
        "value": "no_brim",
-       "label": "无brim"
+       "label": "无brim",
+       "en": "No-brim"
       }
      ],
      "default": "auto_brim",
@@ -3752,7 +3988,8 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "-1",
-       "label": "自动"
+       "label": "自动",
+       "en": "Auto"
       }
      ],
      "default": "-1",
@@ -3901,15 +4138,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "regular",
-       "label": "常规"
+       "label": "常规",
+       "en": "Regular"
       },
       {
        "value": "even_odd",
-       "label": "奇偶"
+       "label": "奇偶",
+       "en": "Even-odd"
       },
       {
        "value": "close_holes",
-       "label": "闭孔"
+       "label": "闭孔",
+       "en": "Close holes"
       }
      ],
      "default": "regular",
@@ -3928,11 +4168,13 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "by layer",
-       "label": "逐层"
+       "label": "逐层",
+       "en": "By layer"
       },
       {
        "value": "by object",
-       "label": "逐件"
+       "label": "逐件",
+       "en": "By object"
       }
      ],
      "default": "by layer",
@@ -3993,11 +4235,13 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "0",
-       "label": "传统模式"
+       "label": "传统模式",
+       "en": "Traditional"
       },
       {
        "value": "1",
-       "label": "平滑模式"
+       "label": "平滑模式",
+       "en": "Smooth"
       }
      ],
      "default": "0",
@@ -4016,23 +4260,28 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "none",
-       "label": "无(允许绘制)"
+       "label": "无(允许绘制)",
+       "en": "None(allow paint)"
       },
       {
        "value": "external",
-       "label": "轮廓"
+       "label": "轮廓",
+       "en": "Contour"
       },
       {
        "value": "all",
-       "label": "轮廓和孔"
+       "label": "轮廓和孔",
+       "en": "Contour and hole"
       },
       {
        "value": "allwalls",
-       "label": "所有墙"
+       "label": "所有墙",
+       "en": "All walls"
       },
       {
        "value": "disabled_fuzzy",
-       "label": "关闭"
+       "label": "关闭",
+       "en": "Disabled"
       }
      ],
      "default": "none",
@@ -4051,15 +4300,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "displacement",
-       "label": "位移"
+       "label": "位移",
+       "en": "Displacement"
       },
       {
        "value": "extrusion",
-       "label": "挤出"
+       "label": "挤出",
+       "en": "Extrusion"
       },
       {
        "value": "combined",
-       "label": "组合"
+       "label": "组合",
+       "en": "Combined"
       }
      ],
      "default": "displacement",
@@ -4078,23 +4330,28 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "classic",
-       "label": "经典"
+       "label": "经典",
+       "en": "Classic"
       },
       {
        "value": "perlin",
-       "label": "perlin"
+       "label": "perlin",
+       "en": "perlin"
       },
       {
        "value": "billow",
-       "label": "billow"
+       "label": "billow",
+       "en": "billow"
       },
       {
        "value": "ridgedmulti",
-       "label": "ridgedmulti"
+       "label": "ridgedmulti",
+       "en": "ridgedmulti"
       },
       {
        "value": "voronoi",
-       "label": "voronoi"
+       "label": "voronoi",
+       "en": "voronoi"
       }
      ],
      "default": "classic",
@@ -4383,15 +4640,18 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [
       {
        "value": "Disabled",
-       "label": "关闭"
+       "label": "关闭",
+       "en": "Disabled"
       },
       {
        "value": "Auto",
-       "label": "自动"
+       "label": "自动",
+       "en": "Auto"
       },
       {
        "value": "Enabled",
-       "label": "打开"
+       "label": "打开",
+       "en": "Enabled"
       }
      ],
      "default": "Auto",
