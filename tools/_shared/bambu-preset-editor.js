@@ -114,6 +114,19 @@
   });
   var VEC_COLS = vecColumns(VEC_LEN);
   function activeColumn(cols) { return cols[Math.min(Math.max(0, curCol), cols.length - 1)]; }
+  function colIndex() { return Math.min(Math.max(0, curCol), Math.max(0, VEC_COLS.length - 1)); }
+
+  /* 只读视图的「值 → 显示文本」：枚举必须显示中文标签，不能直接吐库里的原始值
+     （之前 tree(auto) / default 就是这么露出来的）；
+     开关也不该显示 1/0。 */
+  function displayValue(p, v) {
+    var s = norm(v);
+    if (p.type === "bool") return (s === "1" || s === "true" || s === "是") ? "开启" : "关闭";
+    if ((p.type === "enum" || p.type === "enumopen") && p.enum && p.enum.length) {
+      for (var i = 0; i < p.enum.length; i++) if (p.enum[i].value === s) return p.enum[i].label;
+    }
+    return v;
+  }
   function vecSwitchHTML() {
     if (!VEC_COLS || VEC_COLS.length < 2) return "";
     var act = activeColumn(VEC_COLS);
@@ -333,6 +346,9 @@
     SCHEMA.tabs_order.forEach(function (t, ti) {
       var g = SCHEMA.tabs[t];
       var tabHtml = "";
+      var hasVec = Object.keys(g).some(function (gn) {
+        return g[gn].some(function (p) { return p.vec; });
+      });
       Object.keys(g).forEach(function (gn) {
         var list = g[gn].filter(modeVisible);
         if (!list.length) return;
@@ -344,15 +360,16 @@
           };
           var body;
           if (p.vec) {
-            // 向量参数逐喷头列出（主：标准 / 辅助：标准）。以前把整条逗号值挤成一行，
-            // 4 个值里有 3 个相同，看着像数据重复出错了。
+            // 向量参数逐喷头列出，由页卡下的「主/辅助」开关决定显示哪一列
             var parts = splitVec(val), cols = vecColumns(parts.length);
+            var act = activeColumn(cols);
             body = cols.map(function (c) {
               var v = parts[c.idx] == null ? "" : parts[c.idx];
-              return '<span class="bp-vv"><b>' + esc(c.label) + "</b>" + esc(v) + esc(suffix(v)) + "</span>";
+              return '<span class="bp-vv' + (c.idx === act.idx ? " on" : "") + '" data-idx="' + c.idx + '">' +
+                "<b>" + esc(c.label) + "</b>" + esc(displayValue(p, v)) + esc(suffix(v)) + "</span>";
             }).join("");
           } else {
-            body = esc(val) + esc(suffix(val));
+            body = esc(displayValue(p, val)) + esc(suffix(val));
             var ic = (p.enum && p.enum.length) ? iconFor(val) : "";
             if (ic) {
               var cur = null;
@@ -360,7 +377,7 @@
               body = '<span class="bp-pic" title="' + esc(cur ? (cur.en || cur.label) : "") + '">' + ic + "</span>" + body;
             }
           }
-          return '<div class="bp-row ro' + (mod ? " modified" : "") + '">' +
+          return '<div class="bp-row ro' + (mod ? " modified" : "") + '" data-key="' + esc(p.key) + '">' +
             '<div class="bp-label">' + esc(p.label) + "</div>" +
             '<div class="bp-ctrlwrap bp-ro-val' + (p.vec ? " bp-rovec" : "") + '">' + body + "</div></div>";
         }).join("");
@@ -368,9 +385,22 @@
           esc(gn) + '</span></div><div class="bp-group-body"><div class="bp-cols' +
           (list.length < 4 ? " bp-onecol" : "") + '">' + rows + "</div></div></div>";
       });
-      panels += '<div class="bp-rpanel' + (ti === 0 ? " active" : "") + '" data-rpanel="' + esc(t) + '">' + tabHtml + "</div>";
+      panels += '<div class="bp-rpanel' + (ti === 0 ? " active" : "") + '" data-rpanel="' + esc(t) + '">' +
+        (hasVec ? vecSwitchHTML() : "") + tabHtml + "</div>";
     });
     return '<div class="bp-readonly"><div class="bp-tabs">' + tabs + "</div>" + panels + "</div>";
+  }
+  /* 详情页的「主/辅助」开关：只切显示，不改数据 */
+  function applyReadOnlyColumn(root) {
+    if (!root) return;
+    var act = activeColumn(VEC_COLS);
+    root.querySelectorAll(".bp-vv").forEach(function (v) {
+      v.classList.toggle("on", +v.getAttribute("data-idx") === act.idx);
+    });
+    root.querySelectorAll(".bp-vs").forEach(function (x) {
+      var c = VEC_COLS[+x.getAttribute("data-vcol")];
+      x.classList.toggle("active", !!c && c.idx === act.idx);
+    });
   }
   function bindReadOnly(root) {
     if (!root) return;
@@ -383,6 +413,14 @@
         panels.forEach(function (p) { p.classList.toggle("active", p.getAttribute("data-rpanel") === n); });
       });
     });
+    root.querySelectorAll(".bp-vs").forEach(function (b) {
+      b.addEventListener("click", function () {
+        curCol = +b.getAttribute("data-vcol");
+        try { localStorage.setItem("bp_extruder_col", String(curCol)); } catch (e) { }
+        applyReadOnlyColumn(root);
+      });
+    });
+    applyReadOnlyColumn(root);
   }
 
   /* ---------- 绑定 ---------- */
@@ -649,10 +687,13 @@
       ".bp-mvi{color:var(--muted);font-size:11.5px;flex:none;white-space:nowrap;min-width:56px}" +
       ".bp-mv input.bp-ctrl{width:104px;flex:none}" +
       /* —— 图案预览图标（原生 select 塞不进图片，贴在它左侧）—— */
-      ".bp-pick{display:inline-flex;align-items:center;gap:8px;min-width:0;max-width:100%}" +
+      // inline-flex 是 shrink-to-fit，里面的 select{width:100%} 会算出循环依赖 → 只剩 118px，
+      // 比最长选项所需的 134px 还窄（弹层又会出横向滚动条）。改成撑满控件列。
+      ".bp-pick{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;max-width:100%}" +
+      ".bp-pick select.bp-ctrl{width:auto;flex:1 1 auto;min-width:0;max-width:260px}" +
       ".bp-pic{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ink);opacity:.85}" +
       ".bp-pic:empty{display:none}" +
-      ".bp-pic svg{width:16px;height:16px;display:block}" +
+      ".bp-pic svg{width:20px;height:20px;display:block}" +
       /* —— 置灰（参数不可用）—— */
       ".bp-row.disabled .bp-label{color:var(--muted)}" +
       ".bp-row.disabled .bp-ctrl,.bp-row.disabled .bp-track{opacity:.5}" +
@@ -670,9 +711,11 @@
       ".bp-ro-val{color:var(--ink)}" +
       /* 详情页的向量参数：逐喷头一行 */
       ".bp-rovec{flex-direction:column;align-items:flex-start;gap:2px}" +
-      ".bp-vv{white-space:nowrap}" +
+      // 详情页只显示开关选中的那一列（切列由 applyReadOnlyColumn 加 .on）
+      ".bp-readonly .bp-vv{display:none;white-space:nowrap}" +
+      ".bp-readonly .bp-vv.on{display:block}" +
       ".bp-vv b{font-weight:600;color:var(--muted);font-size:11.5px;margin-right:6px}" +
-      ".bp-readonly .bp-pic svg{width:14px;height:14px;margin-right:1px}" +
+      ".bp-readonly .bp-pic svg{width:18px;height:18px}" +
       ".bp-row.ro.modified .bp-label,.bp-row.ro.modified .bp-ro-val{color:var(--bp-warn)}" +
       /* 视口不够宽时退回单列，避免控件被组容器裁掉 */
       "@media (max-width:960px){.bp-cols{columns:1;column-rule:none}}";
