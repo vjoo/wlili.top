@@ -98,6 +98,30 @@
     }
     return out;
   }
+  /* 软件顶部有一个「主：标准 / 辅助：标准」切换：同一时刻只编辑一列的数值，
+     切换时把另一列的值留在缓冲里（不丢）。这里复刻同一交互。 */
+  var curCol = 0;
+  try {
+    var _sc = localStorage.getItem("bp_extruder_col");
+    if (_sc != null && +_sc >= 0) curCol = +_sc;
+  } catch (e) { /* ignore */ }
+  var VEC_LEN = 2;
+  SCHEMA.tabs_order.forEach(function (t) {
+    var g = SCHEMA.tabs[t];
+    Object.keys(g).forEach(function (gn) {
+      g[gn].forEach(function (p) { if (p.vec) VEC_LEN = Math.max(VEC_LEN, splitVec(p.default).length); });
+    });
+  });
+  var VEC_COLS = vecColumns(VEC_LEN);
+  function activeColumn(cols) { return cols[Math.min(Math.max(0, curCol), cols.length - 1)]; }
+  function vecSwitchHTML() {
+    if (!VEC_COLS || VEC_COLS.length < 2) return "";
+    var act = activeColumn(VEC_COLS);
+    return '<div class="bp-vsw">' + VEC_COLS.map(function (c, i) {
+      return '<button type="button" class="bp-vs' + (c.idx === act.idx ? " active" : "") +
+        '" data-vcol="' + i + '">' + esc(c.label) + "</button>";
+    }).join("") + "</div>";
+  }
 
   /* ---------- 图案预览图标（Bambu 下拉框左侧的小图案） ---------- */
   var PICONS = window.BAMBU_PATTERN_ICONS || null;
@@ -160,17 +184,13 @@
   function controlHTML(p, val) {
     if (p.vec) {
       var parts = splitVec(val); if (!parts.length) parts = [""];
-      var cols = vecColumns(parts.length);
-      var cells = cols.map(function (c) {
-        var v = parts[c.idx] == null ? "" : parts[c.idx];
-        var inner = (p.type === "bool")
-          ? boolHTML(v, 'data-slot="' + c.idx + '"')
-          : numHTML(p, v, 'data-slot="' + c.idx + '"');
-        return '<label class="bp-mv"><span class="bp-mvi">' + esc(c.label) + "</span>" + inner + "</label>";
-      }).join("");
-      // 控件列只有 ~180px，两行各带一个单位（长单位如「mm/s 或 %」）会溢出并被分组框 overflow:hidden 裁掉，
-      // 所以单位挂在整块上做悬停提示；详情页仍逐行带单位。
-      return '<div class="bp-multi"' + (p.unit ? ' title="单位：' + esc(p.unit) + '"' : "") + ">" + cells + "</div>";
+      var c = activeColumn(vecColumns(parts.length));
+      var v = parts[c.idx] == null ? "" : parts[c.idx];
+      var inner = (p.type === "bool")
+        ? boolHTML(v, 'data-slot="' + c.idx + '"')
+        : numHTML(p, v, 'data-slot="' + c.idx + '"');
+      // 只渲染当前那一列（切换由顶部开关控制），单位也就放得下了
+      return '<span class="bp-numwrap">' + inner + unitHTML(p, v) + "</span>";
     }
     if (p.type === "bool") return boolHTML(val, "");
     if (p.type === "enum") return enumHTML(p, val);
@@ -270,7 +290,12 @@
           esc(gn) + '</span><span class="bp-gcount"></span>' + CHEVRON + "</div>" +
           '<div class="bp-group-body"><div class="bp-cols">' + rowsHTML(g[gn], vals) + "</div></div></div>";
       }).join("");
-      return '<div class="bp-panel' + (ti === 0 ? " active" : "") + '" data-panel="' + esc(t) + '">' + groups + "</div>";
+      // 只有含多喷头参数的页卡才需要「主/辅助」开关
+      var hasVec = Object.keys(g).some(function (gn) {
+        return g[gn].some(function (p) { return p.vec; });
+      });
+      return '<div class="bp-panel' + (ti === 0 ? " active" : "") + '" data-panel="' + esc(t) + '">' +
+        (hasVec ? vecSwitchHTML() : "") + groups + "</div>";
     }).join("");
     var modeBtns = MODE_ORDER.map(function (m) {
       return '<button class="bp-mode' + (m === currentMode ? " active" : "") + '" type="button" data-mode="' + m + '">' + MODES[m] + "</button>";
@@ -285,11 +310,27 @@
       '<div class="bp-tabs">' + tabs + "</div>" + panels + "</div>";
   }
 
-  /* ---------- 渲染（只读详情） ---------- */
+  /* ---------- 渲染（只读详情） ----------
+     与编辑页同一套布局：5 个页卡切换，页卡上标出该页卡的已改数量
+     （以前是一整条长滚动，255 项要翻很久） */
   function renderReadOnly(vals) {
     var def = defaultsObj();
-    var html = "";
-    SCHEMA.tabs_order.forEach(function (t) {
+    var counts = {};
+    var tabs = SCHEMA.tabs_order.map(function (t, i) {
+      var g = SCHEMA.tabs[t], n = 0;
+      Object.keys(g).forEach(function (gn) {
+        g[gn].forEach(function (p) {
+          if (!modeVisible(p)) return;
+          var v = (p.key in vals) ? vals[p.key] : norm(p.default);
+          if (squash(v) !== squash(def[p.key])) n++;
+        });
+      });
+      counts[t] = n;
+      return '<button class="bp-tab' + (i === 0 ? " active" : "") + '" data-rtab="' + esc(t) + '">' +
+        esc(t) + (n ? '<span class="bp-tabbadge mod">' + n + "</span>" : '<span class="bp-tabbadge"></span>') + "</button>";
+    }).join("");
+    var panels = "";
+    SCHEMA.tabs_order.forEach(function (t, ti) {
       var g = SCHEMA.tabs[t];
       var tabHtml = "";
       Object.keys(g).forEach(function (gn) {
@@ -327,9 +368,21 @@
           esc(gn) + '</span></div><div class="bp-group-body"><div class="bp-cols' +
           (list.length < 4 ? " bp-onecol" : "") + '">' + rows + "</div></div></div>";
       });
-      html += '<div class="bp-section-title">' + esc(t) + "</div>" + tabHtml;
+      panels += '<div class="bp-rpanel' + (ti === 0 ? " active" : "") + '" data-rpanel="' + esc(t) + '">' + tabHtml + "</div>";
     });
-    return '<div class="bp-readonly">' + html + "</div>";
+    return '<div class="bp-readonly"><div class="bp-tabs">' + tabs + "</div>" + panels + "</div>";
+  }
+  function bindReadOnly(root) {
+    if (!root) return;
+    var tabs = Array.prototype.slice.call(root.querySelectorAll("[data-rtab]"));
+    var panels = Array.prototype.slice.call(root.querySelectorAll("[data-rpanel]"));
+    tabs.forEach(function (b) {
+      b.addEventListener("click", function () {
+        var n = b.getAttribute("data-rtab");
+        tabs.forEach(function (x) { x.classList.toggle("active", x === b); });
+        panels.forEach(function (p) { p.classList.toggle("active", p.getAttribute("data-rpanel") === n); });
+      });
+    });
   }
 
   /* ---------- 绑定 ---------- */
@@ -443,6 +496,32 @@
         applyRules();
       });
     });
+    /* 「主：标准 / 辅助：标准」——先把当前输入回写进 data-vec 缓冲，再换槽位取值 */
+    function switchColumn(i) {
+      if (i === curCol) return;
+      var tgt = vecColumns(VEC_LEN)[Math.min(i, vecColumns(VEC_LEN).length - 1)];
+      root.querySelectorAll('.bp-row[data-vec]').forEach(function (row) {
+        var el = row.querySelector("[data-slot]");
+        if (!el) return;
+        var arr = JSON.parse(row.getAttribute("data-vec") || "[]");
+        var cur = +el.getAttribute("data-slot");
+        arr[cur] = el.hasAttribute("data-bp-bool") ? (el.checked ? "1" : "0") : el.value;
+        el.setAttribute("data-slot", String(tgt.idx));
+        var v = arr[tgt.idx] == null ? "" : arr[tgt.idx];
+        if (el.hasAttribute("data-bp-bool")) el.checked = (v === "1" || v === "true");
+        else el.value = v;
+        row.setAttribute("data-vec", JSON.stringify(arr));
+      });
+      curCol = i;
+      try { localStorage.setItem("bp_extruder_col", String(i)); } catch (e) { }
+      root.querySelectorAll(".bp-vs").forEach(function (x) {
+        x.classList.toggle("active", +x.getAttribute("data-vcol") === i);
+      });
+      refreshAll();
+    }
+    root.querySelectorAll(".bp-vs").forEach(function (b) {
+      b.addEventListener("click", function () { switchColumn(+b.getAttribute("data-vcol")); });
+    });
     // 点「已修改 N 项」→ 只看已修改
     if (countEl) countEl.addEventListener("click", function () {
       onlyModified = !onlyModified;
@@ -519,6 +598,11 @@
       ".bp-tabbadge.hit{display:inline-block;background:var(--panel);color:var(--muted)}" +
       ".bp-panel{display:none}" +
       ".bp-panel.active{display:block}" +
+      /* —— 主：标准 / 辅助：标准 切换（软件顶部同一控件）—— */
+      ".bp-vsw{display:flex;gap:6px;padding:0 0 12px}" +
+      ".bp-vs{appearance:none;border:none;background:var(--panel);color:var(--muted);font-size:12.5px;font-weight:600;font-family:inherit;padding:5px 13px;border-radius:999px;cursor:pointer}" +
+      ".bp-vs:hover{color:var(--ink)}" +
+      ".bp-vs.active{background:var(--success-bg,color-mix(in srgb,#16a34a 16%,var(--card)));color:var(--success,#16a34a)}" +
       ".bp-group{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden;background:var(--card)}" +
       ".bp-group-head{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel);cursor:default;user-select:none}" +
       ".bp-group-head[data-toggle]{cursor:pointer}" +
@@ -579,6 +663,8 @@
       /* .bp-readonly 是 .bp-editor 的兄弟节点，--bp-warn 不会继承过来，
          不在这里重新定义，详情页「偏离默认」的黄色标题就解析不出来（实测 bug） */
       ".bp-readonly{--bp-warn:var(--warning,#f59e0b);padding-top:6px}" +
+      ".bp-rpanel{display:none}" +
+      ".bp-rpanel.active{display:block}" +
       ".bp-section-title{font-size:13px;font-weight:700;color:var(--ink);margin:14px 0 8px}" +
       ".bp-readonly .bp-group{margin-bottom:10px}" +
       ".bp-ro-val{color:var(--ink)}" +
@@ -667,6 +753,7 @@
       '<div class="fmodal-foot"><button class="btn" onclick="closeModal();setTimeout(function(){PAPP.openForm(\'' + id + '\')},100)">编辑</button><button class="btn" onclick="closeModal()">关闭</button></div>';
     document.getElementById("fmodalBox").style.width = "min(900px,95vw)";
     document.getElementById("fmodalMask").classList.add("show");
+    bindReadOnly(document.querySelector(".bp-readonly"));
   };
 
 })();
