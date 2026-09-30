@@ -1,12 +1,12 @@
 // Auto-generated from local Bambu Studio 02.08.00.05 (PrintConfig.cpp v02.08.00.50 + Tab.cpp order + X2D preset chain)
-// machine: Bambu Lab X2D | extruders: 2 | total params: 255
+// machine: Bambu Lab X2D | extruders: 2 | total params: 260
 window.BAMBU_PROCESS_SCHEMA = {
  "meta": {
   "machine": "Bambu Lab X2D",
   "extruders": 2,
   "source_preset": "0.10mm Standard @BBL X2D 0.2 nozzle.json",
   "bambu_version": "02.08.00.05",
-  "total_params": 255,
+  "total_params": 260,
   "generated_by": "build_schema.py"
  },
  "tabs_order": [
@@ -2221,6 +2221,76 @@ window.BAMBU_PROCESS_SCHEMA = {
      "max": null,
      "enum": [],
      "default": "1, 1, 1, 1",
+     "mode": "advanced",
+     "vec": true
+    },
+    {
+     "key": "overhang_1_4_speed",
+     "label": "10% 悬垂",
+     "tab": "速度",
+     "group": "其他层速度",
+     "type": "float",
+     "unit": "mm/s",
+     "min": 0.0,
+     "max": null,
+     "enum": [],
+     "default": "0, 0, 0, 0",
+     "mode": "advanced",
+     "vec": true
+    },
+    {
+     "key": "overhang_2_4_speed",
+     "label": "25% 悬垂",
+     "tab": "速度",
+     "group": "其他层速度",
+     "type": "float",
+     "unit": "mm/s",
+     "min": 0.0,
+     "max": null,
+     "enum": [],
+     "default": "40, 40, 40, 40",
+     "mode": "advanced",
+     "vec": true
+    },
+    {
+     "key": "overhang_3_4_speed",
+     "label": "50% 悬垂",
+     "tab": "速度",
+     "group": "其他层速度",
+     "type": "float",
+     "unit": "mm/s",
+     "min": 0.0,
+     "max": null,
+     "enum": [],
+     "default": "30, 30, 30, 30",
+     "mode": "advanced",
+     "vec": true
+    },
+    {
+     "key": "overhang_4_4_speed",
+     "label": "75% 悬垂",
+     "tab": "速度",
+     "group": "其他层速度",
+     "type": "float",
+     "unit": "mm/s",
+     "min": 0.0,
+     "max": null,
+     "enum": [],
+     "default": "20, 20, 20, 20",
+     "mode": "advanced",
+     "vec": true
+    },
+    {
+     "key": "overhang_totally_speed",
+     "label": "100% 悬垂",
+     "tab": "速度",
+     "group": "其他层速度",
+     "type": "float",
+     "unit": "mm/s",
+     "min": 0.0,
+     "max": null,
+     "enum": [],
+     "default": "10, 10, 10, 10",
      "mode": "advanced",
      "vec": true
     },

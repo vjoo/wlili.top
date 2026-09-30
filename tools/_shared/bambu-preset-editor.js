@@ -191,9 +191,14 @@
   function makeRuleEvaluator() {
     if (!RULES) return null;
     var vals = {};
-    var B = function (k) { var v = vals[k]; return (v === "1" || v === "true") ? 1 : 0; };
-    var I = function (k) { var n = parseInt(vals[k], 10); return isNaN(n) ? 0 : n; };
-    var F = function (k) { var n = parseFloat(vals[k]); return isNaN(n) ? 0 : n; };
+    /* 多喷头向量参数的值形如 "1, 1, 1, 1"/"4000, 10000, ..."；
+       取值函数必须只解析**第一段**（对应 rules 里的 variant_index=0），
+       否则 "1, 1, 1, 1" !== "1" 会被判成 0 —— 曾导致悬垂降速明明开着、
+       4 个悬垂速度却被误隐藏。 */
+    var first = function (v) { return String(v == null ? "" : v).split(",")[0].trim(); };
+    var B = function (k) { var v = first(vals[k]); return (v === "1" || v === "true") ? 1 : 0; };
+    var I = function (k) { var n = parseInt(first(vals[k]), 10); return isNaN(n) ? 0 : n; };
+    var F = function (k) { var n = parseFloat(first(vals[k])); return isNaN(n) ? 0 : n; };
     var S = function (k) { return vals[k] == null ? "" : String(vals[k]); };
     var E = function (k) { return vals[k] == null ? "" : String(vals[k]); };
     var isAuto = function (v) { return /\(auto\)/.test(String(v)); };
