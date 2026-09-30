@@ -1567,7 +1567,6 @@ function viewPromptList(){
   return `${greetHead('全部提示词','','<button class="add" title="新建提示词" onclick="PLNEW.open()">'+ADD_IC+'</button>')}
   <div class="grid"><div class="card c12">
     <div class="fbar" style="margin:0 0 12px">
-      <span class="api-badge" style="margin-left:0">GET /api/prompts</span>
       <span class="sp"></span>
       <div class="search" style="max-width:250px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="plSearch" placeholder="搜索标题 / 标签…" value="${(PL.q||'').replace(/"/g,'&quot;')}" oninput="plSet('q',this.value)"></div>
     </div>
@@ -2616,18 +2615,19 @@ function openDrawer(p){
     '<div class="fmodal-body">' +
       '<div class="fgroup"><label>标题</label><input id="fTitle" type="text"></div>' +
       '<div class="fgroup"><label>标签</label><input id="fTags" type="text" placeholder="逗号分隔"></div>' +
-      '<div class="fgroup"><label>提示词内容</label><textarea id="fBody"></textarea></div>' +
+      '<div class="fgroup"><label>提示词内容</label><textarea id="fBody" rows="6"></textarea></div>' +
       '<div class="fgroup"><label>状态</label><select id="fStatus" class="form-select"><option>已发布</option><option>草稿</option></select></div>' +
       '<div class="fgroup"><label>备注</label><input id="fNote" type="text" placeholder="可选"></div>' +
     '</div>' +
     '<div class="fmodal-foot"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="saveDrawer()">保存修改</button></div>';
   // 注入后按属性赋值（避免 innerHTML 转义问题；此时原生 select 已就绪，MutationObserver 会在异步升级时读取正确选中态）
   var full = (it && it.id && typeof plFullRecord === 'function') ? plFullRecord(it.id) : null;
-  if($('#fTitle')) $('#fTitle').value = (it && it.title) || (typeof p === 'string' ? p : '') || '';
-  if($('#fTags'))  $('#fTags').value  = Array.isArray(it && it.tags) ? it.tags.join(', ') : ((it && it.tags) || '');
-  if($('#fBody'))  $('#fBody').value  = (full && full.prompt) || (it && it.prompt) || '';
-  if($('#fStatus')) $('#fStatus').value = (it && it.published) ? '已发布' : '草稿';
-  if($('#fNote'))  $('#fNote').value  = (it && it.note) || '';
+  var src = full || it || {};
+  if($('#fTitle')) $('#fTitle').value = (it && it.title) || (typeof p === 'string' ? p : '') || src.title || '';
+  if($('#fTags'))  $('#fTags').value  = Array.isArray(src.tags) ? src.tags.join(', ') : (src.tags || '');
+  if($('#fBody'))  $('#fBody').value  = (src.template != null ? src.template : '');
+  if($('#fStatus')) $('#fStatus').value = (src.published) ? '已发布' : '草稿';
+  if($('#fNote'))  $('#fNote').value  = (src.note != null ? src.note : '');
   $('#fmodalMask').classList.add('show');
 }
 function closeDrawer(){ closeModal(); }
@@ -2640,7 +2640,19 @@ function saveDrawer(){
     var recs = ((d && d.records) || []).slice();
     var i = recs.findIndex(function(x){ return x.id === it.id; });
     if(i < 0){ toast('记录不存在或已删除'); return; }
-    recs[i] = Object.assign({}, recs[i], { title: t, updatedAt: new Date().toISOString() });
+    var tagsVal = ($('#fTags') ? $('#fTags').value : '');
+    var bodyVal = ($('#fBody') ? $('#fBody').value : '');
+    var statusVal = ($('#fStatus') ? $('#fStatus').value : '');
+    var noteVal = ($('#fNote') ? $('#fNote').value : '');
+    var tagsArr = tagsVal.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+    recs[i] = Object.assign({}, recs[i], {
+      title: t,
+      tags: tagsArr,
+      template: bodyVal,
+      published: statusVal === '已发布',
+      note: noteVal,
+      updatedAt: new Date().toISOString()
+    });
     return fetch('/api/prompts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ records: recs }) })
       .then(function(r){ if(!r.ok) throw 0; return AD.pullPrompts(); })
       .then(function(){ closeDrawer(); renderMain(); toast('已保存 · 服务端已落盘'); });
@@ -7853,6 +7865,8 @@ var BK = {
   padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0,0,0,.12), 0 8px 10px -6px rgba(0,0,0,.08); }
 .cal-panel[hidden] { display: none; }
+/* 面板在空间不足时向上展开，避免在 .fmodal-body 等滚动容器里触发滚动条 */
+.sel-panel.is-above, .cal-panel.is-above { top: auto; bottom: calc(100% + 4px); }
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .cal-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 .cal-nav { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
@@ -7918,6 +7932,15 @@ var BK = {
     grid:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>",
     layers:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>"
   };
+/* 面板空间自适应：可视区域下方空间不足时向上展开（用于 .fmodal-body 等滚动容器） */
+function fitPanel(panel, wrap) {
+  var rect = wrap.getBoundingClientRect();
+  var ph = panel.getBoundingClientRect().height || 0;
+  var gap = 4;
+  var spaceBelow = Math.max(0, window.innerHeight - rect.bottom);
+  var spaceAbove = Math.max(0, rect.top);
+  panel.classList.toggle('is-above', ph > 0 && spaceAbove > spaceBelow);
+}
 function upgradeSelect(sel) {
     if (!sel || sel.dataset.selUpgraded === '1') return;
     sel.dataset.selUpgraded = '1';
@@ -8122,6 +8145,7 @@ function upgradeSelect(sel) {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
+      fitPanel(panel, wrap);
       if (search) { search.value = ''; filter(''); setTimeout(function () { search.focus(); }, 0); }
       var idx = 0;
       items.forEach(function (it, i) { if (it.getAttribute('aria-selected') === 'true') idx = i; });
@@ -8310,6 +8334,7 @@ function upgradeDate(inp) {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
+      fitPanel(panel, wrap);
       moveCursorByDate(inp.value || todayStr);
       setTimeout(function () { document.addEventListener('mousedown', onDocDown, true); }, 0);
     }
@@ -8571,6 +8596,7 @@ function upgradeDateRange(inpS, inpE) {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
+      fitPanel(panel, wrap);
       moveCursorByDate(inpS.value || todayStr);
       setTimeout(function () { document.addEventListener('mousedown', onDocDown, true); }, 0);
     }
