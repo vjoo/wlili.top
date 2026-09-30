@@ -1,0 +1,47 @@
+/**
+ * WLi Tools - 共享表单控件样式（下拉 select 统一规范）
+ * 作用：让所有独立工具页的下拉框视觉一致（去原生箭头 + 自定义箭头 + 统一圆角/边框/聚焦环）。
+ * 设计语言沿用 common.css 的 Apple 风（--link:#6366f1 / --border / --radius-md）。
+ * 所有取值都带 fallback，因此即便页面没有引入 common.css（如 ip-mascot / composition-editor）也能正常渲染。
+ * 说明：unit-converter 的 .unit-select（嵌入输入框的黑色单位选择器）与 model-viewer 的 .export-group select（无边框工具条选择）
+ *       属于刻意定制的嵌入式控件，不套用本规范，保持原样。
+ */
+
+/* ===== 统一下拉 select ===== */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  height: 36px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--border, #d2d2d7);
+  border-radius: var(--radius-md, 11px);
+  background: var(--bg-white, #ffffff) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center / 10px 6px;
+  color: var(--ink, #2B3041);
+  font-size: 14px;
+  font-family: inherit;
+  line-height: normal;
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+select:focus {
+  border-color: var(--link, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--bg-muted, #f1f3f5);
+}
+select[multiple] {
+  height: auto;
+  padding: 8px 12px;
+  background-image: none;
+}
+select::-ms-expand {
+  display: none;
+}

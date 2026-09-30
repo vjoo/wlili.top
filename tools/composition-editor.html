@@ -137,8 +137,9 @@
   .chip:hover{border-color:var(--acc);color:var(--acc)}
   label.fld{display:block;margin-bottom:8px}
   label.fld span{display:block;color:var(--mut);font-size:11px;margin-bottom:3px}
-  input[type=text],input[type=number],textarea,select{width:100%;min-width:0;border:1px solid var(--line2);border-radius:7px;
+  input[type=text],input[type=number],textarea{width:100%;min-width:0;border:1px solid var(--line2);border-radius:7px;
     padding:6px 8px;font-size:12px;font-family:inherit;color:var(--ink);background:#fff}
+  select#pType{width:100%;font-size:13px}
   textarea{resize:vertical;min-height:46px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:start}
   .grid2>*{min-width:0}
@@ -169,6 +170,7 @@
   #toast.show{opacity:1}
 </style>
 <script src="nav.js"></script>
+<link rel="stylesheet" href="_shared/forms.css">
 </head>
 <body>
 <header>

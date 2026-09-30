@@ -4,6 +4,7 @@
 <!-- Content Security Policy - WLi Tools（本页额外允许 jsdelivr / googleapis：ONNX Runtime 与 MediaPipe 模型） -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: data: https://cdn.jsdelivr.net https://storage.googleapis.com https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
 <link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="_shared/forms.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>W.-证件照排版打印</title>
@@ -41,7 +42,7 @@
   .ctl-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
   .ctl { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); color: var(--ink-secondary); flex: none; }
   .ctl label { color: var(--ink-tertiary); white-space: nowrap; }
-  select, input[type="number"] {
+  input[type="number"] {
     height: 32px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);
     padding: 0 var(--space-2); font-size: var(--fs-sm); color: var(--ink); background: var(--bg-white);
     font-family: inherit;
