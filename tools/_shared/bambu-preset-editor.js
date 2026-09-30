@@ -153,6 +153,25 @@
     return k ? PICONS[k] : "";
   }
 
+  /* ---------- 图案类参数：展开式「图案列表」下拉 ----------
+     原生 <select> 的 <option> 里塞不进图片，所以以前展开只有文字（唯独框里能看到
+     当前项的图）。Bambu Studio 里这些下拉展开是「缩略图 + 名称」的列表，这里用
+     浮层列表复刻。真实的 <select data-bp-enum> **仍然保留**（隐藏），
+     取值 / 重置 / 依赖联动 / 置灰全部照旧复用它，避免重写数据链路。 */
+  var PATTERN_KEYS = {
+    // 质量：熨烫图案
+    ironing_pattern: 1,
+    // 强度：顶面 / 底面 / 内部实心填充 / 稀疏填充 / 锁定皮肤 / 锁定骨架
+    top_surface_pattern: 1, bottom_surface_pattern: 1, internal_solid_infill_pattern: 1,
+    sparse_infill_pattern: 1, locked_skin_infill_pattern: 1, locked_skeleton_infill_pattern: 1,
+    // 支撑：主体图案 / 接触面图案 / 支撑熨烫图案
+    support_base_pattern: 1, support_interface_pattern: 1, support_ironing_pattern: 1
+  };
+  /* ⚠️ 必须白名单，不能「凡命中图标就画」：support_style 有个选项恰好叫 grid，
+     会被误套成网格填充的图案（它还缺 default/树状等 6 项的图，画出来是错的）。 */
+  function isPatternOpt(p) { return !!(p && p.type === "enum" && PATTERN_KEYS[p.key]); }
+  var CARET_IC = '<svg class="bp-caret" viewBox="0 0 10 6" width="10" height="6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
   /* ---------- 耗材选择器 ----------
      这 5 个参数在源码里是 coInt + gui_type=i_enum_open，界面上下拉里放的是
      「默认」＋当前耗材列表（PrintConfig.cpp 的 infill_extruder→sparse_infill_filament
@@ -210,6 +229,18 @@
     return '<span class="bp-pick"><span class="bp-pic"></span>' +
       '<select class="form-select bp-ctrl" data-bp-enum>' + opts + "</select></span>";
   }
+  /* 图案下拉：可见的 face（图案 + 名称 + 箭头）+ 隐藏的真实 select（数据链路不变） */
+  function patternComboHTML(p, val) {
+    var opts = p.enum.map(function (o) {
+      var en = (o.en && o.en !== o.label) ? ' data-en="' + esc(o.en) + '"' : "";
+      return '<option value="' + esc(o.value) + '"' + (o.value === norm(val) ? " selected" : "") + en + ">" + esc(o.label) + "</option>";
+    }).join("");
+    return '<span class="bp-pick bp-combo">' +
+      '<button type="button" class="bp-combo-face bp-ctrl" data-bp-combo aria-haspopup="listbox" aria-expanded="false">' +
+      '<span class="bp-pic"></span><span class="bp-combo-txt"></span>' + CARET_IC + "</button>" +
+      '<select class="bp-ctrl" data-bp-enum data-bp-pat tabindex="-1" style="display:none">' + opts + "</select>" +
+      "</span>";
+  }
   /* 耗材选择器：默认 + 耗材库。
      用 data-bp-enum 让取值/重置逻辑复用 <select> 分支；data-bp-fil 只作语义标记
      （下拉内容只显示耗材类型，不画色块）。 */
@@ -229,12 +260,136 @@
     var o = sel.options[sel.selectedIndex];
     var en = o ? (o.getAttribute("data-en") || o.textContent) : "";
     sel.title = en;
+    // 图案下拉：更新可见 face（图标 + 名称 + 英文名 + 置灰）
+    var face = sel.parentNode ? sel.parentNode.querySelector("[data-bp-combo]") : null;
+    if (face) { syncComboFace(face); return; }
     var pic = sel.parentNode ? sel.parentNode.querySelector(".bp-pic") : null;
     if (!pic) return;
+    // 只给图案类下拉画图 —— 否则像 support_style 里那个同名 grid 会被误套成填充图案
+    if (!sel.hasAttribute("data-bp-pat")) {
+      pic.innerHTML = ""; pic.removeAttribute("title"); sel.classList.remove("has-deco"); return;
+    }
     var svg = iconFor(sel.value);
     if (svg) { pic.innerHTML = svg; pic.title = en; sel.classList.add("has-deco"); }
     else { pic.innerHTML = ""; pic.removeAttribute("title"); sel.classList.remove("has-deco"); }
   }
+  function syncComboFace(face) {
+    var wrap = face.parentNode;
+    var sel = wrap ? wrap.querySelector("[data-bp-enum]") : null;
+    if (!sel) return;
+    var o = sel.options[sel.selectedIndex];
+    var en = o ? (o.getAttribute("data-en") || o.textContent) : "";
+    var pic = face.querySelector(".bp-pic"), txt = face.querySelector(".bp-combo-txt");
+    if (pic) { var svg = iconFor(sel.value); pic.innerHTML = svg || ""; pic.title = en; }
+    if (txt) txt.textContent = o ? o.textContent : "";
+    face.title = en && o ? (o.textContent + " · " + en) : (o ? o.textContent : "");
+    face.disabled = !!sel.disabled;
+    face.classList.toggle("has-deco", !!(pic && pic.innerHTML));
+  }
+
+  /* ---------- 图案下拉的浮层列表 ----------
+     浮层挂在 document.body 而不是分组内：`.bp-group{overflow:hidden}` 会把
+     绝对定位的浮层**静默裁掉**（此前带单位的输入框就是这么被裁的）。 */
+  var comboFace = null;
+  function comboPop() {
+    var p = document.getElementById("bpComboPop");
+    if (!p) {
+      p = document.createElement("div");
+      p.id = "bpComboPop";
+      p.className = "bp-combo-pop";
+      p.hidden = true;
+      document.body.appendChild(p);
+      // 阻止默认行为，避免抢焦点把弹窗滚回去
+      p.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      p.addEventListener("click", function (e) {
+        var it = e.target.closest ? e.target.closest(".bp-combo-item") : null;
+        if (it) comboPick(it.getAttribute("data-v"));
+      });
+      document.addEventListener("scroll", comboClose, true);
+      window.addEventListener("resize", comboClose);
+    }
+    return p;
+  }
+  function comboOpen(face) {
+    var wrap = face.parentNode;
+    var sel = wrap ? wrap.querySelector("[data-bp-enum]") : null;
+    if (!sel || sel.disabled) return;
+    if (comboFace === face) { comboClose(); return; }
+    comboClose();
+    var p = comboPop(), cur = sel.value;
+    p.innerHTML = Array.prototype.map.call(sel.options, function (o) {
+      var en = o.getAttribute("data-en") || "";
+      var ic = iconFor(o.value);
+      return '<div class="bp-combo-item' + (o.value === cur ? " sel" : "") + '" data-v="' + esc(o.value) + '" role="option"' +
+        ' aria-selected="' + (o.value === cur ? "true" : "false") + '">' +
+        '<span class="bp-pic">' + (ic || "") + "</span>" +
+        '<span class="bp-ci-lab">' + esc(o.textContent) + "</span>" +
+        (en ? '<span class="bp-ci-en">' + esc(en) + "</span>" : "") +
+        '<span class="bp-ci-tick">' + CHECK_IC + "</span></div>";
+    }).join("");
+    p.hidden = false;
+    comboFace = face;
+    face.setAttribute("aria-expanded", "true");
+    face.classList.add("open");
+    comboPlace(face, p);
+    var curItem = p.querySelector(".bp-combo-item.sel");
+    if (curItem) {
+      // ⚠️ 不能用 scrollIntoView：浮层是 position:fixed，浏览器为了「把它滚进视野」
+      //    会把**整个文档**也滚走，结果 face 与浮层当场错位。
+      //    手算 scrollTop 只动浮层自己的滚动条。
+      var ir = curItem.getBoundingClientRect(), pr0 = p.getBoundingClientRect();
+      if (ir.top < pr0.top) p.scrollTop += ir.top - pr0.top - 5;
+      else if (ir.bottom > pr0.bottom) p.scrollTop += ir.bottom - pr0.bottom + 5;
+    }
+  }
+  function comboPlace(face, p) {
+    var r = face.getBoundingClientRect();
+    p.style.minWidth = Math.max(180, Math.round(r.width)) + "px";
+    p.style.left = "0px"; p.style.top = "0px";
+    var pw = p.offsetWidth, ph = p.offsetHeight;
+    var left = Math.min(r.left, window.innerWidth - pw - 8);
+    if (left < 8) left = 8;
+    var top = r.bottom + 4;
+    // 下方放不下就翻到上方（最短的那一行足够矮，翻上去仍看得见）
+    if (top + ph > window.innerHeight - 8) {
+      var up = r.top - ph - 4;
+      top = (up > 8) ? up : Math.max(8, window.innerHeight - ph - 8);
+    }
+    p.style.left = left + "px";
+    p.style.top = top + "px";
+  }
+  function comboClose() {
+    var p = document.getElementById("bpComboPop");
+    if (comboFace) {
+      comboFace.setAttribute("aria-expanded", "false");
+      comboFace.classList.remove("open");
+      comboFace = null;
+    }
+    if (p) { p.hidden = true; p.innerHTML = ""; }
+  }
+  function comboPick(v) {
+    if (!comboFace) return;
+    var face = comboFace, sel = face.parentNode.querySelector("[data-bp-enum]");
+    comboClose();
+    if (!sel || sel.value === v) return;
+    sel.value = v;
+    syncComboFace(face);
+    // 复用原有链路：change → 修改态标记 / 依赖联动 / 计数
+    try { sel.dispatchEvent(new Event("change", { bubbles: true })); }
+    catch (e) { /* 老浏览器兜底 */ }
+  }
+  function bindComboGlobals() {
+    document.addEventListener("click", function (e) {
+      var face = (e.target && e.target.closest) ? e.target.closest("[data-bp-combo]") : null;
+      if (face) { comboOpen(face); return; }
+      var p = document.getElementById("bpComboPop");
+      if (!(p && !p.hidden && p.contains(e.target))) comboClose();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && comboFace) comboClose();
+    });
+  }
+  bindComboGlobals();
   var DL_ID = 0;
   function enumOpenHTML(p, val, key) {
     DL_ID++;
@@ -272,7 +427,7 @@
     }
     if (p.type === "bool") return boolHTML(val, "");
     if (isFilamentOpt(p)) return filamentHTML(p, val);
-    if (p.type === "enum") return enumHTML(p, val);
+    if (p.type === "enum") return isPatternOpt(p) ? patternComboHTML(p, val) : enumHTML(p, val);
     if (p.type === "enumopen") return enumOpenHTML(p, val, p.key);
     return '<span class="bp-numwrap">' + numHTML(p, val, "") + unitHTML(p, val) + "</span>";
   }
@@ -573,7 +728,11 @@
         if (hidMode) modeHidden++;
         var dis = !!(res && (k in res.en) && !res.en[k]);
         row.classList.toggle("disabled", dis);
-        row.querySelectorAll("input,select").forEach(function (el) { el.disabled = dis; });
+        row.querySelectorAll("input,select,button[data-bp-combo]").forEach(function (el) { el.disabled = dis; });
+        if (dis) {
+          var _cf = row.querySelector("button[data-bp-combo]");
+          if (_cf && comboFace === _cf) comboClose();   // 被置灰的行别留着展开的浮层
+        }
       });
       root.querySelectorAll(".bp-group").forEach(function (g) {
         var shown = Array.prototype.filter.call(g.querySelectorAll(".bp-row"), function (r) { return r.style.display !== "none"; });
@@ -787,10 +946,33 @@
       ".bp-pick{position:relative;display:block;flex:0 0 auto;width:168px;max-width:100%;min-width:0}" +
       ".bp-pick select.bp-ctrl{width:100%;max-width:100%;min-width:0}" +
       ".bp-editor .bp-pick select.bp-ctrl.has-deco{padding-left:33px!important}" +
-      ".bp-pick .bp-pic{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none}" +
+      ".bp-pick>.bp-pic{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none}" +
       ".bp-pic{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ink);opacity:.85}" +
       ".bp-pic:empty{display:none}" +
       ".bp-pic svg{width:20px;height:20px;display:block}" +
+      /* —— 图案类下拉：face + 浮层列表（每项 图案 + 中文 + 英文 + ✓）—— */
+      ".bp-combo-face{display:flex;align-items:center;gap:8px;width:100%;appearance:none;-webkit-appearance:none;-moz-appearance:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:13px;font-family:inherit;color:var(--ink);text-align:left;cursor:pointer;box-sizing:border-box}" +
+      ".bp-combo-face .bp-pic{position:static;transform:none;flex:none}" +
+      ".bp-combo-face .bp-pic:empty{display:none}" +
+      ".bp-combo-txt{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+      ".bp-combo-face .bp-caret{flex:none;color:var(--muted)}" +
+      ".bp-combo-face:hover{border-color:var(--muted)}" +
+      ".bp-combo-face.open{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
+      ".bp-combo-face:disabled{cursor:not-allowed;background:var(--panel)}" +
+      ".bp-row.modified .bp-combo-face{color:var(--bp-warn);border-color:var(--warning-line,var(--bp-warn))}" +
+      // 浮层挂 body：分组框 overflow:hidden 会把行内的浮层静默裁掉
+      ".bp-combo-pop{position:fixed;z-index:9999;max-height:320px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.16);padding:5px;font-family:inherit}" +
+      ".bp-combo-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--ink);white-space:nowrap}" +
+      ".bp-combo-item:hover{background:var(--panel)}" +
+      ".bp-combo-item.sel{background:var(--accent-light,#eef7e2);color:var(--accent);font-weight:600}" +
+      ".bp-combo-item .bp-pic{position:static;transform:none;flex:none;width:22px;justify-content:center;color:var(--ink);opacity:.85}" +
+      ".bp-combo-item.sel .bp-pic{color:var(--accent);opacity:1}" +
+      ".bp-combo-item .bp-pic:empty{display:inline-flex}" +   // 「默认/自动」没有图案也要留出同一列宽
+      ".bp-ci-lab{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}" +
+      ".bp-ci-en{flex:none;font-size:11px;color:var(--muted)}" +
+      ".bp-combo-item.sel .bp-ci-en{color:var(--accent);opacity:.8}" +
+      ".bp-ci-tick{flex:none;width:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--accent);visibility:hidden}" +
+      ".bp-combo-item.sel .bp-ci-tick{visibility:visible}" +
       // 耗材色块（跟 .btn.primary 一样：accent 底 + 白字/白勾）
       // 只读视图的布尔：勾选框 / 未选框
       ".bp-rocb{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;background:var(--card);color:#fff;flex:none;box-sizing:border-box}" +
