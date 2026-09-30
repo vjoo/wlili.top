@@ -49,3 +49,7 @@ tools/_archive/
 # 一次性探针页 / 临时脚本与目录（含本机路径），用完即弃，禁止入库
 _probe_*.html
 _tmp_*
+
+# Bambu 参数抽取工作目录（含第三方源码 Tab.cpp 等）与本地验证页，禁止入库
+.wb_extract/
+tools/_shared/_bp_*_test.html

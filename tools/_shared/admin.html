@@ -4,7 +4,7 @@
 <script src="../nav.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>wlili 统一后台</title>
+<title>wlili 综合管理后台</title>
 <style>
 :root{
   --bg:#e9eaee; --panel:#f5f5f7; --card:#ffffff; --ink:#14171c; --muted:#71767f;
@@ -802,7 +802,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 <div id="loginView">
   <div class="login-card">
     <div class="login-logo">wl</div>
-    <h1>wlili 统一后台</h1>
+    <h1>wlili 综合管理后台</h1>
     <p class="sub">同一管理账号 · 一个后台地址<br>通过菜单切换管理全部工具</p>
     <div class="field"><label>账号</label><input id="loginUser" value="wl" autocomplete="username"></div>
     <div class="field"><label>密码</label><input id="loginPass" type="password" placeholder="请输入密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
@@ -857,7 +857,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 <div class="mmenu" id="mmenu">
   <div class="mm-mask" onclick="toggleMM(false)"></div>
   <div class="mm-panel">
-    <div class="mm-head"><b>wlili 统一后台</b><button class="x-btn" onclick="toggleMM(false)">&#10005;</button></div>
+    <div class="mm-head"><b>wlili 综合管理后台</b><button class="x-btn" onclick="toggleMM(false)">&#10005;</button></div>
     <div class="mm-sec">工具后台</div>
     <div id="mmTools"></div>
     <div class="mm-foot" id="mmFoot"></div>
@@ -1797,9 +1797,9 @@ function viewFilamentPresets(){
     ${data.length===0?`<div class="fempty"><div class="big-ic">🧩</div><b>暂无预设数据</b>点击右上角「＋」添加第一条预设。</div>`
     :`<div class="table-wrap"><table class="fx"><thead><tr><th>名称</th><th>创建日期</th><th>备注</th><th>工艺参数</th><th>耗材丝参数</th><th>操作</th></tr></thead>
     <tbody>${data.map(item=>{
-      const processCount = item.processParams ? item.processParams.length : (item.parameters ? item.parameters.length : 0);
+      const processCount = item.bpValues ? (window.BAMBU_EDITOR ? BAMBU_EDITOR.modifiedCount(item.bpValues) : 0) : (item.processParams ? item.processParams.length : (item.parameters ? item.parameters.length : 0));
       const filamentCount = item.filamentParams ? item.filamentParams.length : 0;
-      const processDisplay = processCount > 0 ? processCount : (item.subType ? '旧格式' : 0);
+      const processDisplay = item.bpValues ? (processCount > 0 ? ('已改 ' + processCount) : '标准') : (processCount > 0 ? processCount : (item.subType ? '旧格式' : 0));
       return `<tr data-pid="${item.id}">
         <td><b>${item.name}</b></td>
         <td style="white-space:nowrap;color:var(--muted)">${presDate(item.createdDate)}</td>
@@ -8711,5 +8711,8 @@ function upgradeUI(root) {
   }
 })();
 </script>
+<script src="bambu-params-schema.js"></script>
+<script src="bambu-process-rules.js"></script>
+<script src="bambu-preset-editor.js"></script>
 </body>
 </html>
