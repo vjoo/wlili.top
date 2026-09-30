@@ -121,10 +121,10 @@
      开关也不该显示 1/0。 */
   function displayValue(p, v) {
     var s = norm(v);
-    if (p.type === "bool") return (s === "1" || s === "true" || s === "是") ? "开启" : "关闭";
     if ((p.type === "enum" || p.type === "enumopen") && p.enum && p.enum.length) {
       for (var i = 0; i < p.enum.length; i++) if (p.enum[i].value === s) return p.enum[i].label;
     }
+    if (isFilamentOpt(p)) return filamentLabel(s);
     return v;
   }
   function vecSwitchHTML() {
@@ -150,6 +150,43 @@
     return k ? PICONS[k] : "";
   }
 
+  /* ---------- 耗材选择器 ----------
+     这 5 个参数在源码里是 coInt + gui_type=i_enum_open，界面上下拉里放的是
+     「默认」＋当前耗材列表（PrintConfig.cpp 的 infill_extruder→sparse_infill_filament
+     等映射表给出的就是这 5 个）。我们按耗材库 window.FDATA.filaments 生成。 */
+  var FILAMENT_KEYS = {
+    support_filament: 1, support_interface_filament: 1,
+    sparse_infill_filament: 1, solid_infill_filament: 1, wall_filament: 1
+  };
+  function isFilamentOpt(p) { return !!(p && FILAMENT_KEYS[p.key]); }
+  function filamentList() {
+    var arr = (window.FDATA && Array.isArray(window.FDATA.filaments)) ? window.FDATA.filaments : [];
+    var out = [{ v: "0", label: "默认", color: "" }];
+    for (var i = 0; i < arr.length; i++) {
+      var f = arr[i] || {};
+      var nm = f.name || f.type || ("耗材 " + (i + 1));
+      out.push({ v: String(i + 1), label: (i + 1) + " " + nm + (f.colorName ? "·" + f.colorName : ""), color: f.colorValue || "" });
+    }
+    return out;
+  }
+  function filamentByValue(v) {
+    var s = norm(v), list = filamentList();
+    for (var i = 0; i < list.length; i++) if (list[i].v === s) return list[i];
+    return null;
+  }
+  function filamentLabel(v) {
+    var f = filamentByValue(v);
+    return f ? f.label : ("槽位 " + norm(v));
+  }
+
+  /* ---------- 只读视图的布尔：用「勾选框 / 未选框」而不是文字或 1/0 ---------- */
+  var CHECK_IC = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6.5"/></svg>';
+  function isOn(v) { var s = norm(v); return s === "1" || s === "true" || s === "是"; }
+  function boolMark(v) {
+    var on = isOn(v);
+    return '<span class="bp-rocb' + (on ? " on" : "") + '" title="' + (on ? "开启" : "关闭") + '">' + (on ? CHECK_IC : "") + "</span>";
+  }
+
   /* ---------- 控件 ---------- */
   function unitHTML(p, val) {
     if (!p.unit) return "";
@@ -170,13 +207,34 @@
     return '<span class="bp-pick"><span class="bp-pic"></span>' +
       '<select class="form-select bp-ctrl" data-bp-enum>' + opts + "</select></span>";
   }
-  /* 图案预览 + 英文名：随选中项同步（悬停显示英文） */
+  /* 耗材选择器：默认 + 耗材库。
+     用 data-bp-enum 让取值/重置逻辑复用 <select> 分支；data-bp-fil 让 syncPick 去画色块。 */
+  function filamentHTML(p, val) {
+    var list = filamentList(), cur = norm(val), has = false;
+    var opts = list.map(function (o) {
+      if (o.v === cur) has = true;
+      return '<option value="' + esc(o.v) + '"' + (o.v === cur ? " selected" : "") + ">" + esc(o.label) + "</option>";
+    }).join("");
+    // 值超出耗材库（手工设过更大的槽位）时补一项，避免 <select> 回落第一项 = 假"已修改"
+    if (!has) opts += '<option value="' + esc(cur) + '" selected>槽位 ' + esc(cur) + "</option>";
+    return '<span class="bp-pick"><span class="bp-pic"></span>' +
+      '<select class="form-select bp-ctrl" data-bp-enum data-bp-fil>' + opts + "</select></span>";
+  }
+  /* 图案预览 / 耗材色块 + 英文名：随选中项同步 */
   function syncPick(sel) {
     var o = sel.options[sel.selectedIndex];
     var en = o ? (o.getAttribute("data-en") || o.textContent) : "";
     sel.title = en;
     var pic = sel.parentNode ? sel.parentNode.querySelector(".bp-pic") : null;
     if (!pic) return;
+    if (sel.hasAttribute("data-bp-fil")) {
+      var f = filamentByValue(sel.value);
+      if (f && f.color) {
+        pic.innerHTML = '<span class="bp-chip" style="background:' + esc(f.color) + '"></span>';
+        pic.title = en;
+      } else { pic.innerHTML = ""; pic.removeAttribute("title"); }
+      return;
+    }
     var svg = iconFor(sel.value);
     if (svg) { pic.innerHTML = svg; pic.title = en; }
     else { pic.innerHTML = ""; pic.removeAttribute("title"); }
@@ -206,6 +264,7 @@
       return '<span class="bp-numwrap">' + inner + unitHTML(p, v) + "</span>";
     }
     if (p.type === "bool") return boolHTML(val, "");
+    if (isFilamentOpt(p)) return filamentHTML(p, val);
     if (p.type === "enum") return enumHTML(p, val);
     if (p.type === "enumopen") return enumOpenHTML(p, val, p.key);
     return '<span class="bp-numwrap">' + numHTML(p, val, "") + unitHTML(p, val) + "</span>";
@@ -365,16 +424,25 @@
             var act = activeColumn(cols);
             body = cols.map(function (c) {
               var v = parts[c.idx] == null ? "" : parts[c.idx];
+              var inner = (p.type === "bool") ? boolMark(v) : esc(displayValue(p, v)) + esc(suffix(v));
               return '<span class="bp-vv' + (c.idx === act.idx ? " on" : "") + '" data-idx="' + c.idx + '">' +
-                "<b>" + esc(c.label) + "</b>" + esc(displayValue(p, v)) + esc(suffix(v)) + "</span>";
+                "<b>" + esc(c.label) + "</b>" + inner + "</span>";
             }).join("");
+          } else if (p.type === "bool") {
+            // 布尔值画成「勾选框 / 未选框」，不写 1/0 也不写文字
+            body = boolMark(val);
           } else {
             body = esc(displayValue(p, val)) + esc(suffix(val));
             var ic = (p.enum && p.enum.length) ? iconFor(val) : "";
             if (ic) {
-              var cur = null;
-              p.enum.forEach(function (o) { if (o.value === norm(val)) cur = o; });
-              body = '<span class="bp-pic" title="' + esc(cur ? (cur.en || cur.label) : "") + '">' + ic + "</span>" + body;
+              var hit = null;
+              p.enum.forEach(function (o) { if (o.value === norm(val)) hit = o; });
+              body = '<span class="bp-pic" title="' + esc(hit ? (hit.en || hit.label) : "") + '">' + ic + "</span>" + body;
+            } else if (isFilamentOpt(p)) {
+              var fo = filamentByValue(norm(val));
+              if (fo && fo.color) {
+                body = '<span class="bp-pic"><span class="bp-chip" style="background:' + esc(fo.color) + '"></span></span>' + body;
+              }
             }
           }
           return '<div class="bp-row ro' + (mod ? " modified" : "") + '" data-key="' + esc(p.key) + '">' +
@@ -694,6 +762,12 @@
       ".bp-pic{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ink);opacity:.85}" +
       ".bp-pic:empty{display:none}" +
       ".bp-pic svg{width:20px;height:20px;display:block}" +
+      // 耗材色块（跟 .btn.primary 一样：accent 底 + 白字/白勾）
+      ".bp-pic .bp-chip{width:18px;height:18px;border-radius:5px;display:block;border:1px solid var(--line);box-sizing:border-box}" +
+      // 只读视图的布尔：勾选框 / 未选框
+      ".bp-rocb{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;background:var(--card);color:#fff;flex:none;box-sizing:border-box}" +
+      ".bp-rocb.on{background:var(--accent);border-color:var(--accent)}" +
+      ".bp-rocb svg{display:block}" +
       /* —— 置灰（参数不可用）—— */
       ".bp-row.disabled .bp-label{color:var(--muted)}" +
       ".bp-row.disabled .bp-ctrl,.bp-row.disabled .bp-track{opacity:.5}" +
