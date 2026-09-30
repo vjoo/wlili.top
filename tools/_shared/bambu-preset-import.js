@@ -22,8 +22,8 @@
   "subType": "异料支撑",
   "machine": "X2D",
   "filamentType": "PETG + PLA",
-  "createdDate": "2026-09-30T11:58:41.308Z",
-  "notes": "异料支撑：模型 PETG、支撑用 PLA，两种料互不粘连，支撑一撕即落、底面光滑。关键是把 顶部Z距离/底部Z距离 都设为 0（异料不需要留缝），并把接触面改为实心（线距 0）+ 加厚到 3 层，整片可抓取剥离。PLA 料盘位置见导入脚本顶部的 PLA_SLOT；若想省 PLA，把 支撑主体(support_filament) 改回 0，主体跟 PETG 同料、仅接触面用 PLA。注意：换料需保留擦料塔冲刷；PLA 与 PETG 喷嘴温度不同，请分别选好耗材预设。",
+  "createdDate": "2026-09-30T14:56:53.605Z",
+  "notes": "异料支撑（模型 PETG + PLA 做支撑界面）：两料互不粘连，一撕即落、底面光滑。依据 Bambu 官方 wiki：PLA【只做支撑界面】，支撑主体保持「默认」＝沿用模型料 PETG —— 把 PLA 用到整个支撑主体会明显增加打印时间（几乎每层都要换喷嘴）且支撑有脱落风险。关键项：顶部/底部 Z 距离都设 0（异料不必留缝）、接触面 3 层且线距 0（整片可抓取）、主体与支撑面图案都用 Rectilinear。PLA 料盘位置见导入脚本顶部的 PLA_SLOT。提醒：PETG 喷嘴温度高于 PLA，耗材预设里请分别设好温度并充分干燥。",
   "bpValues": {
    "layer_height": "0.1",
    "initial_layer_print_height": "0.1",
@@ -197,7 +197,7 @@
    "enforce_support_layers": "0",
    "raft_layers": "0",
    "raft_contact_distance": "0.1",
-   "support_filament": "2",
+   "support_filament": "0",
    "support_interface_filament": "2",
    "support_interface_not_for_body": "1",
    "enable_support_ironing": "0",
@@ -212,12 +212,12 @@
    "tree_support_wall_count": "-1",
    "support_top_z_distance": "0",
    "support_bottom_z_distance": "0",
-   "support_base_pattern": "default",
+   "support_base_pattern": "rectilinear",
    "support_base_pattern_spacing": "2.5",
    "support_angle": "0",
    "support_interface_top_layers": "3",
    "support_interface_bottom_layers": "2",
-   "support_interface_pattern": "auto",
+   "support_interface_pattern": "rectilinear",
    "support_interface_spacing": "0",
    "support_bottom_interface_spacing": "0.5",
    "support_expansion": "0",
@@ -292,10 +292,6 @@
     "value": "1"
    },
    {
-    "name": "支撑/筏层主体",
-    "value": "2"
-   },
-   {
     "name": "支撑/筏层界面",
     "value": "2"
    },
@@ -308,8 +304,16 @@
     "value": "0"
    },
    {
+    "name": "支撑主体图案",
+    "value": "rectilinear"
+   },
+   {
     "name": "顶部接触面层数",
     "value": "3"
+   },
+   {
+    "name": "支撑面图案",
+    "value": "rectilinear"
    },
    {
     "name": "顶部接触面线距",
@@ -323,7 +327,7 @@
   "subType": "质量·悬垂",
   "machine": "X2D",
   "filamentType": "通用（PLA/PETG/ABS）",
-  "createdDate": "2026-09-30T11:58:41.310Z",
+  "createdDate": "2026-09-30T14:56:53.610Z",
   "notes": "悬垂改善：把 悬垂降速 四个档位整体下调（25%→30、50%→20、75%→12、100%→8 mm/s），让悬垂处有足够时间冷却定型；同时开启 厚桥（桥接层按满流量打印，不易下垂）与 沉孔搭桥（孔口先搭一段防塌）。要点：悬垂质量主要由【冷却风扇】决定——请把耗材预设里的 风扇转速 拉满、必要时降低层高；若仍有薄壁悬垂发虚，可把 墙生成器 从 classic 改为 Arachne（变宽挤出，薄悬垂更饱满）。",
   "bpValues": {
    "layer_height": "0.1",

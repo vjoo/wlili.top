@@ -164,11 +164,11 @@
   function isFilamentOpt(p) { return !!(p && FILAMENT_KEYS[p.key]); }
   function filamentList() {
     var arr = (window.FDATA && Array.isArray(window.FDATA.filaments)) ? window.FDATA.filaments : [];
-    var out = [{ v: "0", label: "默认", color: "" }];
+    // 只显示耗材「类型」（PLA / PETG / PETG HF…）+ 槽位号；不显示颜色名与色块
+    var out = [{ v: "0", label: "默认" }];
     for (var i = 0; i < arr.length; i++) {
       var f = arr[i] || {};
-      var nm = f.name || f.type || ("耗材 " + (i + 1));
-      out.push({ v: String(i + 1), label: (i + 1) + " " + nm + (f.colorName ? "·" + f.colorName : ""), color: f.colorValue || "" });
+      out.push({ v: String(i + 1), label: (i + 1) + " " + (f.type || f.name || ("耗材 " + (i + 1))) });
     }
     return out;
   }
@@ -211,7 +211,8 @@
       '<select class="form-select bp-ctrl" data-bp-enum>' + opts + "</select></span>";
   }
   /* 耗材选择器：默认 + 耗材库。
-     用 data-bp-enum 让取值/重置逻辑复用 <select> 分支；data-bp-fil 让 syncPick 去画色块。 */
+     用 data-bp-enum 让取值/重置逻辑复用 <select> 分支；data-bp-fil 只作语义标记
+     （下拉内容只显示耗材类型，不画色块）。 */
   function filamentHTML(p, val) {
     var list = filamentList(), cur = norm(val), has = false;
     var opts = list.map(function (o) {
@@ -230,15 +231,6 @@
     sel.title = en;
     var pic = sel.parentNode ? sel.parentNode.querySelector(".bp-pic") : null;
     if (!pic) return;
-    if (sel.hasAttribute("data-bp-fil")) {
-      var f = filamentByValue(sel.value);
-      if (f && f.color) {
-        pic.innerHTML = '<span class="bp-chip" style="background:' + esc(f.color) + '"></span>';
-        pic.title = en;
-        sel.classList.add("has-deco");
-      } else { pic.innerHTML = ""; pic.removeAttribute("title"); sel.classList.remove("has-deco"); }
-      return;
-    }
     var svg = iconFor(sel.value);
     if (svg) { pic.innerHTML = svg; pic.title = en; sel.classList.add("has-deco"); }
     else { pic.innerHTML = ""; pic.removeAttribute("title"); sel.classList.remove("has-deco"); }
@@ -459,11 +451,6 @@
               var hit = null;
               p.enum.forEach(function (o) { if (o.value === norm(val)) hit = o; });
               body = '<span class="bp-pic" title="' + esc(hit ? (hit.en || hit.label) : "") + '">' + ic + "</span>" + body;
-            } else if (isFilamentOpt(p)) {
-              var fo = filamentByValue(norm(val));
-              if (fo && fo.color) {
-                body = '<span class="bp-pic"><span class="bp-chip" style="background:' + esc(fo.color) + '"></span></span>' + body;
-              }
             }
           }
           return '<div class="bp-row ro' + (mod ? " modified" : "") + '" data-key="' + esc(p.key) + '">' +
@@ -757,12 +744,19 @@
       ".bp-ctrl{width:168px;max-width:100%;text-align:right;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-family:inherit}" +
       ".bp-ctrl:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
       ".bp-row.modified .bp-ctrl{color:var(--bp-warn);border-color:var(--warning-line,var(--bp-warn))}" +
+      /* ⚠️ 编辑弹窗嵌在 admin.html 的 `.fgroup` 里，而 `.fgroup input[type=text]` 的特异性是
+         (0,2,1) —— 比我们给控件写的规则都高，会盖掉边框/内边距/圆角，结果「框里再套一层框」
+         （带单位的行最明显：外层 .bp-numwrap 一个框 + 内层 input 自己的框）。
+         这里用更高特异性 + !important 把控件外观收回来；admin 自己的 .cpick-inputwrap
+         也是用 !important 解的同一个问题，属于本项目的既定做法。 */
+      ".bp-editor input.bp-ctrl,.bp-editor select.bp-ctrl{background:var(--card)!important;border:1px solid var(--line)!important;border-radius:8px!important;padding:6px 9px!important}" +
       /* 数字框 + 单位合成**一个** 150px 的框（软件里单位就画在框内右侧）：
          这样「下拉 / 输入 / 带单位输入」的宽度与右边界完全一致，
          长单位（mm/s 或 %）也不会再把输入框挤窄或被分组框裁掉 */
       ".bp-numwrap{display:flex;align-items:center;width:168px;max-width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}" +
-      ".bp-numwrap .bp-ctrl{flex:1 1 auto;width:auto;min-width:0;border:none;background:transparent;border-radius:0;padding:6px 9px}" +
-      ".bp-numwrap .bp-ctrl:focus{box-shadow:none;border-color:transparent}" +
+      // 框内的 input 必须是「无边框透明」，且要压过上面那条 !important 的通用规则
+      ".bp-editor .bp-numwrap input.bp-ctrl{flex:1 1 auto;width:auto!important;min-width:0;border:none!important;background:transparent!important;border-radius:0!important;box-shadow:none!important;padding:6px 9px!important}" +
+      ".bp-editor .bp-numwrap input.bp-ctrl:focus{border-color:transparent!important;box-shadow:none!important}" +
       ".bp-numwrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
       ".bp-row.modified .bp-numwrap{border-color:var(--warning-line,var(--bp-warn))}" +
       ".bp-row.disabled .bp-numwrap{background:var(--panel)}" +
@@ -792,13 +786,12 @@
       // 下拉本体与输入框同宽；没有图标时靠 .has-deco 决定要不要留出左侧内边距。
       ".bp-pick{position:relative;display:block;flex:0 0 auto;width:168px;max-width:100%;min-width:0}" +
       ".bp-pick select.bp-ctrl{width:100%;max-width:100%;min-width:0}" +
-      ".bp-pick select.bp-ctrl.has-deco{padding-left:33px}" +
+      ".bp-editor .bp-pick select.bp-ctrl.has-deco{padding-left:33px!important}" +
       ".bp-pick .bp-pic{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none}" +
       ".bp-pic{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ink);opacity:.85}" +
       ".bp-pic:empty{display:none}" +
       ".bp-pic svg{width:20px;height:20px;display:block}" +
       // 耗材色块（跟 .btn.primary 一样：accent 底 + 白字/白勾）
-      ".bp-pic .bp-chip{width:18px;height:18px;border-radius:5px;display:block;border:1px solid var(--line);box-sizing:border-box}" +
       // 只读视图的布尔：勾选框 / 未选框
       ".bp-rocb{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;background:var(--card);color:#fff;flex:none;box-sizing:border-box}" +
       ".bp-rocb.on{background:var(--accent);border-color:var(--accent)}" +
