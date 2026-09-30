@@ -840,6 +840,7 @@
       '<div class="fmodal-body">' +
       '<div class="fgroup"><label>名称 *</label><input type="text" id="p_name" value="' + esc(it ? it.name : "") + '"></div>' +
       '<div class="fgroup"><div id="bpEditor"></div></div>' +
+      '<div class="fgroup"><label>备注</label><textarea id="p_notes" rows="3" placeholder="可选。例如这条预设的用途、注意事项、适用的耗材/喷头">' + esc(it ? (it.notes || "") : "") + '</textarea></div>' +
       "</div>" +
       '<div class="fmodal-foot"><button class="btn" onclick="closeModal()">取消</button>' +
       '<button class="btn primary" onclick="PAPP.save(\'' + (id || "") + '\')">保存</button></div>';
@@ -853,10 +854,12 @@
   PAPP.save = function (id) {
     var name = (document.getElementById("p_name").value || "").trim();
     if (!name) { toast("名称不能为空"); return; }
-    var preset = { id: id || pgenId("preset"), name: name, createdDate: new Date().toISOString(), notes: "" };
+    var preset = { id: id || pgenId("preset"), name: name, createdDate: new Date().toISOString(),
+      notes: (document.getElementById("p_notes").value || "").trim() };
     var old = id ? PSET.find(function (p) { return p.id === id; }) : null;
     if (old) {
-      preset.notes = old.notes || ""; preset.subType = old.subType; preset.machine = old.machine;
+      preset.subType = old.subType; preset.machine = old.machine;
+      if (old.builtinVersion) preset.builtinVersion = old.builtinVersion;
       preset.filamentType = old.filamentType;
       if (old.parameters) preset.parameters = old.parameters;
       if (old.filamentParams) preset.filamentParams = old.filamentParams;   // 保留旧数据，界面不再编辑
@@ -889,8 +892,9 @@
     if (it.filamentType) h += '<div class="ro-field"><b>耗材类型：</b>' + esc(it.filamentType) + "</div>";
     if (it.subType) h += '<div class="ro-field"><b>预设类型：</b>' + esc(it.subType) + "</div>";
     h += '<div class="ro-field"><b>创建日期：</b>' + esc(presDate(it.createdDate)) + "</div>";
+    if (it.notes) h += '<div class="ro-field"><b>备注：</b>' + esc(it.notes).replace(/\n/g, "<br>") + "</div>";
     var mod = modifiedCount(vals);
-    h += '<div class="ro-field"><b>工艺参数：</b>共 ' + Object.keys(vals).length + " 项，已修改 " + mod + " 项</div>";
+    h += '<div class="ro-field" style="color:var(--muted)">共 ' + Object.keys(vals).length + " 项参数 · 已修改 " + mod + " 项</div>";
     h += renderReadOnly(vals);
     document.getElementById("fmodalBox").innerHTML =
       '<div class="fmodal-head"><div class="fmodal-title">预设详情</div><button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
