@@ -235,12 +235,13 @@
       if (f && f.color) {
         pic.innerHTML = '<span class="bp-chip" style="background:' + esc(f.color) + '"></span>';
         pic.title = en;
-      } else { pic.innerHTML = ""; pic.removeAttribute("title"); }
+        sel.classList.add("has-deco");
+      } else { pic.innerHTML = ""; pic.removeAttribute("title"); sel.classList.remove("has-deco"); }
       return;
     }
     var svg = iconFor(sel.value);
-    if (svg) { pic.innerHTML = svg; pic.title = en; }
-    else { pic.innerHTML = ""; pic.removeAttribute("title"); }
+    if (svg) { pic.innerHTML = svg; pic.title = en; sel.classList.add("has-deco"); }
+    else { pic.innerHTML = ""; pic.removeAttribute("title"); sel.classList.remove("has-deco"); }
   }
   var DL_ID = 0;
   function enumOpenHTML(p, val, key) {
@@ -753,13 +754,13 @@
       ".bp-label{color:var(--ink);line-height:1.3;overflow-wrap:anywhere}" +
       ".bp-row.modified .bp-label{color:var(--bp-warn);font-weight:600}" +
       ".bp-ctrlwrap{display:flex;justify-content:flex-start;align-items:center;gap:6px;min-width:0}" +
-      ".bp-ctrl{width:150px;max-width:100%;text-align:right;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-family:inherit}" +
+      ".bp-ctrl{width:168px;max-width:100%;text-align:right;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-family:inherit}" +
       ".bp-ctrl:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
       ".bp-row.modified .bp-ctrl{color:var(--bp-warn);border-color:var(--warning-line,var(--bp-warn))}" +
       /* 数字框 + 单位合成**一个** 150px 的框（软件里单位就画在框内右侧）：
          这样「下拉 / 输入 / 带单位输入」的宽度与右边界完全一致，
          长单位（mm/s 或 %）也不会再把输入框挤窄或被分组框裁掉 */
-      ".bp-numwrap{display:flex;align-items:center;width:150px;max-width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}" +
+      ".bp-numwrap{display:flex;align-items:center;width:168px;max-width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}" +
       ".bp-numwrap .bp-ctrl{flex:1 1 auto;width:auto;min-width:0;border:none;background:transparent;border-radius:0;padding:6px 9px}" +
       ".bp-numwrap .bp-ctrl:focus{box-shadow:none;border-color:transparent}" +
       ".bp-numwrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
@@ -767,10 +768,12 @@
       ".bp-row.disabled .bp-numwrap{background:var(--panel)}" +
       ".bp-row.disabled .bp-numwrap .bp-ctrl{background:transparent}" +
       ".bp-unit{color:var(--muted);font-size:11.5px;white-space:nowrap;flex:none;padding-right:9px}" +
-      /* 下拉框/组合框/输入框统一宽度（150px）：以前下拉吃满控件列、输入框只有 150px，
-         同一列里右边界参差不齐。原生弹层宽度跟随元素宽度，150px 仍大于最长选项所需的 134px。 */
-      ".bp-ctrlwrap select.bp-ctrl{width:100%;max-width:150px;min-width:0;text-align:left;text-overflow:ellipsis}" +
-      ".bp-ctrl.bp-open{width:100%;max-width:150px;min-width:0;text-align:left}" +
+      /* 下拉/组合框/输入框**统一宽度**：以前下拉吃满控件列、输入框只有 150px，右边界参差。
+         现在统一 168px（控件列约 180px）。原生下拉弹层是按**选项文字**算宽的，
+         弹层里还要给「✓」列留位置 —— 实测最长的「内墙/外墙/内墙」需 89px，
+         加上 ✓ 列与内边距后 150px 会挤到换行，所以留到 168px。 */
+      ".bp-ctrlwrap select.bp-ctrl{width:100%;max-width:168px;min-width:0;text-align:left;text-overflow:ellipsis}" +
+      ".bp-ctrl.bp-open{width:100%;max-width:168px;min-width:0;text-align:left}" +
       ".bp-switch{position:relative;display:inline-block;width:38px;height:21px;cursor:pointer;flex:none}" +
       ".bp-switch input{opacity:0;width:0;height:0}" +
       ".bp-track{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:.18s}" +
@@ -781,12 +784,16 @@
       ".bp-multi{display:flex;flex-direction:column;gap:4px;min-width:0}" +
       ".bp-mv{display:flex;align-items:center;gap:6px;min-width:0}" +
       ".bp-mvi{color:var(--muted);font-size:11.5px;flex:none;white-space:nowrap;min-width:56px}" +
-      ".bp-mv input.bp-ctrl{width:104px;flex:none}" +
+      ".bp-mv input.bp-ctrl{width:100px;flex:none}" +
       /* —— 图案预览图标（原生 select 塞不进图片，贴在它左侧）—— */
       // inline-flex 是 shrink-to-fit，里面的 select{width:100%} 会算出循环依赖 → 只剩 118px，
       // 比最长选项所需的 134px 还窄（弹层又会出横向滚动条）。改成撑满控件列。
-      ".bp-pick{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;max-width:100%}" +
-      ".bp-pick select.bp-ctrl{width:auto;flex:1 1 auto;min-width:0;max-width:150px}" +
+      // 图案图标改画在**下拉框内部**左侧（软件里就是这样）：图标不再从控件宽度里扣 26px，
+      // 下拉本体与输入框同宽；没有图标时靠 .has-deco 决定要不要留出左侧内边距。
+      ".bp-pick{position:relative;display:block;flex:0 0 auto;width:168px;max-width:100%;min-width:0}" +
+      ".bp-pick select.bp-ctrl{width:100%;max-width:100%;min-width:0}" +
+      ".bp-pick select.bp-ctrl.has-deco{padding-left:33px}" +
+      ".bp-pick .bp-pic{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none}" +
       ".bp-pic{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ink);opacity:.85}" +
       ".bp-pic:empty{display:none}" +
       ".bp-pic svg{width:20px;height:20px;display:block}" +
