@@ -949,7 +949,8 @@ window.BAMBU_PROCESS_SCHEMA = {
      "enum": [],
      "default": "1, 1, 1, 1",
      "mode": "develop",
-     "vec": true
+     "vec": true,
+     "mv": true
     },
     {
      "key": "initial_layer_flow_ratio",

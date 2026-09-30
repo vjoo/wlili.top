@@ -113,6 +113,9 @@
     });
   });
   var VEC_COLS = vecColumns(VEC_LEN);
+  // multi_variant 参数（p.mv）在软件里是同一行竖排 L: / R:，两列同时可见，
+  // 不受顶部「主/辅助」开关控制 —— 实测用户的质量页「顶部表面流量比例」就是这种。
+  var MV_LABELS = ["L:", "R:", "E3:", "E4:"];
   function activeColumn(cols) { return cols[Math.min(Math.max(0, curCol), cols.length - 1)]; }
   function colIndex() { return Math.min(Math.max(0, curCol), Math.max(0, VEC_COLS.length - 1)); }
 
@@ -255,13 +258,24 @@
   function controlHTML(p, val) {
     if (p.vec) {
       var parts = splitVec(val); if (!parts.length) parts = [""];
-      var c = activeColumn(vecColumns(parts.length));
+      var cols = vecColumns(parts.length);
+      // multi_variant：同一行里竖排 L: / R: 多个输入框，两列同时可见
+      if (p.mv) {
+        var cells = cols.map(function (c, i) {
+          var mv = parts[c.idx] == null ? "" : parts[c.idx];
+          var f = (p.type === "bool")
+            ? boolHTML(mv, 'data-slot="' + c.idx + '"')
+            : numHTML(p, mv, 'data-slot="' + c.idx + '"');
+          return '<label class="bp-mv"><span class="bp-mvi">' + esc(MV_LABELS[i] || c.label) + "</span>" + f + "</label>";
+        }).join("");
+        return '<div class="bp-multi"' + (p.unit ? ' title="单位：' + esc(p.unit) + '"' : "") + ">" + cells + "</div>";
+      }
+      var c = activeColumn(cols);
       var v = parts[c.idx] == null ? "" : parts[c.idx];
-      var inner = (p.type === "bool")
-        ? boolHTML(v, 'data-slot="' + c.idx + '"')
-        : numHTML(p, v, 'data-slot="' + c.idx + '"');
-      // 只渲染当前那一列（切换由顶部开关控制），单位也就放得下了
-      return '<span class="bp-numwrap">' + inner + unitHTML(p, v) + "</span>";
+      // 只渲染当前那一列（切换由顶部开关控制），单位也就放得下了。
+      // 布尔不加 .bp-numwrap：那层是给「输入框 + 单位」用的，开关塞进去会让选择器落空。
+      if (p.type === "bool") return boolHTML(v, 'data-slot="' + c.idx + '"');
+      return '<span class="bp-numwrap">' + numHTML(p, v, 'data-slot="' + c.idx + '"') + unitHTML(p, v) + "</span>";
     }
     if (p.type === "bool") return boolHTML(val, "");
     if (isFilamentOpt(p)) return filamentHTML(p, val);
@@ -343,7 +357,10 @@
     return list.map(function (p) {
       var val = (p.key in vals) ? vals[p.key] : norm(p.default);
       var attrs = ' data-key="' + esc(p.key) + '" data-def="' + esc(p.default) + '" data-mode="' + esc(p.mode || "simple") + '"';
-      if (p.vec) attrs += ' data-vec="' + esc(JSON.stringify(splitVec(val))) + '"';
+      if (p.vec) {
+        attrs += ' data-vec="' + esc(JSON.stringify(splitVec(val))) + '"';
+        if (p.mv) attrs += ' data-mv="1"';   // L:/R: 并列，不参与顶部开关
+      }
       return '<div class="bp-row"' + attrs + '>' +
         '<button class="bp-reset" title="重置为默认" type="button">' + RESET_IC + "</button>" +
         '<div class="bp-label">' + esc(p.label) + "</div>" +
@@ -362,12 +379,13 @@
           esc(gn) + '</span><span class="bp-gcount"></span>' + CHEVRON + "</div>" +
           '<div class="bp-group-body"><div class="bp-cols">' + rowsHTML(g[gn], vals) + "</div></div></div>";
       }).join("");
-      // 只有含多喷头参数的页卡才需要「主/辅助」开关
-      var hasVec = Object.keys(g).some(function (gn) {
-        return g[gn].some(function (p) { return p.vec; });
+      // 只有含「可切换的多喷头参数」的页卡才需要顶部「主/辅助」开关；
+      // multi_variant 那种 L:/R: 并列的不算 —— 质量页因此不再出现开关（用户实测确认）
+      var hasSwitch = Object.keys(g).some(function (gn) {
+        return g[gn].some(function (p) { return p.vec && !p.mv; });
       });
       return '<div class="bp-panel' + (ti === 0 ? " active" : "") + '" data-panel="' + esc(t) + '">' +
-        (hasVec ? vecSwitchHTML() : "") + groups + "</div>";
+        (hasSwitch ? vecSwitchHTML() : "") + groups + "</div>";
     }).join("");
     var modeBtns = MODE_ORDER.map(function (m) {
       return '<button class="bp-mode' + (m === currentMode ? " active" : "") + '" type="button" data-mode="' + m + '">' + MODES[m] + "</button>";
@@ -405,8 +423,8 @@
     SCHEMA.tabs_order.forEach(function (t, ti) {
       var g = SCHEMA.tabs[t];
       var tabHtml = "";
-      var hasVec = Object.keys(g).some(function (gn) {
-        return g[gn].some(function (p) { return p.vec; });
+      var hasSwitch = Object.keys(g).some(function (gn) {
+        return g[gn].some(function (p) { return p.vec && !p.mv; });
       });
       Object.keys(g).forEach(function (gn) {
         var list = g[gn].filter(modeVisible);
@@ -419,14 +437,16 @@
           };
           var body;
           if (p.vec) {
-            // 向量参数逐喷头列出，由页卡下的「主/辅助」开关决定显示哪一列
+            // 可切换的向量参数逐喷头列出、由「主/辅助」开关决定显示哪一列；
+            // mv 的（L:/R: 并列）两列都显示
             var parts = splitVec(val), cols = vecColumns(parts.length);
             var act = activeColumn(cols);
-            body = cols.map(function (c) {
+            body = cols.map(function (c, i) {
               var v = parts[c.idx] == null ? "" : parts[c.idx];
               var inner = (p.type === "bool") ? boolMark(v) : esc(displayValue(p, v)) + esc(suffix(v));
-              return '<span class="bp-vv' + (c.idx === act.idx ? " on" : "") + '" data-idx="' + c.idx + '">' +
-                "<b>" + esc(c.label) + "</b>" + inner + "</span>";
+              var show = p.mv || c.idx === act.idx;
+              return '<span class="bp-vv' + (show ? " on" : "") + '" data-idx="' + c.idx + '">' +
+                "<b>" + esc(p.mv ? (MV_LABELS[i] || c.label) : c.label) + "</b>" + inner + "</span>";
             }).join("");
           } else if (p.type === "bool") {
             // 布尔值画成「勾选框 / 未选框」，不写 1/0 也不写文字
@@ -447,14 +467,14 @@
           }
           return '<div class="bp-row ro' + (mod ? " modified" : "") + '" data-key="' + esc(p.key) + '">' +
             '<div class="bp-label">' + esc(p.label) + "</div>" +
-            '<div class="bp-ctrlwrap bp-ro-val' + (p.vec ? " bp-rovec" : "") + '">' + body + "</div></div>";
+            '<div class="bp-ctrlwrap bp-ro-val' + (p.vec ? " bp-rovec" : "") + (p.mv ? " bp-vvall" : "") + '">' + body + "</div></div>";
         }).join("");
         tabHtml += '<div class="bp-group"><div class="bp-group-head static"><span class="bp-gtitle">' +
           esc(gn) + '</span></div><div class="bp-group-body"><div class="bp-cols' +
           (list.length < 4 ? " bp-onecol" : "") + '">' + rows + "</div></div></div>";
       });
       panels += '<div class="bp-rpanel' + (ti === 0 ? " active" : "") + '" data-rpanel="' + esc(t) + '">' +
-        (hasVec ? vecSwitchHTML() : "") + tabHtml + "</div>";
+        (hasSwitch ? vecSwitchHTML() : "") + tabHtml + "</div>";
     });
     return '<div class="bp-readonly"><div class="bp-tabs">' + tabs + "</div>" + panels + "</div>";
   }
@@ -463,6 +483,7 @@
     if (!root) return;
     var act = activeColumn(VEC_COLS);
     root.querySelectorAll(".bp-vv").forEach(function (v) {
+      if (v.parentNode && v.parentNode.classList.contains("bp-vvall")) return;   // mv：两列常显
       v.classList.toggle("on", +v.getAttribute("data-idx") === act.idx);
     });
     root.querySelectorAll(".bp-vs").forEach(function (x) {
@@ -607,6 +628,7 @@
       if (i === curCol) return;
       var tgt = vecColumns(VEC_LEN)[Math.min(i, vecColumns(VEC_LEN).length - 1)];
       root.querySelectorAll('.bp-row[data-vec]').forEach(function (row) {
+        if (row.hasAttribute("data-mv")) return;   // L:/R: 并列的两列同时可见，跳过
         var el = row.querySelector("[data-slot]");
         if (!el) return;
         var arr = JSON.parse(row.getAttribute("data-vec") || "[]");
@@ -734,15 +756,21 @@
       ".bp-ctrl{width:150px;max-width:100%;text-align:right;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-family:inherit}" +
       ".bp-ctrl:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
       ".bp-row.modified .bp-ctrl{color:var(--bp-warn);border-color:var(--warning-line,var(--bp-warn))}" +
-      // 控件列只有 ~180px：数字框固定 150px 时，遇到长单位（mm/s 或 %）会被分组框裁掉，
-      // 所以给数字框留可收缩的余地（flex-basis 150 起，空间不够时收窄）
-      ".bp-numwrap{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}" +
-      ".bp-numwrap .bp-ctrl{flex:0 1 150px;min-width:56px}" +
-      ".bp-unit{color:var(--muted);font-size:11.5px;white-space:nowrap}" +
-      /* 下拉框/组合框撑满控件列：原生弹层宽度跟随元素宽度，
-         太窄会出现横向滚动条与换行（选项文字比控件宽时） */
-      ".bp-ctrlwrap select.bp-ctrl{width:100%;max-width:260px;min-width:0;text-align:left;text-overflow:ellipsis}" +
-      ".bp-ctrl.bp-open{width:100%;max-width:260px;min-width:0;text-align:left}" +
+      /* 数字框 + 单位合成**一个** 150px 的框（软件里单位就画在框内右侧）：
+         这样「下拉 / 输入 / 带单位输入」的宽度与右边界完全一致，
+         长单位（mm/s 或 %）也不会再把输入框挤窄或被分组框裁掉 */
+      ".bp-numwrap{display:flex;align-items:center;width:150px;max-width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}" +
+      ".bp-numwrap .bp-ctrl{flex:1 1 auto;width:auto;min-width:0;border:none;background:transparent;border-radius:0;padding:6px 9px}" +
+      ".bp-numwrap .bp-ctrl:focus{box-shadow:none;border-color:transparent}" +
+      ".bp-numwrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
+      ".bp-row.modified .bp-numwrap{border-color:var(--warning-line,var(--bp-warn))}" +
+      ".bp-row.disabled .bp-numwrap{background:var(--panel)}" +
+      ".bp-row.disabled .bp-numwrap .bp-ctrl{background:transparent}" +
+      ".bp-unit{color:var(--muted);font-size:11.5px;white-space:nowrap;flex:none;padding-right:9px}" +
+      /* 下拉框/组合框/输入框统一宽度（150px）：以前下拉吃满控件列、输入框只有 150px，
+         同一列里右边界参差不齐。原生弹层宽度跟随元素宽度，150px 仍大于最长选项所需的 134px。 */
+      ".bp-ctrlwrap select.bp-ctrl{width:100%;max-width:150px;min-width:0;text-align:left;text-overflow:ellipsis}" +
+      ".bp-ctrl.bp-open{width:100%;max-width:150px;min-width:0;text-align:left}" +
       ".bp-switch{position:relative;display:inline-block;width:38px;height:21px;cursor:pointer;flex:none}" +
       ".bp-switch input{opacity:0;width:0;height:0}" +
       ".bp-track{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:.18s}" +
@@ -757,8 +785,8 @@
       /* —— 图案预览图标（原生 select 塞不进图片，贴在它左侧）—— */
       // inline-flex 是 shrink-to-fit，里面的 select{width:100%} 会算出循环依赖 → 只剩 118px，
       // 比最长选项所需的 134px 还窄（弹层又会出横向滚动条）。改成撑满控件列。
-      ".bp-pick{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;max-width:100%}" +
-      ".bp-pick select.bp-ctrl{width:auto;flex:1 1 auto;min-width:0;max-width:260px}" +
+      ".bp-pick{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;max-width:100%}" +
+      ".bp-pick select.bp-ctrl{width:auto;flex:1 1 auto;min-width:0;max-width:150px}" +
       ".bp-pic{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ink);opacity:.85}" +
       ".bp-pic:empty{display:none}" +
       ".bp-pic svg{width:20px;height:20px;display:block}" +
