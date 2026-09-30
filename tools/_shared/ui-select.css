@@ -1,0 +1,168 @@
+/* ui-select.css —— 全站统一下拉 / 日期组件（.sel / .cal）
+ * 单一来源：由 tools/_shared/admin.html 的 .sel/.cal 区块抽取（脚本 _extract_components.py）。
+ * 本文件只新增 :root 主题变量默认值（亮色，与后台一致），逻辑与后台完全一致。
+ * 各分支 / 工具页可定义 --accent-color / --accent 等变量覆盖主题色。
+ */
+:root{
+  --border-color:#e5e7eb;
+  --bg-primary:#ffffff;
+  --bg-secondary:#f3f4f6;
+  --bg-hover:#f3f4f6;
+  --text-primary:#1f2937;
+  --text-secondary:#4b5563;
+  --text-muted:#9ca3af;
+  --border-light:#f0f1f3;
+  --accent-color:#6366f1;
+  --accent-light:rgba(99,102,241,0.1);
+  --danger-color:#ef4444;
+}
+
+.sel { position: relative; }
+.sel > select.form-select { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.sel-trigger { position: relative; display: flex; align-items: center; width: 100%; min-height: 34px;
+  padding: 6px 30px 6px 12px; border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--bg-primary); color: var(--text-primary); font-size: 13px; text-align: left; cursor: pointer; }
+.sel-trigger:hover { border-color: var(--text-muted); }
+/* 聚焦/展开态与全站表单统一（.form-input:focus 同款：蓝边 + 10% 靛蓝 ring）。
+   注意要写 :focus 而非只写 :focus-visible —— 鼠标点击不触发 focus-visible。 */
+.sel-trigger:focus, .sel-trigger:focus-visible, .sel.is-open .sel-trigger {
+  border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, rgba(99,102,241,0.1)); outline: none;
+}
+.sel-chevron { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px;
+  color: var(--text-muted); pointer-events: none; transition: transform .15s; }
+.sel.is-open .sel-chevron { transform: translateY(-50%) rotate(180deg); }
+.sel-panel { position: absolute; z-index: 60; top: calc(100% + 4px); left: 0; width: 100%;
+  max-height: 288px; overflow-y: auto; padding: 4px;
+  background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,.12), 0 8px 10px -6px rgba(0,0,0,.08); }
+.sel-panel[hidden] { display: none; }
+.sel-option { display: flex; align-items: center; padding: 7px 10px; border-radius: 8px;
+  font-size: 13px; color: var(--text-primary); cursor: pointer; }
+.sel-option:hover, .sel-option.is-cursor { background: var(--bg-hover); }
+.sel-option + .sel-option { margin-top: 2px; }   /* 选项间留 2px 空隙（Preline space-y-0.5），灰块不粘连 */
+.sel-option[aria-selected="true"] { background: var(--bg-hover); font-weight: 500; }
+.sel-check { margin-left: auto; width: 14px; height: 14px; flex: none; color: var(--accent-color, var(--accent, #6366f1)); opacity: 0; }
+.sel-option[aria-selected="true"] .sel-check { opacity: 1; }
+/* ---------- 自定义滚动条（面板内容超高时）：细胶囊 thumb + 透明轨道 + Firefox 适配 ----------
+   要点：① webkit 用 border+background-clip 做「内缩」，8px 轨道里只露 ~5px 细条，不压内容；
+        ② 必须给 track 设透明，否则部分系统会出现灰底轨道；
+        ③ Firefox 不吃 ::-webkit-*，靠 scrollbar-width/color 两条标准属性兜底；
+        ④ hover 加深一档，让「可拖动」这件事有反馈。 */
+.sel-panel, .cal-panel, .ui-scroll { scrollbar-width: thin; scrollbar-color: var(--border-color) transparent; }
+.sel-panel::-webkit-scrollbar, .cal-panel::-webkit-scrollbar, .ui-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.sel-panel::-webkit-scrollbar-track, .cal-panel::-webkit-scrollbar-track, .ui-scroll::-webkit-scrollbar-track { background: transparent; }
+.sel-panel::-webkit-scrollbar-thumb, .cal-panel::-webkit-scrollbar-thumb, .ui-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-color); background-clip: padding-box;
+  border: 2px solid transparent; border-radius: 999px; }
+.sel-panel::-webkit-scrollbar-thumb:hover, .cal-panel::-webkit-scrollbar-thumb:hover, .ui-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted); background-clip: padding-box; }
+/* 有滚动条时右侧留一点间隙，避免 thumb 压住文字 */
+.sel-panel { padding-right: 2px; }
+/* 触发器变体：胶囊 / 紧凑；空态提示 */
+.sel-trigger.pill { border-radius: 999px; padding-left: 14px; }
+.sel-trigger.compact { min-height: 28px; padding: 3px 26px 3px 10px; font-size: 12px; }
+/* 内联变体（紧凑筛选栏专用）：默认 .sel 是块级、trigger width:100%，塞进横向 flex/inline 筛选栏会把整行撑破。
+   解决办法：.sel 改 inline-block 让宽度收缩到内容，trigger 同步改 auto（min-width 兜底防窄内容抖动）；
+   面板仍相对 .sel 绝对定位，但改 max-content + 上限宽度，保证窄触发器下长选项也读得全。 */
+.sel.inline { display: inline-block; width: auto; vertical-align: middle; }
+.sel.inline .sel-trigger { width: auto; min-width: 88px; }
+.sel.inline .sel-panel { width: max-content; min-width: 100%; max-width: 300px; }
+.sel-label.is-empty { color: var(--text-muted); }
+/* 搜索框（sticky 吸顶，滚动时不被选项盖住） */
+.sel-search { position: sticky; top: 0; z-index: 1; padding: 0 0 4px; background: var(--bg-primary); }
+.sel-search-input { width: 100%; padding: 5px 9px; border: 1px solid var(--border-color); border-radius: 7px;
+  font-size: 13px; font-family: inherit; background: var(--bg-primary); color: var(--text-primary); outline: none; }
+.sel-search-input:focus { border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, rgba(99,102,241,0.1)); }
+/* 选项图标 / 色块圆点 */
+.sel-opt-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
+  margin-right: 7px; flex: none; color: var(--text-secondary); }
+.sel-opt-icon svg { width: 16px; height: 16px; }
+.sel-opt-dot { width: 10px; height: 10px; border-radius: 999px; margin-right: 7px; flex: none;
+  border: 1px solid rgba(0,0,0,.12); }
+/* 多级展开（树形）：分组项右侧箭头，展开时旋转 90°；子项缩进由 JS 按层级写 padding-left */
+.sel-option.is-group { font-weight: 500; }
+/* 分组项只是容器，不参与选中：原生 select 的默认首项可能落在分组 value 上，
+   若不屏蔽会让它显示成选中态（灰底 + 加粗），误导用户以为选了分组 */
+.sel-option.is-group[aria-selected="true"] { background: transparent; }
+/* 显式设 display（inline-flex）：① width/height 对 inline 元素无效，箭头会尺寸失控；
+   ② transform 只在非 inline 时保证生效，不依赖父容器恰好是 flex 的 blockify 行为 */
+.sel-opt-arrow { display: inline-flex; align-items: center; justify-content: center;
+  margin-left: auto; width: 14px; height: 14px; flex: none; color: var(--text-muted); transition: transform .15s; }
+.sel-opt-arrow svg { width: 14px; height: 14px; }
+.sel-option[aria-expanded="true"] .sel-opt-arrow { transform: rotate(90deg); }
+.sel-option[hidden] { display: none; }
+/* 多选标签芯片（可点 × 移除） */
+.sel-chip { display: inline-flex; align-items: center; gap: 4px; margin: 1px 4px 1px 0; padding: 2px 5px;
+  background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px;
+  font-size: 12px; white-space: nowrap; }
+.sel-chip-x { border: 0; background: none; color: var(--text-muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 1px; }
+.sel-chip-x:hover { color: var(--danger-color); }
+
+/* ---------- 日期选择 .cal-*（面板风格与 .sel 同源：圆角 12 + 大阴影 + 圆角块 hover）----------
+   规格对齐 Preline Datepicker：面板 12px 圆角 / 星期表头灰色小字 / 日期格 1:1 正方
+   hover 为浅灰圆块 / 选中为主色实心圆 / 非本月日期降透明度。
+   日期排列按中文习惯「周一起始」（Preline 为周日起始），改 WEEK 与 startIdx 可切换。 */
+.cal { position: relative; }
+.cal > input[type="date"] { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.cal-trigger { position: relative; display: flex; align-items: center; width: 100%; min-height: 34px;
+  padding: 6px 30px 6px 12px; border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--bg-primary); color: var(--text-primary); font-size: 13px; text-align: left; cursor: pointer; }
+.cal-trigger:hover { border-color: var(--text-muted); }
+.cal-trigger:focus, .cal-trigger:focus-visible, .cal.is-open .cal-trigger {
+  border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, rgba(99,102,241,0.1)); outline: none;
+}
+.cal-ico { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px;
+  color: var(--text-muted); pointer-events: none; }
+.cal-label.is-empty { color: var(--text-muted); }
+.cal-panel { position: absolute; z-index: 60; top: calc(100% + 4px); left: 0; width: 294px;
+  padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,.12), 0 8px 10px -6px rgba(0,0,0,.08); }
+.cal-panel[hidden] { display: none; }
+/* 面板在空间不足时向上展开，避免在 .fmodal-body 等滚动容器里触发滚动条 */
+.sel-panel.is-above, .cal-panel.is-above { top: auto; bottom: calc(100% + 4px); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.cal-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.cal-nav { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary, var(--muted, #424245)); cursor: pointer; }
+.cal-nav:hover { background: var(--bg-hover); }
+.cal-nav svg { width: 14px; height: 14px; }
+.cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-week { margin-bottom: 2px; }
+.cal-week span { text-align: center; font-size: 11px; color: var(--text-muted); padding: 5px 0; }
+.cal-day { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; border-radius: 999px; font-family: inherit; font-size: 12.5px;
+  color: var(--text-primary); cursor: pointer; }
+.cal-day:hover, .cal-day.is-cursor { background: var(--bg-hover); }
+.cal-day.is-out { color: var(--text-muted); opacity: .5; }          /* 非本月：可点但弱化 */
+.cal-day.is-today { font-weight: 600; color: var(--accent-color, var(--accent, #6366f1)); }
+.cal-day.is-sel, .cal-day.is-sel:hover { background: var(--accent-color, var(--accent, #6366f1)); color: #fff; font-weight: 500; }
+.cal-day:disabled { cursor: not-allowed; opacity: .28; }
+.cal-day:disabled:hover { background: transparent; }
+.cal-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px;
+  padding-top: 8px; border-top: 1px solid var(--border-light, var(--border-color)); }
+.cal-btn { border: 0; background: transparent; padding: 3px 8px; border-radius: 7px;
+  font-family: inherit; font-size: 12px; color: var(--accent-color, var(--accent, #6366f1)); cursor: pointer; }
+.cal-btn:hover { background: var(--bg-hover); }
+.cal-btn.muted { color: var(--text-muted); }
+.cal-btn:disabled { opacity: .4; cursor: not-allowed; }
+.cal-btn:disabled:hover { background: transparent; }
+/* ---------- 范围选择（.cal-panel.range）：两个月并排，区间中段浅底连成一条，两端主色实心 ----------
+   中段用 --accent-light（各分支自己的浅主色），两端用主色；单日区间仍是完整圆形。
+   grid 未设 gap，所以相邻格的底色会自然连成连续色带。 */
+.cal-panel.range { width: 588px; max-width: calc(100vw - 40px); }
+.cal-hint { font-size: 11px; color: var(--text-muted); padding: 0 2px 8px; }
+.cal-hint b { color: var(--accent-color, var(--accent, #6366f1)); font-weight: 600; }
+.cal-months { display: flex; gap: 14px; }
+.cal-month { flex: 1 1 0; min-width: 0; }
+.cal-day.in-range { background: var(--accent-light, rgba(99,102,241,.14)); border-radius: 0; color: var(--text-primary); }
+.cal-day.range-start, .cal-day.range-end {
+  background: var(--accent-color, var(--accent, #6366f1)); color: #fff; font-weight: 500; }
+.cal-day.range-start { border-radius: 999px 0 0 999px; }
+.cal-day.range-end { border-radius: 0 999px 999px 0; }
+.cal-day.range-start.range-end { border-radius: 999px; }
+
+.form-hint { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+/* 禁用态：原生 select 带 disabled 时，组件触发器同步不可交互（如 unit-converter 的金额单位） */
+.sel-trigger:disabled, .sel-trigger[disabled]{ opacity:.5; cursor:not-allowed; }
+.sel-trigger:disabled:hover, .sel-trigger[disabled]:hover{ border-color:var(--border-color); }

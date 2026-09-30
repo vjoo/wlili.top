@@ -174,7 +174,7 @@ svg{display:block;}
 .rbtn:hover{transform:translateY(-1px);}
 .top-actions{position:relative;}
 .rbtn-menu{
-  position:absolute;top:calc(100% + 10px);right:0;width:720px;max-width:min(94vw,720px);
+  position:absolute;top:calc(100% + 10px);right:0;width:max-content;min-width:320px;max-width:min(94vw,720px);
   max-height:min(80vh,600px);overflow:auto;background:var(--card);border:1px solid var(--line);
   border-radius:18px;box-shadow:var(--shadow);padding:0;z-index:60;
   opacity:0;visibility:hidden;transform:translateY(-6px);transition:.16s ease;
@@ -203,7 +203,7 @@ svg{display:block;}
 .main::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--muted);border:3px solid transparent;border-radius:6px;background-clip:content-box;}
-::-webkit-scrollbar-thumb:hover{background:var(--ink);}
+::-webkit-scrollbar-thumb:hover{background-color:var(--ink);}
 /* 滚动条美化（照抄原 filament-manager.html） */
 /* 滚动条统一走全局内缩规范：thumb 悬浮、与容器边缘留隙 */
 /* ===== select 统一标准（照抄原 .form-select，fbar/fgroup/drawer 全部共用） =====
@@ -7748,21 +7748,6 @@ var BK = {
   }
 };
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <style>
 .sel { position: relative; }
 .sel > select.form-select { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
@@ -7932,14 +7917,51 @@ var BK = {
     grid:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>",
     layers:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>"
   };
-/* 面板空间自适应：可视区域下方空间不足时向上展开（用于 .fmodal-body 等滚动容器） */
-function fitPanel(panel, wrap) {
-  var rect = wrap.getBoundingClientRect();
-  var ph = panel.getBoundingClientRect().height || 0;
-  var gap = 4;
-  var spaceBelow = Math.max(0, window.innerHeight - rect.bottom);
-  var spaceAbove = Math.max(0, rect.top);
-  panel.classList.toggle('is-above', ph > 0 && spaceAbove > spaceBelow);
+function floatPanel(panel, wrap) {
+  var r = wrap.getBoundingClientRect();
+  if (panel.parentNode !== document.body) document.body.appendChild(panel);
+  panel.style.position = 'fixed';
+  panel.style.zIndex = '9999';
+  panel.style.top = '-99999px';           /* 先离屏量尺寸，避免闪烁 */
+  panel.style.left = '0px';
+  if (panel.classList.contains('sel-panel')) {
+    if (wrap.classList.contains('inline')) {
+      panel.style.width = 'max-content';
+      panel.style.minWidth = Math.round(r.width) + 'px';
+      panel.style.maxWidth = 'min(300px, calc(100vw - 16px))';
+    } else {
+      panel.style.width = Math.round(r.width) + 'px';
+      panel.style.minWidth = '';
+      panel.style.maxWidth = 'calc(100vw - 16px)';
+    }
+  } else {                                 /* .cal-panel / .cal-panel.range 自带固定宽度，保留 */
+    panel.style.width = '';
+    panel.style.minWidth = '';
+    panel.style.maxWidth = 'calc(100vw - 16px)';
+  }
+  var ph = panel.offsetHeight, pw = panel.offsetWidth;
+  var left = r.left;
+  if (left + pw > window.innerWidth - 8) left = Math.max(8, window.innerWidth - 8 - pw);
+  var top = r.bottom + 4;
+  /* 垂直：默认向下，下方空间不足且上方够则向上展开 */
+  if (top + ph > window.innerHeight - 8 && r.top - 4 - ph >= 8) top = r.top - 4 - ph;
+  panel.style.left = Math.round(left) + 'px';
+  panel.style.top = Math.round(top) + 'px';
+  if (!wrap.__refloat) {
+    wrap.__refloat = function () { floatPanel(panel, wrap); };
+    window.addEventListener('scroll', wrap.__refloat, true);
+    window.addEventListener('resize', wrap.__refloat);
+  }
+}
+function unfloatPanel(panel, wrap) {
+  if (wrap && wrap.__refloat) {
+    window.removeEventListener('scroll', wrap.__refloat, true);
+    window.removeEventListener('resize', wrap.__refloat);
+    wrap.__refloat = null;
+  }
+  if (panel.parentNode === document.body && wrap) wrap.appendChild(panel);
+  panel.style.position = ''; panel.style.top = ''; panel.style.left = '';
+  panel.style.width = ''; panel.style.minWidth = ''; panel.style.maxWidth = ''; panel.style.zIndex = '';
 }
 function upgradeSelect(sel) {
     if (!sel || sel.dataset.selUpgraded === '1') return;
@@ -8140,12 +8162,12 @@ function upgradeSelect(sel) {
       }
     }
     function fire() { sel.dispatchEvent(new Event('change', { bubbles: true })); }
-    function onDocDown(e) { if (!wrap.contains(e.target)) close(); }
+    function onDocDown(e) { if (!wrap.contains(e.target) && !panel.contains(e.target)) close(); }
     function open() {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
-      fitPanel(panel, wrap);
+      floatPanel(panel, wrap);
       if (search) { search.value = ''; filter(''); setTimeout(function () { search.focus(); }, 0); }
       var idx = 0;
       items.forEach(function (it, i) { if (it.getAttribute('aria-selected') === 'true') idx = i; });
@@ -8154,6 +8176,7 @@ function upgradeSelect(sel) {
     }
     function close() {
       panel.hidden = true;
+      unfloatPanel(panel, wrap);
       wrap.classList.remove('is-open');
       trigger.setAttribute('aria-expanded', 'false');
       document.removeEventListener('mousedown', onDocDown, true);
@@ -8326,7 +8349,7 @@ function upgradeDate(inp) {
       sync();
     }
     function pick(key) { setVal(key); close(); trigger.focus(); }
-    function onDocDown(e) { if (!wrap.contains(e.target)) close(); }
+    function onDocDown(e) { if (!wrap.contains(e.target) && !panel.contains(e.target)) close(); }
     function open() {
       var d = parse(inp.value) || new Date();
       curY = d.getFullYear(); curM = d.getMonth();
@@ -8334,12 +8357,13 @@ function upgradeDate(inp) {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
-      fitPanel(panel, wrap);
+      floatPanel(panel, wrap);
       moveCursorByDate(inp.value || todayStr);
       setTimeout(function () { document.addEventListener('mousedown', onDocDown, true); }, 0);
     }
     function close() {
       panel.hidden = true;
+      unfloatPanel(panel, wrap);
       wrap.classList.remove('is-open');
       trigger.setAttribute('aria-expanded', 'false');
       document.removeEventListener('mousedown', onDocDown, true);
@@ -8586,7 +8610,7 @@ function upgradeDateRange(inpS, inpE) {
     function moveCursorByDate(key) {
       for (var i = 0; i < cells.length; i++) { if (cells[i].dataset.date === key) { moveCursor(i); return; } }
     }
-    function onDocDown(e) { if (!wrap.contains(e.target)) close(); }
+    function onDocDown(e) { if (!wrap.contains(e.target) && !panel.contains(e.target)) close(); }
     function open() {
       var d = parse(inpS.value) || new Date();
       /* 每次打开以「已确认值」为起点：上次未确认就关掉的选择自动作废 */
@@ -8596,12 +8620,13 @@ function upgradeDateRange(inpS, inpE) {
       panel.hidden = false;
       wrap.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
-      fitPanel(panel, wrap);
+      floatPanel(panel, wrap);
       moveCursorByDate(inpS.value || todayStr);
       setTimeout(function () { document.addEventListener('mousedown', onDocDown, true); }, 0);
     }
     function close() {
       panel.hidden = true;
+      unfloatPanel(panel, wrap);
       wrap.classList.remove('is-open');
       trigger.setAttribute('aria-expanded', 'false');
       document.removeEventListener('mousedown', onDocDown, true);
@@ -8675,7 +8700,7 @@ function upgradeUI(root) {
     });
     order.forEach(function (g) { if (groups[g].length >= 2) upgradeDateRange(groups[g][0], groups[g][1]); });
   }
-  visit(document);
+  upgradeUI(document);
   if (window.MutationObserver) {
     var timer = null, pending = [];
     new MutationObserver(function (muts) {

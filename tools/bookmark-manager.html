@@ -7,7 +7,7 @@
 <title>精选收藏夹 - W.-Studio Tools</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232B3041'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='13' font-weight='700' letter-spacing='0.5' fill='%23fff'%3EW.%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="_shared/forms.css">
+<link rel="stylesheet" href="_shared/ui-select.css">
 <script src="nav.js"></script>
 <style>
 /* ============================================
@@ -892,7 +892,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
       </div>
       <div class="modal-field">
         <label>分类</label>
-        <select id="editCategory"></select>
+        <select id="editCategory" class="form-select"></select>
       </div>
       <div class="modal-field">
         <label>推荐理由</label>
@@ -919,7 +919,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
     <div class="modal-body">
       <div class="modal-field">
         <label>选择要清除的分类</label>
-        <select id="batchClearCategory"></select>
+        <select id="batchClearCategory" class="form-select"></select>
       </div>
       <div style="padding:12px 14px;border-radius:var(--radius-sm);background:#FFF5E5;border:1px solid rgba(180,95,6,0.18);font-size:13px;color:#B45F06;line-height:1.55;">
         ⚠️ 此操作会删除该分类下的 <strong id="batchClearCount">0</strong> 条收藏，无法撤销。删除后请记得点「保存」更新文件。
@@ -1845,5 +1845,6 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
   }
 })();
 </script>
+<script src="_shared/ui-select.js"></script>
 </body>
 </html>

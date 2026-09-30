@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>构图编辑器 · 尺度可视化 → 提示词 / Region 配置</title>
+<link rel="stylesheet" href="_shared/ui-select.css">
 <style>
   :root{
     --bg:#eef0f3; --panel:#ffffff; --line:#e2e5ea; --line2:#cfd4dc;
@@ -170,7 +171,6 @@
   #toast.show{opacity:1}
 </style>
 <script src="nav.js"></script>
-<link rel="stylesheet" href="_shared/forms.css">
 </head>
 <body>
 <header>
@@ -252,7 +252,7 @@
         <div id="propEmpty" class="empty">未选中区域（在画布上点选一个框）</div>
         <div id="propBody" style="display:none">
           <label class="fld"><span>类型</span>
-            <select id="pType">
+            <select id="pType" class="form-select">
               <option value="subject">主体</option>
               <option value="character">人物</option>
               <option value="sky">空域</option>
@@ -767,5 +767,6 @@ document.getElementById('loadEx').onclick=()=>{
 
 loadLocal(); render(); applyOutFont();
 </script>
+<script src="_shared/ui-select.js"></script>
 </body>
 </html>

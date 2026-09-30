@@ -4,7 +4,7 @@
 <!-- Content Security Policy - WLi Tools（本页额外允许 jsdelivr / googleapis：ONNX Runtime 与 MediaPipe 模型） -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: data: https://cdn.jsdelivr.net https://storage.googleapis.com https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="_shared/forms.css">
+<link rel="stylesheet" href="_shared/ui-select.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>W.-证件照排版打印</title>
@@ -42,6 +42,8 @@
   .ctl-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
   .ctl { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); color: var(--ink-secondary); flex: none; }
   .ctl label { color: var(--ink-tertiary); white-space: nowrap; }
+  /* 统一组件：.sel 在 .ctl 内联容器里撑开，宽度与原生 select 一致 */
+  .ctl .sel { flex: 1 1 150px; min-width: 130px; }
   input[type="number"] {
     height: 32px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);
     padding: 0 var(--space-2); font-size: var(--fs-sm); color: var(--ink); background: var(--bg-white);
@@ -214,7 +216,7 @@
     <!-- 3 裁切（含上传占位 + 紧凑工具条） -->
     <section class="card">
       <div class="crop-toolbar">
-        <div class="ctl"><label for="spec">规格</label><select id="spec"></select></div>
+        <div class="ctl"><label for="spec">规格</label><select id="spec" class="form-select"></select></div>
         <button class="mini-btn" id="btnReset">复位</button>
         <label class="switch"><input type="checkbox" id="guides" checked> 参考线</label>
       </div>
@@ -251,9 +253,9 @@
     <!-- 4 排版（含导出） -->
     <section class="card">
       <div class="layout-main">
-        <div class="ctl"><label for="paper">纸张</label><select id="paper"></select></div>
+        <div class="ctl"><label for="paper">纸张</label><select id="paper" class="form-select"></select></div>
         <div class="ctl"><label for="maxCols">每行</label>
-          <select id="maxCols">
+          <select id="maxCols" class="form-select">
             <option value="0">自动</option>
             <option value="1">1 张</option>
             <option value="2" selected>2 张</option>
@@ -262,7 +264,7 @@
           </select>
         </div>
         <div class="ctl"><label for="dpi">DPI</label>
-          <select id="dpi">
+          <select id="dpi" class="form-select">
             <option value="300" selected>300</option>
             <option value="350">350</option>
             <option value="600">600</option>
@@ -293,7 +295,7 @@
         <button class="mini-btn" id="btnAdd">＋ 添加图片</button>
         <div class="ctl"><label for="kGap">格间距</label><input type="number" id="kGap" value="0" min="0" max="20" step="0.5" class="num-mm"> mm</div>
         <div class="ctl"><label for="kOrient">方向</label>
-          <select id="kOrient">
+          <select id="kOrient" class="form-select">
             <option value="p" selected>竖版</option>
             <option value="l">横版</option>
           </select>
@@ -310,7 +312,7 @@
     <section class="card">
       <div class="layout-main">
         <div class="ctl"><label for="kDpi">DPI</label>
-          <select id="kDpi">
+          <select id="kDpi" class="form-select">
             <option value="300" selected>300</option>
             <option value="350">350</option>
             <option value="600">600</option>
@@ -2016,5 +2018,6 @@ window.IDPhotoCore = (function () {
   restoreState();
 })();
 </script>
+<script src="_shared/ui-select.js"></script>
 </body>
 </html>

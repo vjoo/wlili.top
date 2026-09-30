@@ -4,7 +4,7 @@
 <!-- Content Security Policy - WLi Tools -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="_shared/forms.css">
+<link rel="stylesheet" href="_shared/ui-select.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>W.-3D模型预览</title>
@@ -102,24 +102,31 @@
   background: rgba(255,255,255,0.8);
   backdrop-filter: blur(8px);
   border-radius: var(--radius-sm);
-  overflow: hidden;
+  /* 不能用 overflow:hidden —— 会裁掉 .sel 组件的下拉面板；圆角改由子元素各自承担 */
+  overflow: visible;
   height: 32px;
 }
-.export-group select {
+/* 导出格式改用全站统一组件 .sel；触发器无边框以融入工具条 */
+.export-group .sel { display: flex; align-items: stretch; height: 100%; }
+.export-group .sel-trigger {
   border: none;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
   background: transparent;
-  padding: 0 10px;
+  padding: 0 26px 0 10px;
   font-size: 13px;
   color: var(--ink-secondary);
-  cursor: pointer;
-  outline: none;
   font-family: inherit;
+  min-height: 0;
   height: 100%;
   border-right: 1px solid rgba(0,0,0,0.08);
+  box-shadow: none;
 }
-.export-group select:hover { background: rgba(255,255,255,0.5); }
+.export-group .sel-trigger:hover { background: rgba(255,255,255,0.5); border-color: transparent; }
+.export-group .sel.is-open .sel-trigger,
+.export-group .sel-trigger:focus { box-shadow: none; border-color: transparent; }
 .export-group button {
   border: none;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   background: var(--fill-black);
   color: var(--fill-white);
   padding: 0 14px;
@@ -274,7 +281,7 @@
         <div class="viewport-toolbar">
           <div class="viewport-toolbar-left">
             <div class="export-group">
-              <select id="exportFormat">
+              <select id="exportFormat" class="form-select">
                 <option value="glb">GLB</option>
                 <option value="gltf">GLTF</option>
                 <option value="obj">OBJ</option>
@@ -1456,5 +1463,6 @@ document.addEventListener('visibilitychange', () => {
 });
 </script>
 
+<script src="_shared/ui-select.js"></script>
 </body>
 </html>

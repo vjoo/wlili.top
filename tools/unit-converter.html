@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>W.-在线换算工具</title>
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="_shared/forms.css">
+<link rel="stylesheet" href="_shared/ui-select.css">
 <style>
 /* ============================================
    WLi Tools - 在线工具集
@@ -158,35 +158,22 @@
     display: flex;
     align-items: center;
   }
-  .unit-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+  /* 单位选择改用全站统一组件 .sel（_shared/ui-select.css），
+     触发器保留「深色小胶囊」外观以贴合输入框，展开面板走组件通用样式 */
+  .unit-select-wrapper .sel-trigger {
     background: var(--fill-black);
     color: var(--fill-white);
     border: none;
     border-radius: var(--radius-sm);
-    padding: 6px 28px 6px 10px;
+    padding: 4px 26px 4px 10px;
     font-size: 13px;
-    font-family: inherit;
     font-weight: 500;
-    cursor: pointer;
-    outline: none;
-    transition: opacity 0.2s;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    -webkit-tap-highlight-color: transparent;
+    min-width: auto;
   }
-  .unit-select:focus {
-    box-shadow: none;
-  }
-  .unit-select::-ms-expand { display: none; }
-  .unit-select:hover { opacity: 0.85; }
-  .unit-select option {
-    background: var(--fill-black);
-    color: var(--fill-white);
-  }
+  .unit-select-wrapper .sel-trigger:hover { border-color: transparent; }
+  .unit-select-wrapper .sel.is-open .sel-trigger,
+  .unit-select-wrapper .sel-trigger:focus { border-color: transparent; box-shadow: none; }
+  .unit-select-wrapper .sel-chevron { color: var(--fill-white); right: 8px; width: 12px; height: 12px; }
 
   /* ===== Price Converter ===== */
   .price-row {
@@ -421,7 +408,7 @@
               <div class="input-wrapper">
                 <input type="number" class="converter-input" id="unitFrom" placeholder="输入数值" step="any">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="unitFromSelect"></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="unitFromSelect"></select>
                 </div>
               </div>
             </div>
@@ -433,7 +420,7 @@
               <div class="input-wrapper">
                 <input type="text" class="converter-input result" id="unitTo" readonly placeholder="结果">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="unitToSelect"></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="unitToSelect"></select>
                 </div>
               </div>
             </div>
@@ -462,7 +449,7 @@
               <div class="input-wrapper">
                 <input type="number" class="converter-input" id="currencyFrom" placeholder="输入金额" step="any">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="currencyFromSelect"></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="currencyFromSelect"></select>
                 </div>
               </div>
             </div>
@@ -474,7 +461,7 @@
               <div class="input-wrapper">
                 <input type="text" class="converter-input result" id="currencyTo" readonly placeholder="结果">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="currencyToSelect"></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="currencyToSelect"></select>
                 </div>
               </div>
             </div>
@@ -508,7 +495,7 @@
               <div class="input-wrapper">
                 <input type="number" class="converter-input" id="weightFrom" placeholder="输入数值" step="any">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="weightFromSelect"></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="weightFromSelect"></select>
                 </div>
               </div>
             </div>
@@ -520,7 +507,7 @@
               <div class="input-wrapper">
                 <input type="text" class="converter-input result" id="weightTo" readonly placeholder="结果">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="weightToSelect"></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="weightToSelect"></select>
                 </div>
               </div>
             </div>
@@ -557,7 +544,7 @@
               <div class="input-wrapper">
                 <input type="number" class="converter-input" id="priceTotal" placeholder="输入金额" step="any">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="priceCurrencySelect"></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="priceCurrencySelect"></select>
                 </div>
               </div>
             </div>
@@ -568,7 +555,7 @@
               <div class="input-wrapper">
                 <input type="number" class="converter-input" id="priceQuantity" placeholder="输入数量" step="any">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="priceQuantitySelect"></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="priceQuantitySelect"></select>
                 </div>
               </div>
             </div>
@@ -579,7 +566,7 @@
               <div class="input-wrapper">
                 <input type="text" class="converter-input result" id="priceUnitPrice" readonly placeholder="自动计算">
                 <div class="unit-select-wrapper">
-                  <select class="unit-select" id="priceUnitSelect" disabled></select>
+                  <select class="form-select" data-sel-compact data-sel-inline id="priceUnitSelect" disabled></select>
                 </div>
               </div>
             </div>
@@ -1284,5 +1271,6 @@
 
 })();
 </script>
+<script src="_shared/ui-select.js"></script>
 </body>
 </html>

@@ -8,6 +8,7 @@
     <title>W.-IP形象生成器</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="_shared/ui-select.css">
     <style>
 /* ============================================
    WLi Tools - 在线工具集
@@ -208,7 +209,6 @@
             margin-left: 4px;
         }
         .field-input,
-        .field-select,
         .field-textarea {
             width: 100%;
             padding: 10px 14px;
@@ -222,7 +222,6 @@
             transition: all 0.2s;
         }
         .field-input:focus,
-        .field-select:focus,
         .field-textarea:focus {
             border-color: var(--border-focus);
             box-shadow: 0 0 0 3px var(--accent-glow);
@@ -232,14 +231,7 @@
             min-height: 56px;
             line-height: 1.5;
         }
-        .field-select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 34px;
-        }
+        /* select 已改用全站统一组件 .sel（_shared/ui-select.css），外观与交互由组件接管 */
 
         /* ── Color Picker ── */
         .color-mode-toggle {
@@ -267,7 +259,7 @@
             display: flex;
             gap: 8px;
         }
-        .color-selects .field-select { flex: 1; }
+        .color-selects .sel { flex: 1; }
         .color-hex-wrap {
             display: none;
         }
@@ -493,8 +485,11 @@
 
         /* ── Animations ── */
         @keyframes fadeUp {
+            /* 末帧不要声明 transform：否则 animation-fill-mode:both 会在动画结束后
+               保留 transform，使 .card 变成层叠上下文，把 .sel 的下拉面板困在卡内、
+               被后面的卡遮住。transform 不在末帧即回落为 none（仍保留上滑过渡）。 */
             from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
+            to { opacity: 1; }
         }
 
         /* ── Scrollbar ── */
@@ -515,7 +510,6 @@
         }
     </style>
     <script src="nav.js"></script>
-<link rel="stylesheet" href="_shared/forms.css">
 </head>
 <body>
 
@@ -594,12 +588,12 @@
                     <button class="color-mode-btn" data-mode="hex">自定义色值</button>
                 </div>
                 <div class="color-selects" id="mainColorSelects">
-                    <select class="field-select" id="c1-main">
+                    <select class="form-select" id="c1-main">
                         <option value="cool">冷色系</option>
                         <option value="warm">暖色系</option>
                         <option value="neutral">中性色</option>
                     </select>
-                    <select class="field-select" id="c2-main"></select>
+                    <select class="form-select" id="c2-main"></select>
                 </div>
                 <div class="color-hex-wrap" id="mainColorHex">
                     <div class="color-hex-input">
@@ -616,12 +610,12 @@
                     <button class="color-mode-btn" data-mode="hex">自定义色值</button>
                 </div>
                 <div class="color-selects" id="brandColorSelects">
-                    <select class="field-select" id="c1-brand">
+                    <select class="form-select" id="c1-brand">
                         <option value="cool">冷色系</option>
                         <option value="warm">暖色系</option>
                         <option value="neutral">中性色</option>
                     </select>
-                    <select class="field-select" id="c2-brand"></select>
+                    <select class="form-select" id="c2-brand"></select>
                 </div>
                 <div class="color-hex-wrap" id="brandColorHex">
                     <div class="color-hex-input">
@@ -633,7 +627,7 @@
 
             <div class="field">
                 <label class="field-label">体态比例</label>
-                <select class="field-select" id="bodyShape">
+                <select class="form-select" id="bodyShape">
                     <option value="kid">Q版幼崽 · 3头身</option>
                     <option value="teen" selected>标准少年 · 5~6头身</option>
                     <option value="tall">修长高挑 · 7~8头身</option>
@@ -641,7 +635,7 @@
             </div>
             <div class="field">
                 <label class="field-label">性别</label>
-                <select class="field-select" id="gender">
+                <select class="form-select" id="gender">
                     <option value="男" selected>男</option>
                     <option value="女">女</option>
                     <option value="无性别">无性别</option>
@@ -1125,5 +1119,6 @@ window.onload = () => {
 };
 </script>
 
+<script src="_shared/ui-select.js"></script>
 </body>
 </html>
