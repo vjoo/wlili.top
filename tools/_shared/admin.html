@@ -1798,7 +1798,9 @@ function PAPP_RM(id){
 /* —— 打印参数预设（原 renderPresetsModule / viewPresetDetail / openPresetModal / savePreset / deletePreset） —— */
 function viewFilamentPresets(){
   const data = PSET;
-  return `${greetHead('打印参数预设','','<button class="add" title="新增预设" onclick="PAPP.openForm(null)">'+ADD_IC+'</button>')}
+  const patchBar = (window.BAMBU_PATCH ? '<button class="btn" title="导入外部 AI 产出的 patch JSON" onclick="PAPP.importDialog()">导入 JSON</button> ' +
+    '<button class="btn" title="导出 260 项字段字典，给外部 AI 用" onclick="PAPP.copyDict()">字段字典</button> ' : '');
+  return `${greetHead('打印参数预设','',patchBar+'<button class="add" title="新增预设" onclick="PAPP.openForm(null)">'+ADD_IC+'</button>')}
   <div class="grid"><div class="card c12">
     <div class="fbar">
       <span class="flabel">共 ${data.length} 条</span>
@@ -8644,6 +8646,7 @@ function upgradeUI(root) {
 <script src="bambu-params-schema.js"></script>
 <script src="bambu-process-rules.js"></script>
 <script src="bambu-pattern-icons.js"></script>
+<script src="bambu-preset-patch.js"></script>
 <script src="bambu-preset-editor.js"></script>
 </body>
 </html>

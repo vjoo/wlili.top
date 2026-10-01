@@ -1027,6 +1027,25 @@
       ".bp-vv b{font-weight:600;color:var(--muted);font-size:11.5px;margin-right:6px}" +
       ".bp-readonly .bp-pic svg{width:18px;height:18px}" +
       ".bp-row.ro.modified .bp-label,.bp-row.ro.modified .bp-ro-val{color:var(--bp-warn)}" +
+      /* —— 导入预览（稀疏 patch）——
+         ⚠ 预览挂在弹窗里、不是 .bp-editor 的子节点，--bp-warn 不会继承过来，
+         必须在卡片根上重新定义（同 .bp-readonly 那个 bug） */
+      ".bp-imp-card{--bp-warn:var(--warning,#f59e0b);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:12px;background:var(--card)}" +
+      ".bp-imp-name{font-size:14px;font-weight:700;color:var(--ink)}" +
+      ".bp-imp-src{font-size:12px;color:var(--muted);margin-top:3px}" +
+      ".bp-imp-src a{color:var(--accent);text-decoration:none}" +
+      ".bp-imp-note{font-size:12.5px;color:var(--ink);margin-top:6px;line-height:1.5}" +
+      ".bp-imp-warn{font-size:12px;color:var(--bp-warn);margin-top:6px}" +
+      ".bp-imp-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;font-size:13px;color:var(--ink);cursor:pointer}" +
+      ".bp-imp-row:hover{background:var(--panel)}" +
+      ".bp-imp-row.warn{color:var(--bp-warn)}" +
+      ".bp-imp-from{color:var(--muted);font-size:12px}" +
+      ".bp-imp-val{color:var(--accent);font-weight:600}" +
+      ".bp-imp-why{color:var(--muted);font-size:11.5px}" +
+      ".bp-tag{font-size:11px;padding:1px 6px;border-radius:999px;background:var(--panel);color:var(--muted);flex:none}" +
+      ".bp-tag.fixed{background:var(--accent-light,#eef7e2);color:var(--accent)}" +
+      ".bp-tag.warn{background:var(--warning-bg,#fff7e6);color:var(--bp-warn)}" +
+      ".bp-imp-ign{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted);line-height:1.6}" +
       /* 视口不够宽时退回单列，避免控件被组容器裁掉 */
       "@media (max-width:960px){.bp-cols{columns:1;column-rule:none}}";
     document.head.appendChild(s);
@@ -1107,10 +1126,192 @@
     document.getElementById("fmodalBox").innerHTML =
       '<div class="fmodal-head"><div class="fmodal-title">预设详情</div><button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
       '<div class="fmodal-body">' + h + "</div>" +
-      '<div class="fmodal-foot"><button class="btn" onclick="closeModal();setTimeout(function(){PAPP.openForm(\'' + id + '\')},100)">编辑</button><button class="btn" onclick="closeModal()">关闭</button></div>';
+      '<div class="fmodal-foot">' +
+      (PATCH ? '<button class="btn" onclick="PAPP.exportPatch(\'' + id + '\')">导出 patch</button>' : "") +
+      '<button class="btn" onclick="closeModal();setTimeout(function(){PAPP.openForm(\'' + id + '\')},100)">编辑</button><button class="btn" onclick="closeModal()">关闭</button></div>';
     document.getElementById("fmodalBox").style.width = "min(900px,95vw)";
     document.getElementById("fmodalMask").classList.add("show");
     bindReadOnly(document.querySelector(".bp-readonly"));
   };
+
+  /* ============================================================
+   * 稀疏 patch 导入 / 导出（配合 bambu-preset-patch.js）
+   *   外部 AI 按「字段字典 + 提示词」产出只含改动项的小 JSON，
+   *   这里归一化 → 预览三档（有效 / 已修正 / 存疑）→ 确认后写入。
+   * ============================================================ */
+  var PATCH = window.BAMBU_PATCH || null;
+  function copyText(txt) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt);
+        return true;
+      }
+    } catch (e) { /* 落到兜底 */ }
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = txt;
+      ta.style.position = "fixed"; ta.style.left = "-9999px";
+      document.body.appendChild(ta); ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e2) { return false; }
+  }
+  PAPP.copyDict = function () {
+    if (!PATCH) { toast("字段字典模块未加载"); return; }
+    // 全量 260 项；体积大，直接下载成文件更稳（剪贴板在部分浏览器会截断）
+    var txt = PATCH.dictJSON();
+    var ok = (txt.length < 200000) ? copyText(txt) : false;
+    if (!ok) {
+      var blob = new Blob([txt], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "bambu-fields-dict.json";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      toast("字典已下载为 bambu-fields-dict.json");
+    } else {
+      toast("字段字典已复制（260 项）");
+    }
+  };
+  PAPP.exportPatch = function (id) {
+    if (!PATCH) { toast("导入模块未加载"); return; }
+    var it = PSET.find(function (p) { return p.id === id; });
+    if (!it) return;
+    var txt = JSON.stringify(PATCH.exportPatch(it), null, 2);
+    if (copyText(txt)) toast("已复制 patch JSON（" + Object.keys(PATCH.exportPatch(it).params).length + " 项改动）");
+    else toast("复制失败，请手动选择内容");
+  };
+
+  var impState = null;
+  PAPP.importDialog = function () {
+    if (!PATCH) { toast("导入模块未加载"); return; }
+    impState = null;
+    var opts = PSET.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + "</option>"; }).join("");
+    document.getElementById("fmodalBox").innerHTML =
+      '<div class="fmodal-head"><div class="fmodal-title">导入预设 JSON</div>' +
+      '<button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
+      '<div class="fmodal-body">' +
+      '<div class="fgroup"><label>粘贴 patch JSON（或选择 .json 文件）</label>' +
+      '<textarea id="bpImpText" rows="8" placeholder=\'{"format":"wlili-preset-patch/1","name":"…","params":{"support_top_z_distance":"0"}}\'></textarea>' +
+      '<input type="file" id="bpImpFile" accept=".json,application/json" style="margin-top:8px;font-size:12px"></div>' +
+      '<div id="bpImpPrev"></div>' +
+      "</div>" +
+      '<div class="fmodal-foot">' +
+      '<select id="bpImpTarget" class="form-select" style="width:auto;max-width:220px"><option value="">新建预设</option>' + opts + "</select>" +
+      '<button class="btn" onclick="closeModal()">取消</button>' +
+      '<button class="btn primary" id="bpImpParse">解析</button>' +
+      '<button class="btn primary" id="bpImpGo" style="display:none">导入</button>' +
+      "</div>";
+    document.getElementById("fmodalBox").style.width = "min(760px,95vw)";
+    document.getElementById("fmodalMask").classList.add("show");
+    var box = document.getElementById("fmodalBox");
+    box.querySelector("#bpImpParse").addEventListener("click", function () { impParse(); });
+    box.querySelector("#bpImpFile").addEventListener("change", function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var ta = document.getElementById("bpImpText");
+        if (ta) ta.value = String(fr.result || "");
+        impParse();
+      };
+      fr.readAsText(f);
+    });
+    box.querySelector("#bpImpGo").addEventListener("click", function () { impCommit(); });
+  };
+
+  function impParse() {
+    var ta = document.getElementById("bpImpText");
+    var raw;
+    try { raw = JSON.parse((ta && ta.value) || "{}"); }
+    catch (e) { toast("JSON 解析失败：" + (e && e.message)); return; }
+    var res = PATCH.normalize(raw);
+    if (res.errors.length) toast(res.errors[0]);
+    if (!res.presets.length) { toast("没有可导入的内容"); return; }
+    impState = { res: res, checked: {} };
+    res.presets.forEach(function (p, pi) {
+      impState.checked[pi] = {};
+      p.items.forEach(function (it, ii) { impState.checked[pi][ii] = (it.status !== "warn"); });
+    });
+    document.getElementById("bpImpPrev").innerHTML = res.presets.map(impPresetHTML).join("");
+    document.getElementById("bpImpPrev").querySelectorAll("[data-imp-item]").forEach(function (el) {
+      el.addEventListener("change", function () {
+        var pi = +el.getAttribute("data-p"), ii = +el.getAttribute("data-i");
+        impState.checked[pi][ii] = el.checked;
+        impRefreshCount();
+      });
+    });
+    var go = document.getElementById("bpImpGo");
+    if (go) go.style.display = "";
+    impRefreshCount();
+  }
+  function impRefreshCount() {
+    var n = 0;
+    if (impState) impState.res.presets.forEach(function (p, pi) {
+      p.items.forEach(function (it, ii) { if (impState.checked[pi][ii]) n++; });
+    });
+    var go = document.getElementById("bpImpGo");
+    if (go) go.textContent = "导入（" + n + " 项）";
+  }
+  function impPresetHTML(p, pi) {
+    var head = '<div class="bp-imp-card">' +
+      '<div class="bp-imp-name">' + esc(p.name || ("未命名 " + (pi + 1))) + "</div>" +
+      (p.source.url ? '<div class="bp-imp-src">来源：<a href="' + esc(p.source.url) + '" target="_blank" rel="noopener">' + esc(p.source.title || p.source.url) + "</a>" + (p.source.fetchedAt ? " · " + esc(p.source.fetchedAt) : "") + "</div>" : "") +
+      (p.machine || p.nozzle || (p.filament && p.filament.length) ? '<div class="bp-imp-src">适用：' + esc([p.machine, p.nozzle ? (p.nozzle + " 喷嘴") : "", (Array.isArray(p.filament) ? p.filament.join("/") : p.filament)].filter(Boolean).join(" · ")) + "</div>" : "") +
+      (p.notes ? '<div class="bp-imp-note">' + esc(p.notes) + "</div>" : "") +
+      (p.caveats.length ? '<div class="bp-imp-warn">提醒：' + p.caveats.map(esc).join("；") + "</div>" : "");
+    var rows = p.items.map(function (it, ii) {
+      var tag = it.status === "ok" ? "" : (it.status === "fixed" ? '<span class="bp-tag fixed">已修正</span>' : '<span class="bp-tag warn">存疑</span>');
+      var from = it.from ? '<span class="bp-imp-from">' + esc(it.from) + ' → </span>' : "";
+      return '<label class="bp-imp-row' + (it.status === "warn" ? " warn" : "") + '">' +
+        '<input type="checkbox" data-imp-item data-p="' + pi + '" data-i="' + ii + '"' + (it.status !== "warn" ? " checked" : "") + ">" +
+        from + "<b>" + esc(it.label) + "</b>" +
+        '<span class="bp-imp-val">' + esc(it.disp || it.value) + "</span>" + tag +
+        (it.note ? '<span class="bp-imp-why">' + esc(it.note) + "</span>" : "") +
+        "</label>";
+    }).join("");
+    var ign = p.ignored.length ? '<div class="bp-imp-ign"><b>未导入 ' + p.ignored.length + " 项</b>" +
+      p.ignored.map(function (x) { return '<div>· ' + esc(x.from) + "：" + esc(x.reason) + "</div>"; }).join("") + "</div>" : "";
+    var empty = (!p.items.length && !p.ignored.length) ? '<div class="bp-imp-ign">这条没有任何可识别的参数</div>' : "";
+    return head + (rows || empty) + ign + "</div>";
+  }
+  function impCommit() {
+    if (!impState) return;
+    var def = defaultsObj();
+    var targetId = (document.getElementById("bpImpTarget") || {}).value || "";
+    var target = targetId ? PSET.find(function (p) { return p.id === targetId; }) : null;
+    var added = 0, merged = 0;
+    // 导入前自动备份（万一导入错了可以恢复）
+    try { localStorage.setItem("bambu_presets_bak", JSON.stringify(PSET)); } catch (e) { }
+    impState.res.presets.forEach(function (p, pi) {
+      var vals = {};
+      Object.keys(def).forEach(function (k) { vals[k] = def[k]; });
+      var n = 0;
+      p.items.forEach(function (it, ii) { if (impState.checked[pi][ii]) { vals[it.key] = it.value; n++; } });
+      if (!n) return;
+      var base = target || { id: pgenId("preset"), name: p.name || ("导入预设 " + (pi + 1)), createdDate: new Date().toISOString() };
+      var preset = {
+        id: base.id,
+        name: (target ? target.name : (p.name || base.name)),
+        createdDate: base.createdDate || new Date().toISOString(),
+        notes: (target ? target.notes : "") || p.notes || "",
+        machine: p.machine || base.machine || "",
+        filamentType: (Array.isArray(p.filament) ? p.filament.join("/") : p.filament) || base.filamentType || "",
+        subType: base.subType || "",
+        bpValues: vals,
+        importMeta: { title: p.source.title, url: p.source.url, fetchedAt: p.source.fetchedAt, nozzle: p.nozzle, caveats: p.caveats, raw: p.items.filter(function (it, ii) { return impState.checked[pi][ii]; }) }
+      };
+      preset.processParams = Object.keys(vals).filter(function (k) { return squash(vals[k]) !== squash(def[k]); })
+        .map(function (k) { return { name: (key2label(k) || k), value: vals[k] }; });
+      var idx = PSET.findIndex(function (x) { return x.id === preset.id; });
+      if (idx === -1) { PSET.push(preset); added++; } else { PSET[idx] = preset; merged++; }
+      // 多条导入时后续各自新建，不全部并进同一条
+      target = null;
+    });
+    AD.save("bambu_presets");
+    closeModal();
+    renderMain();
+    toast("已导入 " + added + " 条" + (merged ? " · 合并 " + merged + " 条" : "") + "（已自动备份）");
+  }
 
 })();
