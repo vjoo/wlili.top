@@ -1210,9 +1210,13 @@
       '<div class="bp-imp-card" style="margin-bottom:0">' +
       '<div class="bp-imp-note"><b>拿到回答后怎么用：</b>把 AI 回复里那段 JSON（从 <code>{</code> 到最后一个 <code>}</code>，不要含 ``` 围栏）复制，' +
       '回到本页点工具栏「<b>导入预设</b>」粘贴 → 预览里逐项核对 → 确认导入。' +
-      '字段名对不上 / 值超限的项会自动标黄默认不勾选，不会污染你的预设。</div></div>' +
+      '字段名对不上 / 值超限的项会自动标黄默认不勾选，不会污染你的预设。</div>' +
+      '<div class="bp-imp-note" style="margin-top:6px;color:var(--muted)">问题类型里选「<b>全部 260 项</b>」＝把整本字典一起给 AI，<b>只在问题横跨多个主题时</b>才需要 —— 参数给得越多，AI 挑错的概率越高。</div>' +
       "</div>" +
       '<div class="fmodal-foot">' +
+      // 全量字典对「问 AI」流程是冗余的（弹窗里嵌的就是同一份，只是更聚焦），
+      // 但跨主题多轮提问 / 喂给别的工具 / 让 AI 做参数文档时仍要用，收在这里当次要入口
+      '<button class="btn" style="margin-right:auto;font-size:12.5px;opacity:.9" title="只导出 260 项参数字典，不含问题描述与输出格式 —— 用于跨主题多轮提问、或喂给别的工具/脚本" onclick="PAPP.copyDict()">仅复制字典</button>' +
       '<button class="btn" onclick="closeModal()">关闭</button>' +
       '<button class="btn" onclick="PAPP.aiGenerate()">生成</button>' +
       '<button class="btn primary" onclick="PAPP.aiCopy()">复制提示词</button>' +

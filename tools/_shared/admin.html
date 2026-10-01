@@ -1799,8 +1799,7 @@ function PAPP_RM(id){
 function viewFilamentPresets(){
   const data = PSET;
   const patchBar = (window.BAMBU_PATCH ? '<button class="btn primary" title="按问题类型挑选参数、生成一条可直接粘给 AI 的提示词" onclick="PAPP.aiDialog()">问 AI</button>' +
-    '<button class="btn" title="粘贴 AI 产出的参数 JSON，预览核对后加入预设列表" onclick="PAPP.importDialog()">导入预设</button>' +
-    '<button class="btn" title="导出 260 项全量字段字典，给外部 AI 用" onclick="PAPP.copyDict()">字段字典</button>' : '');
+    '<button class="btn" title="粘贴 AI 产出的参数 JSON，预览核对后加入预设列表" onclick="PAPP.importDialog()">导入预设</button>' : '');
   /* ⚠ .greet 是 space-between：多个按钮若作为直接子元素会被平摊撑满整行（截图反馈），
      必须包进一个 flex 组，让标题和按钮组各占一头、按钮组内部靠拢 */
   const headActs = '<div class="bp-head-acts" style="display:flex;gap:10px;align-items:center">' + patchBar +
