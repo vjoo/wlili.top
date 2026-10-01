@@ -1248,6 +1248,18 @@ function recentRecords(){
   (PROMPTS||[]).forEach(function(p){ rows.push({date:p.date||'', mod:'AI 提示词库', act:'提示词「'+(p.title||'').slice(0,16)+'」', st:p.published?'已发布':'草稿', ok:!!p.published}); });
   ((PRAW&&PRAW.records)||[]).forEach(function(r){ rows.push({date:r.date||'', mod:'打印管理器', act:'打印 '+(r.pages||0)+' 页 · '+(r.type==='order'?'订单 ¥'+(r.revenue||0).toFixed(2):'自用'), st:r.type==='order'?'订单':'自用', ok:r.type==='order'}); });
   ((SPDATA&&SPDATA.patterns)||[]).forEach(function(p){ if(p.updatedAt||p.createdAt) rows.push({date:fmtDate(p.updatedAt||p.createdAt), mod:'四方连图素材库', act:'素材「'+(p.name||'').slice(0,16)+'」', st:p.platform||'doubao', ok:true}); });
+  /* 备份 / 导入是本机操作，不落在任何业务数据里 —— 单独从 wli_dh_last 取（见 DH._mark）。
+     注：只保留**最近一次**的时间，不是历史列表；要完整审计需另建日志结构。 */
+  try{
+    var L = JSON.parse(localStorage.getItem('wli_dh_last') || '{}') || {};
+    var hhmm = function(iso){
+      var d = new Date(iso); if(isNaN(d.getTime())) return '';
+      var p = function(x){ return (x < 10 ? '0' : '') + x; };
+      return ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    };
+    if(L.backupAt) rows.push({date:fmtDate(L.backupAt), mod:'数据总管', act:'全量备份' + (L.backupName ? '「' + L.backupName + '」' : '') + hhmm(L.backupAt), st:'导出', ok:true});
+    if(L.importAt) rows.push({date:fmtDate(L.importAt), mod:'数据总管', act:'导入数据' + (L.importName ? '（' + L.importName + '）' : '') + hhmm(L.importAt), st:'导入', ok:true});
+  }catch(e){}
   return rows.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
 }
 
