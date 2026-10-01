@@ -321,6 +321,41 @@ body {
         <span class="card-badge">即将上线</span>
       </a>
 
+      <!-- 后台入口（默认 display:none，JS 检测到本机/局域网环境才显示；
+           外网部署时后台依赖的 /api 通道不存在，也不应暴露给访客） -->
+      <a class="card" href="./tools/_shared/admin.html" style="display:none">
+        <div class="card-header">
+          <div class="card-title">综合管理后台</div>
+          <div class="card-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><path d="M15 12H3"/></svg>
+          </div>
+        </div>
+        <div class="card-desc">打印预设、3D 耗材、AI 提示词、打印记账等全部工具数据的管理与备份</div>
+        <span class="card-badge">本地</span>
+      </a>
+
+      <a class="card" href="portfolio/cases/_shared/admin.html" style="display:none">
+        <div class="card-header">
+          <div class="card-title">模块建站后台</div>
+          <div class="card-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><path d="M15 12H3"/></svg>
+          </div>
+        </div>
+        <div class="card-desc">组件化建站平台的页面管理，板块内容、导航主题与站点设置的编辑发布</div>
+        <span class="card-badge">本地</span>
+      </a>
+
+      <a class="card" href="./zhonglele/admin.html" style="display:none">
+        <div class="card-header">
+          <div class="card-title">众乐乐后台</div>
+          <div class="card-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><path d="M15 12H3"/></svg>
+          </div>
+        </div>
+        <div class="card-desc">首页内容编辑，音乐媒体库的内容维护与发布</div>
+        <span class="card-badge">本地</span>
+      </a>
+
     </div>
   </div>
 </section>
@@ -334,6 +369,21 @@ body {
 <script>
 (function() {
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ===== 后台入口：仅本机 / 局域网可见，外网部署自动隐藏 =====
+     后台依赖本地 server.py 的 /api 通道，公网上既用不了也不应暴露。
+     部署上线（正式域名）时这三张卡片保持 display:none。
+     放在 GSAP 动画之前执行：显示后与前三张卡片一起参与入场 stagger。 */
+  (function() {
+    var h = location.hostname;
+    var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '' ||
+                  /^(192\.168|10|172\.(1[6-9]|2\d|3[01]))\./.test(h) || /\.local$/.test(h);
+    if (!isLocal) return;
+    var cards = document.querySelectorAll('a.card .card-badge');
+    cards.forEach(function(b) {
+      if (b.textContent.trim() === '本地') b.closest('a.card').style.display = '';
+    });
+  })();
 
   /* ===== Aurora 光晕流动动画 =====
      极度温和的背景流动（16-30s 周期），不会引起前庭不适。
