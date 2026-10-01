@@ -1594,33 +1594,26 @@ function viewDataHub(){
     {key:'prompts',  tool:'AI 提示词库',    file:'tools/prompt-library-data.json', api:'/api/prompts',  src:'原「数据安全」面板迁入'},
     {key:'seamless', tool:'四方连图素材库', file:'tools/seamless-pattern-data.json', api:'/api/seamless', src:'原「数据同步」迁入 · 体积最大'},
     {key:'bookmarks',tool:'精选收藏夹',     file:'data/bookmarks.json',            api:'/api/bookmarks', src:'原「同步设置」迁入 · 清空保留分类'},
-    {key:'site',     tool:'站点内容',       file:'portfolio/cases/&lt;页&gt;/content.json · cases.json · zhonglele/content.json', api:'/api/pages 等多个',
-     src:'作品集各页内容 + 导航/主题/加载动画/底部联系 + 钟乐乐首页 · 不含图片（图片请复制 uploads 目录）', noclear:true},
   ].map(r=>`<tr>
       <td><b>${r.tool}</b><div style="font-size:11.5px;color:var(--muted);margin-top:2px">${r.src}</div></td>
       <td style="color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:12px">${r.file}</td>
       <td><span class="api-badge" style="margin-left:0">${r.api}</span></td>
       <td style="white-space:nowrap;text-align:right"><span id="dh-size-${r.key}">…</span></td>
-      <td style="white-space:nowrap;text-align:right"><button class="mini-btn" onclick="DH.exportOne('${r.key}')">导出</button> <button class="mini-btn" onclick="DH.importOne('${r.key}')">导入</button>${r.noclear ? '' : ' <button class="mini-btn" style="color:#e5484d" onclick="DH.clearOne(\'' + r.key + '\')">清空</button>'}</td>
+      <td style="white-space:nowrap;text-align:right"><button class="mini-btn" onclick="DH.exportOne('${r.key}')">导出</button> <button class="mini-btn" onclick="DH.importOne('${r.key}')">导入</button> <button class="mini-btn" style="color:#e5484d" onclick="DH.clearOne('${r.key}')">清空</button></td>
     </tr>`).join('');
+  /* 注：作品集 / 钟乐乐的站点内容不在此表 —— 它们有各自的后台，备份归各自后台管 */
   setTimeout(function(){ if(window.DH) DH.sizes(); }, 0);
+  /* ⚠ .greet 是 space-between：头部多个按钮必须包进一个 flex 组（参照「打印参数预设」页的教训） */
+  const dhActs = '<div style="display:flex;gap:10px;align-items:center">' +
+    '<button class="btn" title="选择此前导出的数据包，覆盖恢复各工具数据" onclick="DH.importOne(\'all\')">导入数据包</button>' +
+    '<button class="btn primary" title="导出综合后台全部数据（不含作品集 / 钟乐乐，它们归各自后台备份）" onclick="DH.exportAll()">⇩ 全量备份</button></div>';
   return `
-  ${greetHead('数据总管','','<button class="btn primary" onclick="DH.exportAll()">⇩ 全量备份</button>')}
+  ${greetHead('数据总管','',dhActs)}
   <div class="grid">
     <div class="card c12">
       <div class="card-head"><h3>数据文件一览</h3><span class="api-badge" style="margin-left:0">真实文件 · 经 /api 读写</span></div>
       <div class="table-wrap"><table class="dh-tbl"><thead><tr><th>归属工具</th><th>数据文件</th><th>端点</th><th style="text-align:right">大小</th><th style="text-align:right">操作</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
-    </div>
-    <div class="card c12">
-      <div class="card-head"><h3>危险区域</h3></div>
-      <div class="inner" style="padding:16px 18px">
-        <div class="sub" style="margin:0 0 12px">导入覆盖 / 清空不可恢复，操作前建议先「全量备份」。每项操作均需二次确认。</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn" onclick="DH.exportAll()">导出全部数据</button>
-          <button class="btn" onclick="DH.importOne('all')">导入数据包</button>
-        </div>
-      </div>
     </div>
   </div>`;
 }
@@ -1651,11 +1644,6 @@ var DH = {
         if(el) el.textContent = (JSON.stringify(d).length/1024).toFixed(1) + ' KB';
       }).catch(function(){ var el = document.getElementById('dh-size-' + k); if(el) el.textContent = '—'; });
     });
-    // 站点内容不是单端点，要逐页抓完才能量出体积
-    var el0 = document.getElementById('dh-size-site');
-    if(el0) DH._siteBundle().then(function(s){
-      el0.textContent = (JSON.stringify(s).length/1024).toFixed(1) + ' KB（' + Object.keys(s.contents||{}).length + ' 页）';
-    }).catch(function(){ el0.textContent = '—'; });
   },
   exportOne: function(key){
     if(key === 'site'){
@@ -1681,10 +1669,12 @@ var DH = {
     }).catch(function(){ toast('导出失败 · 服务不可达'); });
   },
   exportAll: function(){
-    Promise.all([DH._get('/api/data'), DH._get('/api/prompts'), DH._get('/api/seamless'), DH._get('/api/bookmarks'), DH._siteBundle()])
+    /* 只含综合后台自己的数据。作品集 / 钟乐乐有各自的后台，备份归各自后台管，
+       不混进这里（站点内容采集/回写逻辑保留在 _siteBundle/_restoreSite，供各自后台复用）。 */
+    Promise.all([DH._get('/api/data'), DH._get('/api/prompts'), DH._get('/api/seamless'), DH._get('/api/bookmarks')])
       .then(function(rs){
         DH._save('wlili-tools-backup-' + new Date().toISOString().slice(0,10) + '.json',
-          { backupDate: new Date().toISOString(), serverData: rs[0], prompts: rs[1], seamless: rs[2], bookmarks: rs[3], site: rs[4] });
+          { backupDate: new Date().toISOString(), serverData: rs[0], prompts: rs[1], seamless: rs[2], bookmarks: rs[3] });
       }).catch(function(){ toast('备份失败 · 服务不可达'); });
   },
   /* ⚠ 导入必须「双写」：AD.apply 是 **localStorage 优先**（本地非空就用本地，服务器只当兜底）。
