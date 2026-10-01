@@ -1602,7 +1602,7 @@ function viewDataHub(){
       <td style="white-space:nowrap;text-align:right"><button class="mini-btn" onclick="DH.exportOne('${r.key}')">导出</button> <button class="mini-btn" onclick="DH.importOne('${r.key}')">导入</button> <button class="mini-btn" style="color:#e5484d" onclick="DH.clearOne('${r.key}')">清空</button></td>
     </tr>`).join('');
   /* 注：作品集 / 钟乐乐的站点内容不在此表 —— 它们有各自的后台，备份归各自后台管 */
-  setTimeout(function(){ if(window.DH) DH.sizes(); }, 0);
+  setTimeout(function(){ if(window.DH){ DH.sizes(); DH._paintLast(); } }, 0);
   /* ⚠ .greet 是 space-between：头部多个按钮必须包进一个 flex 组（参照「打印参数预设」页的教训） */
   const dhActs = '<div style="display:flex;gap:10px;align-items:center">' +
     '<button class="btn" title="选择此前导出的数据包，覆盖恢复各工具数据" onclick="DH.importOne(\'all\')">导入数据包</button>' +
@@ -1612,6 +1612,7 @@ function viewDataHub(){
   <div class="grid">
     <div class="card c12">
       <div class="card-head"><h3>数据文件一览</h3><span class="api-badge" style="margin-left:0">真实文件 · 经 /api 读写</span></div>
+      <div class="sub" style="margin:0;padding:0 18px 14px"><b id="dh-last">…</b><span style="color:var(--muted)"> · 图片类资产不在 JSON 备份内，需单独复制目录</span></div>
       <div class="table-wrap"><table class="dh-tbl"><thead><tr><th>归属工具</th><th>数据文件</th><th>端点</th><th style="text-align:right">大小</th><th style="text-align:right">操作</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
     </div>
@@ -1635,7 +1636,39 @@ var DH = {
     var blob = new Blob([JSON.stringify(obj, null, 2)], { type:'application/json' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 800);
+    DH._mark('backupAt', { backupName: name });   // 记备份时间（含单项导出）
     toast('已导出 ' + name);
+  },
+  /* ---------- 备份 / 导入时间戳 ----------
+     只存本机 localStorage，不打包进备份文件本身（它是"元信息"，不是业务数据）。
+     用途：回答「我上次什么时候备份的 / 上次导入是什么时候」。 */
+  LAST_KEY: 'wli_dh_last',
+  _last: function(){
+    try{ return JSON.parse(localStorage.getItem(DH.LAST_KEY) || '{}') || {}; }catch(e){ return {}; }
+  },
+  _mark: function(field, extra){
+    try{
+      var o = DH._last();
+      o[field] = new Date().toISOString();
+      if(extra) Object.keys(extra).forEach(function(k){ o[k] = extra[k]; });
+      localStorage.setItem(DH.LAST_KEY, JSON.stringify(o));
+    }catch(e){ /* localStorage 不可用时静默跳过，不影响导入导出本身 */ }
+    DH._paintLast();
+  },
+  _fmtWhen: function(iso){
+    if(!iso) return '—';
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return '—';
+    var p = function(n){ return (n < 10 ? '0' : '') + n; };
+    return (d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  },
+  _lastText: function(){
+    var o = DH._last();
+    return '上次备份 ' + DH._fmtWhen(o.backupAt) + ' · 上次导入 ' + DH._fmtWhen(o.importAt);
+  },
+  _paintLast: function(){
+    var el = document.getElementById('dh-last');
+    if(el) el.textContent = DH._lastText();
   },
   sizes: function(){
     Object.keys(DH.SRC).forEach(function(k){
@@ -1781,6 +1814,7 @@ var DH = {
         if(!st || !st.contents){ toast('不是有效的站点内容备份'); return; }
         if(!confirm('将用备份覆盖各页内容 / 导航 / 主题 / 底部联系 / 钟乐乐首页（' + Object.keys(st.contents).length + ' 页）。\n\n⚠ 图片不在备份里：服务器会清理「未被内容引用」的上传图片，备份时间点之后新增的图片可能被删。\n\n确定继续？')) return;
         DH._restoreSite(st).then(function(r){
+          DH._mark('importAt', { importName: 'site' });
           toast('站点内容已导入' + (r.skipped.length ? '（跳过 ' + r.skipped.length + ' 个不存在的页面）' : ''));
           renderMain();
         }).catch(function(){ toast('导入失败 · 服务不可达或格式不符'); });
@@ -1800,11 +1834,11 @@ var DH = {
         if(!jobs.length){ toast('数据包内没有可导入的数据'); return; }
         Promise.all(jobs).then(function(){
           return Promise.all([AD.pullPrompts(), AD.pullBookmarks(), AD.initData()]);
-        }).then(function(){ toast('数据包已导入'); renderMain(); }).catch(function(){ toast('导入失败 · 部分数据可能未写入'); });
+        }).then(function(){ DH._mark('importAt', { importName: '数据包' }); toast('数据包已导入'); renderMain(); }).catch(function(){ toast('导入失败 · 部分数据可能未写入'); });
         return;
       }
       if(!confirm('导入将覆盖该工具现有数据，确定继续？')) return;
-      DH._importKey(key, d).then(function(){ toast('导入成功'); renderMain(); })
+      DH._importKey(key, d).then(function(){ DH._mark('importAt', { importName: key }); toast('导入成功'); renderMain(); })
         .catch(function(){ toast('导入失败 · 服务不可达或格式不符'); });
     };
     reader.readAsText(file);
