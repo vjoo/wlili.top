@@ -1594,12 +1594,14 @@ function viewDataHub(){
     {key:'prompts',  tool:'AI 提示词库',    file:'tools/prompt-library-data.json', api:'/api/prompts',  src:'原「数据安全」面板迁入'},
     {key:'seamless', tool:'四方连图素材库', file:'tools/seamless-pattern-data.json', api:'/api/seamless', src:'原「数据同步」迁入 · 体积最大'},
     {key:'bookmarks',tool:'精选收藏夹',     file:'data/bookmarks.json',            api:'/api/bookmarks', src:'原「同步设置」迁入 · 清空保留分类'},
+    {key:'site',     tool:'站点内容',       file:'portfolio/cases/&lt;页&gt;/content.json · cases.json · zhonglele/content.json', api:'/api/pages 等多个',
+     src:'作品集各页内容 + 导航/主题/加载动画/底部联系 + 钟乐乐首页 · 不含图片（图片请复制 uploads 目录）', noclear:true},
   ].map(r=>`<tr>
       <td><b>${r.tool}</b><div style="font-size:11.5px;color:var(--muted);margin-top:2px">${r.src}</div></td>
       <td style="color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:12px">${r.file}</td>
       <td><span class="api-badge" style="margin-left:0">${r.api}</span></td>
       <td style="white-space:nowrap;text-align:right"><span id="dh-size-${r.key}">…</span></td>
-      <td style="white-space:nowrap;text-align:right"><button class="mini-btn" onclick="DH.exportOne('${r.key}')">导出</button> <button class="mini-btn" onclick="DH.importOne('${r.key}')">导入</button> <button class="mini-btn" style="color:#e5484d" onclick="DH.clearOne('${r.key}')">清空</button></td>
+      <td style="white-space:nowrap;text-align:right"><button class="mini-btn" onclick="DH.exportOne('${r.key}')">导出</button> <button class="mini-btn" onclick="DH.importOne('${r.key}')">导入</button>${r.noclear ? '' : ' <button class="mini-btn" style="color:#e5484d" onclick="DH.clearOne(\'' + r.key + '\')">清空</button>'}</td>
     </tr>`).join('');
   setTimeout(function(){ if(window.DH) DH.sizes(); }, 0);
   return `
@@ -1649,8 +1651,19 @@ var DH = {
         if(el) el.textContent = (JSON.stringify(d).length/1024).toFixed(1) + ' KB';
       }).catch(function(){ var el = document.getElementById('dh-size-' + k); if(el) el.textContent = '—'; });
     });
+    // 站点内容不是单端点，要逐页抓完才能量出体积
+    var el0 = document.getElementById('dh-size-site');
+    if(el0) DH._siteBundle().then(function(s){
+      el0.textContent = (JSON.stringify(s).length/1024).toFixed(1) + ' KB（' + Object.keys(s.contents||{}).length + ' 页）';
+    }).catch(function(){ el0.textContent = '—'; });
   },
   exportOne: function(key){
+    if(key === 'site'){
+      return DH._siteBundle().then(function(s){
+        DH._save('site-content-' + new Date().toISOString().slice(0,10) + '.json',
+          { backupDate: new Date().toISOString(), site: s });
+      }).catch(function(){ toast('导出失败 · 服务不可达'); });
+    }
     if(key === 'bambu'){
       return DH._get('/api/data').then(function(d){
         var out = {}; Object.keys(d||{}).forEach(function(k){ if(k.indexOf('bambu') === 0) out[k] = d[k]; });
@@ -1668,11 +1681,71 @@ var DH = {
     }).catch(function(){ toast('导出失败 · 服务不可达'); });
   },
   exportAll: function(){
-    Promise.all([DH._get('/api/data'), DH._get('/api/prompts'), DH._get('/api/seamless'), DH._get('/api/bookmarks')])
+    Promise.all([DH._get('/api/data'), DH._get('/api/prompts'), DH._get('/api/seamless'), DH._get('/api/bookmarks'), DH._siteBundle()])
       .then(function(rs){
         DH._save('wlili-tools-backup-' + new Date().toISOString().slice(0,10) + '.json',
-          { backupDate: new Date().toISOString(), serverData: rs[0], prompts: rs[1], seamless: rs[2], bookmarks: rs[3] });
+          { backupDate: new Date().toISOString(), serverData: rs[0], prompts: rs[1], seamless: rs[2], bookmarks: rs[3], site: rs[4] });
       }).catch(function(){ toast('备份失败 · 服务不可达'); });
+  },
+  /* ---------- 站点内容（作品集各页 + 全站设置 + 钟乐乐）----------
+     ⚠ 只有 JSON，不含图片：图片永远不进备份（base64 塞进 JSON 会让文件膨胀到几十 MB，
+     且违反项目约定）。图片请直接复制 portfolio/cases/<key>/uploads、zhonglele/uploads 目录。 */
+  _siteBundle: function(){
+    return DH._get('/api/pages').then(function(pg){
+      var pages = (pg && pg.pages) || [];
+      var keys = pages.map(function(p){ return p.key; }).filter(Boolean);
+      var jobs = keys.map(function(k){
+        return DH._get('/api/cases/' + encodeURIComponent(k) + '/content').catch(function(){ return null; });
+      });
+      return Promise.all(jobs.concat([
+        DH._get('/api/navmenu').catch(function(){ return {}; }),
+        DH._get('/api/letstalk').catch(function(){ return {}; }),
+        DH._get('/api/theme').catch(function(){ return {}; }),
+        DH._get('/api/loader').catch(function(){ return {}; }),
+        DH._get('/api/zl/content').catch(function(){ return null; })
+      ])).then(function(rs){
+        var contents = {};
+        keys.forEach(function(k, i){ if (rs[i]) contents[k] = rs[i]; });
+        var b = rs.length;
+        return {
+          pages: pages, homeKey: (pg && pg.homeKey) || '', contents: contents,
+          navMenu: (rs[b-5] && rs[b-5].navMenu) || [],
+          letsTalk: (rs[b-4] && rs[b-4].letsTalk) || null,
+          theme: (rs[b-3] && rs[b-3].theme) || '',
+          loader: (rs[b-2] && rs[b-2].loader) || '',
+          zhonglele: rs[b-1] || null
+        };
+      });
+    });
+  },
+  /* 回写站点内容。返回 {n: 成功项数, skipped: 索引里已不存在的页}。
+     ⚠ 服务端 POST /api/cases/<key>/content 会顺带清理「未被引用」的上传图片 ——
+     用旧备份覆盖时，备份时间点之后新增的图片可能被当作孤儿删掉，所以调用前必须二次确认。 */
+  _restoreSite: function(site){
+    var jobs = [];
+    if (site.navMenu && site.navMenu.length) jobs.push(DH._post('/api/navmenu', { navMenu: site.navMenu }));
+    if (site.letsTalk) jobs.push(DH._post('/api/letstalk', { letsTalk: site.letsTalk }));
+    if (site.theme === 'light' || site.theme === 'dark') jobs.push(DH._post('/api/theme', { theme: site.theme }));
+    if (String(site.loader) === '1' || String(site.loader) === '2') jobs.push(DH._post('/api/loader', { loader: String(site.loader) }));
+    if (site.zhonglele) jobs.push(DH._post('/api/zl/content', site.zhonglele));
+    var c = site.contents || {};
+    Object.keys(c).forEach(function(k){
+      if (c[k]) jobs.push(DH._post('/api/cases/' + encodeURIComponent(k) + '/content', c[k]));
+    });
+    // 页面索引：只更新**当前仍存在**的页（新建页要建目录 + 拷模板，不自动造页，避免恢复出空壳页面）
+    return DH._get('/api/pages').catch(function(){ return { pages: [] }; }).then(function(cur){
+      var have = {};
+      ((cur && cur.pages) || []).forEach(function(p){ have[p.key] = 1; });
+      var skipped = [];
+      (site.pages || []).forEach(function(p){
+        if (!have[p.key]) { skipped.push(p.key); return; }
+        jobs.push(DH._post('/api/pages/update', {
+          key: p.key, title: p.title, type: p.type, parent: p.parent || null,
+          level: p.level, nav: p.nav, accent: p.accent || '', isHome: !!p.isHome
+        }));
+      });
+      return Promise.all(jobs).then(function(){ return { n: jobs.length, skipped: skipped }; });
+    });
   },
   importOne: function(key){
     var inp = document.createElement('input');
@@ -1686,14 +1759,26 @@ var DH = {
     reader.onload = function(e){
       var d;
       try{ d = JSON.parse(e.target.result); }catch(err){ toast('导入失败：文件格式错误'); return; }
+      if(key === 'site'){
+        var st = d.site || d;
+        if(!st || !st.contents){ toast('不是有效的站点内容备份'); return; }
+        if(!confirm('将用备份覆盖各页内容 / 导航 / 主题 / 底部联系 / 钟乐乐首页（' + Object.keys(st.contents).length + ' 页）。\n\n⚠ 图片不在备份里：服务器会清理「未被内容引用」的上传图片，备份时间点之后新增的图片可能被删。\n\n确定继续？')) return;
+        DH._restoreSite(st).then(function(r){
+          toast('站点内容已导入' + (r.skipped.length ? '（跳过 ' + r.skipped.length + ' 个不存在的页面）' : ''));
+          renderMain();
+        }).catch(function(){ toast('导入失败 · 服务不可达或格式不符'); });
+        return;
+      }
       if(key === 'all'){
-        if(!confirm('导入数据包将覆盖各工具现有数据，确定继续？')) return;
+        var warn = d.site ? '\n\n⚠ 含站点内容：图片不在备份里，服务器会清理未被引用图片，备份时间点之后新增的图片可能被删。' : '';
+        if(!confirm('导入数据包将覆盖各工具现有数据，确定继续？' + warn)) return;
         var jobs = [];
         try{
           if(d.serverData) jobs.push(DH._post('/api/data', d.serverData));
           if(d.prompts) jobs.push(DH._post('/api/prompts', { records: d.prompts.records || (Array.isArray(d.prompts) ? d.prompts : []) }));
           if(d.seamless) jobs.push(DH._post('/api/seamless', d.seamless));
           if(d.bookmarks) jobs.push(DH._post('/api/bookmarks', d.bookmarks));
+          if(d.site) jobs.push(DH._restoreSite(d.site));
         }catch(err){ toast('导入失败：数据包结构不符'); return; }
         if(!jobs.length){ toast('数据包内没有可导入的数据'); return; }
         Promise.all(jobs).then(function(){
