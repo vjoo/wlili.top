@@ -1687,6 +1687,33 @@ var DH = {
           { backupDate: new Date().toISOString(), serverData: rs[0], prompts: rs[1], seamless: rs[2], bookmarks: rs[3], site: rs[4] });
       }).catch(function(){ toast('备份失败 · 服务不可达'); });
   },
+  /* ⚠ 导入必须「双写」：AD.apply 是 **localStorage 优先**（本地非空就用本地，服务器只当兜底）。
+     只 POST 到服务器的话，随后 AD.initData() 拉回来的新数据会被浏览器里的旧值顶掉，
+     表现是「导入成功」但页面一点没变、还不报错 —— 这是恢复链路最危险的静默失败。
+     所以导入时把同样的值写进 localStorage，保证本地与服务器一致。 */
+  _syncLocal: function(obj){
+    if(!obj || typeof obj !== 'object') return 0;
+    var n = 0;
+    Object.keys(obj).forEach(function(k){
+      try{
+        var raw = obj[k];
+        localStorage.setItem(k, typeof raw === 'string' ? raw : JSON.stringify(raw));
+        n++;
+      }catch(e){ /* localStorage 满/禁用：至少服务器已写入，不阻断 */ }
+    });
+    return n;
+  },
+  /* 四方连图的数据主体在 localStorage（服务器只是同步副本），键名与 STORAGE_KEYS 一致 */
+  _syncSeamlessLocal: function(d){
+    if(!d || typeof d !== 'object') return 0;
+    var map = { patterns:'seamless_patterns', palettes:'seamless_palettes', licenses:'seamless_licenses', elements:'seamless_elements' };
+    var n = 0;
+    Object.keys(map).forEach(function(k){
+      if(d[k] == null) return;
+      try{ localStorage.setItem(map[k], JSON.stringify(d[k])); n++; }catch(e){}
+    });
+    return n;
+  },
   /* ---------- 站点内容（作品集各页 + 全站设置 + 钟乐乐）----------
      ⚠ 只有 JSON，不含图片：图片永远不进备份（base64 塞进 JSON 会让文件膨胀到几十 MB，
      且违反项目约定）。图片请直接复制 portfolio/cases/<key>/uploads、zhonglele/uploads 目录。 */
@@ -1774,9 +1801,9 @@ var DH = {
         if(!confirm('导入数据包将覆盖各工具现有数据，确定继续？' + warn)) return;
         var jobs = [];
         try{
-          if(d.serverData) jobs.push(DH._post('/api/data', d.serverData));
+          if(d.serverData){ DH._syncLocal(d.serverData); jobs.push(DH._post('/api/data', d.serverData)); }
           if(d.prompts) jobs.push(DH._post('/api/prompts', { records: d.prompts.records || (Array.isArray(d.prompts) ? d.prompts : []) }));
-          if(d.seamless) jobs.push(DH._post('/api/seamless', d.seamless));
+          if(d.seamless){ DH._syncSeamlessLocal(d.seamless); jobs.push(DH._post('/api/seamless', d.seamless)); }
           if(d.bookmarks) jobs.push(DH._post('/api/bookmarks', d.bookmarks));
           if(d.site) jobs.push(DH._restoreSite(d.site));
         }catch(err){ toast('导入失败：数据包结构不符'); return; }
@@ -1798,6 +1825,7 @@ var DH = {
       return DH._post('/api/prompts', { records: recs }).then(function(){ return AD.pullPrompts(); });
     }
     if(key === 'seamless'){
+      DH._syncSeamlessLocal(d);
       return DH._post('/api/seamless', d).then(function(){ try{ _syncStore.init(); }catch(e){} });
     }
     if(key === 'bookmarks'){
@@ -1805,11 +1833,13 @@ var DH = {
     }
     if(key === 'bambu'){
       var list = Array.isArray(d) ? d : (d.bambu_filaments || []);
+      DH._syncLocal({ bambu_filaments: list });           // 见 _syncLocal 注释：不双写本地会导致静默不生效
       return DH._post('/api/data', { bambu_filaments: JSON.stringify(list) }).then(function(){ return AD.initData(); });
     }
     if(key === 'print'){
       var pm = (d.printManager !== undefined) ? d.printManager : d;
       if(typeof pm === 'string'){ try{ pm = JSON.parse(pm); }catch(e){ throw 0; } }
+      DH._syncLocal({ printManager: pm });
       return DH._post('/api/data', { printManager: JSON.stringify(pm) }).then(function(){ return AD.initData(); });
     }
     return Promise.reject();
