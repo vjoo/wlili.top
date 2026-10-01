@@ -1798,8 +1798,9 @@ function PAPP_RM(id){
 /* —— 打印参数预设（原 renderPresetsModule / viewPresetDetail / openPresetModal / savePreset / deletePreset） —— */
 function viewFilamentPresets(){
   const data = PSET;
-  const patchBar = (window.BAMBU_PATCH ? '<button class="btn" title="导入外部 AI 产出的 patch JSON" onclick="PAPP.importDialog()">导入 JSON</button> ' +
-    '<button class="btn" title="导出 260 项字段字典，给外部 AI 用" onclick="PAPP.copyDict()">字段字典</button> ' : '');
+  const patchBar = (window.BAMBU_PATCH ? '<button class="btn primary" title="按问题类型挑选参数、生成一条可直接粘给 AI 的提示词" onclick="PAPP.aiDialog()">问 AI</button> ' +
+    '<button class="btn" title="粘贴 AI 产出的 patch JSON 并预览核对" onclick="PAPP.importDialog()">导入 JSON</button> ' +
+    '<button class="btn" title="导出 260 项全量字段字典，给外部 AI 用" onclick="PAPP.copyDict()">字段字典</button> ' : '');
   return `${greetHead('打印参数预设','',patchBar+'<button class="add" title="新增预设" onclick="PAPP.openForm(null)">'+ADD_IC+'</button>')}
   <div class="grid"><div class="card c12">
     <div class="fbar">

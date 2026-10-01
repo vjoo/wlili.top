@@ -124,6 +124,125 @@
   }
   function dictJSON() { return JSON.stringify(dict(), null, 1); }
 
+  /* ---------- 主题字典：只导出与「本次问题」相关的参数子集 ----------
+     全量 260 项 ≈ 11K token：粘给外部 AI 太重，而且给得越多它越容易顺手填无关项。
+     主题按**分组**圈定（结果稳定可预期），不靠关键词放大 —— 关键词很容易捞到语义
+     相近但完全用不上的参数，反而稀释答案。 */
+  var TOPICS = [
+    { id: "seam", name: "Z 缝 / 接缝明显", desc: "侧面一条竖线、接缝凸点",
+      groups: [["质量", "接缝"], ["质量", "墙生成器"], ["质量", "精度"], ["其他", "换料冲刷选项"], ["其他", "擦料塔"], ["其他", "G-code 输出"]] },
+    { id: "support", name: "支撑难拆 / 支撑面粗糙", desc: "拆不掉、接触面留疤",
+      groups: [["支撑", "支撑"], ["支撑", "筏层"], ["支撑", "支撑耗材"], ["支撑", "支撑熨烫"], ["支撑", "高级"], ["支撑", "树状支撑"]] },
+    { id: "overhang", name: "悬垂 / 搭桥下垂", desc: "斜坡起翘、桥面塌陷",
+      groups: [["速度", "其他层速度"], ["质量", "层高"], ["质量", "线宽"], ["质量", "墙生成器"], ["强度", "顶部/底部外壳"], ["强度", "稀疏填充"]] },
+    { id: "warp", name: "翘边 / 开裂 / 首层翘起", desc: "边角离床、层间裂",
+      groups: [["其他", "热床粘接"], ["支撑", "筏层"], ["速度", "首层速度"], ["质量", "层高"], ["其他", "特殊模式"]] },
+    { id: "surface", name: "表面质量 / 层纹 / 振纹", desc: "顶面不平整、VFA 条纹",
+      groups: [["质量", "熨烫"], ["质量", "层高"], ["质量", "线宽"], ["质量", "精度"], ["质量", "墙生成器"], ["质量", "高级"], ["速度", "其他层速度"], ["速度", "抖动（XY轴）"]] },
+    { id: "dimension", name: "尺寸不准 / 孔偏小 / 装不上", desc: "公差、收缩、象脚",
+      groups: [["质量", "精度"], ["质量", "高级"], ["质量", "线宽"], ["强度", "墙"]] },
+    { id: "stringing", name: "拉丝 / 漏料 / 垂丝", desc: "件之间挂丝、喷嘴拖料",
+      groups: [["其他", "换料冲刷选项"], ["其他", "擦料塔"], ["速度", "空驶速度"], ["其他", "G-code 输出"], ["质量", "接缝"]] },
+    { id: "strength", name: "强度不够 / 沿层断裂", desc: "层间结合弱、掰就断",
+      groups: [["强度", "墙"], ["强度", "顶部/底部外壳"], ["强度", "稀疏填充"], ["强度", "高级"], ["质量", "线宽"], ["质量", "层高"]] },
+    { id: "speed", name: "打印太慢 / 想提速", desc: "总时长优化",
+      groups: [["速度", "首层速度"], ["速度", "其他层速度"], ["速度", "空驶速度"], ["速度", "加速度"], ["速度", "抖动（XY轴）"], ["质量", "层高"], ["其他", "特殊模式"]] },
+    { id: "firstlayer", name: "首层不粘 / 首层粗糙", desc: "第一层糊、起皮",
+      groups: [["速度", "首层速度"], ["其他", "热床粘接"], ["质量", "层高"], ["质量", "线宽"], ["支撑", "筏层"]] },
+    { id: "all", name: "全部 260 项（慎用）", desc: "仅当问题横跨多个主题", groups: null }
+  ];
+
+  function topic(id) {
+    for (var i = 0; i < TOPICS.length; i++) if (TOPICS[i].id === id) return TOPICS[i];
+    return null;
+  }
+  /* 按主题 / 关键词挑子集。opt: {topic: id} 或 {kw: "..."} */
+  function pickFields(opt) {
+    opt = opt || {};
+    var t = opt.topic ? topic(opt.topic) : null;
+    var kwpat = opt.kw ? flat(opt.kw) : "";
+    var gs = t && t.groups;
+    return ALL.filter(function (p) {
+      if (opt.topic === "all") return true;
+      if (gs) {
+        for (var i = 0; i < gs.length; i++) if (p.tab === gs[i][0] && p.group === gs[i][1]) return true;
+        return false;
+      }
+      if (kwpat) return (flat(p.key) + flat(p.label) + flat(p.tab) + flat(p.group)).indexOf(kwpat) >= 0;
+      return true;
+    });
+  }
+  function fieldRow(p) {
+    var o = { k: p.key, n: p.label, t: p.type, d: p.default };
+    if (p.unit) o.u = p.unit;
+    if (p.min != null) o.min = p.min;
+    if (p.max != null) o.max = p.max;
+    if ((p.enum || []).length) {
+      o.e = p.enum.map(function (x) { return x.en ? (x.value + "=" + x.en + "/" + x.label) : (x.value + "=" + x.label); });
+    }
+    if (p.vec) o.vec = true;
+    return o;
+  }
+  function dictSubset(opt) {
+    var fs = pickFields(opt).map(fieldRow);
+    return {
+      format: "wlili-fields-dict/1",
+      machine: (S.meta && S.meta.machine) || "",
+      bambu_version: (S.meta && S.meta.bambu_version) || "",
+      note: "k=参数key（必须原样使用）; n=中文名; t=类型; u=单位; d=默认值; e=允许的枚举值（写 value）",
+      count: fs.length,
+      fields: fs
+    };
+  }
+  function dictSubsetJSON(opt) { return JSON.stringify(dictSubset(opt)); }
+
+  /* ---------- 生成「喂给外部 AI」的完整提示词 ----------
+     一次成型：问题描述 + 机器上下文 + 受限的参数字典 + 输出格式 + 硬约束。
+     用户不需要自己拼任何东西。 */
+  function buildPrompt(problem, opt) {
+    opt = opt || {};
+    var machine = (S.meta && S.meta.machine) || "Bambu Lab X2D";
+    var d = dictSubset(opt);
+    var fieldsJSON = JSON.stringify(d.fields);
+    var lines = [];
+    lines.push("你是 3D 打印工艺参数顾问，熟悉 Bambu Studio / Bambu Lab 打印机。");
+    lines.push("");
+    lines.push("## 我的设备");
+    lines.push("- 打印机：" + machine + "（双喷头" + (opt.nozzle ? "，喷嘴 " + opt.nozzle + "mm" : "") + "）");
+    if (opt.filament) lines.push("- 耗材：" + opt.filament);
+    lines.push("- 切片软件：Bambu Studio " + ((S.meta && S.meta.bambu_version) || ""));
+    lines.push("");
+    lines.push("## 我要解决的问题");
+    lines.push(problem ? problem : "（请在此描述问题）");
+    lines.push("");
+    lines.push("## 任务");
+    lines.push("1. 先用一小段话说明这个问题的成因和解决方向（给我看得懂的建议，100 字以内）；");
+    lines.push("2. 然后从下面「可用参数字典」里挑出需要调整的参数，给出推荐值；");
+    lines.push("3. 如果解决问题还需要改耗材温度 / 风扇 / 回抽距离等**不在字典里**的项，写进 notes 文字说明，不要塞进 params。");
+    lines.push("");
+    lines.push("## 可用参数字典（共 " + d.count + " 项，JSON 数组）");
+    lines.push("k=参数key · n=中文名 · t=类型 · u=单位 · d=默认值 · e=允许的枚举值");
+    lines.push(fieldsJSON);
+    lines.push("");
+    lines.push("## 输出格式（只输出这一个 JSON 对象，不要 markdown 代码块围栏，不要任何解释文字）");
+    lines.push("{");
+    lines.push('  "format": "wlili-preset-patch/1",');
+    lines.push('  "name": "预设名称（中文，20 字以内，体现用途）",');
+    lines.push('  "notes": "一句话说明为什么这么调、适用什么情况",');
+    lines.push('  "applicability": { "machine": "' + machine.replace(/Bambu Lab /, "") + '", "nozzle": "' + (opt.nozzle || "0.4") + '", "filament": ["' + (opt.filament || "PLA") + '"] },');
+    lines.push('  "caveats": ["不确定 / 需要你实测验证的点"],');
+    lines.push('  "params": { "参数key": "值" }');
+    lines.push("}");
+    lines.push("");
+    lines.push("## 硬约束（违反会导致导入失败）");
+    lines.push("1. params 的 key **必须**来自上面字典的 k 字段，一个字都不能改；不许自己发明 key。");
+    lines.push("2. 值是枚举类型时，必须写 e 里的 value（如 \"rectilinear\"），**不要写中文名**。");
+    lines.push("3. 布尔写 \"1\" / \"0\"；数值不写单位符号（写 0.16 不写 0.16mm；百分比写 25 不写 25%）。");
+    lines.push("4. 只填有把握的项，通常 3~15 项就够；不确定的放进 caveats，不要猜着填。");
+    lines.push("5. 不要输出 ```json 围栏，第一行就是 { 。");
+    return lines.join("\n");
+  }
+
   /* ---------- 导出：预设 → patch（只含偏离默认的项） ---------- */
   function exportPatch(preset, extra) {
     var vals = preset.bpValues || {};
@@ -228,8 +347,11 @@
         if (flat(o.value) === f || flat(o.label) === f || (o.en && flat(o.en) === f)) alt = o;
       });
       if (alt) return { v: alt.value, notes: ["枚举「" + s + "」→ " + alt.value + "（写法归一）"], warn: false };
-      // 枚举里没有：保留原值但标存疑
-      return { v: s, notes: ["枚举值「" + s + "」不在该参数的候选中"], warn: true };
+      // 枚举里没有：保留原值但标存疑，并把合法值一起报出来（省得用户回头翻字典 ——
+      // 外部 AI 凭记忆写错枚举值是常态，不给候选值等于让用户自己去猜）
+      var ee = (p.enum || []).map(function (x) { return x.value; });
+      var allEn = ee.length > 8 ? (ee.slice(0, 8).join("/") + " 等 " + ee.length + " 个") : ee.join(" / ");
+      return { v: s, notes: ["枚举值「" + s + "」不在该参数的候选中，可选：" + allEn], warn: true };
     }
 
     // 数值 / 百分比：范围校验
@@ -360,6 +482,11 @@
   window.BAMBU_PATCH = {
     dict: dict,
     dictJSON: dictJSON,
+    dictSubset: dictSubset,
+    dictSubsetJSON: dictSubsetJSON,
+    buildPrompt: buildPrompt,
+    pickFields: pickFields,
+    topics: TOPICS,
     exportPatch: exportPatch,
     normalize: normalize,
     resolveKey: resolveKey,

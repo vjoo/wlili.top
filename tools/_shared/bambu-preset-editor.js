@@ -1182,6 +1182,66 @@
     else toast("复制失败，请手动选择内容");
   };
 
+  /* 「问 AI」：按主题挑相关参数 → 拼成一条可直接粘给豆包/ChatGPT 的提示词。
+     不限制 AI 只输出 JSON —— 保留它的人话解释，只是**要求它最后附上 JSON**。 */
+  PAPP.aiDialog = function () {
+    if (!PATCH) { toast("导入模块未加载"); return; }
+    var opts = PATCH.topics.map(function (t) {
+      var n = PATCH.pickFields({ topic: t.id }).length;
+      return '<option value="' + t.id + '"' + (t.id === "seam" ? " selected" : "") + ">" + esc(t.name) + "（" + n + " 项）</option>";
+    }).join("");
+    document.getElementById("fmodalBox").innerHTML =
+      '<div class="fmodal-head"><div class="fmodal-title">问 AI：生成一条能直接得到参数的提示词</div>' +
+      '<button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
+      '<div class="fmodal-body">' +
+      '<div class="fgroup"><label>我要解决的问题（越具体越好，带上机型/喷嘴/耗材/现象）</label>' +
+      '<textarea id="bpAiProb" rows="3" placeholder="例：0.4 喷嘴打 PLA，圆柱件侧面有一条很明显的 Z 缝，摸上去有凸点，接缝位置显示是随机"></textarea></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<div class="fgroup" style="flex:1 1 190px"><label>问题类型（决定给 AI 看哪些参数）</label>' +
+      '<select id="bpAiTopic" class="form-select" style="width:100%">' + opts + "</select></div>" +
+      '<div class="fgroup" style="flex:0 0 96px"><label>喷嘴 mm</label>' +
+      '<input id="bpAiNozzle" class="form-text" type="text" value="0.4" style="width:100%"></div>' +
+      '<div class="fgroup" style="flex:0 0 130px"><label>耗材</label>' +
+      '<input id="bpAiFil" class="form-text" type="text" value="PLA" style="width:100%"></div>' +
+      "</div>" +
+      '<div class="fgroup"><label>提示词（复制后粘到豆包 / 任意 AI 对话里）</label>' +
+      '<textarea id="bpAiOut" rows="12" style="font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.55" placeholder="点下面「生成」自动填充"></textarea>' +
+      '<div id="bpAiMeta" style="font-size:12px;color:var(--muted);margin-top:6px"></div></div>' +
+      '<div class="bp-imp-card" style="margin-bottom:0">' +
+      '<div class="bp-imp-note"><b>拿到回答后怎么用：</b>把 AI 回复里那段 JSON（从 <code>{</code> 到最后一个 <code>}</code>，不要含 ``` 围栏）复制，' +
+      '回到本页点工具栏「<b>导入 JSON</b>」粘贴 → 预览里逐项核对 → 确认导入。' +
+      '字段名对不上 / 值超限的项会自动标黄默认不勾选，不会污染你的预设。</div></div>' +
+      "</div>" +
+      '<div class="fmodal-foot">' +
+      '<button class="btn" onclick="closeModal()">关闭</button>' +
+      '<button class="btn" onclick="PAPP.aiGenerate()">生成</button>' +
+      '<button class="btn primary" onclick="PAPP.aiCopy()">复制提示词</button>' +
+      "</div>";
+    document.getElementById("fmodalBox").style.width = "min(820px,95vw)";
+    document.getElementById("fmodalMask").classList.add("show");
+    PAPP.aiGenerate();
+  };
+  PAPP.aiGenerate = function () {
+    if (!PATCH) return;
+    var prob = (document.getElementById("bpAiProb").value || "").trim();
+    var topic = document.getElementById("bpAiTopic").value;
+    var nozzle = (document.getElementById("bpAiNozzle").value || "0.4").trim();
+    var fil = (document.getElementById("bpAiFil").value || "").trim();
+    var txt = PATCH.buildPrompt(prob, { topic: topic, nozzle: nozzle, filament: fil });
+    var out = document.getElementById("bpAiOut");
+    out.value = txt;
+    var n = PATCH.pickFields({ topic: topic }).length;
+    document.getElementById("bpAiMeta").innerHTML =
+      "共 " + n + " 项参数 · " + txt.length + " 字符 ≈ " + Math.round(txt.length / 3.2) + " token" +
+      (n > 90 ? ' · <span style="color:var(--bp-warn,#f59e0b)">参数偏多，AI 更容易挑错，试试换更窄的主题</span>' : "");
+  };
+  PAPP.aiCopy = function () {
+    var ta = document.getElementById("bpAiOut");
+    if (!ta || !ta.value.trim()) { PAPP.aiGenerate(); ta = document.getElementById("bpAiOut"); }
+    if (copyText(ta.value)) toast("提示词已复制，去粘给 AI 吧");
+    else { ta.select(); toast("请按 Ctrl+C 复制"); }
+  };
+
   var impState = null;
   PAPP.importDialog = function () {
     if (!PATCH) { toast("导入模块未加载"); return; }
