@@ -1191,7 +1191,7 @@
       return '<option value="' + t.id + '"' + (t.id === "seam" ? " selected" : "") + ">" + esc(t.name) + "（" + n + " 项）</option>";
     }).join("");
     document.getElementById("fmodalBox").innerHTML =
-      '<div class="fmodal-head"><div class="fmodal-title">问 AI：生成一条能直接得到参数的提示词</div>' +
+      '<div class="fmodal-head"><div class="fmodal-title">问 AI · 生成提示词</div>' +
       '<button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
       '<div class="fmodal-body">' +
       '<div class="fgroup"><label>我要解决的问题（越具体越好，带上机型/喷嘴/耗材/现象）</label>' +
@@ -1209,7 +1209,7 @@
       '<div id="bpAiMeta" style="font-size:12px;color:var(--muted);margin-top:6px"></div></div>' +
       '<div class="bp-imp-card" style="margin-bottom:0">' +
       '<div class="bp-imp-note"><b>拿到回答后怎么用：</b>把 AI 回复里那段 JSON（从 <code>{</code> 到最后一个 <code>}</code>，不要含 ``` 围栏）复制，' +
-      '回到本页点工具栏「<b>导入 JSON</b>」粘贴 → 预览里逐项核对 → 确认导入。' +
+      '回到本页点工具栏「<b>导入预设</b>」粘贴 → 预览里逐项核对 → 确认导入。' +
       '字段名对不上 / 值超限的项会自动标黄默认不勾选，不会污染你的预设。</div></div>' +
       "</div>" +
       '<div class="fmodal-foot">' +
@@ -1248,7 +1248,7 @@
     impState = null;
     var opts = PSET.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + "</option>"; }).join("");
     document.getElementById("fmodalBox").innerHTML =
-      '<div class="fmodal-head"><div class="fmodal-title">导入预设 JSON</div>' +
+      '<div class="fmodal-head"><div class="fmodal-title">导入预设</div>' +
       '<button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
       '<div class="fmodal-body">' +
       '<div class="fgroup"><label>粘贴 patch JSON（或选择 .json 文件）</label>' +
