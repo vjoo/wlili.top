@@ -181,24 +181,43 @@
     sparse_infill_filament: 1, solid_infill_filament: 1, wall_filament: 1
   };
   function isFilamentOpt(p) { return !!(p && FILAMENT_KEYS[p.key]); }
+  /* 选项按**材质类型去重**：库里可能有多盘同类型耗材（1 PLA / 2 PLA / 3 PETG），
+     逐盘列出来会重复且分不清 —— 只列不同的类型名。
+     同类型多盘时以**第一个槽位**作为该类型的代表值。 */
+  function filamentTypeOf(f) {
+    f = f || {};
+    var t = f.type || f.material || f.name || "";
+    return String(t).trim() || "耗材";
+  }
   function filamentList() {
     var arr = (window.FDATA && Array.isArray(window.FDATA.filaments)) ? window.FDATA.filaments : [];
-    // 只显示耗材「类型」（PLA / PETG / PETG HF…）+ 槽位号；不显示颜色名与色块
-    var out = [{ v: "0", label: "默认" }];
+    var out = [{ v: "0", label: "默认", type: "" }], seen = {};
     for (var i = 0; i < arr.length; i++) {
-      var f = arr[i] || {};
-      out.push({ v: String(i + 1), label: (i + 1) + " " + (f.type || f.name || ("耗材 " + (i + 1))) });
+      var f = arr[i] || {}, t = filamentTypeOf(f);
+      if (seen[t]) continue;                       // 同类型只出现一次
+      seen[t] = 1;
+      out.push({ v: String(i + 1), label: t, type: t });
     }
     return out;
   }
-  function filamentByValue(v) {
-    var s = norm(v), list = filamentList();
-    for (var i = 0; i < list.length; i++) if (list[i].v === s) return list[i];
-    return null;
+  function filamentBySlot(v) {
+    var arr = (window.FDATA && Array.isArray(window.FDATA.filaments)) ? window.FDATA.filaments : [];
+    var n = parseInt(norm(v), 10);
+    return (n >= 1 && n <= arr.length) ? (arr[n - 1] || null) : null;
   }
+  /* 值 → 显示名：按**类型**换算（槽位 2 是 PLA 就显示 PLA），
+     这样「1 PLA / 2 PLA」重复的问题在编辑态与只读态一起消失。 */
   function filamentLabel(v) {
-    var f = filamentByValue(v);
-    return f ? f.label : ("槽位 " + norm(v));
+    var s = norm(v);
+    if (s === "0" || s === "") return "默认";
+    var f = filamentBySlot(v);
+    return f ? filamentTypeOf(f) : ("槽位 " + s);
+  }
+  function filamentTypeOfValue(v) {
+    var s = norm(v);
+    if (s === "0" || s === "") return "";
+    var f = filamentBySlot(v);
+    return f ? filamentTypeOf(f) : "\u0000" + s;      // 库外的槽位：用不可见前缀当唯一 key
   }
 
   /* ---------- 只读视图的布尔：用「勾选框 / 未选框」而不是文字或 1/0 ---------- */
@@ -245,13 +264,20 @@
      用 data-bp-enum 让取值/重置逻辑复用 <select> 分支；data-bp-fil 只作语义标记
      （下拉内容只显示耗材类型，不画色块）。 */
   function filamentHTML(p, val) {
-    var list = filamentList(), cur = norm(val), has = false;
+    var list = filamentList(), cur = norm(val), ct = filamentTypeOfValue(val), has = false;
+    // 按**类型**匹配选中项：值是槽位 2 而选项里 PLA 的代表槽位是 1 时，
+    // 也要显示成 PLA 选中，否则会误判成「已修改」并冒出重复的「槽位 2」选项
     var opts = list.map(function (o) {
-      if (o.v === cur) has = true;
-      return '<option value="' + esc(o.v) + '"' + (o.v === cur ? " selected" : "") + ">" + esc(o.label) + "</option>";
+      var sel = (o.type === ct);
+      if (sel) has = true;
+      /* 选中项保留**原槽位值**：预设里存的是槽位 2（第二盘 PLA），不能因为
+         去重显示成 PLA 就把值改成代表槽位 1 —— 那等于悄悄换了一盘料。
+         只有用户真的去选「PLA」时才落到代表槽位。 */
+      var v = (sel && ct) ? cur : o.v;
+      return '<option value="' + esc(v) + '"' + (sel ? " selected" : "") + ">" + esc(o.label) + "</option>";
     }).join("");
     // 值超出耗材库（手工设过更大的槽位）时补一项，避免 <select> 回落第一项 = 假"已修改"
-    if (!has) opts += '<option value="' + esc(cur) + '" selected>槽位 ' + esc(cur) + "</option>";
+    if (!has) opts += '<option value="' + esc(cur) + '" selected>' + esc(filamentLabel(cur)) + "</option>";
     return '<span class="bp-pick"><span class="bp-pic"></span>' +
       '<select class="form-select bp-ctrl" data-bp-enum data-bp-fil>' + opts + "</select></span>";
   }
