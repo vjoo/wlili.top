@@ -6858,7 +6858,8 @@ return html;
             // 底色
             var bgColor = p ? p.bgColor : '#FFFFFF';
             html += '<div class="form-group"><label class="form-label">底色</label><div class="color-picker-row">';
-            html += '<div class="color-swatch" id="pl_bg_swatch" style="background:'+bgColor+';"><input type="color" id="pl_bg_color" value="'+bgColor+'" oninput="app._onColorPick(\'bg\', this.value)"></div>';
+            html += '<button type="button" class="form-swatch cp-swatch-btn" id="pl_bg_swatch" data-dot-cur="'+bgColor+'" title="点击取色：色域 / 色相 / 透明度 / 预设色板" aria-label="选择底色" onclick="openColorPicker(this, document.getElementById(\'pl_bg_text\'))"><span class="sw-dot" style="background:'+bgColor+'"></span></button>';
+            html += '<input type="color" class="cp-native" id="pl_bg_color" tabindex="-1" aria-hidden="true" value="'+bgColor+'" oninput="app._onColorPick(\'bg\', this.value)">';
             html += '<input class="form-input color-hex-input" id="pl_bg_text" value="'+bgColor+'" placeholder="#FFF9EF" oninput="app._onHexInput(\'bg\', this.value)">';
             html += '<span class="cmyk-warn" id="pl_bg_cmyk" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="warn-tooltip"></span></span>';
             html += '</div></div>';
@@ -6872,7 +6873,8 @@ return html;
                 var cv = curColors[i] || defaultColors[i % defaultColors.length];
                 var cn = hexToColorName(cv);
                 html += '<div class="color-picker-row" style="margin-bottom:6px;" id="pl_color_row_'+i+'">';
-                html += '<div class="color-swatch" id="pl_color_swatch_'+i+'" style="background:'+cv+';"><input type="color" id="pl_color_color_'+i+'" value="'+cv+'" oninput="app._onColorPick('+i+', this.value)"></div>';
+                html += '<button type="button" class="form-swatch cp-swatch-btn" id="pl_color_swatch_'+i+'" data-dot-cur="'+cv+'" title="点击取色：色域 / 色相 / 透明度 / 预设色板" aria-label="选择颜色" onclick="openColorPicker(this, document.getElementById(\'pl_color_text_'+i+'\'))"><span class="sw-dot" style="background:'+cv+'"></span></button>';
+                html += '<input type="color" class="cp-native" id="pl_color_color_'+i+'" tabindex="-1" aria-hidden="true" value="'+cv+'" oninput="app._onColorPick('+i+', this.value)">';
                 html += '<input class="form-input color-hex-input" id="pl_color_text_'+i+'" value="'+cv+'" placeholder="#000000" oninput="app._onHexInput('+i+', this.value)">';
                 html += '<span class="color-name-label" id="pl_color_name_'+i+'">'+escapeHtml(cn)+'</span>';
                 html += '<span class="cmyk-warn" id="pl_color_cmyk_'+i+'" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="warn-tooltip"></span></span>';
@@ -6886,7 +6888,8 @@ return html;
             // 线条色
             var lineColor = p ? p.lineColor : '#333333';
             html += '<div class="form-group"><label class="form-label">线条色</label><div class="color-picker-row">';
-            html += '<div class="color-swatch" id="pl_line_swatch" style="background:'+lineColor+';"><input type="color" id="pl_line_color" value="'+lineColor+'" oninput="app._onColorPick(\'line\', this.value)"></div>';
+            html += '<button type="button" class="form-swatch cp-swatch-btn" id="pl_line_swatch" data-dot-cur="'+lineColor+'" title="点击取色：色域 / 色相 / 透明度 / 预设色板" aria-label="选择线条色" onclick="openColorPicker(this, document.getElementById(\'pl_line_text\'))"><span class="sw-dot" style="background:'+lineColor+'"></span></button>';
+            html += '<input type="color" class="cp-native" id="pl_line_color" tabindex="-1" aria-hidden="true" value="'+lineColor+'" oninput="app._onColorPick(\'line\', this.value)">';
             html += '<input class="form-input color-hex-input" id="pl_line_text" value="'+lineColor+'" placeholder="#444444" oninput="app._onHexInput(\'line\', this.value)">';
             html += '<span class="cmyk-warn" id="pl_line_cmyk" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="warn-tooltip"></span></span>';
             html += '</div></div>';
@@ -6916,42 +6919,53 @@ return html;
             this._updateCmykWarn('line', lineColor);
         },
 
-        // 原生 color picker 选色回调
+        // 给色块上色：色块现在是 .form-swatch 按钮，颜色要落在内部 .sw-dot 上
+        // （直接设按钮 background 会盖掉 swatch 的边框/圆角视觉）。空值 → 透明棋盘格。
+        _paintSwatch: function (id, val) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var dot = el.querySelector('.sw-dot') || el;
+            var v = (val == null || val === '') ? '' : String(val).trim();
+            dot.style.background = v || 'transparent';
+            el.dataset.dotCur = v;
+            if (!v) el.setAttribute('data-empty', '1'); else el.removeAttribute('data-empty');
+            // 同步隐藏的原生 color input（保留是为了 _onColorPick / 保存时取值）
+            var nid = id.replace(/_swatch$/, '');
+            var idx = id.match(/_(\d+)$/);
+            var nat = document.getElementById(nid + '_color' + (idx ? '_' + idx[1] : ''));
+            if (nat && /^#[0-9a-fA-F]{6}$/.test(v)) { try { nat.value = v; } catch (e) {} }
+        },
+
+        // 原生 color picker 选色回调（原生 input 已隐藏，仅作兼容与取值）
         _onColorPick: function(index, hex) {
             if (index === 'bg') {
                 document.getElementById('pl_bg_text').value = hex;
-                document.getElementById('pl_bg_swatch').style.background = hex;
+                this._paintSwatch('pl_bg_swatch', hex);
                 this._updateCmykWarn('bg', hex);
             } else if (index === 'line') {
                 document.getElementById('pl_line_text').value = hex;
-                document.getElementById('pl_line_swatch').style.background = hex;
+                this._paintSwatch('pl_line_swatch', hex);
                 this._updateCmykWarn('line', hex);
             } else {
                 document.getElementById('pl_color_text_'+index).value = hex;
-                var swatch = document.getElementById('pl_color_swatch_'+index);
-                if (swatch) swatch.style.background = hex;
+                this._paintSwatch('pl_color_swatch_'+index, hex);
                 this._updateColorName(index, hex);
                 this._updateCmykWarn(index, hex);
             }
         },
 
-        // hex 文本框手动输入回调
+        // hex 文本框手动输入回调（取色器提交时也走这里 —— cpCommit 会派发 input 事件）
         _onHexInput: function(index, val) {
             val = val.trim();
             if (!/^#[0-9a-fA-F]{6}$/.test(val)) return;
             if (index === 'bg') {
-                document.getElementById('pl_bg_color').value = val;
-                document.getElementById('pl_bg_swatch').style.background = val;
+                this._paintSwatch('pl_bg_swatch', val);
                 this._updateCmykWarn('bg', val);
             } else if (index === 'line') {
-                document.getElementById('pl_line_color').value = val;
-                document.getElementById('pl_line_swatch').style.background = val;
+                this._paintSwatch('pl_line_swatch', val);
                 this._updateCmykWarn('line', val);
             } else {
-                var swatch = document.getElementById('pl_color_swatch_'+index);
-                if (swatch) swatch.style.background = val;
-                var colorInput = document.getElementById('pl_color_color_'+index);
-                if (colorInput) colorInput.value = val;
+                this._paintSwatch('pl_color_swatch_'+index, val);
                 this._updateColorName(index, val);
                 this._updateCmykWarn(index, val);
             }
@@ -8856,5 +8870,302 @@ function upgradeUI(root) {
 <script src="bambu-pattern-icons.js"></script>
 <script src="bambu-preset-patch.js"></script>
 <script src="bambu-preset-editor.js"></script>
+
+<style id="cpPorted">
+/* ↓ 由 cp_port.py 从 portfolio 后台同步（改动色板取色器请改源后重跑本脚本） */
+/* ===== 弹出式取色器（对齐 amotion 风格：色域 + 色相条 + 预设色板 + RGB 滑块 + HEX） ===== */
+.form-color-dot { width: 42px; height: 34px; padding: 0; border: 1px solid rgba(127,127,127,.4); border-radius: 8px; cursor: pointer; flex: none; box-shadow: inset 0 0 0 2px #fff; }
+.form-color-dot:hover { border-color: var(--accent-color); }
+.cp-pop { position: fixed; z-index: 6000; width: 264px; background: #fff; border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.18); padding: 12px; user-select: none; }
+.cp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cp-head span { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.cp-cur { width: 40px; height: 26px; border-radius: 7px; border: 1px solid rgba(127,127,127,.35); display: inline-block; }
+.cp-area { position: relative; height: 150px; border-radius: 10px; overflow: hidden; cursor: crosshair; touch-action: none; }
+.cp-area-dot { position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); transform: translate(-50%,-50%); pointer-events: none; }
+.cp-hue { position: relative; height: 16px; border-radius: 8px; margin-top: 10px; cursor: pointer; touch-action: none;
+  background: linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
+.cp-hue-dot { position: absolute; top: 50%; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); transform: translate(-50%,-50%); pointer-events: none; }
+.cp-swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 10px; }
+.cp-sw { aspect-ratio: 1/1; border-radius: 7px; border: 1px solid rgba(127,127,127,.3); cursor: pointer; padding: 0; }
+.cp-sw:hover { transform: scale(1.12); }
+.cp-rgb { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.cp-rgb-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.cp-rgb-row label { width: 14px; flex: none; }
+.cp-rgb-row input[type=range] { flex: 1; accent-color: var(--accent-color); }
+.cp-rgb-row b { width: 30px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cp-hexrow { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.cp-hexrow label { font-size: 12px; color: var(--text-secondary); flex: none; }
+.cp-hexrow input { flex: 1; height: 30px; border: 1px solid var(--border-color); border-radius: 8px; padding: 0 8px; font-size: 13px; font-family: monospace; }
+.form-tab-panel { min-width: 0; }
+#editorFormContainer, #editorFormContainer > * { max-width: 100%; box-sizing: border-box; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+
+/* ===== 色板选择 Palette（预设色块点选，避免手填 hex） ===== */
+.form-palette { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.form-swatch {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 30px; padding: 0 11px 0 6px;
+  border: 1px solid var(--border-color); border-radius: 999px;
+  background: var(--bg-primary); color: var(--text-secondary);
+  font-size: 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s, color .15s;
+}
+.form-swatch:hover { border-color: var(--accent-color); }
+.form-swatch.on { border-color: var(--accent-color); box-shadow: 0 0 0 1px var(--accent-color); color: var(--text-primary); }
+.form-swatch .sw-dot {
+  width: 16px; height: 16px; border-radius: 50%; flex: none;
+  border: 1px solid rgba(0,0,0,0.18);
+}
+.form-swatch .sw-dot.sw-empty {
+  background: #fff !important;
+  background-image: linear-gradient(135deg, #fff 44%, #c9c9c9 44%, #c9c9c9 56%, #fff 56%) !important;
+}
+.sw-val { font-size: 11px; color: var(--text-muted); margin-left: 2px; word-break: break-all; }
+
+
+/* ↓ 表单基础样式（由 css_extract.py 从 portfolio 后台按选择器精确抽取） */
+.btn-secondary { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-secondary); border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-secondary:hover { background: var(--bg-hover); }
+.form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.form-group.full { grid-column: 1 / -1; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.form-range { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border-color); outline: none; cursor: pointer; margin: 8px 0 2px; box-sizing: border-box; padding: 0; }
+.form-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent-color); cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: transform .15s; }
+.form-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--accent-color); cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.form-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--border-color); }
+.form-input, .form-select, .form-textarea { padding: 9px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 14px; outline: none; transition: all .2s; font-family: inherit; background: var(--bg-primary); width: 100%; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+.form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select { cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--bg-primary) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; }
+
+/* ==== 四方连图「色板弹窗」补齐（源 portfolio 也没有这组，两个后台都缺） ==== */
+.color-picker-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.color-picker-row .form-input { width:auto; flex:0 0 132px; }
+.color-picker-row .form-input.color-hex-input { font-family:'SFMono-Regular',Consolas,Menlo,monospace; font-size:13px; }
+.color-swatch { position:relative; display:inline-flex; flex:none; }
+.color-swatch .cp-native, .cp-native { position:absolute; width:1px; height:1px; left:-9999px; top:auto;
+  opacity:0; pointer-events:none; border:0; padding:0; }   /* 原生 color input 只保留取值作用：
+  用 position:absolute + inset:0 时它找不到定位祖先，会落到页面别处并**露在色块上**（实测每个色块里一条灰条）→ 直接移出可视区 */
+.cp-swatch-btn { width:34px; height:34px; min-width:34px; padding:0; border-radius:9px; overflow:hidden; background:var(--bg-primary); }
+.cp-swatch-btn .sw-dot { display:block; width:100%; height:100%; border-radius:8px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+.cp-swatch-btn[data-empty="1"] .sw-dot { background:transparent !important;
+  background-image:linear-gradient(45deg,#ccc 25%,transparent 25%),linear-gradient(-45deg,#ccc 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ccc 75%),linear-gradient(-45deg,transparent 75%,#ccc 75%);
+  background-size:10px 10px; background-position:0 0,0 5px,5px -5px,-5px 0; }
+.color-name-label { font-size:12px; color:var(--text-secondary); min-width:54px; }
+.cmyk-warn { position:relative; display:inline-flex; align-items:center; cursor:help; }
+.cmyk-warn svg { width:15px; height:15px; --ic-sw:2; }
+.warn-tooltip { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+  background:var(--text-primary); color:var(--bg-primary); font-size:11px; line-height:1.5;
+  padding:6px 9px; border-radius:7px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; z-index:20; }
+.cmyk-warn:hover .warn-tooltip { opacity:1; }
+.btn-icon-sm { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px;
+  border:1px solid var(--border-color); border-radius:7px; background:var(--bg-primary); color:var(--text-secondary); cursor:pointer; padding:0; }
+.btn-icon-sm:hover { background:var(--bg-hover); color:var(--text-primary); }
+.btn-icon-sm svg { width:14px; height:14px; --ic-sw:2; }
+</style>
+
+<script id="cpPortedJS">
+/* ↓ 色板取色器 JS（由 cp_port.py 从 portfolio 后台同步） */
+function cpHexToRgb(hex) {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function cpRgbToHex(r, g, b) {
+  return '#' + [r, g, b].map((n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('');
+}
+function cpRgbToHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d > 0) {
+    if (mx === r) h = ((g - b) / d) % 6;
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+  }
+  return [h, mx === 0 ? 0 : d / mx, mx];
+}
+function cpHsvToRgb(h, s, v) {
+  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+
+function openColorPicker(anchorBtn, txtInput) {
+  if (!CP) cpEnsureDOM();
+  const raw = String(txtInput.value || '').trim();
+  const mRgba = /^rgba?\(([^)]+)\)$/i.exec(raw);
+  let hex = '#ffffff', alpha = 1;
+  if (mRgba) {
+    const parts = mRgba[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    if (parts.length >= 3 && !parts.slice(0, 3).some(isNaN)) {
+      hex = cpRgbToHex(parts[0], parts[1], parts[2]);
+      alpha = parts[3] != null && !isNaN(parts[3]) ? Math.max(0, Math.min(1, parts[3])) : 1;
+    }
+  } else if (cpHexToRgb(raw)) hex = cpHexToRgb(raw) ? raw.trim() : '#ffffff';
+  const rgb = cpHexToRgb(hex) || [255, 255, 255];
+  const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+  CP.txt = txtInput; CP.dot = anchorBtn;
+  CP.state.h = h; CP.state.s = s; CP.state.v = v; CP.state.a = alpha;
+  /* 定位：anchor 下方，右侧溢出则靠右对齐 */
+  const r = anchorBtn.getBoundingClientRect();
+  const pop = CP.pop;
+  pop.hidden = false;
+  const pw = pop.offsetWidth || 264, ph = pop.offsetHeight || 380;
+  let left = r.left, top = r.bottom + 8;
+  if (left + pw > innerWidth - 8) left = Math.max(8, innerWidth - pw - 8);
+  if (top + ph > innerHeight - 8) top = Math.max(8, r.top - ph - 8);
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+  cpSync();
+}
+function cpEnsureDOM() {
+  const pop = document.createElement('div');
+  pop.className = 'cp-pop';
+  pop.hidden = true;
+  const swatches = ['#ffffff', '#e5e7eb', '#9ca3af', '#374151', '#111827', '#ef4444', '#f97316', '#eab308',
+    '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#78350f'];
+  pop.innerHTML =
+    '<div class="cp-head"><span>颜色</span><i class="cp-cur"></i></div>' +
+    '<div class="cp-area"><div class="cp-area-dot"></div></div>' +
+    '<div class="cp-hue"><div class="cp-hue-dot"></div></div>' +
+    '<div class="cp-swatches">' + swatches.map((c) => `<button type="button" class="cp-sw" data-cp-sw="${c}" style="background:${c}" title="${c}"></button>`).join('') + '</div>' +
+    '<div class="cp-rgb">' +
+      ['R', 'G', 'B'].map((ch, i) => `<div class="cp-rgb-row"><label>${ch}</label><input type="range" min="0" max="255" step="1" data-cp-ch="${i}"><b data-cp-b="${i}">0</b></div>`).join('') +
+      '<div class="cp-rgb-row"><label>A</label><input type="range" min="0" max="100" step="1" data-cp-alpha><b data-cp-ab>100%</b></div>' +
+    '</div>' +
+    '<div class="cp-hexrow"><label>HEX</label><input type="text" data-cp-hex maxlength="9" placeholder="#232323"></div>';
+  document.body.appendChild(pop);
+  CP = { pop: pop, state: { h: 0, s: 0, v: 0, a: 1 }, txt: null, dot: null };
+  /* 色域拖拽 */
+  const area = pop.querySelector('.cp-area');
+  const areaDrag = (ev) => {
+    const r = area.getBoundingClientRect();
+    CP.state.s = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+    CP.state.v = 1 - Math.max(0, Math.min(1, (ev.clientY - r.top) / r.height));
+    cpSync(); cpCommit();
+  };
+  area.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    areaDrag(e);
+    const mv = (ev2) => areaDrag(ev2);
+    const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); };
+    document.addEventListener('pointermove', mv);
+    document.addEventListener('pointerup', up);
+  });
+  /* 色相条拖拽 */
+  const hue = pop.querySelector('.cp-hue');
+  const hueDrag = (ev) => {
+    const r = hue.getBoundingClientRect();
+    CP.state.h = Math.max(0, Math.min(359, (ev.clientX - r.left) / r.width * 360));
+    cpSync(); cpCommit();
+  };
+  hue.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    hueDrag(e);
+    const mv = (ev2) => hueDrag(ev2);
+    const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); };
+    document.addEventListener('pointermove', mv);
+    document.addEventListener('pointerup', up);
+  });
+  /* 预设色板 */
+  pop.querySelectorAll('[data-cp-sw]').forEach((b) => b.addEventListener('click', () => {
+    const rgb = cpHexToRgb(b.dataset.cpSw);
+    const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+    CP.state.h = h; CP.state.s = s; CP.state.v = v;
+    cpSync(); cpCommit();
+  }));
+  /* RGB 滑块 */
+  pop.querySelectorAll('[data-cp-ch]').forEach((inp) => inp.addEventListener('input', () => {
+    const rgb = cpHsvToRgb(CP.state.h, CP.state.s, CP.state.v);
+    rgb[+inp.dataset.cpCh] = +inp.value;
+    const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+    CP.state.h = h; CP.state.s = s; CP.state.v = v;
+    cpSync(); cpCommit();
+  }));
+  /* A（透明度）滑块：0–100%，<100% 时写回 rgba(...) */
+  pop.querySelector('[data-cp-alpha]').addEventListener('input', (e) => {
+    CP.state.a = (+e.target.value) / 100;
+    cpSync(); cpCommit();
+  });
+  /* HEX 输入 */
+  const hexInp = pop.querySelector('[data-cp-hex]');
+  hexInp.addEventListener('change', () => {
+    const rgb = cpHexToRgb(hexInp.value);
+    if (!rgb) return;
+    const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+    CP.state.h = h; CP.state.s = s; CP.state.v = v;
+    cpSync(); cpCommit();
+  });
+  /* 关闭：点外部 / Esc / 滚动 */
+  setTimeout(() => {
+    document.addEventListener('pointerdown', cpOutside);
+    document.addEventListener('keydown', cpEsc);
+  }, 0);
+}
+function cpOutside(e) {
+  if (!CP || CP.pop.hidden) return;
+  if (CP.pop.contains(e.target) || (CP.dot && CP.dot.contains(e.target))) return;
+  cpClose();
+}
+function cpEsc(e) { if (e.key === 'Escape' && CP && !CP.pop.hidden) cpClose(); }
+function cpClose() {
+  if (!CP) return;
+  CP.pop.hidden = true;
+  document.removeEventListener('pointerdown', cpOutside);
+  document.removeEventListener('keydown', cpEsc);
+}
+function cpCurrentHex() {
+  const rgb = cpHsvToRgb(CP.state.h, CP.state.s, CP.state.v);
+  return cpRgbToHex(rgb[0], rgb[1], rgb[2]);
+}
+function cpSync() {
+  const pop = CP.pop, st = CP.state;
+  const hex = cpCurrentHex();
+  const rgb = cpHexToRgb(hex);
+  const a = (st.a == null ? 1 : st.a);
+  /* 色域背景：当前色相的饱和度×明度二维渐变 */
+  const area = pop.querySelector('.cp-area');
+  area.style.background = 'linear-gradient(to top, #000, rgba(0,0,0,0)), linear-gradient(to right, #fff, hsl(' + Math.round(st.h) + ',100%,50%))';
+  area.querySelector('.cp-area-dot').style.left = (st.s * 100) + '%';
+  area.querySelector('.cp-area-dot').style.top = ((1 - st.v) * 100) + '%';
+  area.querySelector('.cp-area-dot').style.background = hex;
+  pop.querySelector('.cp-hue-dot').style.left = (st.h / 359 * 100) + '%';
+  pop.querySelector('.cp-hue-dot').style.background = 'hsl(' + Math.round(st.h) + ',100%,50%)';
+  pop.querySelector('.cp-cur').style.background = 'rgba(' + rgb.join(',') + ',' + a + ')';
+  pop.querySelectorAll('[data-cp-ch]').forEach((inp) => { inp.value = Math.round(rgb[+inp.dataset.cpCh]); });
+  pop.querySelectorAll('[data-cp-b]').forEach((b) => { b.textContent = Math.round(rgb[+b.dataset.cpB]); });
+  const aInp = pop.querySelector('[data-cp-alpha]');
+  if (document.activeElement !== aInp) aInp.value = Math.round(a * 100);
+  pop.querySelector('[data-cp-ab]').textContent = Math.round(a * 100) + '%';
+  const hexInp = pop.querySelector('[data-cp-hex]');
+  if (document.activeElement !== hexInp) hexInp.value = hex;
+}
+function cpCommit() {
+  if (!CP || !CP.txt) return;
+  const hex = cpCurrentHex();
+  const rgb = cpHexToRgb(hex);
+  const a = (CP.state.a == null ? 1 : CP.state.a);
+  /* a=100% 写回 hex；<100% 写回 rgba 保留透明度（色卡底色同步同步显示半透明） */
+  CP.txt.value = (a >= 0.999)
+    ? hex
+    : 'rgba(' + Math.round(rgb[0]) + ',' + Math.round(rgb[1]) + ',' + Math.round(rgb[2]) + ',' + (Math.round(a * 100) / 100) + ')';
+  CP.dot.dataset.dotCur = hex;
+  CP.dot.style.background = CP.txt.value;
+  CP.txt.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+/* 取色器全局态声明 —— 源在 cpHexToRgb 之前（portfolio: let CP = null;），
+   抽取时容易漏；漏了会在 cpEnsureDOM 里 `CP = {...}` 抛 ReferenceError。 */
+let CP = null;</script>
 </body>
 </html>
