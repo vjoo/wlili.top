@@ -3589,7 +3589,11 @@ var CaseRenderer = (function () {
 
     var radius = (mbClamp(mbNum(s.cornerRadius, 0.08), 0, 0.5) * 100).toFixed(1) + '%';
     var stageStyle = ' style="--mbn-r:' + radius + '"';
-    section.innerHTML = '<div class="mockup-frame"' + frameStyle + '>' + bgHtml + textHtml +
+    /* 黑色遮罩（overlayOpacity 0-100%）：z3 = 卡片(stage z2)之上、文字(textlayer z5)之下，
+       亮色卡片干扰文字时调大衬托文字。 */
+    var ovPct = mbClamp(mbNum(s.overlayOpacity, 0), 0, 100);
+    var ovHtml = ovPct > 0 ? '<div class="mbn-ov" style="position:absolute;inset:0;z-index:3;background:rgba(0,0,0,' + (ovPct / 100).toFixed(3) + ');pointer-events:none"></div>' : '';
+    section.innerHTML = '<div class="mockup-frame"' + frameStyle + '>' + bgHtml + ovHtml + textHtml +
       '<div class="mbn-stage"' + stageStyle + '><div class="mbn-deck"></div></div></div>';
     section._motionS = s;
     section._motionImgs = imgs;
@@ -3626,9 +3630,14 @@ var CaseRenderer = (function () {
       var eff = (MFX.effects && MFX.effects[s.effect]) ? s.effect : 'vortex';
       var compute = MFX[eff];
       var N = Math.max(total, 4);
-      /* 整墙俯仰/左右倾斜（amotion 模板参数 tiltX/tiltY）：挂在 deck 上，静态一次 */
+      /* 整墙俯仰/左右倾斜：通用 tiltX/tiltY（全动效）+ ticker 专属 tTilt/tTurn（参考站三轴的 x/y 轴，
+         之前 UI 有字段但从未接线——「改了没变化」的根因；ticker 时叠加到 deck 同一 transform）。 */
       var tiltX = mbClamp(mbNum(s.tiltX, 0), -45, 45);
       var tiltY = mbClamp(mbNum(s.tiltY, 0), -45, 45);
+      if (eff === 'ticker') {
+        tiltX = mbClamp(tiltX + mbNum(s.tTilt, 0), -90, 90);
+        tiltY = mbClamp(tiltY + mbNum(s.tTurn, 0), -90, 90);
+      }
       if (tiltX || tiltY) {
         deck.style.transform = 'perspective(1400px) rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)';
         deck.style.transformStyle = 'preserve-3d';

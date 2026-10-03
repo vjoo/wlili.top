@@ -17,7 +17,7 @@
       window.__FIXTURE_CONTENT = { sections: [{
         id: 'fx1', type: 'motion-banner',
         images: [{}, {}, {}, {}, {}, {}, {}, {}, {}],
-        effect: 'vortex', cardRatio: 'auto', cornerRadius: '0.08', tiltX: '0', tiltY: '0', borderWidth: '0', borderColor: '#ffffff',
+        effect: 'vortex', cardRatio: 'auto', cornerRadius: '0.08', tiltX: '0', tiltY: '0', borderWidth: '0', borderColor: '#ffffff', overlayOpacity: '0',
         speed: '0.4', cardSize: '0.2', turns: '3.5', spacing: '5', spread: '4', attenuation: '2', fadeIn: '20',
         dSpeed: '0.12', dCardSize: '0.3', parallax: '0.7', variation: '0.4', backFade: '0.45', dDirection: 'up',
         bSpeed: '0.07', rows: '3', coverage: '1', bVariation: '1', gap: '0.06', bDirection: 'left',
@@ -5229,10 +5229,23 @@ function startMnLive() {
     const radius = mbRadiusPx(sec, eff, st.W, st.H).toFixed(1) + 'px';
     const bwK = MFX.clamp(MFX.num(sec.borderWidth, 0), 0, 0.12);
     const bcCol = sec.borderColor || '#ffffff';
-    const tiltX = MFX.clamp(MFX.num(sec.tiltX, 0), -45, 45);
-    const tiltY = MFX.clamp(MFX.num(sec.tiltY, 0), -45, 45);
+    const tiltX0 = MFX.clamp(MFX.num(sec.tiltX, 0), -45, 45);
+    const tiltY0 = MFX.clamp(MFX.num(sec.tiltY, 0), -45, 45);
+    /* ticker 三轴补全：tTilt/tTurn 叠加到通用 tilt（与前台 render.js 同式） */
+    const tiltX = (eff === 'ticker') ? MFX.clamp(tiltX0 + MFX.num(sec.tTilt, 0), -90, 90) : tiltX0;
+    const tiltY = (eff === 'ticker') ? MFX.clamp(tiltY0 + MFX.num(sec.tTurn, 0), -90, 90) : tiltY0;
     deck.style.transform = (tiltX || tiltY) ? 'perspective(1400px) rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)' : '';
     deck.style.transformStyle = 'preserve-3d';
+    /* 黑色遮罩预览：卡上、文字手柄( z20000 )下 */
+    const ovPct = MFX.clamp(MFX.num(sec.overlayOpacity, 0), 0, 100);
+    if (!st.overlay) {
+      const ov = document.createElement('div');
+      ov.className = 'mn-live-ov';
+      ov.style.cssText = 'position:absolute;inset:0;z-index:1;background:transparent;pointer-events:none';
+      stage.appendChild(ov);
+      st.overlay = ov;
+    }
+    st.overlay.style.background = ovPct > 0 ? 'rgba(0,0,0,' + (ovPct / 100).toFixed(3) + ')' : 'transparent';
     deck.style.background = sec.bgType === 'color' && sec.bgColor ? sec.bgColor : '#0c0d10';
     for (let i = 0; i < frames.length; i++) {
       const f = frames[i], c = st.pool[i];
@@ -5476,7 +5489,7 @@ function ensureMotionVisDOM() {
   style.textContent = [
     '.mnvis-body{display:flex;gap:14px;align-items:stretch}',
     '.mnvis-stage{position:relative;flex:1 1 auto;background:#101116;border-radius:14px;overflow:hidden;min-height:440px;touch-action:none}',
-    '.mnvis-chip{position:absolute;cursor:grab;user-select:none;-webkit-user-select:none;white-space:nowrap;transform:translate(-50%,-50%);padding:4px 8px;border:1.5px dashed transparent;border-radius:6px;line-height:1.25;max-width:92%}',
+    '.mnvis-chip{position:absolute;cursor:grab;user-select:none;-webkit-user-select:none;white-space:nowrap;transform:translate(-50%,-50%);padding:4px 8px;border:1.5px dashed transparent;border-radius:6px;line-height:1.25;max-width:92%;z-index:20000}',
     '.mnvis-chip.sel{border-color:#3b82f6;background:rgba(59,130,246,.10)}',
     '.mnvis-chip:active{cursor:grabbing}',
     '.mnvis-side{width:236px;flex:0 0 236px;display:flex;flex-direction:column;gap:10px}',
@@ -5628,11 +5641,24 @@ function buildMotionVis() {
   const radius = mbRadiusPx(sec, eff, W, H).toFixed(1) + 'px';
   const bwK = MFX.clamp(MFX.num(sec.borderWidth, 0), 0, 0.12);
   const bcCol = sec.borderColor || '#ffffff';
-  const tiltX = MFX.clamp(MFX.num(sec.tiltX, 0), -45, 45);
-  const tiltY = MFX.clamp(MFX.num(sec.tiltY, 0), -45, 45);
+  const tiltX0 = MFX.clamp(MFX.num(sec.tiltX, 0), -45, 45);
+  const tiltY0 = MFX.clamp(MFX.num(sec.tiltY, 0), -45, 45);
+  /* ticker 三轴补全：tTilt/tTurn 叠加到通用 tilt（与前台 render.js 同式） */
+  const tiltX = (eff === 'ticker') ? MFX.clamp(tiltX0 + MFX.num(sec.tTilt, 0), -90, 90) : tiltX0;
+  const tiltY = (eff === 'ticker') ? MFX.clamp(tiltY0 + MFX.num(sec.tTurn, 0), -90, 90) : tiltY0;
   deck.style.transform = (tiltX || tiltY) ? 'perspective(1400px) rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)' : '';
   deck.style.transformStyle = 'preserve-3d';
   deck.style.background = sec.bgType === 'color' && sec.bgColor ? sec.bgColor : '#0c0d10';
+  /* 黑色遮罩预览：卡上、文字手柄下（chips 已提到 z-index:20000） */
+  let ovEl = stage.querySelector('.mnvis-ov');
+  if (!ovEl) {
+    ovEl = document.createElement('div');
+    ovEl.className = 'mnvis-ov';
+    ovEl.style.cssText = 'position:absolute;inset:0;z-index:1;background:transparent;pointer-events:none';
+    stage.appendChild(ovEl);
+  }
+  const ovPct = MFX.clamp(MFX.num(sec.overlayOpacity, 0), 0, 100);
+  ovEl.style.background = ovPct > 0 ? 'rgba(0,0,0,' + (ovPct / 100).toFixed(3) + ')' : 'transparent';
   let html = '';
   for (let i = 0; i < frames.length; i++) {
     const f = frames[i];

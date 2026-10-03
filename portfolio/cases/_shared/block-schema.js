@@ -759,6 +759,8 @@
         { key: 'tiltY', label: '左右倾斜', type: 'range', min: -45, max: 45, step: 1, default: 0, tab: '动效' },
         { key: 'borderWidth', label: '边框粗细', type: 'range', min: 0, max: 0.12, step: 0.005, default: 0, tab: '动效' },
         { key: 'borderColor', label: '边框颜色', type: 'color', default: '#ffffff', tab: '动效' },
+        { key: 'overlayOpacity', label: '黑色遮罩', type: 'range', min: 0, max: 100, step: 1, default: 0, tab: '动效',
+          hint: '卡片之上、文字之下的黑色遮罩不透明度（%）：亮色卡片干扰文字时调大可衬托文字' },
 
         { key: 'speed', label: '流速（卡位/秒）', type: 'range', min: 0.1, max: 20, step: 0.1, default: 0.8, tab: '动效',
           showIf: { key: 'effect', in: ['vortex'] } },
@@ -844,7 +846,7 @@
       default: {
         size: 'large',
         images: [{}, {}, {}, {}, {}, {}, {}, {}, {}],
-        effect: 'vortex', cardRatio: 'auto', cornerRadius: '0.08', tiltX: '0', tiltY: '0', borderWidth: '0', borderColor: '#ffffff',
+        effect: 'vortex', cardRatio: 'auto', cornerRadius: '0.08', tiltX: '0', tiltY: '0', borderWidth: '0', borderColor: '#ffffff', overlayOpacity: '0',
         speed: '0.8', cardSize: '0.2', turns: '3.5', spacing: '5', spread: '6', attenuation: '2', fadeIn: '20',
         dSpeed: '0.12', dCardSize: '0.3', parallax: '0.7', variation: '0.4', backFade: '0.45', dDirection: 'up',
         bSpeed: '0.07', rows: '3', coverage: '1', bVariation: '1', gap: '0.06', bDirection: 'left',

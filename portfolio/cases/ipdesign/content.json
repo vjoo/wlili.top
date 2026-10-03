@@ -4,56 +4,45 @@
     {
       "type": "motion-banner",
       "size": "large",
-      "effect": "ticker",
+      "effect": "drift",
       "bgType": "theme",
       "images": [
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787981569208.jpg",
-          "tag": "素材1"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043645080.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1788189849227.jpg",
-          "tag": "素材2"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043470393.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787755209548.jpg",
-          "tag": "素材3"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043581483.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787755430984.jpg",
-          "tag": "素材4"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043449002.jpg"
         },
         {
           "image": "/portfolio/cases/ipdesign/uploads/1787755495584.jpg",
           "tag": "素材5"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787755456636.jpg",
-          "tag": "素材6"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043432120.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787755520068.jpg",
-          "tag": "素材7"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043426455.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787755524409.jpg",
-          "tag": "素材8"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043419762.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787756052964.jpg",
-          "tag": "素材9"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043525050.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787756080038.jpg",
-          "tag": "素材10"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043387455.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787756229724.jpg",
-          "tag": "素材11"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043595832.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787756090576.jpg",
-          "tag": "素材12"
+          "image": "/portfolio/cases/ipdesign/uploads/1791043613913.jpg"
         }
       ],
       "texts": [
@@ -65,8 +54,8 @@
           "opacity": 1,
           "rotate": 0,
           "align": "left",
-          "x": "",
-          "y": ""
+          "x": "22.7",
+          "y": "39.4"
         },
         {
           "text": "一滴水，也能汇成江海 —— 关注社区环保，陪伴儿童成长",
@@ -85,12 +74,17 @@
       "tTilt": "0",
       "tCardSize": "0.45",
       "tRoll": "30",
-      "tiltX": "31",
+      "tiltX": "0",
       "tiltY": "0",
       "tRows": "5",
       "tSpeed": "0.01",
       "tVariance": "0.45",
-      "tRowGap": "0.43"
+      "tRowGap": "0.43",
+      "cardRatio": "auto",
+      "dCardSize": "0.27",
+      "dSpeed": "0.05",
+      "backFade": "0.25",
+      "variation": "0.65"
     },
     {
       "id": "smtaaitajwcwr",
