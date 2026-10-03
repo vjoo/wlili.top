@@ -41,6 +41,9 @@ scripts/check_redundant_files.py
 # ⚠️ 设计过程产物：仅本地留档，不上线（2026-09-27）
 # tools/_concept/ 含概念稿、探针页（单文件 4.6MB）、190+ 张设计截图、本地迁移脚本、__pycache__，共 ~37MB
 tools/_concept/
+# 例外：图标命名归档页必须入库 —— 它是 Ext 层资产（icons.ext.js）的唯一来源，
+# 不入库则换机器/新克隆时 build-ext 重建出的 Ext 会与线上不一致。
+!tools/_concept/icon-naming-review.html
 # 根目录设计截图（授权表单等）
 _shots/
 # 本地归档的旧工具页（已从线上移除，仅本地回退备份，不对外提供）
