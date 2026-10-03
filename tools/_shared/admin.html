@@ -9018,6 +9018,39 @@ function upgradeUI(root) {
 @media (max-width:900px){ .stats-grid{ grid-template-columns:repeat(2,1fr); } }
 @media (max-width:560px){ .stats-grid{ grid-template-columns:1fr; gap:10px; } }
 @media (max-width:560px){ .stat-card.stat-card-row{ padding:14px 16px; gap:12px; } }
+
+/* ===== 生成器 / 无缝工具 移动端降级 · 特异性对齐层（2026-10-03 修复）=====
+   事故：全局基础定义是 `.sp-wrap .X`（spec 2），而下方各 @media 里的降级规则
+   写成了单类 `.X`（spec 1）→ 同场景下全局基础反压降级，窄屏仍是双列/多列，
+   文字被挤成竖排（用户截图「4 块挤破 / 生成器布局乱」）。
+   修复策略：不动任何既有规则（避免全局去前缀的样式泄漏风险），只在这里把降级
+   规则也加上 `.sp-wrap` 前缀 —— 与基础定义同特异性（spec 2）、且位于文件最末
+   → 稳定胜出。桌面（>1200px）这些 @media 不命中，故零影响。 */
+@media (max-width:1200px){
+  .sp-wrap .gen-layout{ grid-template-columns:1fr; }
+  .sp-wrap .gen-col-left{ display:block; }
+  .sp-wrap .gen-col-left > .gen-section:first-child{ flex:0 0 auto; }
+  .sp-wrap .gen-col-left > .gen-section:first-child > .gen-section-body{ overflow:visible; max-height:none; }
+  .sp-wrap .gen-col-output{ position:static; max-height:none; }
+  .sp-wrap .gen-col-output > .gen-section{ flex:0 0 auto; }
+  .sp-wrap .gen-col-output > .gen-section > .gen-section-body{ flex:0 0 auto; }
+}
+@media (max-width:900px){
+  .sp-wrap .gen-layout{ grid-template-columns:1fr; }
+  .sp-wrap .gen-col-output{ position:static; }
+  .sp-wrap .form-row{ grid-template-columns:1fr; }
+}
+@media (max-width:734px){
+  .sp-wrap .pattern-grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
+  .sp-wrap .palette-grid{ grid-template-columns:1fr; }
+  .sp-wrap .dash-recent-list .pattern-thumb{ width:100%; }
+  .sp-wrap .psc-grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
+  .sp-wrap .psc-hero{ padding:10px; }
+  .sp-wrap .psc-info{ padding:10px 12px; }
+}
+@media (max-width:480px){
+  .sp-wrap .pattern-grid{ grid-template-columns:1fr; }
+}
 </style>
 
 <script id="cpPortedJS">
