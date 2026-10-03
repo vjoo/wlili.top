@@ -262,7 +262,8 @@
         var slot = (b.base + m) % N;
         for (var c2 = 0; c2 < 2; c2++) {
           var px = it.x - off + (c2 ? contentW : 0) - contentW * 0.5 + W / 2;
-          if (px < -it.w || px >= W) continue;
+          /* ⛔ 不做视口裁剪：理由同 ticker——恒定输出保证 DOM 池按索引稳定绑定，
+             否则卡进出视口时帧数波动 → 图片频繁切换（闪动重叠）。 */
           out.push({ x: px + it.w / 2, y: b.y, w: it.w, h: b.h, scale: 1, rotation: 0, alpha: 1,
             zIndex: 100 - i, dim: 0, slot: slot });
         }
@@ -313,9 +314,9 @@
         /* 墙坐标 → 绕画布中心旋转 roll（整墙 z 轴旋转）→ 屏幕坐标 */
         var x = cx + wx * cosr - wy * sinr;
         var y = cy + wx * sinr + wy * cosr;
-        /* 视口裁剪（留半个卡边距防边缘闪断） */
-        var half = Math.max(cw, ch) * 0.75;
-        if (x < -half || x > W + half || y < -half || y > H + half) continue;
+        /* ⛔ 不做视口裁剪（曾在此 continue 跳过出屏卡）：帧数随裁剪每帧波动，
+           render.js 的 DOM 池按帧索引绑定 → 卡与图片对应关系漂移 → 图片频繁切换
+           （用户实测「闪动重叠」）。恒定输出后出屏卡由 transform 移出，浏览器跳过绘制。 */
         var deg = roll * 180 / Math.PI;
         out.push({ x: x, y: y, w: cw, h: ch, scale: 1, rotation: deg, alpha: 1,
           zIndex: 50 - c, dim: 0, slot: (c * rowsY + k2) % N });
