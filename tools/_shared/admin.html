@@ -127,12 +127,17 @@ svg{display:block;}
 }
 .r-item svg{width:20px;height:20px;}
 .r-item:hover{background:var(--panel);color:var(--ink);}
-.r-item.on{background:var(--cap-bg);color:var(--cap-ink);}
+/* ⛔ 选中态用**主色渐变**，不用 --cap-bg（深墨#14171c）。
+   事故记录（2026-10-03用户截图）：深墨底 + 白图标在浅色侧栏上对比不足，
+   加上 .r-item svg 是 1.7px 细描边 → 整枚按钮看着像"没有选中"。
+   实测隔离页对照：深墨底几乎看不出选中 vs 绿渐变 + 白字一眼可辨。
+   规范依据：项目主色 = accent 渐变胶囊（.btn.primary 同款），选中态应与之同源。 */
+.r-item.on{background:var(--accent-grad);color:#fff;}
 .rail-global .r-item{
   background:var(--card);border:1px solid var(--line);
 }
 .rail-global .r-item:hover{transform:translateY(-1px);}
-.rail-global .r-item.on{background:var(--cap-bg);color:var(--cap-ink);border-color:var(--cap-bg);}
+.rail-global .r-item.on{background:var(--accent-grad);color:#fff;border-color:transparent;}
 
 
 /* ===== 顶栏（横跨全宽）===== */
@@ -499,9 +504,12 @@ h3 .hint-i{margin-left:6px;}
 }
 .mm-tool svg{width:20px;height:20px;color:var(--muted);flex:none;}
 .mm-tool:hover{background:var(--panel);}
-.mm-tool.on{background:var(--cap-bg);color:var(--cap-ink);font-weight:600;}
-.mm-tool.on svg{color:var(--cap-ink);}
-.mm-subs{margin:2px 12px 8px 32px;border-left:2px solid var(--line);padding-left:10px;}
+.mm-tool.on{background:var(--accent-grad);color:#fff;font-weight:600;}
+.mm-tool.on svg{color:#fff;}
+/* ⛔ 二级菜单组与一级项之间必须有明确空隙 —— 原margin-top 只有 2px，
+   实测在手机上二级项直接贴着一级项底部（用户截图「中间没有空隙」）。
+   层级靠「缩进 + 左侧竖线 + 间距」三重表达，缺一不可。 */
+.mm-subs{margin:10px 12px 10px 32px;border-left:2px solid var(--line);padding-left:10px;}
 .mm-sub{
   display:block;width:100%;text-align:left;border:none;background:transparent;
   padding:8px 10px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:13px;transition:.12s;
@@ -673,8 +681,13 @@ input:focus:not([type=checkbox]):not([type=radio]),select:focus,textarea:focus{b
 .sp-wrap .btn-primary:active{ transform:scale(0.98);}
 .sp-wrap .btn-sm{ padding:7px 14px; font-size:12.5px;}.sp-wrap .btn-secondary{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--bg-white); color:var(--text-primary); border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;}.sp-wrap .btn-secondary:hover{ background:var(--bg-hover); border-color:var(--text-muted);}.sp-wrap .btn-secondary:active{ transform:scale(0.98);}.sp-wrap .btn-danger{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--bg-white); color:var(--danger); border:1px solid rgba(229,72,77,0.3); border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;}.sp-wrap .btn-danger:hover{ background:var(--danger-bg); border-color:var(--danger);}.sp-wrap .btn-sm{ padding:5px 12px; font-size:13px;}.sp-wrap .btn-icon-sm{ width:28px; height:28px; border-radius:6px; border:1px solid var(--border-light); background:var(--fill-white); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); transition:all 0.2s; flex-shrink:0;}.sp-wrap .btn-icon-sm:hover{ background:var(--bg-hover); color:var(--danger); border-color:var(--danger);}.sp-wrap .btn-icon{ width:30px; height:30px; border:1px solid var(--border-color); border-radius:var(--radius-sm); background:var(--bg-white); color:var(--text-secondary); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0;}.sp-wrap .btn-icon:hover{ border-color:var(--text-muted); color:var(--text-primary);}.sp-wrap .btn-icon svg{ width:16px; height:16px;}.sp-wrap /* Search */
 .search-box{ position:relative; width:240px;}.sp-wrap .search-box input{ width:100%; padding:7px 12px 7px 34px; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-primary); font-size:14px; outline:none; transition:all 0.2s;}.sp-wrap .search-box input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(101,163,13,0.1);}.sp-wrap .search-icon{ position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-muted);}.sp-wrap /* Filter */
-.filter-bar{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;}.sp-wrap .filter-select{ padding:6px 32px 6px 10px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:14px; outline:none; cursor:pointer; min-width:100px; appearance:none; -webkit-appearance:none; background:var(--bg-primary) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;}.sp-wrap /* Stats */
-.stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:0;}.sp-wrap .stat-card{ background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px; display:flex; flex-direction:column; gap:6px; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1);}.sp-wrap .stat-card:hover{ box-shadow:var(--shadow-md);}.sp-wrap .stat-card-label{ font-size:13px; color:var(--text-secondary); font-weight:500;}.sp-wrap .stat-card-value{ font-size:28px; font-weight:700; color:var(--text-primary); line-height:1.2;}.sp-wrap .stat-card-value.accent{ color:var(--accent);}.sp-wrap .stat-card-value.success{ color:var(--success);}.sp-wrap .stat-card-value.warning{ color:var(--warning);}.sp-wrap .stat-card-value.danger{ color:var(--danger);}.sp-wrap .stat-card-sub{ font-size:12px; color:var(--text-muted);}.sp-wrap /* 仪表台带图标统计卡（filament 风格：图标块 + 信息区） */
+.filter-bar{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;}.sp-wrap .filter-select{ padding:6px 32px 6px 10px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:14px; outline:none; cursor:pointer; min-width:100px; appearance:none; -webkit-appearance:none; background:var(--bg-primary) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;}/* ⛔ Stats 基础定义必须是**全局**规则，绝不能塞进任何 @media。
+   事故记录：它原先写在 @media(max-width:820px) 内，与 900/734 的 2 列降级规则
+   **同特异性（都是单类）**且文件位置更靠后 → 反过来压过降级；
+   实测 390/700/820/900 全部退化成 4 列挤在窄屏里（用户截图「4 块挤破」）。
+   规则：基础样式放全局、降级样式统一收到文件末尾的 media 块，两层分工别混。 */
+.stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:0;}
+.stat-card-row{ background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:16px; display:flex; flex-direction:column; gap:6px; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1);}.sp-wrap .stat-card:hover{ box-shadow:var(--shadow-md);}.sp-wrap .stat-card-label{ font-size:13px; color:var(--text-secondary); font-weight:500;}.sp-wrap .stat-card-value{ font-size:28px; font-weight:700; color:var(--text-primary); line-height:1.2;}.sp-wrap .stat-card-value.accent{ color:var(--accent);}.sp-wrap .stat-card-value.success{ color:var(--success);}.sp-wrap .stat-card-value.warning{ color:var(--warning);}.sp-wrap .stat-card-value.danger{ color:var(--danger);}.sp-wrap .stat-card-sub{ font-size:12px; color:var(--text-muted);}.sp-wrap /* 仪表台带图标统计卡（filament 风格：图标块 + 信息区） */
 .stat-card.stat-card-row{ flex-direction:row; align-items:center; justify-content:flex-start; gap:14px; padding:18px 20px; background:var(--card); box-shadow:var(--shadow-sm);}.sp-wrap .stat-card-icon{ width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff;}.sp-wrap .stat-card-icon svg{ width:24px; height:24px;}.sp-wrap .stat-card-info{ display:flex; flex-direction:column; gap:3px; min-width:0;}.sp-wrap .stat-card-info .stat-card-label{ font-size:12px;}.sp-wrap .stat-card-info .stat-card-value{ font-size:24px;}.sp-wrap .stat-card-badge{ align-self:flex-start; font-size:11px; color:var(--text-muted); background:var(--bg-hover); padding:2px 8px; border-radius:10px; white-space:nowrap; margin-top:1px;}.sp-wrap /* 仪表台 Hero 欢迎横幅 */
 .dash-hero{ position:relative; overflow:hidden; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:26px 30px; border-radius:var(--radius-lg); background:var(--hero-grad); color:#fff; box-shadow:0 12px 32px rgba(101,163,13,0.28);}.sp-wrap .dash-hero::before{ content:''; position:absolute; top:-70px; right:-30px; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,0.12);}.sp-wrap .dash-hero::after{ content:''; position:absolute; bottom:-90px; right:90px; width:170px; height:170px; border-radius:50%; background:rgba(255,255,255,0.08);}.sp-wrap .dash-hero-info{ position:relative; z-index:1; min-width:0;}.sp-wrap .dash-hero-title{ font-size:22px; font-weight:700; letter-spacing:0.02em; display:flex; align-items:center; gap:10px;}.sp-wrap .dash-hero-title svg{ width:24px; height:24px; opacity:0.9;}.sp-wrap .dash-hero-sub{ font-size:13px; opacity:0.88; margin-top:7px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}.sp-wrap .dash-hero-stat{ position:relative; z-index:1; text-align:right; flex-shrink:0; padding-left:24px; border-left:1px solid rgba(255,255,255,0.28);}.sp-wrap .dash-hero-num{ font-size:36px; font-weight:800; line-height:1;}.sp-wrap .dash-hero-num-label{ font-size:12px; opacity:0.85; margin-top:5px;}.sp-wrap /* 授权概览面板 */
 .dash-license-panel .panel-header{ background:transparent; border-bottom:none; padding:0 2px 10px;}.sp-wrap .dash-license-panel .panel-title svg{ width:16px; height:16px; color:var(--accent);}.dash-license-panel .panel-body{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-md); padding:14px; margin:0 14px 14px;}.sp-wrap /* 授权概览小卡（带浅色图标） */
@@ -760,7 +773,7 @@ input:focus:not([type=checkbox]):not([type=radio]),select:focus,textarea:focus{b
 .pay-btn{ display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:500; font-family:inherit; padding:3px 10px; border-radius:var(--radius-sm); border:1px solid var(--accent); background:var(--accent-light); color:var(--accent); cursor:pointer; transition:all 0.2s; white-space:nowrap;}.sp-wrap .pay-btn:hover{ background:var(--accent); color:#fff;}.sp-wrap .pay-btn-done{ border-color:var(--border-color); background:var(--bg-elevated); color:var(--text-muted); cursor:default;}.sp-wrap .pay-btn-done:hover{ background:var(--bg-elevated); color:var(--text-muted);}.sp-wrap /* Warning Box */
 .warning-box{ background:var(--warning-bg); border:1px solid rgba(255,149,0,0.3); border-radius:var(--radius-md); padding:10px 14px; font-size:13px; color:#8a5a00; display:flex; align-items:center; gap:8px; margin-bottom:12px;}.sp-wrap /* Info Box */
 .info-box{ background:var(--info-bg); border:1px solid rgba(99,102,241,0.2); border-radius:var(--radius-md); padding:10px 14px; font-size:13px; color:#4338ca; display:flex; align-items:center; gap:8px; margin-bottom:12px;}.sp-wrap /* Responsive */
-@media (max-width:1200px){.gen-layout{ grid-template-columns:1fr;}.gen-col-left{ display:block;}.gen-col-left > .gen-section:first-child{ flex:0 0 auto;}.gen-col-left > .gen-section:first-child > .gen-section-body{ overflow:visible; max-height:none;}.gen-col-output{ position:static; max-height:none;}.gen-col-output > .gen-section{ flex:0 0 auto;}.gen-col-output > .gen-section > .gen-section-body{ flex:0 0 auto;}.dash-recent-list{ grid-template-columns:repeat(3,1fr);}}@media (max-width:900px){.sp-wrap .sidebar{ transform:translateX(-100%); transition:transform 0.3s ease; width:280px;}.sidebar.open{ transform:translateX(0);}.main-content{ margin-left:0;}.mobile-menu-btn{ display:flex;}.stats-grid{ grid-template-columns:repeat(2,1fr);}.gen-layout{ grid-template-columns:1fr;}.gen-col-output{ position:static;}.form-row{ grid-template-columns:1fr;}.search-box{ width:auto; flex:1; min-width:0;}}@media (max-width:734px){.sp-wrap .content-area{ padding:14px;}.stats-grid{ grid-template-columns:repeat(2,1fr); gap:10px;}.stat-card-value{ font-size:22px;}.pattern-grid{ grid-template-columns:repeat(2,1fr); gap:10px;}.panel-header{ padding:10px 14px;}.panel-body{ padding:14px;}.top-bar{ padding:0 14px;}.modal{ max-width:100%;}.config-row{ grid-template-columns:1fr;}.palette-grid{ grid-template-columns:1fr;}.psc-grid{ grid-template-columns:repeat(2,1fr); gap:10px;}.psc-hero{ padding:10px;}.psc-info{ padding:10px 12px;}.dash-recent-list{ grid-template-columns:repeat(2,1fr);}.dash-recent-list .pattern-thumb{ width:100%;}/* 仪表台 Hero 窄屏适配 */
+@media (max-width:1200px){.gen-layout{ grid-template-columns:1fr;}.gen-col-left{ display:block;}.gen-col-left > .gen-section:first-child{ flex:0 0 auto;}.gen-col-left > .gen-section:first-child > .gen-section-body{ overflow:visible; max-height:none;}.gen-col-output{ position:static; max-height:none;}.gen-col-output > .gen-section{ flex:0 0 auto;}.gen-col-output > .gen-section > .gen-section-body{ flex:0 0 auto;}.dash-recent-list{ grid-template-columns:repeat(3,1fr);}}@media (max-width:900px){.sp-wrap .sidebar{ transform:translateX(-100%); transition:transform 0.3s ease; width:280px;}.sidebar.open{ transform:translateX(0);}.main-content{ margin-left:0;}.mobile-menu-btn{ display:flex;}.gen-layout{ grid-template-columns:1fr;}.gen-col-output{ position:static;}.form-row{ grid-template-columns:1fr;}.search-box{ width:auto; flex:1; min-width:0;}}@media (max-width:734px){.sp-wrap .content-area{ padding:14px;}.stat-card-value{ font-size:22px;}.pattern-grid{ grid-template-columns:repeat(2,1fr); gap:10px;}.panel-header{ padding:10px 14px;}.panel-body{ padding:14px;}.top-bar{ padding:0 14px;}.modal{ max-width:100%;}.config-row{ grid-template-columns:1fr;}.palette-grid{ grid-template-columns:1fr;}.psc-grid{ grid-template-columns:repeat(2,1fr); gap:10px;}.psc-hero{ padding:10px;}.psc-info{ padding:10px 12px;}.dash-recent-list{ grid-template-columns:repeat(2,1fr);}.dash-recent-list .pattern-thumb{ width:100%;}/* 仪表台 Hero 窄屏适配 */
     .dash-hero{ padding:20px 22px;}.dash-hero-title{ font-size:19px;}.dash-hero-num{ font-size:30px;}.dash-hero-stat{ padding-left:16px;}.stat-card-mini{ padding:10px 12px;}}@media (max-width:480px){.sp-wrap .pattern-grid{ grid-template-columns:1fr;}.filter-bar{ flex-direction:column; align-items:stretch;}.filter-select{ width:100%;}.psc-grid{ grid-template-columns:1fr;}}
 
 
@@ -5939,7 +5952,10 @@ return html;
             var totalElements = elements.subjects.reduce(function(s,c){return s+c.items.length;},0) + elements.decorations.reduce(function(s,c){return s+c.items.length;},0);
 
             var html = '<div class="card c12" style="margin-bottom:16px"><div class="card-head"><h3>数据统计</h3></div><div class="inner fd-fill" style="padding:14px">';
-            html += '<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0;">';
+            /* ⛔ 不要内联写死 grid-template-columns —— 内联样式优先级高于所有 @media，
+               窄屏降级规则会被整条压掉（这里原本硬编码 repeat(4,1fr)）。
+               列数统一交给 .stats-grid 的全局 4 列 + 820/560 降级处理。 */
+            html += '<div class="stats-grid" style="margin-bottom:0;">';
             html += '<div class="stat-card"><div class="stat-card-label">素材记录</div><div class="stat-card-value accent">'+patterns.length+'</div></div>';
             html += '<div class="stat-card"><div class="stat-card-label">授权记录</div><div class="stat-card-value accent">'+licenses.length+'</div></div>';
             html += '<div class="stat-card"><div class="stat-card-label">元素总数</div><div class="stat-card-value accent">'+totalElements+'</div></div>';
@@ -8991,6 +9007,12 @@ function upgradeUI(root) {
 /* 关闭 ×：文本字符用 flex 居中会因基线偏移显得偏上，锁 line-height 并用 grid 居中 */
 .modal-close { display:grid; place-items:center; line-height:1; padding:0;
   border-radius:8px; font-size:18px; line-height:1; }
+
+/* ===== Stats 移动端降级（统一放最后：与全局 4 列同特异性、位置更靠后 → 稳定胜出）=====
+   勿把基础定义挪进任何 @media，也勿在 HTML 上内联写死列数。 */
+@media (max-width:900px){ .stats-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:560px){ .stats-grid{ grid-template-columns:1fr; gap:10px; } }
+@media (max-width:560px){ .stat-card.stat-card-row{ padding:14px 16px; gap:12px; } }
 </style>
 
 <script id="cpPortedJS">
