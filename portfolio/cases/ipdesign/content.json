@@ -2,6 +2,86 @@
   "version": 2,
   "sections": [
     {
+      "type": "motion-banner",
+      "size": "large",
+      "effect": "vortex",
+      "bgType": "theme",
+      "images": [
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787981569208.jpg",
+          "tag": "素材1"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1788189849227.jpg",
+          "tag": "素材2"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787755209548.jpg",
+          "tag": "素材3"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787755430984.jpg",
+          "tag": "素材4"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787755495584.jpg",
+          "tag": "素材5"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787755456636.jpg",
+          "tag": "素材6"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787755520068.jpg",
+          "tag": "素材7"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787755524409.jpg",
+          "tag": "素材8"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787756052964.jpg",
+          "tag": "素材9"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787756080038.jpg",
+          "tag": "素材10"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787756229724.jpg",
+          "tag": "素材11"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1787756090576.jpg",
+          "tag": "素材12"
+        }
+      ],
+      "texts": [
+        {
+          "text": "小水滴人",
+          "size": 64,
+          "weight": 800,
+          "color": "#ffffff",
+          "opacity": 1,
+          "rotate": 0,
+          "align": "left",
+          "x": "",
+          "y": ""
+        },
+        {
+          "text": "一滴水，也能汇成江海 —— 关注社区环保，陪伴儿童成长",
+          "size": 22,
+          "weight": 400,
+          "color": "rgba(255,255,255,0.82)",
+          "opacity": 1,
+          "rotate": 0,
+          "align": "left",
+          "x": "",
+          "y": ""
+        }
+      ]
+    },
+    {
       "id": "smtaaitajwcwr",
       "type": "product-hero",
       "badge": "众乐乐 Design Concept",

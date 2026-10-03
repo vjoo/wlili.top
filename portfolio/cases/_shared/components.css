@@ -4452,7 +4452,7 @@
 
 /* motion-banner 文字可视化拖放层：每层文字绝对定位（x/y=舞台百分比，中心对齐） */
 .mbn-textlayer { position: absolute; inset: 0; pointer-events: none; }
-.mbn-tx { position: absolute; transform-origin: 50% 50%; max-width: 90%; }
+.mbn-tx { position: absolute; transform-origin: 50% 50%; max-width: 90%; text-shadow: 0 1px 2px rgba(0,0,0,.45), 0 4px 24px rgba(0,0,0,.35); }
 /* 动效首屏文字：字号/颜色由 render.js 内联在 .mbn-tx 上，但 .mockup-title/.mockup-subtitle
    自带 font-size: clamp(...64px) 与 color: var(--color-white) —— **会覆盖继承值**，
    实测用户设 50px 被顶成 64px、color:#ffffff 被解析成 --color-white=#1a1a1a（深灰看不清）。
