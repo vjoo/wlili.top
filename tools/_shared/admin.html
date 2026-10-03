@@ -8975,6 +8975,11 @@ function upgradeUI(root) {
   background:var(--bg-primary); color:var(--text-secondary); transition:background .2s,color .2s; }
 .btn-secondary:hover { background:var(--bg-hover); color:var(--text-primary); }
 .btn-sm { padding:7px 14px; font-size:12px; gap:6px; }
+/* 表格操作列（全项目 9 处用到，此前**无任何定义** → 图标按钮贴在一起且不右对齐）。
+   由 css_missing_audit.py 查出（扫「class= 用法 − 静态 CSS 定义 − JS 内联 CSS 定义」）。 */
+.table-wrap td.act-cell { text-align:right; white-space:nowrap; }
+.table-wrap td.act-cell .btn-icon + .btn-icon { margin-left:4px; }
+
 /* 弹窗内按钮按内容宽度，不撑满。
    ⚠ 真正的原因是 .form-group 是 column flex，子项默认 align-items:stretch
      → 按钮被拉满整行（实测取消按钮 520px 宽，flex:0 0 auto 也拦不住）。
