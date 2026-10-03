@@ -3549,9 +3549,10 @@ var CaseRenderer = (function () {
       }
       return arr;
     }
-    /* 未拖拽条目的默认落位：x 按对齐（left 24% / center 50%），y 从 40% 起每条 +14% */
+    /* 未拖拽条目的默认落位：x 按对齐（left 24% / center 50% / right 76%），y 从 40% 起每条 +14% */
     function mbTextPos(t, i) {
-      var x = (t.x !== '' && t.x != null) ? mbNum(t.x, 50) : (String(t.align || 'left') === 'center' ? 50 : 24);
+      var al0 = String(t.align || 'left');
+      var x = (t.x !== '' && t.x != null) ? mbNum(t.x, 50) : (al0 === 'center' ? 50 : (al0 === 'right' ? 76 : 24));
       var y = (t.y !== '' && t.y != null) ? mbNum(t.y, 50) : Math.min(40 + i * 14, 78);
       return { x: x, y: y };
     }
@@ -3563,11 +3564,16 @@ var CaseRenderer = (function () {
       for (var ti = 0; ti < textArr.length; ti++) {
         var t = textArr[ti];
         var pos = mbTextPos(t, ti);
-        var st = { left: pos.x + '%', top: pos.y + '%', 'text-align': String(t.align || 'left') === 'center' ? 'center' : 'left' };
+        var al = String(t.align || 'left');
+        var st = { left: pos.x + '%', top: pos.y + '%', 'text-align': al };
         var fpx = mbNum(t.size, 0);
         if (fpx) st['font-size'] = mbFont(fpx);
         if (t.color) st.color = t.color;
-        var tfo = 'translate(-50%,-50%)';
+        /* align 决定水平锚点：left=左边缘贴 x%、center=中心、right=右边缘贴 x%。
+           此前一律 translate(-50%,-50%) 中心定位 → 「左对齐」的左边缘随字宽浮动，
+           主/副标题两行左边缘对不齐（用户实测截图 2026-10-03）。 */
+        var ax = al === 'center' ? '-50%' : (al === 'right' ? '-100%' : '0%');
+        var tfo = 'translate(' + ax + ',-50%)';
         if (mbNum(t.rotate, 0)) tfo += ' rotate(' + mbNum(t.rotate, 0) + 'deg)';
         st.transform = tfo;
         var top2 = mbNum(t.opacity, 1);

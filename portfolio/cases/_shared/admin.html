@@ -5175,7 +5175,8 @@ function mnTextsOf(sec) {
 }
 /* 未拖拽条目的默认落位（与前台 render.js mbTextPos 逐字一致） */
 function mnTextPos(t, i) {
-  var x = (t.x !== '' && t.x != null) ? (parseFloat(t.x) || 50) : (String(t.align || 'left') === 'center' ? 50 : 24);
+  var al0 = String(t.align || 'left');
+  var x = (t.x !== '' && t.x != null) ? (parseFloat(t.x) || 50) : (al0 === 'center' ? 50 : (al0 === 'right' ? 76 : 24));
   var y = (t.y !== '' && t.y != null) ? (parseFloat(t.y) || 50) : Math.min(40 + i * 14, 78);
   return { x: x, y: y };
 }
@@ -5313,7 +5314,10 @@ function mnLiveSyncChips(st, sec) {
     const opv = parseFloat(t.opacity);
     ch.style.opacity = isNaN(opv) ? 1 : Math.max(0.05, Math.min(1, opv));
     const rot = parseFloat(t.rotate) || 0;
-    const tf = 'translate(-50%,-50%)' + (rot ? ' rotate(' + rot + 'deg)' : '');
+    /* align 决定水平锚点（与前台 render.js 一致）：left=左边缘贴 x% / center=中心 / right=右边缘贴 x% */
+    const alv = String(t.align || 'left');
+    const ax = alv === 'center' ? '-50%' : (alv === 'right' ? '-100%' : '0%');
+    const tf = 'translate(' + ax + ',-50%)' + (rot ? ' rotate(' + rot + 'deg)' : '');
     if (ch.style.transform !== tf) ch.style.transform = tf;
   }
 }
@@ -5563,8 +5567,9 @@ function mnSyncChips() {
     chip.style.textShadow = '0 2px 14px rgba(0,0,0,.45)';
     const op = sec[pfx + 'Opacity'];
     chip.style.opacity = (op !== '' && op != null) ? MFX.clamp(MFX.num(op, 1), 0, 1) : 1;
-    /* 未拖放时按前台自动排版近似落点（左对齐 ≈ 24%，居中 = 50%） */
-    const alignX = (sec.titleAlign === 'center') ? 50 : 24;
+    /* 未拖放时按前台自动排版近似落点（left ≈ 24% / center = 50% / right ≈ 76%，按各自 align） */
+    const alv = String((pfx === 'title' ? sec.titleAlign : sec.subtitleAlign) || 'left');
+    const alignX = alv === 'center' ? 50 : (alv === 'right' ? 76 : 24);
     const x = (sec[pfx + 'X'] !== '' && sec[pfx + 'X'] != null) ? MFX.num(sec[pfx + 'X'], 50) : alignX;
     const yTitleDef = sec.titleVAlign === 'top' ? 20 : (sec.titleVAlign === 'bottom' ? 80 : 50);
     const yDef = pfx === 'title' ? yTitleDef : Math.min(92, yTitleDef + 14);
@@ -5572,7 +5577,9 @@ function mnSyncChips() {
     chip.style.left = x + '%';
     chip.style.top = y + '%';
     const rot = sec[pfx + 'Rotate'];
-    chip.style.transform = 'translate(-50%,-50%)' + (rot ? ' rotate(' + MFX.num(rot, 0) + 'deg)' : '');
+    /* align 决定水平锚点（与前台一致） */
+    const axv = alv === 'center' ? '-50%' : (alv === 'right' ? '-100%' : '0%');
+    chip.style.transform = 'translate(' + axv + ',-50%)' + (rot ? ' rotate(' + MFX.num(rot, 0) + 'deg)' : '');
     chip.classList.toggle('sel', mnLayer === pfx);
   });
 }

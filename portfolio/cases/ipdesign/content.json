@@ -4,7 +4,7 @@
     {
       "type": "motion-banner",
       "size": "large",
-      "effect": "vortex",
+      "effect": "ticker",
       "bgType": "theme",
       "images": [
         {
@@ -79,7 +79,18 @@
           "x": "",
           "y": ""
         }
-      ]
+      ],
+      "id": "smuskmgamm31f",
+      "tTurn": "0",
+      "tTilt": "0",
+      "tCardSize": "0.45",
+      "tRoll": "30",
+      "tiltX": "31",
+      "tiltY": "0",
+      "tRows": "5",
+      "tSpeed": "0.01",
+      "tVariance": "0.45",
+      "tRowGap": "0.43"
     },
     {
       "id": "smtaaitajwcwr",
