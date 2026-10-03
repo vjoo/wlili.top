@@ -73,7 +73,10 @@
       "ink": "",
       "inkSoft": "",
       "titleAnim": "rise",
-      "subAnim": "rise"
+      "subAnim": "rise",
+      "textIn": 25,
+      "textOut": 78,
+      "textFade": 16
     },
     "videos": [
       {
@@ -102,7 +105,7 @@
             "sub": "一个有温度的育儿充电小站",
             "align": "left",
             "vAlign": "center",
-            "fontFamily": "notoSansSC",
+            "fontFamily": "system",
             "titleSize": 60,
             "titleWeight": "600",
             "subSize": 24,

@@ -30,11 +30,17 @@ ROOT = pathlib.Path(__file__).resolve().parents[3]  # wlili.top/
 CASES = ROOT / "portfolio" / "cases"
 SHARED = CASES / "_shared"
 
-TARGETS = [
-    "home/index.html", "ipdesign/index.html", "mybilist/index.html",
-    "pjlist/index.html", "reeoder/index.html", "vjooProject/index.html",
-    "_template/index.html",
-]
+TARGETS = None  # 动态扫描（见下）；不再硬编码——新建 case 页也要被缓存破坏覆盖
+
+
+def _scan_targets():
+    """动态扫描 cases/ 下所有含 index.html 的目录（排除 _shared），保证新建页面不落网。"""
+    targets = []
+    if CASES.exists():
+        for child in sorted(CASES.iterdir()):
+            if child.is_dir() and child.name != "_shared" and (child / "index.html").exists():
+                targets.append(f"{child.name}/index.html")
+    return targets
 
 # group(1)=前缀  group(2)=资源相对路径  group(3)=结束引号
 PATTERN = re.compile(r'((?:href|src)="\.\./_shared/)([^"?]+?)(?:\?v=[a-f0-9]+)?(")')
@@ -58,7 +64,8 @@ def main():
     total_fixed = 0
     summary = {}
 
-    for rel in TARGETS:
+    targets = _scan_targets()
+    for rel in targets:
         p = CASES / rel
         if not p.exists():
             print("跳过（不存在）:", rel)

@@ -172,7 +172,7 @@
   }
   .btn-download:hover { opacity: 0.85; }
   .btn-download:active { transform: scale(0.97); }
-  .btn-download svg { width: 15px; height: 15px; }
+  .btn-download svg { width:16px; height:16px; }
   .crop-info {
     display: flex;
     align-items: center;
@@ -290,7 +290,7 @@
   }
   .side-btn:hover { border-color: var(--ink); color: var(--ink); }
   .side-btn:active { transform: scale(0.94); }
-  .side-btn svg { width: 18px; height: 18px; }
+  .side-btn svg { width:20px; height:20px; }
   .side-btn-primary {
     background: var(--fill-black);
     color: var(--fill-white);
@@ -424,7 +424,7 @@
 
     <!-- Drop Zone -->
     <div class="dropzone" id="dropzone">
-      <div class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+      <div class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></div>
       <div class="drop-title">拖拽图片到此处，或 <span>点击选择</span></div>
       <div class="drop-desc">支持 JPG / PNG / WebP / GIF / BMP / SVG / AVIF / PDF 格式</div>
     </div>
@@ -442,7 +442,7 @@
           <span style="color:var(--ink-tertiary);font-size:12px;">px</span>
         </div>
         <button class="crop-info-reset" id="cropInfoReset" title="恢复尺寸">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </button>
       </div>
 
@@ -463,13 +463,13 @@
         </div>
         <div class="canvas-side-tools">
           <button class="side-btn" onclick="rotateImage(90)" title="旋转90°">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
           </button>
           <button class="side-btn" onclick="flipImage()" title="水平镜像">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22"/><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2"/><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/></svg>
           </button>
           <button class="side-btn" onclick="resetCrop()" title="重置裁切">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           </button>
           <div class="side-divider"></div>
           <button class="side-btn side-btn-text" onclick="changeImage()">更换</button>

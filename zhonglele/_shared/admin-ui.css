@@ -18,8 +18,20 @@
   --text-faint: #86868b;
   --border-color: #d2d2d7;
   --border-light: #e8e8ed;
+  /* 「继承 / 自定义」开关在关闭（= 继承）态的底色。
+     ⚠️ 特意**不用** var(--border-color)：`tools/_shared/ui-select.css` 在 admin.html 里是
+        **最后**引入的，而它自带一份 :root{--border-color:#e5e7eb}，会把本文件的 #d2d2d7 盖掉 ——
+        实测开关拿到的是 #e5e7eb（比设计值浅一档，看着像灰白而不是灰）。
+        起个专属名字，跨文件的同名变量打架就波及不到它。 */
+  --ovr-off: #cfd0d6;
   --accent-color: #6366f1;
   --accent-light: #eef2ff;
+  /* 深色「台面」：**现在只用于视频缩略图的占位底**（.media-thumb）。
+     ⚠️ 历史：它一度也是监视器工作台的底色，2026-10-01 用户把工作台改成白色（见 .pv-body 的 --mat-bg），
+     此 token 就退化成「缩略图空框的深底」——不要再拿它去刷大面积背景。
+     取值过程（都渲过实机图对比）：#1c1c1e（旧，看着就是纯黑）→ #2a2a32（= amotion 画布 #232329 再提一档）
+     → **#3b3b45**（石墨灰，与浅色后台最协调，也最不会看成黑）。 */
+  --mat-dark: #3b3b45;
   --danger-color: #ff3b30;
   --success-color: #34c759;
   --warning-color: #ff9500;
@@ -31,13 +43,18 @@
   --radius-lg: 18px;
   --radius-pill: 980px;
   --nav-h: 48px;
-  --tl-h: 134px;              /* 时间轴（嵌在右栏预览下方）：头部 + 胶片条 54 + 刻度 + 内边距 */
-  --side-w: 170px;            /* ① 一级菜单 */
-  --tree-w: 238px;            /* ② 结构树 */
-  --preview-w: 600px;         /* ④ 画面预览 + 该视频的时间轴（可拖分隔条实时改宽） */
-  --form-min-w: 320px;        /* ③ 表单栏的最小可用宽度，拖拽时分隔条的左界 */
-  --split-w: 7px;             /* ③↔④ 分隔条 */
-  --preview-default-w: 600px; /* 双击分隔条恢复到这个值（各断点可覆盖） */
+  --tl-gutter: 0px;           /* 时间轴轨道左列宽。2026-10-01 起**恒为 0** —— 原来那条 112px 的
+                                 「当前屏身份」列（屏名 + 起止秒）已搬到头部中间居中一行（见 .tl-cur），
+                                 轨道因此整条通栏。变量留着是因为 JS 换算（tlGutterPx / 播放头 calc）
+                                 与 .tl-ruler 都读它，保留单点真源、改这里一处就能整体平移。 */
+  --tree-w: 240px;            /* ① 左侧结构树。⚠️ 2026-10-01 起树里是「卡套包」双层嵌套
+                                 （视频段卡 padding + 场景包 padding + 场景行 padding），
+                                 216px 时最内层只剩 ~140px，标题频繁折行；加到 240px 换回可读性 */
+  --stage-min-w: 460px;       /* ② 中间舞台（画面预览 + 通栏时间轴）最小宽度 = 拖拽时参数栏的右界 */
+  --params-w: 380px;          /* ③ 右侧参数栏（可拖分隔条实时改宽 / 可折叠成 44px 竖条） */
+  --params-rail-w: 44px;      /* 参数栏折叠后的竖条宽度 */
+  --split-w: 7px;             /* ② ↔ ③ 分隔条 */
+  --params-default-w: 380px;  /* 双击分隔条恢复到这个值（各断点可覆盖） */
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
@@ -135,18 +152,26 @@ button { font-family: inherit; }
 .btn-icon.danger:hover { background: #ffecec; color: var(--danger-color); }
 .btn-icon:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* ===== 时间轴（全宽，视频时间与场景区间可视化） ===== */
-.timeline-bar {
-  height: var(--tl-h);
+/* ===== 时间轴（钉在预览栏底部：上面看画面，下面看编排） =====
+   高度由内容决定（头部 + 轨道 70 + 刻度 13 + 内边距），不再写死 --tl-h ——
+   写死会让「轨道高度 / 刻度行高」任一处改动都从 .pv-timeline 一路溢出到 .workspace。
+   ⚠️ 2026-10-01 用户「时间轴可以不用太挤」→ 整体放宽一档：
+   内边距 8/12 → 12/14、行间距 6 → 9、轨道 64 → 70、刻度行 12 → 13（+21px 总高）。
+   代价是画面少约 20px 高（.pv-body 是 flex:1，被挤掉的高度由 fitPreview 自动重算）。 */
+.pv-timeline {
+  flex: 0 0 auto;
   background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 10px 18px 8px;
+  border-top: 1px solid var(--border-color);
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 9px;
   position: relative;
   z-index: 10;
 }
+/* 头部三栏：左（标题/总时长/警告）· 中（当前屏身份）· 右（均分/衔接）。
+   ⚠️ 左右两栏都 flex:1 —— 只有等宽，中间那栏才落在整行的几何中心；
+      若只给一侧 spacer，中间块会按两侧内容宽度差偏掉。 */
 .tl-head {
   display: flex;
   align-items: center;
@@ -154,74 +179,168 @@ button { font-family: inherit; }
   font-size: 11px;
   color: var(--text-muted);
 }
+.tl-hl, .tl-hr {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tl-hr { justify-content: flex-end; }
 .tl-head strong { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
 .tl-head .tl-spacer { flex: 1; }
 
+/* 「当前屏身份」：原来挤在轨道左侧 112px 列里（屏名一行 + 起止/时长一行，
+   窄列把「屏幕 2」压成「屏…」）。2026-10-01 搬到头部中间**一行**显示：
+   色点 + 屏幕 N · 起止 · 时长。没选中屏时降级成灰色说明。 */
+.tl-cur {
+  flex: 0 0 auto;
+  max-width: 46%;              /* 窄屏时不许挤掉两边的标题与按钮，超出走 ellipsis */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-active);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  color: var(--text-muted);
+}
+.tl-cur-dot { width: 8px; height: 8px; border-radius: 2px; flex: 0 0 8px; }
+.tl-cur-nm { font-weight: 600; color: var(--text-primary); }
+.tl-cur-sep { color: var(--text-faint); }
+.tl-cur-rng { color: var(--text-secondary); }
+.tl-cur-dur { color: var(--text-faint); }
+/* 空态（还没视频 / 还没场景）：整颗 chip 退成灰说明，不再假装有「当前屏」 */
+.tl-cur.is-empty { background: transparent; color: var(--text-faint); }
+.tl-cur.is-empty .tl-cur-dot { background: var(--text-faint); }
+/* 重叠警告 chip：相邻两屏共用了一段视频时间（第 N+1 屏开始时画面会倒回去重播）。
+   做成按钮 —— 点它就直接衔接。空隙（跳帧）有橙色斜纹，重叠则靠这颗 chip + 轨道底部红纹。 */
+.tl-warn {
+  display: inline-flex; align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 2px 9px;
+  border: 1px solid rgba(255, 59, 48, 0.35);
+  border-radius: var(--radius-pill);
+  background: #fff2f1;
+  color: var(--danger-color);
+  font-family: inherit;
+  font-size: 10px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.tl-warn:hover { background: #ffe6e4; border-color: var(--danger-color); }
+.tl-warn:active { background: #ffdbd8; }
+
+/* 轨道 = 一条通栏 lane（四屏在同一条时间上并排，不是四条轨道）。
+   ⚠️ 2026-10-01：原来的「左 gutter 列 + 右 lane」两列 grid 已拆 —— 左列取消后
+      lane 直接占满整条轨道，区间百分比因此不再被左列偏掉。
+   ⚠️ 不用 overflow:hidden —— 首屏 t0 可为 0，两端菱形要能露出段外侧半格。 */
 .tl-track {
   position: relative;
-  flex: 0 0 auto;            /* 不许被 flex 压缩：胶片条必须保持 54px 才看得清画面 */
-  height: 54px;              /* 胶片条高度：区间里要放得下视频画面 */
+  flex: 0 0 auto;            /* 不许被 flex 压缩：轨道高度是写死的，塞不进别的 */
+  height: 70px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   background: var(--bg-active);
   border-radius: var(--radius-sm);
-  overflow: hidden;
   cursor: ew-resize;         /* 点/拖轨道空白处 = 定位播放头（看画面） */
   user-select: none;
   touch-action: none;
 }
-/* 胶片层：整段视频的帧沿时间轴铺开（剪辑软件那种），由 JS 画在 canvas 上 */
-.tl-film {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.tl-inner { position: absolute; inset: 0; }
+/* ② lane：所有区间 / 空隙 / 循环带 / 文字参数带都相对它定位。
+   左列取消后它就是整条轨道（grid 单列 stretch），起止百分比直接是「整条轨道的几分之几」。 */
+.tl-lane { position: relative; }
 
-/* 区间 = 盖在胶片上的半透明色块：能看清自己覆盖的是哪几帧 */
+/* clip 带：纯色块（不再铺视频缩略图，画面在上面的监视器里实时看着） */
 .tl-seg {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  background: rgba(99, 102, 241, 0.22);
-  border-left: 2px solid rgba(255, 255, 255, 0.85);
-  border-right: 2px solid rgba(255, 255, 255, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-  overflow: hidden;
-  white-space: nowrap;
+  top: 8px; bottom: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-left-width: 3px;                 /* 颜色由 JS 内联 border-left-color = 该屏序号色 */
+  border-radius: 5px;
+  overflow: visible;
   cursor: pointer;
-  transition: background 0.15s;
 }
-.tl-seg:hover { background: rgba(99, 102, 241, 0.4); }
+.tl-seg:hover { background: var(--bg-hover); }
 .tl-seg.on {
-  background: rgba(99, 102, 241, 0.34);
+  border-color: var(--accent-color);
+  box-shadow: inset 0 0 0 1px var(--accent-color), 0 1px 3px rgba(0, 0, 0, 0.08);
   z-index: 2;
-  box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px var(--accent-color);
 }
-/* 文字时间轴：区间底部那条白杠 = 该屏文字「淡入 → 停留 → 淡出」的可见范围。
-   白杠越长 = 文字停留越久；两端各自还含一次淡入淡出时长。 */
-.tl-seg .tl-text {
+/* 序号：窄轨道（≤1320px 断点下每屏只有 ~79px）里还要能一眼数清是第几屏 */
+.tl-num {
   position: absolute;
-  bottom: 0;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.65);
+  left: 6px; top: 3px;
+  font-size: 9px; font-weight: 600; line-height: 1;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
-  z-index: 1;
+  z-index: 4;
 }
+.tl-seg.on .tl-num { color: var(--accent-color); }
+/* 文字参数带 = 该屏文字「淡入 → 停留 → 淡出」的可见范围（原那条白杠的升级版）。
+   两端菱形 = textIn / textOut，拖整条 = 整体平移 */
+.tl-band {
+  position: absolute;
+  top: 17px; bottom: 17px;
+  min-width: 5px;
+  background: rgba(99, 102, 241, 0.16);
+  border-top: 1.5px solid var(--accent-color);
+  border-bottom: 1.5px solid var(--accent-color);
+  border-radius: 2px;
+  cursor: grab;
+  z-index: 3;
+}
+.tl-seg.on .tl-band { background: rgba(99, 102, 241, 0.28); }
+.tl-dia {
+  position: absolute;
+  top: 50%; left: 0;
+  width: 12px; height: 12px;
+  margin: -6px 0 0 -6px;
+  background: #fff;
+  border: 2px solid var(--accent-color);
+  border-radius: 3px;
+  transform: rotate(45deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  cursor: ew-resize;
+  z-index: 5;
+}
+.tl-dia::after {
+  content: ""; position: absolute;
+  inset: 2.5px;
+  background: var(--accent-color);
+  opacity: 0.3;
+}
+/* ⚠ hover 必须重声明 rotate(45deg)：transform 会被整体覆盖，否则菱形变方片 */
+.tl-dia:hover { transform: rotate(45deg) scale(1.12); }
 /* 段与段之间的空隙（未覆盖的视频时间）用条纹提示，避免播放时出现跳帧 */
 .tl-gap {
   position: absolute;
-  top: 0; bottom: 0;
+  top: 6px; bottom: 6px;
+  border-radius: 4px;
   background: repeating-linear-gradient(45deg,
-    rgba(255, 149, 0, 0.28) 0 5px, rgba(255, 149, 0, 0.1) 5px 10px);
+    rgba(255, 149, 0, 0.30) 0 5px, rgba(255, 255, 255, 0.55) 5px 10px);
   pointer-events: none;
+  z-index: 1;
+}
+/* 「重叠区」= 与空隙相反方向的编排断裂：相邻两屏共用了同一段视频时间，
+   滚动到交界处时第 N+1 屏会把画面倒回去重播（空隙是跳过、重叠是倒退）。
+   ⚠️ 只压轨道底部一条红纹，不铺满 —— clip 背景是不透明的，铺满会把区间和文字参数带盖住。 */
+.tl-overlap {
+  position: absolute;
+  bottom: 1px;
+  height: 3px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg,
+    var(--danger-color) 0 3px, rgba(255, 59, 48, 0.18) 3px 8px);
+  pointer-events: none;
+  z-index: 6;
 }
 .tl-handle {
   position: absolute;
@@ -244,13 +363,17 @@ button { font-family: inherit; }
 .tl-seg.on .tl-handle::after { opacity: 0.85; }
 .tl-handle.l { left: -1px; }
 .tl-handle.r { right: -1px; }
+/* ⚠️ 刻度尺必须 = lane 的盒子。左列取消后 --tl-gutter 恒为 0，这两行实际等于「无偏移 + 100%」，
+      但**仍然保留 calc 写法**：万一以后要把 gutter 加回来，刻度 / 播放头 / 拖拽换算三处会一起自动跟上。 */
 .tl-ruler {
   position: relative;
-  height: 12px;
+  height: 13px;
+  margin-left: var(--tl-gutter);
+  width: calc(100% - var(--tl-gutter));
   font-size: 10px;
-  line-height: 12px;          /* ⚠️ 必须钉死：默认行高会给 .tl-tick 留出 15px → 下溢 3px，
+  line-height: 13px;          /* ⚠️ 必须钉死=height：默认行高会给 .tl-tick 多留 3px → 下溢，
                                  经 .pv-timeline → .pane-preview 一路传到 .workspace，
-                                 整个后台文档就多出 3px 纵向滚动 */
+                                 整个后台文档就多出几 px 纵向滚动 */
   color: var(--text-faint);
   overflow: hidden;           /* 刻度是个固定宽度的浮层，兜住任何残余溢出 */
 }
@@ -260,9 +383,9 @@ button { font-family: inherit; }
   transform: translateX(-50%);
   white-space: nowrap;
 }
-/* 空态：还没上传视频 / 还没场景。此时胶片层没内容，藏掉免得盖住提示文字 */
+/* 空态：还没上传视频 / 还没场景。此时 lane 没内容，藏掉免得盖住提示文字 */
 .tl-track.is-empty { cursor: default; }
-.tl-track.is-empty .tl-film,
+.tl-track.is-empty .tl-lane,
 .tl-track.is-empty .tl-play { display: none; }
 .tl-empty-msg {
   position: absolute;
@@ -273,58 +396,92 @@ button { font-family: inherit; }
   font-size: 12px;
   color: var(--text-faint);
 }
-/* 首屏自动循环区间（视频开头那段自动播放的范围），只是提示层，不参与交互 */
+/* 首屏自动循环区间（视频开头那段自动播放的范围），只是提示层，不参与交互。
+   ⚠️ z-index 必须高于 clip：clip 已是不透明色块，压在下面等于完全看不见。
+      又不能用实心填充（会盖住 clip 和参数带），所以做成「只描边」的浮层。 */
 .tl-loop {
   position: absolute;
-  top: 0; bottom: 0;
-  background: rgba(52, 199, 89, 0.14);
-  border-top: 2px solid rgba(52, 199, 89, 0.6);
+  top: 1px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(52, 199, 89, 0.92);
   pointer-events: none;
+  z-index: 6;
 }
-/* 播放头 = 右侧画面预览正停在哪一帧。可拖拽，也可点轨道空白处直接定位。 */
+/* 播放头 = 右侧画面预览正停在哪一帧。可拖拽，也可点轨道空白处直接定位。
+   顶部那颗 <b> 是时间码（跟着走，松手能看见停在第几秒）。 */
 .tl-play {
   position: absolute;
   top: 0; bottom: 0;
-  width: 11px;
-  margin-left: -5px;
-  z-index: 4;
+  width: 14px;
+  margin-left: -6px;
+  z-index: 20;
   cursor: ew-resize;
   touch-action: none;
 }
 .tl-play::before {
   content: "";
   position: absolute;
-  left: 5px; top: 0; bottom: 0;
+  left: 6px; top: 0; bottom: 0;
   width: 2px;
   background: var(--danger-color);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
 }
-.tl-play::after {
-  content: "";
+.tl-play b {
   position: absolute;
-  left: 0; top: 0;
-  width: 11px; height: 11px;
-  border-radius: 3px;
+  left: 7px; top: 1px;
+  transform: translateX(-50%);
   background: var(--danger-color);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 10px; font-weight: 500; line-height: 16px;
+  padding: 0 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 }
 
-/* ===== 四栏主体 =====
-   ① 一级菜单（视图切换） ② 结构树 / 列表 ③ 表单 ④ 画面预览 + 时间轴
-   非「首页结构」视图（顶部导航 / 底部板块 / 全局排版 / 页面信息）不需要结构树与画面预览，
-   自动收成两栏，让表单占满。 */
+/* ===== 四栏主体（布局 v2）=====
+   ① 左侧结构树  ② 中间舞台（画面预览 + 通栏时间轴）  ③ 右侧参数栏（可折叠）
+   导航已搬进顶栏，不再占左侧一列；原来的「中间表单 / 右栏 600px 预览」在这里角色互换。
+   ⚠️ DOM 顺序仍是 tree → form → split → preview，靠 grid-template-areas 摆正视觉位置，
+      这样 admin.js 里 $('paneForm') / $('panePreview') 的取法一行都不用改。 */
 .workspace {
   display: grid;
-  grid-template-columns: var(--side-w) var(--tree-w)
-                         minmax(var(--form-min-w), 1fr) var(--split-w) var(--preview-w);
+  grid-template-columns: var(--tree-w) minmax(var(--stage-min-w), 1fr)
+                         var(--split-w) var(--params-w);
+  grid-template-areas: "tree stage split params";
   height: calc(100vh - var(--nav-h));
 }
-.workspace:not([data-view="structure"]) { grid-template-columns: var(--side-w) minmax(0, 1fr); }
+/* 参数栏收起：那一列压成 44px 竖条，宽度全给舞台 */
+.workspace.collapsed {
+  grid-template-columns: var(--tree-w) minmax(0, 1fr) var(--split-w) var(--params-rail-w);
+}
+/* 非「首页结构」视图：没有视频可预览，结构树与舞台都不出现，只剩表单（grid-areas 里就是 params 独占） */
+.workspace:not([data-view="structure"]) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "params";
+}
 .workspace:not([data-view="structure"]) .pane-tree,
 .workspace:not([data-view="structure"]) .pane-preview,
 .workspace:not([data-view="structure"]) .pane-split { display: none; }
+/* 非结构视图的表单独占整行；1440px 以上限一个阅读宽度居中，
+   否则双列字段会被拉到 700px+ 宽，输入框长得离谱（导航搬走后这一栏比以前还宽 170px） */
+@media (min-width: 1440px) {
+  .workspace:not([data-view="structure"]) .pane-form {
+    max-width: 1240px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
 
-/* ③↔④ 分隔条：可左右拖拽调整预览栏宽度 */
+/* 各 pane 落进自己的区域（换位全靠这里） */
+.pane-tree { grid-area: tree; }
+.pane-preview { grid-area: stage; }
+.pane-split { grid-area: split; }
+.pane-form { grid-area: params; }
+
+/* ②↔③ 分隔条：可左右拖拽调整参数栏宽度（舞台自动让位） */
 .pane-split {
   position: relative;
   cursor: col-resize;
@@ -357,43 +514,63 @@ button { font-family: inherit; }
 body.is-splitting,
 body.is-splitting * { cursor: col-resize !important; user-select: none !important; }
 
-/* ① 一级菜单 */
-.side-menu {
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
-  padding: 10px 8px;
+/* 视图切换胶囊（长在顶栏里，替代原来的左侧 170px 竖排菜单，宽度全给舞台）
+   ⚠️ 按钮类名仍是 .side-item —— admin.js 的点击委托（约 2216 行）与 on 态同步（约 734 行）都按它取节点 */
+.view-caps {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 2px;
-  overflow-y: auto;
+  margin-left: 12px;
+  padding: 3px;
+  background: var(--bg-hover);
+  border-radius: 10px;
+  flex: 0 0 auto;
+  overflow: hidden;
 }
 .side-item {
   display: flex;
   align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 9px 11px;
+  gap: 6px;
+  padding: 5px 10px;
   border: none;
   background: transparent;
-  border-radius: var(--radius-md);
+  border-radius: 7px;
+  font-family: inherit;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   cursor: pointer;
-  text-align: left;
-  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
-.side-item svg { width: 15px; height: 15px; flex: 0 0 15px; opacity: 0.7; }
-.side-item:hover { background: var(--bg-hover); }
-.side-item.on { background: var(--bg-active); color: var(--accent-color); }
+.side-item svg { width:16px; height:16px; flex: 0 0 16px; opacity: 0.72; }
+.side-item:hover { background: var(--bg-active); color: var(--text-secondary); }
+.side-item.on {
+  background: var(--bg-primary);
+  color: var(--accent-color);
+  box-shadow: var(--shadow-sm);
+}
 .side-item.on svg { opacity: 1; }
 
 /* ② 结构树 / 列表 */
 .pane-tree {
-  background: var(--bg-secondary);
+  /* ⚠️ 底色 2026-10-01 从 --bg-secondary(#fbfbfd) 换成 --bg-sidebar(#f5f5f7)：
+     树里现在是「白卡套灰包」，卡要白得出来、包要压得下去，面板底就得退到侧栏那一档灰。
+     原来那种近白底上，白卡只剩一条 1px 边框，层次根本看不出来。 */
+  background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   overflow-y: auto;
   padding: 12px 10px 28px;
+}
+/* 面板头：标题 + 一个「添加视频段」图标按钮。
+   ⚠️ 2026-10-01：添加视频段原先是列表末尾的满宽虚线按钮，与场景包末尾那个宽度基准不同 →
+   看上去「一长一短」。现在提到头部做图标按钮，下面只留场景包内那一个添加入口。 */
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 9px 6px;
 }
 .list-title {
   font-size: 11px;
@@ -401,23 +578,64 @@ body.is-splitting * { cursor: col-resize !important; user-select: none !importan
   color: var(--text-faint);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 4px 6px 8px;
+}
+.list-head-btn {
+  width: 22px; height: 22px; flex: 0 0 22px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-size: 14px; line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.list-head-btn:hover {
+  border-color: var(--accent-color);
+  background: var(--accent-light);
+  color: var(--accent-color);
+}
+.list-head-btn:active { transform: scale(0.9); }
+.tree-empty {
+  padding: 18px 10px;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text-faint);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-md);
 }
 
-/* 视频段节点（一级） */
+/* 视频段（一级）= **外壳卡**：头部行 + 卡内下方的场景包。
+   2026-10-01 从「一行 + 缩进竖线」改成「卡里套包」——用户要的「包层级」：
+   从属关系一眼可见，不再是两条并排的列表。 */
 .tree-video {
   position: relative;          /* 悬浮操作按钮的定位基准 */
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  margin-bottom: 10px;
+  overflow: hidden;            /* 卡内场景包的四角跟着卡圆角走 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);   /* 浮在灰面板上的一点点厚度 */
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tree-video:hover { border-color: var(--border-color); box-shadow: var(--shadow-sm); }
+.tree-video.on {
+  border-color: #ccd1f7;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.07);
+}
+/* 头部行：原来是 .tree-video 自身，现在收进 .tv-head（卡片只管外壳，行只管交互） */
+.tv-head {
+  position: relative;          /* .tv-ops 的定位基准 */
   display: flex;
   align-items: center;
   gap: 7px;
   padding: 8px 9px;
-  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.15s;
-  margin-bottom: 2px;
 }
-.tree-video:hover { background: var(--bg-hover); }
-.tree-video.on { background: var(--bg-active); }
+.tv-head:hover { background: var(--bg-hover); }
+.tree-video.on .tv-head { background: var(--accent-light); }
 .tree-video.on .tv-name { color: var(--accent-color); }
 .tv-caret {
   width: 14px; flex: 0 0 14px;
@@ -428,7 +646,7 @@ body.is-splitting * { cursor: col-resize !important; user-select: none !importan
 .tv-badge {
   width: 20px; height: 20px; flex: 0 0 20px;
   border-radius: 6px;
-  background: var(--bg-primary);
+  background: var(--bg-sidebar);   /* 卡片头是白底，白徽标会隐形 —— 用侧栏灰显形 */
   border: 1px solid var(--border-light);
   font-size: 10px; font-weight: 700; color: var(--text-muted);
   display: flex; align-items: center; justify-content: center;
@@ -436,36 +654,53 @@ body.is-splitting * { cursor: col-resize !important; user-select: none !importan
 .tree-video.on .tv-badge {
   background: var(--accent-color); border-color: var(--accent-color); color: #fff;
 }
-.tv-body { flex: 1; min-width: 0; }
+/* 卡头文字区：现在只有段名一行（原来的「已上传 · 4 场景」元信息行 2026-10-01 已去掉）。
+   ⚠️ 仍显式排成纵向：以后若再加第二行（如时长），默认 inline 会挤成一行糊串。 */
+.tv-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .tv-name {
   font-size: 12.5px; font-weight: 600; color: var(--text-primary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.tv-meta { font-size: 10.5px; color: var(--text-faint); }
-/* 操作按钮悬浮：hover 时浮在节点右侧，平时不占布局宽度（左侧渐变垫底保证可读） */
+/* 操作按钮：hover 时浮现在**卡片右上角**，平时不占布局宽度。
+   ⚠️ 2026-10-01 用户要求「放到卡片右上角 + 有底色」—— 原来贴在右侧垂直居中、
+      底是从「透明」渐变到卡片底色（等于没有底），三个图标灰扑扑地糊在文字上。
+      现在做成一颗**白底小胶囊**（1px 细边 + 微投影），里面的按钮各自另有浅灰圆角底，
+      在「灰包」和「白卡」两种底色上都立得住。 */
 .tv-ops {
   position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 4px;
+  right: 4px;
   display: flex;
-  gap: 1px;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.07), 0 1px 4px rgba(15, 23, 42, 0.10);
   opacity: 0;
   pointer-events: none;
-  padding: 2px 3px 2px 16px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(to right, transparent, var(--bg-hover) 14px);
   transition: opacity 0.15s;
 }
-.tree-video:hover .tv-ops { opacity: 1; pointer-events: auto; }
-.tree-video.on .tv-ops { background: linear-gradient(to right, transparent, var(--bg-active) 14px); }
-.tv-ops .btn-icon { width: 20px; height: 20px; font-size: 10px; }
+.tv-head:hover .tv-ops { opacity: 1; pointer-events: auto; }
+.tv-ops .btn-icon {
+  width: 20px; height: 20px; font-size: 10px; border-radius: 5px;
+  background: rgba(15, 23, 42, 0.075);
+}
+.tv-ops .btn-icon:hover:not(:disabled) { background: rgba(15, 23, 42, 0.16); }
+.tv-ops .btn-icon.danger:hover:not(:disabled) { background: rgba(255, 59, 48, 0.12); color: var(--danger-color); }
 
-/* 场景层 / 过渡屏节点（二级） */
+/* 场景包（二级）：**真正的包裹容器** —— 灰底圆角块，缩进由它自己的内边距给。
+   里面依次是：场景行 / 过渡屏行 / 唯一的「＋ 添加场景层」入口。
+   （2026-10-01 之前这里只是一条 1px 竖线缩进，场景和视频段看上去像两条并列列表。） */
 .tree-children {
-  margin: 0 0 8px 10px;
-  padding-left: 7px;
-  border-left: 1px solid var(--border-light);
+  margin: 0 6px 6px;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  /* ⚠️ 2026-10-01 用户要求「卡片与卡片之间要有空隙」：原来是 2px —— 相邻两张卡
+     （白卡与灰卡）在浅灰包上几乎贴成一整块，看不出是两条。6px 才读得出"两张卡"。 */
+  gap: 6px;
 }
 .tree-node {
   position: relative;          /* 悬浮操作按钮的定位基准 */
@@ -473,13 +708,38 @@ body.is-splitting * { cursor: col-resize !important; user-select: none !importan
   align-items: center;
   gap: 7px;
   padding: 6px 8px;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s;
+  overflow: hidden;            /* 选中态的左侧色条跟着圆角裁 */
+  transition: background 0.15s, box-shadow 0.15s;
 }
-.tree-node:hover { background: var(--bg-hover); }
-.tree-node.on { background: var(--bg-active); }
+/* 场景卡「统一高度」（2026-10-01 用户要求：1.2.3.4 四个卡一样高，标题最多 2 行、超出省略）。
+   高度算法：2 行标题（12px × 1.4 × 2 ≈ 33.6）+ 2px 行距 + 1 行时间（10.5 × 1.3 ≈ 13.7）
+   + 上下 padding 12 ≈ 61.3 → 取 62。
+   内容整体垂直居中（.tree-node 的 align-items:center），所以只有 1 行标题的卡看起来是
+   紧凑的两行居中的，而不是「顶上空出一行」。
+   ⚠️ 只钉 `[data-scene]`（真正的场景卡）：过渡屏行 / 「最后一段…」是**说明行**，性质不同，
+      不跟着钉高，否则整列会多出几条等高空盒子。 */
+.tree-node[data-scene] {
+  height: 62px;
+  flex: none;                  /* 包是 flex column，别让它在空间紧张时被压扁 */
+}
+.tree-node:hover { background: var(--bg-active); }   /* 包底是 #f5f5f7，hover 得再深一档才看得见 */
+/* 选中态：**白底 + 左侧 accent 色条**。包底是 --bg-sidebar(#f5f5f7)，
+   原来那档 --bg-active(#e8e8ed) 压上去几乎分不出层次；改成「灰包里的白卡」
+   既跳得出来，又和后台其它地方的卡片语言一致。 */
+.tree-node.on { background: var(--bg-primary); box-shadow: var(--shadow-sm); }
+.tree-node.on::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 2.5px; height: 58%;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent-color);
+}
 .tree-node.on .tn-name { color: var(--accent-color); font-weight: 600; }
+.tree-node.on .tn-idx { color: var(--accent-color); }
 .tn-idx {
   width: 16px; flex: 0 0 16px;
   font-size: 10px; font-weight: 700; color: var(--text-faint);
@@ -490,8 +750,16 @@ body.is-splitting * { cursor: col-resize !important; user-select: none !importan
   font-size: 12px; color: var(--text-secondary);
   white-space: normal; overflow-wrap: break-word; word-break: break-word;
   line-height: 1.4;
+  /* 标题最多 2 行、超出省略号（配合上面的固定卡高 —— 卡高是死的，长标题绝不能把它撑开）。
+     ⚠️ line-clamp 必须配 `display:-webkit-box` + `-webkit-box-orient:vertical`，
+     三者缺一整个 clamp 就不生效。标题里用户敲的回车是 `<br>` 渲染的，
+     line-clamp 按**行盒**计数，`<br>` 产生的行同样计一行，所以换行标题照样只留 2 行。 */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
-/* 场景节点：标题一行、时间一行，完整显示不省略（列高充裕） */
+/* 场景节点：标题区（最多 2 行）+ 时间一行 */
 .tn-main {
   flex: 1; min-width: 0;
   display: flex; flex-direction: column; gap: 2px;
@@ -500,46 +768,88 @@ body.is-splitting * { cursor: col-resize !important; user-select: none !importan
 .tn-main .tn-meta { line-height: 1.3; }
 .tn-meta { font-size: 10.5px; color: var(--text-faint); white-space: nowrap; }
 .tree-node.is-outro .tn-name { font-style: italic; color: var(--text-muted); }
-/* 操作按钮悬浮：不占布局宽度，hover 浮现在节点右侧（与 .tv-ops 同一套规则） */
+/* 操作按钮：与 .tv-ops 同一套（右上角白底小胶囊 + 按钮浅灰底）。
+   ⚠️ 卡片是 62px 定高 + 标题最多 2 行，胶囊会盖住第一行标题**右端** ——
+      这是「hover 才出现」的代价，用户明确要右上角；靠白底 + 投影让它读成"浮在上层"。 */
 .tn-ops {
   position: absolute;
+  top: 4px;
   right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
   display: flex;
-  gap: 1px;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.07), 0 1px 4px rgba(15, 23, 42, 0.10);
   opacity: 0;
   pointer-events: none;
-  padding: 2px 3px 2px 16px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(to right, transparent, var(--bg-hover) 14px);
   transition: opacity 0.15s;
 }
 .tree-node:hover .tn-ops { opacity: 1; pointer-events: auto; }
-.tree-node.on .tn-ops { background: linear-gradient(to right, transparent, var(--bg-active) 14px); }
-.tn-ops .btn-icon { width: 19px; height: 19px; font-size: 10px; }
-
-.list-add {
-  width: 100%;
-  margin-top: 8px;
-  justify-content: center;
-  border-style: dashed;
-  color: var(--accent-color);
-  border-color: var(--accent-color);
-  background: transparent;
+.tn-ops .btn-icon {
+  width: 20px; height: 20px; font-size: 10px; border-radius: 5px;
+  background: rgba(15, 23, 42, 0.075);
 }
-.list-add:hover { background: rgba(99, 102, 241, 0.06); }
+.tn-ops .btn-icon:hover:not(:disabled) { background: rgba(15, 23, 42, 0.16); }
+.tn-ops .btn-icon.danger:hover:not(:disabled) { background: rgba(255, 59, 48, 0.12); color: var(--danger-color); }
 
-/* ③ 表单 */
+/* 场景包内唯一的添加入口。
+   ⚠️ 它和场景行同处 .tree-children 内、同缩进同宽 —— 这正是「一长一短」的解药：
+   原来两个满宽虚线按钮分别挂在两级末尾，包含块不同（一个在 .tree-children 里、一个在外层），
+   宽度基准差着缩进量，并排看就是长短不齐。 */
+.tree-add {
+  width: 100%;
+  /* 上间距交给 .tree-children 的 gap（原来是自己 margin-top:3px，叠在 gap 上会多一截） */
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tree-add:hover {
+  border-style: solid;
+  border-color: var(--accent-color);
+  background: var(--bg-primary);
+  color: var(--accent-color);
+}
+
+/* ③ 参数栏（原表单）：舞台右侧，宽度由 --params-w 控制，可拖分隔条 / 可折叠 */
 .pane-form {
   min-width: 0;
   overflow-y: auto;
-  padding: 18px 22px 60px;
+  padding: 16px 18px 60px;
   background: var(--bg-primary);
   /* 兜底：让表单里任何绝对定位的后代（开头是 .switch 的隐藏 checkbox）都以本栏为
      包含块，被这里的 overflow:auto 收住；否则它们会逃到文档上、把整页撑出滚动条，
      一聚焦就让整个后台页面往上跳（详见 .switch 注释） */
   position: relative;
+}
+/* 折叠态：参数栏只剩一根 44px 竖条，点它可重新展开（JS 绑定） */
+.workspace.collapsed .pane-form {
+  padding: 0;
+  overflow: hidden;
+  border-left: none;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+.workspace.collapsed .pane-form > * { display: none; }
+.workspace.collapsed .pane-form::before {
+  content: '参数';
+  writing-mode: vertical-rl;
+  padding-top: 14px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
 }
 .form-head {
   display: flex;
@@ -579,6 +889,18 @@ body.is-splitting * { cursor: col-resize !important; user-select: none !importan
   margin-bottom: 12px;
 }
 .field-grid:last-child { margin-bottom: 0; }
+/* 场景参数栏的字段网格（2026-10-01 用户要求改两列）：
+   装得下两列就两列，装不下**自动回落单列** —— 不写死 2 列是因为参数栏宽 320~380px 三档摇摆，
+   写死会在窄档把「标签 + ⓘ + 继承/自定义开关」这一行挤到放不下（会把标签压成「副…」）。
+   阈值 133px 的算法见 .ovr-sw 那段注释。 */
+.field-grid.fit {
+  grid-template-columns: repeat(auto-fit, minmax(133px, 1fr));
+  gap: 12px 12px;
+}
+/* 两列时半格只有 133~149px，这一行必须再省一点：间距 6→4。
+   （2026-10-01 二次改版：右侧控件从 55px 的胶囊下拉换成 26px 的小开关，横向多出 29px 余量，
+     标签被 ellipsis 截成「标题字…」的风险已大幅降低。） */
+.field-grid.fit .form-label { gap: 4px; }
 .field { min-width: 0; }
 .field.span-all { grid-column: 1 / -1; }
 .form-label {
@@ -596,6 +918,128 @@ body.is-splitting * { cursor: col-resize !important; user-select: none !importan
   color: var(--accent-color);
   margin-left: auto;
   font-variant-numeric: tabular-nums;
+}
+
+/* ===== 参数栏页卡：场景层字段按「文案·字号 / 视频时长 / 按钮·链接」三组切换 =====
+   浅灰轨道 + 白底选中块，沿用结构树那套「靠色差分层、不靠描边」的语言。
+   ⚠️ 没有它时场景面板是一长条 fieldset，380px 的栏要滚半天才能看全一类参数。 */
+.form-tabs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-sidebar);
+}
+.form-tab {
+  /* ⚠️ flex-basis 用 auto 而不是 0：三张页卡的标签长短不一（「视频时长」4 字、「按钮 · 链接」6 字），
+     等宽会把长标签压到需要 ellipsis（实机出现过「文案 · …」）。按内容打底 + 等量伸展才不会被截。 */
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 5px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.form-tab:hover { color: var(--text-secondary); }
+.form-tab.on {
+  background: var(--bg-primary);
+  color: var(--accent-color);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
+}
+.form-tab .ft-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* ⚠️ 2026-10-01（P0-18）：原来这里还有 `.form-tab .ft-badge`（「自定义 N」小圆点徽标），
+   用户要求去掉，连样式一起删 —— 标签现为纯文字。 */
+
+/* ===== 「继承 / 自定义」开关（场景层排版类字段） =====
+   默认继承 home.typography，控件禁用；打开开关才可编辑。
+   ⚠️ 禁用做**双保险**：控件自身 disabled（键盘 Tab 也跳不过去）+ 下面这层压暗。
+      只靠 pointer-events 挡不住键盘操作。
+   ⚠️ 2026-10-01 二次改版：原来是 `<select> 继承|自定义` 小胶囊，10px 字 + 自绘箭头
+      在最窄半格里箭头会和文字挤成一团（用户反馈「很丑，还重叠」）。
+      换成 26×15 的小号开关：比胶囊窄 29px，状态也更直观（关=灰=继承 / 开=强调色=这一屏自定义）。
+   ⚠️ 尺寸仍按**最窄半格反推**，别随手放大：参数栏最窄 320px → 内容约 256px，两列时半格 122px；
+      这一行最坏情况是「5 字标签(65) + ⓘ(15) + 三个 4px 间距(12) + 开关(26)」≈ 118px ≤ 半格。
+      再宽就会把标签挤成省略号（阈值 133px 与 .field-grid.fit 是同一套账）。 */
+.form-label .lb-txt {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 占位撑开：有它在，ⓘ 的 margin-right:auto 拿不到剩余空间，开关才会稳定贴右
+   （靠 flex-grow 吃掉全部剩余空间，auto 边距拿到 0 —— 比两边都写 auto 可靠） */
+.form-label .lb-spacer { flex: 1 1 auto; min-width: 0; }
+.ovr-wrap {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+/* 小号开关：轨道 26×15、圆点 11px（2 + 11 + 11 + 2）。
+   状态真源写在 `aria-checked` 上而不是加一个 `.on` 类 —— CSS 与无障碍读的是同一个值，
+   不会出现「类名说开着、aria 说关着」的两套账。 */
+.ovr-sw {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 15px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--ovr-off);               /* 关 = 继承（灰），取值理由见 :root 的 --ovr-off */
+  cursor: pointer;
+  transition: background 0.16s;
+}
+.ovr-sw::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.28);
+  transition: transform 0.16s;
+}
+.ovr-sw[aria-checked="true"] { background: var(--accent-color); }   /* 开 = 这一屏单独设置 */
+.ovr-sw[aria-checked="true"]::after { transform: translateX(11px); }
+.ovr-sw:hover { box-shadow: 0 0 0 2px var(--accent-light); }
+.ovr-sw:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-light); }
+/* 继承态：数据控件整块压暗 + 不可点（真正的禁用由 JS 给控件加 disabled，这里只是视觉）。
+   ⚠️ 压暗的是**统一下拉的壳** `.sel`，**绝不能**写 `select.form-select`：
+      tools/_shared/ui-select.css 是用 `.sel > select.form-select{opacity:0}` 把原生控件藏起来的，
+      一旦这里给它 0.4，原生 select 会被「显影」到触发器上 —— 实机表现为**箭头变成两个、
+      文字和 .sel-label 重影**（两条规则的优先级 0,2,2 > 0,1,1，谁也拦不住）。 */
+.field.is-inherit .range-wrap,
+.field.is-inherit .form-palette,
+.field.is-inherit .color-row,
+.field.is-inherit .sel { opacity: 0.4; }
+.field.is-inherit .range-wrap,
+.field.is-inherit .form-palette,
+.field.is-inherit .color-row { pointer-events: none; }
+
+/* ⚠️ 统一下拉组件（tools/_shared/ui-select.css）的 .sel-label 没有防溢出规则：
+   参数栏只有 320~380px、字段又是两列，长中文标签（如「系统默认（苹方 / 微软雅黑）」）
+   会被 flex 压成两三行、把半格撑高并溢出色块。这里就地补省略号 ——
+   **不动** tools 的共享组件（它被两个后台共用，且由 _sync_ui_components.js 同步）。 */
+.pane-form .sel-label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* ---------- 说明图标（替代原来堆在表单里的灰色解释段落） ----------
    解释性文案不再always占位，收进 label 旁的 ⓘ。悬停 / 键盘聚焦时由 #tipLayer
@@ -821,7 +1265,7 @@ input[type="range"]::-moz-range-thumb {
   width: 108px; height: 64px;
   flex: 0 0 108px;
   border-radius: var(--radius-sm);
-  background: #000;
+  background: var(--mat-dark);
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
 }
@@ -886,10 +1330,10 @@ input[type="file"] { display: none; }
   padding: 6px 2px 2px;
 }
 
-/* 右：预览 */
+/* ② 舞台：画面预览（上）+ 通栏时间轴（下）
+   从原来的「右栏固定 600px」提为中间弹性主体 —— 这是时间轴能从 600px 涨到全宽的根本原因 */
 .pane-preview {
-  width: var(--preview-w);
-  flex: 0 0 var(--preview-w);
+  min-width: 0;
   border-left: 1px solid var(--border-color);
   background: var(--bg-sidebar);
   display: flex;
@@ -916,11 +1360,91 @@ input[type="file"] { display: none; }
   min-width: 0;
 }
 .pv-body {
+  /* 「信箱」留边：画面四周必须留出一条带，浮动控件才有落脚处。
+     纵向带宽要放得下最高的那根浮条（下浮条 = 30px 按钮、拆掉胶囊壳后无额外内边距），
+     再各留 ~14px 呼吸；因为浮条从「34/40px 胶囊」瘦成「26/30px 独立圆」，
+     这里同步从 52 收到 44 —— 省下的 16px 高度全部还给画面，抵掉时间轴放宽的那部分。
+     横向留边不额外缩小画面（此时纵向才是约束边），窗口变窄转为横向受限时它能兜住。
+     ⚠️ fitPreview() 会读这两个值，改这里就够了。 */
+  --pv-pad-x: 32px;
+  --pv-pad-y: 44px;
   flex: 1;
   min-height: 0;
   position: relative;
-  background: #1c1c1e;      /* 监视器外的"信箱"底色（视频剪辑软件同款） */
+  padding: var(--pv-pad-y) var(--pv-pad-x);
+  /* 监视器外的「工作台」= 白色点阵底。
+     ⚠️ 2026-10-01 用户指定：台面从深灰（#3b3b45）改成白色。
+     换白之后有个代价必须知道：**画面本身也是浅底（#f5f5f5），白台面与它的色差 ≈ 0**，
+     所以「靠色差分台面与内容」这条（amotion 的做法）在白底上失效，
+     分层只能改回 **.pv-stage 那圈描边 + 投影**（已同步调成黑色系，见下）。
+     点阵保留、反相：白底上画浅灰点，Δ 仍按参照物对齐（≈25/255 → 黑点 alpha 0.10）。
+     —— 点阵参数（2026-10-01 逐像素采样 amotion 编辑器实机截图得到）：
+        amotion 底 #0a0a0a / 点 #232323（≈ 白 alpha 0.10）/ **间距 18px** / 点径 1px、**硬边无羽化**
+        （剖面是 10,10 → 35,35 → 10,10，没有过渡像素）。
+     想调手感只动下面三个变量：间距 / 点径 / 点的黑度。 */
+  --mat-bg: #ffffff;
+  --mat-dot-gap: 18px;
+  --mat-dot-r: 0.6px;         /* 实心半径；圆心钉在像素中心(1.5px) → 屏上就是 1px 针尖点 */
+  --mat-dot-a: 0.10;          /* 点的黑色不透明度；白底上实测 Δ≈25（与参照物对齐） */
+  background-color: var(--mat-bg);
+  background-image: radial-gradient(circle at 1.5px 1.5px,
+      rgba(0, 0, 0, var(--mat-dot-a)) var(--mat-dot-r),
+      transparent calc(var(--mat-dot-r) + 0.35px));
+  background-size: var(--mat-dot-gap) var(--mat-dot-gap);
+  background-position: 0 0;   /* 不用 center：避免点落在半像素上被抗锯齿糊成 2px 灰团 */
   overflow: hidden;
+}
+
+/* ===== 画布浮动控件 =====
+   参照 amotion 样机画布：高频操作直接长在画面边缘，不占布局高度，
+   所以画面能一路顶到信箱边缘（原来播放按钮挤在 .pv-head 里，离画面很远）。
+   ⚠️ 2026-10-01 用户「按钮不要黑底」+ 参考截图：**拆掉外层胶囊壳**，
+   按钮各自独立成圆形（浅灰底、深色图标），浮条容器本身完全透明。
+   这样既没有深底压画面，白色台面上也看得清（靠浅灰圆而非胶囊）。 */
+.pv-float {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;                /* 必须高于 .pv-stage（它是 absolute + transform） */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+}
+/* 浮条落在信箱带里：上浮条 34px 高（26 按钮 + 8 内边距）、下浮条 40px 高，
+   各自贴自己那条边，和画面之间留 6–9px，不再压住内容。 */
+.pv-float-top { top: 9px; }
+.pv-float-bottom { bottom: 6px; gap: 10px; }
+.pv-fbtn {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border: none;
+  background: rgba(15, 23, 42, 0.06);   /* 浅灰圆（参考图同款）；白台面上靠它显形，不用深底 */
+  border-radius: 50%;
+  color: #2b3041;
+  font-size: 16px; line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.pv-fbtn:hover:not(:disabled) { background: rgba(15, 23, 42, 0.12); }
+.pv-fbtn:active:not(:disabled) { transform: scale(0.9); }
+.pv-fbtn:disabled { opacity: 0.3; cursor: default; }
+/* 重置 / 播放这两个主控件比左右翻页大半号（30 vs 26），底仍是同一档浅灰 */
+.pv-fbtn.round { width: 30px; height: 30px; }
+/* 播放（及暂停）仍要能一眼认出是主操作，但**不给实底**（用户「按钮不要黑底」）——
+   只把图标染成 accent 色，底色与其它按钮同档浅灰。 */
+.pv-fbtn.primary { color: var(--accent-color); }
+.pv-fbtn .pv-ic-pause { display: none; }
+.pv-fbtn.playing .pv-ic-play { display: none; }
+.pv-fbtn.playing .pv-ic-pause { display: block; }
+.pv-fidx {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);   /* 浮条壳已去掉 → 裸字，回到正文灰 */
+  font-variant-numeric: tabular-nums;
+  padding: 0 5px;
+  white-space: nowrap;
 }
 
 /* ===== 画面监视器 =====
@@ -935,6 +1459,16 @@ input[type="file"] { display: none; }
   transform-origin: 0 0;
   overflow: hidden;
   background: var(--zl-stage-bg, #f5f5f5);
+  /* 圆角 = amotion 画布的同比例：它 918px 宽的画布圆角实测 ≈16px（1.74%），
+     所以 1280 逻辑宽取 1280×1.74% ≈ 22px。因为是 transform:scale 缩放，
+     屏幕上的圆角会跟着一起缩（1600 视口 scale 0.72 → 约 16px），随视口自然变；
+     这也是它有别于「固定像素圆角」的地方 —— 画面和它的框是一体的。
+     overflow:hidden 已在上面，圆角会自动裁掉视频/文案层的四个角。 */
+  border-radius: 22px;
+  /* 台面改白之后，**这圈描边就是画面与背景的唯一分界**（白台面 vs 浅色画面没有色差可用）：
+     所以从「白 7%」换成「黑 8%」，并把投影压轻（白底上重投影会显脏）。
+     仍用外扩 box-shadow 而非 border，避免占 1px 影响内部 1280×800 的排版基准。 */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 6px 20px rgba(0, 0, 0, 0.10);
   /* 前台用 --zl-vh 表达「一屏高」，这里把它钉在监视器的逻辑高度上 */
   --zl-vh: 800px;
 }
@@ -1021,46 +1555,57 @@ input[type="file"] { display: none; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.err { background: rgba(197, 48, 48, 0.96); }
 
-/* ===== 响应式 ===== */
-@media (max-width: 1500px) {
-  :root { --preview-w: 520px; --preview-default-w: 520px; --tree-w: 216px; }
+/* ===== 响应式 =====
+   舞台是弹性的，所以这里让的是「参数栏」：越窄参数栏越薄，舞台始终优先。
+   ⚠️ 参数栏的折叠（.collapsed）由 admin.js 在 ≤1180px 自动加/去，CSS 只管宽度。 */
+/* 窄屏让宽度时优先让参数栏，结构树只小幅收（卡套包双层嵌套，树太窄场景标题全要折行） */
+@media (max-width: 1520px) {
+  :root { --params-w: 348px; --params-default-w: 348px; --tree-w: 228px; }
 }
 @media (max-width: 1320px) {
-  :root { --preview-w: 440px; --preview-default-w: 440px; --tree-w: 198px; --side-w: 154px; }
+  :root { --params-w: 320px; --params-default-w: 320px; --tree-w: 214px; }
 }
-/* 再窄就把「画面预览 + 时间轴」整栏收起来（顶栏的「预览」按钮可临时全屏唤出） */
 @media (max-width: 1180px) {
-  .workspace[data-view="structure"] { grid-template-columns: var(--side-w) var(--tree-w) minmax(0, 1fr); }
-  .workspace[data-view="structure"] .pane-preview { display: none; }
-  .workspace[data-view="structure"] .pane-split { display: none; }
-  .workspace[data-view="structure"] .pane-preview.force-show {
-    display: flex;
-    position: fixed;
-    inset: var(--nav-h) 0 0 0;
-    width: 100%;
-    z-index: 30;
-  }
+  :root { --stage-min-w: 320px; }
 }
 @media (max-width: 860px) {
-  :root { --side-w: 100%; --tree-w: 100%; }
+  :root { --tree-w: 100%; }
   body { overflow: auto; }
+  /* 单列堆叠：结构树 / 舞台 / 参数栏 依次往下，靠 grid-areas 重排（split 不占行） */
   .workspace,
-  .workspace[data-view="structure"] { grid-template-columns: 100%; height: auto; }
-  .pane-split { display: none; }
-  .side-menu {
-    flex-direction: row;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
+  .workspace[data-view="structure"] {
+    grid-template-columns: 100%;
+    grid-template-areas: "tree" "stage" "params";
+    height: auto;
   }
-  .side-item { width: auto; white-space: nowrap; }
+  .pane-split { display: none; }
+  /* 顶栏在窄屏也允许压缩：胶囊横向滚动，别把整页撑出横向滚动条 */
+  .top-nav { gap: 8px; padding: 0 12px; }
+  .view-caps { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
   .pane-tree {
     border-right: none;
     border-bottom: 1px solid var(--border-color);
     max-height: 42vh;
   }
-  /* 堆叠模式下预览恢复整宽（var(--preview-w) 只在并列四栏时有意义） */
-  .pane-preview { width: auto; flex: 1 1 auto; border-left: none; border-top: 1px solid var(--border-color); }
-  .workspace[data-view="structure"] .pane-preview { display: flex; }
+  .pane-preview { border-left: none; border-top: 1px solid var(--border-color); }
+  /* 堆叠时整页高度 auto，.pv-body 的 flex:1 没有可分配的高度 -> 会塌成 0，
+     监视器只剩一条黑底。这里改用比例钉住高度（1280×800 的同一个比例）。 */
+  .pv-body { flex: 0 0 auto; aspect-ratio: 16 / 10; }
+  /* 堆叠下参数栏恢复完整高度，别缩成竖条 */
+  .workspace.collapsed .pane-form { padding: 16px 18px 40px; display: block; }
+  .workspace.collapsed .pane-form > * { display: revert; }
+  .workspace.collapsed .pane-form::before { content: none; }
   .field-grid { --cols: 1 !important; }
+  /* 堆叠后参数栏变成整屏宽，auto-fit 会一口气排出 4~5 列（134px 一列太碎）。
+     这里让它退回普通网格，跟着上面那条 --cols:1!important 走单列。 */
+  .field-grid.fit { grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 12px 14px; }
 }
+
+/* ═══ 图标档位接入（DESIGN_SYSTEM §9 · 尺寸 6 档 × 官方线宽）══════════════
+ * 线宽不再逐个写死：基础规则按 viewBox 接管，容器按显示尺寸下发档位。
+ * 档位原则：默认用官方值 2；只在实测发虚且图形简单时才补偿，上限 2.4。
+ * ⚠ 改容器尺寸后必须重跑 icon_probe.mjs 实测，别照抄别处的档位。
+ */
+svg[viewBox="0 0 24 24"]{ stroke-width: var(--ic-sw, 2); }
+svg[viewBox="0 0 24 24"] > *{ stroke-width: inherit; }
+.side-item svg{ --ic-sw: 2; }   /* 16px 档 · 顶栏视图切换 */

@@ -9,7 +9,7 @@
   <!-- 前台舞台样式：后台「画面预览」监视器与前台共用同一份样式与同一份渲染代码，
        所以预览里的文案排版天然等于前台（见 admin-ui.css 的 .pv-stage 说明） -->
   <link rel="stylesheet" href="_shared/scrub.css?v=5" data-page-node-id="oQwLnjBvWZt2cmz4eRjCEt">
-  <link rel="stylesheet" href="_shared/admin-ui.css?v=11" data-page-node-id="deRrzaoyrYBXStFK3o5nzR">
+  <link rel="stylesheet" href="_shared/admin-ui.css?v=31" data-page-node-id="deRrzaoyrYBXStFK3o5nzR">
   <!-- 全站统一下拉组件 .sel（单一来源 tools/_shared/ui-select.css，跟随 --accent-color 主题） -->
   <link rel="stylesheet" href="../tools/_shared/ui-select.css" data-page-node-id="zhonglele-sel">
 </head>
@@ -36,59 +36,55 @@
 <!-- ===== 顶栏 ===== -->
 <div class="top-nav" data-page-node-id="O1X014vv1xy0vUyHz9su4p">
   <div class="top-title" data-page-node-id="qrQPHuhmyqQiw6eiPLWnlZ">众乐乐后台 <small data-page-node-id="v7uqqaf8R0OOFSGhGj9ydr">首页编辑</small></div>
-  <div class="top-spacer" data-page-node-id="yoWRrKUBXImGbdtf46eK6Q"></div>
-  <span class="save-state" id="saveState" data-page-node-id="hvcE0EHyMFSR7SRxjL8VnY">加载中…</span>
-  <button class="btn-secondary btn-sm" id="btnTheme" title="切换全站深浅色（写入 content.json）" data-page-node-id="BBCFkEnFhXZlAMMczgN6Qo">浅色</button>
-  <button class="btn-secondary btn-sm" id="btnPreviewToggle" title="窄窗口时显示/隐藏右侧画面预览" data-page-node-id="Wy1SayGXUJAw7dC5Gf7auM">预览</button>
-  <button class="btn-secondary btn-sm" id="btnOpenSite" data-page-node-id="aVaX3VdfGA15PbNOcuCwcJ">打开前台</button>
-  <button class="btn-accent btn-sm" id="btnSave" data-page-node-id="jDHrAllA9knvaJUmvGQjMp">保存</button>
-</div>
-
-<!-- ===== 工作区：① 一级菜单 ② 结构树/列表 ③ 表单 ④ 画面预览 + 时间轴 =====
-     时间轴不再横在页面顶部 —— 它属于「当前正在编辑的那段视频」，所以跟着预览一起放右侧。 -->
-<div class="workspace" id="workspace" data-view="structure" data-page-node-id="CTasphDrFGkJSr7G7tIwVh">
-
-  <!-- ① 一级菜单 -->
-  <nav class="side-menu" id="sideMenu" data-page-node-id="gGTdiugfKA3fEpEJsXAjOf">
+  <!-- 视图切换：5 个视图从左侧竖排搬进顶栏成胶囊（省下的 170px 全给中间舞台）-->
+  <nav class="view-caps" id="sideMenu" data-page-node-id="gGTdiugfKA3fEpEJsXAjOf">
     <button class="side-item" type="button" data-view="structure" title="首页的视频段与场景层（增删 / 排序 / 编辑）" data-page-node-id="jdkaUSb0IzlKAJvKGml0zn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="ypVsW3WcAvx4NNp8uPKh4c"><rect x="3" y="3" width="18" height="18" rx="2" data-page-node-id="GGMk8PMF5zZpgvscxUZ8xA"/><line x1="3" y1="9" x2="21" y2="9" data-page-node-id="KrEiv2k7v3t6CkmpCy6gyG"/><line x1="9" y1="21" x2="9" y2="9" data-page-node-id="GY2gAZTUxWQrHqKLYCzdyk"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="ypVsW3WcAvx4NNp8uPKh4c"><rect width="18" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg>
       首页结构
     </button>
     <button class="side-item" type="button" data-view="nav" title="前台顶部导航菜单（名称 / 链接 / 是否新窗口）" data-page-node-id="Un0iJjBvO7aSY9UzGpNs7i">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="O26uvVBkQYcnbgRRwkNzTd"><line x1="3" y1="12" x2="21" y2="12" data-page-node-id="byAIXDGpIvpZVLYGZrAkrQ"/><line x1="3" y1="6" x2="21" y2="6" data-page-node-id="YVUJPFjjstg2g2AGWvzRgd"/><line x1="3" y1="18" x2="21" y2="18" data-page-node-id="RgYzXP8uYeuZhZWuWJvSQu"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="O26uvVBkQYcnbgRRwkNzTd"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
       顶部导航
     </button>
     <button class="side-item" type="button" data-view="footer" title="底部板块：Let's talk 文案 / 二维码 / 页脚链接 / 版权" data-page-node-id="WjrxcQaSho0LurULMpWUfF">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="LpfLtPZjxcXXaBqbNWXzZo"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" data-page-node-id="GiOqYcTEtPzDgCNUwCeWcR"/><path d="M8 9h8" data-page-node-id="MOxVZMLnGtKSPKcmVjBqYY"/><path d="M8 13h5" data-page-node-id="NEqSYEMMtTvZhWrlGJEjnA"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="LpfLtPZjxcXXaBqbNWXzZo"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" data-page-node-id="5x7jA4vhOv0KA6FUFb5vJ4"/><path d="M8 9h8" data-page-node-id="guoy8R7bBhFpoovWL6mb95"/><path d="M8 13h5" data-page-node-id="ELJJrBUGUrv7qBrw3Dd5dg"/></svg>
       底部板块
-    </button>
-    <button class="side-item" type="button" data-view="typo" title="所有场景层的基准字体、字号与颜色" data-page-node-id="6XwcieGHc2XC2Juh7k3N5d">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="KcgVaKscNhbjvcBURnaJzH"><polyline points="4 7 4 4 20 4 20 7" data-page-node-id="RoMcXQtIpHAcWKTveKFoql"/><line x1="9" y1="20" x2="15" y2="20" data-page-node-id="GrgShbKuGoVdpFvTHtgxwL"/><line x1="12" y1="4" x2="12" y2="20" data-page-node-id="AkvVJUUHuTvHrJcKGpLPZL"/></svg>
-      全局排版
     </button>
     <button class="side-item" type="button" data-view="site" title="浏览器标签标题、Logo 字母、导航按钮文字、全站深浅主题" data-page-node-id="QtdgioHFFRUYN4vvr7Ge7x">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="OPSZKNkOZXHvhqxXQKAeSA"><circle cx="12" cy="12" r="3" data-page-node-id="TxrEOsmBvxTNLZNGdEqVaD"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" data-page-node-id="VsGSWJtsdAQFwLXnVAdiTU"/></svg>
       页面信息
     </button>
   </nav>
+  <div class="top-spacer" data-page-node-id="yoWRrKUBXImGbdtf46eK6Q"></div>
+  <span class="save-state" id="saveState" data-page-node-id="hvcE0EHyMFSR7SRxjL8VnY">加载中…</span>
+  <button class="btn-secondary btn-sm" id="btnPreviewToggle" title="收起 / 展开右侧参数栏（收起后舞台与时间轴更宽）" data-page-node-id="Wy1SayGXUJAw7dC5Gf7auM">参数</button>
+  <button class="btn-secondary btn-sm" id="btnOpenSite" title="在新标签页打开前台页面看效果" data-page-node-id="aVaX3VdfGA15PbNOcuCwcJ">预览</button>
+  <button class="btn-accent btn-sm" id="btnSave" data-page-node-id="jDHrAllA9knvaJUmvGQjMp">保存</button>
+</div>
+
+<!-- ===== 工作区：① 结构树 ② 舞台（画面预览 + 通栏时间轴）③ 参数栏（可折叠） =====
+     布局 v2：原来「中间表单 + 右栏 600px 预览」的角色互换 —— 预览提为中间弹性舞台，
+     时间轴因此从 600px 涨到舞台全宽；表单收成右侧参数栏；导航已搬进顶栏成胶囊。
+     ⚠️ DOM 顺序仍是 tree → form → split → preview，视觉顺序由 CSS 的 grid-template-areas 决定。 -->
+<div class="workspace" id="workspace" data-view="structure" data-page-node-id="CTasphDrFGkJSr7G7tIwVh">
+
 
   <!-- ② 结构树（只在「首页结构」视图下出现） -->
   <aside class="pane-tree" id="paneTree" data-page-node-id="WGCsTLZdmwd388nLeS66NT"></aside>
 
-  <!-- ③ 表单 -->
+  <!-- ③ 参数栏（原表单）：舞台右侧，可折叠成 44px 竖条 -->
   <main class="pane-form" id="paneForm" data-page-node-id="lzHNaFF1azTsycSAsCLDZM"></main>
 
-  <!-- ③↔④ 分隔条：拖它调「预览栏」宽度（表单栏自动让位），双击恢复默认 -->
+  <!-- 舞台 ↔ 参数栏 分隔条：拖它调「参数栏」宽度（舞台自动让位），双击恢复默认 -->
   <div class="pane-split" id="paneSplit" role="separator" aria-orientation="vertical"
        title="拖动调整预览栏宽度（双击恢复默认）" data-page-node-id="Yc2nQ7hbSxTdLmRoVfPzXe"></div>
 
-  <!-- ④ 画面预览 + 该视频的时间轴 -->
+  <!-- ② 舞台：画面预览（上）+ 通栏时间轴（下） -->
   <aside class="pane-preview" id="panePreview" data-page-node-id="vgz15TBisRj5Nq4Ubit5Ip">
     <div class="pv-head" data-page-node-id="YmHwPIO75hRxHhyO0QU4Xj">
       <strong data-page-node-id="BCEt1Rsc7VOBo32PNiGRdr">画面预览</strong>
       <span id="pvNote" data-page-node-id="pNTixF2FeUA0c5TPIY2yd8">—</span>
       <span class="tl-spacer" data-page-node-id="HU9wFOkKgzYi8zFyafCd6X"></span>
-      <button class="btn-secondary btn-sm" id="pvPlay" title="循环播放当前这一屏的视频区间" data-page-node-id="HHo3cnKFWLgseu95B25NKB">▶ 播放本屏</button>
     </div>
     <div class="pv-body" id="pvBody" data-page-node-id="J7OBN6Tn5Wh94SlG06DgZT">
       <!-- 监视器：逻辑视口固定 1280×800（与前台排版基准断点一致），整体等比缩放。
@@ -99,33 +95,69 @@
         <div class="zl-scenes" id="pvScenes" data-page-node-id="Hn4vTbKmEs9gQcJdUxZpAy"></div>
         <div class="pv-empty" id="pvEmpty" data-page-node-id="Ws8kNjRmYp3hFvCdLqZxBu">这一段还没有上传视频</div>
       </div>
+
+      <!-- 画布浮动控件：高频操作长在画面边缘，不占布局高度（画面因此能顶到信箱边缘）。
+           上方 = 「第几屏 / 共几屏」+ 上一屏 / 下一屏；下方 = 重置 + 播放。 -->
+      <div class="pv-float pv-float-top" id="pvNav">
+        <button class="pv-fbtn" type="button" id="pvPrev" title="上一屏（←）" aria-label="上一屏">‹</button>
+        <span class="pv-fidx" id="pvIdx" aria-live="polite">– / 0</span>
+        <button class="pv-fbtn" type="button" id="pvNext" title="下一屏（→）" aria-label="下一屏">›</button>
+      </div>
+      <div class="pv-float pv-float-bottom">
+        <button class="pv-fbtn round" type="button" id="pvReset" title="回到本屏起点" aria-label="回到本屏起点">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.7-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <polyline points="11.9 1.2 11.9 4.4 8.7 4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="pv-fbtn round primary" type="button" id="pvPlay" title="循环播放当前这一屏（空格）" aria-label="播放本屏">
+          <svg class="pv-ic-play" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <path d="M4.6 2.9 L12.4 8 L4.6 13.1 Z" fill="currentColor"/>
+          </svg>
+          <svg class="pv-ic-pause" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <rect x="4.6" y="2.9" width="2.3" height="10.2" rx="0.7" fill="currentColor"/>
+            <rect x="9.1" y="2.9" width="2.3" height="10.2" rx="0.7" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
-    <!-- 时间轴：属于「当前选中的那段视频」。胶片层画整段视频的帧，区间 = 该段的场景层 -->
-    <div class="pv-timeline" id="pvTimeline" data-page-node-id="Lz8P4K0AAGjmxAGpfi2Ah6">
-      <div class="tl-head" data-page-node-id="2bVCTGgQHA7Wu8Vhv98KTF">
-        <strong id="tlTitle" data-page-node-id="wFcZHd0F6pttOEqRKkikFt">时间轴</strong>
-        <span id="tlDur" data-page-node-id="rqE92wu8Un7CNjuOFqIZM6">—</span>
-        <span class="tl-spacer" data-page-node-id="IV2RmuHiTI1kVoZdpL4LNU"></span>
-        <button class="btn-secondary btn-sm" id="btnSplitEven" title="按场景层数把该段视频时长平均分配，并首尾相接" data-page-node-id="CJWHqgoib14B5anZUoyxo8">均分</button>
-        <button class="btn-secondary btn-sm" id="btnChain" title="把每屏的终点对齐到下一屏的起点，消除跳帧空隙" data-page-node-id="wo0RPRim9nVZAk0lWcO3ki">衔接</button>
+    <!-- 时间轴：属于「当前选中的那段视频」。轨道就是一条通栏 lane（四屏并排）——
+         左列「当前屏身份」已取消（2026-10-01）：屏名与起止搬到头部中间居中一行，
+         轨道因此多出整列宽度，区间位置不再被左列偏掉。
+         无视频缩略图胶片 —— 画面在上面的监视器里实时看着，这里只管「第几秒 / 多长 / 文字何时出现」 -->
+    <div class="pv-timeline" id="pvTimeline">
+      <!-- 头部三栏：左（标题 / 总时长 / 重叠警告）· 中（当前屏身份，居中一行）· 右（均分 / 衔接）。
+           ⚠️ 左右两栏等宽（flex:1），中间那栏才是**真正居中**（不同宽会让中间偏掉）。 -->
+      <div class="tl-head">
+        <div class="tl-hl">
+          <strong id="tlTitle">时间轴</strong>
+          <span id="tlDur">—</span>
+          <!-- 重叠警告：相邻两屏共用了一段视频时间 → 滚动到交界处画面会倒回去重播。
+               点一下 = 一键衔接（与右侧「衔接」按钮同一条通道）。无重叠时 display:none -->
+          <button class="tl-warn" id="tlWarn" type="button" style="display:none"
+                  title="相邻两屏共用了一段视频时间，滚动到交界处画面会倒回去重播一段。点这里立即衔接"></button>
+        </div>
+        <div class="tl-cur" id="tlCur"></div>
+        <div class="tl-hr">
+          <button class="btn-secondary btn-sm" id="btnSplitEven" title="按场景层数把该段视频时长平均分配，并首尾相接">均分</button>
+          <button class="btn-secondary btn-sm" id="btnChain" title="把每屏的终点对齐到下一屏的起点 —— 同时消除空隙（跳帧前进）与重叠（倒回重播）">衔接</button>
+        </div>
       </div>
-      <!-- 轨道 = 胶片层（整段视频的帧，JS 画一次）+ 内容层（区间/空隙/播放头，随数据重绘）
-           胶片层必须留在 #tlInner 之外：它只在换视频/改宽度时重画，不该跟着每次表单输入重建 -->
-      <div class="tl-track" id="tlTrack" data-page-node-id="n6wMsSft3MR0nyiDY9OD5z">
-        <canvas class="tl-film" id="tlFilm" data-page-node-id="Rv5nQdKtYxL2mBpWsHjEcA"></canvas>
-        <div class="tl-inner" id="tlInner" data-page-node-id="Mq9fTwZpVjRtNcGsdKbLxE"></div>
+      <!-- 轨道：① lane（区间/文字参数带/空隙/播放头，随数据重绘） ② 播放头（绝对定位，跨整条轨道） -->
+      <div class="tl-track" id="tlTrack">
+        <div class="tl-lane" id="tlLane"></div>
+        <div class="tl-play" id="tlPlay" title="拖动查看该时刻的画面"><b id="tlPlayTc">0.0s</b></div>
       </div>
-      <div class="tl-ruler" id="tlRuler" data-page-node-id="M2swNetJjLZdTyk67rRiOp"></div>
+      <div class="tl-ruler" id="tlRuler"></div>
     </div>
   </aside>
 </div>
 
 <div class="toast" id="toast" data-page-node-id="xtQ9zc8vSWRvi8u9Wupgub"></div>
 <input type="file" id="filePicker" accept="video/*,image/*" data-page-node-id="WqH12PNiEF9CP1bXnbhKto">
-<!-- 隐藏探测器：读视频真实时长回填该段的 duration，并抽帧给时间轴做缩略图
-     （preload=auto：抽帧需要能解码画面，只有元信息不够） -->
-<video id="probeVideo" muted playsinline preload="auto" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-10px;top:-10px" data-page-node-id="owIeXpqVsNtfJkJzoyxfUF"></video>
+<!-- 隐藏探测器：只用来读视频真实时长，回填该段的 duration（时间轴刻度 / 区间上限都靠它） -->
+<video id="probeVideo" muted playsinline preload="metadata" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-10px;top:-10px" data-page-node-id="owIeXpqVsNtfJkJzoyxfUF"></video>
 
 <!-- 字体注册表（唯一数据源） -->
 <script src="_shared/fonts.js?v=1"></script>
@@ -134,6 +166,6 @@
 <script src="_shared/scrub.js?v=9"></script>
 <!-- 全站统一下拉组件 .sel：自动升级 select.form-select（含动态渲染的字体下拉） -->
 <script src="../tools/_shared/ui-select.js"></script>
-<script src="_shared/admin.js?v=11"></script>
+<script src="_shared/admin.js?v=27"></script>
 </body>
 </html>

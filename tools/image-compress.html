@@ -272,7 +272,7 @@
     <!-- Actions -->
     <div class="actions-row">
       <button class="btn-filled btn-sm" id="btnCompressAll" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 一键压缩全部</button>
-      <button class="btn-outline btn-sm" id="btnDownloadAll" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 批量下载 (ZIP)</button>
+      <button class="btn-outline btn-sm" id="btnDownloadAll" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg> 批量下载 (ZIP)</button>
       <button class="btn-outline btn-sm" id="btnClear" disabled>清空列表</button>
     </div>
 
@@ -740,9 +740,9 @@
     else if (error) { sizeHTML = `<span style="color:var(--red);font-size:12px">失败</span>`; }
     else { sizeHTML = `<span class="card-size original">${formatBytesCompact(origSize)}</span>`; }
     const cls = done ? 'done' : ((processing || loading) ? 'processing' : '');
-    const dlBtn = done ? `<button class="card-btn" onclick="event.stopPropagation();downloadSingle(${im.id})" title="下载"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>` : '';
+    const dlBtn = done ? `<button class="card-btn" onclick="event.stopPropagation();downloadSingle(${im.id})" title="下载"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg></button>` : '';
     const srcLabel = im.file.type === 'application/pdf' ? 'PDF' : (im.file.type.replace('image/','').toUpperCase() || im.file.name.split('.').pop().toUpperCase());
-    return `<div class="image-card ${cls}" data-id="${im.id}"><img class="card-thumb" src="${im._thumbUrl}" alt="" loading="lazy"><div class="card-info"><div class="card-name" title="${im.file.name}">${im.file.name}</div><div class="card-meta"><span>${srcLabel}</span>${done?`<span class="reduced">→ ${getExt(selectedFormat).toUpperCase()}</span>`:''}</div></div><div class="card-size-group">${sizeHTML}</div><div class="card-actions">${dlBtn}<button class="card-btn danger" onclick="event.stopPropagation();removeImage(${im.id})" title="移除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>`;
+    return `<div class="image-card ${cls}" data-id="${im.id}"><img class="card-thumb" src="${im._thumbUrl}" alt="" loading="lazy"><div class="card-info"><div class="card-name" title="${im.file.name}">${im.file.name}</div><div class="card-meta"><span>${srcLabel}</span>${done?`<span class="reduced">→ ${getExt(selectedFormat).toUpperCase()}</span>`:''}</div></div><div class="card-size-group">${sizeHTML}</div><div class="card-actions">${dlBtn}<button class="card-btn danger" onclick="event.stopPropagation();removeImage(${im.id})" title="移除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div></div>`;
   }
 
   function updateStats() {

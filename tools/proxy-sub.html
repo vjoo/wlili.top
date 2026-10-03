@@ -111,7 +111,7 @@ btn.addEventListener('click', function() {
   var text = document.getElementById('url1').textContent;
   var ok = function() {
     btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)';
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
     setTimeout(function(){ btn.style.borderColor = ''; btn.style.color = ''; btn.innerHTML = origHTML; }, 1500);
   };
   if (navigator.clipboard) navigator.clipboard.writeText(text).then(ok).catch(function(){ fallback(text, ok); });

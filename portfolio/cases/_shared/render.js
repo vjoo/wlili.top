@@ -61,7 +61,8 @@ var CaseRenderer = (function () {
     'split-head':    renderSplitHead,  // 分栏头（左序号标题 + 右描述，来自 sec-head）
     'product-hero':  renderProductHero,// 产品首屏（左文案 + 右产品面板，来自 hero）
     'scene-grid':    renderSceneGrid,  // 场景网格（居中头 + 场景卡片网格，来自 scenes）
-    'mockup-banner': renderMockupBanner, // 3D 样机 Banner（手机/笔记本真 3D 旋转进场 + 标题/背景合成）
+    'mockup-banner': renderMockupBanner, // 3D 样机 Banner（手机真 3D 旋转进场 + 标题/背景合成）
+    'motion-banner': renderMotionBanner, // 动效首屏（多图卡按动效算法流动 + 可配文字排版：旋入涡心 / 纵深漂流 / 交错横滚）
     'ad-banner': renderAdBanner,         // 广告 Banner（大标题裂开 + 16:9 图片无缝跑马灯 + 上下副标题）
     'text-fill-banner': renderTextFillBanner, // 字图填充 Banner（超大字母镂空填图贴上半屏 + 副标题压字底）
     'icon-wall': renderIconWall,          // 图标动画墙（GIF/APNG/Lottie 散落全屏）
@@ -97,7 +98,7 @@ var CaseRenderer = (function () {
     var grid = '<section class="sk-grid"><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div></section>';
     switch (type) {
       case 'intro': case 'hero': case 'hero-banner': case 'big-banner':
-      case 'title': case 'ad-banner': case 'text-fill-banner': case 'mockup-banner': case 'double-banner':
+      case 'title': case 'ad-banner': case 'text-fill-banner': case 'mockup-banner': case 'motion-banner': case 'double-banner':
       case 'double-image': case 'masonry': case 'stats':
         return hero;
       case 'showcase': case 'image': case 'gallery': case 'carousel':
@@ -206,6 +207,7 @@ var CaseRenderer = (function () {
       safeDownstream(function () { initFullscreenSliders(container); }, 'initFullscreenSliders');
       safeDownstream(function () { initViewportMedia(container); }, 'initViewportMedia');
       safeDownstream(function () { initMockupBanners(); }, 'initMockupBanners');
+      safeDownstream(function () { initMotionBanners(); }, 'initMotionBanners');
       safeDownstream(function () {
         var runAB = function () { initAdBanners(); };
         if (window.gsap) { runAB(); return; }
@@ -383,8 +385,8 @@ var CaseRenderer = (function () {
     var wrap = isBanner ? 'hero-banner-carousel' : 'hero-carousel';
     // 左右切换按钮：默认隐藏，鼠标悬停轮播图时显现（hover 只显箭头、不暂停自动播放）
     // 自动播放接管：点击箭头/圆点切换时停止，鼠标移出容器或触摸滑动后延迟 3s 恢复（见 initCarousels）
-    var navBtn = '<button type="button" class="swiper-nav swiper-nav-prev" aria-label="上一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>' +
-      '<button type="button" class="swiper-nav swiper-nav-next" aria-label="下一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>';
+    var navBtn = '<button type="button" class="swiper-nav swiper-nav-prev" aria-label="上一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>' +
+      '<button type="button" class="swiper-nav swiper-nav-next" aria-label="下一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>';
      var sw = '<div class="swiper ' + wrap + '" data-effect="' + esc(effect) + '" data-delay="' + delay + '">' +
        '<div class="swiper-wrapper">' + slides + '</div>' + navBtn + '</div>';
      // 大Banner 轮播也要包在 .hero-banner-frame 内（圆角裁剪 + absolute 定位基准，与单图同款）
@@ -552,7 +554,7 @@ var CaseRenderer = (function () {
     }
     if (!slides.length) {
       section.innerHTML = '<div class="video-placeholder warm-shot"><div class="placeholder-icon">' +
-        '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
           '<rect x="3" y="4" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-4.5-4.5L8 19"/></svg></div></div>';
       return section;
     }
@@ -2347,7 +2349,7 @@ var CaseRenderer = (function () {
       textHtml = '<div class="mockup-text' + alignCls + vCls + fullCls + '" style="z-index:' + zIdx + '">' + titleHtml + subHtml + '</div>';
     }
 
-    // ③ 手机/笔记本舞台（方形，左 / 中 / 右）
+    // ③ 手机舞台（方形，左 / 中 / 右）
     var pos = (s.stagePos === 'left' || s.stagePos === 'center') ? s.stagePos : 'right';
     var size = mkNum(s.stageSize, 560);
     var innerHtml = '<div class="mk-phone-row"></div>';
@@ -2504,9 +2506,49 @@ var CaseRenderer = (function () {
   }
 
   function mockupApply(u, ty, rx, ry, sc) {
+    u.tyCur = ty; u.rxCur = rx; u.ryCur = ry;      // 供 3D 接管时还原当前姿态（避免跳帧）
+    /* 3D 真机模式（换机身后）：入参仍是老组件那套**像素/角度语义**
+       —— ty 向下为正、rx·ry 为度、sc 为缩放，这里统一翻译成 three 世界
+       （Y 轴向上、弧度、mm）。CSS 的 rotateX 正值是「顶边向后倒」，
+       three rotation.x 正值是「+Y 向 +Z（顶边向前）」→ 故 rx 取负号。 */
+    if (u.obj && u.mk3) {
+      u.obj.position.set(u.ox, -ty * u.mk3.mmPerPx, u.zmm);
+      /* CSS 是左手系（y 向下），rotateX/rotateY 的正角视觉方向都与 three（右手系）相反
+         —— 实测确认：不取负号，endRy=-41 的双机会从「外八」变成「内八」 */
+      u.obj.rotation.set(-rx * Math.PI / 180, -ry * Math.PI / 180, 0);
+      u.obj.scale.setScalar(sc || 1);
+      u.mk3.kick();
+      return;
+    }
     if (!u.node) return;
     u.node.style.transform = 'translateY(' + ty + 'px) translateZ(' + u.z + 'px) rotateX(' + rx +
       'deg) rotateY(' + ry + 'deg)' + (sc ? ' scale(' + sc + ')' : '');
+  }
+
+  /* 3D 模式下量「手机剪影真实顶边」相对相框的位置（px）。
+     ⚠️ 必须逐顶点投影：Box3.setFromObject 拿的是轴对齐盒，机身一旦带旋转
+        就会虚增一圈，读数偏大约 5~10mm（历史 bug）。取 minY 即剪影顶。 */
+  function mk3SilhouetteTopRel(u, frame) {
+    var st = u.mk3;
+    if (!st || !u.obj) return null;
+    var cv = st.cv, fr = frame.getBoundingClientRect(), cr = cv.getBoundingClientRect();
+    if (!cr.height) return null;
+    var v = st.v3, minY = 1e9, found = false;
+    u.obj.updateMatrixWorld(true);
+    u.obj.traverse(function (o) {
+      var pa = o.geometry && o.geometry.attributes && o.geometry.attributes.position;
+      if (!pa) return;
+      var stride = Math.max(1, Math.floor(pa.count / 3000));   // 抽稀：大网格也足够精确
+      for (var i = 0; i < pa.count; i += stride) {
+        v.fromBufferAttribute(pa, i).applyMatrix4(o.matrixWorld).project(st.camera);
+        var sy = (-v.y * 0.5 + 0.5) * cr.height;
+        if (sy < minY) minY = sy;
+        found = true;
+      }
+    });
+    if (!found) return null;
+    if (!isFinite(minY)) return null;              // 矩阵未就绪等异常 → 放弃校正（保持原值），绝不写 NaN
+    return (cr.top - fr.top) + minY;
   }
 
   /* 保证起点手机完整沉到相框底边之外（应对响应式 k 缩放 + 起始旋转导致分析式 clamp 残留露边）。
@@ -2518,6 +2560,18 @@ var CaseRenderer = (function () {
     if (!fr.height) return;
     var k = section._mockupFitK || 1;
     units.forEach(function (u) {
+      if (u.obj && u.mk3) {                       // ── 3D 模式：改用顶点投影量剪影 ──
+        var tryTy3 = u.start.ty;
+        for (var j = 0; j < 14; j++) {
+          mockupApply(u, tryTy3, u.start.rx, u.start.ry, 1);
+          var rel = mk3SilhouetteTopRel(u, frame);
+          if (rel == null) return;                // 读不到（布局未就绪）→ 保持原值
+          if (rel >= fr.height - 1) { u.start.ty = tryTy3; return; }
+          tryTy3 += (fr.height - rel) / (k || 1) * 1.08;
+        }
+        u.start.ty = tryTy3;
+        return;
+      }
       if (!u.node) return;
       var tryTy = u.start.ty;
       for (var it = 0; it < 12; it++) {
@@ -2529,6 +2583,180 @@ var CaseRenderer = (function () {
       }
       u.start.ty = tryTy;
     });
+  }
+
+  /* ===== 老 mockup-banner「换机身」：CSS 伪 3D 壳 → three.js 真 3D 模型 ==========
+     目标：机身换成 iPhone 17 Pro 真模型，**外框的一切像素语义保持不变**
+       — stageSize / abGap / globalZoom / 每台 UI 图 / 升降位移 / 旋转角度 / 景深全部沿用原值。
+     做法（px↔mm 精确映射）：
+       · mmPerPx = MP3_H / phoneH（模型 150mm 对应 row 的 phoneH 像素）
+       · 相机机位 dist = 1200px·mmPerPx（对齐 CSS perspective:1200px），fov 按「可视高度」反解
+         ⇒ **z=0 平面上 1px 严格等于 mmPerPx 毫米**，比例/间隙/横向偏移全部 1:1 对齐 CSS 版；
+       · ty 是纯 Y 平移（透视只按 z 缩放）→ 位移线性等比，升起点/终点完全一致；
+       · 剩下的高阶差（旋转 Perspective）由 ensureStartHidden 的顶点投影实测兜住。
+     兜底：canvas 建不出来 / three 未就绪（轮询 ≤1.5s）→ 什么也不改，CSS 壳照常工作。
+     注意歌声 units 仍然是同一批对象，所以动画编排（含中途接管）零改动。 */
+  var MK3_SHELL_MAP = { black: 'deepblue', titanium: 'deepblue', blue: 'deepblue',
+                        silver: 'silver', white: 'silver' };
+  function mk3TryAttach(section, units, row, phoneW, phoneH, gap) {
+    if (!row) return;
+    /* 调试开关：?nocss3d 强制沿用 CSS 壳（用于换机身前后的 A/B 对比截图，生产无人带此参数） */
+    try { if (new URLSearchParams(location.search).has('nocss3d')) return; } catch (e) {}
+    var tries = 0;
+    (function poll() {
+      if (window.THREE) {
+        try { mk3Attach(window.THREE, section, units, row, phoneW, phoneH, gap); }
+        catch (e) { console.warn('[mk3] 换机身失败，沿用 CSS 壳：', e); }
+        return;
+      }
+      if (++tries > 50) return;            // ~1.5s 仍未就绪 → 保留 CSS 壳
+      setTimeout(poll, 30);
+    })();
+  }
+
+  function mk3Attach(THREE, section, units, row, phoneW, phoneH, gap) {
+    if (section._mk3) return;
+    var cv = document.createElement('canvas');
+    cv.className = 'mk3-cv';
+    var renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    } catch (e) { return; }
+    var rowW = parseFloat(row.style.width) || row.offsetWidth || phoneW;
+    /* ⚠️ 视野必须盖住整个相框（.mockup-viewport，overflow:hidden 的那层）：
+       CSS 壳是 DOM 节点，「从下方升起」能一直露到相框底边才被裁（裁线=屏幕边，看不见）；
+       canvas 只显示「视锥 ∩ 画布」，若画布只到 row 附近，动画中途会在半空出现一条硬切线
+       （用户实测截图圈出）。所以 pad 不按比例猜，直接量 row ↔ 相框四边的真实距离，
+       canvas 铺满相框 —— 裁切行为与 CSS 壳时代逐像素一致。
+       row 可能被 fitRow/globalZoom 缩放（k = 实测宽/逻辑宽），距离要除回 k 折算到 row 坐标系。
+       窗口 resize 会改 fitRow 缩放 → pad 失配，由下方 mk3Resize 防抖重测。 */
+    var padL, padT, padR, padB, viewW, viewH, lastKFit = 1;
+    function measurePads() {
+      padL = Math.round(phoneW * 0.25); padR = padL;
+      padT = Math.round(phoneH * 0.18); padB = padT;   // 兜底：量不到相框时退回旧比例
+      try {
+        var vpEl = row.closest('.mockup-viewport') || section;
+        var rr = row.getBoundingClientRect(), vr = vpEl.getBoundingClientRect();
+        if (vr.width > 4 && vr.height > 4 && rr.width > 4) {
+          var kFit = rr.width / rowW;                    // fitRow scale × globalZoom 的总缩放
+          if (isFinite(kFit) && kFit > 0) {
+            lastKFit = kFit;
+            padL = Math.max(0, Math.round((rr.left - vr.left) / kFit));
+            padT = Math.max(0, Math.round((rr.top - vr.top) / kFit));
+            padR = Math.max(0, Math.round((vr.right - rr.right) / kFit));
+            padB = Math.max(0, Math.round((vr.bottom - rr.bottom) / kFit));
+          }
+        }
+      } catch (e) {}
+      viewW = rowW + padL + padR; viewH = phoneH + padT + padB;
+    }
+    measurePads();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(viewW, viewH, false);         // false：尺寸交给 CSS 内联样式，这里只管 drawing buffer
+    cv.style.left = -padL + 'px';
+    cv.style.top = -padT + 'px';
+    cv.style.width = viewW + 'px';
+    cv.style.height = viewH + 'px';
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.16;
+
+    var scene = new THREE.Scene();
+    var pmrem = new THREE.PMREMGenerator(renderer);
+    var envRT = pmrem.fromEquirectangular(mp3EnvTex(THREE));
+    scene.environment = envRT.texture;
+    scene.add(new THREE.AmbientLight(0x8f97a8, 0.10));
+    var key3 = new THREE.DirectionalLight(0xffffff, 0.40); key3.position.set(-90, 130, 150); scene.add(key3);
+    var fill3 = new THREE.DirectionalLight(0xaebdff, 0.12); fill3.position.set(120, -30, 90); scene.add(fill3);
+    var rim3 = new THREE.DirectionalLight(0xffffff, 0.30); rim3.position.set(60, 110, -170); scene.add(rim3);
+
+    var mmPerPx = MP3_H / phoneH;
+    /* 透视强度对齐 CSS 壳：dist 锁 1200px·mmPerPx（perspective:1200px 等效，畸变不变），
+       fov 改按「整个相框的 viewH」反解 —— 视锥盖住画布，z=0 平面仍严格 1px = mmPerPx 毫米。
+       fov/aspect/root 平移都随 pad 走 → 收进 applyView()，resize 重测后一键重算。 */
+    var camera = new THREE.PerspectiveCamera(30, 1, 1, 4000);
+    var dist = 1200 * mmPerPx;
+    camera.position.set(0, 0, dist);
+    camera.lookAt(0, 0, 0);
+    /* pad 非对称时画布中心 ≠ row 中心：把全部手机挂到一个根组上做整体平移，
+       让 row 中心投影回它在相框里的真实位置（屏幕 dx 向右 → three x 正；dy 向下 → three y 负）。 */
+    var root = new THREE.Group();
+    scene.add(root);
+    function applyView() {
+      renderer.setSize(viewW, viewH, false);
+      cv.style.left = -padL + 'px';
+      cv.style.top = -padT + 'px';
+      cv.style.width = viewW + 'px';
+      cv.style.height = viewH + 'px';
+      camera.fov = 2 * Math.atan((viewH * mmPerPx / 2) / (1200 * mmPerPx)) * 180 / Math.PI;
+      camera.aspect = viewW / viewH;
+      camera.updateProjectionMatrix();
+      root.position.set((padL - padR) / 2 * mmPerPx, (padB - padT) / 2 * mmPerPx, 0);
+    }
+    applyView();
+    /* resize 防抖重测：fitRow 缩放变了 pad 就变，不重测会出现新的半空切线 */
+    var rsT = 0;
+    window.addEventListener('resize', function () {
+      clearTimeout(rsT);
+      rsT = setTimeout(function () {
+        if (!cv.isConnected) return;
+        var oL = padL, oT = padT, oR = padR, oB = padB;
+        measurePads();
+        if (padL === oL && padT === oT && padR === oR && padB === oB) return;
+        applyView();
+        kick();
+      }, 180);
+    }, { passive: true });
+
+    /* 渲染调度：只在姿态改过时才画，连续空闲 30 帧自动停机（静止着陆后不空转 GPU） */
+    var need = true, idle = 0, running = false;
+    function startLoop() {
+      if (running) { need = true; return; }
+      running = true;
+      (function step() {
+        if (need) { need = false; idle = 0; try { renderer.render(scene, camera); } catch (e) { running = false; return; } }
+        else if (++idle > 30) { running = false; return; }
+        requestAnimationFrame(step);
+      })();
+    }
+    function kick() { if (section.offsetParent !== null) startLoop(); }
+
+    var aniso = renderer.capabilities.getMaxAnisotropy();
+    var s = section._mockupS || {};
+    var shellKey = MK3_SHELL_MAP[s.shellColor || 'black'] || 'deepblue';
+    var list = section._mockupPhones || [];
+    var built = false;
+    units.forEach(function (u, i) {
+      var p = list[i] || {};
+      var m = mp3Build(THREE, shellKey, p.ui || '', aniso, envRT);
+      var leftPx = (i === 0 ? 0 : i * (phoneW + gap));
+      m.group.position.x = (leftPx + phoneW / 2 - rowW / 2) * mmPerPx;
+      root.add(m.group);
+      u.obj = m.group;
+      u.ox = m.group.position.x;
+      u.zmm = (u.z || 0) * mmPerPx;
+      u.mk3 = { cv: cv, camera: camera, mmPerPx: mmPerPx, kick: kick, v3: new THREE.Vector3() };
+      built = true;
+    });
+    if (!built) { return; }
+    row.insertBefore(cv, row.firstChild);
+    var rig = section.querySelector('.mockup-rig');
+    if (rig) rig.classList.add('is-mk3');          // 隐掉 CSS 壳（DOM 仍留作无 WebGL 兜底）
+    section._mk3 = { scene: scene, camera: camera, renderer: renderer, cv: cv, pads: [padL, padT, padR, padB], kFit: lastKFit };
+
+    // 还没开播：按 3D 剪影复核一遍起点是否沉出相框，并把终态再摆一次；
+    // 已经开播（接管时刻）则不做校正 —— 改 u.start.ty 会让正在播的动画当场跳一下。
+    // ⚠️ 校正前必须先空渲染一帧：mk3SilhouetteTopRel 依赖 camera.matrixWorldInverse，
+    //    而它只在 renderer.render 时才更新 —— 跳过这步投影会算出 NaN，
+    //    u.start.ty 被写成 NaN，整个动画期间手机都停在 NaN 位置（画面全空，且无任何报错）。
+    if (!section._mockupPlayed) {
+      try { renderer.render(scene, camera); } catch (e) {}
+      try { ensureStartHidden(section, units); } catch (e) {}
+      units.forEach(function (u) { mockupApply(u, u.end.ty, u.end.rx, u.end.ry, 1); });
+    } else {
+      units.forEach(function (u) { mockupApply(u, u.tyCur || u.end.ty, u.rxCur || u.end.rx, u.ryCur || u.end.ry, 1); });
+    }
+    kick();
   }
 
   /* 建壳 + 落在静止视角 + 注册「滚进视口才播一次」的进场动画 */
@@ -2606,11 +2834,24 @@ var CaseRenderer = (function () {
           };
           fitRow();
           // 首次布局可能未稳定（图片/字体未就绪），延迟补算一次；布局稳定后按真实位姿复核起点是否已沉出相框外
-          setTimeout(function () { fitRow(); if (!played) ensureStartHidden(section, units); }, 400);
+          /* ⚠️ phoneAnim 关闭态补丁（原版既有坑，换机身时一并修掉）：
+             ensureStartHidden 量完会把手机**停在起点姿态（框外）**且无人摆回 ——
+             「关闭（直接静止展示）」模式下 400ms 后手机凭空消失。
+             这里量完把终态摆回去；动画模式不受影响（tryPlay 反正会重摆起点再播）。 */
+          setTimeout(function () {
+            fitRow();
+            if (played) return;
+            ensureStartHidden(section, units);
+            if (s.phoneAnim === '' || s.phoneAnim === '0') {
+              units.forEach(function (u) { mockupApply(u, u.end.ty, u.end.rx, u.end.ry, 1); });
+            }
+          }, 400);
           MOCKUP_FIT_FNS.push(fitRow);
         }
 
       var units = mockupUnits(section, nodes);
+      // 换机身：three 就绪后把 CSS 伪 3D 壳换成真 3D 模型（失败则原样沿用，零风险）
+      mk3TryAttach(section, units, row, phoneW, phoneH, mkNum(s.abGap, 48));
       // 「从屏幕外进入」保证：起点 ty 自动 clamp——舞台高度已自适应铺满 frame，
       // 按实际 frame 高度算出「手机完全沉在 frame 底边之外」所需的最小 ty（row 垂直居中：
       // phone top = (fh-ph)/2 + ty ≥ fh ⇔ ty ≥ (fh+ph)/2；×1.2 余量容纳起点旋转外接矩形）。
@@ -2704,6 +2945,7 @@ var CaseRenderer = (function () {
       function tryPlay() {
         if (raf) return;                 // 播放中不重入（原 played 一次性守卫改为播放态守卫，支持重播）
         played = true;
+        section._mockupPlayed = true;              // 供 mk3Attach 判断「能否安全校正起点」
         // 立即把手机切到「隐藏起点」姿态（在下框架外），再播放升起到终点，避免先闪一下最终姿态
         units.forEach(function (u) { mockupApply(u, u.start.ty, u.start.rx, u.start.ry, 1); });
         play();
@@ -2765,6 +3007,726 @@ var CaseRenderer = (function () {
         }, 150);
       });
     }
+  }
+
+  // ===== iPhone 17 Pro 真 3D 模型（供 mockup-banner「换机身」mk3Attach 使用）=====
+  // 【来历】2026-10-01 先做了独立组件 mockup3d-banner，后按用户要求把该组件下线、
+  //   能力并入老 mockup-banner（换机身）。本段只保留**模型层**（几何 / 材质 / 环境图 / 贴图），
+  //   独立组件的骨架与初始化（renderMockup3dBanner / initMockup3dBanners / .mp3- CSS）已删。
+  // 【约定】零模型文件、零额外运行时：几何全部代码生成；three.js r128 随 case 页 async 加载。
+  // 【尺寸来源】真实模型实测（.workbuddy/tools/_glb_inspect.py 解析 iPhone 17 Pro 的 glb），单位 mm：
+  //   机身 73.1×150.0、厚 8.75；相机条 54.1 宽 ×33.26 高、距顶端 7.29 起、凸起 4.54；
+  //   三摄两列 X=-18.2/-6.2、两行 Y=59.5/42.7；闪光灯 X=+22.1；灵动岛 19.6×6.0、距顶端 8；
+  //   背面玻璃开窗 67.55×97.02、Y 中心 -22.5。机身圆角取自真机观感 11.6。
+  var MP3_GRAIN = null;                             // 喷砂微颗粒粗糙度贴图（两个实例共用，不进 dispose 队列）
+  var MP3_W = 71.5, MP3_H = 150.0, MP3_D = 8.75;   // iPhone 17 Pro 真机毫米数
+  var MP3_SHELLS = {
+    deepblue: { frame: 0x2c3a57, back: 0x232d42 },   // 深蓝 Deep Blue
+    silver:   { frame: 0xbcc1c9, back: 0xa6acb5 },   // 银色 Silver
+    orange:   { frame: 0xc4612c, back: 0xa04a1e }    // 星宇橙 Cosmic Orange
+  };
+
+  /* 圆角矩形 Shape：absarc 画真圆弧 + curveSegments 细分 → 圆角是连续曲面（CSS 壳只有 14 段折线） */
+  function mp3Shape(THREE, w, h, r) {
+    r = Math.min(r, w / 2 - 0.01, h / 2 - 0.01);
+    var s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+    s.moveTo(x + r, y);
+    s.lineTo(x + w - r, y);
+    s.absarc(x + w - r, y + r, r, -Math.PI / 2, 0, false);
+    s.lineTo(x + w, y + h - r);
+    s.absarc(x + w - r, y + h - r, r, 0, Math.PI / 2, false);
+    s.lineTo(x + r, y + h);
+    s.absarc(x + r, y + h - r, r, Math.PI / 2, Math.PI, false);
+    s.lineTo(x, y + r);
+    s.absarc(x + r, y + r, r, Math.PI, Math.PI * 1.5, false);
+    return s;
+  }
+  /* ShapeGeometry 的 UV 是原始坐标 → 按包围盒归一化到 0~1，屏幕贴图才对得上 */
+  function mp3NormUV(geo) {
+    geo.computeBoundingBox();
+    var bb = geo.boundingBox, uv = geo.attributes.uv, pos = geo.attributes.position;
+    var sx = 1 / (bb.max.x - bb.min.x), sy = 1 / (bb.max.y - bb.min.y);
+    for (var i = 0; i < uv.count; i++) {
+      uv.setXY(i, (pos.getX(i) - bb.min.x) * sx, (pos.getY(i) - bb.min.y) * sy);
+    }
+    uv.needsUpdate = true;
+    return geo;
+  }
+  /* 程序化「摄影棚」环境贴图（equirect）→ PMREM。
+     ⚠️ 上一版是「低频纵向渐变 + 三条软边光带」：源图软，PMREM 之后再软一次，
+        整张环境图糊成一团雾 —— 金属上没有任何一条「边」，这就是「塑料感」的头号来源。
+     这一版改成 **硬边柔光箱**：光源先画在离屏 canvas 上（纯色矩形、边是硬的），
+     最后整体只做一次很轻的羽化（2048 宽的画布上 blur 5px = 边宽 0.24%），
+     进 PMREM 后仍然是一条「边」而不是一团雾。
+     → 中框侧壁 / 相机岛倒角 / 镜头压圈都能吃到一条随视角连续变化的高光带。 */
+  function mp3EnvTex(THREE) {
+    var W = 2048, H = 1024;
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var g = c.getContext('2d');
+
+    // 底：上亮下黑的暗箱 —— 给金属一个明确的「上/下」方向感，否则反射全是均匀灰
+    var vg = g.createLinearGradient(0, 0, 0, H);
+    vg.addColorStop(0.00, '#aab5c6');
+    vg.addColorStop(0.24, '#5c6575');
+    vg.addColorStop(0.42, '#2c3241');
+    vg.addColorStop(0.58, '#12161d');
+    vg.addColorStop(1.00, '#040507');
+    g.fillStyle = vg; g.fillRect(0, 0, W, H);
+
+    var lc = document.createElement('canvas'); lc.width = W; lc.height = H;
+    var lg = lc.getContext('2d');
+    function box(cx, cy, w, h, col) { lg.fillStyle = col; lg.fillRect(cx - w / 2, cy - h / 2, w, h); }
+
+    // ① 方位角结构：左亮 → 中亮 → 右暗。**这一维是「金属感」的关键** ——
+    //    只有纵向渐变时，正对镜头的平面反射出来是一片均匀色，那就是塑料。
+    box(345, 240, 320, 380, 'rgba(255,255,255,0.99)');     // 左主柔光箱（竖条）
+    box(760, 300, 300, 440, 'rgba(230,238,252,0.72)');     // 中偏左补光
+    box(1600, 420, 620, 900, 'rgba(0,0,0,0.70)');          // 右侧大片暗场 → 提供反射落差
+    box(60, 520, 220, 760, 'rgba(0,0,0,0.50)');            // 最左暗场（与右暗场跨接缝连成一片）
+    // ② 纵向结构：顶亮 / 底暗
+    box(880, 96, 900, 46, 'rgba(255,255,255,0.92)');       // 顶部横条 → 机身上缘一条亮线
+    box(880, 700, 1100, 240, 'rgba(112,132,168,0.38)');    // 底部回光（没有它下半身全黑）
+    // ③ 专用反光板（后画 = 盖在暗场之上）
+    box(500, 470, 430, 175, 'rgba(196,210,238,0.58)');     // 后方地平线 → 背板/相机岛的中调
+    box(1240, 640, 280, 100, 'rgba(255,255,255,0.34)');    // 右前小反光板 → 镜头压圈那道弧形高光
+
+    g.filter = 'blur(5px)';                                // 只羽化 0.24% 画宽 → 高光边仍然锐利
+    g.drawImage(lc, 0, 0);
+    g.filter = 'none';
+
+    var t = new THREE.CanvasTexture(c);
+    t.mapping = THREE.EquirectangularReflectionMapping;
+    t.encoding = THREE.sRGBEncoding;
+    return t;
+  }
+  /* 程序化「喷砂微颗粒」粗糙度贴图：真机的哑光铝不是均匀的，是细密颗粒把反射打碎。
+     ⚠️ 不能用逐像素白噪声直接当 normalMap：手机在画面上只有几百 px 高，
+        1mm 一格的颗粒落到屏幕上不足 1px，mipmap 一平均就是一片糊，还会闪。
+        这里改用「平滑过的低频噪声 + 4.5mm 一格」当 roughnessMap —— 得到的是
+        「喷砂雾面」的斑驳感，而不是电视雪花。（ExtrudeGeometry 的 UV 直接是毫米坐标） */
+  function mp3GrainTex(THREE) {
+    var S = 128;
+    var c = document.createElement('canvas'); c.width = S; c.height = S;
+    var g = c.getContext('2d');
+    var img = g.createImageData(S, S), d = img.data;
+    var h = new Float32Array(S * S);
+    for (var i = 0; i < S * S; i++) h[i] = Math.random();
+    var sm = new Float32Array(S * S);
+    for (var y = 0; y < S; y++) for (var x = 0; x < S; x++) {
+      var a = 0;
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++)
+        a += h[((y + dy + S) % S) * S + ((x + dx + S) % S)];
+      sm[y * S + x] = a / 9;
+    }
+    for (var k = 0; k < S * S; k++) {
+      // 0.62 ~ 1.0：乘到 base roughness 上 → 反射被轻微打碎，但不至于变成砂纸
+      var v = (0.62 + sm[k] * 0.38) * 255;
+      d[k * 4] = d[k * 4 + 1] = d[k * 4 + 2] = v; d[k * 4 + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    var t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(0.22, 0.22);                              // ≈ 4.5mm 一格
+    return t;
+  }
+  /* 未上传 UI 截图时的程序化锁屏（自包含，不依赖任何外部图） */
+  function mp3LockCanvas() {
+    var c = document.createElement('canvas'); c.width = 720; c.height = 1562;
+    var g = c.getContext('2d');
+    function rr(x, y, w, h, r) {
+      g.beginPath();
+      g.moveTo(x + r, y);
+      g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+      g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r);
+      g.closePath();
+    }
+    var lg = g.createLinearGradient(0, 0, 720, 1562);
+    lg.addColorStop(0, '#1b1038'); lg.addColorStop(0.5, '#2c1d50'); lg.addColorStop(1, '#0a0a19');
+    g.fillStyle = lg; g.fillRect(0, 0, 720, 1562);
+    function blob(x, y, r, col) {
+      var rg = g.createRadialGradient(x, y, 0, x, y, r);
+      rg.addColorStop(0, col); rg.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = rg; g.fillRect(0, 0, 720, 1562);
+    }
+    blob(575, 300, 430, 'rgba(255,110,180,0.55)');
+    blob(170, 910, 470, 'rgba(90,140,255,0.50)');
+    blob(540, 1370, 390, 'rgba(110,255,215,0.32)');
+    g.textAlign = 'center'; g.fillStyle = '#fff';
+    g.font = '600 58px -apple-system,"Segoe UI",sans-serif'; g.fillText('9:41', 360, 178);
+    g.font = '500 38px -apple-system,"Segoe UI",sans-serif';
+    g.fillStyle = 'rgba(255,255,255,0.88)'; g.fillText('10月1日 星期三', 360, 300);
+    g.font = '200 208px -apple-system,"Segoe UI",sans-serif';
+    g.fillStyle = 'rgba(255,255,255,0.96)'; g.fillText('19:23', 360, 648);
+    g.font = '500 34px -apple-system,"Segoe UI",sans-serif';
+    g.fillStyle = 'rgba(255,255,255,0.62)'; g.fillText('没有日程', 360, 724);
+    var n = 4, sz = 116, gap = (720 - n * sz) / (n + 1), y0 = 1268;
+    for (var i = 0; i < n; i++) {
+      g.fillStyle = 'rgba(255,255,255,0.15)';
+      rr(gap + i * (sz + gap), y0, sz, sz, 30); g.fill();
+    }
+    g.fillStyle = 'rgba(255,255,255,0.8)'; rr(275, 1494, 170, 15, 7.5); g.fill();
+    return c;
+  }
+
+  /* 程序化 iPhone 17 Pro。返回 { group, dispose }；坐标系：X=宽 Y=高 Z=厚，正面朝 +Z、背面朝 -Z。 */
+  function mp3Build(THREE, shellKey, uiSrc, aniso, envRT) {
+    var SH = MP3_SHELLS[shellKey] || MP3_SHELLS.deepblue;
+    var W = MP3_W, H = MP3_H, D = MP3_D, R = 11.6, SEG = 48;
+    var g = new THREE.Group();
+    var kill = [];                                   // 需要 dispose 的 geometry/material/texture
+    function own(o) { kill.push(o); return o; }
+
+    // —— 材质 ——
+    var grain = MP3_GRAIN || (MP3_GRAIN = mp3GrainTex(THREE));
+    var matFrame = own(new THREE.MeshPhysicalMaterial({
+      color: SH.frame, metalness: 0.78, roughness: 0.42,     // 哑光阳极氧化铝（喷砂感）
+      roughnessMap: grain,
+      clearcoat: 0.2, clearcoatRoughness: 0.36, envMapIntensity: 1.25
+      // ⚠️ 金属度别拉满（曾用 0.92）——金属的漫反射为 0、颜色只体现在反射上，
+      //    环境亮部会把深蓝壳色整片冲成灰白，看起来像银色。
+    }));
+    // 中框侧壁：比背板亮一档。硬光源下会在侧壁上拉出一条纵向亮带 ——
+    // 「这块是金属」这个判断，主要就靠这条带子。（同一个几何体的 group 1）
+    var matEdge = own(new THREE.MeshPhysicalMaterial({
+      color: SH.frame, metalness: 0.96, roughness: 0.24,
+      roughnessMap: grain, envMapIntensity: 1.35
+    }));
+    // 抛光倒角 / 按键侧棱：镜面级 —— 相机岛那圈「亮色勾边」靠它。
+    // ⚠️ roughness 别低于 0.1：0.085 时整圈变成一圈白电镀，比真机夸张。
+    var matPolished = own(new THREE.MeshPhysicalMaterial({
+      color: 0xb6bcc6, metalness: 1.0, roughness: 0.14, envMapIntensity: 1.15
+    }));
+    var matBackGlass = own(new THREE.MeshPhysicalMaterial({
+      color: SH.back, metalness: 0.62, roughness: 0.5,
+      clearcoat: 1.0, clearcoatRoughness: 0.1, envMapIntensity: 0.72
+      // ⚠️ 上一版 metalness 0.3 + envMapIntensity 0.9，高光整片铺满 → 这块玻璃比机身
+      //    亮一大截，看着像「贴了张浅色贴纸」。真机背板玻璃与金属几乎同色，
+      //    只靠「更亮的高光带 + 更暗的反射底色」区分。
+    }));
+    var matRing = own(new THREE.MeshPhysicalMaterial({
+      color: 0xa9b0ba, metalness: 1.0, roughness: 0.18, envMapIntensity: 1.6
+    }));
+    var matDark = own(new THREE.MeshStandardMaterial({
+      color: 0x07080b, metalness: 0.5, roughness: 0.45
+    }));
+    var matLens = own(new THREE.MeshPhysicalMaterial({
+      color: 0x010206, metalness: 0.15, roughness: 0.022,
+      clearcoat: 1.0, clearcoatRoughness: 0.01, envMapIntensity: 1.05
+      // ⚠️ 这里**绝对不能有 emissive**。上一版给了 0x1a1f4a / intensity 0.07，
+      //    截图里就是「三颗镜头中间各一个蓝点 = 三只眼睛」。
+      //    真机镜片几乎是全黑的，那点光泽全部来自环境反射，不来自自发光。
+    }));
+    // 天线断点（注塑填充条）：⚠️ 不能用「浅色非金属」—— 暗环境里漫反射比金属反射还暗，
+    // 在机身边框上等于隐形（第一版就这么踩的）。改成亮一档的金属，靠反射差异读出来。
+    // ⚠️ 但也别太亮：初版给到 0xeef2f8，横贯机身之后就是「贴了一条白胶带」。
+    // 真机天线带与中框同色系、只差一点反射率，取中灰蓝最像。
+    var matAntenna = own(new THREE.MeshStandardMaterial({
+      color: 0xa9b4c6, metalness: 0.82, roughness: 0.32, envMapIntensity: 1.15
+    }));
+
+    // ① 铝一体机身（中框 + 背板）：挤出圆角矩形，bevel 出来就是 CNC 切边
+    var bodyGeo = own(new THREE.ExtrudeGeometry(mp3Shape(THREE, W, H, R), {
+      depth: D - 1.7, curveSegments: SEG,
+      bevelEnabled: true, bevelSegments: 6, bevelSize: 0.62, bevelThickness: 0.85
+    }));
+    bodyGeo.center();
+    // ExtrudeGeometry 自带两个 group：0 = 前后两片「面」，1 = 侧壁 + 倒角。
+    // 传材质数组就能「一个几何体两种材质」→ 倒角自动变成一圈高光边，不用额外建几何体。
+    g.add(new THREE.Mesh(bodyGeo, [matFrame, matEdge]));
+
+    // ② 背面下半的玻璃开窗（iPhone 17 Pro：相机条区是金属、下方是玻璃）
+    var gbGeo = own(new THREE.ExtrudeGeometry(mp3Shape(THREE, 67.55, 97.02, 14), {
+      depth: 0.5, curveSegments: SEG, bevelEnabled: true,
+      bevelSegments: 3, bevelSize: 0.2, bevelThickness: 0.2
+    }));
+    gbGeo.center();
+    // ⚠️ 这块玻璃是「depth 0.5 + 两侧 bevelThickness 0.2」的挤出体：
+    //    center() 后 z ∈ ±0.45，**外表面并不是 −(depth/2)，而是 −(depth/2 + bevelThickness)**。
+    //    第一版把 logo 的 z 按「−D/2−0.12」摆，就是没算 bevel，结果整个 logo 埋在玻璃内部、看不见。
+    //    所以这里把外表面单独记成 GB_OUT，后面一律引用它，不手推。
+    var GB_T = -D / 2 + 0.22;                        // 玻璃板中心 z（比原来抬高 0.3 → 更接近齐平）
+    gbGeo.translate(0, -22.5, GB_T);
+    var GB_OUT = GB_T - 0.45;                        // 玻璃板外表面 z
+    g.add(new THREE.Mesh(gbGeo, matBackGlass));
+
+    // ③ 横向贯穿相机条（凸台）：宽 54.1 / 高 33.26 / 凸起 4.54，距顶端 7.29
+    // 相机条：横贯机身上部（左右各留约 6mm），与参考图的视觉比例一致。
+    // 注：glb 里能明确命名到的只有「镜头盖板」组（30.49 宽，Camera_sapphire_miror），
+    //     基座本身没有独立命名（被并进 Display_Frame 那个大 mesh），故按参考图定宽。
+    var CB_W = 59.5, CB_H = 33.26, CB_CY = (34.45 + 67.71) / 2, CB_CX = 0;
+    var cbGeo = own(new THREE.ExtrudeGeometry(mp3Shape(THREE, CB_W, CB_H, 12), {
+      depth: 3.6, curveSegments: SEG, bevelEnabled: true,
+      bevelSegments: 6, bevelSize: 0.62, bevelThickness: 0.62
+    }));
+    cbGeo.center();
+    cbGeo.translate(CB_CX, CB_CY, -D / 2 - 2.27);
+    g.add(new THREE.Mesh(cbGeo, [matFrame, matPolished]));   // 侧壁+倒角走抛光 → 一圈亮色勾边
+    var CB_OUT = -D / 2 - 4.54;                      // 相机条外表面 z
+
+    // ④ 三摄（三角形：左上 / 左下 / 右中）—— 每颗 = 抛光倒角环 + 内腔壁 + 深黑镜片
+    //    上一版是「一个环 + 一片扁球 + 中间一个发光蓝点」，读出来是「三只眼睛」。
+    //    真机镜头靠的是**同心分层**：镜面倒角抓一道亮环 → 黑腔 → 几乎全黑的玻璃。
+    function lens(x, y, rad) {
+      var lg = new THREE.Group();
+      // ① 环口抛光倒角：半径由外向内斜收 0.84mm —— 镜面级，**金属亮环的宽度就靠它**。
+      //    （上一版只收 0.32mm，亮环细得像根线，整颗镜头被玻璃球占满 → 读成「按钮」）
+      var bz = own(new THREE.CylinderGeometry(rad - 0.84, rad, 0.95, 64, 1, true));
+      bz.rotateX(-Math.PI / 2);                        // 细端朝 -Z（朝外）
+      var bzm = new THREE.Mesh(bz, matPolished);
+      bzm.position.z = -0.475;
+      lg.add(bzm);
+      // ② 内腔壁：由倒角内缘继续收到镜片边缘（深黑）→ 给出「镜头是凹进去的」纵深
+      var wl = own(new THREE.CylinderGeometry(rad - 1.55, rad - 0.84, 1.35, 56, 1, true));
+      wl.rotateX(-Math.PI / 2);
+      var wlm = new THREE.Mesh(wl, matDark);
+      wlm.position.z = -1.625;
+      lg.add(wlm);
+      // ③ 镜片：压扁球冠，边缘半径正好等于内腔壁收口 = rad−1.55（不漏缝）。
+      //    全黑 + 高光泽，只反环境、**绝不自发光** —— emissive 是「三只眼睛」的唯一来源。
+      var gl = own(new THREE.SphereGeometry((rad - 1.55) / Math.sin(Math.PI * 0.42),
+        32, 18, 0, Math.PI * 2, 0, Math.PI * 0.42));
+      gl.rotateX(-Math.PI / 2);                        // 极点朝 -Z
+      var lm = new THREE.Mesh(gl, matLens);
+      lm.scale.z = 0.30;                               // 压扁 → 凸起仅约 1.0mm，不是一颗球
+      lm.position.z = -2.30;
+      lg.add(lm);
+      lg.position.set(x, y, CB_OUT + 0.15);            // 环口基本与相机条齐平（真机只高出约 0.3mm）
+      return lg;
+    }
+    g.add(lens(-19.5, 59.5, 6.0));   // 左上
+    g.add(lens(-19.5, 42.7, 6.0));   // 左下
+    g.add(lens(-5.5, 51.1, 6.0));    // 右中（三角形第三颗）
+
+    // ⑤ 闪光灯 + LiDAR（相机条右端，上下排列）
+    // ⚠️⚠️ 上一版是两个 `CircleGeometry` 平贴在 z = CB_OUT − 0.05，犯了**两重**错，
+    //   叠加起来的结果就是「这两个零件在图上完全不存在」：
+    //   ① CircleGeometry 的法线朝 **+Z**（机身正面方向），而相机条在背面。从背面看过去，
+    //      迎面的是背面 → 默认 FrontSide 整片剔除，光栅阶段就没它了；
+    //   ② z 只比相机条表面探出 0.05mm，连相机条自己的倒角都没越过，退一万步也读不出来。
+    //   现在每颗做成「抛光压圈 → 内凹腔壁 → 芯面」三层立体件，芯面显式把法线翻到 −Z。
+    var FL_X = 19.0, FL_Y = 59.5, LD_Y = 42.7;
+    function flashUnit(x, y, ringR, coreR, depth, matCore) {
+      var u = new THREE.Group();
+      // ① 压圈：开口圆柱收出斜面 → 一圈金属边（和镜头环同一套做法）
+      var bz = own(new THREE.CylinderGeometry(ringR - 0.5, ringR, 0.8, 44, 1, true));
+      bz.rotateX(-Math.PI / 2);                        // 细端朝 −Z（朝机身背面外侧）
+      var bzm = new THREE.Mesh(bz, matPolished);
+      bzm.position.z = -0.40;
+      u.add(bzm);
+      // ② 内腔壁：由压圈内缘收到芯面边缘 → 给出「凹进去」的纵深
+      var wl = own(new THREE.CylinderGeometry(coreR, ringR - 0.5, depth, 44, 1, true));
+      wl.rotateX(-Math.PI / 2);
+      var wlm = new THREE.Mesh(wl, matDark);
+      wlm.position.z = -0.40 - depth / 2;
+      u.add(wlm);
+      // ③ 芯面：**必须 rotation.y = π** 把法线转朝 −Z，否则和上一版一样被背面剔除。
+      var core = new THREE.Mesh(own(new THREE.CircleGeometry(coreR, 44)), matCore);
+      core.rotation.y = Math.PI;
+      core.position.z = -0.40 - depth;
+      u.add(core);
+      u.position.set(x, y, CB_OUT);                    // 整组挂在相机条外表面上
+      return u;
+    }
+    // 闪光灯：双色温 LED。用 MeshBasic —— 它本身就是自发光体，不该吃光照；
+    // 挂 PBR 反而会被环境反射压暗成一块灰片（上一版就是灰的）。
+    g.add(flashUnit(FL_X, FL_Y, 4.0, 3.1, 0.85, own(new THREE.MeshBasicMaterial({
+      color: 0xfdf3d6
+    }))));
+    // LiDAR：全黑玻璃芯 + 两圈同心读数环（真机能透出内部的发射/接收窗口）
+    g.add(flashUnit(FL_X, LD_Y, 3.2, 2.45, 0.75, own(new THREE.MeshPhysicalMaterial({
+      color: 0x070a10, metalness: 0.25, roughness: 0.06,
+      clearcoat: 1.0, clearcoatRoughness: 0.02, envMapIntensity: 1.5
+    }))));
+    [2.0, 1.35].forEach(function (rr) {
+      var tg = own(new THREE.TorusGeometry(rr, 0.085, 8, 40));
+      var tm = new THREE.Mesh(tg, matDark);
+      tm.position.set(FL_X, LD_Y, CB_OUT - 1.10);      // 略浮在芯面之外 0.05mm
+      g.add(tm);
+    });
+
+    // ⑥ 屏幕（OLED 66.81×144.91）+ 玻璃盖板（69.81×147.91）
+    var scrGeo = own(new THREE.ShapeGeometry(mp3Shape(THREE, 68.6, 146.6, R - 1.55), SEG));
+    mp3NormUV(scrGeo);
+    var scrTex;
+    if (uiSrc) {
+      scrTex = own(new THREE.TextureLoader().load(uiSrc));   // 异步填充，three 自动更新
+      scrTex.encoding = THREE.sRGBEncoding;
+      scrTex.anisotropy = aniso || 4;
+    } else {
+      scrTex = own(new THREE.CanvasTexture(mp3LockCanvas()));
+      scrTex.encoding = THREE.sRGBEncoding;
+      scrTex.anisotropy = aniso || 4;
+    }
+    // toneMapped:false —— 屏幕走「自发光内容」而非受光表面，关掉色调映射才不会被 ACES 压暗
+    var scr = new THREE.Mesh(scrGeo, own(new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })));
+    scr.position.z = D / 2 + 0.03;
+    g.add(scr);
+
+    var gsGeo = own(new THREE.ShapeGeometry(mp3Shape(THREE, 69.81, 147.91, R - 1.35), SEG));
+    var gs = new THREE.Mesh(gsGeo, own(new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, metalness: 0, roughness: 0.045,
+      transparent: true, opacity: 0.075, clearcoat: 1.0, clearcoatRoughness: 0.02,
+      envMapIntensity: 2.1, side: THREE.DoubleSide
+    })));
+    gs.position.z = D / 2 + 0.09;
+    g.add(gs);
+
+    // ⑦ 灵动岛（19.6×6.0，距顶端 8）+ 岛内前摄点
+    var islGeo = own(new THREE.ShapeGeometry(mp3Shape(THREE, 19.6, 6.0, 3.0), 24));
+    var isl = new THREE.Mesh(islGeo, own(new THREE.MeshBasicMaterial({ color: 0x000000 })));
+    isl.position.set(0, H / 2 - 8, D / 2 + 0.15);
+    g.add(isl);
+    var dotGeo = own(new THREE.CircleGeometry(0.72, 20));
+    var dot = new THREE.Mesh(dotGeo, own(new THREE.MeshBasicMaterial({ color: 0x151a24 })));
+    dot.position.set(6.1, H / 2 - 8, D / 2 + 0.17);
+    g.add(dot);
+
+    // ⑧ 按键（正面朝观察者：右=电源键 + 相机控制键；左=操作按钮 + 音量±）
+    function key(side, y, len, thick, depth) {
+      var kg = own(new THREE.ExtrudeGeometry(mp3Shape(THREE, thick, len, thick / 2), {
+        depth: depth, curveSegments: 12, bevelEnabled: true,
+        bevelSegments: 2, bevelSize: 0.13, bevelThickness: 0.13
+      }));
+      kg.center();
+      var m = new THREE.Mesh(kg, [matFrame, matRing]);   // 按键侧壁走亮一档的金属 → 键边缘有高光
+      m.position.set(side * (W / 2 + 0.4), y, 0);
+      m.rotation.y = Math.PI / 2;
+      return m;
+    }
+    g.add(key(1, 21, 20, 1.7, 1.6));      // 电源键
+    g.add(key(1, -24, 13, 1.4, 0.5));     // 相机控制键（平面蓝宝石键）
+    g.add(key(-1, 33, 15, 1.7, 1.6));     // 操作按钮
+    g.add(key(-1, 15, 17, 1.7, 1.6));     // 音量 +
+    g.add(key(-1, -7, 17, 1.7, 1.6));     // 音量 -
+
+    // ⑨ Apple logo：背板玻璃中央。用 Path2D 把 logo 画进 canvas 当 alphaMap
+    //    真机的 logo 是「玻璃底下一块镜面」—— 所以要高金属度 + 低粗糙度，
+    //    角度一对就随环境亮起来（参考图里那种「logo 在反光」的效果）。
+    //    注意：网格绕 Y 转 180° 只是「走到背面去看正面」，**不会镜像**，贴图不用翻。
+    var logoCv = document.createElement('canvas'); logoCv.width = 384; logoCv.height = 512;
+    var lctx = logoCv.getContext('2d');
+    lctx.fillStyle = '#fff';
+    lctx.fill(new Path2D('M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z'));
+    var logoTex = own(new THREE.CanvasTexture(logoCv));
+    logoTex.encoding = THREE.sRGBEncoding;
+    // 尺寸：从参考图实测 —— logo 纵向 88px ÷ 4.15px/mm ≈ 21mm，即机身高的 ~13%；
+    // 上一版用 11.6×15.5 的平面，因路径只占 canvas 的 87.5%，实际渲染出来仅 13.6mm 高，
+    // 于是「logo 偏小」（用户反馈）。
+    // canvas 384×512、路径实测包围盒 376×448 → 横向占 97.9% / 纵向占 87.5%，所以：
+    //   plane_h = 目标视觉高 / 0.875      plane_w = plane_h × (384/512) = 目标高 × 0.857
+    var LOGO_H = 18.5;                                 // logo 的**视觉**高度（mm）
+    var logo = new THREE.Mesh(
+      own(new THREE.PlaneGeometry(LOGO_H * 0.857, LOGO_H / 0.875)),
+      own(new THREE.MeshPhysicalMaterial({
+        // ⚠️ 两个坑：① 别用「白色纯金属」—— 环境一暗它反射不出任何东西 = 完全隐形；
+        //    ② 用 `map`（canvas 自带 alpha 通道）而不是 `alphaMap` —— 后者取绿通道，
+        //       在部分后端上更容易踩坑，直接带 alpha 的贴图最稳。
+        color: 0xdfe5ee, metalness: 0.22, roughness: 0.3,
+        clearcoat: 1.0, clearcoatRoughness: 0.04,
+        map: logoTex, transparent: true,
+        emissive: 0xbfcbe0, emissiveIntensity: 0.07,
+        envMapIntensity: 1.0, depthWrite: false
+      })));
+    logo.rotation.y = Math.PI;
+    logo.position.set(0, -22.5, GB_OUT - 0.05);       // 贴着玻璃外表面、再往外 0.05mm
+    g.add(logo);
+
+    // ⑩ 天线注塑带：只贴在**中框边缘面**上，绝不横贯正/背两面。
+    //    上一版用 Box(W+0.3, 1.8, D+0.1) 横跨机身 —— z 向外扩 0.05mm 的本意只是防共面闪烁，
+    //    结果正/背两面上都露出一条横贯线，用户指出「白线在边缘面，不是正反面」。
+    //    正确结构 = 固定高度处环绕「框体横截面（X-Z 平面）」一周的领圈（collar）：
+    //    · 外圈比中框侧面外扩 0.06mm → 侧面读得出一条横线（真机天线带与框齐平，
+    //      能被看到靠的是颜色/反射率差，不是凸起；0.06 只为防 z-fighting）；
+    //    · z 向两端各缩进 0.15mm（不超出正/背两面）→ 正面/背面视角完全看不见；
+    //    · 内圈整体缩进 0.6mm 埋进框体，不留缝；
+    //    · 沿 Y 挤出 1.8mm（真机 ~0.5mm，按「680px 能读出」的既定取舍放大）。
+    //    · 位置 Y=±64：距上下边缘约 11mm（参考图实测红圈中心距底边 51px ÷ 4.15px/mm ≈ 12mm）。
+    //    实现：mp3Shape 画在 X-Z 平面（shape.y → 世界 z），rotation.x=+90° 把挤出方向
+    //    （shape.z）转到世界 -Y，再 position.y 摆到带中心。
+    [1, -1].forEach(function (sy) {
+      var ag = own(new THREE.ExtrudeGeometry(
+        (function () {
+          // ⚠️ three 的 bevel 是「向外扩」：机身最大半宽 = W/2 + bevelSize = 36.37mm
+          //    （第一版外圈只给 35.81，整圈埋进框体里，侧面什么也看不见）。
+          //    外圈半宽 36.43 = 36.37 + 0.06（露头防 z-fighting）；z 半高 4.225 = 4.375 − 0.15。
+          var o = mp3Shape(THREE, W + 1.36, D - 0.30, 1.5);
+          o.holes.push(mp3Shape(THREE, W - 1.20, D - 1.50, 1.0)); // 内圈：埋进框体，不留缝
+          return o;
+        })(),
+        { depth: 1.8, curveSegments: 24, bevelEnabled: false }
+      ));
+      var am = new THREE.Mesh(ag, matAntenna);
+      am.rotation.x = Math.PI / 2;                 // shape.y → 世界 z，挤出方向 → 世界 -Y
+      am.position.set(0, sy * 64 + 0.9, 0);        // 挤出区间 [sy*64-0.9, sy*64+0.9]
+      g.add(am);
+    });
+
+    // 挂环境图：① 材质数组（机身/相机岛/按键）要逐个成员处理，否则整个数组被跳过；
+    // ② 只给 PBR 材质挂 —— 屏幕与灵动岛是 MeshBasicMaterial，挂上 envMap 会被环境反射洗白。
+    if (envRT) {
+      g.traverse(function (o) {
+        if (!o.isMesh || !o.material) return;
+        var ms = Array.isArray(o.material) ? o.material : [o.material];
+        ms.forEach(function (mm) {
+          if (mm && mm.isMeshStandardMaterial && mm.envMap !== undefined) mm.envMap = envRT.texture;
+        });
+      });
+    }
+
+    return {
+      group: g,
+      dispose: function () {
+        g.traverse(function (o) { if (o.isMesh) { if (o.geometry) o.geometry.dispose(); } });
+        kill.forEach(function (o) { try { if (o && o.dispose) o.dispose(); } catch (e) {} });
+      }
+    };
+  }
+
+
+  // ===== 动效首屏 motion-banner（多图卡按动效算法流动 + 可配文字排版）=============
+  // 【来源】amotion.app/editor 的动效预设体系（逆向）：每个动效 = 一个 compute(参数, 宽, 高, 张数, 时间)，
+  //   返回每张卡的 {x, y, scale, rotation, alpha, zIndex, dim, w, h, slot} ——
+  //   正好是 CSS transform 直接能落位的结构，所以**用 DOM + transform 逐帧驱动**即可，
+  //   不需要 canvas / three.js，零新增运行时。
+  // 【首批三个】旋入涡心 vortex（阿基米德螺线向心）/ 纵深漂流 drift（三层视差纵向漂流）/
+  //   交错横滚 brick（砖墙行间反向无缝横滚）。后续可继续按同一套接口加动效。
+  // 【纪律】离屏即停 rAF（IntersectionObserver）；prefers-reduced-motion 只画一帧不循环。
+  var MOTION_QUEUE = [];
+
+  /* 动效算法在 _shared/motion-fx.js（前台/后台共用单一真相源，后台可视化编辑同源预览） */
+  var MFX = window.MFX;
+  var mbNum = MFX.num, mbClamp = MFX.clamp, mbFrac = MFX.frac, mbLerp = MFX.lerp,
+      mbRatio = MFX.ratio, mbRnd = MFX.rnd;
+  var mbVortex = MFX.vortex, mbDrift = MFX.drift, mbBrick = MFX.brick, mbHelix = MFX.helix, mbTicker = MFX.ticker;
+
+  /* 骨架：只建 DOM（背景 / 文字 / 空卡舞台），逐帧动画交给 initMotionBanners */
+  function renderMotionBanner(s) {
+    var section = sec('motion-banner-section');
+    /* 尺寸：large（默认，铺满屏小边距）/ medium（16:9 居中大边距，对齐小Banner hero 容器比例） */
+    if (s.size === 'medium') section.classList.add('is-medium');
+    /* 关键：list 含空槽（card-slots 计数器决定卡数），imgs 只是有真图的 src 列表。
+       这样无论用户是否上传图，动效都能展示完整版式 —— 缺图槽位渲染占位卡。 */
+    var list = Array.isArray(s.images) ? s.images : [];
+    var imgs = list.map(function (x) { return x && x.image; }).filter(Boolean);
+
+    var bgType = s.bgType || 'theme';
+    var frameStyle = '', bgHtml = '';
+    if (bgType === 'color' && s.bgColor) {
+      frameStyle = ' style="background:' + esc(s.bgColor) + '"';
+    } else if (bgType === 'image' && s.bgImage) {
+      frameStyle = ' style="background:#0c0d10"';
+      bgHtml = '<img class="mockup-bg" src="' + esc(s.bgImage) + '" alt="">';
+    } else if (bgType === 'video' && s.bgVideo) {
+      frameStyle = ' style="background:#0c0d10"';
+      var moOv = overlayStrength(s.bgOverlay);
+      bgHtml = '<video class="mockup-bg" autoplay muted loop playsinline preload="metadata" src="' + esc(s.bgVideo) + '"></video>' +
+        (moOv > 0 ? '<div class="mockup-bg-overlay" style="background:rgba(0,0,0,' + moOv + ')"></div>' : '');
+    }
+
+    function mbStyle(obj) {
+      var pr = [];
+      for (var k in obj) { if (obj[k] !== '' && obj[k] != null) pr.push(k + ':' + obj[k]); }
+      return pr.length ? ' style="' + pr.join(';') + '"' : '';
+    }
+    /* 字号响应式：设定值 = 桌面实际 px，窄屏按比例缩到 0.5 倍下限（防撑破相框） */
+    function mbFont(px) {
+      var v = mbNum(px, 0);
+      if (!v) return '';
+      var mn = Math.max(14, Math.round(v * 0.5));
+      return 'clamp(' + mn + 'px, ' + (v * 100 / 1400).toFixed(3) + 'vw, ' + v + 'px)';
+    }
+    /* 文字条目：新模型 s.texts = [{text,size,weight,color,opacity,rotate,align,x,y}]；
+       老数据（title/subtitle/...）在此迁移，不回写。 */
+    function mbTexts(s) {
+      var arr = Array.isArray(s.texts) ? s.texts.filter(function (t) { return t && t.text; }) : [];
+      if (!arr.length) {
+        if (s.title) arr.push({ text: s.title, size: s.titleSize || 64, weight: 800, color: s.titleColor || '#ffffff',
+          opacity: (s.titleOpacity === '' || s.titleOpacity == null) ? 1 : s.titleOpacity,
+          rotate: s.titleRotate || 0, align: s.titleAlign || 'left', x: s.titleX || '', y: s.titleY || '' });
+        if (s.subtitle) arr.push({ text: s.subtitle, size: s.subtitleSize || 22, weight: 400, color: s.subtitleColor || 'rgba(255,255,255,0.82)',
+          opacity: (s.subtitleOpacity === '' || s.subtitleOpacity == null) ? 1 : s.subtitleOpacity,
+          rotate: s.subtitleRotate || 0, align: 'left', x: s.subtitleX || '', y: s.subtitleY || '' });
+      }
+      return arr;
+    }
+    /* 未拖拽条目的默认落位：x 按对齐（left 24% / center 50%），y 从 40% 起每条 +14% */
+    function mbTextPos(t, i) {
+      var x = (t.x !== '' && t.x != null) ? mbNum(t.x, 50) : (String(t.align || 'left') === 'center' ? 50 : 24);
+      var y = (t.y !== '' && t.y != null) ? mbNum(t.y, 50) : Math.min(40 + i * 14, 78);
+      return { x: x, y: y };
+    }
+    var textArr = mbTexts(s);
+    var textHtml = '';
+    if (textArr.length) {
+      var zi = (s.titleZ === 'behind') ? 1 : 5;
+      textHtml = '<div class="mbn-textlayer" style="z-index:' + zi + '">';
+      for (var ti = 0; ti < textArr.length; ti++) {
+        var t = textArr[ti];
+        var pos = mbTextPos(t, ti);
+        var st = { left: pos.x + '%', top: pos.y + '%', 'text-align': String(t.align || 'left') === 'center' ? 'center' : 'left' };
+        var fpx = mbNum(t.size, 0);
+        if (fpx) st['font-size'] = mbFont(fpx);
+        if (t.color) st.color = t.color;
+        var tfo = 'translate(-50%,-50%)';
+        if (mbNum(t.rotate, 0)) tfo += ' rotate(' + mbNum(t.rotate, 0) + 'deg)';
+        st.transform = tfo;
+        var top2 = mbNum(t.opacity, 1);
+        if (top2 < 1) st.opacity = mbClamp(top2, 0, 1);
+        var w8 = parseInt(t.weight, 10);
+        if (w8 >= 100 && w8 <= 900) st['font-weight'] = w8;
+        var tag = (ti === 0) ? 'h2' : 'p';
+        var cls = (ti === 0) ? 'mockup-title' : 'mockup-subtitle';
+        textHtml += '<div class="mbn-tx"' + mbStyle(st) + '><' + tag + ' class="' + cls + '">' + esc(t.text) + '</' + tag + '></div>';
+      }
+      textHtml += '</div>';
+    }
+
+    var radius = (mbClamp(mbNum(s.cornerRadius, 0.08), 0, 0.5) * 100).toFixed(1) + '%';
+    var stageStyle = ' style="--mbn-r:' + radius + '"';
+    section.innerHTML = '<div class="mockup-frame"' + frameStyle + '>' + bgHtml + textHtml +
+      '<div class="mbn-stage"' + stageStyle + '><div class="mbn-deck"></div></div></div>';
+    section._motionS = s;
+    section._motionImgs = imgs;
+    section._motionTotal = Math.max(list.length, 4); /* 至少 4 张卡才能看出动效 */
+    MOTION_QUEUE.push(section);
+    return section;
+  }
+
+  /* 逐帧驱动：卡池复用 DOM（不每帧重建）+ 离屏暂停 + 尊重减少动效 */
+  /* 圆角统一像素：cornerRadius × 该动效的「标称卡短边」。不能用百分比——CSS 百分比
+     圆角相对各自卡片宽/高，drift/brick 卡尺寸带抖动、不同卡像素圆角不同 → 畸变。 */
+  function mbRadiusPx(s, eff, W, H) {
+    var d = Math.min(W, H);
+    var nominal;
+    if (eff === 'drift') nominal = d * mbClamp(mbNum(s.dCardSize, 0.3), 0.12, 0.5);
+    else if (eff === 'brick') nominal = H * mbClamp(mbNum(s.coverage, 1), 0.4, 1) / Math.round(mbClamp(mbNum(s.rows, 3), 2, 5));
+    else if (eff === 'helix') nominal = d * mbClamp(mbNum(s.hCardSize, 0.26), 0.1, 0.6);
+    else if (eff === 'ticker') nominal = d * mbClamp(mbNum(s.tCardSize, 0.36), 0.1, 0.6);
+    else nominal = d * mbClamp(mbNum(s.cardSize, 0.2), 0.08, 0.5);
+    return mbClamp(mbNum(s.cornerRadius, 0.08), 0, 0.5) * nominal;
+  }
+  function initMotionBanners() {
+    var reduced = false;
+    try { reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    MOTION_QUEUE.forEach(function (section) {
+      var s = section._motionS || {};
+      var imgs = section._motionImgs || [];
+      var total = section._motionTotal || Math.max(imgs.length, 4);
+      var deck = section.querySelector('.mbn-deck');
+      if (!deck) return;
+      var eff = (s.effect === 'drift' || s.effect === 'brick' || s.effect === 'helix' || s.effect === 'ticker') ? s.effect : 'vortex';
+      var compute = eff === 'drift' ? mbDrift : (eff === 'brick' ? mbBrick : (eff === 'helix' ? mbHelix : (eff === 'ticker' ? mbTicker : mbVortex)));
+      var N = Math.max(total, 4);
+      /* 整墙俯仰/左右倾斜（amotion 模板参数 tiltX/tiltY）：挂在 deck 上，静态一次 */
+      var tiltX = mbClamp(mbNum(s.tiltX, 0), -45, 45);
+      var tiltY = mbClamp(mbNum(s.tiltY, 0), -45, 45);
+      if (tiltX || tiltY) {
+        deck.style.transform = 'perspective(1400px) rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)';
+        deck.style.transformStyle = 'preserve-3d';
+      }
+      var bwK = mbClamp(mbNum(s.borderWidth, 0), 0, 0.12);   /* 边框粗细 = 卡片短边的百分比 */
+      var bcCol = s.borderColor || '#ffffff';
+      var pool = [];
+      function ensure(n) {
+        while (pool.length < n) {
+          var d = document.createElement('div');
+          d.className = 'mbn-card';
+          var im = document.createElement('img');
+          im.alt = ''; im.draggable = false;
+          var ph = document.createElement('div');
+          ph.className = 'mbn-ph-tag';
+          d.appendChild(im); d.appendChild(ph);
+          deck.appendChild(d);
+          pool.push(d);
+        }
+        while (pool.length > n) { var last = pool.pop(); if (last.parentNode) last.parentNode.removeChild(last); }
+      }
+      var W = 0, H = 0, raf = 0, elapsed = 0, t0 = 0;
+      function measure() {
+        W = deck.clientWidth || 0; H = deck.clientHeight || 0;
+        if (!W) W = section.clientWidth;
+        if (!H) H = section.clientHeight;
+        /* 圆角统一像素：--mbn-r 从百分比改为 px（resize 时随视口重算） */
+        var st = section.querySelector('.mbn-stage');
+        if (st) st.style.setProperty('--mbn-r', mbRadiusPx(s, eff, W, H).toFixed(1) + 'px');
+      }
+      function draw(t) {
+        if (!W || !H) return;
+        var frames = compute(s, W, H, N, t);
+        ensure(frames.length);
+        for (var i = 0; i < frames.length; i++) {
+          var f = frames[i], c = pool[i];
+          if (!c) continue;
+          var im = c.firstChild;
+          var ph = c.lastChild;
+          /* 占位卡：slot 落在真图范围外 → 标 .is-ph + 写「素材 N」；真图卡：写 src、隐占位 */
+          var useReal = imgs.length > 0 && f.slot < imgs.length;
+          if (useReal) {
+            if (c._phMark) { c.classList.remove('is-ph'); c._phMark = false; }
+            var src = imgs[f.slot];
+            if (im.getAttribute('src') !== src) im.setAttribute('src', src);
+            if (ph.style.display !== 'none') ph.style.display = 'none';
+          } else {
+            if (!c._phMark) { c.classList.add('is-ph'); c._phMark = true; }
+            if (im.getAttribute('src')) im.removeAttribute('src');
+            var lb = '素材 ' + (f.slot + 1);
+            if (ph.textContent !== lb) { ph.textContent = lb; }
+            if (ph.style.display !== '') ph.style.display = '';
+          }
+          var wp = f.w.toFixed(1) + 'px', hp = f.h.toFixed(1) + 'px';
+          if (c._w !== wp) { c.style.width = wp; c._w = wp; }
+          if (c._h !== hp) { c.style.height = hp; c._h = hp; }
+          var tr = 'translate3d(' + (f.x - f.w / 2).toFixed(1) + 'px,' + (f.y - f.h / 2).toFixed(1) +
+            'px,0) rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) + ')';
+          if (c._tr !== tr) { c.style.transform = tr; c._tr = tr; }
+          var op = f.alpha.toFixed(3);
+          if (c._op !== op) { c.style.opacity = op; c._op = op; }
+          if (c._z !== f.zIndex) { c.style.zIndex = f.zIndex; c._z = f.zIndex; }
+          var fl = f.dim > 0.01 ? 'brightness(' + (1 - f.dim * 0.75).toFixed(2) + ')' : '';
+          if (c._fl !== fl) { c.style.filter = fl; c._fl = fl; }
+          if (bwK > 0.001) {
+            var bwd = Math.max(1, Math.round(bwK * Math.min(f.w, f.h))) + 'px solid ' + bcCol;
+            if (c._bd !== bwd) { c.style.border = bwd; c._bd = bwd; }
+          }
+        }
+      }
+      function loop(now) {
+        raf = requestAnimationFrame(loop);
+        elapsed = (now - t0) / 1000;
+        draw(elapsed);
+      }
+      function start() {
+        if (raf || reduced) return;
+        t0 = (window.performance && performance.now ? performance.now() : Date.now()) - elapsed * 1000;
+        raf = requestAnimationFrame(loop);
+      }
+      function stop() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
+
+      measure();
+      draw(0);                                   // 先落一帧静态布局，避免首屏空白
+      if (reduced) return;
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (es) {
+          for (var i = 0; i < es.length; i++) { if (es[i].isIntersecting) start(); else stop(); }
+        }, { threshold: 0.05 });
+        io.observe(section);
+      } else { start(); }
+
+      if (!initMotionBanners._rz) {
+        initMotionBanners._rz = true;
+        var tm = null;
+        window.addEventListener('resize', function () {
+          if (tm) clearTimeout(tm);
+          tm = setTimeout(function () {
+            MOTION_QUEUE.forEach(function (sec2) {
+              var d2 = sec2.querySelector && sec2.querySelector('.mbn-deck');
+              if (d2 && sec2._motionReMeasure) sec2._motionReMeasure();
+            });
+          }, 160);
+        });
+      }
+      section._motionReMeasure = function () { measure(); if (!raf) draw(elapsed); };
+    });
   }
 
   // ===== 广告 Banner（ad-banner）=====

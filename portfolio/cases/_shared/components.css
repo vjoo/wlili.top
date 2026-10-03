@@ -1678,8 +1678,8 @@
 }
 
 .service-toggle svg {
-  width: 34px;
-  height: 34px;
+  width:32px;
+  height:32px;
 }
 
 .service-toggle .svg-v {
@@ -2054,8 +2054,8 @@
   }
 
   .service-toggle svg {
-    width: 28px;
-    height: 28px;
+    width:32px;
+    height:32px;
   }
 
   .service-detail-grid {
@@ -3845,7 +3845,6 @@
 .mk-mute      { position: absolute; left: calc(var(--ph) * -3 / 520); top: calc(var(--ph) * 96 / 520); width: calc(var(--ph) * 4 / 520); height: calc(var(--ph) * 26 / 520); border-radius: calc(var(--ph) * 2 / 520) 0 0 calc(var(--ph) * 2 / 520);
                 background: linear-gradient(180deg, #6e727b 0%, #3a3d44 50%, #15171b 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 3px rgba(0, 0, 0, 0.6); }
 
-/* 笔记本(mk-laptop) 样式已随分支移除 */
 
 /* 移动端：相框定高（76vh 给下方留 24vh 给滚动提示），标题靠上、手机舞台水平居中 */
 @media (max-width: 767px) {
@@ -4349,3 +4348,116 @@
 @media (min-width: 1024px) { .ly-grid.gap-tight { gap: 0.75rem; } }
 .ly-grid.gap-loose { gap: 1.5rem; }
 @media (min-width: 1024px) { .ly-grid.gap-loose { gap: 2rem; } }
+
+/* ===== mockup-banner「换机身」：three.js 真 3D 外壳（2026-10-01）=================
+   老 3D样机Banner 原本是 CSS 伪 3D 壳（56 片 div + 解析式着色）。这轮把机身换成
+   three.js 真模型（iPhone 17 Pro），**外框语义一个不改**：stageSize / abGap /
+   globalZoom / 每台机的 UI 图 / 升降与旋转角度全沿用原来的像素值。
+   做法：canvas 铺在 .mk-phone-row 里（与原 CSS 手机占同一块 px 区域），
+   render.js 里建立 px↔mm 精确换算 —— z=0 平面上 1px 严格 = mmPerPx 毫米，
+   于是「比例 · 间隙 · 位移」全部原样生效，连 fitRow 的响应式 scale 也照样继承自 row。
+   · three 未就绪 / 无 WebGL → canvas 根本不会被插入，CSS 壳照常显示（零降级风险）
+   · 3D 接上后 .mockup-rig 加 .is-mk3 → 旧的 CSS 壳节点 display:none（仍留作兜底） */
+.mk-phone-row > .mk3-cv {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 0;
+}
+.mockup-rig.is-mk3 > .mk-phone-row > .mk-phone { display: none; }
+
+/* ===== 动效首屏 motion-banner（block type = motion-banner）=========================
+   只新增 .mbn- 前缀（卡舞台 / 卡片）；版式层复用 mockup 的 .mockup-frame / .mockup-bg /
+   .mockup-text / .mockup-title / .mockup-subtitle（纯样式，与现有组件零冲突）。
+   卡片位置/缩放/旋转/透明度全部由 render.js 逐帧写 CSS transform，CSS 只管外观。 */
+.motion-banner-section {
+  max-width: 100%;               /* 大尺寸（默认）：覆盖 .container 上限，铺满视口（对齐大Banner hero-banner） */
+  height: 100vh;                 /* 严格一屏：与 3D 样机 Banner 首屏一致 */
+  display: flex;
+  align-items: stretch;
+  padding: 0.75rem;              /* 与 hero-banner 一致的四周留白（小边距） */
+  box-sizing: border-box;
+}
+@media (max-width: 767px) { .motion-banner-section { height: 76vh; padding: 0.75rem 1rem; } }
+
+/* 中尺寸：对齐小Banner（hero）容器比例——1136:608 圆角相框居中、四周大边距（.container 1208/1520px + 36px 边距） */
+.motion-banner-section.is-medium {
+  max-width: 75.5rem;            /* 1208px，与 .container 一致 */
+  height: auto;
+  align-items: center;
+  padding: 2.5rem 2.25rem;       /* 上下 40px、左右 36px（与 .container 左右 padding 对齐） */
+}
+.motion-banner-section.is-medium .mockup-frame {
+  flex: none;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1136 / 608;      /* 小Banner 轮播 / 视频同款比例 */
+  align-self: center;
+}
+@media (min-width: 1500px) {
+  .motion-banner-section.is-medium { max-width: 95rem; }  /* 1520px */
+}
+@media (max-width: 767px) {
+  .motion-banner-section.is-medium { height: auto; padding: 1.25rem 1rem; }
+  .motion-banner-section.is-medium .mockup-frame { aspect-ratio: 4 / 3; }  /* 移动端收窄比例 */
+}
+
+.mbn-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;                    /* 与 mockup 同套层级：文字 1=卡后 / 5=卡前 */
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.mbn-deck { position: absolute; inset: 0; }
+.mbn-card {
+  position: absolute;
+  left: 0; top: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  overflow: hidden;
+  border-radius: var(--mbn-r, 8%);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .26);
+}
+.mbn-card img {
+  display: block;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* 占位卡：用户尚未上传图时把槽位用占位块填满，让动效版式直接可见 */
+.mbn-card.is-ph {
+  background: linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  border: 1.5px dashed rgba(255,255,255,.30);
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+}
+.mbn-card.is-ph img { display: none; }
+.mbn-ph-tag {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,.62);
+  font-size: clamp(11px, 1.3vw, 14px);
+  letter-spacing: .04em;
+  font-weight: 500;
+  pointer-events: none;
+  text-align: center; padding: 0 6px;
+  line-height: 1.25;
+}
+.mbn-card.is-real .mbn-ph-tag { display: none; }
+
+/* motion-banner 文字可视化拖放层：每层文字绝对定位（x/y=舞台百分比，中心对齐） */
+.mbn-textlayer { position: absolute; inset: 0; pointer-events: none; }
+.mbn-tx { position: absolute; transform-origin: 50% 50%; max-width: 90%; }
+/* 动效首屏文字：字号/颜色由 render.js 内联在 .mbn-tx 上，但 .mockup-title/.mockup-subtitle
+   自带 font-size: clamp(...64px) 与 color: var(--color-white) —— **会覆盖继承值**，
+   实测用户设 50px 被顶成 64px、color:#ffffff 被解析成 --color-white=#1a1a1a（深灰看不清）。
+   这里让内层继承外层，并把限宽交给容器（.mbn-tx 的 max-width:90%），前后台才能一致。
+   font-weight 也必须 inherit —— .mockup-title 自带 600 会覆盖用户设的 400，
+   字重不同 → 文字宽度不同 → 换行点不同（实测同样文字前台 2 行 / 后台 3 行）。 */
+.mbn-tx .mockup-title, .mbn-tx .mockup-subtitle { margin: 0; font-size: inherit; color: inherit; font-weight: inherit; }
+.mbn-tx .mockup-subtitle { max-width: none; }

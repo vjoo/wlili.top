@@ -1,0 +1,66 @@
+/* ============================================================
+ * wlili.top 图标档位表 —— Core 层配套（DESIGN_SYSTEM §9）
+ * ------------------------------------------------------------
+ * 原则：几何只有一套（24×24 Lucide），差异全靠「光学尺寸」补偿
+ *   尺寸越小 → 线宽占比越高（防小尺寸发虚）
+ *   尺寸越大 → 线宽占比越低（防大尺寸笨重）
+ *
+ * 用法：<svg class="icon ic-24" viewBox="0 0 24 24">…</svg>
+ *      或 JS：iconSvg('trash', 24)
+ * ⚠ SVG 内部禁止再写 stroke-width —— 一律由本文件的 --ic-sw 下发
+ * ============================================================ */
+
+/* ---------- 基类：所有图标都必须带 .icon ---------- */
+.icon {
+  display: inline-block;
+  flex: none;                       /* 放进 flex 容器不被压扁 */
+  vertical-align: -0.125em;         /* 与文字基线对齐 */
+  fill: none;
+  stroke: currentColor;             /* 颜色永远继承文字色 */
+  stroke-width: var(--ic-sw, 2);    /* 线宽由档位下发，默认 M 档 */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;             /* 图标不该吃点击，点击交给父按钮 */
+}
+
+/* ---------- 五档光学尺寸 ---------- */
+/* XS 16px：表格行内操作、小标签、密集列表 */
+.ic-16 { width: 16px; height: 16px; --ic-sw: 2.4; }   /* 实际 1.60px，占 10.0% */
+/* S 20px：按钮内、列表项、面包屑 */
+.ic-20 { width: 20px; height: 20px; --ic-sw: 2.2; }   /* 实际 1.83px，占  9.2% */
+/* M 24px：基准档 —— 导航、表单、弹窗标题、空态 */
+.ic-24 { width: 24px; height: 24px; --ic-sw: 2;   }   /* 实际 2.00px，占  8.3% */
+/* L 32px：卡片主图标、统计卡、抽屉标题 */
+.ic-32 { width: 32px; height: 32px; --ic-sw: 2;   }   /* 实际 2.67px，占  8.3% */
+/* XL 48px：空状态、插画级、hero */
+.ic-48 { width: 48px; height: 48px; --ic-sw: 1.5; }   /* 实际 3.00px，占  6.3% */
+
+/* ---------- 图标容器壳（统计卡 / 列表头像位） ---------- */
+/* 与 .icon 配套：外壳给底，图标给线；两者尺寸表一致 */
+.ic-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 9px;               /* 卡片体系例外值，见 DESIGN_SYSTEM §1.5 */
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+[data-theme="dark"] .ic-box { color: var(--accent); }
+
+.ic-box-24 { width: 24px; height: 24px; }   /* 内放 .ic-16 */
+.ic-box-32 { width: 32px; height: 32px; }   /* 内放 .ic-16（统计卡标准） */
+.ic-box-40 { width: 40px; height: 40px; }   /* 内放 .ic-20 */
+.ic-box-48 { width: 48px; height: 48px; }   /* 内放 .ic-24 */
+
+/* ---------- 语义色图标（状态反馈，唯一允许改色的场景） ---------- */
+.ic-success { color: var(--success); }
+.ic-warning { color: var(--warning); }
+.ic-info    { color: var(--info); }
+.ic-danger  { color: var(--danger); }
+.ic-muted   { color: var(--muted); }
+
+/* ---------- 存量迁移期说明 ---------- */
+/* 老代码里写死的 stroke-width="2" 是 SVG 呈现属性，优先级低于任何 CSS 规则，
+   因此只要给元素加上 .icon + .ic-*，档位变量会自动接管线宽 —— 迁移无需先删属性。 */

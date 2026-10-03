@@ -38,12 +38,13 @@
   var TYPO_DEFAULTS = ZLH.DEFAULT_TYPO || {};
   var FONTS = window.ZL_FONTS || [];
 
-  var VIEWS = ['structure', 'nav', 'footer', 'typo', 'site'];
+  var VIEWS = ['structure', 'nav', 'footer', 'site'];
 
   var S = {
     content: null,
-    view: 'structure',                        // structure | nav | footer | typo | site
+    view: 'structure',                        // structure | nav | footer | site
     sel: { kind: 'scene', vi: 0, si: 0 },     // kind: video | scene | outro
+    sceneTab: 0,                              // 场景层参数栏当前页卡：0 文案·字号 / 1 视频时长 / 2 按钮·链接
     collapsed: {},                            // vi -> true（结构树折叠）
     dirty: false,
     durations: [],                            // 每段视频探测到的真实时长
@@ -51,8 +52,6 @@
     playing: false,
     pvSrc: '',                                // 监视器已加载的视频地址（相同则复用，避免重载闪一下）
     pvScreenKey: '',                          // 文案层当前渲染的是哪一屏（一致就不重写 DOM）
-    frames: {},                               // src -> 帧池（时间轴胶片条用）
-    framesBusy: {},                           // src -> true 正在抽帧
     token: '',
     uploadTarget: null                        // { kind:'field'|'repeater', ... }
   };
@@ -208,11 +207,58 @@
     { key: 'loop.end', type: 'range', label: '循环终点', min: 0, max: '@duration', step: 0.05, unit: 's', inline: true }
   ];
 
-  var SCENE_FIELDS = [
+  /* ---------- 场景层字段：按 3 张页卡切分 ----------
+     ⚠️ 2026-10-01 重构：原来是一长条 fieldset（文案 / 视频区间 / 文字时间轴 / 这一屏的排版覆盖 / 按钮），
+        参数栏只有 380px，看一类参数得滚半天。现在收成 3 张页卡切换，一次只面对一类。
+     ⚠️ SCENE_TABS 是分组的**唯一真源**，SCENE_FIELDS 由三张页卡的字段拼接而来 ——
+        必须保持「SCENE_FIELDS ≡ SCENE_TAB_COPY + SCENE_TAB_TIME + SCENE_TAB_CTA」的顺序，
+        否则 fieldByKey()（commitField / 事件委托都靠它）找不到字段、静默不写回。
+     overridable: true → 该字段带「继承 / 自定义」下拉（默认继承、控件禁用）。
+        继承时取 home.typography 的同名字段；判空规则与 scrubb.js 的 mergeTypo 必须一致
+        （'' / null / undefined / 数字 0 = 未设置 = 继承），见 isInherited() / effVal()。 */
+  /* ⚠️ 2026-10-01（用户要求）：字号 / 字重 / 对齐 / 进场 从「滑块 + 按钮组」全改成**下拉**。
+     原因：参数栏只有 320~380px，两列排布时滑块拖不准、按钮组（5 个 300/400/600/700/900）又太占地方。
+     历史数据里若存了不在梯子里的值（早期用滑块存的任意数），optionsHtml() 会把它补成一项并选中，
+     不会静默改值。 */
+  function numOpts(list) { return list.map(function (n) { return { v: n, t: String(n) }; }); }
+  var SIZE_TITLE_OPTS = numOpts([24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 72, 80, 96, 120, 160]);
+  var SIZE_SUB_OPTS = numOpts([14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 44, 48, 56, 60]);
+  var WEIGHT_OPTS = numOpts([300, 400, 500, 600, 700, 800, 900]);
+  var ALIGN_OPTS = [{ v: 'left', t: '左对齐' }, { v: 'center', t: '居中' }, { v: 'right', t: '右对齐' }];
+  var VALIGN_OPTS = [{ v: 'top', t: '顶部' }, { v: 'center', t: '居中' }, { v: 'bottom', t: '底部' }];
+  var ANIM_OPTS = [{ v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }];
+
+  var SCENE_TAB_COPY = [
     { group: '文案', groupHint: '标题与副标题支持换行，换行会原样呈现在页面上。',
       key: 'title', type: 'textarea', label: '主标题', rows: 2, span: true },
     { key: 'sub', type: 'textarea', label: '副标题', rows: 2, span: true },
 
+    { group: '字体与字号',
+      groupHint: '这一屏单独用的字体与字号。默认「继承」全局排版；要单独改就切成「自定义」。',
+      key: 'fontFamily', type: 'font', label: '字体', allowInherit: true, overridable: true },
+    { key: 'titleSize', type: 'select', label: '标题字号', options: SIZE_TITLE_OPTS, numeric: true,
+      overridable: true, hint: '桌面基准值，窄屏自动等比收缩' },
+    { key: 'titleWeight', type: 'select', label: '标题字重', options: WEIGHT_OPTS, numeric: true,
+      overridable: true },
+    { key: 'subSize', type: 'select', label: '副标题字号', options: SIZE_SUB_OPTS, numeric: true,
+      overridable: true },
+
+    { group: '对齐与进场', groupHint: '文字在这一屏里的位置与进场方式。',
+      key: 'align', type: 'select', label: '水平对齐', options: ALIGN_OPTS, overridable: true },
+    { key: 'vAlign', type: 'select', label: '垂直对齐', options: VALIGN_OPTS, overridable: true },
+    { key: 'titleAnim', type: 'select', label: '标题进场', options: ANIM_OPTS, overridable: true,
+      hint: '上浮 = 淡入时从下方浮起；原地淡入淡出 = 只变透明度、不位移' },
+    { key: 'subAnim', type: 'select', label: '副标题进场', options: ANIM_OPTS, overridable: true },
+
+    { group: '颜色',
+      groupHint: '强调色同时作用于圆点导航。标题 / 副标题颜色留空则跟随深浅主题。',
+      key: 'accent', type: 'color', label: '强调色', overridable: true },
+    { key: 'ink', type: 'color', label: '标题颜色', overridable: true,
+      hint: '留空跟随主题（浅色主题深字 / 深色主题浅字）' },
+    { key: 'inkSoft', type: 'color', label: '副标题颜色', overridable: true }
+  ];
+
+  var SCENE_TAB_TIME = [
     { group: '视频区间',
       groupHint: '这一屏滚过时，本段视频从「起点」播到「终点」。相邻两屏若不衔接（上一屏终点 ≠ 本屏起点），' +
                  '滚动到交界处会跳帧 —— 时间轴上的橙色条纹就是提示，点「衔接」可一键消除。',
@@ -220,42 +266,30 @@
     { key: 'tEnd', type: 'range', label: '视频终点', min: 0, max: '@duration', step: 0.05, unit: 's', inline: true },
 
     { group: '文字时间轴（只改这一屏）',
-      groupHint: '只调这一屏的文字出现/消失时机，单位是占本屏区间的百分比（轨道上那条白杠就是它）。' +
-                 '三项留 0 = 继承「默认排版」里的时间轴。文字钉在视口里不动，' +
-                 '所以「开始淡出 − 淡入完成」这段就是它稳定可读的时长。',
-      key: 'textIn', type: 'range', label: '淡入完成', min: 0, max: 100, step: 1, unit: '%', inline: true,
-      hint: '0 = 继承' },
-    { key: 'textOut', type: 'range', label: '开始淡出', min: 0, max: 100, step: 1, unit: '%', inline: true,
-      hint: '0 = 继承' },
-    { key: 'textFade', type: 'range', label: '淡入淡出时长', min: 0, max: 60, step: 1, unit: '%', inline: true,
-      hint: '0 = 继承' },
+      groupHint: '只调这一屏的文字出现 / 消失时机，单位是占本屏区间的百分比（轨道上那条白杠就是它）。' +
+                 '文字钉在视口里不动，所以「开始淡出 − 淡入完成」这段就是它稳定可读的时长。',
+      key: 'textIn', type: 'range', label: '淡入完成', min: 0, max: 100, step: 1, unit: '%', span: true,
+      overridable: true },
+    { key: 'textOut', type: 'range', label: '开始淡出', min: 0, max: 100, step: 1, unit: '%', span: true,
+      overridable: true },
+    { key: 'textFade', type: 'range', label: '淡入淡出时长', min: 0, max: 60, step: 1, unit: '%', span: true,
+      overridable: true }
+  ];
 
-    { group: '这一屏的排版覆盖',
-      groupHint: '留空 / 0 表示继承「全局排版」。只有需要单独调整的屏才填。',
-      key: 'fontFamily', type: 'font', label: '字体', inline: true, allowInherit: true },
-    { key: 'titleSize', type: 'range', label: '标题字号', min: 0, max: 160, step: 1, unit: 'px', inline: true,
-      hint: '0 = 继承；桌面基准值，窄屏自动等比收缩' },
-    { key: 'titleWeight', type: 'palette', label: '标题字重', inline: true,
-      palette: [{ v: 0, t: '继承' }, { v: 300, t: '300' }, { v: 400, t: '400' }, { v: 600, t: '600' }, { v: 700, t: '700' }, { v: 900, t: '900' }] },
-    { key: 'subSize', type: 'range', label: '副标题字号', min: 0, max: 60, step: 1, unit: 'px', inline: true },
-    { key: 'align', type: 'palette', label: '水平对齐', inline: true,
-      palette: [{ v: '', t: '继承' }, { v: 'left', t: '左' }, { v: 'center', t: '居中' }, { v: 'right', t: '右' }] },
-    { key: 'vAlign', type: 'palette', label: '垂直对齐', inline: true,
-      palette: [{ v: '', t: '继承' }, { v: 'top', t: '上' }, { v: 'center', t: '中' }, { v: 'bottom', t: '下' }] },
-    { key: 'titleAnim', type: 'palette', label: '标题进场', inline: true,
-      palette: [{ v: '', t: '继承' }, { v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }],
-      hint: '上浮 = 淡入时从下方浮起；原地淡入淡出 = 只变透明度、不位移。留空继承「全局排版」' },
-    { key: 'subAnim', type: 'palette', label: '副标题进场', inline: true,
-      palette: [{ v: '', t: '继承' }, { v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }] },
-    { key: 'accent', type: 'color', label: '强调色', inline: true },
-    { key: 'ink', type: 'color', label: '标题颜色', inline: true, hint: '留空跟随主题（浅色主题深字 / 深色主题浅字）' },
-    { key: 'inkSoft', type: 'color', label: '副标题颜色', inline: true },
-
-    { group: '按钮（可选）', groupHint: '文字与链接都填了才会显示。',
+  var SCENE_TAB_CTA = [
+    { group: '按钮（可选）', groupHint: '文字与链接都填了，前台才会显示这枚按钮。',
       key: 'ctaText', type: 'text', label: '按钮文字', inline: true },
     { key: 'ctaHref', type: 'text', label: '按钮链接', inline: true, hint: '站内相对路径或完整 http 链接' },
     { key: 'ctaBlank', type: 'switch', label: '新标签打开', inline: true }
   ];
+
+  var SCENE_TABS = [
+    { key: 'copy', label: '文案 · 字号', fields: SCENE_TAB_COPY },
+    { key: 'time', label: '视频时长', fields: SCENE_TAB_TIME },
+    { key: 'cta', label: '按钮 · 链接', fields: SCENE_TAB_CTA }
+  ];
+
+  var SCENE_FIELDS = SCENE_TAB_COPY.concat(SCENE_TAB_TIME, SCENE_TAB_CTA);
 
   var OUTRO_FIELDS = [
     { group: '过渡屏',
@@ -321,42 +355,10 @@
     { group: '版权', key: 'site.copyright', type: 'text', label: '版权文字', span: true }
   ];
 
-  var TYPO_FIELDS = [
-    { group: '默认排版', groupHint: '所有场景层的基准值。某一屏想单独调整，在该屏的「排版覆盖」里填即可。',
-      key: 'fontFamily', type: 'font', label: '字体', inline: true },
-    { key: 'copyMax', type: 'range', label: '文案块最大宽度', min: 320, max: 1100, step: 10, unit: 'px', inline: true },
-    { key: 'titleSize', type: 'range', label: '标题字号', min: 20, max: 160, step: 1, unit: 'px', inline: true,
-      hint: '桌面基准值（1280px 宽处生效），窄屏自动收缩' },
-    { key: 'titleWeight', type: 'palette', label: '标题字重', inline: true,
-      palette: [{ v: 300, t: '300' }, { v: 400, t: '400' }, { v: 600, t: '600' }, { v: 700, t: '700' }, { v: 900, t: '900' }] },
-    { key: 'titleLineHeight', type: 'range', label: '标题行高', min: 1, max: 2, step: 0.02, inline: true },
-    { key: 'titleSpacing', type: 'range', label: '标题字距', min: -0.05, max: 0.3, step: 0.005, unit: 'em', inline: true },
-    { key: 'subSize', type: 'range', label: '副标题字号', min: 10, max: 60, step: 1, unit: 'px', inline: true },
-    { key: 'align', type: 'palette', label: '水平对齐', inline: true,
-      palette: [{ v: 'left', t: '左' }, { v: 'center', t: '居中' }, { v: 'right', t: '右' }] },
-    { key: 'vAlign', type: 'palette', label: '垂直对齐', inline: true,
-      palette: [{ v: 'top', t: '上' }, { v: 'center', t: '中' }, { v: 'bottom', t: '下' }] },
-    { key: 'titleAnim', type: 'palette', label: '标题进场', inline: true,
-      palette: [{ v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }],
-      hint: '上浮 = 淡入时从下方轻轻浮起（默认）；原地淡入淡出 = 只有透明度变化、不位移' },
-    { key: 'subAnim', type: 'palette', label: '副标题进场', inline: true,
-      palette: [{ v: 'rise', t: '上浮' }, { v: 'fade', t: '原地淡入淡出' }] },
-
-    { group: '文字时间轴',
-      groupHint: '文案钉在视口里不动，只按时间轴「淡入 → 停留 → 淡出」（像剪影那样）。' +
-                 '三个值都是占「本屏滚动区间」的百分比：本屏区间 = 视频从本屏起点走到终点那一段滚动。' +
-                 '停留段越长越好读；想让文字早点收，把「开始淡出」调小。',
-      key: 'textIn', type: 'range', label: '淡入完成', min: 0, max: 100, step: 1, unit: '%', inline: true,
-      hint: '淡入从「淡入完成 − 淡入淡出时长」开始' },
-    { key: 'textOut', type: 'range', label: '开始淡出', min: 0, max: 100, step: 1, unit: '%', inline: true },
-    { key: 'textFade', type: 'range', label: '淡入淡出时长', min: 1, max: 60, step: 1, unit: '%', inline: true,
-      hint: '淡入与淡出各占这么长；调大更柔和，调小更干脆' },
-
-    { group: '颜色', groupHint: '强调色同时作用于圆点导航。标题/副标题颜色留空则跟随深浅主题。',
-      key: 'accent', type: 'color', label: '强调色', inline: true },
-    { key: 'ink', type: 'color', label: '标题颜色', inline: true },
-    { key: 'inkSoft', type: 'color', label: '副标题颜色', inline: true }
-  ];
+  /* ⚠️ 2026-10-01：「全局排版」视图（TYPO_FIELDS）已删除 —— 用户判定它与场景层的
+     「文案 · 字号」页卡重复（同一批字段两处可改，容易改完不知道哪边生效）。
+     现在 home.typography 退为**只读的继承基准**：场景层各排版字段默认「继承」它，
+     要单独改就在那一屏切成「自定义」。数据字段一个没删（content.json 仍由 scrub.js 读取）。 */
 
   var SITE_FIELDS = [
     { group: '页面信息', groupHint: '浏览器标签标题、Logo 字母与导航上的联系按钮文字。',
@@ -390,7 +392,6 @@
       switch (S.view) {
         case 'nav': return c;
         case 'footer': return c;
-        case 'typo': return c.home.typography;
         case 'site': return c;
         default: return null;
       }
@@ -417,7 +418,6 @@
         return [];
       case 'nav': return NAV_FIELDS;
       case 'footer': return FOOTER_FIELDS;
-      case 'typo': return TYPO_FIELDS;
       case 'site': return SITE_FIELDS;
       default: return [];
     }
@@ -465,6 +465,14 @@
       return clamp(n, min, max);
     }
     if (f.type === 'switch') return !!raw;
+    if (f.type === 'select') {
+      var list = f.options || [];
+      var hit = list.filter(function (o) { return String(o.v) === String(raw); })[0];
+      if (hit) return f.numeric ? num(hit.v, 0) : hit.v;
+      // 不在预设里：保留原值（渲染时 optionsHtml 会把它补成一项），别静默改成第一项
+      if (raw === '' || raw === null || raw === undefined) return f.numeric ? 0 : '';
+      return f.numeric ? num(raw, 0) : raw;
+    }
     if (f.type === 'palette') {
       var ok = (f.palette || []).some(function (p) { return String(p.v) === String(raw); });
       return ok ? raw : ((f.palette || [{ v: '' }])[0].v);
@@ -475,6 +483,18 @@
       return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s) ? s : '';
     }
     return raw == null ? '' : raw;
+  }
+
+  /** 取「控件区」里的那个 select。
+      ⚠️ 不能直接 wrap.querySelector('select') —— label 行在 DOM 里排在控件**前面**，
+         一旦那里也放了 select，就会把它的值当成字段值写回去
+         （历史事故：label 行那个「继承 / 自定义」下拉还是 select 时，
+         改一次字号就被写成 "inherit" → clampField 收敛成哨兵值 → 字段悄悄退回「继承」）。
+      ⚠️ 所以这里按 **DOM 位置**正向筛，而不是写死排除某个 class：
+         现在 label 行里只有开关（`<button>`）和 ⓘ，但将来谁再往里塞控件都不会污染读值。 */
+  function controlSelect(wrap) {
+    var all = [].slice.call(wrap.querySelectorAll('select'));
+    return all.filter(function (s) { return !s.closest('.form-label'); })[0] || null;
   }
 
   /** 从 DOM 控件读回值（与 clampField 配对，保证读写同源） */
@@ -493,7 +513,9 @@
         return clampField(f, tx.value);
       }
       case 'font':
-        return wrap.querySelector('select').value;
+        return (controlSelect(wrap) || {}).value;
+      case 'select':
+        return clampField(f, (controlSelect(wrap) || {}).value);
       case 'palette': {
         var on = wrap.querySelector('.form-swatch.on');
         return on ? on.getAttribute('data-v') : '';
@@ -507,11 +529,99 @@
     }
   }
 
+  /* ---------- 「继承 / 自定义」（场景层排版类字段） ----------
+     ⚠️ 判空规则必须与 scrub.js 的 mergeTypo **逐字一致**：'' / null / undefined / 数字 0 都算
+        「未设置 = 继承」。两边一旦不一致，就会出现「后台显示自定义、前台其实在继承」的静默分叉。 */
+  function isEmptyVal(v) {
+    return v === undefined || v === null || v === '' ||
+           (typeof v === 'number' && v === 0) ||
+           (typeof v === 'string' && v.trim() === '');
+  }
+  function isInherited(raw) { return isEmptyVal(raw); }
+
+  /** 切回「继承」时要写回数据的代表值：range → 下限（这些字段都是 0）；其余 → 空串 */
+  function inheritValOf(f) {
+    if (f.inheritVal !== undefined) return f.inheritVal;
+    return (f.type === 'range' || f.type === 'number') ? resolveBound(f.min, 0) : '';
+  }
+
+  /** 「继承」的取值来源：home.typography 叠加内置默认（与前台 buildScene 的合并口径一致） */
+  function typoGlobal() {
+    var g = (S.content && S.content.home && S.content.home.typography) || {};
+    return Object.assign({}, TYPO_DEFAULTS, g);
+  }
+
+  /** 控件要显示的值。继承时显示全局对应值 —— 这样切成「自定义」能原地接手，画面不跳。 */
+  function effVal(f, raw) {
+    if (!isInherited(raw)) return clampField(f, raw);
+    var gv = typoGlobal()[f.key];
+    if (gv === undefined || gv === null || gv === '') gv = inheritValOf(f);
+    return clampField(f, gv);
+  }
+
+  /** 切换某字段的「继承 / 自定义」并整块重绘。
+      切到自定义 → 写入继承到的值（所见即所得）；切回继承 → 写回继承代表值。 */
+  function setOverride(wrap, toCustom) {
+    var f = fieldOfWrap(wrap);
+    if (!f || !f.overridable) return;
+    var host = scopeObj();
+    if (!host) return;
+    setPath(host, f.key, toCustom ? effVal(f, getPath(host, f.key)) : inheritValOf(f));
+    markDirty();
+    renderForm();
+    renderTimeline();
+    syncMonitor();
+  }
+
+  // ⚠️ 2026-10-01（P0-18）：原来这里有一对 `customCount()` / `refreshTabBadges()`，
+  //    给页卡标签加「自定义 N」小徽标（一眼看出这屏改过几项）。
+  //    用户要求去掉（P0-18：「不用显示几项 8」），连同 syncOvrUi 里的就地刷新调用一起删除 ——
+  //    函数一个都没留，避免死代码；将来要恢复就是「算数 + 拼一段 span」两处，成本很低。
+
+  /** 就地同步某个 overridable 字段的继承外观（开关状态 + 控件禁用）。
+      ⚠️ 故意**不重绘**：range 正在被拖动时重绘会换掉那个元素、拖拽直接中断。
+      所以只在「值落回继承哨兵（0 / 空）」这种状态翻转时调用，由它把外观拨回去。 */
+  function syncOvrUi(wrap, f) {
+    if (!f.overridable) return;
+    var inh = isInherited(getPath(scopeObj(), f.key));
+    wrap.classList.toggle('is-inherit', inh);
+    var sw = wrap.querySelector('.ovr-sw');
+    if (sw) {
+      sw.setAttribute('aria-checked', inh ? 'false' : 'true');
+      sw.title = ovrTitle(inh);
+    }
+    // 只禁用**控件区**的元素。⚠️ 用 `closest('.form-label')` 正向排除 ——
+    //   label 行里那个开关（还有 ⓘ）不是数据控件，禁用了用户就切不回「自定义」了。
+    wrap.querySelectorAll('input, button, select').forEach(function (el) {
+      if (el.closest('.form-label')) return;
+      el.disabled = inh;
+    });
+  }
+
   // ---------- 控件渲染 ----------
-  function labelHtml(f, valText) {
-    return '<div class="form-label">' + esc(f.label) + hintIcon(f.hint, f.key) +
-           (valText != null ? '<span class="lb-val" data-lbval>' + esc(valText) + '</span>' : '') +
-           '</div>';
+  /** 开关的两个悬停说明（关 = 继承 / 开 = 这一屏自定义） */
+  function ovrTitle(inh) {
+    return inh ? '继承全局排版 · 点一下改成这一屏单独设置'
+               : '已单独设置 · 点一下恢复继承全局排版';
+  }
+
+  function labelHtml(f, valText, ovrInherit) {
+    var tail = '';
+    if (f.overridable) {
+      // 「继承 / 自定义」开关占掉右侧数值位 —— 继承态下显示自己的值没意义（真正生效的是全局值）
+      // ⚠️ 2026-10-01 二次改版：这里原来是 `<select> 继承|自定义` 小胶囊，
+      //    10px 字 + 自绘箭头在最窄半格里会和文字挤在一起（用户反馈「很丑，还重叠」）。
+      //    改成 26×15 小号开关：比胶囊窄 29px，且开/关状态一眼可见（关=灰、开=强调色）。
+      tail = '<span class="lb-spacer"></span>' +
+        '<button type="button" class="ovr-sw" role="switch" data-ovrsw="1"' +
+          ' aria-checked="' + (ovrInherit ? 'false' : 'true') + '"' +
+          ' aria-label="' + esc(f.label) + '：改为这一屏单独设置"' +
+          ' title="' + esc(ovrTitle(ovrInherit)) + '"></button>';
+    } else if (valText != null) {
+      tail = '<span class="lb-val" data-lbval>' + esc(valText) + '</span>';
+    }
+    return '<div class="form-label">' + '<span class="lb-txt">' + esc(f.label) + '</span>' +
+           hintIcon(f.hint, f.key) + tail + '</div>';
   }
   /** 说明图标：把过去占据版面的灰色解释段收进 label / 图例旁的小 ⓘ，
       文案存 data-tip，悬停 / 键盘聚焦时由 #tipLayer 浮层显示（见 bindTips）。 */
@@ -530,6 +640,22 @@
       out += '<option value="' + esc(f.key) + '"' + (String(cur) === f.key ? ' selected' : '') + '>' +
              esc(f.label) + '</option>';
     });
+    return out;
+  }
+
+  /** 通用下拉（type:'select'）。
+      ⚠️ 值不在 options 里时（历史数据、早期用滑块存的任意值），要把它**补成一项**并且选中 ——
+         否则浏览器会回落到第一项，用户什么都没点，一保存就把数据静默改掉了。 */
+  function optionsHtml(f, cur) {
+    var out = '', hit = false;
+    (f.options || []).forEach(function (o) {
+      var on = String(o.v) === String(cur);
+      if (on) hit = true;
+      out += '<option value="' + esc(o.v) + '"' + (on ? ' selected' : '') + '>' + esc(o.t) + '</option>';
+    });
+    if (!hit && cur !== '' && cur !== null && cur !== undefined) {
+      out = '<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>' + out;
+    }
     return out;
   }
 
@@ -556,48 +682,51 @@
       '</div></div>';
   }
 
-  function controlHtml(f, val) {
+  function controlHtml(f, val, disabled) {
+    var dis = disabled ? ' disabled' : '';
     switch (f.type) {
       case 'text':
-        return '<input type="text" value="' + esc(val) + '">';
+        return '<input type="text" value="' + esc(val) + '"' + dis + '>';
       case 'textarea':
-        return '<textarea rows="' + (f.rows || 3) + '">' + esc(val) + '</textarea>';
+        return '<textarea rows="' + (f.rows || 3) + '"' + dis + '>' + esc(val) + '</textarea>';
       case 'number':
         return '<input type="number" value="' + esc(val) + '" min="' + resolveBound(f.min, 0) +
-               '" max="' + resolveBound(f.max, 100) + '" step="' + (f.step || 1) + '">';
+               '" max="' + resolveBound(f.max, 100) + '" step="' + (f.step || 1) + '"' + dis + '>';
       case 'range': {
         var d = digitsFor(f.step);
         return '<div class="range-wrap">' +
             '<input type="range" min="' + resolveBound(f.min, 0) + '" max="' + resolveBound(f.max, 100) +
-              '" step="' + (f.step || 1) + '" value="' + val + '">' +
+              '" step="' + (f.step || 1) + '" value="' + val + '"' + dis + '>' +
             '<input type="number" class="range-num" min="' + resolveBound(f.min, 0) + '" max="' + resolveBound(f.max, 100) +
-              '" step="' + (f.step || 1) + '" value="' + trimNum(val, d) + '">' +
+              '" step="' + (f.step || 1) + '" value="' + trimNum(val, d) + '"' + dis + '>' +
           '</div>';
       }
       case 'switch':
-        return '<label class="switch"><input type="checkbox"' + (val ? ' checked' : '') + '><i></i>' +
+        return '<label class="switch"><input type="checkbox"' + (val ? ' checked' : '') + dis + '><i></i>' +
                '<span>' + (val ? '开启' : '关闭') + '</span></label>';
       case 'palette':
         return '<div class="form-palette">' + (f.palette || []).map(function (p) {
           var on = String(p.v) === String(val);
           var dot = p.bg ? '<span class="sw-dot" style="background:' + esc(p.bg) + '"></span>' : '';
-          return '<button class="form-swatch' + (on ? ' on' : '') + '" type="button" data-v="' + esc(p.v) + '">' +
+          return '<button class="form-swatch' + (on ? ' on' : '') + '" type="button" data-v="' + esc(p.v) + '"' + dis + '>' +
                  dot + '<span>' + esc(p.t) + '</span></button>';
         }).join('') + '</div>';
       case 'color': {
         var hex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(val)) ? val : '#000000';
         return '<div class="color-row">' +
-            '<input type="color" value="' + esc(hex) + '">' +
-            '<input type="text" value="' + esc(val) + '" placeholder="留空 = 跟随主题" spellcheck="false">' +
-            (val ? '<button class="btn-icon" type="button" data-color-clear title="清空">✕</button>' : '') +
+            '<input type="color" value="' + esc(hex) + '"' + dis + '>' +
+            '<input type="text" value="' + esc(val) + '" placeholder="留空 = 跟随主题" spellcheck="false"' + dis + '>' +
+            (val ? '<button class="btn-icon" type="button" data-color-clear title="清空"' + dis + '>✕</button>' : '') +
           '</div>';
       }
       case 'font':
-        return '<select class="form-select">' + fontOptionsHtml(val, f.allowInherit) + '</select>';
+        return '<select class="form-select"' + dis + '>' + fontOptionsHtml(val, f.allowInherit) + '</select>';
+      case 'select':
+        return '<select class="form-select"' + dis + '>' + optionsHtml(f, val) + '</select>';
       case 'media':
         return mediaBoxHtml(f, val);
       default:
-        return '<input type="text" value="' + esc(val) + '">';
+        return '<input type="text" value="' + esc(val) + '"' + dis + '>';
     }
   }
 
@@ -609,11 +738,15 @@
   function fieldHtml(f, host) {
     var raw = getPath(host, f.key);
     if (raw === undefined) raw = f.type === 'switch' ? false : (f.type === 'range' ? resolveBound(f.min, 0) : '');
-    var val = clampField(f, raw);
-    var cls = 'field' + (f.span ? ' span-all' : '');
-    return '<div class="' + cls + '" data-fkey="' + esc(f.key) + '" data-ftype="' + f.type + '">' +
-      labelHtml(f, rangeLabelText(f, val)) +
-      controlHtml(f, val) +
+    // overridable 字段：继承态 → 控件禁用 + 显示全局值（.is-inherit 由 CSS 压暗、JS 兜底不写回）
+    var inherited = !!(f.overridable && isInherited(raw));
+    var val = f.overridable ? effVal(f, raw) : clampField(f, raw);
+    var cls = 'field' + (f.span ? ' span-all' : '') +
+              (f.overridable ? (' has-ovr' + (inherited ? ' is-inherit' : '')) : '');
+    return '<div class="' + cls + '" data-fkey="' + esc(f.key) + '" data-ftype="' + f.type + '"' +
+        (f.overridable ? ' data-ovr="1"' : '') + '>' +
+      labelHtml(f, rangeLabelText(f, val), inherited) +
+      controlHtml(f, val, inherited) +
     '</div>';
   }
 
@@ -644,15 +777,18 @@
            '</div>';
   }
 
-  /** 按 group 切分成若干 fieldset，inline 字段两列排布 */
-  function renderFields(fields, host) {
+  /** 按 group 切分成若干 fieldset，字段两列排布。
+      opts.fit = true → 用 auto-fit 网格：装得下两列就两列，装不下（参数栏窄断点）自动回落单列，
+      不会出现「标签被压成省略号」那种半格事故。 */
+  function renderFields(fields, host, opts) {
+    var fit = !!(opts && opts.fit);
     var html = '';
     var open = false;
     var buf = [];
 
     function flushGrid() {
       if (!buf.length) return;
-      html += '<div class="field-grid" style="--cols:2">' + buf.join('') + '</div>';
+      html += '<div class="field-grid' + (fit ? ' fit' : '') + '" style="--cols:2">' + buf.join('') + '</div>';
       buf = [];
     }
     fields.forEach(function (f) {
@@ -681,10 +817,20 @@
     switch (S.view) {
       case 'nav': return { title: '顶部导航', desc: '前台顶部那排菜单。增删 / 排序 / 改名都在这里。' };
       case 'footer': return { title: '底部板块', desc: "网页底部的 Let's talk 联系区块、二维码、页脚链接与版权。" };
-      case 'typo': return { title: '全局排版', desc: '所有场景层的基准字体、字号与颜色。单屏想不一样，去那一屏的「排版覆盖」里填。' };
       case 'site': return { title: '页面信息', desc: '标签标题、Logo 字母、导航按钮文字、章节导航开关与全站深浅主题。' };
       default: return null;
     }
+  }
+
+  /** 场景层面板的 3 张页卡。
+      ⚠️ 2026-10-01（P0-18）：标签右侧原来挂了个「自定义 N」小徽标，用户要求去掉，现为纯文字标签。 */
+  function sceneTabsHtml(host) {
+    return '<div class="form-tabs" id="sceneTabs" role="tablist">' + SCENE_TABS.map(function (t, i) {
+      return '<button class="form-tab' + (i === S.sceneTab ? ' on' : '') + '" type="button" role="tab" ' +
+             'aria-selected="' + (i === S.sceneTab ? 'true' : 'false') + '" data-scenetab="' + i + '">' +
+               '<span class="ft-txt">' + esc(t.label) + '</span>' +
+             '</button>';
+    }).join('') + '</div>';
   }
 
   function renderForm() {
@@ -725,10 +871,19 @@
       return;
     }
 
+    // 场景层：字段太多，按 SCENE_TABS 分 3 张页卡，只渲染当前那一张
+    var body;
+    if (S.sel.kind === 'scene') {
+      S.sceneTab = clamp(num(S.sceneTab, 0), 0, SCENE_TABS.length - 1);
+      body = sceneTabsHtml(host) + renderFields(SCENE_TABS[S.sceneTab].fields, host, { fit: true });
+    } else {
+      body = renderFields(currentFields(), host);
+    }
+
     pane.innerHTML =
       '<div class="form-head"><h2>' + esc(title) + hintIcon(desc, 'p:' + title) + '</h2>' +
         '<span>' + esc(extra) + '</span></div>' +
-      renderFields(currentFields(), host);
+      body;
   }
 
   // ---------- 一级菜单 + 结构树 ----------
@@ -744,11 +899,18 @@
     if (S.view !== 'structure') { box.innerHTML = ''; return; }
     var list = videos();
 
-    var head = '<div class="list-title">视频段 · 场景层</div>';
+    // 面板头 = 标题 + 「添加视频段」图标按钮。
+    // ⚠️ 2026-10-01：添加视频段原先是列表末尾一个满宽虚线按钮，跟场景包末尾那个宽度基准不同
+    //    （一个在 .tree-children 里、一个在外层），看上去就是「一长一短」。现在提到头部做图标按钮，
+    //    列表下面只剩场景包内那一个添加入口，也就没有长短可比了。
+    var head = '<div class="list-head">' +
+        '<span class="list-title">视频段 · 场景层</span>' +
+        '<button class="list-head-btn" type="button" id="btnAddVideo" title="添加视频段">＋</button>' +
+      '</div>';
+
     if (!list.length) {
       box.innerHTML = head +
-        '<div class="tree-node" style="cursor:default"><span class="tn-name">还没有视频段</span></div>' +
-        '<button class="btn-secondary btn-sm list-add" type="button" id="btnAddVideo">＋ 添加视频段</button>';
+        '<div class="tree-empty">还没有视频段<br>点右上角 ＋ 添加</div>';
       return;
     }
 
@@ -757,10 +919,8 @@
       var scenes = (v && v.scenes) || [];
       var onVideo = (S.sel.kind === 'video' && currentVi() === vi);
       var name = trimStr(v.name) || ('视频段 ' + (vi + 1));
-      var meta = [
-        v.src ? '已上传' : '未上传',
-        scenes.length + ' 场景'
-      ].join(' · ');
+      // ⚠️ 2026-10-01 用户要求去掉卡片头那行「已上传 · 4 场景」元信息 —— 卡头只留段名一行。
+      //    「有没有视频」看上方预览即可，「几个场景」数下面的包里有几条，都是冗余文字。
 
       var children = '';
       if (!collapsed) {
@@ -783,7 +943,9 @@
             '</div>';
         });
 
-        // 过渡屏节点：只有「后面还有段」时才可能出现
+        // 过渡屏节点：只有「后面还有段」时才可能出现。
+        // ⚠️ 2026-10-01：最后一段原来会补一行「↧ 最后一段，直接接底部板块」的说明行 ——
+        //    用户要求去掉（是纯解释文字，不承载任何操作；包内只剩真实的场景行与添加入口）。
         if (vi < list.length - 1) {
           var shown = outroShown(vi);
           var onOutro = (S.sel.kind === 'outro' && currentVi() === vi);
@@ -791,35 +953,39 @@
               '<span class="tn-idx">✦</span>' +
               '<span class="tn-name">' + (shown ? '过渡屏（已启用）' : '过渡屏（未填文案，不显示）') + '</span>' +
             '</div>';
-        } else {
-          children += '<div class="tree-node" style="cursor:default">' +
-              '<span class="tn-idx">↧</span>' +
-              '<span class="tn-name" style="font-style:italic">最后一段，直接接底部板块</span>' +
-            '</div>';
         }
 
-        children += '<button class="btn-secondary btn-sm list-add" type="button" data-addscene="1" data-vi="' + vi + '">＋ 添加场景层</button>';
+        // 场景包内唯一的添加入口：与场景行**同缩进、同宽**（都在 .tree-children 里），不再是满宽大按钮
+        children += '<button class="tree-add" type="button" data-addscene="1" data-vi="' + vi + '">＋ 添加场景层</button>';
       }
 
+      // 「包层级」：视频段是一张**外壳卡**（.tree-video），头部一行 .tv-head，
+      // 场景们装在卡内下方的灰底包 .tree-children 里 —— 从属关系靠「卡里套包」表达，
+      // 不再靠原来那条 1px 竖线缩进（那条线又细又容易看成同级）。
+      // ⚠️ .tree-children 必须在 .tree-video **内部**，否则包不起来（原来是兄弟节点）。
       return '<div class="tree-video' + (onVideo ? ' on' : '') + (collapsed ? ' collapsed' : '') + '" data-vi="' + vi + '">' +
-          '<span class="tv-caret" data-tvact="toggle">▼</span>' +
-          '<span class="tv-badge">' + (vi + 1) + '</span>' +
-          '<span class="tv-body">' +
-            '<span class="tv-name">' + esc(name) + '</span>' +
-            '<span class="tv-meta">' + esc(meta) + '</span>' +
-          '</span>' +
-          '<span class="tv-ops">' +
-            '<button class="btn-icon" type="button" data-tvact="up" title="上移"' + (vi === 0 ? ' disabled' : '') + '>↑</button>' +
-            '<button class="btn-icon" type="button" data-tvact="down" title="下移"' + (vi === list.length - 1 ? ' disabled' : '') + '>↓</button>' +
-            '<button class="btn-icon danger" type="button" data-tvact="del" title="删除这一段">✕</button>' +
-          '</span>' +
-        '</div>' +
-        (collapsed ? '' : '<div class="tree-children">' + children + '</div>');
-    }).join('') +
-      '<button class="btn-secondary btn-sm list-add" type="button" id="btnAddVideo">＋ 添加视频段</button>';
+          '<div class="tv-head">' +
+            '<span class="tv-caret" data-tvact="toggle">▼</span>' +
+            '<span class="tv-badge">' + (vi + 1) + '</span>' +
+            '<span class="tv-body">' +
+              '<span class="tv-name">' + esc(name) + '</span>' +
+            '</span>' +
+            '<span class="tv-ops">' +
+              '<button class="btn-icon" type="button" data-tvact="up" title="上移"' + (vi === 0 ? ' disabled' : '') + '>↑</button>' +
+              '<button class="btn-icon" type="button" data-tvact="down" title="下移"' + (vi === list.length - 1 ? ' disabled' : '') + '>↓</button>' +
+              '<button class="btn-icon danger" type="button" data-tvact="del" title="删除这一段">✕</button>' +
+            '</span>' +
+          '</div>' +
+          (collapsed ? '' : '<div class="tree-children">' + children + '</div>') +
+        '</div>';
+    }).join('');
   }
 
   // ---------- 时间轴（当前段） ----------
+  // 每个场景层一个序号色：结构树 / 时间轴 / 监视器共用同一套，方便对上号
+  var SCENE_COLORS = ['#6366f1', '#f5b544', '#34c7a0', '#c58cf0', '#ff8f5a', '#4dc4f0'];
+  function sceneColor(i) { return SCENE_COLORS[((i % SCENE_COLORS.length) + SCENE_COLORS.length) % SCENE_COLORS.length]; }
+
   /**
    * 某一屏「文字可见范围」占本屏区间的比例（含两端的淡入 / 淡出）。
    * 与 scrub.js 的 textTl() 同一套取值规则（单屏覆盖优先，0/空 = 继承全局排版）。
@@ -843,15 +1009,21 @@
     $('tlDur').textContent = dur ? ('总时长 ' + fmtSec(dur) + ' · ' + list.length + ' 个场景层') : '未设置视频';
 
     var track = $('tlTrack');
-    var inner = $('tlInner');
+    var lane = $('tlLane');
+    var cur = $('tlCur');          // 头部中间那颗「当前屏身份」chip（原轨道左列，2026-10-01 上移）
     var ruler = $('tlRuler');
     var v = videoAt(currentVi());
 
     if (!dur || !list.length) {
       track.classList.add('is-empty');
-      inner.innerHTML = '<div class="tl-empty-msg">' +
+      lane.innerHTML = '<div class="tl-empty-msg">' +
         (dur ? '这一段还没有场景层，左边结构树里添加' : '先在表单里给这一段上传视频') + '</div>';
+      cur.classList.add('is-empty');
+      cur.removeAttribute('title');
+      cur.innerHTML = '<i class="tl-cur-dot"></i><span>' +
+        (dur ? '这一段还没有场景层' : '还没有上传视频') + '</span>';
       ruler.innerHTML = '';
+      syncWarn([]);          // 空态没有重叠可言，顺手把上一段的警告清掉（否则会留着上一段的提示）
       return;
     }
     track.classList.remove('is-empty');
@@ -868,39 +1040,80 @@
       }
     }
 
-    // 空隙：相邻两屏之间未被覆盖的时间（滚动到交界会跳帧）
-    var gaps = '';
+    // 交界处的两种编排断裂（方向相反）：
+    //   · 空隙 a<tEnd < b=tStart → 视频跳过一截不播（跳帧前进），橙色斜纹铺段间
+    //   · 重叠 a > b             → 同一段视频被两屏各扫一遍，滚动到交界处画面会倒回去重播
+    //     ⚠️ 重叠在收缩叙事里几乎总是笔误（拖拽不阻止它：handleDrag 只夹自身不夹邻居），
+    //        所以除了轨道底部红纹，头部还会出一颗可点的警告 chip。
+    var gaps = '', overlaps = '', ovTips = [];
     for (var i = 0; i < list.length - 1; i++) {
       var a = num(list[i].tEnd, 0);
       var b = num(list[i + 1].tStart, 0);
       if (b - a > 0.01) {
         gaps += '<div class="tl-gap" style="left:' + (a / dur * 100).toFixed(3) + '%;width:' +
                 ((b - a) / dur * 100).toFixed(3) + '%"></div>';
+      } else if (a - b > 0.01) {
+        ovTips.push('屏 ' + (i + 1) + '·' + (i + 2) + ' 重叠 ' + fmtSec(a - b));
+        overlaps += '<div class="tl-overlap" style="left:' + (b / dur * 100).toFixed(3) + '%;width:' +
+                    ((a - b) / dur * 100).toFixed(3) + '%" title="屏幕 ' + (i + 1) + ' 与屏幕 ' + (i + 2) +
+                    ' 重叠 ' + fmtSec(a - b) + '&#10;第 ' + (i + 2) + ' 屏开始时画面会倒回 ' + fmtSec(b) +
+                    '（滚动到交界处会重播这一截）"></div>';
       }
     }
 
     var curSi = (S.sel.kind === 'scene') ? S.sel.si : -1;
-    inner.innerHTML = loopBand + list.map(function (s, i) {
+    // clip 带：纯色块（不再铺视频缩略图 —— 画面在上面的监视器里实时看着）；
+    // 带内那层 = 文字参数带，两端菱形就是 textIn / textOut，直接拖
+    lane.innerHTML = loopBand + list.map(function (s, i) {
       var a = clamp(num(s.tStart, 0), 0, dur);
       var b = clamp(num(s.tEnd, a), a, dur);
       var left = a / dur * 100;
-      var w = Math.max((b - a) / dur * 100, 0.6);
+      // ⚠️ 最短 2%：再短（旧的 0.6%）在 440px 预览栏里不到 3px，两端手柄糊成一坨点不中
+      var w = Math.max((b - a) / dur * 100, 2);
       var on = (i === curSi);
-      // 白杠 = 文字从淡入到淡出的可见范围（占本屏区间；两端各含一次淡入淡出）
-      var ts = sceneTextSpan(s);
-      var txtBand = '<i class="tl-text" style="left:' + (ts.t0 * 100).toFixed(2) + '%;width:' +
-                    Math.max((ts.t1 - ts.t0) * 100, 1).toFixed(2) + '%"></i>';
+      var ts = sceneTextSpan(s);                       // 文字可见范围（相对本屏区间）
+      var t0 = (ts.t0 * 100).toFixed(2);
+      var t1 = (ts.t1 * 100).toFixed(2);
+      var bw = Math.max((ts.t1 - ts.t0) * 100, 1).toFixed(2);
       return '<div class="tl-seg' + (on ? ' on' : '') + '" data-i="' + i + '"' +
-             ' style="left:' + left.toFixed(3) + '%;width:' + w.toFixed(3) + '%"' +
-             ' title="场景 ' + (i + 1) + ' ' + fmtSec(a) + ' → ' + fmtSec(b) +
-             '&#10;文字 ' + fmtSec(a + (b - a) * ts.t0) + ' → ' + fmtSec(a + (b - a) * ts.t1) + '">' +
+             ' style="left:' + left.toFixed(3) + '%;width:' + w.toFixed(3) + '%;border-left-color:' + sceneColor(i) + '"' +
+             ' title="屏幕 ' + (i + 1) + ' ' + fmtSec(a) + ' → ' + fmtSec(b) + '（拖两端改起止）' +
+             '&#10;文字 ' + fmtSec(a + (b - a) * ts.t0) + ' → ' + fmtSec(a + (b - a) * ts.t1) + '（拖菱形改淡入/淡出）">' +
                '<span class="tl-handle l" data-side="l"></span>' +
-               '<span>' + (i + 1) + '</span>' +
-               txtBand +
+               '<span class="tl-num">' + (i + 1) + '</span>' +
+               // ⚠️ 菱形贴在带子的两端（0% / 100%），不是再写 t0/t1 ——
+               //    带子本身就是 [t0, t1] 那段，子元素再写 t0% 是相对「带子宽度」再算一次 → 位置被缩进
+               '<i class="tl-band" style="left:' + t0 + '%;width:' + bw + '%">' +
+                 '<b class="tl-dia l" data-side="l" style="left:0%"></b>' +
+                 '<b class="tl-dia r" data-side="r" style="left:100%"></b>' +
+               '</i>' +
                '<span class="tl-handle r" data-side="r"></span>' +
              '</div>';
-    }).join('') + gaps +
-      '<div class="tl-play" id="tlPlay" title="拖动查看该时刻的画面"></div>';
+    }).join('') + gaps + overlaps;
+
+    // 头部中间 chip：跟着选中屏走，一行给出「第几屏 / 哪一段 / 多长」。
+    // ⚠️ 原来是轨道左侧 112px 的竖排两行（屏名一行 + 起止/时长一行），窄列会把「屏幕 2」压成「屏…」；
+    //    搬到头部后横向宽裕，一律单行 —— 分隔点拆成独立 span 才好各自上色。
+    if (curSi >= 0 && list[curSi]) {
+      var ga = num(list[curSi].tStart, 0);
+      var gb = num(list[curSi].tEnd, ga);
+      cur.classList.remove('is-empty');
+      cur.title = '屏幕 ' + (curSi + 1) + ' · ' + fmtSec(ga) + ' → ' + fmtSec(gb) +
+                  '（拖轨道上这一段的两端可改起止）';
+      cur.innerHTML = '<i class="tl-cur-dot" style="background:' + sceneColor(curSi) + '"></i>' +
+        '<b class="tl-cur-nm">屏幕 ' + (curSi + 1) + '</b>' +
+        '<span class="tl-cur-sep">·</span>' +
+        '<span class="tl-cur-rng">' + fmtSec(ga) + '–' + fmtSec(gb) + '</span>' +
+        '<span class="tl-cur-sep">·</span>' +
+        '<span class="tl-cur-dur">占 ' + fmtSec(gb - ga) + '</span>';
+    } else {
+      cur.classList.add('is-empty');
+      cur.title = '点轨道上某个区间可查看它的起止时间';
+      cur.innerHTML = '<i class="tl-cur-dot"></i><span>共 ' + list.length + ' 屏 · 点一下某屏看详情</span>';
+    }
+
+    syncWarn(ovTips);
+
     renderPlayhead();
 
     // 刻度：按总时长选一个整齐的步长，最多约 10 个
@@ -918,105 +1131,6 @@
     ruler.innerHTML = ticks;
   }
 
-  // ---------- 时间轴胶片层（整段视频的帧）----------
-  // 每段视频各有一池帧（160×100 jpeg），沿时间轴等距铺开 ——
-  // 「时间轴上的画面」与「该时刻实际会出现的画面」严格对应（帧池等距 = 时间等距）。
-  // 为什么抽帧池而不是按需抓帧：改区间/拖播放头会高频重绘，按需抓帧要不停 seek，卡；
-  // 帧池只在「换视频」时抓一次，之后画布重绘是纯内存操作。按 src 缓存在 S.frames 里。
-  var POOL_W = 160, POOL_H = 100, POOL_MAX = 32;
-
-  function drawFilm() {
-    var cv = $('tlFilm');
-    var src = (videoAt(currentVi()) || {}).src || '';
-    var imgs = S.frames[src];
-    var ctx, w, h;
-    if (!cv) return;
-    w = Math.round(cv.clientWidth);
-    h = Math.round(cv.clientHeight);
-    if (!w || !h) return;
-    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-    ctx = cv.getContext('2d');
-    ctx.clearRect(0, 0, w, h);
-    if (!imgs || !imgs.length) return;
-    var tileW = Math.max(24, Math.round(h * POOL_W / POOL_H));   // 每格按缩略图比例
-    var n = Math.ceil(w / tileW);
-    for (var i = 0; i < n; i++) {
-      var k = Math.round((i + 0.5) / n * (imgs.length - 1));
-      var im = imgs[k];
-      if (!im || !im.complete || !im.naturalWidth) continue;
-      var x = i * tileW;
-      // 逐格裁切填满（cover），与前台 object-fit:cover 同一取向
-      var sc = Math.max(tileW / im.naturalWidth, h / im.naturalHeight);
-      var dw = im.naturalWidth * sc, dh = im.naturalHeight * sc;
-      ctx.drawImage(im, x + (tileW - dw) / 2, (h - dh) / 2, dw, dh);
-      if (i > 0) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x - 1, 0, 2, h); }
-    }
-    // 整条压暗一层：区间色块与编号要能压得住画面
-    ctx.fillStyle = 'rgba(0,0,0,0.22)';
-    ctx.fillRect(0, 0, w, h);
-  }
-
-  /** 抽出某一秒的画面到帧池（串行 seek，避免解码器抖动） */
-  function captureFrames() {
-    var v = videoAt(currentVi());
-    var src = (v && v.src) || '';
-    var dur = durationOf(currentVi());
-    var probe = $('probeVideo');
-    if (!src || !dur || !probe) return;
-    if (S.frames[src] || S.framesBusy[src]) return;   // 已抓过 / 正在抓
-    S.framesBusy[src] = true;
-
-    function run() {
-      if (probe.readyState < 2) {
-        probe.addEventListener('loadeddata', run, { once: true });
-        return;
-      }
-      var n = clamp(Math.round(dur), 12, POOL_MAX);
-      var pool = new Array(n);
-      var i = 0;
-      var done = false;
-      probe.onseeked = function () { draw(); };
-
-      function finish() {
-        if (done) return;
-        done = true;
-        probe.onseeked = null;
-        delete S.framesBusy[src];
-        // 转成 <img> 后画布才能同步 drawImage（dataURL 数组没法直接画）
-        S.frames[src] = pool.map(function (url) {
-          var im = new Image();
-          if (url) { im.onload = drawFilm; im.src = url; }
-          return im;
-        });
-        drawFilm();
-      }
-      function draw() {
-        if (done) return;
-        if (i >= n) { finish(); return; }
-        try {
-          var c = document.createElement('canvas');
-          c.width = POOL_W; c.height = POOL_H;
-          var ctx = c.getContext('2d');
-          var vw = probe.videoWidth || 16, vh = probe.videoHeight || 9;
-          var k = Math.max(POOL_W / vw, POOL_H / vh);
-          ctx.drawImage(probe, (POOL_W - vw * k) / 2, (POOL_H - vh * k) / 2, vw * k, vh * k);
-          pool[i] = c.toDataURL('image/jpeg', 0.62);
-        } catch (_) { pool[i] = ''; }
-        i++;
-        step();
-      }
-      function step() {
-        if (done) return;
-        if (i >= n) { finish(); return; }
-        var t = (i / (n - 1)) * Math.max(0, dur - 0.05);
-        if (Math.abs(probe.currentTime - t) < 0.005) { draw(); return; }
-        try { probe.currentTime = t; } catch (_) { finish(); }
-      }
-      step();
-    }
-    run();
-  }
-
   /** 一次拖拽的收尾都挂在 window 上：指针滑出轨道/元素被重建也不会丢事件 */
   function dragLoop(move, up) {
     function onUp(ev) {
@@ -1030,10 +1144,13 @@
     window.addEventListener('pointercancel', onUp);
   }
 
-  /** 指针位置 → 视频时刻（秒） */
+  /** 指针位置 → 视频时刻（秒）。
+   *  ⚠️ 基准必须是 lane（= 轨道去掉左侧 gutter 后的那条时间带），不是整条 .tl-track。
+   *     用轨道盒子算会整体偏一整个 gutter 宽 —— 拿左侧 156px 去换算时间，全错位。 */
   function trackTimeAt(ev, track, dur) {
-    var rect = track.getBoundingClientRect();
-    return clamp((ev.clientX - rect.left) / rect.width, 0, 1) * dur;
+    var lane = $('tlLane') || track;
+    var rect = lane.getBoundingClientRect();
+    return clamp((ev.clientX - rect.left) / (rect.width || 1), 0, 1) * dur;
   }
 
   // 时间轴交互：① 拖轨道 = 拖播放头看画面（松手落到该帧所属那一屏）
@@ -1046,26 +1163,25 @@
       var dur = durationOf(currentVi());
       if (!dur) return;
       var handle = e.target.closest ? e.target.closest('.tl-handle') : null;
+      var dia = e.target.closest ? e.target.closest('.tl-dia') : null;
       var seg = e.target.closest ? e.target.closest('.tl-seg') : null;
       var i = seg ? parseInt(seg.getAttribute('data-i'), 10) : -1;
       e.preventDefault();
       pvPause();
 
-      if (handle && seg && !isNaN(i)) {
-        selectScene(currentVi(), i, null, true);   // 先选中，再拖（重建后重取节点）
+      if (dia && seg && !isNaN(i)) {                 // 拖菱形 = 改文字的淡入 / 淡出
+        selectScene(currentVi(), i, null, true);
         var seg2 = track.querySelector('.tl-seg[data-i="' + i + '"]');
-        if (seg2) handleDrag(e, track, seg2, i, dur, handle.getAttribute('data-side'));
+        if (seg2) bandDrag(e, track, seg2, i, dur, dia.getAttribute('data-side'));
+        return;
+      }
+      if (handle && seg && !isNaN(i)) {              // 拖 clip 两端 = 改这一屏的起止
+        selectScene(currentVi(), i, null, true);
+        var seg3 = track.querySelector('.tl-seg[data-i="' + i + '"]');
+        if (seg3) handleDrag(e, track, seg3, i, dur, handle.getAttribute('data-side'));
         return;
       }
       scrubDrag(e, track, dur);
-    });
-
-    // 宽度变了要按新宽度重铺胶片（帧池不用重抓，只是分格数变了）
-    var filmTick = false;
-    window.addEventListener('resize', function () {
-      if (filmTick) return;
-      filmTick = true;
-      requestAnimationFrame(function () { filmTick = false; drawFilm(); });
     });
   }
 
@@ -1126,7 +1242,7 @@
       var a = num(s.tStart, 0);
       var b = num(s.tEnd, a);
       seg.style.left = (a / dur * 100).toFixed(3) + '%';
-      seg.style.width = Math.max((b - a) / dur * 100, 0.6).toFixed(3) + '%';
+      seg.style.width = Math.max((b - a) / dur * 100, 2).toFixed(3) + '%';
       seg.title = '场景 ' + (si + 1) + ' ' + fmtSec(a) + ' → ' + fmtSec(b);
       syncRangeInputs(['tStart', 'tEnd']);
       setPvScreen({ kind: 'scene', vi: currentVi(), si: si });
@@ -1140,6 +1256,64 @@
     }
     move(e0);           // 按下即定位，单击手柄也能立刻看到首/尾帧
     dragLoop(move, up);
+  }
+
+  /**
+   * 拖文字参数带：改这一屏的 textIn / textOut。
+   * 条的位置由 sceneTextSpan 反推（t0=(in-fade)/100、t1=(out+fade)/100），所以
+   * 拖动时只改百分比字段本身，条和菱形一起 paint 出来即可 —— 数据零搬运，content.json 结构不动。
+   * side: 'l' 拖左端（只改 textIn） / 'r' 拖右端（只改 textOut） / 'move' 拖整条（两者同步平移，fade 不变）
+   */
+  function bandDrag(e0, track, seg, si, dur, side) {
+    var s = sceneAt(currentVi(), si);
+    if (!s) return;
+    var g = (S.content && S.content.home && S.content.home.typography) || {};
+    var fade = num(s.textFade, 0) || num(g.textFade, 16);
+    var band = seg.querySelector('.tl-band');
+    var diaL = seg.querySelector('.tl-dia.l');
+    var diaR = seg.querySelector('.tl-dia.r');
+
+    function paint() {
+      var ts = sceneTextSpan(s);
+      var t0 = ts.t0 * 100;
+      var t1 = ts.t1 * 100;
+      band.style.left = t0.toFixed(2) + '%';
+      band.style.width = Math.max(t1 - t0, 1).toFixed(2) + '%';
+      // 菱形永远贴在带子两端，跟着带子走即可（见 renderTimeline 里同一处说明）
+      diaL.style.left = '0%';
+      diaR.style.left = '100%';
+    }
+    // ⚠️ 百分比基准 = 本屏 clip 自己（.tl-seg 是绝对定位，是 .tl-band 的包含块）。
+    //    错用 lane 或轨道会让「拖到哪儿 = 百分之几」整体错位。
+    // 扣掉左边框（clip 有 3px 左侧色条）：绝对定位子元素的 0% 从 padding box 起算，
+    // 直接用 rect 会把整段百分比往左偏 4px。
+    function pctAt(ev) {
+      var r = seg.getBoundingClientRect();
+      var inner = seg.clientWidth || r.width || 1;
+      return clamp((ev.clientX - r.left - seg.clientLeft) / inner, 0, 1) * 100;
+    }
+
+    function move(ev) {
+      var f = pctAt(ev);
+      if (side === 'l') {
+        s.textIn = clamp(f + fade, 0, 100);
+        if (num(s.textIn, 0) > num(s.textOut, 0)) s.textIn = num(s.textOut, 0);
+      } else if (side === 'r') {
+        s.textOut = clamp(f - fade, 0, 100);
+        if (num(s.textOut, 0) < num(s.textIn, 0)) s.textIn = s.textOut;
+      } else {
+        var d = f - (num(s.textIn, 0) - fade);          // 相对「起点应在的位置」的位移
+        s.textIn = clamp(num(s.textIn, 0) + d, 0, 100);
+        s.textOut = clamp(num(s.textOut, 0) + d, 0, 100);
+      }
+      paint();
+      syncRangeInputs(['textIn', 'textOut']);
+      setPvScreen({ kind: 'scene', vi: currentVi(), si: si });
+      syncMonitor();
+      markDirty();
+    }
+    move(e0);                       // 按下即定位，单击菱形也能立刻生效
+    dragLoop(move, function () { renderTimeline(); syncMonitor(); });
   }
 
   /** 只更新表单里指定 key 的 range 显示值（拖时间轴时用，避免整表重绘丢焦点） */
@@ -1170,6 +1344,9 @@
   function commitField(wrap) {
     var f = fieldOfWrap(wrap);
     if (!f || f.type === 'repeater') return;
+    // 继承态控件是 disabled、理论上不派发事件；这里再兜一层 ——
+    // 万一被程序化触发，也不能把「显示出来的全局值」写成本屏的自定义值。
+    if (f.overridable && wrap.classList && wrap.classList.contains('is-inherit')) return;
     // repeater 内部的字段另走一条路（写回数组项）
     var rp = wrap.closest ? wrap.closest('.repeater') : null;
     if (rp) { commitRepeaterField(rp, wrap, f); return; }
@@ -1179,6 +1356,9 @@
     var key = wrap.getAttribute('data-fkey');
     var val = readControl(f, wrap);
     setPath(host, key, val);
+
+    // overridable 字段：值若落到继承哨兵（0 / 空），外观要立刻拨回「继承」态
+    if (f.overridable) syncOvrUi(wrap, f);
 
     if (f.type === 'range') {
       var lb = wrap.querySelector('[data-lbval]');
@@ -1194,7 +1374,7 @@
     }
     if (S.view === 'structure' && S.sel.kind === 'scene' && key === 'title') renderTree();
     if (S.view === 'structure' && S.sel.kind === 'video' && key === 'name') renderTree();
-    if (S.view === 'site' && key === 'theme') syncThemeBtn();
+    // theme 变了只需监视器跟着换皮（顶栏那个快捷按钮已移除，无按钮态要同步）
 
     markDirty();
     syncMonitor();
@@ -1287,7 +1467,23 @@
       }
 
       var wrap = e.target.closest ? e.target.closest('.field') : null;
+
+      // ---- 场景层参数栏的 3 张页卡切换（不写数据，只切当前页卡）----
+      var tabBtn = e.target.closest ? e.target.closest('[data-scenetab]') : null;
+      if (tabBtn) {
+        S.sceneTab = clamp(parseInt(tabBtn.getAttribute('data-scenetab'), 10) || 0, 0, SCENE_TABS.length - 1);
+        renderForm();
+        return;
+      }
+
       if (!wrap) return;
+
+      // ---- 「继承 / 自定义」开关：不写字段值，只翻这个字段的覆盖状态（setOverride 内部整块重绘）----
+      var ovrBtn = e.target.closest('.ovr-sw');
+      if (ovrBtn) {
+        setOverride(wrap, ovrBtn.getAttribute('aria-checked') !== 'true');
+        return;
+      }
 
       var sw = e.target.closest('.form-swatch');
       if (sw) {
@@ -1361,7 +1557,6 @@
     renderForm();
     renderTimeline();
     syncMonitor();
-    if (!silent) captureFrames();
   }
 
   function selectVideo(vi) {
@@ -1373,7 +1568,6 @@
     renderForm();
     renderTimeline();
     syncMonitor();
-    captureFrames();
   }
 
   function selectOutro(vi) {
@@ -1384,7 +1578,6 @@
     renderForm();
     renderTimeline();
     syncMonitor();
-    captureFrames();
   }
 
   /** 保证 S.sel 指向的节点仍存在（增删段/场景后调用） */
@@ -1436,7 +1629,6 @@
         }
         normalizeSel();
         renderSideMenu(); renderTree(); renderForm(); renderTimeline(); syncMonitor();
-        captureFrames();
         return;
       }
 
@@ -1500,8 +1692,14 @@
       if (outro) { selectOutro(parseInt(outro.getAttribute('data-vi'), 10)); return; }
       var scNode = t.closest ? t.closest('[data-scene]') : null;
       if (scNode) { selectScene(parseInt(scNode.getAttribute('data-vi'), 10), parseInt(scNode.getAttribute('data-si'), 10)); return; }
-      var vNode = t.closest ? t.closest('.tree-video') : null;
-      if (vNode) { selectVideo(parseInt(vNode.getAttribute('data-vi'), 10)); return; }
+      // ⚠️ 兜底选段只认**头部行 .tv-head**，不认整张 .tree-video：
+      // 2026-10-01 起卡里还包着场景包，用整卡兜底会把「点包内空白」也算成选段，参数栏会莫名跳走。
+      var vHead = t.closest ? t.closest('.tv-head') : null;
+      if (vHead) {
+        var vBox = vHead.closest('.tree-video');
+        if (vBox) selectVideo(parseInt(vBox.getAttribute('data-vi'), 10));
+        return;
+      }
     });
   }
 
@@ -1530,8 +1728,11 @@
       }
       markDirty();
       renderTimeline(); renderTree(); renderForm(); syncMonitor();
-      toast('已消除段间空隙');
+      toast('已把每屏终点对齐到下一屏起点（空隙与重叠一并消除）');
     });
+
+    // 重叠警告 chip：等价于点「衔接」—— 看得见问题就能就地修掉
+    $('tlWarn').addEventListener('click', function () { $('btnChain').click(); });
   }
 
   // ---------- 媒体上传 ----------
@@ -1646,10 +1847,9 @@
           s.tEnd = clamp(num(s.tEnd, s.tStart), num(s.tStart, 0), d);
         });
       }
-      // 换视频了：该 src 的旧帧池作废（不同 src 天然分开缓存，这里只需重抓当前段）
+      // 探测到真实时长后：时间轴上限、区间收敛、刻度步长全都要跟着变
       renderTimeline(); renderTree(); renderForm(); syncMonitor();
-      captureFrames();
-    };
+      };
     v.onerror = function () { toast('视频元信息读取失败，时间轴上限用配置里的时长', true); };
     v.src = src;
     v.load();
@@ -1686,8 +1886,7 @@
     // 全部探测完后刷新一次 UI
     var total = queue.length;
     if (total) setTimeout(function () {
-      renderTimeline(); renderTree(); renderForm(); syncMonitor(); captureFrames();
-    }, 400 * total + 400);
+      renderTimeline(); renderTree(); renderForm(); syncMonitor(); }, 400 * total + 400);
   }
 
   // ---------- 画面预览（监视器）----------
@@ -1771,17 +1970,85 @@
     el.textContent = head;
   }
 
+  /** 轨道左列宽。单一真源在 CSS 的 --tl-gutter，这里读过来，免得 JS 和 CSS 各写一个数、改一处就错位。
+      ⚠️ 2026-10-01 起该值恒为 0（左「当前屏身份」列已搬到头部居中 chip）——
+         0 时下面两处 calc 自动退化成「无偏移 + 满宽」，不需要改代码。 */
+  function tlGutterPx() {
+    var n = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tl-gutter'));
+    return isNaN(n) ? 0 : n;
+  }
+
+  /**
+   * 重叠警告 chip：相邻两屏共用了一段视频时间（滚动到交界处画面会倒回重播）。
+   * tips 为每对重叠的文案数组（如 ['屏 1·2 重叠 0.55s']），空数组 = 收起 chip。
+   * 点击行为见 initEvents 里对 #tlWarn 的绑定（等价于点「衔接」）。
+   */
+  function syncWarn(tips) {
+    var el = $('tlWarn');
+    if (!el) return;
+    if (tips && tips.length) {
+      el.textContent = '⚠ ' + tips.join('，');
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
   /** 播放头位置。只改 style 不重建 DOM —— 播放时每帧都要调 */
   function renderPlayhead() {
     var el = $('tlPlay');
     if (!el) return;
     var dur = durationOf(currentVi());
-    el.style.left = (dur ? clamp(S.playhead / dur, 0, 1) * 100 : 0).toFixed(3) + '%';
+    var frac = dur ? clamp(S.playhead / dur, 0, 1) : 0;
+    // ⚠️ 播放头要落在 lane 里：lane 从 --tl-gutter 起、宽 100% - gutter。
+    //    直接写 frac% 是相对整个轨道（含轨道头），会偏一整个 gutter 宽。
+    var g = tlGutterPx();
+    el.style.left = 'calc(' + g + 'px + (100% - ' + g + 'px) * ' + frac.toFixed(5) + ')';
+    var tc = $('tlPlayTc');
+    if (tc) tc.textContent = fmtSec(S.playhead);
   }
 
   function syncPlayBtn() {
     var b = $('pvPlay');
-    if (b) b.textContent = S.playing ? '⏸ 暂停' : '▶ 播放本屏';
+    if (!b) return;
+    b.classList.toggle('playing', !!S.playing);
+    b.setAttribute('aria-label', S.playing ? '暂停本屏' : '播放本屏');
+  }
+
+  /** 画布上方浮层：当前屏序号 + 前后按钮的可用态（越界置灰，不做跨段跳转） */
+  function syncPvNav() {
+    var idx = $('pvIdx'), prev = $('pvPrev'), next = $('pvNext');
+    if (!idx) return;
+    var n = scenesOf(currentVi()).length;
+    var si = (S.sel.kind === 'scene') ? S.sel.si : -1;
+    idx.textContent = n ? ((si >= 0 ? si + 1 : '–') + ' / ' + n) : '0 / 0';
+    if (prev) prev.disabled = !(si > 0);
+    if (next) next.disabled = !(si >= 0 && si < n - 1);
+  }
+
+  /** 上一屏 / 下一屏。只在当前这一段内切换 —— 跨段会让「第几屏 / 共几屏」失去参照 */
+  function pvStep(dir) {
+    var list = scenesOf(currentVi());
+    if (!list.length) return;
+    var si = (S.sel.kind === 'scene') ? S.sel.si : -1;
+    if (si < 0) { selectScene(currentVi(), dir > 0 ? 0 : list.length - 1); return; }
+    var t = si + dir;
+    if (t < 0 || t >= list.length) return;
+    selectScene(currentVi(), t);
+  }
+
+  /** 重置：播放头回到当前这一屏的起点（整段 / 过渡屏则回到各自区间起点） */
+  function pvReset() {
+    var t = 0;
+    if (S.sel.kind === 'scene') {
+      var sc = scenesOf(currentVi())[S.sel.si];
+      if (sc) t = num(sc.tStart, 0);
+    } else if (S.sel.kind === 'outro') {
+      t = screenTime();
+    }
+    pvPause();
+    seek(t, true);
+    toast('已回到本屏起点');
   }
 
   function pvPause() {
@@ -1870,6 +2137,7 @@
     if (v.readyState >= 1) { try { v.currentTime = t; } catch (_) {} }
     renderPlayhead();
     updatePvNote();
+    syncPvNav();
   }
 
   /** 把播放头收进当前这一屏的区间（换屏时用；本来就在区间里则原地不动） */
@@ -1882,16 +2150,26 @@
     if (!(S.playhead >= a - 1e-6 && S.playhead <= b + 1e-6)) S.playhead = a;
   }
 
+  /** 把 1280×800 的逻辑舞台等比缩放进监视器的「内容盒」——
+      即容器扣掉四周的信箱留边（--pv-pad-x / --pv-pad-y，见 admin-ui.css）。
+      ⚠️ 留边必须在这里扣掉：.pv-stage 是绝对定位，它的包含块是 .pv-body 的
+      内边距盒，left:0 落在边框内侧而**不是**内容盒，不扣就会把留边吃掉。 */
   function fitPreview() {
     var body = $('pvBody');
     var stage = $('pvStage');
     if (!body || !stage) return;
-    var w = body.clientWidth, h = body.clientHeight;
-    if (!w || !h) return;
+    var cs = getComputedStyle(body);
+    var padL = parseFloat(cs.paddingLeft) || 0;
+    var padT = parseFloat(cs.paddingTop) || 0;
+    var padX = padL + (parseFloat(cs.paddingRight) || 0);
+    var padY = padT + (parseFloat(cs.paddingBottom) || 0);
+    // clientWidth/Height 是「内容 + 内边距」，扣掉留边才是画面真正可用的盒子
+    var w = body.clientWidth - padX, h = body.clientHeight - padY;
+    if (w <= 0 || h <= 0) return;
     var scale = Math.min(w / PREVIEW_W, h / PREVIEW_H);
     stage.style.transform = 'scale(' + scale.toFixed(4) + ')';
-    stage.style.left = Math.max(0, (w - PREVIEW_W * scale) / 2) + 'px';
-    stage.style.top = Math.max(0, (h - PREVIEW_H * scale) / 2) + 'px';
+    stage.style.left = Math.round(padL + Math.max(0, (w - PREVIEW_W * scale) / 2)) + 'px';
+    stage.style.top = Math.round(padT + Math.max(0, (h - PREVIEW_H * scale) / 2)) + 'px';
   }
 
   function bindPreview() {
@@ -1902,6 +2180,25 @@
     });
     v.addEventListener('ended', pvPause);
     $('pvPlay').addEventListener('click', pvPlayToggle);
+    $('pvPrev').addEventListener('click', function () { pvStep(-1); });
+    $('pvNext').addEventListener('click', function () { pvStep(1); });
+    $('pvReset').addEventListener('click', pvReset);
+
+    // 画布快捷键：← → 切屏、空格播放/暂停。
+    // 输入框内不拦（否则没法打字）；分隔条聚焦时也不拦（它自己用 ← → 调参数栏宽度）。
+    document.addEventListener('keydown', function (e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      var t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (t && t.closest && t.closest('.pane-split')) return;
+      if (S.view !== 'structure') return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); pvStep(-1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); pvStep(1); }
+      else if (e.key === ' ') {
+        if (t && t.tagName === 'BUTTON') return;   // 让空格照常触发已聚焦的按钮
+        e.preventDefault(); pvPlayToggle();
+      }
+    });
 
     if (window.ResizeObserver) {
       new ResizeObserver(fitPreview).observe($('pvBody'));
@@ -1910,8 +2207,9 @@
     }
     fitPreview();
 
+    // 顶栏「参数」按钮：收起 / 展开右侧参数栏 —— 收起后舞台与时间轴再宽一截
     $('btnPreviewToggle').addEventListener('click', function () {
-      $('panePreview').classList.toggle('force-show');
+      $('workspace').classList.toggle('collapsed');
       setTimeout(fitPreview, 60);
     });
     $('btnOpenSite').addEventListener('click', function () {
@@ -1924,19 +2222,9 @@
   }
 
   // ---------- 主题 ----------
-  function syncThemeBtn() {
-    var t = (S.content && S.content.theme === 'dark') ? 'dark' : 'light';
-    $('btnTheme').textContent = t === 'dark' ? '深色' : '浅色';
-  }
-  function bindTheme() {
-    $('btnTheme').addEventListener('click', function () {
-      S.content.theme = (S.content.theme === 'dark') ? 'light' : 'dark';
-      syncThemeBtn();
-      markDirty();
-      if (S.view === 'site') renderForm();
-      syncMonitor();
-    });
-  }
+  /* 顶栏那个「浅色 / 深色」快捷按钮已移除（2026-10-01 用户要求）。
+     全站深浅色仍可在「页面信息」视图里改（字段 key: 'theme'），内容侧能力一点没少，
+     少掉的只是顶栏那个容易误点的开关 —— 所以这里不需要 syncThemeBtn / bindTheme。 */
 
   // ---------- 保存 / 加载 ----------
   function normalizeContent(raw) {
@@ -2093,44 +2381,44 @@
     });
   }
 
-  // ---------- 分隔条：左右拖拽调整预览栏宽度 ----------
-  // ③ 表单栏是 1fr，④ 预览栏是固定 var(--preview-w)。拖动只改后者的内联值，
-  // 表单栏自然让位。窗口跨过 CSS 断点时以断点默认值为准（见 reflowSplit）。
-  var SPLIT_KEY = 'zl_admin_preview_w';
-  var SPLIT_DEFAULT = 600;
+  // ---------- 分隔条：左右拖拽调整「参数栏」宽度（布局 v2） ----------
+  // ② 舞台是 1fr（弹性），③ 参数栏是固定 var(--params-w)。拖动只改后者的内联值，
+  // 舞台自然让位 —— 所以「拖窄参数栏」= 时间轴变宽，这是布局 v2 的核心交互。
+  // 窗口跨过 CSS 断点时以断点默认值为准。
+  var SPLIT_KEY = 'zl_admin_params_w';
+  var SPLIT_DEFAULT = 380;
 
   function cssNum(name, fallback) {
     var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
     return isFinite(v) && v > 0 ? v : fallback;
   }
-  function previewDefaultW() { return cssNum('--preview-default-w', SPLIT_DEFAULT); }
-  function previewW(ws) {
-    return parseFloat(getComputedStyle(ws).getPropertyValue('--preview-w')) || previewDefaultW();
+  function paramsDefaultW() { return cssNum('--params-default-w', SPLIT_DEFAULT); }
+  function paramsW(ws) {
+    return parseFloat(getComputedStyle(ws).getPropertyValue('--params-w')) || paramsDefaultW();
   }
-  function clampPreviewW(w) {
+  function clampParamsW(w) {
     var ws = $('workspace');
     if (!ws) return w;
-    var side = ($('sideMenu') || { offsetWidth: 0 }).offsetWidth;
-    var tree = ($('paneTree') || { offsetWidth: 0 }).offsetWidth;
+    var tree = ($('paneTree') || { offsetWidth: 0 }).offsetWidth;   // 只有结构树还占横向空间
     var split = cssNum('--split-w', 7);
-    var minForm = cssNum('--form-min-w', 320);
-    var max = Math.max(280, window.innerWidth - side - tree - split - minForm);
+    var minStage = cssNum('--stage-min-w', 460);                    // 舞台的最小宽度，参数栏的右界
+    var max = Math.max(280, window.innerWidth - tree - split - minStage);
     return Math.max(280, Math.min(Math.round(w), Math.round(max)));
   }
-  function applyPreviewW(w, persist) {
+  function applyParamsW(w, persist) {
     var ws = $('workspace');
     if (!ws) return w;
-    var raw = clampPreviewW(w);
-    if (raw === Math.round(previewDefaultW())) {
-      ws.style.removeProperty('--preview-w');          // 回到断点默认值，别让内联样式压住 CSS
+    var raw = clampParamsW(w);
+    if (raw === Math.round(paramsDefaultW())) {
+      ws.style.removeProperty('--params-w');           // 回到断点默认值，别让内联样式压住 CSS
       if (persist) { try { localStorage.removeItem(SPLIT_KEY); } catch (_) {} }
     } else {
-      ws.style.setProperty('--preview-w', raw + 'px');
+      ws.style.setProperty('--params-w', raw + 'px');
       if (persist) { try { localStorage.setItem(SPLIT_KEY, String(raw)); } catch (_) {} }
     }
     return raw;
   }
-  function savedPreviewW() {
+  function savedParamsW() {
     var v = NaN;
     try { v = parseFloat(localStorage.getItem(SPLIT_KEY) || ''); } catch (_) {}
     return isFinite(v) && v > 0 ? v : 0;
@@ -2138,7 +2426,7 @@
   function initSplit() {
     var ws = $('workspace'), sp = $('paneSplit');
     if (!ws || !sp) return;
-    if (savedPreviewW()) applyPreviewW(savedPreviewW(), false);
+    if (savedParamsW()) applyParamsW(savedParamsW(), false);
 
     var dragging = false;
     // ⚠️ move/up 必须挂 document，不能依赖 setPointerCapture：
@@ -2147,8 +2435,9 @@
     function onMove(e) {
       if (!dragging) return;
       e.preventDefault();
-      // 分隔条左缘跟着指针走 → 预览栏宽 = 工作区右界 − 指针位置 − 半个分隔条
-      applyPreviewW(ws.getBoundingClientRect().right - e.clientX - cssNum('--split-w', 7) / 2, false);
+      if (ws.classList.contains('collapsed')) ws.classList.remove('collapsed');  // 一拖就把参数栏拉出来
+      // 分隔条左缘跟着指针走 → 参数栏宽 = 工作区右界 − 指针位置 − 半个分隔条
+      applyParamsW(ws.getBoundingClientRect().right - e.clientX - cssNum('--split-w', 7) / 2, false);
     }
     function end() {
       if (!dragging) return;
@@ -2158,12 +2447,13 @@
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', end);
       document.removeEventListener('pointercancel', end);
-      applyPreviewW(previewW(ws), true);
+      applyParamsW(paramsW(ws), true);
     }
     sp.setAttribute('tabindex', '0');
     sp.addEventListener('pointerdown', function (e) {
-      if (window.matchMedia('(max-width: 1180px)').matches) return;   // 该断点下预览栏整栏收起
+      if (window.matchMedia('(max-width: 860px)').matches) return;   // 单列堆叠下分隔条不出现
       dragging = true;
+      ws.classList.remove('collapsed');
       sp.classList.add('dragging');
       document.body.classList.add('is-splitting');
       document.addEventListener('pointermove', onMove);
@@ -2173,17 +2463,37 @@
     });
     sp.addEventListener('dblclick', function () {
       try { localStorage.removeItem(SPLIT_KEY); } catch (_) {}
-      ws.style.removeProperty('--preview-w');
+      ws.style.removeProperty('--params-w');
     });
     sp.addEventListener('keydown', function (e) {
       var step = e.shiftKey ? 40 : 10;
-      if (e.key === 'ArrowLeft') { applyPreviewW(previewW(ws) - step, true); e.preventDefault(); }
-      else if (e.key === 'ArrowRight') { applyPreviewW(previewW(ws) + step, true); e.preventDefault(); }
-      else if (e.key === 'Enter' || e.key === 'Home') { applyPreviewW(previewDefaultW(), true); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { applyParamsW(paramsW(ws) + step, true); e.preventDefault(); }
+      else if (e.key === 'ArrowRight') { applyParamsW(paramsW(ws) - step, true); e.preventDefault(); }
+      else if (e.key === 'Enter' || e.key === 'Home') { applyParamsW(paramsDefaultW(), true); e.preventDefault(); }
     });
     // 窗口尺寸变化：把已保存的宽度重新夹进当前可用范围
     window.addEventListener('resize', function () {
-      if (savedPreviewW()) applyPreviewW(savedPreviewW(), true);
+      if (savedParamsW()) applyParamsW(savedParamsW(), true);
+    });
+
+    // ---- 参数栏的收起 / 展开 ----
+    // ≤1180px 自动收成 44px 竖条，把宽度让给舞台；回到宽屏自动还原。
+    // narrowAuto 记住「这次折叠是自动的」—— 用户在窄屏手动展开后就不该再被自动收回。
+    var narrowAuto = false;
+    function reflowNarrow() {
+      var narrow = window.innerWidth <= 1180;
+      if (narrow && !narrowAuto) { ws.classList.add('collapsed'); narrowAuto = true; }
+      else if (!narrow && narrowAuto) { ws.classList.remove('collapsed'); narrowAuto = false; }
+    }
+    reflowNarrow();
+    window.addEventListener('resize', reflowNarrow);
+
+    // 收起态：点那根竖条就地展开
+    var paneForm = $('paneForm');
+    if (paneForm) paneForm.addEventListener('click', function () {
+      if (!ws.classList.contains('collapsed')) return;
+      ws.classList.remove('collapsed');
+      narrowAuto = false;
     });
   }
 
@@ -2228,7 +2538,7 @@
       renderForm();
       renderTimeline();
       syncMonitor();
-      if (v === 'structure') { captureFrames(); setTimeout(fitPreview, 40); }
+      if (v === 'structure') setTimeout(fitPreview, 40);
     });
   }
 
@@ -2249,7 +2559,6 @@
         bindTimelineTools();
         bindUpload();
         bindPreview();
-        bindTheme();
         $('btnSave').addEventListener('click', save);
         document.addEventListener('keydown', function (e) {
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
@@ -2262,7 +2571,6 @@
         });
       }
 
-      syncThemeBtn();
       renderSideMenu();
       renderTree();
       renderForm();
@@ -2271,8 +2579,7 @@
       setSaveState('已就绪');
       syncMonitor();
       probeAll();
-      captureFrames();
-    });
+      });
   }
 
   function start() {

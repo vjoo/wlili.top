@@ -2,7 +2,7 @@
   "meta": {
     "title": "WLi 精选收藏夹",
     "subtitle": "我日常使用并真心推荐的工具与资源，持续更新",
-    "updatedAt": "2026-09-30"
+    "updatedAt": "2026-10-01"
   },
   "categories": [
     {
@@ -31,6 +31,20 @@
     }
   ],
   "bookmarks": [
+    {
+      "id": "bm_mupn8s59wqf1",
+      "title": "飞流视频",
+      "url": "https://www.flixflop.com/",
+      "category": "video",
+      "notes": ""
+    },
+    {
+      "id": "bm_mupn88ffi8zn",
+      "title": "可可影视",
+      "url": "https://www.keke1.app/",
+      "category": "video",
+      "notes": ""
+    },
     {
       "id": "bmmunns8fb",
       "title": "GPT",

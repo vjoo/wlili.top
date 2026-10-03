@@ -63,8 +63,8 @@
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
+  width:20px;
+  height:20px;
   color: var(--ink-quaternary);
   pointer-events: none;
 }
@@ -196,7 +196,7 @@
 }
 .cat-scroll-btn:hover:not(.is-disabled) { color: var(--ink); background: var(--bg); }
 .cat-scroll-btn.is-disabled { opacity: 0.25; cursor: default; pointer-events: none; }
-.cat-scroll-btn svg { width: 14px; height: 14px; }
+.cat-scroll-btn svg { width:16px; height:16px; }
 .cat-scroll-divider { width: 1px; background: var(--border-light); flex-shrink: 0; }
 .cat-pill {
   padding: 6px 16px;
@@ -412,8 +412,8 @@
   border-color: var(--link, #2B3041);
 }
 .bm-batch-check svg {
-  width: 14px;
-  height: 14px;
+  width:16px;
+  height:16px;
   color: #fff;
   opacity: 0;
   transition: opacity 0.15s;
@@ -494,7 +494,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
 }
 .bm-action-btn:hover { background: #fff; color: var(--link); transform: scale(1.08); }
 .bm-action-btn.is-danger:hover { color: var(--red); }
-.bm-action-btn svg { width: 15px; height: 15px; }
+.bm-action-btn svg { width:16px; height:16px; }
 
 /* Info row below cover */
 .bm-info {
@@ -534,7 +534,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
   padding: 80px 22px;
   color: var(--ink-quaternary);
 }
-.empty-state svg { width: 56px; height: 56px; opacity: 0.3; margin-bottom: 16px; }
+.empty-state svg { width:48px; height:48px; opacity: 0.3; margin-bottom: 16px; }
 .empty-state h3 { font-size: 18px; font-weight: 600; color: var(--ink-tertiary); margin-bottom: 6px; }
 .empty-state p { font-size: 14px; margin-bottom: 20px; }
 
@@ -639,7 +639,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
   transition: all 0.15s;
 }
 .modal-close:hover { background: var(--bg); color: var(--ink); }
-.modal-close svg { width: 18px; height: 18px; }
+.modal-close svg { width:20px; height:20px; }
 .modal-body { padding: 0 24px 24px; }
 .modal-field { margin-bottom: 16px; }
 .modal-field label {
@@ -785,35 +785,35 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
   </div>
   <div class="hero-right">
     <div class="search-box">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
       <input type="text" class="search-input" id="searchInput" placeholder="搜索收藏...">
     </div>
     <!-- 编辑模式工具栏（默认隐藏） -->
     <button class="btn-new" id="btnAdd" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
       新增
     </button>
     <!-- 保存到本地服务（写回 tools/data/bookmarks.json，仅本地起服务时可用） -->
     <button class="btn-import btn-save" id="btnSaveServer" style="display:none;" title="写入本地 tools/data/bookmarks.json（线上生效仍需提交推送）">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
       <span id="btnSaveServerLabel">保存</span>
     </button>    <button class="btn-import" id="btnExport" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
       导出
     </button>
     <button class="btn-import" id="btnImportJson" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
       导入
     </button>
     <button class="btn-import" id="btnBatchClear" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       批量清除
     </button>
     <button class="btn-import" id="btnDone" style="display:none;">完成</button>
     <input type="file" id="jsonFileInput" accept=".json" style="display:none;">
     <!-- 展示模式：维护入口（默认隐藏，Ctrl+Shift+E 唤出） -->
     <button class="btn-settings" id="btnEdit" title="进入维护模式（Ctrl+Shift+E 唤出）" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>
     </button>
   </div>
 </div>
@@ -832,11 +832,11 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
       <div class="category-filter" id="categoryFilter"></div>
       <div class="cat-scroll-group">
         <button class="cat-scroll-btn is-disabled" id="catScrollLeft" aria-label="向左滚动">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <div class="cat-scroll-divider"></div>
         <button class="cat-scroll-btn" id="catScrollRight" aria-label="向右滚动">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
     </div>
@@ -846,7 +846,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
 
     <!-- Empty State -->
     <div class="empty-state" id="emptyState" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/></svg>
       <h3>暂无收藏</h3>
       <p>数据加载中或为空，请稍后再试</p>
     </div>
@@ -858,18 +858,18 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
   <div class="category-filter" id="floatingCategoryFilter"></div>
   <div class="cat-scroll-group">
     <button class="cat-scroll-btn is-disabled" id="floatScrollLeft" aria-label="向左滚动">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <div class="cat-scroll-divider"></div>
     <button class="cat-scroll-btn" id="floatScrollRight" aria-label="向右滚动">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
     </button>
   </div>
 </div>
 
 <!-- Back to Top -->
 <button class="back-to-top" id="backToTop" aria-label="返回顶部">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
 </button>
 
 <!-- Edit Modal -->
@@ -878,7 +878,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
     <div class="modal-header">
       <div class="modal-title" id="editModalTitle">编辑收藏</div>
       <button class="modal-close" id="editModalClose">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
@@ -913,7 +913,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
     <div class="modal-header">
       <div class="modal-title">批量清除分类</div>
       <button class="modal-close" id="batchClearClose">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
@@ -934,7 +934,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
 
 <!-- Import Status Toast -->
 <div class="import-status" id="importStatus">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
   <span id="importStatusText">操作成功</span>
 </div>
 
@@ -1246,10 +1246,10 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
       if (state.editMode) {
         actionsHtml = '<div class="bm-actions">' +
           '<button class="bm-action-btn" data-action="edit" data-id="' + bm.id + '" title="编辑">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>' +
           '</button>' +
           '<button class="bm-action-btn is-danger" data-action="delete" data-id="' + bm.id + '" title="删除">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
           '</button>' +
         '</div>';
       }
@@ -1261,7 +1261,7 @@ body.is-editing .bm-card .bm-cover-badge { opacity: 0.3; }
       /* 收藏按钮：所有人可见，右上角 */
       var favCls = 'bm-favorite-btn' + (isFavorited(bm.id) ? ' is-favorited' : '');
       var favHtml = '<button class="' + favCls + '" data-fav="' + bm.id + '" title="加入收藏" aria-label="收藏">' +
-        '<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>' +
       '</button>';
 
       return '<div class="bm-card" data-id="' + bm.id + '" style="animation-delay:' + delay + 's">' +

@@ -227,7 +227,7 @@
       <div class="stage-wrap empty" id="stageWrap">
         <canvas id="stage"></canvas>
         <button class="change-btn" id="btnChange" title="更换照片" aria-label="更换照片">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 3l4 4-4 4"/>
             <path d="M20 7H7a4 4 0 0 0-4 4"/>
             <path d="m8 21-4-4 4-4"/>
@@ -1261,7 +1261,7 @@ window.IDPhotoCore = (function () {
     if (c.img) {
       el.appendChild(c.img.cv);
     } else {
-      el.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>上传</span>';
+      el.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span>上传</span>';
     }
     var ops = document.createElement('div');
     ops.className = 'k-ops';

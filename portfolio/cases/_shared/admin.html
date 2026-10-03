@@ -5,7 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" data-page-node-id="AidVfXQp6clwG21bTbEZYK">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; media-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self';" data-page-node-id="sTIKzsit7k0U5NEVkOAPHx">
   <title>W. Block</title>
+  <script>
+  /* ===== 测试夹具钩子（?_fixture=1）：离线跑后台，不发任何真实请求 =====
+     仅在 URL 带 _fixture=1 时激活，正常使用零影响。数据源 window.__FIXTURE_CONTENT
+     （可在本钩子之后、init 之前由脚本改写）；POST /content 会把 body 存进
+     sessionStorage['wli_fixture_saved'] 供断言读取。 */
+  (function () {
+    if (!/[?&]_fixture=1/.test(location.search)) return;
+    /* 内置样板：一个 motion-banner（9 空槽 + 老式 title/subtitle 测迁移），验证编辑器离线渲染 */
+    if (!window.__FIXTURE_CONTENT) {
+      window.__FIXTURE_CONTENT = { sections: [{
+        id: 'fx1', type: 'motion-banner',
+        images: [{}, {}, {}, {}, {}, {}, {}, {}, {}],
+        effect: 'vortex', cardRatio: 'auto', cornerRadius: '0.08', tiltX: '0', tiltY: '0', borderWidth: '0', borderColor: '#ffffff',
+        speed: '0.4', cardSize: '0.2', turns: '3.5', spacing: '5', spread: '4', attenuation: '2', fadeIn: '20',
+        dSpeed: '0.12', dCardSize: '0.3', parallax: '0.7', variation: '0.4', backFade: '0.45', dDirection: 'up',
+        bSpeed: '0.07', rows: '3', coverage: '1', bVariation: '1', gap: '0.06', bDirection: 'left',
+        title: '旧版主标题', subtitle: '旧版副标题，用于验证迁移', titleSize: '64', subtitleSize: '22',
+        titleColor: '#ffffff', subtitleColor: 'rgba(255,255,255,0.82)', titleAlign: 'left', titleVAlign: 'center', titleZ: 'front',
+        bgType: 'color', bgColor: '#12131a', bgImage: '', bgVideo: '', bgOverlay: '0.75'
+      }] };
+    }
+    var FIX = window.__FIXTURE_CONTENT;
+    var realFetch = window.fetch ? window.fetch.bind(window) : null;
+    function J(obj) {
+      return Promise.resolve(new Response(JSON.stringify(obj), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    }
+    /* 预置登录态：checkAuth 先查 localStorage token，没 token 根本不发请求 */
+    try {
+      localStorage.setItem('wli_admin_token', 'fixture-token');
+      localStorage.setItem('wli_admin_user', 'tester');
+    } catch (e) {}
+    window.fetch = function (u) {
+      var s = String(u || '');
+      var m = String((arguments[1] && arguments[1].method) || 'GET').toUpperCase();
+      if (s.indexOf('/api/auth/check') >= 0) return J({ ok: true });
+      if (s.indexOf('/api/login') >= 0) return J({ ok: true, token: 'fixture-token', user: 'tester' });
+      if (s.indexOf('/api/navmenu') >= 0) return J(m === 'POST' ? { ok: true } : { ok: true, navMenu: FIX.navMenu || null });
+      if (s.indexOf('/api/letstalk') >= 0) return J(m === 'POST' ? { ok: true } : { ok: true, letsTalk: FIX.letsTalk || null });
+      if (s.indexOf('/api/pages') >= 0) return J({ ok: true, pages: [{ key: 'home', title: 'home' }] });
+      if (s.indexOf('/api/cases/') >= 0 && s.indexOf('/content') >= 0) {
+        if (m === 'POST') {
+          try { sessionStorage.setItem('wli_fixture_saved', String((arguments[1] && arguments[1].body) || '')); } catch (e) {}
+          return J({ ok: true });
+        }
+        return J({ sections: (FIX && FIX.sections) || [] });
+      }
+      if (s.indexOf('/api/') >= 0) return J({ ok: true });
+      return realFetch ? realFetch.apply(window, arguments) : Promise.reject(new Error('offline fixture'));
+    };
+    window.__FIXTURE = true;
+  })();
+  </script>
   <script src="block-schema.js"></script>
+  <script src="motion-fx.js"></script>
   <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { touch-action: manipulation; }
@@ -143,7 +196,7 @@ body {
   color: var(--text-secondary); font-size: 13.5px; font-weight: 600; cursor: pointer;
   text-align: left; transition: background-color .28s cubic-bezier(.22, .61, .36, 1), color .28s cubic-bezier(.22, .61, .36, 1), box-shadow .28s cubic-bezier(.22, .61, .36, 1);
 }
-.side-menu-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+.side-menu-item svg { width:16px; height:16px; flex-shrink: 0; --ic-sw: 2; }
 .side-menu-item:hover { background: var(--bg-hover); color: var(--text-primary); }
 .side-menu-item.active { background: #ffffff; color: var(--accent-color); box-shadow: var(--shadow-sm); }
 .side-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -385,7 +438,7 @@ body {
 }
 .btn-icon:hover { background: var(--bg-hover); color: var(--text-primary); }
 .btn-icon.delete:hover { background: rgba(239,68,68,0.08); color: #EF4444; }
-.btn-icon svg { width: 16px; height: 16px; }
+.btn-icon svg { width: 16px; height: 16px; --ic-sw: 2; }
 
 /* ===== Panel ===== */
 .panel {
@@ -418,7 +471,7 @@ body {
 .dropzone .dz-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
 .dropzone .dz-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.7; }
 .dropzone .dz-icon { margin-bottom: 8px; color: var(--text-muted); }
-.dropzone .dz-icon svg { width: 30px; height: 30px; }
+.dropzone .dz-icon svg { width:32px; height:32px; --ic-sw: 2; }
 .dropzone.compact { padding: 22px 16px; }
 .dropzone.has-image { padding: 0; border-style: solid; border-color: var(--border-color); background: var(--bg-primary); }
 .dropzone.has-image .dz-icon, .dropzone.has-image .dz-title, .dropzone.has-image .dz-sub { display: none; }
@@ -443,7 +496,7 @@ body {
   z-index: 2;
 }
 .dropzone-preview .dz-clear:hover { background: var(--danger-color); }
-.dropzone-preview .dz-clear svg { width: 14px; height: 14px; }
+.dropzone-preview .dz-clear svg { width:16px; height:16px; --ic-sw: 2; }
 
 /* ===== 图片焦点调整面板（微信头像式：上传大图缩略图 + 下方小图拖动显示区域） ===== */
 /* 上传预览（dropzone）在上，焦点调整框在下方，普通块布局 */
@@ -722,7 +775,7 @@ body {
   color: var(--text-muted); font-size: 13px; font-weight: 600; font-family: inherit;
   transition: color .2s; border-radius: inherit; padding: 20px;
 }
-.add-card-btn svg { width: 26px; height: 26px; }
+.add-card-btn svg { width:24px; height:24px; --ic-sw: 2; }
 .add-card:hover .add-card-btn { color: var(--accent-color); }
 
 .card-head {
@@ -904,7 +957,7 @@ body {
   display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
   padding: 48px 20px; color: var(--text-faint); font-size: 13px; text-align: center;
 }
-.empty-state svg { width: 40px; height: 40px; opacity: .4; }
+.empty-state svg { width:48px; height:48px; opacity: .4; --ic-sw: 1.5; }
 
 /* ===== 就地新建页面表单（未选定页面时的板块管理空白态） ===== */
 #createPageInline { width: 100%; max-width: 720px; }
@@ -931,6 +984,32 @@ body {
 }
 .form-tab-btn:hover { color: var(--text-primary); }
 .form-tab-btn.on { background: #fff; color: var(--text-primary); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+.form-tab-reset { margin-left: auto; background: transparent; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+.form-tab-reset:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ===== 弹出式取色器（对齐 amotion 风格：色域 + 色相条 + 预设色板 + RGB 滑块 + HEX） ===== */
+.form-color-dot { width: 42px; height: 34px; padding: 0; border: 1px solid rgba(127,127,127,.4); border-radius: 8px; cursor: pointer; flex: none; box-shadow: inset 0 0 0 2px #fff; }
+.form-color-dot:hover { border-color: var(--accent-color); }
+.cp-pop { position: fixed; z-index: 6000; width: 264px; background: #fff; border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.18); padding: 12px; user-select: none; }
+.cp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cp-head span { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.cp-cur { width: 40px; height: 26px; border-radius: 7px; border: 1px solid rgba(127,127,127,.35); display: inline-block; }
+.cp-area { position: relative; height: 150px; border-radius: 10px; overflow: hidden; cursor: crosshair; touch-action: none; }
+.cp-area-dot { position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); transform: translate(-50%,-50%); pointer-events: none; }
+.cp-hue { position: relative; height: 16px; border-radius: 8px; margin-top: 10px; cursor: pointer; touch-action: none;
+  background: linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
+.cp-hue-dot { position: absolute; top: 50%; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); transform: translate(-50%,-50%); pointer-events: none; }
+.cp-swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 10px; }
+.cp-sw { aspect-ratio: 1/1; border-radius: 7px; border: 1px solid rgba(127,127,127,.3); cursor: pointer; padding: 0; }
+.cp-sw:hover { transform: scale(1.12); }
+.cp-rgb { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.cp-rgb-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.cp-rgb-row label { width: 14px; flex: none; }
+.cp-rgb-row input[type=range] { flex: 1; accent-color: var(--accent-color); }
+.cp-rgb-row b { width: 30px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cp-hexrow { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.cp-hexrow label { font-size: 12px; color: var(--text-secondary); flex: none; }
+.cp-hexrow input { flex: 1; height: 30px; border: 1px solid var(--border-color); border-radius: 8px; padding: 0 8px; font-size: 13px; font-family: monospace; }
 .form-tab-panel { min-width: 0; }
 #editorFormContainer, #editorFormContainer > * { max-width: 100%; box-sizing: border-box; }
 .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
@@ -953,14 +1032,13 @@ body {
   cursor: help; flex: none; border-radius: 50%;
 }
 .field-hint:hover, .field-hint:focus { color: var(--accent-color); }
-.field-hint svg { width: 15px; height: 15px; }
+.field-hint svg { width:16px; height:16px; --ic-sw: 2; }
 .hint-bubble {
   position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%) translateY(4px);
   width: 232px; background: rgba(28,29,33,0.96); color: #fff; font-size: 12px; font-weight: 400;
   line-height: 1.65; padding: 9px 12px; border-radius: 8px; text-align: left; white-space: normal;
   opacity: 0; visibility: hidden; transition: opacity .18s, transform .18s, visibility .18s;
-  pointer-events: none; z-index: 2000; box-shadow: 0 10px 28px rgba(0,0,0,0.22);
-}
+  pointer-events: none; z-index: 2000; box-shadow: 0 10px 28px rgba(0,0,0,0.22); --ic-sw: 1.5; }
 .hint-bubble::after {
   content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
   border: 6px solid transparent; border-top-color: rgba(28,29,33,0.96);
@@ -986,7 +1064,7 @@ body {
   transition: background .2s, color .2s;
 }
 .form-label .field-reset:hover { background: var(--bg-hover); color: var(--text-primary); }
-.form-label .field-reset svg { width: 14px; height: 14px; }
+.form-label .field-reset svg { width:16px; height:16px; --ic-sw: 2; }
 
 /* ===== 动画背景参数：内联可折叠面板 ===== */
 .ani-params-field {
@@ -1043,7 +1121,7 @@ body {
   width: auto; height: 22px; padding: 0 8px;
   font-size: 11px; font-weight: 500; color: var(--text-muted);
 }
-.ani-params-reset-all svg { width: 13px; height: 13px; }
+.ani-params-reset-all svg { width:12px; height:12px; --ic-sw: 2.4; }
 .ani-params-reset-all .ani-params-reset-label { white-space: nowrap; }
 .ani-params-body {
   padding: 16px;
@@ -1090,6 +1168,8 @@ body {
 .form-range-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .form-range-row .form-range { flex: 1; min-width: 0; margin: 8px 0 2px; }
 .form-range-val { font-size: 12px; color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 34px; text-align: right; }
+.form-range-val.is-default { color: var(--text-muted); font-weight: 500; }
+.form-range-val.is-default::after { content: ' 默认'; font-size: 10px; font-weight: 400; color: var(--text-muted); }
 /* 颜色选择器 */
 .ani-color-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .ani-color-input {
@@ -1185,7 +1265,7 @@ body {
 /* 选项图标 / 色块圆点 */
 .sel-opt-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
   margin-right: 7px; flex: none; color: var(--text-secondary); }
-.sel-opt-icon svg { width: 16px; height: 16px; }
+.sel-opt-icon svg { width: 16px; height: 16px; --ic-sw: 2; }
 .sel-opt-dot { width: 10px; height: 10px; border-radius: 999px; margin-right: 7px; flex: none;
   border: 1px solid rgba(0,0,0,.12); }
 /* 多级展开（树形）：分组项右侧箭头，展开时旋转 90°；子项缩进由 JS 按层级写 padding-left */
@@ -1197,7 +1277,7 @@ body {
    ② transform 只在非 inline 时保证生效，不依赖父容器恰好是 flex 的 blockify 行为 */
 .sel-opt-arrow { display: inline-flex; align-items: center; justify-content: center;
   margin-left: auto; width: 14px; height: 14px; flex: none; color: var(--text-muted); transition: transform .15s; }
-.sel-opt-arrow svg { width: 14px; height: 14px; }
+.sel-opt-arrow svg { width:16px; height:16px; --ic-sw: 2; }
 .sel-option[aria-expanded="true"] .sel-opt-arrow { transform: rotate(90deg); }
 .sel-option[hidden] { display: none; }
 /* 多选标签芯片（可点 × 移除） */
@@ -1234,7 +1314,7 @@ body {
 .cal-nav { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
   border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary, var(--muted, #424245)); cursor: pointer; }
 .cal-nav:hover { background: var(--bg-hover); }
-.cal-nav svg { width: 14px; height: 14px; }
+.cal-nav svg { width:16px; height:16px; --ic-sw: 2; }
 .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-week { margin-bottom: 2px; }
 .cal-week span { text-align: center; font-size: 11px; color: var(--text-muted); padding: 5px 0; }
@@ -1476,7 +1556,7 @@ body {
   color: var(--text-muted);
   cursor: pointer;
 }
-.gc-add-dropzone svg { width: 18px; height: 18px; flex-shrink: 0; }
+.gc-add-dropzone svg { width:20px; height:20px; flex-shrink: 0; --ic-sw: 2; }
 .gc-add-dropzone.dragover { border-color: var(--accent-color); background: var(--accent-light); color: var(--accent-color); }
 
 /* ===== Right Panel Editor ===== */
@@ -1699,7 +1779,7 @@ body {
   font-size: 13px; font-weight: 500; transition: all .2s;
 }
 .np-tab-add:hover { color: var(--accent-color); border-color: var(--accent-color); background: rgba(99,102,241,0.05); }
-.np-tab-add svg { width: 13px; height: 13px; }
+.np-tab-add svg { width:12px; height:12px; --ic-sw: 2.4; }
 /* 组 Tab 拖动排序态 */
 .np-tab[draggable="true"] { cursor: grab; }
 .np-tab.dragging { opacity: .45; cursor: grabbing; }
@@ -1781,7 +1861,7 @@ body {
   background: repeating-linear-gradient(45deg, var(--bg-hover) 0 8px, var(--bg-primary) 8px 16px);
   color: var(--text-muted);
 }
-.dp-thumb-default svg { width: 24px; height: 24px; }
+.dp-thumb-default svg { width: 24px; height: 24px; --ic-sw: 2; }
 .dp-name { font-size: 11px; color: var(--text-muted); font-weight: 500; text-align: center; line-height: 1.3; }
 .dp-item.active .dp-name { color: var(--accent-color); font-weight: 600; }
 /* 条目内图片控件（items-list 通用编辑器用） */
@@ -1799,15 +1879,14 @@ body {
   background: rgba(127,127,127,0.14); color: var(--text-secondary, #888);
   font-size: 12px; font-weight: 600; letter-spacing: .02em;
 }
-.il-lottie-badge svg { width: 16px; height: 16px; }
+.il-lottie-badge svg { width: 16px; height: 16px; --ic-sw: 2; }
 /* 条目内图片清除按钮：右上角 x 图标，与全局上传（.dz-clear）视觉统一 */
 .il-image-preview .il-img-clear {
   position: absolute; top: 8px; right: 8px;
   width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff;
-  border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2;
-}
+  border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; --ic-sw: 2; }
 .il-image-preview .il-img-clear:hover { background: var(--danger-color); }
-.il-image-preview .il-img-clear svg { width: 14px; height: 14px; }
+.il-image-preview .il-img-clear svg { width:16px; height:16px; --ic-sw: 2; }
 .il-image-actions { display: flex; gap: 8px; align-items: center; }
 .il-image-actions .il-img-url { flex: 1; min-width: 0; }
 
@@ -1840,7 +1919,7 @@ body {
   display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all .2s;
 }
 .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
-.modal-close svg { width: 16px; height: 16px; }
+.modal-close svg { width: 16px; height: 16px; --ic-sw: 2; }
 
 /* ===== Toast ===== */
 .toast-wrap { position: fixed; top: 60px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
@@ -1990,7 +2069,7 @@ body.auth-pending .pages-view { visibility: hidden; }
   transition: background .18s, color .18s, border-color .18s;
 }
 .pg-ico:hover { background: var(--bg-hover); color: var(--text-primary); }
-.pg-ico svg { width: 16px; height: 16px; display: block; }
+.pg-ico svg { width: 16px; height: 16px; display: block; --ic-sw: 2; }
 .pg-ico.primary { background: var(--accent-color); border-color: var(--accent-color); color: #fff; }
 .pg-ico.primary:hover { filter: brightness(1.08); color: #fff; }
 .pg-ico.danger { color: #e5484d; border-color: #f0c4c5; }
@@ -2112,6 +2191,82 @@ body.auth-pending .pages-view { visibility: hidden; }
 .mbvis-launch-s{font-size:12px;color:var(--text-secondary);margin-top:3px}
 .mbvis-launch-btn{background:var(--accent-color);color:#fff;border:0;border-radius:100px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
 .mbvis-launch-btn:hover{filter:brightness(1.08)}
+
+/* ===== motion-banner 编辑层（静态化：原在 ensureMotionVisDOM 懒注入 → 不打开弹窗就没样式，
+   card-slots 布局崩坏（文字重叠/图片原尺寸）。现在常驻顶层 style，浅色系跟后台主题走） ===== */
+.card-slots{display:flex;flex-direction:column;gap:10px}
+.cslot-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--text-muted)}
+.cslot-step{display:inline-flex;align-items:center;gap:10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:100px;padding:3px 8px}
+.cslot-step-btn{width:24px;height:24px;border-radius:50%;border:none;background:var(--bg-active);color:var(--text-primary);font-size:15px;cursor:pointer;line-height:1}
+.cslot-step-btn:disabled{opacity:.35;cursor:default}
+.cslot-n{font-size:14px;color:var(--text-primary);min-width:20px;text-align:center;font-weight:600}
+.cslot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.cslot{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden}
+.cslot.has{border:1px solid var(--border-color)}
+.cslot.has img{width:100%;height:100%;object-fit:cover;display:block}
+.cslot-del{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cslot-del:hover{background:#e24b4a}
+.cslot.empty{border:1.5px dashed var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--text-muted);background:var(--bg-secondary)}
+.cslot.empty:hover{border-color:var(--accent-color);color:var(--text-primary)}
+.cslot-plus{font-size:20px;line-height:1}
+.cslot-lb{font-size:11px}
+.cslot-batch-btn{align-self:flex-start;background:var(--bg-secondary);border:1px solid var(--border-color);color:var(--text-primary);padding:7px 16px;border-radius:100px;cursor:pointer;font-size:13px}
+.cslot-batch-btn:hover{border-color:var(--accent-color)}
+
+/* 动效预览卡片（.mn-live 内嵌视窗与 mnvis 弹窗共用；舞台是深色画布，卡片配色独立于后台主题） */
+.mnl-deck,.mnvis-deck{position:absolute;inset:0}
+.mnl-deck .mfc,.mnvis-deck .mfc{position:absolute;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none}
+.mnl-deck .mfc img,.mnvis-deck .mfc img{width:100%;height:100%;object-fit:cover;display:block}
+.mnl-deck .mfc.is-ph,.mnvis-deck .mfc.is-ph{background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1.5px dashed rgba(255,255,255,.30);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.mnl-deck .mfc-ph,.mnvis-deck .mfc-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(232,234,237,.62);font-size:12px;background:#1a1d24;letter-spacing:.04em;font-weight:500;text-align:center;padding:0 6px;line-height:1.25}
+
+/* 内嵌实时预览视窗（右侧编辑面板顶部常驻，amotion 式：编辑即所见） */
+.mn-live { border:1px solid var(--border-color); border-radius:14px; overflow:hidden; background:var(--bg-secondary); margin:0 0 14px; position:relative; z-index:0; }
+/* ↑ z-index:0 建独立层叠上下文：内部 chip(20000)/卡片(zIndex 上万) 被隔离在本组件内，
+   不会盖住字段 hint 气泡(z-index:2000)与取色器 popover(6000) —— 气泡被预览遮住的根因 */
+.mn-live-head{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border-color)}
+.mn-live-dot{width:8px;height:8px;border-radius:50%;background:#34c759;box-shadow:0 0 0 3px rgba(52,199,89,.18)}
+.mn-live-t{font-size:13px;font-weight:600;color:var(--text-primary)}
+.mn-live-s{font-size:12px;color:var(--text-muted);flex:1}
+.mn-live-stage{position:relative;height:300px;background:#0c0d10;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.mn-live-stage .mnl-deck{position:absolute;inset:0}
+.mnl-chip{position:absolute;cursor:grab;white-space:nowrap;transform:translate(-50%,-50%);padding:4px 9px;border:1.5px dashed transparent;border-radius:6px;line-height:1.3;max-width:92%;color:#fff;pointer-events:auto;text-shadow:0 1px 4px rgba(0,0,0,.5);z-index:20000}
+.mnl-chip.sel{border-color:#3b82f6;background:rgba(59,130,246,.14)}
+.mnl-chip:active{cursor:grabbing}
+.mnl-chip.is-empty{color:rgba(255,255,255,.45);font-style:italic}
+
+/* 文字条目编辑器（文字页卡：chips + 选中条目属性） */
+.mnt-wrap{display:flex;flex-direction:column;gap:12px}
+.mnt-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mnt-chip{display:inline-flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1.5px solid var(--border-color);color:var(--text-primary);border-radius:100px;padding:6px 14px;cursor:pointer;font-size:13px;max-width:220px}
+.mnt-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mnt-chip.on{border-color:var(--accent-color);background:var(--accent-color);color:#fff}
+.mnt-chip .mnt-x{width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.18);color:inherit;font-size:11px;line-height:16px;text-align:center;flex:0 0 16px}
+.mnt-chip.on .mnt-x{background:rgba(255,255,255,.25)}
+.mnt-chip .mnt-x:hover{background:#e24b4a;color:#fff}
+.mnt-add{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1.5px dashed var(--border-color);color:var(--text-muted);border-radius:100px;padding:6px 14px;cursor:pointer;font-size:13px}
+.mnt-add:hover{border-color:var(--accent-color);color:var(--accent-color)}
+.mnt-hint{font-size:12px;color:var(--text-muted);line-height:1.6}
+.mnt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.mnt-grid .mnt-span2{grid-column:1/-1}
+.mnt-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mnt-field>label{font-size:12px;color:var(--text-muted)}
+.mnt-field .form-input,.mnt-field .form-select,.mnt-field .form-textarea{width:100%}
+.mnt-color-row{display:flex;gap:6px;align-items:center}
+.mnt-color-row input[type=color]{width:40px;height:32px;padding:0;border:1px solid var(--border-color);border-radius:8px;background:none;cursor:pointer;flex:0 0 40px}
+@media (max-width:900px){.mnt-grid{grid-template-columns:1fr}}
+
+/* ═══ 图标档位接入（DESIGN_SYSTEM §9 · 五档光学尺寸）══════════════════
+ * 线宽不再逐个写死：基础规则按 viewBox 接管全部图标，各容器在自己的尺寸规则里下发档位。
+ * 档位：≤16px→2.4 · 17–20px→2.2 · 21–32px→2.0 · >32px→1.5（尺寸越小线宽占比越高）
+ * ⚠ 档位值由脚本按各处 width 实算，改动图标尺寸后须重跑
+ */
+svg[viewBox="0 0 24 24"]{ stroke-width: var(--ic-sw, 2); }
+svg[viewBox="0 0 24 24"] > *{ stroke-width: inherit; }
+/* 实测补充：顶栏 nav-link 与页头主按钮内的图标没有自己的尺寸规则，实测 14px，落到默认 sw2 */
+.nav-link svg, .btn-primary svg{ --ic-sw: 2; width: 16px; height: 16px; }
+/* 折叠箭头自身就是 <svg class="side-arrow">，选择器里没有 "svg" 字样，批量脚本会漏掉它 */
+.side-arrow{ width: 16px; height: 16px; }
 </style>
 </head>
 <body class="auth-pending" data-page-node-id="SSntV2k4CxS6XAtvGcOoHm">
@@ -2139,7 +2294,7 @@ body.auth-pending .pages-view { visibility: hidden; }
     </div>
     <div class="nav-links" data-page-node-id="nWZjmA5MaP4afvLkqDB14l">
       <a class="nav-link" id="btnPreview" href="index.html" target="_blank" title="在新标签页预览当前案例" data-page-node-id="ToFmzrJG6MQBV7WfHtZTtE">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;" data-page-node-id="PrV4a8bI3N0sFQYYZDIbWs"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" data-page-node-id="GX0xj9VsSu7a0xdaavKi1L"/><polyline points="15 3 21 3 21 9" data-page-node-id="lGlrsgyvQjqNTpVru3EbZs"/><line x1="10" y1="14" x2="21" y2="3" data-page-node-id="3uAXmAex0GRF2XhjFZiP2y"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;" data-page-node-id="PrV4a8bI3N0sFQYYZDIbWs"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
         <span data-page-node-id="2X61UXYb8QL5jlEXiNReUH">预览</span>
       </a>
       <span class="nav-user" id="navUser" data-page-node-id="i89nQrxsy9EqIOy0eFxKp1"></span>
@@ -2250,14 +2405,14 @@ body.auth-pending .pages-view { visibility: hidden; }
         <button class="side-menu-item active" data-view="sections" title="编辑当前案例的板块内容（增删 / 排序 / 编辑）" data-page-node-id="0Y4EOf90PSH0StNw2x1JKH">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="ykWBV7z1e4AFJpmj3Uj1pw"><rect x="3" y="3" width="18" height="18" rx="2" data-page-node-id="le8dFPXR9izoQQwwv5A3ir"/><line x1="9" y1="3" x2="9" y2="21" data-page-node-id="1zEln6yaAbbLyRGI5oQlqm"/><line x1="15" y1="3" x2="15" y2="21" data-page-node-id="cT0McB5Kya7Xe51rRFCa5P"/></svg>
           <span class="side-label" data-page-node-id="jDY0SVSYAP3rrJBLDZHzLq">板块管理</span>
-          <svg class="side-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="S019VOlACQORE4YgIg3lDn"><polyline points="6 9 12 15 18 9" data-page-node-id="UZMk0wSMA2YAeVXldHTbqP"/></svg>
+          <svg class="side-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="S019VOlACQORE4YgIg3lDn"><path d="m6 9 6 6 6-6"/></svg>
         </button>
         <div class="side-sub" id="sideSubSections" data-page-node-id="EgZrODJGMK6uE4VIdXGOFU">
           <div class="nav-menu" id="sidebarNav" data-page-node-id="fffWsOJah39XMzh0o3rPnD"></div>
         </div>
       </div>
       <button class="side-menu-item" data-view="pages" title="页面管理（列表 / 新建 / 复制 / 层级 / 删除）" data-page-node-id="EmFJ8FUvOV5O4Ffojn1Avv">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="yuJhC07zZFMeR6Suf4e8FQ"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" data-page-node-id="eDuU8rymkKtioP5DCeMNyA"/><polyline points="14 2 14 8 20 8" data-page-node-id="HCVSb5R0H1E95F0yO0OwZw"/><line x1="16" y1="13" x2="8" y2="13" data-page-node-id="EfNZTXZzxWWXBHoEs3ZxNP"/><line x1="16" y1="17" x2="8" y2="17" data-page-node-id="SE5PRqcNjdQBdxUyK0niRA"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="yuJhC07zZFMeR6Suf4e8FQ"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>
         页面管理
       </button>
       <button class="side-menu-item" data-view="letsTalk" title="编辑网页底部 Let's talk 联系区块（文案 + 四张二维码）" data-page-node-id="wuqN9M8hAl0gETY3PDaQLF">
@@ -2265,7 +2420,7 @@ body.auth-pending .pages-view { visibility: hidden; }
         底部导航
       </button>
       <button class="side-menu-item" data-view="navMenu" title="编辑前台顶部导航菜单（名称 / 链接页面 / 是否新窗口）" data-page-node-id="tT05P6dDEuoaH8qlGy43zI">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="GmtLo7tHuZVwHesPzzhe9b"><line x1="3" y1="12" x2="21" y2="12" data-page-node-id="zLqakArYYfHdEEkKHcIEwQ"/><line x1="3" y1="6" x2="21" y2="6" data-page-node-id="3ZyAIjgxLrsAoICTHsXSzH"/><line x1="3" y1="18" x2="21" y2="18" data-page-node-id="GFXLosQGvGgyqhiYECncvr"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="GmtLo7tHuZVwHesPzzhe9b"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
         顶部导航
       </button>
     </div>
@@ -2286,7 +2441,7 @@ body.auth-pending .pages-view { visibility: hidden; }
           <span style="font-size:13px; color:var(--text-muted);" data-page-node-id="dWgqFmzrWbByCAmoM07rOs">共 <b id="sectionCount" style="color:var(--text-primary);" data-page-node-id="9yzXYR5KM6ILGB1gY8CQ75">0</b> 个板块</span>
           <span class="save-status" id="saveStatus" data-page-node-id="9tG7PVQ2rEMcSUppneulCY"><span class="spinner" data-page-node-id="gMuw99mUVWiOc4yvWVUrKe"></span><span class="save-text" data-page-node-id="oCxnhx5oYuCG8ySKXHas7r"></span></span>
           <button class="btn-primary" id="btnSave" title="保存当前案例的板块、Let's talk 与顶部导航修改 (Ctrl+S)" data-page-node-id="O5Aif3BOCcfdNx0Xfp6QSd">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;" data-page-node-id="LWTecrqBVdbm0qkiWhG97G"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" data-page-node-id="gvpDH8e0wgh8X5qCFOlD6z"/><polyline points="17 21 17 13 7 13 7 21" data-page-node-id="lDYHpHlgWmacK1aO3XeWBf"/><polyline points="7 3 7 8 15 8" data-page-node-id="8L5IOLiaryATwBpidSJlXi"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;" data-page-node-id="LWTecrqBVdbm0qkiWhG97G"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
             保存
           </button>
         </div>
@@ -2296,7 +2451,7 @@ body.auth-pending .pages-view { visibility: hidden; }
         <div class="panel-body" style="padding:16px 20px 20px;" data-page-node-id="DbdT343tQnFT1emoC8MykC">
           <div class="cards-grid" id="cardsGrid" data-page-node-id="tjsHVAyDKwFfuDptuSuC4v"></div>
           <div id="cardsEmpty" class="empty-state" data-page-node-id="ZN21r6GvwNHq2k5LdexESK">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="XdlHWAPjlrdypG8VX5GNCq"><rect x="3" y="3" width="18" height="18" rx="2" data-page-node-id="A2OfUQL5PS1wUYkC86E4Fb"/><line x1="9" y1="3" x2="9" y2="21" data-page-node-id="J6Y4tUXNKW6OeDkJYqjFMA"/><line x1="15" y1="3" x2="15" y2="21" data-page-node-id="Tgx2eP4ZVEONSfZpHbJJrN"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="XdlHWAPjlrdypG8VX5GNCq"><rect x="3" y="3" width="18" height="18" rx="2" data-page-node-id="le8dFPXR9izoQQwwv5A3ir"/><line x1="9" y1="3" x2="9" y2="21" data-page-node-id="1zEln6yaAbbLyRGI5oQlqm"/><line x1="15" y1="3" x2="15" y2="21" data-page-node-id="cT0McB5Kya7Xe51rRFCa5P"/></svg>
             <div data-page-node-id="AqiHzFe6zFckFFjvGjiG5C">还没有板块，从右侧选择一种板块类型开始构建</div>
           </div>
         </div>
@@ -2359,7 +2514,7 @@ body.auth-pending .pages-view { visibility: hidden; }
       <div class="pages-topbar" data-page-node-id="21X9SH2Bfx6WHX55dAggzf">
         <div style="display:flex; align-items:center; gap:18px; min-width:0;" data-page-node-id="60BQwPAOJBGo8pIhUQE3iP">
           <div data-page-node-id="t9JjPgJNn2xztPYjZjiy2Y">
-            <div class="page-title" data-page-node-id="tB2KDVBPIv8q1X8YJzHcl0">页面管理<span class="field-hint" tabindex="0" title="" aria-label="基于板块组装体系的页面索引，点「内容」进入该页面的板块编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble hint-below">基于板块组装体系的页面索引，点「内容」进入该页面的板块编辑</span></span></div>
+            <div class="page-title" data-page-node-id="tB2KDVBPIv8q1X8YJzHcl0">页面管理<span class="field-hint" tabindex="0" title="" aria-label="基于板块组装体系的页面索引，点「内容」进入该页面的板块编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span class="hint-bubble hint-below">基于板块组装体系的页面索引，点「内容」进入该页面的板块编辑</span></span></div>
           </div>
           <div class="theme-switch" id="themeSwitch" title="全站主题切换（仅前台组件与页面背景变色；顶部导航与底部 footer 不参与）" data-page-node-id="9XkZT9U5HXscF0NDpb8utY">
             <button type="button" class="theme-btn" data-theme="light" data-page-node-id="obH0nYEGmw5CV3gi5crXBX">浅色</button>
@@ -2486,6 +2641,7 @@ let selectedIndex = -1; // -1 = nothing selected; -2 = type picker open; -3 = Le
 let editorMode = 'empty'; // 'empty' | 'picker' | 'edit' | 'letsTalk' | 'navMenu'
 let confirmAction = null;
 let confirmBtnRestore = null;  // 弹窗关闭后恢复按钮文字/样式（非删除类操作用）
+let __activeFtab = null;       // 当前选中页卡名（跨表单重建保持：重置/下拉切换不再跳回第一页卡）
 let draggedIndex = null;
 
 /* ===== Let's talk 底部联系区块默认值（存于 content.json 顶层 letsTalk） ===== */
@@ -2968,7 +3124,7 @@ function renderSectionList() {
     addBox.className = 'card-item add-card';
     addBox.innerHTML = `
       <button class="add-card-btn" title="添加新板块">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
         <span>添加板块</span>
       </button>`;
     addBox.onclick = () => openTypePicker();
@@ -2997,9 +3153,9 @@ function renderSectionList() {
       <div class="card-thumb-area">
         <div class="card-thumb-box">${thumbHtml}</div>
         <div class="card-actions">
-          <button class="btn-icon" title="编辑" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn-icon" title="编辑" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg></button>
           <button class="btn-icon" title="复制到页面" data-act="more"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
-          <button class="btn-icon delete" title="删除" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button class="btn-icon delete" title="删除" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
       </div>`;
 
@@ -3373,7 +3529,7 @@ function renderRightPanel() {
         </div>
         <div class="editor-footer-right">
           <button class="btn-icon delete" id="btnDeleteEditor" title="删除此板块">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
           <button class="btn-secondary" id="btnCancelChanges">取消改动</button>
         </div>
@@ -3418,31 +3574,31 @@ function updateEditorFooterStatus() {
                                 兼容旧的内联 SVG 写法；查不到时当纯文字 / emoji 显示
        data-color="…"        → 左侧色块圆点（任意 CSS 颜色）
      原生 select 始终是真值容器（视觉隐藏、不参与 Tab 序），change 照常冒泡 → data-bind 链路不变。 */
-  var SEL_CHEVRON = '<svg class="sel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-  var SEL_CHECK = '<svg class="sel-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  var SEL_CHEVRON = '<svg class="sel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+  var SEL_CHECK = '<svg class="sel-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   /* 图标表：**data-icon 只写键名，不要塞整段 SVG**。
      原因（踩过两次）：把标记语言塞进 HTML 属性要同时过「引号冲突」和「esc() 转义」两道关 ——
      esc 会把 < ' " 转成 &lt; &#39; &quot;，任一环节出错组件就拿不到以 < 开头的串，
      会退化成 textContent 把 <svg …> 当纯文本打印出来（表现就是页面上一堆标点/标签字符）。
      改用键名后属性里只有 [a-z0-9-]，无需转义也无引号冲突，从根上消除这类 bug。
-     扩展：window.SEL_ICONS.xxx = '<svg…>' 即可（本表在 upgradeSelect 内读取时动态合并）。 */
+     扩展：window.SEL_ICONS.xxx = '<SVG 串>' 即可（本表在 upgradeSelect 内读取时动态合并）。 */
   var SEL_ICONS = {
     home:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/><polyline points='9 22 9 12 15 12 15 22'/></svg>",
-    star:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/></svg>",
-    bell:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9'/><path d='M13.73 21a2 2 0 0 1-3.46 0'/></svg>",
-    user:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>",
-    image:    "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='2'/><circle cx='8.5' cy='8.5' r='1.5'/><polyline points='21 15 16 10 5 21'/></svg>",
-    tag:      "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'/><line x1='7' y1='7' x2='7.01' y2='7'/></svg>",
-    folder:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg>",
+    star:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z'/></svg>",
+    bell:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M10.268 21a2 2 0 0 0 3.464 0'/><path d='M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326'/></svg>",
+    user:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>",
+    image:    "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2' ry='2'/><circle cx='9' cy='9' r='2'/><path d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'/></svg>",
+    tag:      "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z'/><circle cx='7.5' cy='7.5' r='.5'/></svg>",
+    folder:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'/></svg>",
     file:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/></svg>",
     link:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/><path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/></svg>",
-    calendar: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>",
-    search:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>",
-    plus:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='5' x2='12' y2='19'/><line x1='5' y1='12' x2='19' y2='12'/></svg>",
-    check:    "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>",
-    eye:      "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg>",
-    grid:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>",
-    layers:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>"
+    calendar: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M8 2v3'/><path d='M16 2v3'/><rect x='3' y='3' width='18' height='18' rx='2'/><path d='M3 9h18'/></svg>",
+    search:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m21 21-4.34-4.34'/><circle cx='11' cy='11' r='8'/></svg>",
+    plus:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/><path d='M12 5v14'/></svg>",
+    check:    "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>",
+    eye:      "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0'/><circle cx='12' cy='12' r='3'/></svg>",
+    grid:     "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='7' height='7' x='3' y='3' rx='1'/><rect width='7' height='7' x='14' y='3' rx='1'/><rect width='7' height='7' x='14' y='14' rx='1'/><rect width='7' height='7' x='3' y='14' rx='1'/></svg>",
+    layers:   "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z'/><path d='M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12'/><path d='M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17'/></svg>"
   };
 
   function floatPanel(panel, wrap) {
@@ -3546,7 +3702,7 @@ function upgradeSelect(sel) {
     /* 多级展开（树形）：option 用 data-parent="父value" 声明父级；有子项的自动成为可展开分组。
        点击分组只展开/收起，不选中；搜索时自动展开命中路径（否则搜到的子项藏在折叠里看不见）。 */
     var byValue = {}, childMap = {}, expanded = {}, curQuery = '';
-    var SEL_ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+    var SEL_ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
 
     function rebuild() {
       Array.prototype.slice.call(panel.querySelectorAll('.sel-option')).forEach(function (n) { n.remove(); });
@@ -3575,7 +3731,7 @@ function upgradeSelect(sel) {
           var icKey = o.dataset.icon;
           /* ① 先查图标表键名（推荐写法，属性里只有 [a-z0-9-]，无引号/转义风险）
              ② 兼容早期直接内联 SVG 的旧数据  ③ 其余当纯文字或 emoji
-             ⚠ 不要反过来先测 /^</ —— 转义异常时会把 <svg…> 当纯文本打印出来 */
+             ⚠ 不要反过来先测 /^</ —— 转义异常时会把 svg 片段当纯文本打印出来 */
           var icHtml = (typeof SEL_ICONS[icKey] === 'string') ? SEL_ICONS[icKey]
             : ((window.SEL_ICONS && typeof window.SEL_ICONS[icKey] === 'string') ? window.SEL_ICONS[icKey] : '');
           if (icHtml) ic.innerHTML = icHtml;
@@ -3806,13 +3962,13 @@ function upgradeSelect(sel) {
       head.className = 'cal-head';
       var prev = document.createElement('button');
       prev.type = 'button'; prev.className = 'cal-nav'; prev.setAttribute('aria-label', '上一月');
-      prev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+      prev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';
       var title = document.createElement('span');
       title.className = 'cal-title';
       title.textContent = curY + '年' + (curM + 1) + '月';
       var next = document.createElement('button');
       next.type = 'button'; next.className = 'cal-nav'; next.setAttribute('aria-label', '下一月');
-      next.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+      next.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
       prev.addEventListener('click', function () { step(-1); });
       next.addEventListener('click', function () { step(1); });
       head.appendChild(prev); head.appendChild(title); head.appendChild(next);
@@ -3962,7 +4118,7 @@ function upgradeSelect(sel) {
     label.className = 'cal-label';
     trigger.appendChild(label);
     trigger.insertAdjacentHTML('beforeend',
-      '<svg class="cal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>');
+      '<svg class="cal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>');
     wrap.appendChild(trigger);
 
     var panel = document.createElement('div');
@@ -4023,8 +4179,8 @@ function upgradeSelect(sel) {
         var b = document.createElement('button');
         b.type = 'button'; b.className = 'cal-nav'; b.setAttribute('aria-label', label);
         b.innerHTML = dir < 0
-          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'
-          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
         b.addEventListener('click', function () { step(dir); });
         return b;
       }
@@ -4218,6 +4374,7 @@ function upgradeSelect(sel) {
   }
 
 function renderEditorForm(section) {
+  stopMnLive();                       // 表单将重建：先停掉旧的内嵌预览引擎（防引用已销毁 DOM）
   const container = $('#editorFormContainer');
   const rawFields = TYPE_FIELDS[section.type] || [];
   // text-fill-banner：缺失滑块/下拉字段补默认（仅补 undefined），保证滑块有稳定初始位且与前台缺省一致；
@@ -4242,11 +4399,13 @@ function renderEditorForm(section) {
     migrateNextProjectsToGroups(section);
   }
   // === 按 dependsOn 过滤：只有满足依赖条件的字段才显示 ===
+  // value 支持数组（如 bgType in ['image','video']），单值等价单元素数组
   const fields = rawFields.filter(function(f) {
     if (f.popupOnly) return false; // 弹窗编辑器已涵盖的参数，flat 表单不再重复展示
     if (!f.dependsOn) return true;
     var dep = f.dependsOn;
-    return String(section[dep.field]) === String(dep.value);
+    var vals = Array.isArray(dep.value) ? dep.value : [dep.value];
+    return vals.map(String).includes(String(section[dep.field]));
   });
   // 统计当前 section 里「image 类型字段」的数量（只看当前可见字段）
   const imageFieldsInSection = fields.filter(f => f.type === 'image');
@@ -4255,19 +4414,23 @@ function renderEditorForm(section) {
   const hasTabs = fields.some((f) => f.tab);
   const tabs = [];
   fields.forEach((f) => { if (f.tab && tabs.indexOf(f.tab) < 0) tabs.push(f.tab); });
+  const initTab = hasTabs ? ((__activeFtab && tabs.indexOf(__activeFtab) >= 0) ? __activeFtab : tabs[0]) : null;
   let html = '';
   let curTabIdx = -1;
   const openPanel = (tabOf, i) => {
     if (curTabIdx === i) return;
     if (curTabIdx >= 0) html += '</div></div>';  // 关上一个 panel + form-grid
-    if (hasTabs) html += `<div class="form-tab-panel" data-ftab-panel="${esc(tabOf)}"${i === 0 ? '' : ' style="display:none"'}>`;
+    if (hasTabs) html += `<div class="form-tab-panel" data-ftab-panel="${esc(tabOf)}"${tabOf === initTab ? '' : ' style="display:none"'}>`;
     html += '<div class="form-grid">';
     curTabIdx = i;
   };
   if (hasTabs) {
-    html += '<div class="form-tabs" data-form-tabs="1">' + tabs.map((t, i) =>
-      `<button type="button" class="form-tab-btn${i === 0 ? ' on' : ''}" data-ftab="${esc(t)}">${esc(t)}</button>`
-    ).join('') + '</div>';
+    html += '<div class="form-tabs" data-form-tabs="1">' + tabs.map((t) =>
+      `<button type="button" class="form-tab-btn${t === initTab ? ' on' : ''}" data-ftab="${esc(t)}">${esc(t)}</button>`
+    ).join('')
+      /* 页卡级一键重置：把当前页卡内所有带默认值的字段恢复默认（用户改散了不知道默认是多少时用） */
+      + `<button type="button" class="form-tab-reset" data-ftab-reset="1" title="把当前页卡的所有参数恢复默认值">↺ 重置本页</button>`
+      + '</div>';
   } else {
     html += '<div class="form-grid">';
   }
@@ -4292,9 +4455,24 @@ function renderEditorForm(section) {
       '<div class="mbvis-launch-s">拖拽 4 角对准样机屏幕；手挡住一角时开启「平行四边形锁定」自动推算，媒体实时透视预览，关闭即保存</div></div>' +
       '<button type="button" class="mbvis-launch-btn" id="dsvisLaunchBtn">打开屏幕校准</button></div></div>';
   }
+  // motion-banner：表单顶部内嵌「实时预览视窗」（amotion 式）——动效常驻运行，
+  // 文字条目直接在视窗里拖拽定位（取代原「打开可视化摆放」弹窗入口）。
+  if (section.type === 'motion-banner') {
+    html += '<div class="mn-live" id="mnLive">' +
+      '<div class="mn-live-head"><span class="mn-live-dot"></span>' +
+        '<span class="mn-live-t">实时预览</span>' +
+        '<span class="mn-live-s">与前台同一份动效算法 · 直接拖动文字定位 · 参数改动即时生效</span></div>' +
+      '<div class="mn-live-stage" id="mnLiveStage"><div class="mnl-deck" id="mnLiveDeck"></div></div>' +
+    '</div>';
+  }
     fields.forEach((f) => {
     if (hasTabs) openPanel(f.tab || tabs[0], tabs.indexOf(f.tab || tabs[0]));
-    const isFull = ['textarea', 'image', 'image-list', 'video', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'displacement-picker', 'animated-params'].includes(f.type);
+    /* showIf 条件显示：字段只在 {key: 值 in [..]} 满足时渲染（如动效参数跟着下拉走） */
+    if (f.showIf) {
+      const curV = String(section[f.showIf.key] == null ? '' : section[f.showIf.key]);
+      if (!f.showIf.in.map(String).includes(curV)) return;
+    }
+    const isFull = ['textarea', 'image', 'image-list', 'video', 'cards-list', 'groups-list', 'gallery-columns', 'intro-rows', 'items-list', 'card-slots', 'mn-texts', 'displacement-picker', 'animated-params'].includes(f.type);
     // checkbox 整行宽（开关 + 文字描述横排，宽度小就不好看）
     const isCheckbox = f.type === 'checkbox';
     const val = section[f.key];
@@ -4307,24 +4485,33 @@ function renderEditorForm(section) {
         `<input type="checkbox" data-bind-key="${esc(f.key)}" data-bind-ftype="checkbox" id="${fieldUid}"${checked}>` +
         `<span class="switch-track"><span class="switch-thumb"></span></span>` +
         `<span class="switch-text">${esc(f.label)}</span>` +
-        (f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : '') +
+        (f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : '') +
         `</label>`;
       html += `</div>`;
       return;
     }
-    html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : ''}${((f.type === 'select' || f.type === 'color' || f.type === 'text') && f.default !== undefined) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>` : ''}</label>`;
+    html += `<label class="form-label">${esc(f.label)}${f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : ''}${((f.type === 'select' || f.type === 'color' || f.type === 'text' || f.type === 'range') && f.default !== undefined && !f.rebuildOnChange) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置为默认值（${esc(f.default)}）" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>` : ''}</label>`;
     switch (f.type) {
       case 'text':
         html += `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="text" type="text" value="${esc(val || '')}" id="${fieldUid}">`;
         break;
       case 'color': {
-        // 色卡选择器：系统色块 + 颜色文本框双联。文本框是唯一取值源（允许任意 CSS 颜色，含 rgba），
-        // 色块仅同步纯色部分（input[type=color] 不支持 alpha）；点击重置按钮后随表单重建自动回显。
+        // 取色器：自定义弹出式取色面板（色域 + 色相条 + 预设色板 + RGB 滑块 + HEX），
+        // 替代系统原生 picker。文本框仍是唯一取值源（允许任意 CSS 颜色，含 rgba——
+        // 面板选色时保留原 alpha）；rgba 初值取 rgb 部分做面板初始色。
         const cv = String(val || '');
         const m6 = /^#([0-9a-fA-F]{6})$/.exec(cv.trim());
-        const dotV = m6 ? cv.trim() : '#ffffff';
+        const mRgba = /^rgba?\(([^)]+)\)$/i.exec(cv.trim());
+        let dotV = '#ffffff';
+        if (m6) dotV = cv.trim();
+        else if (mRgba) {
+          const parts = mRgba[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+          if (parts.length >= 3 && parts.slice(0, 3).every((n) => !isNaN(n))) {
+            dotV = '#' + parts.slice(0, 3).map((n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('');
+          }
+        }
         html += `<div class="form-color-row">` +
-          `<input type="color" class="form-color-dot" data-color-for="${esc(f.key)}" value="${esc(dotV)}" aria-label="${esc(f.label)}取色">` +
+          `<button type="button" class="form-color-dot" data-color-for="${esc(f.key)}" data-dot-cur="${esc(dotV)}" style="background:${esc(dotV)}" aria-label="${esc(f.label)}取色"></button>` +
           `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="text" type="text" placeholder="${esc(f.placeholder || '#ffffff')}" value="${esc(cv)}" id="${fieldUid}">` +
           `</div>`;
         break;
@@ -4383,11 +4570,12 @@ function renderEditorForm(section) {
         if (!Number.isFinite(rv)) rv = rdef;
         rv = Math.min(rmax, Math.max(rmin, rv));
         const dec = rstep >= 1 ? 0 : rstep >= 0.1 ? 1 : rstep >= 0.01 ? 2 : rstep >= 0.001 ? 3 : 4;
+        const isDefault = Math.abs(rv - rdef) < (rstep / 2);
         html += `<div class="form-range-row">
           <input class="form-range" data-bind-key="${esc(f.key)}" data-bind-ftype="range" type="range"
             min="${esc(String(rmin))}" max="${esc(String(rmax))}" step="${esc(String(rstep))}"
             value="${rv}" id="${fieldUid}">
-          <span class="form-range-val">${Number(rv.toFixed(dec)).toString()}</span>
+          <span class="form-range-val${isDefault ? ' is-default' : ''}" title="默认 ${Number(rdef.toFixed(dec)).toString()}">${Number(rv.toFixed(dec)).toString()}</span>
         </div>`;
         break;
       }
@@ -4451,6 +4639,12 @@ function renderEditorForm(section) {
         if (section.type === 'intro') migrateIntroSectionToV3(section);
         html += renderIntroRowsEditor(f.key, Array.isArray(section.rows) ? section.rows : [], section.id);
         break;
+      case 'card-slots':
+        html += renderCardSlotsField(f, Array.isArray(val) ? val : [], section);
+        break;
+      case 'mn-texts':
+        html += renderMnTextsField(f, section);
+        break;
       case 'items-list':
         html += renderItemsListField(f, Array.isArray(val) ? val : [], fieldUid);
         break;
@@ -4473,10 +4667,32 @@ function renderEditorForm(section) {
       const btn = e.target.closest('.form-tab-btn');
       if (!btn) return;
       const t = btn.getAttribute('data-ftab');
+      __activeFtab = t;                                       // 记忆页卡：重置/下拉切换重建后保持
       ftabBar.querySelectorAll('.form-tab-btn').forEach((b) => b.classList.toggle('on', b === btn));
       container.querySelectorAll('.form-tab-panel').forEach((p) => {
         p.style.display = (p.getAttribute('data-ftab-panel') === t) ? '' : 'none';
       });
+    });
+    // 页卡级一键重置：当前激活页卡内所有带 default 的字段恢复默认
+    const ftReset = ftabBar.querySelector('[data-ftab-reset]');
+    if (ftReset) ftReset.addEventListener('click', () => {
+      const tab = __activeFtab || tabs[0];
+      const sec = state.sections[selectedIndex];
+      if (!sec) return;
+      let n = 0;
+      (TYPE_FIELDS[section.type] || []).forEach((f) => {
+        if (f.tab !== tab || f.default === undefined) return;
+        /* 跳过 rebuildOnChange 字段（如动效下拉）：重置它们会切换整个参数组，
+           用户点「重置本页」的意图是恢复参数值、不是换动效 */
+        if (f.rebuildOnChange) return;
+        /* 与 default 块一致写回字符串（content.json 全字符串）；对象类型（如列表）深拷贝 */
+        sec[f.key] = (typeof f.default === 'object' && f.default !== null) ? JSON.parse(JSON.stringify(f.default)) : String(f.default);
+        n++;
+      });
+      if (!n) { toast('当前页卡没有可重置的参数', 'error'); return; }
+      toast('已重置「' + tab + '」页卡 ' + n + ' 项参数', 'success');
+      onSectionChanged();
+      setTimeout(() => renderEditorForm(section), 0);
     });
   }
   // 站内页下拉兜底刷新：PAGE_OPTIONS 可能晚于编辑器渲染完成，确保加载后用最新列表重填选项并保留选中值
@@ -4500,6 +4716,10 @@ function renderEditorForm(section) {
         if (span) {
           const dec = st >= 1 ? 0 : st >= 0.1 ? 1 : st >= 0.01 ? 2 : st >= 0.001 ? 3 : 4;
           span.textContent = Number(v.toFixed(dec)).toString();
+          // 实时刷新「= 默认值」标记：拖回默认位时变灰 + 「默认」后缀
+          const fld = (TYPE_FIELDS[section.type] || []).find((x) => x.key === k);
+          const def = fld && fld.default != null ? parseFloat(fld.default) : NaN;
+          span.classList.toggle('is-default', Number.isFinite(def) && Math.abs(v - def) < (st / 2));
         }
       } else if (ftype === 'tags') {
         state.sections[selectedIndex][k] = inp.value.split(',').map((s) => s.trim()).filter(Boolean);
@@ -4523,6 +4743,14 @@ function renderEditorForm(section) {
       const needsRebuild = willRebuild ||
         (k === 'colCount' && section.type === 'gallery') ||
         (k === 'videoType' && (section.type === 'hero' || section.type === 'hero-banner' || section.type === 'showcase'));
+      if (k === 'cardRatio' && section.type === 'motion-banner') {
+        // 卡片比例切换 → 套用该比例下的预设默认值（amotion defaultsByRatio 同思路）
+        const mnSec = state.sections[selectedIndex];
+        if ((mnSec.effect || 'vortex') === 'brick') {
+          const rowMap = { '9:16': '4', '16:9': '3', '4:5': '3' };
+          if (rowMap[inp.value]) mnSec.rows = rowMap[inp.value];
+        }
+      }
       if (needsRebuild) {
         onSectionChanged();
         setTimeout(() => renderEditorForm(section), 0);
@@ -4534,17 +4762,15 @@ function renderEditorForm(section) {
     inp.addEventListener('change', handler);
   });
 
-  // 色卡（color 字段）双联联动：色块 → 写入同 key 文本框并触发保存；文本框填 6 位 hex → 同步色块
+  // 取色器（color 字段）：点色卡打开自定义弹出式取色面板（写回同 key 文本框 + 触发保存）；
+  // 文本框填合法 hex → 同步色卡底色。rgba 值由面板保留 alpha 写回。
   container.querySelectorAll('[data-color-for]').forEach((dot) => {
     const txt = container.querySelector('[data-bind-key="' + dot.dataset.colorFor + '"]');
     if (!txt) return;
-    dot.addEventListener('input', () => {
-      txt.value = dot.value;
-      txt.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    dot.addEventListener('click', () => openColorPicker(dot, txt));
     txt.addEventListener('input', () => {
       const v = String(txt.value || '').trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(v)) dot.value = v;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { dot.dataset.dotCur = v; dot.style.background = v; }
     });
   });
 
@@ -4600,6 +4826,8 @@ function renderEditorForm(section) {
     else if (f.type === 'displacement-picker') bindDisplacementPicker(f.key, fieldUid);
     else if (f.type === 'gallery-columns') bindGalleryColumnsEditor(f.key, section.id);
     else if (f.type === 'intro-rows') bindIntroRowsEditor(f.key, section.id);
+    else if (f.type === 'card-slots') bindCardSlotsField(f, section);
+    else if (f.type === 'mn-texts') bindMnTextsField(f, section);
     else if (f.type === 'items-list') bindItemsListField(f, fieldUid);
     else if (f.type === 'animated-params') bindAnimatedParamsField(f, fieldUid, section);
   });
@@ -4619,6 +4847,842 @@ function renderEditorForm(section) {
     const dsBtn = document.getElementById('dsvisLaunchBtn');
     if (dsBtn) dsBtn.onclick = () => openDeviceScreenCalib();
   }
+  // motion-banner：表单 DOM 就绪后启动内嵌实时预览引擎（rAF 常驻，直到表单重建/切走）
+  if (section.type === 'motion-banner') {
+    requestAnimationFrame(() => startMnLive());
+  }
+}
+
+
+/* ===== motion-banner 多图槽位编辑器（card-slots）=================================
+   amotion 式：数量步进（− N +）+ 小方块槽位网格 + 批量上传；
+   数据仍是 section.images = [{image}]，与前台/旧数据完全兼容。 */
+/* ===== 弹出式取色器（全局单例）：色域 + 色相条 + 预设色板 + RGB 滑块 + HEX =====
+   替代系统原生 picker（样式对齐 amotion）。文本框仍是唯一取值源：
+   面板每次改动写回 txt.value + dispatch input（走既有 data-bind-key 绑定与脏标记）。
+   rgba 值：初始化取 rgb 部分做面板色，选色写回时保留原 alpha。 */
+let CP = null;   // { pop, state:{h,s,v}, alpha, txt, dot }
+
+function cpHexToRgb(hex) {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function cpRgbToHex(r, g, b) {
+  return '#' + [r, g, b].map((n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('');
+}
+function cpRgbToHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d > 0) {
+    if (mx === r) h = ((g - b) / d) % 6;
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+  }
+  return [h, mx === 0 ? 0 : d / mx, mx];
+}
+function cpHsvToRgb(h, s, v) {
+  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+
+function openColorPicker(anchorBtn, txtInput) {
+  if (!CP) cpEnsureDOM();
+  const raw = String(txtInput.value || '').trim();
+  const mRgba = /^rgba?\(([^)]+)\)$/i.exec(raw);
+  let hex = '#ffffff', alpha = 1;
+  if (mRgba) {
+    const parts = mRgba[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    if (parts.length >= 3 && !parts.slice(0, 3).some(isNaN)) {
+      hex = cpRgbToHex(parts[0], parts[1], parts[2]);
+      alpha = parts[3] != null && !isNaN(parts[3]) ? Math.max(0, Math.min(1, parts[3])) : 1;
+    }
+  } else if (cpHexToRgb(raw)) hex = cpHexToRgb(raw) ? raw.trim() : '#ffffff';
+  const rgb = cpHexToRgb(hex) || [255, 255, 255];
+  const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+  CP.txt = txtInput; CP.dot = anchorBtn;
+  CP.state.h = h; CP.state.s = s; CP.state.v = v; CP.state.a = alpha;
+  /* 定位：anchor 下方，右侧溢出则靠右对齐 */
+  const r = anchorBtn.getBoundingClientRect();
+  const pop = CP.pop;
+  pop.hidden = false;
+  const pw = pop.offsetWidth || 264, ph = pop.offsetHeight || 380;
+  let left = r.left, top = r.bottom + 8;
+  if (left + pw > innerWidth - 8) left = Math.max(8, innerWidth - pw - 8);
+  if (top + ph > innerHeight - 8) top = Math.max(8, r.top - ph - 8);
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+  cpSync();
+}
+function cpEnsureDOM() {
+  const pop = document.createElement('div');
+  pop.className = 'cp-pop';
+  pop.hidden = true;
+  const swatches = ['#ffffff', '#e5e7eb', '#9ca3af', '#374151', '#111827', '#ef4444', '#f97316', '#eab308',
+    '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#78350f'];
+  pop.innerHTML =
+    '<div class="cp-head"><span>颜色</span><i class="cp-cur"></i></div>' +
+    '<div class="cp-area"><div class="cp-area-dot"></div></div>' +
+    '<div class="cp-hue"><div class="cp-hue-dot"></div></div>' +
+    '<div class="cp-swatches">' + swatches.map((c) => `<button type="button" class="cp-sw" data-cp-sw="${c}" style="background:${c}" title="${c}"></button>`).join('') + '</div>' +
+    '<div class="cp-rgb">' +
+      ['R', 'G', 'B'].map((ch, i) => `<div class="cp-rgb-row"><label>${ch}</label><input type="range" min="0" max="255" step="1" data-cp-ch="${i}"><b data-cp-b="${i}">0</b></div>`).join('') +
+      '<div class="cp-rgb-row"><label>A</label><input type="range" min="0" max="100" step="1" data-cp-alpha><b data-cp-ab>100%</b></div>' +
+    '</div>' +
+    '<div class="cp-hexrow"><label>HEX</label><input type="text" data-cp-hex maxlength="9" placeholder="#232323"></div>';
+  document.body.appendChild(pop);
+  CP = { pop: pop, state: { h: 0, s: 0, v: 0, a: 1 }, txt: null, dot: null };
+  /* 色域拖拽 */
+  const area = pop.querySelector('.cp-area');
+  const areaDrag = (ev) => {
+    const r = area.getBoundingClientRect();
+    CP.state.s = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+    CP.state.v = 1 - Math.max(0, Math.min(1, (ev.clientY - r.top) / r.height));
+    cpSync(); cpCommit();
+  };
+  area.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    areaDrag(e);
+    const mv = (ev2) => areaDrag(ev2);
+    const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); };
+    document.addEventListener('pointermove', mv);
+    document.addEventListener('pointerup', up);
+  });
+  /* 色相条拖拽 */
+  const hue = pop.querySelector('.cp-hue');
+  const hueDrag = (ev) => {
+    const r = hue.getBoundingClientRect();
+    CP.state.h = Math.max(0, Math.min(359, (ev.clientX - r.left) / r.width * 360));
+    cpSync(); cpCommit();
+  };
+  hue.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    hueDrag(e);
+    const mv = (ev2) => hueDrag(ev2);
+    const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); };
+    document.addEventListener('pointermove', mv);
+    document.addEventListener('pointerup', up);
+  });
+  /* 预设色板 */
+  pop.querySelectorAll('[data-cp-sw]').forEach((b) => b.addEventListener('click', () => {
+    const rgb = cpHexToRgb(b.dataset.cpSw);
+    const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+    CP.state.h = h; CP.state.s = s; CP.state.v = v;
+    cpSync(); cpCommit();
+  }));
+  /* RGB 滑块 */
+  pop.querySelectorAll('[data-cp-ch]').forEach((inp) => inp.addEventListener('input', () => {
+    const rgb = cpHsvToRgb(CP.state.h, CP.state.s, CP.state.v);
+    rgb[+inp.dataset.cpCh] = +inp.value;
+    const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+    CP.state.h = h; CP.state.s = s; CP.state.v = v;
+    cpSync(); cpCommit();
+  }));
+  /* A（透明度）滑块：0–100%，<100% 时写回 rgba(...) */
+  pop.querySelector('[data-cp-alpha]').addEventListener('input', (e) => {
+    CP.state.a = (+e.target.value) / 100;
+    cpSync(); cpCommit();
+  });
+  /* HEX 输入 */
+  const hexInp = pop.querySelector('[data-cp-hex]');
+  hexInp.addEventListener('change', () => {
+    const rgb = cpHexToRgb(hexInp.value);
+    if (!rgb) return;
+    const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+    CP.state.h = h; CP.state.s = s; CP.state.v = v;
+    cpSync(); cpCommit();
+  });
+  /* 关闭：点外部 / Esc / 滚动 */
+  setTimeout(() => {
+    document.addEventListener('pointerdown', cpOutside);
+    document.addEventListener('keydown', cpEsc);
+  }, 0);
+}
+function cpOutside(e) {
+  if (!CP || CP.pop.hidden) return;
+  if (CP.pop.contains(e.target) || (CP.dot && CP.dot.contains(e.target))) return;
+  cpClose();
+}
+function cpEsc(e) { if (e.key === 'Escape' && CP && !CP.pop.hidden) cpClose(); }
+function cpClose() {
+  if (!CP) return;
+  CP.pop.hidden = true;
+  document.removeEventListener('pointerdown', cpOutside);
+  document.removeEventListener('keydown', cpEsc);
+}
+function cpCurrentHex() {
+  const rgb = cpHsvToRgb(CP.state.h, CP.state.s, CP.state.v);
+  return cpRgbToHex(rgb[0], rgb[1], rgb[2]);
+}
+function cpSync() {
+  const pop = CP.pop, st = CP.state;
+  const hex = cpCurrentHex();
+  const rgb = cpHexToRgb(hex);
+  const a = (st.a == null ? 1 : st.a);
+  /* 色域背景：当前色相的饱和度×明度二维渐变 */
+  const area = pop.querySelector('.cp-area');
+  area.style.background = 'linear-gradient(to top, #000, rgba(0,0,0,0)), linear-gradient(to right, #fff, hsl(' + Math.round(st.h) + ',100%,50%))';
+  area.querySelector('.cp-area-dot').style.left = (st.s * 100) + '%';
+  area.querySelector('.cp-area-dot').style.top = ((1 - st.v) * 100) + '%';
+  area.querySelector('.cp-area-dot').style.background = hex;
+  pop.querySelector('.cp-hue-dot').style.left = (st.h / 359 * 100) + '%';
+  pop.querySelector('.cp-hue-dot').style.background = 'hsl(' + Math.round(st.h) + ',100%,50%)';
+  pop.querySelector('.cp-cur').style.background = 'rgba(' + rgb.join(',') + ',' + a + ')';
+  pop.querySelectorAll('[data-cp-ch]').forEach((inp) => { inp.value = Math.round(rgb[+inp.dataset.cpCh]); });
+  pop.querySelectorAll('[data-cp-b]').forEach((b) => { b.textContent = Math.round(rgb[+b.dataset.cpB]); });
+  const aInp = pop.querySelector('[data-cp-alpha]');
+  if (document.activeElement !== aInp) aInp.value = Math.round(a * 100);
+  pop.querySelector('[data-cp-ab]').textContent = Math.round(a * 100) + '%';
+  const hexInp = pop.querySelector('[data-cp-hex]');
+  if (document.activeElement !== hexInp) hexInp.value = hex;
+}
+function cpCommit() {
+  if (!CP || !CP.txt) return;
+  const hex = cpCurrentHex();
+  const rgb = cpHexToRgb(hex);
+  const a = (CP.state.a == null ? 1 : CP.state.a);
+  /* a=100% 写回 hex；<100% 写回 rgba 保留透明度（色卡底色同步同步显示半透明） */
+  CP.txt.value = (a >= 0.999)
+    ? hex
+    : 'rgba(' + Math.round(rgb[0]) + ',' + Math.round(rgb[1]) + ',' + Math.round(rgb[2]) + ',' + (Math.round(a * 100) / 100) + ')';
+  CP.dot.dataset.dotCur = hex;
+  CP.dot.style.background = CP.txt.value;
+  CP.txt.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function renderCardSlotsField(f, list, section) {
+  const min = Number(f.min) || 4, max = Number(f.max) || 16, rec = Number(f.recommend) || 9;
+  const count = list.length;
+  const total = Math.max(count, min);
+  let slots = '';
+  for (let i = 0; i < total; i++) {
+    const it = list[i];
+    if (it && it.image) {
+      slots += '<div class="cslot has" data-idx="' + i + '">' +
+        '<img src="' + esc(it.image) + '" alt="" loading="lazy">' +
+        '<button type="button" class="cslot-del" data-del="' + i + '" title="清空此槽">×</button></div>';
+    } else {
+      slots += '<div class="cslot empty" data-slot="' + i + '"><span class="cslot-plus">+</span><span class="cslot-lb">素材 ' + (i + 1) + '</span></div>';
+    }
+  }
+  return '<div class="card-slots" data-cslots="' + esc(f.key) + '">' +
+    '<div class="cslot-head">' +
+      '<span class="cslot-count">卡片图片：' + count + '/' + max + ' 已上传（推荐 ' + rec + ' 张，可用 ' + min + '–' + max + ' 张）</span>' +
+      '<span class="cslot-step">' +
+        '<button type="button" class="cslot-step-btn" data-step="-1"' + (count <= min ? ' disabled' : '') + '>−</button>' +
+        '<b class="cslot-n">' + count + '</b>' +
+        '<button type="button" class="cslot-step-btn" data-step="1"' + (count >= max ? ' disabled' : '') + '>+</button>' +
+      '</span></div>' +
+    '<div class="cslot-grid">' + slots + '</div>' +
+    '<input type="file" accept="image/*" class="cslot-file" hidden>' +
+    '<input type="file" accept="image/*" multiple class="cslot-batch" hidden>' +
+    '<button type="button" class="cslot-batch-btn">⇪ 批量上传</button>' +
+  '</div>';
+}
+
+function bindCardSlotsField(f, section) {
+  const root = document.querySelector('[data-cslots="' + f.key + '"]');
+  if (!root) return;
+  const key = f.key;
+  const min = Number(f.min) || 4, max = Number(f.max) || 16;
+  const getList = () => { const a = section[key]; return Array.isArray(a) ? a : (section[key] = []); };
+  const refresh = () => { onSectionChanged(); setTimeout(() => renderEditorForm(section), 0); };
+
+  async function uploadFiles(files, atIdx) {
+    const arr = Array.prototype.slice.call(files).filter(Boolean);
+    if (!arr.length) return;
+    const prog = toastProgress('正在上传图片 0/' + arr.length + '...');
+    const list = getList();
+    try {
+      for (let i = 0; i < arr.length; i++) {
+        prog.update('正在上传图片 ' + (i + 1) + '/' + arr.length + '...');
+        const url = await uploadImage(arr[i], 'auto', section.type || '');
+        if (atIdx != null && atIdx >= 0) {
+          while (list.length <= atIdx) list.push({});
+          list[atIdx] = { image: url };
+          atIdx = null;                       // 后续文件顺延追加
+        } else {
+          if (list.length >= max) break;
+          list.push({ image: url });
+        }
+      }
+      prog.close('上传完成', 'success');
+    } catch (e) {
+      prog.close('上传失败：' + (e && e.message ? e.message : '未知错误'), 'error');
+    }
+    refresh();
+  }
+
+  // 数量步进
+  root.querySelectorAll('.cslot-step-btn').forEach((b) => b.addEventListener('click', () => {
+    const list = getList();
+    if (b.dataset.step === '1') { if (list.length >= max) return; list.push({}); }
+    else { if (list.length <= min) return; list.pop(); }
+    refresh();
+  }));
+  // 空槽点击 → 单张上传
+  const fileInp = root.querySelector('.cslot-file');
+  root.querySelectorAll('.cslot.empty').forEach((sl) => sl.addEventListener('click', () => {
+    fileInp.dataset.idx = sl.dataset.slot;
+    fileInp.value = '';
+    fileInp.click();
+  }));
+  fileInp.addEventListener('change', () => {
+    if (fileInp.files && fileInp.files[0]) uploadFiles([fileInp.files[0]], Number(fileInp.dataset.idx));
+  });
+  // 清空单槽
+  root.querySelectorAll('.cslot-del').forEach((b) => b.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const list = getList();
+    const i = Number(b.dataset.del);
+    if (list[i]) { list[i] = {}; refresh(); }
+  }));
+  // 批量上传
+  const batchInp = root.querySelector('.cslot-batch');
+  root.querySelector('.cslot-batch-btn').addEventListener('click', () => { batchInp.value = ''; batchInp.click(); });
+  batchInp.addEventListener('change', () => { if (batchInp.files && batchInp.files.length) uploadFiles(batchInp.files, null); });
+}
+
+/* ===== motion-banner 内嵌实时预览 + 文字条目编辑器（mn-texts）======================
+   amotion 式：右侧编辑面板顶部常驻「实时预览」视窗（与前台同一份 MFX 算法），
+   文字条目在预览视窗里直接拖拽定位；「文字」页卡编辑选中条目属性、可增删条目。
+   数据：section.texts = [{text,size,weight,color,opacity,rotate,align,x,y}]（x/y = 舞台%）。
+   老数据（title/subtitle/...）在 mnTextsOf 读取时迁移，不回写。 */
+let mnSelText = 0;
+
+function mnTextsOf(sec) {
+  if (!sec) return [];
+  if (!Array.isArray(sec.texts)) sec.texts = [];
+  if (!sec.texts.length) {
+    if (sec.title) sec.texts.push({ text: sec.title, size: sec.titleSize || '64', weight: '800',
+      color: sec.titleColor || '#ffffff', opacity: sec.titleOpacity || '1', rotate: sec.titleRotate || '0',
+      align: sec.titleAlign || 'left', x: sec.titleX || '', y: sec.titleY || '' });
+    if (sec.subtitle) sec.texts.push({ text: sec.subtitle, size: sec.subtitleSize || '22', weight: '400',
+      color: sec.subtitleColor || 'rgba(255,255,255,0.82)', opacity: sec.subtitleOpacity || '1', rotate: sec.subtitleRotate || '0',
+      align: 'left', x: sec.subtitleX || '', y: sec.subtitleY || '' });
+  }
+  return sec.texts;
+}
+/* 未拖拽条目的默认落位（与前台 render.js mbTextPos 逐字一致） */
+function mnTextPos(t, i) {
+  var x = (t.x !== '' && t.x != null) ? (parseFloat(t.x) || 50) : (String(t.align || 'left') === 'center' ? 50 : 24);
+  var y = (t.y !== '' && t.y != null) ? (parseFloat(t.y) || 50) : Math.min(40 + i * 14, 78);
+  return { x: x, y: y };
+}
+
+/* 圆角统一像素（与前台 render.js mbRadiusPx 同式）：cornerRadius × 该动效「标称卡短边」。
+   不能用百分比——drift/brick 卡尺寸带抖动，百分比圆角相对各自卡片尺寸 → 像素圆角不一致（畸变）。 */
+function mbRadiusPx(s, eff, W, H) {
+  const d = Math.min(W, H);
+  let nominal;
+  if (eff === 'drift') nominal = d * MFX.clamp(MFX.num(s.dCardSize, 0.3), 0.12, 0.5);
+  else if (eff === 'brick') nominal = H * MFX.clamp(MFX.num(s.coverage, 1), 0.4, 1) / Math.round(MFX.clamp(MFX.num(s.rows, 3), 2, 5));
+  else if (eff === 'helix') nominal = d * MFX.clamp(MFX.num(s.hCardSize, 0.26), 0.1, 0.6);
+  else if (eff === 'ticker') nominal = d * MFX.clamp(MFX.num(s.tCardSize, 0.36), 0.1, 0.6);
+  else nominal = d * MFX.clamp(MFX.num(s.cardSize, 0.2), 0.08, 0.5);
+  return MFX.clamp(MFX.num(s.cornerRadius, 0.08), 0, 0.5) * nominal;
+}
+
+/* —— 内嵌实时预览引擎：rAF 常驻，每帧读 mbS()，参数改动即时反映 —— */
+let MN_LIVE = null;
+function stopMnLive() {
+  if (!MN_LIVE) return;
+  MN_LIVE.stop = true;
+  if (MN_LIVE.raf) cancelAnimationFrame(MN_LIVE.raf);
+  if (MN_LIVE.ro) { try { MN_LIVE.ro.disconnect(); } catch (e) {} }
+  MN_LIVE = null;
+}
+function startMnLive() {
+  stopMnLive();
+  const stage = document.getElementById('mnLiveStage');
+  const deck = document.getElementById('mnLiveDeck');
+  if (!stage || !deck || typeof window.MFX === 'undefined') return;
+  const st = { stage, deck, W: 0, H: 0, raf: 0, t0: 0, elapsed: 0, pool: [], chips: [], stop: false, ro: null };
+  MN_LIVE = st;
+  const measure = () => { st.W = deck.clientWidth || stage.clientWidth || 640; st.H = deck.clientHeight || stage.clientHeight || 300; };
+  st.draw = function (t) {
+    const sec = mbS();
+    if (!sec || sec.type !== 'motion-banner') return;
+    const MFX = window.MFX;
+    const imgs = (Array.isArray(sec.images) ? sec.images : []).map((x) => x && x.image).filter(Boolean);
+    const N = Math.max(Array.isArray(sec.images) ? sec.images.length : 0, 4);
+    const eff = (sec.effect === 'drift' || sec.effect === 'brick' || sec.effect === 'helix' || sec.effect === 'ticker') ? sec.effect : 'vortex';
+    const frames = MFX[eff](sec, st.W, st.H, N, t);
+    /* 卡池复用 */
+    while (st.pool.length < frames.length) {
+      const d = document.createElement('div'); d.className = 'mfc';
+      const im = document.createElement('img'); im.alt = ''; im.draggable = false;
+      const ph = document.createElement('div'); ph.className = 'mfc-ph';
+      d.appendChild(im); d.appendChild(ph); deck.appendChild(d); st.pool.push(d);
+    }
+    while (st.pool.length > frames.length) { const last = st.pool.pop(); if (last.parentNode) last.parentNode.removeChild(last); }
+    const radius = mbRadiusPx(sec, eff, st.W, st.H).toFixed(1) + 'px';
+    const bwK = MFX.clamp(MFX.num(sec.borderWidth, 0), 0, 0.12);
+    const bcCol = sec.borderColor || '#ffffff';
+    const tiltX = MFX.clamp(MFX.num(sec.tiltX, 0), -45, 45);
+    const tiltY = MFX.clamp(MFX.num(sec.tiltY, 0), -45, 45);
+    deck.style.transform = (tiltX || tiltY) ? 'perspective(1400px) rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)' : '';
+    deck.style.transformStyle = 'preserve-3d';
+    deck.style.background = sec.bgType === 'color' && sec.bgColor ? sec.bgColor : '#0c0d10';
+    for (let i = 0; i < frames.length; i++) {
+      const f = frames[i], c = st.pool[i];
+      if (!c) continue;
+      const im = c.firstChild, ph = c.lastChild;
+      const useReal = imgs.length > 0 && f.slot < imgs.length;
+      if (useReal) {
+        if (c._phMark) { c.classList.remove('is-ph'); c._phMark = false; }
+        const src = imgs[f.slot];
+        if (im.getAttribute('src') !== src) im.setAttribute('src', src);
+        if (ph.style.display !== 'none') ph.style.display = 'none';
+      } else {
+        if (!c._phMark) { c.classList.add('is-ph'); c._phMark = true; }
+        if (im.getAttribute('src')) im.removeAttribute('src');
+        const lb = '素材 ' + (f.slot + 1);
+        if (ph.textContent !== lb) ph.textContent = lb;
+        if (ph.style.display !== '') ph.style.display = '';
+      }
+      const wp = f.w.toFixed(1) + 'px', hp = f.h.toFixed(1) + 'px';
+      if (c._w !== wp) { c.style.width = wp; c._w = wp; }
+      if (c._h !== hp) { c.style.height = hp; c._h = hp; }
+      const tr = 'translate3d(' + (f.x - f.w / 2).toFixed(1) + 'px,' + (f.y - f.h / 2).toFixed(1) + 'px,0) rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) + ')';
+      if (c._tr !== tr) { c.style.transform = tr; c._tr = tr; }
+      const op = f.alpha.toFixed(3);
+      if (c._op !== op) { c.style.opacity = op; c._op = op; }
+      if (c._z !== f.zIndex) { c.style.zIndex = f.zIndex; c._z = f.zIndex; }
+      const fl = f.dim > 0.01 ? 'brightness(' + (1 - f.dim * 0.75).toFixed(2) + ')' : '';
+      if (c._fl !== fl) { c.style.filter = fl; c._fl = fl; }
+      if (bwK > 0.001) {
+        const bwd = Math.max(1, Math.round(bwK * Math.min(f.w, f.h))) + 'px solid ' + bcCol;
+        if (c._bd !== bwd) { c.style.border = bwd; c._bd = bwd; }
+      } else if (c._bd) { c.style.border = ''; c._bd = ''; }
+      if (c._rd !== radius) { c.style.borderRadius = radius; c._rd = radius; }
+    }
+    mnLiveSyncChips(st, sec);
+  };
+  st.loop = function (now) {
+    if (st.stop) return;
+    st.raf = requestAnimationFrame(st.loop);
+    st.elapsed = (now - st.t0) / 1000;
+    st.draw(st.elapsed);
+  };
+  measure();
+  st.t0 = performance.now();
+  st.raf = requestAnimationFrame(st.loop);
+  st.ro = new ResizeObserver(() => { measure(); });
+  st.ro.observe(stage);
+}
+
+/* —— 文字 chip：同步（每帧 diff）+ 拖拽 —— */
+function mnLiveSyncChips(st, sec) {
+  const texts = mnTextsOf(sec);
+  while (st.chips.length < texts.length) {
+    const ch = document.createElement('div');
+    ch.className = 'mnl-chip';
+    ch.style.position = 'absolute';
+    st.stage.appendChild(ch);           /* 挂 stage（不挂 deck——deck 有 tilt 变形） */
+    st.chips.push(ch);
+    mnBindChipDrag(ch, st);
+  }
+  while (st.chips.length > texts.length) { const last = st.chips.pop(); if (last.parentNode) last.parentNode.removeChild(last); }
+  for (let i = 0; i < texts.length; i++) {
+    const t = texts[i], ch = st.chips[i];
+    const pos = mnTextPos(t, i);
+    const lp = pos.x.toFixed(2) + '%', tp = pos.y.toFixed(2) + '%';
+    if (ch.style.left !== lp) ch.style.left = lp;
+    if (ch.style.top !== tp) ch.style.top = tp;
+    ch.dataset.txi = i;
+    const txt = String(t.text || '');
+    const label = txt.length > 14 ? txt.slice(0, 14) + '…' : (txt || '空文字');
+    if (ch.textContent !== label) ch.textContent = label;
+    ch.classList.toggle('sel', i === mnSelText);
+    ch.classList.toggle('is-empty', !txt);
+    /* 字号等比缩放：前台 1400px 宽时 = size px；预览宽 W 时 = size × W/1400（与前台该宽度渲染一致） */
+    const fpx = parseFloat(t.size) || 18;
+    ch.style.fontSize = Math.max(8, Math.min(fpx * st.W / 1400, 120)) + 'px';
+    ch.style.fontWeight = Math.max(100, Math.min(900, parseInt(t.weight, 10) || 400));
+    ch.style.color = t.color || '#ffffff';
+    const opv = parseFloat(t.opacity);
+    ch.style.opacity = isNaN(opv) ? 1 : Math.max(0.05, Math.min(1, opv));
+    const rot = parseFloat(t.rotate) || 0;
+    const tf = 'translate(-50%,-50%)' + (rot ? ' rotate(' + rot + 'deg)' : '');
+    if (ch.style.transform !== tf) ch.style.transform = tf;
+  }
+}
+function mnBindChipDrag(chip, st) {
+  chip.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const idx = parseInt(chip.dataset.txi, 10);
+    if (isNaN(idx)) return;
+    mnSelText = idx;
+    mnRefreshTextForm();                /* 属性表单切到该条 */
+    const r = st.stage.getBoundingClientRect();
+    const move = (ev) => {
+      const x = Math.max(2, Math.min(98, (ev.clientX - r.left) / r.width * 100));
+      const y = Math.max(2, Math.min(98, (ev.clientY - r.top) / r.height * 100));
+      const tt = (mnTextsOf(mbS()) || [])[idx];
+      if (!tt) return;
+      tt.x = x.toFixed(1); tt.y = y.toFixed(1);
+      chip.style.left = x + '%'; chip.style.top = y + '%';
+    };
+    const up = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      onSectionChanged();
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  });
+}
+/* chip 点选后同步「文字」页卡的选中态与属性表单（只重建该字段容器，不动其它控件） */
+function mnRefreshTextForm() {
+  const root = document.querySelector('[data-mntroot="texts"]');
+  if (!root) return;
+  const fl = (TYPE_FIELDS['motion-banner'] || []).filter((x) => x.key === 'texts');
+  if (fl.length) root.innerHTML = renderMnTextsFieldInner(fl[0], mbS());
+}
+
+/* —— 文字条目编辑器（texts 字段渲染 + 委托绑定） —— */
+function renderMnTextsField(f, section) {
+  return '<div data-mntroot="' + esc(f.key) + '">' + renderMnTextsFieldInner(f, section) + '</div>';
+}
+function renderMnTextsFieldInner(f, section) {
+  const texts = mnTextsOf(section);
+  const max = Number(f.max) || 6;
+  if (mnSelText >= texts.length) mnSelText = Math.max(0, texts.length - 1);
+  let chips = '';
+  for (let i = 0; i < texts.length; i++) {
+    const t = texts[i];
+    const label = (t.text || '').length > 10 ? t.text.slice(0, 10) + '…' : (t.text || '空文字');
+    chips += '<button type="button" class="mnt-chip' + (i === mnSelText ? ' on' : '') + '" data-mnt-sel="' + i + '">' +
+      '<span>' + esc(label) + '</span>' +
+      '<span class="mnt-x" data-mnt-del="' + i + '" title="删除此条">×</span></button>';
+  }
+  if (texts.length < max) chips += '<button type="button" class="mnt-add" data-mnt-add="1">+ 添加文字</button>';
+  let form = '';
+  if (texts.length) {
+    const cur = texts[mnSelText] || texts[0];
+    form = '<div class="mnt-grid">' +
+      '<div class="mnt-field mnt-span2"><label>内容</label><textarea class="form-textarea" rows="2" data-mnt="text" placeholder="输入文字内容（留空则该条不显示）">' + esc(cur.text || '') + '</textarea></div>' +
+      '<div class="mnt-field"><label>字号（px）</label><input class="form-input" type="number" min="12" max="200" step="1" value="' + esc(String(cur.size || '32')) + '" data-mnt="size"></div>' +
+      '<div class="mnt-field"><label>字重</label><select class="form-select" data-mnt="weight">' +
+        [300, 400, 500, 600, 700, 800, 900].map((w) => '<option value="' + w + '"' + (String(cur.weight) === String(w) ? ' selected' : '') + '>' + w + '</option>').join('') +
+      '</select></div>' +
+      '<div class="mnt-field"><label>颜色</label><div class="mnt-color-row"><input type="color" data-mnt-dot="color" value="' + esc((String(cur.color || '#ffffff')).slice(0, 7)) + '"><input class="form-input" type="text" value="' + esc(String(cur.color || '#ffffff')) + '" data-mnt="color" placeholder="#ffffff 或 rgba(...)"></div></div>' +
+      '<div class="mnt-field"><label>不透明度（0–1）</label><input class="form-input" type="number" min="0" max="1" step="0.05" value="' + esc(String(cur.opacity == null ? '1' : cur.opacity)) + '" data-mnt="opacity"></div>' +
+      '<div class="mnt-field"><label>旋转（°）</label><input class="form-input" type="number" min="-180" max="180" step="1" value="' + esc(String(cur.rotate == null ? '0' : cur.rotate)) + '" data-mnt="rotate"></div>' +
+      '<div class="mnt-field"><label>对齐（未拖拽时）</label><select class="form-select" data-mnt="align">' +
+        '<option value="left"' + (String(cur.align || 'left') === 'left' ? ' selected' : '') + '>左对齐</option>' +
+        '<option value="center"' + (String(cur.align) === 'center' ? ' selected' : '') + '>居中</option>' +
+      '</select></div>' +
+    '</div>';
+  }
+  return '<div class="mnt-wrap">' +
+    '<div class="mnt-chips">' + chips + '</div>' +
+    form +
+    '<div class="mnt-hint">💡 在上方「实时预览」视窗里直接拖动文字定位（坐标按舞台百分比保存，任何分辨率下相对位置不变）。</div>' +
+  '</div>';
+}
+function bindMnTextsField(f, section) {
+  const root = document.querySelector('[data-mntroot="' + f.key + '"]');
+  if (!root) return;
+  const max = Number(f.max) || 6;
+  const rerender = () => { root.innerHTML = renderMnTextsFieldInner(f, mbS()); };
+  root.addEventListener('click', (e) => {
+    const del = e.target.closest('[data-mnt-del]');
+    if (del) {
+      e.stopPropagation();
+      const texts = mnTextsOf(mbS());
+      const i = parseInt(del.dataset.mntDel, 10);
+      if (texts[i]) {
+        texts.splice(i, 1);
+        mnSelText = Math.max(0, Math.min(mnSelText, texts.length - 1));
+        rerender(); onSectionChanged();
+      }
+      return;
+    }
+    if (e.target.closest('[data-mnt-add]')) {
+      const texts = mnTextsOf(mbS());
+      if (texts.length >= max) return;
+      texts.push({ text: '新文字', size: '32', weight: '400', color: '#ffffff', opacity: '1', rotate: '0', align: 'left', x: '', y: '' });
+      mnSelText = texts.length - 1;
+      rerender(); onSectionChanged();
+      return;
+    }
+    const sel = e.target.closest('[data-mnt-sel]');
+    if (sel) {
+      mnSelText = parseInt(sel.dataset.mntSel, 10) || 0;
+      rerender();
+    }
+  });
+  root.addEventListener('input', (e) => {
+    const el = e.target.closest('[data-mnt]');
+    if (!el) return;
+    const t = mnTextsOf(mbS())[mnSelText];
+    if (!t) return;
+    t[el.dataset.mnt] = el.value;
+    if (el.dataset.mnt === 'color') {
+      const dot = root.querySelector('[data-mnt-dot]');
+      if (dot && /^#[0-9a-fA-F]{6}$/.test(el.value.trim())) dot.value = el.value.trim();
+    }
+    if (el.dataset.mnt === 'text') {
+      const chip = root.querySelector('[data-mnt-sel="' + mnSelText + '"] span');
+      if (chip) chip.textContent = (el.value || '').length > 10 ? el.value.slice(0, 10) + '…' : (el.value || '空文字');
+    }
+    onSectionChanged();
+  });
+  root.addEventListener('change', (e) => {
+    const dot = e.target.closest('[data-mnt-dot]');
+    if (!dot) return;
+    const t = mnTextsOf(mbS())[mnSelText];
+    const inp = root.querySelector('[data-mnt="color"]');
+    if (t && inp) { t.color = dot.value; inp.value = dot.value; onSectionChanged(); }
+  });
+}
+
+/* ===== motion-banner 文字可视化摆放（与前台同源动效预览 + 拖放文字） ============== */
+let mnVis = null, mnVisSnap = null, mnLayer = 'title';
+
+function mnTakeSnapshot() {
+  try { mnVisSnap = JSON.parse(JSON.stringify(mbS() || {})); } catch (e) { mnVisSnap = null; }
+}
+function mnCancelVis() {
+  try {
+    if (mnVisSnap && state.sections[selectedIndex]) state.sections[selectedIndex] = JSON.parse(JSON.stringify(mnVisSnap));
+  } catch (e) {}
+  mnVisSnap = null;
+  if (mnVis && mnVis.mask) mnVis.mask.hidden = true;
+  try { renderAll(); } catch (e) { try { onSectionChanged(); } catch (e2) {} }
+  toast('已取消可视化摆放的修改', 'success');
+}
+
+function ensureMotionVisDOM() {
+  if (mnVis) return mnVis;
+  /* 卡片(.mfc)与槽位(.cslot)样式已静态化进顶层 <style>（浅色化 + 内嵌预览共用）；
+     这里只注入 mnvis 弹窗专用布局。 */
+  const style = document.createElement('style');
+  style.textContent = [
+    '.mnvis-body{display:flex;gap:14px;align-items:stretch}',
+    '.mnvis-stage{position:relative;flex:1 1 auto;background:#101116;border-radius:14px;overflow:hidden;min-height:440px;touch-action:none}',
+    '.mnvis-chip{position:absolute;cursor:grab;user-select:none;-webkit-user-select:none;white-space:nowrap;transform:translate(-50%,-50%);padding:4px 8px;border:1.5px dashed transparent;border-radius:6px;line-height:1.25;max-width:92%}',
+    '.mnvis-chip.sel{border-color:#3b82f6;background:rgba(59,130,246,.10)}',
+    '.mnvis-chip:active{cursor:grabbing}',
+    '.mnvis-side{width:236px;flex:0 0 236px;display:flex;flex-direction:column;gap:10px}',
+    '.mnvis-layers{display:flex;gap:6px}',
+    '.mnvis-layer{flex:1;background:#262a31;border:1px solid #3a3f47;color:#e8eaed;padding:7px 0;border-radius:8px;cursor:pointer;font-size:12px}',
+    '.mnvis-layer.on{background:#3b82f6;border-color:#3b82f6}',
+    '.mnvis-ctrl{display:flex;align-items:center;gap:8px;font-size:12px;color:#cdd5e4}',
+    '.mnvis-ctrl label{width:52px;flex:0 0 52px}',
+    '.mnvis-ctrl input[type=range]{flex:1;accent-color:#3b82f6}',
+    '.mnvis-ctrl input[type=color]{width:44px;height:26px;padding:0;border:none;background:none;cursor:pointer}',
+    '.mnvis-ctrl select{flex:1;background:#1d2026;border:1px solid #3a3f47;color:#e8eaed;border-radius:6px;padding:4px 6px;font-size:12px}',
+    '.mnvis-tip{font-size:11px;color:rgba(232,234,237,.55);line-height:1.55;margin-top:auto}',
+    '.mnvis-reset{background:transparent;border:1px solid #3a3f47;color:rgba(232,234,237,.72);padding:6px 0;border-radius:8px;cursor:pointer;font-size:12px}',
+    '.mnvis-reset:hover{border-color:#ffb84d;color:#ffb84d}',
+    '@media (max-width:860px){.mnvis-body{flex-direction:column}.mnvis-side{width:auto;flex:1 1 auto}}'
+  ].join('\n');
+  document.head.appendChild(style);
+  const mask = document.createElement('div');
+  mask.className = 'mbvis-mask';
+  mask.hidden = true;
+  mask.innerHTML =
+    '<div class="mbvis-modal" style="width:min(1180px,97vw)">' +
+      '<div class="mbvis-head"><div><div class="mbvis-title">可视化摆放 · 动效首屏文字</div>' +
+      '<div class="mbvis-sub">预览与前台同一份动效算法（同源渲染）。直接拖动文字摆位置；右侧调选中文字的字号 / 字重 / 颜色 / 不透明度 / 旋转。坐标按舞台百分比保存，任何分辨率下相对位置不变。</div></div>' +
+      '<div class="mbvis-head-act"><button type="button" class="mbvis-cancel" id="mnvisCancel">取消</button>' +
+      '<button type="button" class="mbvis-close" id="mnvisDone">完成</button></div></div>' +
+      '<div class="mnvis-body">' +
+        '<div class="mnvis-stage" id="mnvisStage"><div class="mnvis-deck" id="mnvisDeck"></div>' +
+          '<div class="mnvis-chip" id="mnvisChipTitle"></div>' +
+          '<div class="mnvis-chip" id="mnvisChipSub"></div>' +
+        '</div>' +
+        '<div class="mnvis-side">' +
+          '<div class="mnvis-layers">' +
+            '<button type="button" class="mnvis-layer on" data-layer="title">主标题</button>' +
+            '<button type="button" class="mnvis-layer" data-layer="subtitle">副标题</button>' +
+          '</div>' +
+          '<div id="mnvisCtrls"></div>' +
+          '<button type="button" class="mnvis-reset" id="mnvisResetPos">恢复自动排版（清除拖放坐标）</button>' +
+          '<div class="mnvis-tip">拖不动的文字说明它还没填内容——先在「文字」页卡里填标题/副标题，再回来摆。</div>' +
+        '</div>' +
+      '</div></div>';
+  document.body.appendChild(mask);
+  mnVis = { mask: mask };
+  mask.addEventListener('click', (e) => { if (e.target === mask) mnVis.mask.hidden = true; });
+  mask.querySelector('#mnvisCancel').addEventListener('click', mnCancelVis);
+  mask.querySelector('#mnvisDone').addEventListener('click', () => {
+    mnVis.mask.hidden = true;
+    onSectionChanged();
+    toast('已保存文字摆放', 'success');
+  });
+  mask.querySelector('#mnvisResetPos').addEventListener('click', () => {
+    const sec = mbS();
+    ['titleX', 'titleY', 'subtitleX', 'subtitleY', 'titleRotate', 'titleOpacity', 'subtitleRotate', 'subtitleOpacity'].forEach((k) => { sec[k] = ''; });
+    buildMotionVis();
+    toast('已恢复自动排版', 'success');
+  });
+  mask.querySelectorAll('.mnvis-layer').forEach((b) => b.addEventListener('click', () => {
+    mnLayer = b.dataset.layer;
+    mask.querySelectorAll('.mnvis-layer').forEach((x) => x.classList.toggle('on', x === b));
+    buildMnCtrls();
+    mnSyncChips();
+  }));
+  return mnVis;
+}
+
+function mnCur() {
+  const sec = mbS() || {};
+  return mnLayer === 'subtitle'
+    ? { pfx: 'subtitle', text: sec.subtitle, chip: document.getElementById('mnvisChipSub') }
+    : { pfx: 'title', text: sec.title, chip: document.getElementById('mnvisChipTitle') };
+}
+
+function mnSyncChips() {
+  const sec = mbS() || {};
+  const stage = document.getElementById('mnvisStage');
+  if (!stage) return;
+  const k = stage.clientWidth / 1400;                 // 前台 1400 视口基准 → 预览缩放
+  [['title', 'mnvisChipTitle'], ['subtitle', 'mnvisChipSub']].forEach(([pfx, chipId]) => {
+    const chip = document.getElementById(chipId);
+    const txt = sec[pfx === 'title' ? 'title' : 'subtitle'];
+    if (!txt) { chip.style.display = 'none'; return; }
+    chip.style.display = 'block';
+    chip.textContent = txt;
+    const size = MFX.num(sec[pfx === 'title' ? 'titleSize' : 'subtitleSize'], pfx === 'title' ? 64 : 22);
+    chip.style.fontSize = Math.max(10, size * k) + 'px';
+    chip.style.fontWeight = sec[pfx === 'title' ? 'titleWeight' : 'subtitleWeight'] || (pfx === 'title' ? '600' : '400');
+    chip.style.color = sec[pfx === 'title' ? 'titleColor' : 'subtitleColor'] || '#ffffff';
+    chip.style.textShadow = '0 2px 14px rgba(0,0,0,.45)';
+    const op = sec[pfx + 'Opacity'];
+    chip.style.opacity = (op !== '' && op != null) ? MFX.clamp(MFX.num(op, 1), 0, 1) : 1;
+    /* 未拖放时按前台自动排版近似落点（左对齐 ≈ 24%，居中 = 50%） */
+    const alignX = (sec.titleAlign === 'center') ? 50 : 24;
+    const x = (sec[pfx + 'X'] !== '' && sec[pfx + 'X'] != null) ? MFX.num(sec[pfx + 'X'], 50) : alignX;
+    const yTitleDef = sec.titleVAlign === 'top' ? 20 : (sec.titleVAlign === 'bottom' ? 80 : 50);
+    const yDef = pfx === 'title' ? yTitleDef : Math.min(92, yTitleDef + 14);
+    const y = (sec[pfx + 'Y'] !== '' && sec[pfx + 'Y'] != null) ? MFX.num(sec[pfx + 'Y'], yDef) : yDef;
+    chip.style.left = x + '%';
+    chip.style.top = y + '%';
+    const rot = sec[pfx + 'Rotate'];
+    chip.style.transform = 'translate(-50%,-50%)' + (rot ? ' rotate(' + MFX.num(rot, 0) + 'deg)' : '');
+    chip.classList.toggle('sel', mnLayer === pfx);
+  });
+}
+
+function buildMnCtrls() {
+  const sec = mbS() || {};
+  const box = document.getElementById('mnvisCtrls');
+  if (!box) return;
+  const p = mnLayer === 'subtitle' ? 'subtitle' : 'title';
+  const sizeKey = p === 'title' ? 'titleSize' : 'subtitleSize';
+  const colKey = p === 'title' ? 'titleColor' : 'subtitleColor';
+  const wKey = p === 'title' ? 'titleWeight' : 'subtitleWeight';
+  const size = MFX.num(sec[sizeKey], p === 'title' ? 64 : 22);
+  const col = sec[colKey] || '#ffffff';
+  const w = sec[wKey] || (p === 'title' ? '600' : '400');
+  const op = (sec[p + 'Opacity'] !== '' && sec[p + 'Opacity'] != null) ? MFX.num(sec[p + 'Opacity'], 1) : 1;
+  const rot = (sec[p + 'Rotate'] !== '' && sec[p + 'Rotate'] != null) ? MFX.num(sec[p + 'Rotate'], 0) : 0;
+  box.innerHTML =
+    '<div class="mnvis-ctrl"><label>字号</label><input type="range" min="16" max="180" step="1" value="' + size + '" data-mn="' + sizeKey + '"><b style="width:34px;text-align:right">' + size + '</b></div>' +
+    '<div class="mnvis-ctrl"><label>字重</label><select data-mn="' + wKey + '">' +
+      ['400', '500', '600', '700', '800', '900'].map((wv) => '<option value="' + wv + '"' + (String(w) === wv ? ' selected' : '') + '>' + wv + '</option>').join('') +
+    '</select></div>' +
+    '<div class="mnvis-ctrl"><label>颜色</label><input type="color" value="' + (String(col).slice(0, 7) || '#ffffff') + '" data-mn="' + colKey + '"></div>' +
+    '<div class="mnvis-ctrl"><label>不透明度</label><input type="range" min="0" max="1" step="0.05" value="' + op + '" data-mn="' + p + 'Opacity"><b style="width:34px;text-align:right">' + Math.round(op * 100) + '%</b></div>' +
+    '<div class="mnvis-ctrl"><label>旋转</label><input type="range" min="-180" max="180" step="1" value="' + rot + '" data-mn="' + p + 'Rotate"><b style="width:34px;text-align:right">' + rot + '°</b></div>';
+  box.querySelectorAll('[data-mn]').forEach((inp) => {
+    inp.addEventListener('input', () => {
+      const sec2 = mbS();
+      sec2[inp.dataset.mn] = String(inp.value);
+      mnSyncChips();
+      onSectionChanged();
+    });
+  });
+}
+
+function buildMotionVis() {
+  const sec = mbS() || {};
+  const stage = document.getElementById('mnvisStage');
+  const deck = document.getElementById('mnvisDeck');
+  if (!stage || !deck) return;
+  const W = stage.clientWidth || 800, H = stage.clientHeight || 440;
+  const imgs = (Array.isArray(sec.images) ? sec.images : []).map((x) => x && x.image).filter(Boolean);
+  const total = Math.max(Array.isArray(sec.images) ? sec.images.length : 0, 4); /* 含空槽总数：让动效在无图时也展示全貌 */
+  const eff = (sec.effect === 'drift' || sec.effect === 'brick' || sec.effect === 'helix' || sec.effect === 'ticker') ? sec.effect : 'vortex';
+  const frames = window.MFX[eff](sec, W, H, total, 0);
+  const radius = mbRadiusPx(sec, eff, W, H).toFixed(1) + 'px';
+  const bwK = MFX.clamp(MFX.num(sec.borderWidth, 0), 0, 0.12);
+  const bcCol = sec.borderColor || '#ffffff';
+  const tiltX = MFX.clamp(MFX.num(sec.tiltX, 0), -45, 45);
+  const tiltY = MFX.clamp(MFX.num(sec.tiltY, 0), -45, 45);
+  deck.style.transform = (tiltX || tiltY) ? 'perspective(1400px) rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)' : '';
+  deck.style.transformStyle = 'preserve-3d';
+  deck.style.background = sec.bgType === 'color' && sec.bgColor ? sec.bgColor : '#0c0d10';
+  let html = '';
+  for (let i = 0; i < frames.length; i++) {
+    const f = frames[i];
+    const st = 'left:' + (f.x - f.w / 2).toFixed(1) + 'px;top:' + (f.y - f.h / 2).toFixed(1) + 'px;width:' + f.w.toFixed(1) +
+      'px;height:' + f.h.toFixed(1) + 'px;transform:rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) +
+      ');opacity:' + f.alpha.toFixed(2) + ';z-index:' + f.zIndex + ';border-radius:' + radius +
+      (bwK > 0.001 ? ';border:' + Math.max(1, Math.round(bwK * Math.min(f.w, f.h))) + 'px solid ' + bcCol : '');
+    const useReal = imgs.length > 0 && f.slot < imgs.length;
+    const inner = useReal
+      ? '<img src="' + esc(imgs[f.slot]) + '" alt="" loading="lazy">'
+      : '<span class="mfc-ph' + (useReal ? '' : ' empty') + '">素材 ' + (f.slot + 1) + '</span>';
+    html += '<div class="mfc' + (useReal ? '' : ' is-ph') + '" style="' + st + '">' + inner + '</div>';
+  }
+  deck.innerHTML = html;
+  mnSyncChips();
+  buildMnCtrls();
+  // 拖放：pointer 事件（支持触屏）；坐标写舞台百分比
+  [['mnvisChipTitle', 'title'], ['mnvisChipSub', 'subtitle']].forEach(([chipId, pfx]) => {
+    const chip = document.getElementById(chipId);
+    if (chip && !chip._mnDrag) {
+      chip._mnDrag = true;
+      chip.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        mnLayer = pfx;
+        document.querySelectorAll('.mnvis-layer').forEach((x) => x.classList.toggle('on', x.dataset.layer === pfx));
+        buildMnCtrls();
+        mnSyncChips();
+        const st2 = document.getElementById('mnvisStage').getBoundingClientRect();
+        const move = (ev) => {
+          const x = MFX.clamp((ev.clientX - st2.left) / st2.width * 100, 2, 98);
+          const y = MFX.clamp((ev.clientY - st2.top) / st2.height * 100, 2, 98);
+          const sec2 = mbS();
+          sec2[pfx + 'X'] = x.toFixed(1);
+          sec2[pfx + 'Y'] = y.toFixed(1);
+          chip.style.left = x + '%';
+          chip.style.top = y + '%';
+        };
+        const up = () => {
+          document.removeEventListener('pointermove', move);
+          document.removeEventListener('pointerup', up);
+          onSectionChanged();
+        };
+        document.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', up);
+      });
+    }
+  });
+}
+
+function openMotionVis() {
+  const s = mbS();
+  if (!s || s.type !== 'motion-banner') { toast('请先选中动效首屏板块'); return; }
+  mnTakeSnapshot();
+  ensureMotionVisDOM();
+  mnVis.mask.hidden = false;
+  requestAnimationFrame(() => { buildMotionVis(); });
 }
 
 function onSectionChanged() {
@@ -4689,12 +5753,12 @@ function renderImageFieldWithUrl(key, url, uid, options) {
     <div class="img-field-media">
       <div class="dropzone${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-uid="${esc(uid)}" data-focus-field="1" id="${dzId}" data-ftype="image">
         <input type="hidden" data-bind-key="${esc(key)}" data-ftype="image-value" value="${esc(url)}">
-        <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+        <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
         <div class="dz-title">点击选择或拖拽图片</div>
         <div class="dz-sub">图片 jpg/png/webp/gif/avif</div>
         ${has ? `<div class="dropzone-preview">
           <img src="${esc(url)}" alt="" loading="lazy">
-          <button type="button" class="dz-clear" data-clear="${esc(key)}" data-clear-uid="${esc(uid)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button type="button" class="dz-clear" data-clear="${esc(key)}" data-clear-uid="${esc(uid)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
           <div class="dz-replace">点击替换媒体</div>
         </div>` : ''}
       </div>
@@ -4704,12 +5768,12 @@ function renderImageFieldWithUrl(key, url, uid, options) {
     mediaHtml = `
     <div class="dropzone${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-uid="${esc(uid)}" id="${dzId}" data-ftype="image">
       <input type="hidden" data-bind-key="${esc(key)}" data-ftype="image-value" value="${esc(url)}">
-      <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+      <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
       <div class="dz-title">点击选择或拖拽媒体（图片/动图/视频）</div>
       <div class="dz-sub">图片 jpg/png/webp/gif/avif · 视频 mp4/webm · 动图 gif/apng 保留动画</div>
       ${has ? `<div class="dropzone-preview">
         ${isVideoUrl(url) ? `<video src="${esc(url)}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;"></video>` : `<img src="${esc(url)}" alt="" loading="lazy">`}
-        <button type="button" class="dz-clear" data-clear="${esc(key)}" data-clear-uid="${esc(uid)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button type="button" class="dz-clear" data-clear="${esc(key)}" data-clear-uid="${esc(uid)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
         <div class="dz-replace">点击替换媒体</div>
       </div>` : ''}
     </div>`;
@@ -5421,13 +6485,13 @@ function renderVideoFieldWithUrl(key, url, uid, options) {
   return `
     <div class="dropzone dropzone-video${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-uid="${esc(uid)}" id="${dzId}" data-ftype="video">
       <input type="hidden" data-bind-key="${esc(key)}" data-ftype="video-value" value="${esc(url)}">
-      <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+      <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></div>
       <div class="dz-title">点击选择或拖拽媒体（视频/图片/动图）</div>
       <div class="dz-sub">视频 mp4/webm · 图片 jpg/png/webp/gif/avif · 动图保留动画</div>
       ${has ? `<div class="dropzone-preview dz-video-preview">
         ${isVideoUrl(url) ? `<video src="${esc(url)}" preload="metadata" muted playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>` : `<img src="${esc(url)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">`}
         <div class="dz-video-badge">${isVideoUrl(url) ? '视频' : '媒体'}</div>
-        <button type="button" class="dz-clear" data-clear="${esc(key)}" data-clear-uid="${esc(uid)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button type="button" class="dz-clear" data-clear="${esc(key)}" data-clear-uid="${esc(uid)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
         <div class="dz-replace">点击替换媒体</div>
       </div>` : ''}
     </div>
@@ -5692,7 +6756,7 @@ function renderIntroRowsEditor(key, rows, sectionId) {
             <option value="tags"${t === 'tags' ? ' selected' : ''}>标签药丸（Scope of work / Skills …）</option>
           </select>
           <button type="button" class="btn-icon intro-row-del" title="删除此行" data-del-row="${esc(rid)}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
           </button>
         </div>
         <div class="intro-row-grid">
@@ -5714,7 +6778,7 @@ function renderIntroRowsEditor(key, rows, sectionId) {
     <div class="intro-rows-editor" id="${gid}" data-key="${esc(key)}" data-section-id="${esc(sectionId)}">
       ${cardHtml || '<div class="form-hint">还没有内容行，点击下方「新增一行」按钮开始（例如 Year / Industry / Scope of work / Timeline）。</div>'}
       <button type="button" class="btn-outline intro-row-add" data-intro-add>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
         新增一行
       </button>
     </div>`;
@@ -5856,7 +6920,7 @@ function renderGalleryColumnsEditor(key, columns, sectionId, colCount) {
         <button type="button" class="btn-secondary gc-add-url" data-gc-addurl="${gid}" data-gc-col="${ci}">+ 新增（填直链）</button>
         ${fmtPickHtml()}
         <div class="dropzone gc-add-dropzone" data-gc-dz="${gid}" data-gc-col="${ci}" data-ftype="image">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           <span>+ 点选 / 拖拽图片上传（本列末尾）</span>
         </div>
       </div>
@@ -6080,12 +7144,12 @@ function renderImageField(key, url) {
     <div class="dz-ctl">
     <div class="dropzone${has ? ' has-image' : ''}" data-dz="${esc(key)}" data-ftype="image">
       <input type="hidden" data-key="${esc(key)}" data-ftype="image-value" value="${esc(url)}">
-      <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+      <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
       <div class="dz-title">点击选择或拖拽图片</div>
       <div class="dz-sub">jpg / png / webp / gif</div>
       ${has ? `<div class="dropzone-preview">
         <img src="${esc(url)}" alt="" loading="lazy">
-        <button type="button" class="dz-clear" data-clear="${esc(key)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button type="button" class="dz-clear" data-clear="${esc(key)}" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
         <div class="dz-replace">点击替换图片</div>
       </div>` : ''}
     </div>
@@ -6148,7 +7212,7 @@ function renderItemsListField(field, list, uid) {
     // 渲染单个字段的 form-group；inline 字段会被打包进 .lf-row（同行多列）
     function itemFieldHtml(f) {
       const v = item ? item[f.key] : '';
-      const hintHtml = f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : '';
+      const hintHtml = f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : '';
       let ctl = '';
       if (f.type === 'textarea') {
         ctl = `<textarea class="form-input form-textarea" data-il-key="${esc(f.key)}" data-il-type="textarea" data-il-idx="${i}">${esc(Array.isArray(v) ? v.join(', ') : (v || ''))}</textarea>`;
@@ -6196,9 +7260,9 @@ function renderItemsListField(field, list, uid) {
       <div class="lf-head">
         <span class="lf-title">${esc(itemLabel)} #${i + 1}</span>
         <div class="lf-head-actions">
-          <button type="button" class="btn-icon" data-lf-move="up" data-lf-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
-          <button type="button" class="btn-icon" data-lf-move="down" data-lf-idx="${i}" title="下移"${i === list.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-          <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button type="button" class="btn-icon" data-lf-move="up" data-lf-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
+          <button type="button" class="btn-icon" data-lf-move="down" data-lf-idx="${i}" title="下移"${i === list.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+          <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
       </div>
       ${body}
@@ -6208,7 +7272,7 @@ function renderItemsListField(field, list, uid) {
     ${items}
     ${!field.max || list.length < field.max ? `
     <button type="button" class="btn-secondary list-field-add" data-lf-add="${esc(key)}" data-lf-add-uid="${esc(uid)}" style="justify-content:center;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
       添加${esc(itemLabel)}
     </button>` : `<div class="lf-max-hint" style="padding:10px 0;font-size:12px;color:var(--text-muted,#999);">已达上限（最多 ${esc(field.max)} 个${esc(itemLabel)}）</div>`}
   </div>`;
@@ -6242,7 +7306,7 @@ function renderItemImageControl(fkey, url, idx, field, focusValue, fmtPick) {
   return `
     <div class="il-image${focus ? ' il-image-focus' : ''}" data-il-key="${esc(fkey)}" data-il-type="image" data-il-idx="${idx}"${focus ? ' data-il-focus="1"' : ''}>
       <input type="hidden" class="il-image-value" value="${esc(url)}">
-      ${has ? `<div class="il-image-preview">${isLottieUrl(url) ? `<div class="il-lottie-badge"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg><span>Lottie JSON</span></div>` : `<img src="${esc(url)}" alt="" loading="lazy">`}<button type="button" class="il-img-clear" title="清除图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>` : ''}
+      ${has ? `<div class="il-image-preview">${isLottieUrl(url) ? `<div class="il-lottie-badge"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg><span>Lottie JSON</span></div>` : `<img src="${esc(url)}" alt="" loading="lazy">`}<button type="button" class="il-img-clear" title="清除图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>` : ''}
       ${focusPanel}
       <div class="il-image-actions">
         <button type="button" class="btn-secondary il-img-upload" style="justify-content:center;">上传图片</button>
@@ -6511,11 +7575,11 @@ function renderAnimatedParamsField(f, params, uid, section) {
     <div class="ani-params-field${changedKeys ? ' has-changes' : ''}" data-ani-field data-key="${esc(f.key)}" data-uid="${esc(uid)}" data-effect="${esc(effect)}">
       <input type="hidden" data-ani-value value="${esc(JSON.stringify(stored))}">
       <div class="ani-params-header" data-ani-toggle>
-        <svg class="ani-params-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg class="ani-params-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         <span class="ani-params-title">${esc(effectLabel)}</span>
         <span class="ani-params-badge">${changedKeys ? `已改 ${changedKeys} 项` : '使用默认值'}</span>
         <button type="button" class="field-reset ani-params-reset-all" data-ani-reset-all title="重置全部参数为默认值" aria-label="重置全部参数为默认值">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           <span class="ani-params-reset-label">重置全部</span>
         </button>
       </div>
@@ -6527,9 +7591,9 @@ function renderAnimatedParamsField(f, params, uid, section) {
 // 渲染单个参数行（含控件 + 数值显示 + 单项重置按钮）
 function renderAnimParamRow(p, val, merged) {
   const isDefault = isParamDefault(p, val);
-  const hintHtml = p.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(p.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="hint-bubble">${esc(p.hint)}</span></span>` : '';
+  const hintHtml = p.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(p.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span class="hint-bubble">${esc(p.hint)}</span></span>` : '';
   const resetHtml = !isDefault
-    ? `<button type="button" class="field-reset ani-param-reset" data-ani-reset-key="${esc(p.key)}" data-ani-reset-default="${esc(p.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>`
+    ? `<button type="button" class="field-reset ani-param-reset" data-ani-reset-key="${esc(p.key)}" data-ani-reset-default="${esc(p.default)}" title="重置此项" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>`
     : '';
   let controlHtml = '';
   if (p.type === 'range') {
@@ -6768,7 +7832,7 @@ function ensureResetButton(row, schema, val) {
   btn.dataset.aniResetDefault = schema.default;
   btn.title = '重置此项';
   btn.setAttribute('aria-label', '重置此项');
-  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     // 找到最近的 ani-params-field 容器
@@ -6852,7 +7916,7 @@ function renderImageListField(key, list, uid) {
     <div class="list-field-item" data-lf-item="${i}">
       <div class="lf-head">
         <span class="lf-title">截图 #${i + 1}</span>
-        <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       </div>
       ${renderImageField(key + '__' + i + '_' + uid, url || '')}
     </div>`).join('');
@@ -6860,7 +7924,7 @@ function renderImageListField(key, list, uid) {
     <div class="list-field" data-lf="${esc(key)}" data-uid="${esc(uid)}" data-ftype="image-list">
       ${items}
       <button type="button" class="btn-secondary list-field-add" data-lf-add="${esc(key)}" data-lf-add-uid="${esc(uid)}" style="justify-content:center;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
         添加截图
       </button>
     </div>`;
@@ -6942,7 +8006,7 @@ function renderDisplacementPicker(key, value, uid) {
     if (cur === o.value) currentName = shortLabel;
     return `<div class="dp-item${(cur === o.value) ? ' active' : ''}" data-dp-val="${esc(o.value)}" title="${esc(o.label)}">
       <div class="dp-thumb${isDefault ? ' dp-thumb-default' : ''}"${isDefault ? '' : ` style="background-image:url('${esc(o.value)}')"`}>
-        ${isDefault ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>' : ''}
+        ${isDefault ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' : ''}
       </div>
       <span class="dp-name">${esc(shortLabel)}</span>
     </div>`;
@@ -6951,7 +8015,7 @@ function renderDisplacementPicker(key, value, uid) {
     <div class="dp-head" data-dp-toggle title="点击展开 / 收起纹理列表">
       <span class="dp-head-label">置换图纹理</span>
       <span class="dp-head-current">${esc(currentName)}</span>
-      <svg class="dp-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <svg class="dp-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
     </div>
     <div class="dp-grid">${items}</div>
   </div>`;
@@ -6985,9 +8049,9 @@ function renderCardsListField(key, list, uid) {
       <div class="lf-head">
         <span class="lf-title">卡片 #${i + 1}</span>
         <div class="lf-head-actions">
-          <button type="button" class="btn-icon" data-lf-move="up" data-cl-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
-          <button type="button" class="btn-icon" data-lf-move="down" data-cl-idx="${i}" title="下移"${i === list.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-          <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button type="button" class="btn-icon" data-lf-move="up" data-cl-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
+          <button type="button" class="btn-icon" data-lf-move="down" data-cl-idx="${i}" title="下移"${i === list.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+          <button type="button" class="btn-icon delete" data-lf-remove="${i}" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
       </div>
       <div class="lf-row">
@@ -7051,7 +8115,7 @@ function renderCardsListField(key, list, uid) {
       })()}
       <div class="lf-row np-swap-row">
         <button type="button" class="btn-secondary" data-cl-swap="${i}" style="justify-content:center;width:auto;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><path d="M7 16V4"/><path d="M7 4 3 8"/><path d="M7 4l4 4"/><path d="M17 8v12"/><path d="M17 20l4-4"/><path d="M17 20l-4-4"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-right:6px;"><path d="M7 16V4"/><path d="M7 4 3 8"/><path d="M7 4l4 4"/><path d="M17 8v12"/><path d="M17 20l4-4"/><path d="M17 20l-4-4"/></svg>
           交换图片1 / 图片2 顺序
         </button>
         <span class="np-swap-hint">图片1 = 主图（默认显示），图片2 = 悬停切换图</span>
@@ -7061,7 +8125,7 @@ function renderCardsListField(key, list, uid) {
     <div class="list-field" data-lf="${esc(key)}" data-uid="${esc(uid)}" data-ftype="cards-list">
       ${items}
       <button type="button" class="btn-secondary list-field-add" data-lf-add="${esc(key)}" data-lf-add-uid="${esc(uid)}" style="justify-content:center;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
         添加项目卡片
       </button>
     </div>`;
@@ -7277,7 +8341,7 @@ function renderGroupsListField(key, list, uid) {
     panels.push(`<div class="np-panel${isActive ? ' active' : ''}" data-gl-item="${gi}">
       <div class="lf-head">
         <span class="lf-title">组 #${gi + 1} · 双图卡片（共 ${count} 张）</span>
-        <button type="button" class="btn-icon delete" data-gl-remove="${gi}" title="删除本组"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        <button type="button" class="btn-icon delete" data-gl-remove="${gi}" title="删除本组"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       </div>
       <div class="gl-cards">
         <div class="gl-cards-label">本组双图卡片</div>
@@ -7290,7 +8354,7 @@ function renderGroupsListField(key, list, uid) {
       <div class="np-tabs" role="tablist">
         ${tabs.join('')}
         <button type="button" class="np-tab-add" data-gl-add>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
           添加一组
         </button>
       </div>
@@ -7685,9 +8749,9 @@ function renderNavMenuEditor(right) {
       <div class="navm-head">
         <span class="navm-num">菜单 ${String(i + 1).padStart(2, '0')}</span>
         <span class="navm-ops">
-          <button type="button" class="btn-icon navm-move" data-navm-move="up" data-navm-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
-          <button type="button" class="btn-icon navm-move" data-navm-move="down" data-navm-idx="${i}" title="下移"${i === items.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-          <button type="button" class="btn-icon delete navm-del" data-navm-del="${i}" title="删除此菜单"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button type="button" class="btn-icon navm-move" data-navm-move="up" data-navm-idx="${i}" title="上移"${i === 0 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
+          <button type="button" class="btn-icon navm-move" data-navm-move="down" data-navm-idx="${i}" title="下移"${i === items.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+          <button type="button" class="btn-icon delete navm-del" data-navm-del="${i}" title="删除此菜单"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </span>
       </div>
       <div class="navm-grid">
@@ -7819,6 +8883,7 @@ function selectSection(index) {
   if (index < 0 || index >= state.sections.length) return;
   selectedIndex = index;
   editorMode = 'edit';
+  __activeFtab = null;           // 切板块时清空页卡记忆（不同板块页卡不同）
   renderAll();
 }
 
@@ -7985,6 +9050,7 @@ async function saveAll() {
 }
 
 function renderAll() {
+  stopMnLive();                       // 全量重渲染（切板块/视图）时停掉内嵌预览引擎
   renderSidebar();
   renderSectionList();
   renderRightPanel();
@@ -8164,7 +9230,7 @@ const PG_ROW_ICONS = {
   preview: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   level: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-2h12v2"/></svg>',
   edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
-  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
   home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10.5 9-7.5 9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>',
   del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>'
 };
@@ -8714,6 +9780,24 @@ let mbDev = 'phone', mbPhoneCount = 1, mbEditIdx = 0, mbActiveTab = 'start', mbO
 
 function mbS() { return state.sections[selectedIndex]; }
 function mbCommit() { onSectionChanged(); }
+/* ===== 取消支持：打开弹窗时给板块拍一张快照，点「取消」整段还原 ==================
+   弹窗里的滑块是实时写 state 的（拖一下就改），所以「取消」必须能整体回滚，
+   否则用户只是点进去看看也会被脏写；这也是和「完成」唯一的区别。 */
+let mbVisSnap = null;
+function mbTakeSnapshot() {
+  try { mbVisSnap = JSON.parse(JSON.stringify(mbS() || {})); } catch (e) { mbVisSnap = null; }
+}
+function mbCancelVis() {
+  try {
+    if (mbVisSnap && state.sections[selectedIndex]) {
+      state.sections[selectedIndex] = JSON.parse(JSON.stringify(mbVisSnap));
+    }
+  } catch (e) {}
+  mbVisSnap = null;
+  if (mbVis && mbVis.mask) mbVis.mask.hidden = true;
+  try { renderAll(); } catch (e) { try { onSectionChanged(); } catch (e2) {} }
+  toast('已取消可视化编辑的修改', 'success');
+}
 /* ===== 动画预设：保存 / 应用 / 删除（免疫一切会清空视角的操作：上传 UI、增删手机、调序、保存） ===== */
 function mbPresets() {
   var s = mbS(); if (!s) return [];
@@ -9137,6 +10221,9 @@ function ensureMbVisDOM() {
     '.mbvis-sub{font-size:12px;color:rgba(232,234,237,.6);margin-top:3px;max-width:560px}',
     '.mbvis-close{background:#262a31;border:1px solid #3a3f47;color:#e8eaed;padding:7px 16px;border-radius:100px;cursor:pointer;font-size:13px;white-space:nowrap}',
     '.mbvis-close:hover{border-color:#3b82f6}',
+    '.mbvis-head-act{display:flex;align-items:center;gap:8px;flex-shrink:0}',
+    '.mbvis-cancel{background:transparent;border:1px solid #3a3f47;color:rgba(232,234,237,.72);padding:7px 16px;border-radius:100px;cursor:pointer;font-size:13px;white-space:nowrap}',
+    '.mbvis-cancel:hover{border-color:#ff6b6b;color:#ff6b6b}',
     '.mbvis-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}',
     '.mbvis-seg{display:flex;background:#0e0f12;border:1px solid #262a31;border-radius:100px;overflow:hidden}',
     '.mbvis-seg button{background:none;border:0;color:rgba(232,234,237,.6);padding:7px 15px;cursor:pointer;font-size:13px}',
@@ -9247,7 +10334,7 @@ function ensureMbVisDOM() {
   mask.hidden = true;
   mask.innerHTML = [
     '<div class="mbvis-modal">',
-    '  <div class="mbvis-head"><div><div class="mbvis-title">可视化编辑 · 3D 样机 Banner</div><div class="mbvis-sub">拖滑块实时调视角 / 进场动画 / 标题遮挡 / 背景，关闭即保存到板块</div></div><button class="mbvis-close" id="mbvisClose">完成</button></div>',
+    '  <div class="mbvis-head"><div><div class="mbvis-title">可视化编辑 · 3D 样机 Banner</div><div class="mbvis-sub">拖滑块实时调视角 / 进场动画 / 标题遮挡 / 背景。「完成」保留改动，「取消」撤销本次弹窗内的全部改动。</div></div><div class="mbvis-head-act"><button type="button" class="mbvis-cancel" id="mbvisCancel">取消</button><button type="button" class="mbvis-close" id="mbvisClose">完成</button></div></div>',
     '  <div class="mbvis-toolbar">',
     '    <div class="mbvis-seg mbvis-disabled" id="mbvisCount"><button data-count="1" class="on">1 台</button><button data-count="2">2 台</button></div>',
     '    <button class="mbvis-replay" id="mbvisReplay">▶ 重播进场动画</button>',
@@ -9303,8 +10390,12 @@ function ensureMbVisDOM() {
 
 function bindMbVisEvents() {
   var $ = function (id) { return document.getElementById(id); };
-  $('mbvisClose').addEventListener('click', function () { mbVis.mask.hidden = true; });
-  mbVis.mask.addEventListener('click', function (e) { if (e.target === mbVis.mask) mbVis.mask.hidden = true; });
+  $('mbvisClose').addEventListener('click', function () { mbVis.mask.hidden = true; mbVisSnap = null; });
+  var mbCancel = $('mbvisCancel');
+  if (mbCancel) mbCancel.addEventListener('click', mbCancelVis);
+  mbVis.mask.addEventListener('click', function (e) {
+    if (e.target === mbVis.mask) mbVis.mask.hidden = true;   // 点遮罩=保留改动（等同完成，避免误触丢改动）
+  });
 
   $('mbvisCount').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && mbDev === 'phone') mbSetCount(+b.dataset.count); });
   $('mbvisReplay').addEventListener('click', mbPlayIntro);
@@ -9927,6 +11018,7 @@ function openMbVis() {
   ensureMbVisDOM();
   var s = mbS();
   if (!s || s.type !== 'mockup-banner') { toast('请先选中 3D 样机 Banner 板块'); return; }
+  mbTakeSnapshot();                       // 拍快照：供「取消」整体回滚（见 mbCancelVis）
   mbDev = 'phone';
   mbPhoneCount = Math.min(2, Math.max(1, (Array.isArray(s.phones) ? s.phones.length : 1)));
   mbEditIdx = 0; mbActiveTab = 'start'; mbOpZoom = 0.62; mbP = 1200;

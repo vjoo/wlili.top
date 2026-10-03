@@ -38,8 +38,8 @@
   function norm(v) { return (v == null ? "" : String(v)).trim(); }
   function squash(v) { return norm(v).replace(/\s*,\s*/g, ","); }
   function splitVec(v) { return norm(v) === "" ? [] : norm(v).split(/\s*,\s*/); }
-  var RESET_IC = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 8 7 8"/></svg>';
-  var CHEVRON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  var RESET_IC = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 8 7 8"/></svg>';
+  var CHEVRON = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
 
   /* label -> key 反查（旧预设中文名迁移） */
   var LABEL2KEY = {};
@@ -221,7 +221,7 @@
   }
 
   /* ---------- 只读视图的布尔：用「勾选框 / 未选框」而不是文字或 1/0 ---------- */
-  var CHECK_IC = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6.5"/></svg>';
+  var CHECK_IC = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6.5"/></svg>';
   function isOn(v) { var s = norm(v); return s === "1" || s === "true" || s === "是"; }
   function boolMark(v) {
     var on = isOn(v);

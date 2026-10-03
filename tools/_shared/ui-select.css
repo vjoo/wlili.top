@@ -88,7 +88,7 @@
    ② transform 只在非 inline 时保证生效，不依赖父容器恰好是 flex 的 blockify 行为 */
 .sel-opt-arrow { display: inline-flex; align-items: center; justify-content: center;
   margin-left: auto; width: 14px; height: 14px; flex: none; color: var(--text-muted); transition: transform .15s; }
-.sel-opt-arrow svg { width: 14px; height: 14px; }
+.sel-opt-arrow svg { width:16px; height:16px; }
 .sel-option[aria-expanded="true"] .sel-opt-arrow { transform: rotate(90deg); }
 .sel-option[hidden] { display: none; }
 /* 多选标签芯片（可点 × 移除） */
@@ -125,7 +125,7 @@
 .cal-nav { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
   border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary, var(--muted, #424245)); cursor: pointer; }
 .cal-nav:hover { background: var(--bg-hover); }
-.cal-nav svg { width: 14px; height: 14px; }
+.cal-nav svg { width:16px; height:16px; }
 .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-week { margin-bottom: 2px; }
 .cal-week span { text-align: center; font-size: 11px; color: var(--text-muted); padding: 5px 0; }
