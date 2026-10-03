@@ -5,7 +5,7 @@
  * 线宽同样不写死，由 icons.css 的 --ic-sw 按档位下发
  *
  * ⚠ 本文件由 .workbuddy/tools/icon_sync.py --build-ext 生成，勿手改
- * 生成时间：2026-10-03 · Ext 34 个
+ * 生成时间：2026-10-03 · Ext 35 个
  * ============================================================ */
 const ICON_EXT = {
   'anchor-feather': '<circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0020 0h-3"/>',
@@ -25,6 +25,7 @@ const ICON_EXT = {
   'home': '<path d="m3 10.5 9-7.5 9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/>',
   'id-photo': '<rect x="3" y="2" width="18" height="20" rx="2"/><circle cx="12" cy="9" r="3"/><path d="M7 19c1.2-2.2 3-3.3 5-3.3S15.8 16.8 17 19"/>',
   'maximize': '<polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/>',
+  'menu-feather': '<path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/>',
   'message-square': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" data-page-node-id="5x7jA4vhOv0KA6FUFb5vJ4"/><path d="M8 9h8" data-page-node-id="guoy8R7bBhFpoovWL6mb95"/><path d="M8 13h5" data-page-node-id="ELJJrBUGUrv7qBrw3Dd5dg"/>',
   'more-horizontal': '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
   'palette': '<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
