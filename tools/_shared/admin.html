@@ -8963,6 +8963,29 @@ function upgradeUI(root) {
   border:1px solid var(--border-color); border-radius:7px; background:var(--bg-primary); color:var(--text-secondary); cursor:pointer; padding:0; }
 .btn-icon-sm:hover { background:var(--bg-hover); color:var(--text-primary); }
 .btn-icon-sm svg { width:14px; height:14px; --ic-sw:2; }
+/* ↓ 按钮类（按 tools 后台规格重写，而非照搬 portfolio 的深灰 #2B3033 ——
+   tools 的主色是亮绿渐变胶囊，档案规定主按钮 = .btn.primary：accent 渐变 + 白字 + 胶囊、无投影） */
+.btn-primary { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:999px;
+  font-size:13px; font-weight:600; cursor:pointer; border:1px solid transparent;
+  background:var(--accent-grad); color:#fff; }
+.btn-primary:hover { filter:brightness(.96); }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+.btn-secondary { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:999px;
+  font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--border-color);
+  background:var(--bg-primary); color:var(--text-secondary); transition:background .2s,color .2s; }
+.btn-secondary:hover { background:var(--bg-hover); color:var(--text-primary); }
+.btn-sm { padding:7px 14px; font-size:12px; gap:6px; }
+/* 弹窗内按钮按内容宽度，不撑满。
+   ⚠ 真正的原因是 .form-group 是 column flex，子项默认 align-items:stretch
+     → 按钮被拉满整行（实测取消按钮 520px 宽，flex:0 0 auto 也拦不住）。
+     所以要 align-self，而不是 width/flex。 */
+.form-group > .btn-primary, .form-group > .btn-secondary,
+.form-group > .btn-sm, .form-group > .btn-icon-sm,
+.fmodal-foot .btn-primary, .fmodal-foot .btn-secondary,
+.modal-foot .btn-primary, .modal-foot .btn-secondary { align-self:flex-start; width:auto; margin-left:0; }
+/* 关闭 ×：文本字符用 flex 居中会因基线偏移显得偏上，锁 line-height 并用 grid 居中 */
+.modal-close { display:grid; place-items:center; line-height:1; padding:0;
+  border-radius:8px; font-size:18px; line-height:1; }
 </style>
 
 <script id="cpPortedJS">
