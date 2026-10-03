@@ -127,17 +127,16 @@ svg{display:block;}
 }
 .r-item svg{width:20px;height:20px;}
 .r-item:hover{background:var(--panel);color:var(--ink);}
-/* ⛔ 选中态用**主色渐变**，不用 --cap-bg（深墨#14171c）。
-   事故记录（2026-10-03用户截图）：深墨底 + 白图标在浅色侧栏上对比不足，
-   加上 .r-item svg 是 1.7px 细描边 → 整枚按钮看着像"没有选中"。
-   实测隔离页对照：深墨底几乎看不出选中 vs 绿渐变 + 白字一眼可辨。
-   规范依据：项目主色 = accent 渐变胶囊（.btn.primary 同款），选中态应与之同源。 */
-.r-item.on{background:var(--accent-grad);color:#fff;}
+/* 圆形钮选中态 = --cap-bg 深墨 +白字（DESIGN_SYSTEM §令牌表：
+   --cap-bg/--cap-ink 用途明确写为「胶囊选中 / Toast / 深色反转面」）。
+   ⚠️ 别改成--accent-grad 绿渐变 —— 绿渐变是 .cap/.pill/.pg-btn/.btn.primary
+   这类**胶囊类**的选中态；圆形钮走深墨是既有设计，改了会与规范冲突。 */
+.r-item.on{background:var(--cap-bg);color:var(--cap-ink);}
 .rail-global .r-item{
   background:var(--card);border:1px solid var(--line);
 }
 .rail-global .r-item:hover{transform:translateY(-1px);}
-.rail-global .r-item.on{background:var(--accent-grad);color:#fff;border-color:transparent;}
+.rail-global .r-item.on{background:var(--cap-bg);color:var(--cap-ink);border-color:var(--cap-bg);}
 
 
 /* ===== 顶栏（横跨全宽）===== */
@@ -504,8 +503,8 @@ h3 .hint-i{margin-left:6px;}
 }
 .mm-tool svg{width:20px;height:20px;color:var(--muted);flex:none;}
 .mm-tool:hover{background:var(--panel);}
-.mm-tool.on{background:var(--accent-grad);color:#fff;font-weight:600;}
-.mm-tool.on svg{color:#fff;}
+.mm-tool.on{background:var(--cap-bg);color:var(--cap-ink);font-weight:600;}
+.mm-tool.on svg{color:var(--cap-ink);}
 /* ⛔ 二级菜单组与一级项之间必须有明确空隙 —— 原margin-top 只有 2px，
    实测在手机上二级项直接贴着一级项底部（用户截图「中间没有空隙」）。
    层级靠「缩进 + 左侧竖线 + 间距」三重表达，缺一不可。 */
@@ -519,11 +518,12 @@ h3 .hint-i{margin-left:6px;}
 [data-theme="dark"] .mm-sub.on{color:var(--accent);}
 .mm-foot{margin-top:auto;border-top:1px solid var(--line);padding:12px 14px;display:flex;gap:10px;align-items:center;}
 /* ⛔ 必须同时给 .on 变体 —— 下面那条 .mm-foot .r-item 与 .r-item.on
-   **同特异性（各2 个类）且写在更后面**，会把选中态背景压掉。
+   **同特异性（各 2 个类）且写在更后面**，会把选中态背景整条压掉。
    症状：移动端抽屉左下角的主题按钮（太阳/月亮）看起来"没有选中态"。
-   通则：给元素设了带状态类（.on）的容器底色时，**状态变体必须写在容器规则之后**。 */
+   通则：给元素设了带状态类（.on）的容器底色时，**状态变体必须写在容器规则之后**，
+   否则同特异性下靠后的容器规则会盖掉状态。 */
 .mm-foot .r-item{background:var(--panel);border:1px solid var(--line);box-shadow:none;}
-.mm-foot .r-item.on{background:var(--accent-grad);color:#fff;border-color:transparent;}
+.mm-foot .r-item.on{background:var(--cap-bg);color:var(--cap-ink);border-color:var(--cap-bg);}
 
 @media (max-width:820px){
   .rail{display:none;}
