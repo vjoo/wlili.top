@@ -5187,7 +5187,6 @@ function mbRadiusPx(s, eff, W, H) {
   let nominal;
   if (eff === 'drift') nominal = d * MFX.clamp(MFX.num(s.dCardSize, 0.3), 0.12, 0.5);
   else if (eff === 'brick') nominal = H * MFX.clamp(MFX.num(s.coverage, 1), 0.4, 1) / Math.round(MFX.clamp(MFX.num(s.rows, 3), 2, 5));
-  else if (eff === 'helix') nominal = d * MFX.clamp(MFX.num(s.hCardSize, 0.26), 0.1, 0.6);
   else if (eff === 'ticker') nominal = d * MFX.clamp(MFX.num(s.tCardSize, 0.36), 0.1, 0.6);
   else nominal = d * MFX.clamp(MFX.num(s.cardSize, 0.2), 0.08, 0.5);
   return MFX.clamp(MFX.num(s.cornerRadius, 0.08), 0, 0.5) * nominal;
@@ -5216,7 +5215,7 @@ function startMnLive() {
     const MFX = window.MFX;
     const imgs = (Array.isArray(sec.images) ? sec.images : []).map((x) => x && x.image).filter(Boolean);
     const N = Math.max(Array.isArray(sec.images) ? sec.images.length : 0, 4);
-    const eff = (sec.effect === 'drift' || sec.effect === 'brick' || sec.effect === 'helix' || sec.effect === 'ticker') ? sec.effect : 'vortex';
+    const eff = (MFX.effects && MFX.effects[sec.effect]) ? sec.effect : 'vortex';
     const frames = MFX[eff](sec, st.W, st.H, N, t);
     /* 卡池复用 */
     while (st.pool.length < frames.length) {
@@ -5617,7 +5616,7 @@ function buildMotionVis() {
   const W = stage.clientWidth || 800, H = stage.clientHeight || 440;
   const imgs = (Array.isArray(sec.images) ? sec.images : []).map((x) => x && x.image).filter(Boolean);
   const total = Math.max(Array.isArray(sec.images) ? sec.images.length : 0, 4); /* 含空槽总数：让动效在无图时也展示全貌 */
-  const eff = (sec.effect === 'drift' || sec.effect === 'brick' || sec.effect === 'helix' || sec.effect === 'ticker') ? sec.effect : 'vortex';
+  const eff = (window.MFX.effects && window.MFX.effects[sec.effect]) ? sec.effect : 'vortex';
   const frames = window.MFX[eff](sec, W, H, total, 0);
   const radius = mbRadiusPx(sec, eff, W, H).toFixed(1) + 'px';
   const bwK = MFX.clamp(MFX.num(sec.borderWidth, 0), 0, 0.12);

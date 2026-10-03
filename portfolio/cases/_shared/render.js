@@ -3497,7 +3497,7 @@ var CaseRenderer = (function () {
   var MFX = window.MFX;
   var mbNum = MFX.num, mbClamp = MFX.clamp, mbFrac = MFX.frac, mbLerp = MFX.lerp,
       mbRatio = MFX.ratio, mbRnd = MFX.rnd;
-  var mbVortex = MFX.vortex, mbDrift = MFX.drift, mbBrick = MFX.brick, mbHelix = MFX.helix, mbTicker = MFX.ticker;
+  var mbVortex = MFX.vortex, mbDrift = MFX.drift, mbBrick = MFX.brick, mbTicker = MFX.ticker;
 
   /* 骨架：只建 DOM（背景 / 文字 / 空卡舞台），逐帧动画交给 initMotionBanners */
   function renderMotionBanner(s) {
@@ -3600,7 +3600,6 @@ var CaseRenderer = (function () {
     var nominal;
     if (eff === 'drift') nominal = d * mbClamp(mbNum(s.dCardSize, 0.3), 0.12, 0.5);
     else if (eff === 'brick') nominal = H * mbClamp(mbNum(s.coverage, 1), 0.4, 1) / Math.round(mbClamp(mbNum(s.rows, 3), 2, 5));
-    else if (eff === 'helix') nominal = d * mbClamp(mbNum(s.hCardSize, 0.26), 0.1, 0.6);
     else if (eff === 'ticker') nominal = d * mbClamp(mbNum(s.tCardSize, 0.36), 0.1, 0.6);
     else nominal = d * mbClamp(mbNum(s.cardSize, 0.2), 0.08, 0.5);
     return mbClamp(mbNum(s.cornerRadius, 0.08), 0, 0.5) * nominal;
@@ -3614,8 +3613,12 @@ var CaseRenderer = (function () {
       var total = section._motionTotal || Math.max(imgs.length, 4);
       var deck = section.querySelector('.mbn-deck');
       if (!deck) return;
-      var eff = (s.effect === 'drift' || s.effect === 'brick' || s.effect === 'helix' || s.effect === 'ticker') ? s.effect : 'vortex';
-      var compute = eff === 'drift' ? mbDrift : (eff === 'brick' ? mbBrick : (eff === 'helix' ? mbHelix : (eff === 'ticker' ? mbTicker : mbVortex)));
+      /* effect 合法性以 motion-fx.js 导出的 effects 白名单为准（不是手写名字列表）：
+         白名单 = 真正实现了的算法键 → 新增算法只要同时登记进 effects 就自动可用；
+         反之未登记/未实现的名字（如早期预留的 helix，MFX.helix 是 undefined）会安全回落 vortex，
+         不会退化成 compute=undefined → 调用 TypeError → **整个板块白屏**。 */
+      var eff = (MFX.effects && MFX.effects[s.effect]) ? s.effect : 'vortex';
+      var compute = MFX[eff];
       var N = Math.max(total, 4);
       /* 整墙俯仰/左右倾斜（amotion 模板参数 tiltX/tiltY）：挂在 deck 上，静态一次 */
       var tiltX = mbClamp(mbNum(s.tiltX, 0), -45, 45);
