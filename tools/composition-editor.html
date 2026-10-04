@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>构图编辑器 · 尺度可视化 → 提示词 / Region 配置</title>
+<title>构图编辑器 · 尺度可视化 → Krea 2 提示词 / Region 配置</title>
 <link rel="stylesheet" href="_shared/ui-select.css">
 <style>
   :root{
@@ -136,6 +136,10 @@
   .row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
   .chip{border:1px solid var(--line2);background:#fff;border-radius:7px;padding:6px 11px;font-size:12px;cursor:pointer}
   .chip:hover{border-color:var(--acc);color:var(--acc)}
+  .chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:start}
+  .grid3>*{min-width:0}
+  .grid3 input{font-size:11px;padding:5px 6px}
   label.fld{display:block;margin-bottom:8px}
   label.fld span{display:block;color:var(--mut);font-size:11px;margin-bottom:3px}
   input[type=text],input[type=number],textarea{width:100%;min-width:0;border:1px solid var(--line2);border-radius:7px;
@@ -175,17 +179,21 @@
 <body>
 <header>
   <h1>构图编辑器</h1>
-  <span class="sub">全屏画布 · B·Region主输出 · A·文本副产出</span>
+  <span class="sub">全屏画布 · Krea 2 巨构提示词</span>
   <div class="spacer"></div>
   <div class="seg" id="aspectSeg">
-    <button data-ar="21:9" class="on">21:9 巨幅</button>
+    <button data-ar="2.35:1" class="on">2.35:1</button>
+    <button data-ar="21:9">21:9</button>
     <button data-ar="16:9">16:9</button>
-    <button data-ar="2.39:1">2.39:1</button>
     <button data-ar="9:16">9:16</button>
     <button data-ar="1:1">1:1</button>
+    <button data-ar="3:2">3:2</button>
+    <button data-ar="4:5">4:5</button>
   </div>
   <button class="btn" id="loadEx">载入巨物白莲示例</button>
 </header>
+<div id="arNote" style="position:fixed;left:18px;top:78px;z-index:35;font-size:11px;color:var(--mut);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 9px"></div>
 
 <!-- fullscreen canvas -->
 <div class="stage" id="stage">
@@ -206,8 +214,9 @@
 <div class="rail" id="rail">
   <button data-view="add" title="添加区域"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span class="tip">添加区域</span></button>
   <button data-view="props" title="选中区域属性"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.4" fill="#fff"/><circle cx="15" cy="12" r="2.4" fill="#fff"/><circle cx="8" cy="18" r="2.4" fill="#fff"/></svg><span class="tip">选中区域属性</span></button>
-  <button data-view="text" title="A · 文本提示词"><span class="gl">A</span><span class="tip">A · 文本提示词（副产出）</span></button>
-  <button data-view="json" title="B · Region 配置"><span class="gl">B</span><span class="tip">B · Region 配置 JSON（主输出）</span></button>
+  <button data-view="scene" title="巨构参数"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1"/></svg><span class="tip">巨构参数（光/镜头/结构/风格）</span></button>
+  <button data-view="text" title="A · 提示词"><span class="gl">A</span><span class="tip">A · Krea 2 提示词（主输出）</span></button>
+  <button data-view="json" title="B · 参数与 Region"><span class="gl">B</span><span class="tip">B · 参数 + Region JSON</span></button>
 </div>
 
 <!-- right drawer -->
@@ -259,9 +268,9 @@
               <option value="foreground">前景</option>
             </select>
           </label>
-          <label class="fld"><span>名称</span><input type="text" id="pLabel" placeholder="如：巨型白莲"></label>
-          <label class="fld"><span>该区域提示词 · 中文（可丢给豆包 / 即梦 扩写）</span><textarea id="pPromptZh" placeholder="如：如绸缎般垂坠的巨型粉莲花瓣，半透绡纱质感，背光描出柔光边缘"></textarea></label>
-          <label class="fld"><span>该区域提示词 · English（for ComfyUI VLM / 英文模型）</span><textarea id="pPromptEn" placeholder="如：colossal pink lotus petals like draped silk fabric, sheer translucent satin, backlit glowing edges"></textarea></label>
+          <label class="fld"><span>名称</span><input type="text" id="pLabel" placeholder="如：巨型粉莲"></label>
+          <label class="fld"><span>该区域提示词 · 中文（作 Krea 2 长句的素材）</span><textarea id="pPromptZh" placeholder="如：如绸缎般垂坠的巨型粉莲花瓣，半透绡纱质感，背光描出柔光边缘"></textarea></label>
+          <label class="fld"><span>该区域提示词 · English（进 Krea 2 提示词正文）</span><textarea id="pPromptEn" placeholder="如：colossal pink lotus petals like draped silk fabric, sheer translucent satin, backlit glowing edges"></textarea></label>
           <div class="grid2">
             <label class="fld"><span>层级 z（大=前）</span><input type="number" id="pZ" value="1" min="0" max="99"></label>
             <label class="fld"><span>强度 strength</span><input type="number" id="pStr" value="1" min="0" max="2" step="0.1"></label>
@@ -280,14 +289,135 @@
       </div>
     </div>
 
+    <!-- SCENE 巨构参数（Krea 2 输出层） -->
+    <div class="view" data-view="scene">
+      <div class="card">
+        <h2>光与镜头</h2>
+        <label class="fld"><span>时间</span>
+          <select id="sTime" class="form-select">
+            <option value="">— 不写 —</option>
+            <option value="dawn">黎明 dawn</option>
+            <option value="golden hour">黄金时刻 golden hour</option>
+            <option value="blue hour">蓝调时刻 blue hour</option>
+            <option value="pre-dawn cold light">破晓冷光 pre-dawn</option>
+            <option value="high noon harsh light">正午强光 high noon</option>
+            <option value="dusk">黄昏 dusk</option>
+            <option value="storm light">风暴光 storm light</option>
+            <option value="overcast diffused light">阴天漫射 overcast</option>
+          </select>
+        </label>
+        <label class="fld"><span>主光方向</span>
+          <select id="sLightDir" class="form-select">
+            <option value="">— 不写 —</option>
+            <option value="low sun raking across from the left">低角度侧掠（左）</option>
+            <option value="low sun raking across from the right">低角度侧掠（右）</option>
+            <option value="backlit by a blazing sun">逆光炽烈</option>
+            <option value="single shaft of dawn light">单束体积光</option>
+            <option value="lit from below by sodium dock lights">底部钠灯冷暖对冲</option>
+            <option value="rim light separating subject from background">边缘轮廓光</option>
+            <option value="soft even light">柔和均匀光</option>
+          </select>
+        </label>
+        <label class="fld"><span>体积光 / 氛围</span>
+          <select id="sVolumetric" class="form-select">
+            <option value="">— 不写 —</option>
+            <option value="volumetric shafts through the mist">雾中体积光柱</option>
+            <option value="god rays piercing the haze">穿透霭层的丁达尔</option>
+            <option value="light shaft falling through the opening">开口落下光柱</option>
+            <option value="dusty beams">浮尘光束</option>
+          </select>
+        </label>
+        <div class="grid2">
+          <label class="fld"><span>焦距</span>
+            <select id="sLens" class="form-select">
+              <option value="">— 不写 —</option>
+              <option value="14mm ultra-wide">14mm 超广角（极端仰视）</option>
+              <option value="16mm wide-angle">16mm 广角（仰视首选）</option>
+              <option value="24mm wide-angle">24mm 广角（标准）</option>
+              <option value="35mm">35mm（远景全身）</option>
+              <option value="50mm">50mm（平实纪念碑式）</option>
+              <option value="85mm telephoto">85mm 长焦（压缩空间）</option>
+              <option value="135mm telephoto">135mm 长焦（强压缩）</option>
+              <option value="100mm macro">100mm 微距（局部特写）</option>
+            </select>
+          </label>
+          <label class="fld"><span>机位角度</span>
+            <select id="sAngle" class="form-select">
+              <option value="">— 不写 —</option>
+              <option value="extreme low angle looking up">极端低角度仰视</option>
+              <option value="worm's-eye view">虫视仰视</option>
+              <option value="three-quarter view">四分之三侧视</option>
+              <option value="high aerial view looking down">高空俯视</option>
+              <option value="eye level from a neighbouring ridge">平视（邻脊高度）</option>
+              <option value="from inside looking out">从内部向外看</option>
+            </select>
+          </label>
+        </div>
+        <label class="fld" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="sAtmos"> <span style="margin:0">大气透视分层（前景锐 → 中景雾 → 远端消失）</span>
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>结构与重量</h2>
+        <div class="note" style="margin-bottom:8px">结构可读性：至少选 1 个重复单元，巨物才不糊成一团</div>
+        <div class="row" id="rowRepeats"></div>
+        <div class="note" style="margin:10px 0 8px">重量感：写「它凭什么不倒」</div>
+        <div class="row" id="rowSupport"></div>
+      </div>
+
+      <div class="card">
+        <h2>风格与模型参数</h2>
+        <label class="fld"><span>风格预设（择一）</span>
+          <select id="sStyle" class="form-select">
+            <option value="">— 不写 —</option>
+          </select>
+        </label>
+        <label class="fld"><span>调色</span>
+          <select id="sPalette" class="form-select">
+            <option value="">— 不写 —</option>
+            <option value="warm amber highlights against cool blue shadow">敬畏 / 神圣</option>
+            <option value="desaturated ochre and ash grey, dust-choked atmosphere">荒凉 / 废土</option>
+            <option value="near-monochrome with crushed blacks, single cold cyan accent">恐怖 / 压迫</option>
+            <option value="soft pearl and pale jade, low contrast, even overcast light">宁静 / 冥想</option>
+            <option value="steel blue with sodium orange accents, cold pre-dawn light">科幻 / 冷峻</option>
+            <option value="saturated jade green, coral and vermilion, humid haze">热带 / 生机</option>
+          </select>
+        </label>
+        <div class="grid2">
+          <label class="fld"><span>模型</span>
+            <select id="sModel" class="form-select">
+              <option value="Large">Large（写实/颗粒）</option>
+              <option value="Medium">Medium（风格化/快）</option>
+              <option value="Turbo">Turbo（最快，无参考图）</option>
+            </select>
+          </label>
+          <label class="fld"><span>creativity</span>
+            <select id="sCreativity" class="form-select">
+              <option value="raw">raw（完整长句·默认）</option>
+              <option value="low">low（补一点氛围）</option>
+              <option value="medium">medium（短提示词）</option>
+              <option value="high">high（探索方向）</option>
+            </select>
+          </label>
+        </div>
+        <div class="note" style="margin-top:4px">Sliders（−100~100，0 中性，巨构建议 Complexity 正向；一次只推一个轴）</div>
+        <div class="grid3">
+          <label class="fld"><span>Intensity</span><input type="number" id="sIntensity" value="0" min="-100" max="100" step="10"></label>
+          <label class="fld"><span>Complexity</span><input type="number" id="sComplexity" value="0" min="-100" max="100" step="10"></label>
+          <label class="fld"><span>Movement</span><input type="number" id="sMovement" value="0" min="-100" max="100" step="10"></label>
+        </div>
+      </div>
+    </div>
+
     <!-- TEXT A -->
     <div class="view" data-view="text">
       <div class="card">
         <div class="zoomrow" style="flex-wrap:wrap;gap:10px">
-          <span style="display:inline-flex;align-items:center;gap:6px">语言
+          <span style="display:inline-flex;align-items:center;gap:6px">输出
             <span class="seg" id="langSeg">
-              <button data-lang="zh" class="on">中文</button>
-              <button data-lang="en">EN</button>
+              <button data-lang="en" class="on">EN 长句</button>
+              <button data-lang="zh">中文对照</button>
             </span>
           </span>
           <span style="display:inline-flex;align-items:center;gap:6px;margin-left:auto">字号
@@ -297,13 +427,15 @@
         </div>
         <div class="outwrap">
           <pre class="out" id="textOut"></pre>
-          <button class="copyic" id="copyTextIc" title="复制文本"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+          <button class="copyic" id="copyTextIc" title="复制提示词"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         </div>
         <div class="exbar">
-          <button class="btn primary" id="copyTextBtn">复制文本</button>
+          <button class="btn primary" id="copyTextBtn">复制提示词</button>
+          <button class="btn" id="checkBtn">尺度自查</button>
         </div>
       </div>
-      <div class="note">点上方「中文 / EN」切换：中文版给豆包 / 即梦 等文本 AI，几何已译成文字（越框 / 占高度% / 两层落差）；EN 版给 ComfyUI VLM / 英文模型。复制按钮复制当前语言版本。</div>
+      <div class="note" id="textNote">EN 长句版直接投喂 Krea 2：主体 → 结构重复单元 → 支撑方式 → 大气分层 → 光 → 镜头 → 媒介。<br>
+        <b>尺度措辞纪律</b>：实测扩散模型<b>不解析百分比与画布坐标</b>，因此提示词里只写视觉关系词（tiny / towering / barely distinguishable / receding out of sight），<b>精确数字全部保留在 B · JSON</b>（供 ComfyUI Regional Prompter / GLIGEN 的 bbox 使用）。中文版是同一内容的对照。</div>
     </div>
 
     <!-- JSON B -->
@@ -323,7 +455,10 @@
           <button class="btn" id="dlBtn">下载 JSON</button>
         </div>
       </div>
-      <div class="note">对接 ComfyUI Regional Prompter（mask 模式）/ GLIGEN（bbox 模式）；如走 VLM 扩写，可先导出标注图 + 此 JSON 作指令。</div>
+      <div class="note">两份产出，用途不同：<br>
+        <b>prompt</b> = 只含视觉关系词的长句，<b>可直接粘贴进 Krea 2</b>（已剔除百分比与坐标，因模型不解析度量）。<br>
+        <b>regions</b> = 每个框的精确 x/y/w/h 百分比与强度，用于画参考标注图，或接 ComfyUI Regional Prompter（mask）/ GLIGEN（bbox）。<br>
+        下方 <b>scale_evidence</b> 与 <b>parameters</b> 两块是给人核对的精确数据，不会进入提示词。</div>
     </div>
 
   </div>
@@ -332,12 +467,61 @@
 <div id="toast"></div>
 
 <script>
-const AR2PX = {"21:9":[1792,768],"16:9":[1536,864],"9:16":[768,1344],"1:1":[1024,1024],"2.39:1":[1912,800]};
+/* Krea 2 官方画幅与像素（docs.krea.ai，2026-10-04 核实） */
+const AR2PX = {"2.35:1":[1568,672],"21:9":[1792,768],"16:9":[1376,768],"9:16":[768,1376],
+  "1:1":[1024,1024],"3:2":[1248,832],"4:5":[928,1152],"4:3":[1184,896]};
+const AR_NOTE = {
+  "2.35:1":"官方 · 横向巨构首选，最宽画幅",
+  "21:9":"Krea 2 不支持 — 21:9 观感请用 2.35:1；此处仅作换模型参考坐标",
+  "16:9":"官方 · 通用，主体与环境并重",
+  "9:16":"官方 · 垂直巨构首选（塔 / 巨兽站立 / 巨树 / 深井）",
+  "1:1":"官方 · 对称纪念碑、正面立面",
+  "3:2":"官方 · 电影剧照感，海报常用",
+  "4:5":"官方 · 竖版海报、社媒竖屏",
+  "4:3":"官方 · 横向但需更多环境信息"
+};
 const TYPE_LABEL = {subject:"主体",character:"人物",sky:"空域",foreground:"前景"};
 const ARROW = {subject:"#f3a847",character:"#378add",sky:"#9fb4c9",foreground:"#6b5b73"};
 const GRID_PX = 32;
 
-let state = { aspect:"21:9", regions:[], sel:null, _id:1, snap:true, lang:"zh" };
+/* 巨构词库（来自《Krea2巨构提示词方法论》skill） */
+const REPEATS = [
+  {k:"rows of identical arched windows", t:"连排拱窗"},
+  {k:"rib-like buttresses at regular intervals", t:"等距肋状扶壁"},
+  {k:"visible seams between prefabricated blocks", t:"预制块可见接缝"},
+  {k:"stepped terraces", t:"层叠台地"},
+  {k:"lattice of exposed trusses", t:"外露桁架格构"},
+  {k:"plating divided into panels", t:"分块装甲板"},
+  {k:"staircases switchbacking up the facade", t:"立面折返楼梯"},
+  {k:"suspended cables in a regular fan", t:"扇形规则张索"},
+  {k:"segmented plating like armor", t:"甲节式分块装甲"},
+  {k:"colonnades marching to the horizon", t:"无尽列柱"}
+];
+const SUPPORTS = [
+  {k:"massive buttressed base", t:"巨大扶壁基座"},
+  {k:"cantilevered counterweighted by a stone spur", t:"悬挑 + 石翼配重"},
+  {k:"anchored by tension cables driven into bedrock", t:"张索锚入基岩"},
+  {k:"roots gripping the cliff like a hand", t:"根系如手抓岩"},
+  {k:"sagging under its own weight, cracks spreading", t:"自重下垂 · 裂缝蔓延"},
+  {k:"stepped foundation merging into the terrain", t:"阶梯基座融入地形"}
+];
+const STYLES = [
+  {k:"cinematic matte painting concept art, epic scale, atmospheric perspective, painterly realism, subtle film grain", t:"电影概念美术（通用首选）"},
+  {k:"photorealistic photograph, natural light, high dynamic range, crisp detail, subtle film grain", t:"写实摄影"},
+  {k:"epic oil painting, thick impasto brushstrokes, rich glazes, dramatic chiaroscuro, Romantic landscape tradition", t:"史诗油画"},
+  {k:"3D render, Octane render, physically based materials, subsurface scattering, global illumination, ray-traced reflections", t:"3D 渲染"},
+  {k:"architectural visualization, entourage figures, soft overcast lighting, accurate material rendering, wide-angle corrected perspective", t:"建筑可视化"},
+  {k:"weathered technical illustration, blueprint linework overlaid on a rendered scene, annotation marks and measurement callouts, worn paper texture", t:"废土蓝图"},
+  {k:"traditional East Asian ink wash painting, vast negative space, misty voids, sparse brushwork, monochrome with faint mineral pigment, rice paper texture", t:"东方水墨（留白型）"},
+  {k:"dark fantasy illustration, desaturated palette with a single accent color, heavy texture, dramatic rim lighting, intricate silhouette detail", t:"暗黑奇幻插画"},
+  {k:"long-wave infrared thermography, false-color thermal palette, no visible light, scientific survey capture", t:"热成像 / 科学观测"},
+  {k:"photographed scale model diorama, visible seams and paint wear, shallow depth of field with tilt-shift, studio lighting", t:"微缩模型（与可信尺度相反）"}
+];
+
+let state = { aspect:"2.35:1", regions:[], sel:null, _id:1, snap:true, lang:"en",
+  scene:{ time:'', lightDir:'', volumetric:'', lens:'', angle:'', atmos:false,
+          repeats:[], supports:[], style:'', palette:'',
+          model:'Large', creativity:'raw', intensity:0, complexity:0, movement:0 } };
 const frame = document.getElementById('frame');
 
 /* ---------- canvas camera (zoom / pan) ---------- */
@@ -402,7 +586,13 @@ function render(){
   renderChecklist();
   renderProps();
   renderExport();
+  syncSceneUI();
+  updateArNote();
   saveLocal();
+}
+function updateArNote(){
+  const el=document.getElementById('arNote');
+  if(el) el.textContent = AR_NOTE[state.aspect] || '';
 }
 
 function updatePctRead(r){
@@ -589,52 +779,244 @@ function renderChecklist(){
     `<li><span class="dot ${r.s}"></span><div><div class="t">${r.t}</div><div class="d">${r.d}</div></div></li>`).join('');
 }
 
-/* ---------- export ---------- */
-function buildText(lang){
-  const ar=state.aspect;
+/* ---------- export · Krea 2 ----------
+   组装顺序（七层 MEGA-STACK 的可自动化部分）：
+   CORE 主体 → 结构重复单元 → 支撑方式 → ATMOS 大气分层 → LIGHT 光 → CAMERA 镜头 → STYLE 媒介
+
+   ⚠️ 度量措辞纪律（2026-10-04 实测校准）：
+   扩散模型**不解析画布坐标与百分比**——"occupying only 2% of the frame height"
+   "located lower center, crossing left/right frame edge" 实测均无效，人物仍被画成正常比例。
+   有效的写法是**视觉关系词**：tiny / distant / barely distinguishable / towering /
+   dwarfing / receding out of sight / diminishing perspective。
+   因此：几何照算（x/y/w/h 百分比、越框、落差），但**一律翻译成关系词再入句**。
+   精确数字只保留在 buildJSON() 里，供 ComfyUI Regional Prompter / GLIGEN 的 bbox 使用。 */
+const TYPE_EN = {subject:'The megastructure', character:'a figure', sky:'the sky', foreground:'the foreground'};
+
+/* 主体占画比 → 关系词短语（不出现数字） */
+function subjectScalePhrase(r){
+  if(!r) return '';
+  const h=Math.round(r.h);
+  if(r.cross) return 'towering far above and receding out of sight through the top of the frame, its full height never contained';
+  if(h>=85) return 'so vast it fills the frame from edge to edge and still recedes beyond sight';
+  if(h>=70) return 'dominating the frame, its upper reaches lost beyond the top edge';
+  if(h>=50) return 'filling most of the frame and towering far above its surroundings';
+  if(h>=30) return 'rising high above the horizon, clearly larger than anything else in view';
+  return 'standing in the middle distance, still far larger than anything near it';
+}
+/* 人物占画比 → 关系词短语 */
+function figureScalePhrase(r){
+  const h=Math.round(r.h);
+  if(h<=3)  return 'tiny and barely distinguishable';
+  if(h<=6)  return 'small and distant';
+  if(h<=12) return 'clearly visible at a distance';
+  return 'close enough to see plainly';
+}
+/* 纵向位置 → 关系词（不用 middle/center 这类构图术语） */
+function placePhrase(r){
+  const isChar=r.type==='character';
+  const cx=r.x+r.w/2;
+  const cy=isChar? r.y+r.h : r.y+r.h/2;
+  const h = cx<33?'left-hand':cx>66?'right-hand':'';
+  const v = cy<33?'upper':cy>66?'lower':'';
+  if(h&&v) return `${v} ${h} side`;        // lower left-hand side
+  if(h)   return `${h} side of the frame`;
+  if(v)   return v==='lower' ? 'lower part of the frame' : 'upper part of the frame';
+  return 'centre of the frame';
+}
+function sceneSentence(){
+  const sc=state.scene||{}, out=[];
+  if(sc.time) out.push(sc.time);
+  if(sc.lightDir) out.push(sc.lightDir);
+  if(sc.volumetric) out.push(sc.volumetric);
+  return out.join(', ');
+}
+function atmosSentence(){
+  return state.scene&&state.scene.atmos
+    ? 'the foreground surface is razor sharp, the middle section veiled in atmospheric haze, and the far end dissolving entirely into the sky'
+    : '';
+}
+
+/* EN 长句：主体 → 结构 → 支撑 → 大气 → 光 → 镜头 → 媒介
+   全部度量以关系词表达，不写百分比与坐标。 */
+function buildTextEn(){
   const ordered=[...state.regions].sort((a,b)=>a.z-b.z);
-  if(!ordered.length) return lang==='en'?'No regions yet.':'(尚无区域)';
-  if(lang==='en'){
-    let s=`${ar} ultra-wide frame. `;
-    for(const r of ordered){
-      const who=TYPE_LABEL[r.type];
-      const what=r.promptEn||r.label||'element';
-      const hPct=Math.round(r.h);
-      const cross=r.cross?' breaking out of the frame':'';
-      s+=` ${who} (${what}) is located ${locEn(r)}, occupying ~${hPct}% of frame height${cross}.`;
-    }
-    const subj=ordered.find(r=>r.type==='subject');
-    const chars=ordered.filter(r=>r.type==='character');
-    if(subj||chars.length){
-      s+=' Scale evidence: ';
-      if(subj) s+='the subject engulfs the frame; ';
-      if(chars.length) s+=`characters occupy ${chars.map(c=>Math.round(c.h)+'%').join('/')} of frame height and stand upon the megastructure; `;
-      s+='scale is defined by geometry, not adjectives.';
-    }
-    return s;
-  }
-  // zh
-  let s=`${ar} 巨幅画面。`;
-  for(const r of ordered){
-    const who=TYPE_LABEL[r.type];
-    const what=r.promptZh||r.label||'元素';
-    const hPct=Math.round(r.h);
-    const cross = r.cross? '，强行越出画框':'';
-    s+=` ${who}（${what}）位于${loc(r)}，占据画面高度约 ${hPct}%${cross}。`;
-  }
+  if(!ordered.length) return 'No regions yet. Add a subject on the canvas first.';
+  const sc = state.scene||{};
+  const reps = Array.isArray(sc.repeats)?sc.repeats:[];
+  const sups = Array.isArray(sc.supports)?sc.supports:[];
   const subj=ordered.find(r=>r.type==='subject');
   const chars=ordered.filter(r=>r.type==='character');
-  if(subj||chars.length){
-    s+=' 尺度证据：';
-    if(subj) s+=`主体吞没画框、`;
-    if(chars.length) s+=`人物占画面高度 ${chars.map(c=>Math.round(c.h)+'%').join('/')} 且立于巨物之上、`;
-    s+='以几何比例而非形容词定义巨物尺度。';
+  const s=[];
+
+  // CORE —— 主体 + 尺度关系
+  const subjDesc = subj ? (subj.promptEn||subj.label||'a colossal structure') : 'a colossal structure';
+  let core = subjDesc.replace(/[.\s]+$/,'');
+  core = core.charAt(0).toLowerCase()+core.slice(1);
+  if(subj){
+    const sp=subjectScalePhrase(subj);
+    if(sp) core += `, ${sp}`;
   }
-  return s;
+  s.push(core.charAt(0).toUpperCase()+core.slice(1)+'.');
+
+  // 结构重复单元 + 支撑方式
+  const struct=[];
+  if(reps.length) struct.push(reps.join(', '));
+  if(sups.length) struct.push('held up by '+sups.join(' and '));
+  if(struct.length) s.push('Its structure reads clearly: '+struct.join(', ')+'.');
+
+  // 环境 / 尺度锚定（几何 → 关系词）
+  const env=[];
+  for(const r of ordered){
+    if(r.type==='subject') continue;
+    let what = (r.promptEn || r.label || TYPE_EN[r.type]).replace(/[.\s]+$/,'');
+    what = what.charAt(0).toLowerCase()+what.slice(1);
+    let seg;
+    if(r.type==='character'){
+      // 人物：关系词修饰 + 位置，位置与尺度词不重复
+      seg = `${what} on the ${placePhrase(r)}, ${figureScalePhrase(r)}`;
+    }else if(r.type==='sky'){
+      const sh=Math.round(r.h);
+      const hasHaze=/haze|cloud|atmospher/i.test(what);
+      seg = sh>=40
+        ? (hasHaze ? `${what}, filling the upper half of the frame`
+                   : `${what}, filling the upper half of the frame and dissolving into haze at its far edge`)
+        : (hasHaze ? `${what}, opening above the structure`
+                   : `${what}, opening above the structure and fading into haze`);
+    }else{
+      // 用户填的 what 可能已含 "sharply defined"，避免重复
+      const hasSharp=/sharp|defined|detailed/i.test(what);
+      seg = hasSharp ? `${what}, anchoring the immediate foreground`
+                     : `${what} anchoring the immediate foreground, sharply defined`;
+    }
+    env.push(seg);
+  }
+  // 两层落差：用"远小近大"表达，不用百分比也不用阿拉伯数字
+  if(chars.length>=2){
+    const ys=chars.map(c=>c.y+c.h).sort((a,b)=>a-b);
+    const spread=ys[ys.length-1]-ys[0];
+    const mid=ys[0]+spread/2;
+    const upper=chars.filter(c=>(c.y+c.h)<=mid);
+    const lower=chars.filter(c=>(c.y+c.h)>mid);
+    if(upper.length&&lower.length){
+      const uN=['one','two','three','four','five'][upper.length-1]||'several';
+      const lN=['one','two','three','four','five'][lower.length-1]||'several';
+      env.push(`the figures fall into two clearly separated depth layers, the ${uN} far above and much smaller, the ${lN} distinctly nearer and larger, dwarfing everything around them`);
+    }else{
+      env.push('the figures stand at clearly separated depths, the far ones much smaller than the near ones');
+    }
+  }
+  if(env.length){
+    const envSentence = env.join(', ');
+    s.push(envSentence.charAt(0).toUpperCase()+envSentence.slice(1)+'.');
+  }
+
+  // 大气透视（缺了会显平显小）
+  const at=atmosSentence();
+  if(at) s.push('Depth reads through atmosphere: '+at+'.');
+
+  // 光
+  const li=sceneSentence();
+  if(li) s.push('Light: '+li+'.');
+
+  // 镜头
+  const cam=[];
+  if(sc.lens) cam.push(`shot on a ${sc.lens}`);
+  if(sc.angle) cam.push(sc.angle);
+  if(subj&&subj.cross) cam.push('dramatically converging vertical perspective, the structure receding out of the top of the frame');
+  else if(subj&&Math.round(subj.h)>=70) cam.push('dramatically converging vertical perspective');
+  if(cam.length) s.push('Camera: '+cam.join(', ')+'.');
+
+  // 尺度声明
+  if(subj||chars.length){
+    let sc2='Scale is defined by measurable geometry and reference objects, not by size adjectives';
+    if(chars.length) sc2 += ': the figures above are the only human measure in the scene';
+    s.push(sc2+'.');
+  }
+
+  // 媒介
+  const tail=[];
+  if(sc.style) tail.push(sc.style);
+  if(sc.palette) tail.push(sc.palette);
+  if(tail.length){
+    const t=tail.join(', ');
+    s.push(t.charAt(0).toUpperCase()+t.slice(1)+'.');
+  }
+
+  return s.join(' ');
 }
+
+/* 中文对照版：同一内容，便于自查 / 丢给其他 AI 扩写 */
+function buildTextZh(){
+  const ordered=[...state.regions].sort((a,b)=>a.z-b.z);
+  if(!ordered.length) return '（尚无区域）请先在画布添加「主体」框。';
+  const sc=state.scene||{};
+  const subj=ordered.find(r=>r.type==='subject');
+  const chars=ordered.filter(r=>r.type==='character');
+  const s=[];
+
+  let core = subj ? (subj.promptZh||subj.label||'一座巨构') : '一座巨构';
+  if(subj){
+    // 中文版保留百分比（给人看的对照），但尺度主张改用关系词
+    if(subj.cross) core += '，主体高耸入云并越出画框上缘，完整高度从不入画';
+    else if(Math.round(subj.h)>=70) core += '，主体占满画幅并压过画面上缘，尺度远超周遭一切';
+    else core += `，主体占画面高度约 ${Math.round(subj.h)}%，明显大于画面内其他一切`;
+  }
+  s.push(core+'。');
+
+  const struct=[];
+  const reps=Array.isArray(sc.repeats)?sc.repeats:[];
+  const sups=Array.isArray(sc.supports)?sc.supports:[];
+  if(reps.length) struct.push('结构可读：'+reps.map(k=>{
+    const m=REPEATS.find(r=>r.k===k); return m?m.t:k;}).join('、'));
+  if(sups.length) struct.push('重量感由'+sups.map(k=>{
+    const m=SUPPORTS.find(r=>r.k===k); return m?m.t:k;}).join('、')+'支撑');
+  if(struct.length) s.push(struct.join('；')+'。');
+
+  for(const r of ordered){
+    if(r.type==='subject') continue;
+    const what=r.promptZh||r.label||TYPE_LABEL[r.type];
+    if(r.type==='character'){
+      const h=Math.round(r.h);
+      const w = h<=3?'极小、几乎难以辨认':h<=6?'细小且遥远':h<=12?'远处可辨':'近处清晰可见';
+      s.push(`${what}${w}，立于${loc(r)}。`);
+    }else if(r.type==='sky'){
+      s.push(`${what}占满画面上半部，远端逐渐褪入霭中。`);
+    }else{
+      s.push(`${what}压在近景前景，轮廓锐利。`);
+    }
+  }
+  if(chars.length>=2){
+    const ys=chars.map(c=>c.y+c.h).sort((a,b)=>a-b);
+    s.push('人物分为两层明显不同的景深：上层远而极小，下层近而稍巨，彼此互证尺度。');
+  }
+  if(sc.atmos) s.push('大气透视分层：前景锐利 → 中景被雾冲淡 → 远端消失于天光。');
+
+  const li=sceneSentence();
+  if(li) s.push('光：'+li+'。');
+
+  const cam=[];
+  if(sc.lens) cam.push(sc.lens);
+  if(sc.angle) cam.push(sc.angle);
+  if(cam.length) s.push('镜头：'+cam.join('，')+'。');
+
+  s.push('尺度以可测量几何与参照物定义，不用尺寸形容词。');
+
+  const tail=[];
+  if(sc.style) tail.push('媒介：'+sc.style);
+  if(sc.palette) tail.push('调色：'+sc.palette);
+  if(tail.length) s.push(tail.join('；')+'。');
+
+  return s.join('');
+}
+
+function buildText(lang){ return lang==='zh' ? buildTextZh() : buildTextEn(); }
 function renderTextOut(){ document.getElementById('textOut').textContent=buildText(state.lang); }
+
 function buildJSON(){
-  const [W,H]=AR2PX[state.aspect];
+  const sc=state.scene||{};
+  const reps=Array.isArray(sc.repeats)?sc.repeats:[];
+  const sups=Array.isArray(sc.supports)?sc.supports:[];
+  const [W,H]=AR2PX[state.aspect]||[1024,1024];
   const regions=state.regions.map(r=>({
     id:r.id, type:r.type, label:r.label||'',
     x:+r.x.toFixed(2), y:+r.y.toFixed(2),
@@ -643,25 +1025,68 @@ function buildJSON(){
     prompt_zh:r.promptZh||'', prompt_en:r.promptEn||'',
     strength:+r.strength.toFixed(2), z:r.z
   }));
+  const prompt = buildTextEn();
+  const sizeWords = state.regions.filter(r=>r.type==='character')
+    .map(c=>Math.round(c.h)+'%');
   return {
-    target:"comfyui-region-prompter | gligen-bbox",
-    aspect:state.aspect, pixel:{width:W,height:H},
-    notes:"x/y/w/h 为相对画幅百分比(0-100)，可超出100表示越框；对接 Regional Prompter 用 mask 模式、GLIGEN 用 bbox 模式",
-    regions
+    target: "krea-2",
+    note_target: "Krea 2 无独立负面栏、无 --no 参数；风格参考图上限 4 张（每张带独立强度滑块）。",
+    note_measure: "提示词只写视觉关系词（tiny/towering/barely distinguishable），不写百分比与画布坐标 —— 实测扩散模型不解析度量。以下 regions / scale_evidence 保留精确数字，仅供 ComfyUI Regional Prompter、GLIGEN bbox 与人工核对，不进入 prompt。",
+    aspect_ratio: state.aspect,
+    krea_supports_this_ratio: !AR2PX[state.aspect] ? false : (state.aspect!=='21:9'),
+    pixel:{width:W,height:H},
+    creativity: sc.creativity||'raw',
+    model: sc.model||'Large',
+    sliders: {
+      intensity: +sc.intensity||0,
+      complexity: +sc.complexity||0,
+      movement: +sc.movement||0
+    },
+    slider_hint: "Sliders 与 creativity 独立，范围 −100~100，0 中性；一次只推一个轴。巨构建议 Complexity 正向。",
+    scene: {
+      time: sc.time||'', light_direction: sc.lightDir||'', volumetric: sc.volumetric||'',
+      lens: sc.lens||'', camera_angle: sc.angle||'',
+      atmospheric_layers: !!sc.atmos,
+      repeating_units: reps,
+      support_structure: sups,
+      style_medium: sc.style||'', palette: sc.palette||''
+    },
+    scale_evidence: {
+      subject_crosses_frame: state.regions.some(r=>r.type==='subject'&&r.cross),
+      subject_height_pct: (()=>{const s2=state.regions.find(r=>r.type==='subject'); return s2?Math.round(s2.h):null;})(),
+      character_height_pct: sizeWords,
+      note: "可辨认参照物 = character 框；Krea 2 对具体数字与参照物敏感，对 huge/colossal 等形容词不敏感。"
+    },
+    prompt,
+    regions,
+    legacy_targets: {
+      comfyui: "comfyui-region-prompter (mask 模式) / gligen-bbox — regions 字段可直接复用",
+      mj_warning: "MJ 的 --raw（去 AI 味）≠ Krea 2 的 creativity:raw（完全不扩展提示词）；--ar 21:9 Krea 2 不支持，请用 2.35:1"
+    }
   };
 }
 function renderExport(){
   renderTextOut();
   document.getElementById('jsonOut').textContent=JSON.stringify(buildJSON(),null,2);
 }
-document.getElementById('copyTextBtn').onclick=()=>{navigator.clipboard.writeText(buildText(state.lang)).then(()=>toast('已复制文本'));};
+document.getElementById('copyTextBtn').onclick=()=>{navigator.clipboard.writeText(buildText(state.lang)).then(()=>toast('已复制 Krea 2 提示词'));};
 document.getElementById('copyJsonBtn').onclick=()=>{navigator.clipboard.writeText(JSON.stringify(buildJSON(),null,2)).then(()=>toast('已复制 JSON'));};
-document.getElementById('copyTextIc').onclick=()=>{navigator.clipboard.writeText(buildText(state.lang)).then(()=>toast('已复制文本'));};
+document.getElementById('copyTextIc').onclick=()=>{navigator.clipboard.writeText(buildText(state.lang)).then(()=>toast('已复制 Krea 2 提示词'));};
 document.getElementById('copyJsonIc').onclick=()=>{navigator.clipboard.writeText(JSON.stringify(buildJSON(),null,2)).then(()=>toast('已复制 JSON'));};
+document.getElementById('checkBtn').onclick=()=>{
+  const sc=state.scene||{};
+  const warn=[];
+  if(!sc.lens) warn.push('未设焦距（镜头语言是 Krea 2 最吃的能力）');
+  if(!sc.angle) warn.push('未设机位角度');
+  if(!sc.repeats.length) warn.push('未选结构重复单元（巨物会糊成一团）');
+  if(!sc.atmos) warn.push('未开大气透视分层（画面会显平显小）');
+  if(!sc.supports.length) warn.push('未选支撑方式（巨物会像贴图）');
+  toast(warn.length? ('待补：'+warn.join(' / ')) : '五项关键项齐备');
+};
 document.getElementById('dlBtn').onclick=()=>{
   const blob=new Blob([JSON.stringify(buildJSON(),null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`region-${state.aspect.replace(':','x')}.json`;a.click();toast('已下载 JSON');
+  a.download=`krea2-${state.aspect.replace(':','x')}.json`;a.click();toast('已下载 JSON');
 };
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1500);}
 
@@ -676,7 +1101,8 @@ document.getElementById('jSmall').onclick=()=>{outFont=Math.max(9,outFont-1);app
 /* ---------- drawer / rail ---------- */
 const VIEWS={
   add:'添加区域 · 尺度校验', props:'选中区域属性',
-  text:'A · 文本提示词（副产出）', json:'B · Region 配置 JSON（主输出）'
+  scene:'巨构参数（光 / 镜头 / 结构 / 风格）',
+  text:'A · Krea 2 提示词', json:'B · 参数 + Region JSON'
 };
 let activeView=null;
 const drawer=document.getElementById('drawer');
@@ -706,6 +1132,58 @@ document.querySelectorAll('#langSeg button').forEach(b=>b.onclick=()=>{
   renderTextOut();
 });
 
+/* ---------- scene panel (巨构参数) ---------- */
+function ensureScene(){
+  if(!state.scene) state.scene={time:'',lightDir:'',volumetric:'',lens:'',angle:'',atmos:false,
+    repeats:[],supports:[],style:'',palette:'',model:'Large',creativity:'raw',intensity:0,complexity:0,movement:0};
+  const sc=state.scene;
+  if(!Array.isArray(sc.repeats)) sc.repeats=[];
+  if(!Array.isArray(sc.supports)) sc.supports=[];
+  return sc;
+}
+function buildChips(hostId, list, selected){
+  const host=document.getElementById(hostId);
+  host.innerHTML=list.map((o,i)=>
+    `<span class="chip${selected.includes(o.k)?' on':''}" data-k="${o.k}" title="${o.k}">${o.t}</span>`).join('');
+  host.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    const k=c.dataset.k, arr=selected.includes(k)?selected.filter(x=>x!==k):[...selected,k];
+    if(hostId==='rowRepeats') sc().repeats=arr; else sc().supports=arr;
+    c.classList.toggle('on');
+    renderExport();
+  });
+}
+const sc = ensureScene;
+function syncSceneUI(){
+  const s=ensureScene();
+  const setVal=(id,v)=>{const el=document.getElementById(id); if(el && document.activeElement!==el) el.value=v;};
+  setVal('sTime',s.time); setVal('sLightDir',s.lightDir); setVal('sVolumetric',s.volumetric);
+  setVal('sLens',s.lens); setVal('sAngle',s.angle);
+  const at=document.getElementById('sAtmos'); if(at) at.checked=!!s.atmos;
+  setVal('sStyle',s.style); setVal('sPalette',s.palette);
+  setVal('sModel',s.model); setVal('sCreativity',s.creativity);
+  setVal('sIntensity',s.intensity); setVal('sComplexity',s.complexity); setVal('sMovement',s.movement);
+  buildChips('rowRepeats', REPEATS, s.repeats);
+  buildChips('rowSupport', SUPPORTS, s.supports);
+}
+function bindSceneSelect(id,key){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('change',()=>{ sc()[key]=el.value; renderExport(); });
+}
+// 风格预设下拉（从词库生成，避免 HTML 与 JS 两处维护）
+(function(){
+  const sel=document.getElementById('sStyle');
+  if(sel) STYLES.forEach(o=>{ const op=document.createElement('option'); op.value=o.k; op.textContent=o.t; sel.appendChild(op); });
+})();
+['sTime|time','sLightDir|lightDir','sVolumetric|volumetric','sLens|lens','sAngle|angle',
+ 'sStyle|style','sPalette|palette','sModel|model','sCreativity|creativity'
+].forEach(p=>bindSceneSelect(p.split('|')[0], p.split('|')[1]));
+['sIntensity|intensity','sComplexity|complexity','sMovement|movement'].forEach(p=>{
+  const el=document.getElementById(p.split('|')[0]);
+  if(el) el.addEventListener('input',()=>{ sc()[p.split('|')[1]]=+el.value||0; renderExport(); });
+});
+document.getElementById('sAtmos').addEventListener('change',e=>{ sc().atmos=e.target.checked; renderExport(); });
+
 /* ---------- aspect ---------- */
 document.querySelectorAll('#aspectSeg button').forEach(b=>b.onclick=()=>{
   state.aspect=b.dataset.ar;
@@ -717,9 +1195,18 @@ document.querySelectorAll('#aspectSeg button').forEach(b=>b.onclick=()=>{
 const LS_KEY='comp-editor';
 function normalizeLoaded(s){
   // 老数据兼容：单 prompt 字段拆成中英两框
-  s.regions.forEach(r=>{ if(r.prompt && !r.promptEn && !r.promptZh){ r.promptEn=r.prompt; r.promptZh=r.prompt; } });
-  if(!s.lang) s.lang='zh';
+  (s.regions||[]).forEach(r=>{ if(r.prompt && !r.promptEn && !r.promptZh){ r.promptEn=r.prompt; r.promptZh=r.prompt; } });
+  if(!s.lang) s.lang='en';
   if(typeof s.snap!=='boolean') s.snap=true;
+  // 画幅迁移：老版本把 2.39:1 / 21:9 当主力，Krea 2 无这两个 → 2.39:1 归到 2.35:1
+  if(s.aspect==='2.39:1') s.aspect='2.35:1';
+  if(!AR2PX[s.aspect]) s.aspect='2.35:1';
+  // 老数据没有 scene 层，补默认值
+  s.scene = Object.assign({time:'',lightDir:'',volumetric:'',lens:'',angle:'',atmos:false,
+    repeats:[],supports:[],style:'',palette:'',model:'Large',creativity:'raw',
+    intensity:0,complexity:0,movement:0}, s.scene||{});
+  if(!Array.isArray(s.scene.repeats)) s.scene.repeats=[];
+  if(!Array.isArray(s.scene.supports)) s.scene.supports=[];
   return s;
 }
 function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
@@ -736,10 +1223,19 @@ document.getElementById('snapChk').onchange=e=>{state.snap=e.target.checked;save
 
 /* ---------- example: 巨物白莲 (D4 构图基因) ---------- */
 document.getElementById('loadEx').onclick=()=>{
+  state.aspect='2.35:1';
+  state.lang='en';
+  state.scene={ time:'dawn', lightDir:'backlit by a blazing sun', volumetric:'god rays piercing the haze',
+    lens:'16mm wide-angle', angle:'extreme low angle looking up', atmos:true,
+    repeats:['segmented plating like armor','colonnades marching to the horizon',
+             'rows of identical arched windows'],
+    supports:['massive buttressed base','anchored by tension cables driven into bedrock'],
+    style:STYLES[0].k, palette:'warm amber highlights against cool blue shadow',
+    model:'Large', creativity:'raw', intensity:50, complexity:40, movement:20 };
   state.regions=[
     {id:state._id++,type:'subject',label:'巨型粉莲',
-      promptZh:'如绸缎般垂坠的巨型粉莲花瓣，半透绡纱质感，背光描出柔光边缘，由浅粉到玫红渐变',
-      promptEn:'colossal pink lotus petals like draped silk fabric, sheer translucent satin with soft sheen, backlit glowing edges, gradient from blush pink to rose',
+      promptZh:'一座从云海中升起的巨型粉莲，瓣如绸缎般垂坠，半透绡纱质感，边缘被逆光描出柔光',
+      promptEn:'a colossal pink lotus rising out of a sea of cloud, its petals draped like silk fabric, sheer translucent satin with soft sheen, backlit glowing edges',
       x:-6,y:40,w:112,h:66,z:1,strength:1.2,cross:true},
     {id:state._id++,type:'character',label:'花瓣顶端·白衣',
       promptZh:'身着白衣的宋代女子立于花瓣顶端',
