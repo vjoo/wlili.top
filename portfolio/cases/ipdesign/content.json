@@ -4,7 +4,7 @@
     {
       "type": "motion-banner",
       "size": "large",
-      "effect": "drift",
+      "effect": "ticker",
       "bgType": "theme",
       "images": [
         {
@@ -33,7 +33,7 @@
           "image": "/portfolio/cases/ipdesign/uploads/1791043419762.jpg"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1791043525050.jpg"
+          "image": "/portfolio/cases/ipdesign/uploads/1791090025813.jpg"
         },
         {
           "image": "/portfolio/cases/ipdesign/uploads/1791043387455.jpg"
@@ -43,48 +43,39 @@
         },
         {
           "image": "/portfolio/cases/ipdesign/uploads/1791043613913.jpg"
-        }
-      ],
-      "texts": [
-        {
-          "text": "小水滴人",
-          "size": 64,
-          "weight": 800,
-          "color": "#ffffff",
-          "opacity": 1,
-          "rotate": 0,
-          "align": "left",
-          "x": "22.7",
-          "y": "39.4"
         },
         {
-          "text": "一滴水，也能汇成江海 —— 关注社区环保，陪伴儿童成长",
-          "size": 22,
-          "weight": 400,
-          "color": "rgba(255,255,255,0.82)",
-          "opacity": 1,
-          "rotate": 0,
-          "align": "left",
-          "x": "",
-          "y": ""
+          "image": "/portfolio/cases/ipdesign/uploads/1791080475754.jpg"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1791080478705.jpg"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1791080482226.jpg"
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1791080485634.jpg"
         }
       ],
+      "texts": [],
       "id": "smuskmgamm31f",
       "tTurn": "0",
       "tTilt": "0",
-      "tCardSize": "0.45",
+      "tCardSize": "0.34",
       "tRoll": "30",
       "tiltX": "0",
       "tiltY": "0",
       "tRows": "5",
       "tSpeed": "0.01",
-      "tVariance": "0.45",
-      "tRowGap": "0.43",
-      "cardRatio": "auto",
+      "tVariance": "0",
+      "tRowGap": "0.17",
+      "cardRatio": "1:1",
       "dCardSize": "0.27",
       "dSpeed": "0.05",
       "backFade": "0.25",
-      "variation": "0.65"
+      "variation": "0.65",
+      "overlayOpacity": "33",
+      "tDirs": "alternate"
     },
     {
       "id": "smtaaitajwcwr",
@@ -178,13 +169,13 @@
       "videoType": "video",
       "items": [
         {
-          "value": "画面中央偏左",
+          "value": "Prompt",
           "suffix": "",
           "title": "黄色墨镜、身穿蓝底白花夏威夷衬衫和白色短裤、脚穿黄色拖鞋的",
           "desc": "Q 版卡通角色，惬意地半躺在蓝白条纹沙滩躺椅上，一只手举着插有吸管的青色椰汁饮品，表情放松享受；"
         },
         {
-          "value": "背景",
+          "value": "BG",
           "suffix": "",
           "title": "湛蓝天空 + 蓬松白云 + 倾斜的椰子树×2 + 灌木丛}+ 阳光光斑",
           "desc": "躺椅前方的小木凳上放着一台屏幕打开的笔记本电脑，营造 \"海边远程办公\" 的度假氛围。前景是细腻的金黄色沙滩，散落着橙色海星、小贝壳、彩色沙滩球和一行脚印，一只红色小螃蟹在沙面上爬行；"
@@ -230,18 +221,18 @@
       "label": "设计理念 → 形象设定→ 场景故事→ 应用画面；",
       "heading": "养宠要懂得文明，陪伴才有滋味，爱护环境也是一种 \"温柔\"",
       "subtitle": "3D 卡通渲染风格，潮玩手办质感，干净白色场景。",
-      "videoUrl": "/portfolio/cases/ipdesign/uploads/1787763917198.mp4",
+      "videoUrl": "/portfolio/cases/ipdesign/uploads/1791079330607.mp4",
       "videoType": "video",
       "mediaRatio": "landscape",
       "items": [
         {
-          "value": "画面中央偏右",
+          "value": "Prompt",
           "suffix": "",
           "title": "身穿浅色短袖的小水滴孩子和妈妈，看到前方跑了一只可爱的小狗，孩子轻轻抚摸柴犬的头顶； ",
           "desc": "Q 版柴犬面朝孩子，张嘴吐舌、眯眼微笑，神态愉悦放松；小水滴妈妈站在一旁微微俯身，温柔地注视着一人一狗；"
         },
         {
-          "value": "背景",
+          "value": "BG",
           "suffix": "",
           "title": "浅灰白干净的场景地面 + 蓝黄配色",
           "desc": "一卷宠物拾便袋、一根牵引绳和一个宠物水碗\"文明遛狗、爱护环境\"，爱护环境从每一次遛狗开始。"
