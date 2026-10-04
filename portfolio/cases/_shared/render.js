@@ -3659,7 +3659,7 @@ var CaseRenderer = (function () {
         }
         while (pool.length > n) { var last = pool.pop(); if (last.parentNode) last.parentNode.removeChild(last); }
       }
-      var W = 0, H = 0, raf = 0, elapsed = 0, t0 = 0;
+      var W = 0, H = 0, raf = 0, elapsed = 0, t0 = 0, lastNow = 0;
       function measure() {
         W = deck.clientWidth || 0; H = deck.clientHeight || 0;
         if (!W) W = section.clientWidth;
@@ -3710,6 +3710,15 @@ var CaseRenderer = (function () {
       }
       function loop(now) {
         raf = requestAnimationFrame(loop);
+        /* 标签页切走 / 窗口最小化 / 系统休眠 / 偶发掉帧时，rAF 被浏览器暂停，真实时间仍在走；
+           切回的第一帧 now 突然跳变 → elapsed 瞬跳到真实相位 → 卡片「飞/退回」一大段（卡顿回退观感）。
+           检测异常大间隔（>100ms）把多出的时间挤掉，让这一帧只比上一帧前进 100ms，
+           动画从暂停位置无缝继续，不再瞬跳。正常 60fps（~16ms）完全不受影响。 */
+        if (lastNow) {
+          var gap = now - lastNow, MAX_GAP = 100;
+          if (gap > MAX_GAP) t0 += (gap - MAX_GAP);
+        }
+        lastNow = now;
         elapsed = (now - t0) / 1000;
         draw(elapsed);
       }
