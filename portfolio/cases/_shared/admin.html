@@ -5222,7 +5222,6 @@ function startMnLive() {
     const MFX = window.MFX;
     const imgs = (Array.isArray(sec.images) ? sec.images : []).map((x) => x && x.image).filter(Boolean);
     const N = Math.max(Array.isArray(sec.images) ? sec.images.length : 0, 4);
-    const freeMode = (sec.cardRatio === 'free');
     const eff = (MFX.effects && MFX.effects[sec.effect]) ? sec.effect : 'vortex';
     const frames = MFX[eff](sec, st.W, st.H, N, t);
     /* 卡池复用 */
@@ -5264,9 +5263,6 @@ function startMnLive() {
         const src = imgs[f.slot];
         if (im.getAttribute('src') !== src) im.setAttribute('src', src);
         if (ph.style.display !== 'none') ph.style.display = 'none';
-        /* 自由比例：图片等比完整显示在统一卡框内（object-fit: contain，不裁切、不重叠） */
-        const fit = freeMode ? 'contain' : 'cover';
-        if (im.style.objectFit !== fit) im.style.objectFit = fit;
       } else {
         if (!c._phMark) { c.classList.add('is-ph'); c._phMark = true; }
         if (im.getAttribute('src')) im.removeAttribute('src');
@@ -5669,7 +5665,6 @@ function buildMotionVis() {
   }
   const ovPct = MFX.clamp(MFX.num(sec.overlayOpacity, 0), 0, 100);
   ovEl.style.background = ovPct > 0 ? 'rgba(0,0,0,' + (ovPct / 100).toFixed(3) + ')' : 'transparent';
-  const freeMode = (sec.cardRatio === 'free');
   let html = '';
   for (let i = 0; i < frames.length; i++) {
     const f = frames[i];
@@ -5679,7 +5674,7 @@ function buildMotionVis() {
       ');opacity:' + f.alpha.toFixed(2) + ';z-index:' + f.zIndex + ';border-radius:' + radius +
       (bwK > 0.001 ? ';border:' + Math.max(1, Math.round(bwK * Math.min(f.w, f.h))) + 'px solid ' + bcCol : '');
     const inner = useReal
-      ? '<img src="' + esc(imgs[f.slot]) + '" alt="" loading="lazy" style="object-fit:' + (freeMode ? 'contain' : 'cover') + '">'
+      ? '<img src="' + esc(imgs[f.slot]) + '" alt="" loading="lazy">'
       : '<span class="mfc-ph' + (useReal ? '' : ' empty') + '">素材 ' + (f.slot + 1) + '</span>';
     html += '<div class="mfc' + (useReal ? '' : ' is-ph') + '" style="' + st + '">' + inner + '</div>';
   }

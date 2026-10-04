@@ -3630,7 +3630,6 @@ var CaseRenderer = (function () {
       var eff = (MFX.effects && MFX.effects[s.effect]) ? s.effect : 'vortex';
       var compute = MFX[eff];
       var N = Math.max(total, 4);
-      var freeMode = (s.cardRatio === 'free');
       /* 整墙俯仰/左右倾斜：通用 tiltX/tiltY（全动效）+ ticker 专属 tTilt/tTurn（参考站三轴的 x/y 轴，
          之前 UI 有字段但从未接线——「改了没变化」的根因；ticker 时叠加到 deck 同一 transform）。 */
       var tiltX = mbClamp(mbNum(s.tiltX, 0), -45, 45);
@@ -3685,9 +3684,6 @@ var CaseRenderer = (function () {
             var src = imgs[f.slot];
             if (im.getAttribute('src') !== src) im.setAttribute('src', src);
             if (ph.style.display !== 'none') ph.style.display = 'none';
-            /* 自由比例：图片等比完整显示在统一卡框内（object-fit: contain，不裁切、不重叠） */
-            var fit = freeMode ? 'contain' : 'cover';
-            if (im.style.objectFit !== fit) im.style.objectFit = fit;
           } else {
             if (!c._phMark) { c.classList.add('is-ph'); c._phMark = true; }
             if (im.getAttribute('src')) im.removeAttribute('src');
