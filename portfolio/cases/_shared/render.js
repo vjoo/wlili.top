@@ -3630,6 +3630,17 @@ var CaseRenderer = (function () {
       var eff = (MFX.effects && MFX.effects[s.effect]) ? s.effect : 'vortex';
       var compute = MFX[eff];
       var N = Math.max(total, 4);
+      /* 自由比例：预载每张图原图宽高比（按 imgs 下标对齐 slot），渲染时按自然比例重塑卡形 */
+      var freeMode = (s.cardRatio === 'free');
+      var natRatios = [];
+      if (freeMode && imgs.length) {
+        imgs.forEach(function (src, idx) {
+          var ni = new Image();
+          ni.onload = function () { if (ni.naturalWidth > 1) natRatios[idx] = ni.naturalWidth / ni.naturalHeight; };
+          ni.onerror = function () { natRatios[idx] = 0; };
+          ni.src = src;
+        });
+      }
       /* 整墙俯仰/左右倾斜：通用 tiltX/tiltY（全动效）+ ticker 专属 tTilt/tTurn（参考站三轴的 x/y 轴，
          之前 UI 有字段但从未接线——「改了没变化」的根因；ticker 时叠加到 deck 同一 transform）。 */
       var tiltX = mbClamp(mbNum(s.tiltX, 0), -45, 45);
@@ -3691,10 +3702,21 @@ var CaseRenderer = (function () {
             if (ph.textContent !== lb) { ph.textContent = lb; }
             if (ph.style.display !== '') ph.style.display = '';
           }
-          var wp = f.w.toFixed(1) + 'px', hp = f.h.toFixed(1) + 'px';
+          /* 自由比例：按原图比例重塑卡形，长边不超出标称框（contain），不裁切；
+             natRatios 未就绪时退化为标称方形，加载完成后下一帧自动套用。 */
+          var dw = f.w, dh = f.h;
+          if (freeMode) {
+            var nr = natRatios[f.slot];
+            if (nr && nr > 0) {
+              var boxR = f.w / f.h;
+              if (nr >= boxR) { dw = f.w; dh = f.w / nr; }
+              else { dw = f.h * nr; dh = f.h; }
+            }
+          }
+          var wp = dw.toFixed(1) + 'px', hp = dh.toFixed(1) + 'px';
           if (c._w !== wp) { c.style.width = wp; c._w = wp; }
           if (c._h !== hp) { c.style.height = hp; c._h = hp; }
-          var tr = 'translate3d(' + (f.x - f.w / 2).toFixed(1) + 'px,' + (f.y - f.h / 2).toFixed(1) +
+          var tr = 'translate3d(' + (f.x - dw / 2).toFixed(1) + 'px,' + (f.y - dh / 2).toFixed(1) +
             'px,0) rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) + ')';
           if (c._tr !== tr) { c.style.transform = tr; c._tr = tr; }
           var op = f.alpha.toFixed(3);
@@ -3703,7 +3725,7 @@ var CaseRenderer = (function () {
           var fl = f.dim > 0.01 ? 'brightness(' + (1 - f.dim * 0.75).toFixed(2) + ')' : '';
           if (c._fl !== fl) { c.style.filter = fl; c._fl = fl; }
           if (bwK > 0.001) {
-            var bwd = Math.max(1, Math.round(bwK * Math.min(f.w, f.h))) + 'px solid ' + bcCol;
+            var bwd = Math.max(1, Math.round(bwK * Math.min(dw, dh))) + 'px solid ' + bcCol;
             if (c._bd !== bwd) { c.style.border = bwd; c._bd = bwd; }
           }
         }
