@@ -3702,16 +3702,12 @@ var CaseRenderer = (function () {
             if (ph.textContent !== lb) { ph.textContent = lb; }
             if (ph.style.display !== '') ph.style.display = '';
           }
-          /* 自由比例：按原图比例重塑卡形，长边不超出标称框（contain），不裁切；
-             natRatios 未就绪时退化为标称方形，加载完成后下一帧自动套用。 */
+          /* 自由比例：固定列宽、按各图原比例仅缩放高度（等比到同一宽度），
+             列宽一致 → 每列中间缝隙均匀；natRatios 未就绪时退化为标称方形。 */
           var dw = f.w, dh = f.h;
           if (freeMode) {
             var nr = natRatios[f.slot];
-            if (nr && nr > 0) {
-              var boxR = f.w / f.h;
-              if (nr >= boxR) { dw = f.w; dh = f.w / nr; }
-              else { dw = f.h * nr; dh = f.h; }
-            }
+            if (nr && nr > 0) { dw = f.w; dh = f.w / nr; }
           }
           var wp = dw.toFixed(1) + 'px', hp = dh.toFixed(1) + 'px';
           if (c._w !== wp) { c.style.width = wp; c._w = wp; }
