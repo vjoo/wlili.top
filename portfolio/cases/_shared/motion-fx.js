@@ -15,6 +15,12 @@
   function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
   function frac(v) { return v - Math.floor(v); }
   function lerp(a, b, t) { return a + (b - a) * t; }
+  function gcd(a, b) { while (b) { var t = a % b; a = b; b = t; } return a; }
+  function coprimeStep(n, off) {
+    var s = off || 1, i;
+    for (i = 2; i < n; i++) { if (gcd(i, n) === 1) { if (--s === 0) return i; } }
+    return 1;
+  }
   /* smoothstep：淡入淡出的缓动。线性斜坡会在 alpha 0~0.3 的「幽灵区」停留过久，
      多张半透明卡叠在同一处时每张轮廓都能透出来 → 观感像一堆碎片而不是「化开」。 */
   function smoothstep(x) { return x <= 0 ? 0 : (x >= 1 ? 1 : x * x * (3 - 2 * x)); }
@@ -299,6 +305,10 @@
     var coverH = W * Math.abs(sinr) + H * Math.abs(cosr);
     var cols = Math.max(tracks, Math.ceil(coverW / colW) + 1);  /* 用户轨道数优先，但保横向铺满 */
     var rowsY = Math.ceil(coverH / cellH) + 3;      /* 每列卡数（+3 行保险：seam 推到屏外） */
+    /* 用与 N 互质的步长在二维网格里铺 slot，避免 rowsY 与 N 不互质时出现
+       短周期列重复（如 N=12 rowsY=8 时列周期仅 3，同一屏左右重复明显）。
+       互质保证同行/同列内只要长度不超过 N 就不重复，复本被打散到远处。 */
+    var stepC = coprimeStep(N, 1), stepR = coprimeStep(N, 2);
     var wallW = cols * colW, wallH = rowsY * cellH; /* 墙宽/高（纵向无缝：行距 = cellH） */
     var cx = W / 2, cy = H / 2;
     var rand = rnd(20261003);
@@ -318,8 +328,9 @@
            render.js 的 DOM 池按帧索引绑定 → 卡与图片对应关系漂移 → 图片频繁切换
            （用户实测「闪动重叠」）。恒定输出后出屏卡由 transform 移出，浏览器跳过绘制。 */
         var deg = roll * 180 / Math.PI;
+        var slot = ((c * stepC + k2 * stepR) % N + N) % N;
         out.push({ x: x, y: y, w: cw, h: ch, scale: 1, rotation: deg, alpha: 1,
-          zIndex: 50 - c, dim: 0, slot: (c * rowsY + k2) % N });
+          zIndex: 50 - c, dim: 0, slot: slot });
       }
     }
     return out;
