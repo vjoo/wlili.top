@@ -3630,17 +3630,7 @@ var CaseRenderer = (function () {
       var eff = (MFX.effects && MFX.effects[s.effect]) ? s.effect : 'vortex';
       var compute = MFX[eff];
       var N = Math.max(total, 4);
-      /* 自由比例：预载每张图原图宽高比（按 imgs 下标对齐 slot），渲染时按自然比例重塑卡形 */
       var freeMode = (s.cardRatio === 'free');
-      var natRatios = [];
-      if (freeMode && imgs.length) {
-        imgs.forEach(function (src, idx) {
-          var ni = new Image();
-          ni.onload = function () { if (ni.naturalWidth > 1) natRatios[idx] = ni.naturalWidth / ni.naturalHeight; };
-          ni.onerror = function () { natRatios[idx] = 0; };
-          ni.src = src;
-        });
-      }
       /* 整墙俯仰/左右倾斜：通用 tiltX/tiltY（全动效）+ ticker 专属 tTilt/tTurn（参考站三轴的 x/y 轴，
          之前 UI 有字段但从未接线——「改了没变化」的根因；ticker 时叠加到 deck 同一 transform）。 */
       var tiltX = mbClamp(mbNum(s.tiltX, 0), -45, 45);
@@ -3695,6 +3685,9 @@ var CaseRenderer = (function () {
             var src = imgs[f.slot];
             if (im.getAttribute('src') !== src) im.setAttribute('src', src);
             if (ph.style.display !== 'none') ph.style.display = 'none';
+            /* 自由比例：图片等比完整显示在统一卡框内（object-fit: contain，不裁切、不重叠） */
+            var fit = freeMode ? 'contain' : 'cover';
+            if (im.style.objectFit !== fit) im.style.objectFit = fit;
           } else {
             if (!c._phMark) { c.classList.add('is-ph'); c._phMark = true; }
             if (im.getAttribute('src')) im.removeAttribute('src');
@@ -3702,17 +3695,10 @@ var CaseRenderer = (function () {
             if (ph.textContent !== lb) { ph.textContent = lb; }
             if (ph.style.display !== '') ph.style.display = '';
           }
-          /* 自由比例：固定列宽、按各图原比例仅缩放高度（等比到同一宽度），
-             列宽一致 → 每列中间缝隙均匀；natRatios 未就绪时退化为标称方形。 */
-          var dw = f.w, dh = f.h;
-          if (freeMode) {
-            var nr = natRatios[f.slot];
-            if (nr && nr > 0) { dw = f.w; dh = f.w / nr; }
-          }
-          var wp = dw.toFixed(1) + 'px', hp = dh.toFixed(1) + 'px';
+          var wp = f.w.toFixed(1) + 'px', hp = f.h.toFixed(1) + 'px';
           if (c._w !== wp) { c.style.width = wp; c._w = wp; }
           if (c._h !== hp) { c.style.height = hp; c._h = hp; }
-          var tr = 'translate3d(' + (f.x - dw / 2).toFixed(1) + 'px,' + (f.y - dh / 2).toFixed(1) +
+          var tr = 'translate3d(' + (f.x - f.w / 2).toFixed(1) + 'px,' + (f.y - f.h / 2).toFixed(1) +
             'px,0) rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) + ')';
           if (c._tr !== tr) { c.style.transform = tr; c._tr = tr; }
           var op = f.alpha.toFixed(3);

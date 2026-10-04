@@ -5223,7 +5223,6 @@ function startMnLive() {
     const imgs = (Array.isArray(sec.images) ? sec.images : []).map((x) => x && x.image).filter(Boolean);
     const N = Math.max(Array.isArray(sec.images) ? sec.images.length : 0, 4);
     const freeMode = (sec.cardRatio === 'free');
-    if (!st._nat) st._nat = {};           /* url → 原图宽高比缓存（自由比例用） */
     const eff = (MFX.effects && MFX.effects[sec.effect]) ? sec.effect : 'vortex';
     const frames = MFX[eff](sec, st.W, st.H, N, t);
     /* 卡池复用 */
@@ -5265,13 +5264,9 @@ function startMnLive() {
         const src = imgs[f.slot];
         if (im.getAttribute('src') !== src) im.setAttribute('src', src);
         if (ph.style.display !== 'none') ph.style.display = 'none';
-        /* 自由比例：懒加载原图宽高比，缓存到 st._nat（按 url），加载完成后下一帧自动套用 */
-        if (freeMode && st._nat[src] === undefined) {
-          const ni = new Image();
-          ni.onload = function () { st._nat[src] = ni.naturalWidth > 1 ? ni.naturalWidth / ni.naturalHeight : 0; };
-          ni.onerror = function () { st._nat[src] = 0; };
-          ni.src = src;
-        }
+        /* 自由比例：图片等比完整显示在统一卡框内（object-fit: contain，不裁切、不重叠） */
+        const fit = freeMode ? 'contain' : 'cover';
+        if (im.style.objectFit !== fit) im.style.objectFit = fit;
       } else {
         if (!c._phMark) { c.classList.add('is-ph'); c._phMark = true; }
         if (im.getAttribute('src')) im.removeAttribute('src');
@@ -5279,16 +5274,10 @@ function startMnLive() {
         if (ph.textContent !== lb) ph.textContent = lb;
         if (ph.style.display !== '') ph.style.display = '';
       }
-      /* 自由比例：固定列宽、按原图比例缩放高度（列宽一致 → 缝隙均匀），不裁切 */
-      var dw = f.w, dh = f.h;
-      if (freeMode && useReal) {
-        var nr = st._nat[imgs[f.slot]];
-        if (nr && nr > 0) { dw = f.w; dh = f.w / nr; }
-      }
-      const wp = dw.toFixed(1) + 'px', hp = dh.toFixed(1) + 'px';
+      const wp = f.w.toFixed(1) + 'px', hp = f.h.toFixed(1) + 'px';
       if (c._w !== wp) { c.style.width = wp; c._w = wp; }
       if (c._h !== hp) { c.style.height = hp; c._h = hp; }
-      const tr = 'translate3d(' + (f.x - dw / 2).toFixed(1) + 'px,' + (f.y - dh / 2).toFixed(1) + 'px,0) rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) + ')';
+      const tr = 'translate3d(' + (f.x - f.w / 2).toFixed(1) + 'px,' + (f.y - f.h / 2).toFixed(1) + 'px,0) rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) + ')';
       if (c._tr !== tr) { c.style.transform = tr; c._tr = tr; }
       const op = f.alpha.toFixed(3);
       if (c._op !== op) { c.style.opacity = op; c._op = op; }
@@ -5681,40 +5670,16 @@ function buildMotionVis() {
   const ovPct = MFX.clamp(MFX.num(sec.overlayOpacity, 0), 0, 100);
   ovEl.style.background = ovPct > 0 ? 'rgba(0,0,0,' + (ovPct / 100).toFixed(3) + ')' : 'transparent';
   const freeMode = (sec.cardRatio === 'free');
-  if (!window.MNVIS_NAT) window.MNVIS_NAT = {};   /* url → 原图宽高比缓存（自由比例） */
   let html = '';
-  let pending = 0;
   for (let i = 0; i < frames.length; i++) {
     const f = frames[i];
-    let dw = f.w, dh = f.h;
     const useReal = imgs.length > 0 && f.slot < imgs.length;
-    /* 自由比例：固定列宽、按原图比例缩放高度（列宽一致 → 缝隙均匀），并懒加载宽高比；
-       加载完成后 pending 归零时整墙重绘一次，套用真实比例。 */
-    if (freeMode && useReal) {
-      const src = imgs[f.slot];
-      let nr = window.MNVIS_NAT[src];
-      if (nr === undefined) {
-        pending++;
-        const ni = new Image();
-        ni.onload = function () {
-          window.MNVIS_NAT[src] = ni.naturalWidth > 1 ? ni.naturalWidth / ni.naturalHeight : 0;
-          if (--pending <= 0) requestAnimationFrame(buildMotionVis);
-        };
-        ni.onerror = function () {
-          window.MNVIS_NAT[src] = 0;
-          if (--pending <= 0) requestAnimationFrame(buildMotionVis);
-        };
-        ni.src = src;
-        nr = 0;
-      }
-      if (nr && nr > 0) { dw = f.w; dh = f.w / nr; }
-    }
-    const st = 'left:' + (f.x - dw / 2).toFixed(1) + 'px;top:' + (f.y - dh / 2).toFixed(1) + 'px;width:' + dw.toFixed(1) +
-      'px;height:' + dh.toFixed(1) + 'px;transform:rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) +
+    const st = 'left:' + (f.x - f.w / 2).toFixed(1) + 'px;top:' + (f.y - f.h / 2).toFixed(1) + 'px;width:' + f.w.toFixed(1) +
+      'px;height:' + f.h.toFixed(1) + 'px;transform:rotate(' + f.rotation.toFixed(1) + 'deg) scale(' + f.scale.toFixed(3) +
       ');opacity:' + f.alpha.toFixed(2) + ';z-index:' + f.zIndex + ';border-radius:' + radius +
-      (bwK > 0.001 ? ';border:' + Math.max(1, Math.round(bwK * Math.min(dw, dh))) + 'px solid ' + bcCol : '');
+      (bwK > 0.001 ? ';border:' + Math.max(1, Math.round(bwK * Math.min(f.w, f.h))) + 'px solid ' + bcCol : '');
     const inner = useReal
-      ? '<img src="' + esc(imgs[f.slot]) + '" alt="" loading="lazy">'
+      ? '<img src="' + esc(imgs[f.slot]) + '" alt="" loading="lazy" style="object-fit:' + (freeMode ? 'contain' : 'cover') + '">'
       : '<span class="mfc-ph' + (useReal ? '' : ' empty') + '">素材 ' + (f.slot + 1) + '</span>';
     html += '<div class="mfc' + (useReal ? '' : ' is-ph') + '" style="' + st + '">' + inner + '</div>';
   }
