@@ -22,3 +22,20 @@
 | 颜色色板网格 | `repeat(8,1fr)` 色板 | 8 列耗材颜色选择网格 |
 | 统计卡片 | `.stat-card-icon / .stat-card-value` | 带图标的统计卡片，含消耗量进度 |
 | 标签徽章 | `.tag-badge` | 耗材标签徽章组件 |
+
+---
+
+## 数据口径（仪表盘统计）
+
+- **所有仪表盘数字必须现算**：入口 `flDashData()`（`viewFilamentDash()` 每次渲染调用它）。
+  ⛔ **不要再写成 `const XDASH = { stats:[…] }` 这样的字面量快照** —— 历史上就是这样，
+  用户后来把耗材标成「已用完」，卡片仍停在「消耗 2 盘」，用户报了「消耗数量不对」。
+- 口径（与原 `filament-manager.html` 的 `renderDashboardModule` 一致，改口径要两处一起改）：
+  - 套装按**子盘数**计（1 条套装 3 盘 = 3 盘 / 3×净重）；
+  - **消耗只算标记项**：单盘看 `tags` 含「已用完」，套装看 `bundleItems[].consumed` 的个数；
+  - 单价用**均价**（套装总价 ÷ 子盘数）；颜色分布**拆套装子色**；
+  - 颜色值走 `F_CMAP`（与耗材库列表 `FUTIL.swatch` 同一张表，别各写一份）。
+- **三处数据必须对齐**：内嵌 `var FDATA` 种子 / `localStorage` / `server_data.json · bambu_filaments`。
+  优先级 = localStorage → 服务端 → 种子。种子只允许**陈旧**（少标「已用完」），**不允许凭空造状态**。
+- 回归：`test_fil_dash.js`（在系统临时目录）——断言数字来自数据 + 改数据数字跟着变 + 种子不得造状态。
+

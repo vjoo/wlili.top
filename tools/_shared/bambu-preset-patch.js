@@ -44,6 +44,81 @@
   function norm(v) { return String(v == null ? "" : v).trim(); }
   function squash(v) { return norm(v).replace(/\s+/g, " ").replace(/,\s+/g, ","); }
 
+  /* ---------- 耗材丝索引（BAMBU_FILAMENT_SCHEMA） ----------
+     工艺与耗材丝在 Bambu Studio 里是并列的两个预设域，各有各的字段表。
+     这里把耗材丝 135 项也建成可检索索引，「问 AI」与「导入 patch」共用。 */
+  var FS = window.BAMBU_FILAMENT_SCHEMA || null;
+  var FIL_BY_KEY = {}, FIL_BY_LABEL = {}, FIL_ALL = [];
+  if (FS) {
+    var fb = ((FS.builtin || {}).pla || {}).values || {};
+    function addFilRow(f, tabLabel, groupLabel, pin) {
+      if (FIL_BY_KEY[f.key]) return;
+      var def = fb[f.key] != null ? String(fb[f.key]) : "";   // values 里已是官方 6 段的第 0 段
+      var row = {
+        key: f.key, label: f.label, tab: tabLabel, group: groupLabel,
+        type: f.type === "checkbox" ? "bool" : (f.type === "select" ? "enum" : "text"),
+        default: def, unit: f.unit || "",
+        enum: (f.options || []).map(function (x) { return { value: x, label: x }; }),
+        ro: (FS.ro && FS.ro[f.key]) ? 1 : 0,
+        vec6: f.vec6 ? 1 : 0, pin: pin ? 1 : 0
+      };
+      FIL_BY_KEY[f.key] = row;
+      FIL_ALL.push(row);
+    }
+    FS.tabs.forEach(function (t) {
+      t.groups.forEach(function (g) {
+        g.fields.forEach(function (f) {
+          if (f.key) addFilRow(f, t.label, g.label, f.pin);
+          else (f.cols || []).forEach(function (c) { addFilRow(c, t.label, g.label, f.pin); });
+        });
+      });
+    });
+    FIL_ALL.forEach(function (r) { FIL_BY_LABEL[r.label] = r.key; });
+  }
+  /* 主题 → 耗材丝分组。只在相关主题下给对应分组，全量 135 项会把 AI 淹掉
+     （和工艺侧 260 项按主题圈选是同一个道理）。 */
+  var FIL_TOPIC_GROUPS = {
+    stringing: ["回抽", "部件冷却风扇", "多材料", "材料斜拼接缝参数"],
+    firstlayer: ["打印温度", "擦拭塔 / 接触层"],
+    warp: ["打印温度", "基础信息"],
+    strength: ["打印温度", "体积速度限制"],
+    support: ["速度", "打印温度"],
+    overhang: ["速度", "部件冷却风扇"],
+    seam: ["材料斜拼接缝参数", "回抽"],
+    surface: ["材料斜拼接缝参数", "部件冷却风扇"],
+    speed: ["打印温度", "部件冷却风扇", "体积速度限制"],
+    dimension: [],
+    all: ["打印温度", "部件冷却风扇", "辅助部件冷却风扇", "回抽", "速度", "体积速度限制", "擦拭塔 / 接触层", "材料斜拼接缝参数"]
+  };
+  /* all 主题也不给全量：只给这批真正影响打印结果的核心项（约 30 项） */
+  var FIL_CORE = [
+    "nozzle_temperature", "nozzle_temperature_initial_layer", "nozzle_temperature_range_low", "nozzle_temperature_range_high",
+    "cool_plate_temp", "eng_plate_temp", "hot_plate_temp", "textured_plate_temp", "chamber_temperatures",
+    "fan_min_speed", "fan_max_speed", "close_fan_the_first_x_layers", "full_fan_speed_layer",
+    "first_x_layer_fan_speed", "overhang_fan_threshold", "overhang_fan_speed", "additional_cooling_fan_speed",
+    "slow_down_layer_time", "slow_down_min_speed",
+    "filament_retraction_length", "filament_retraction_speed", "filament_deretraction_speed",
+    "filament_retract_restart_extra", "filament_z_hop", "filament_retraction_minimum_travel",
+    "filament_flow_ratio", "filament_max_volumetric_speed", "filament_density", "filament_cost",
+    "filament_dev_ams_drying_temperature", "filament_dev_ams_drying_time"
+  ];
+  function pickFilFields(opt) {
+    opt = opt || {};
+    if (!FS || opt.withFilament === false) return [];
+    if (opt.topic === "all") {
+      return FIL_CORE.map(function (k) { return FIL_BY_KEY[k]; }).filter(Boolean);
+    }
+    var gs = FIL_TOPIC_GROUPS[opt.topic] || [];
+    if (!gs.length) return [];
+    return FIL_ALL.filter(function (r) { return gs.indexOf(r.group) >= 0 && !r.ro; });
+  }
+  function filFieldRow(r) {
+    var o = { k: r.key, n: r.label, t: r.type, d: r.default, g: r.group };
+    if (r.unit) o.u = r.unit;
+    if (r.enum && r.enum.length) o.e = r.enum.map(function (x) { return x.value; });
+    return o;
+  }
+
   /* ---------- 别名表：旧字段名 / 俗名 → 现 key ----------
      conv 只在语义确定时声明（老 Slic3r 的 fill_density 用 0~1 小数，Bambu 用百分比）。
      ⚠ 没有 conv 的字段绝不自动换算 —— 猜比例是这类导入最危险的错误。 */
@@ -185,7 +260,7 @@
   }
   function dictSubset(opt) {
     var fs = pickFields(opt).map(fieldRow);
-    return {
+    var out = {
       format: "wlili-fields-dict/1",
       machine: (S.meta && S.meta.machine) || "",
       bambu_version: (S.meta && S.meta.bambu_version) || "",
@@ -193,6 +268,15 @@
       count: fs.length,
       fields: fs
     };
+    var ff = pickFilFields(opt);
+    if (ff.length) {
+      out.filament = {
+        note: "耗材丝参数（与上面的工艺参数是两个独立预设域）。k=key; n=中文名; t=类型; u=单位; d=默认值; g=所属分组",
+        count: ff.length,
+        fields: ff.map(filFieldRow)
+      };
+    }
+    return out;
   }
   function dictSubsetJSON(opt) { return JSON.stringify(dictSubset(opt)); }
 
@@ -218,24 +302,41 @@
     lines.push("## 任务");
     lines.push("1. 先用一小段话说明这个问题的成因和解决方向（给我看得懂的建议，100 字以内）；");
     lines.push("2. 然后从下面「可用参数字典」里挑出需要调整的参数，给出推荐值；");
-    lines.push("3. 如果解决问题还需要改耗材温度 / 风扇 / 回抽距离等**不在字典里**的项，写进 notes 文字说明，不要塞进 params。");
+    if (d.filament) {
+      lines.push("3. 如果问题的根因在**材料**（拉丝/强度不足/附着差/易熔/不耐温），还可以从「耗材丝参数字典」里挑项，");
+      lines.push("   放进 filament.overrides —— 工艺和耗材丝在 Bambu Studio 里是两个独立预设，两边都要给才完整；");
+      lines.push("4. 字典里完全没有的项，写进 notes 文字说明，不要塞进 params 或 filament.overrides。");
+    } else {
+      lines.push("3. 如果解决问题还需要改耗材温度 / 风扇 / 回抽距离等**不在字典里**的项，写进 notes 文字说明，不要塞进 params。");
+    }
     lines.push("");
-    lines.push("## 可用参数字典（共 " + d.count + " 项，JSON 数组）");
+    lines.push("## 可用参数字典 · 工艺（共 " + d.count + " 项，JSON 数组）");
     lines.push("k=参数key · n=中文名 · t=类型 · u=单位 · d=默认值 · e=允许的枚举值");
     lines.push(fieldsJSON);
+    if (d.filament) {
+      lines.push("");
+      lines.push("## 可用参数字典 · 耗材丝（共 " + d.filament.count + " 项，JSON 数组）");
+      lines.push("k=key · n=中文名 · t=类型 · u=单位 · d=默认值 · g=所属分组（写入 filament.overrides）");
+      lines.push(JSON.stringify(d.filament.fields));
+    }
     lines.push("");
     lines.push("## 输出格式（只输出这一个 JSON 对象，不要 markdown 代码块围栏，不要任何解释文字）");
     lines.push("{");
-    lines.push('  "format": "wlili-preset-patch/1",');
+    lines.push('  "format": "wlili-preset-patch/2",');
     lines.push('  "name": "预设名称（中文，20 字以内，体现用途）",');
     lines.push('  "notes": "一句话说明为什么这么调、适用什么情况",');
     lines.push('  "applicability": { "machine": "' + machine.replace(/Bambu Lab /, "") + '", "nozzle": "' + (opt.nozzle || "0.4") + '", "filament": ["' + (opt.filament || "PLA") + '"] },');
     lines.push('  "caveats": ["不确定 / 需要你实测验证的点"],');
-    lines.push('  "params": { "参数key": "值" }');
+    lines.push('  "params": { "工艺参数key": "值" },');
+    if (d.filament) {
+      lines.push('  "filament": { "type": "PLA 或 PETG", "overrides": { "耗材丝key": "值" } }');
+    } else {
+      lines.push('  "params": { "工艺参数key": "值" }');
+    }
     lines.push("}");
     lines.push("");
     lines.push("## 硬约束（违反会导致导入失败）");
-    lines.push("1. params 的 key **必须**来自上面字典的 k 字段，一个字都不能改；不许自己发明 key。");
+    lines.push("1. params 的 key **必须**来自「工艺」字典的 k 字段，filament.overrides 的 key 必须来自「耗材丝」字典，一个字都不能改；不许自己发明 key。");
     lines.push("2. 值是枚举类型时，必须写 e 里的 value（如 \"rectilinear\"），**不要写中文名**。");
     lines.push("3. 布尔写 \"1\" / \"0\"；数值不写单位符号（写 0.16 不写 0.16mm；百分比写 25 不写 25%）。");
     lines.push("4. 只填有把握的项，通常 3~15 项就够；不确定的放进 caveats，不要猜着填。");
@@ -412,6 +513,59 @@
     for (k in o) if (!RESERVED[k]) out[k] = o[k];
     return out;
   }
+  /* 耗材丝段：filament:{ type, overrides:{key:值} }（也接受 filament:{key:值} 扁平写法） */
+  function pickFilOverrides(o) {
+    var f = o && o.filament;
+    if (!f || typeof f !== "object") return {};
+    if (f.overrides && typeof f.overrides === "object") return f.overrides;
+    var out = {}, k;
+    for (k in f) {
+      if (k === "type" || k === "filament" || k === "notes" || k === "vendor") continue;
+      out[k] = f[k];
+    }
+    return out;
+  }
+  function normalizeFilOne(o) {
+    var ov = pickFilOverrides(o || {});
+    var items = [], ignored = [], values = {};
+    Object.keys(ov).forEach(function (k) {
+      var raw = ov[k];
+      var r = FIL_BY_KEY[k] || (FIL_BY_LABEL[norm(k)] ? FIL_BY_KEY[FIL_BY_LABEL[norm(k)]] : null);
+      if (!r) { ignored.push({ from: k, value: raw, reason: "无法匹配到耗材丝参数（已废弃或写法过旧）" }); return; }
+      if (r.ro) { ignored.push({ from: k, value: raw, reason: r.label + " 是材料固有属性，不可改" }); return; }
+      var v = norm(raw);
+      var status = "ok";
+      if (r.type === "bool") {
+        var b = toBool(raw);
+        if (b == null) { items.push(mkFilItem(r, norm(raw), "warn", "布尔值写法不规范", "")); values[r.key] = norm(raw); return; }
+        v = b;
+        if (norm(raw) !== b) status = "fixed";
+      } else if (r.type === "enum") {
+        var hit = null, alt = null;
+        (r.enum || []).forEach(function (x) { if (x.value === v) hit = x; else if (flat(x.value) === flat(v)) alt = x; });
+        if (hit) { /* 合法 */ }
+        else if (alt) { v = alt.value; status = "fixed"; }
+        else { status = "warn"; }
+      } else if (v === "") {
+        ignored.push({ from: k, value: raw, reason: "值为空" });
+        return;
+      }
+      items.push(mkFilItem(r, v, status, "", r.unit));
+      values[r.key] = v;
+    });
+    var f = (o && o.filament) || {};
+    return {
+      type: norm(f.type || ""),
+      items: items, ignored: ignored, values: values
+    };
+  }
+  function mkFilItem(r, v, status, note, unit) {
+    return {
+      key: r.key, label: r.label, value: v,
+      disp: r.type === "bool" ? ((v === "1") ? "开启" : "关闭") : (v + (unit ? (unit === "%" ? "%" : " " + unit) : "")),
+      status: status, note: note || "", group: r.group, def: r.default
+    };
+  }
   function normalizeOne(o) {
     var params = pickParams(o || {});
     var items = [], ignored = [], values = {};
@@ -449,12 +603,15 @@
     });
     var app = o.applicability || {};
     var src = o.source || {};
+    var fl = normalizeFilOne(o);
     return {
       name: norm(o.name || ""),
       notes: norm(o.notes || o.note || ""),
       machine: norm(app.machine || o.machine || ""),
       nozzle: norm(app.nozzle || o.nozzle || ""),
       filament: Array.isArray(app.filament) ? app.filament.map(norm).filter(Boolean) : norm(app.filament || o.filamentType || ""),
+      filType: fl.type,
+      filItems: fl.items, filIgnored: fl.ignored, filValues: fl.values,
       source: { title: norm(src.title || ""), url: norm(src.url || ""), fetchedAt: norm(src.fetchedAt || "") },
       caveats: Array.isArray(o.caveats) ? o.caveats.map(norm).filter(Boolean) : (o.caveats ? [norm(o.caveats)] : []),
       items: items, ignored: ignored, values: values
@@ -486,10 +643,12 @@
     dictSubsetJSON: dictSubsetJSON,
     buildPrompt: buildPrompt,
     pickFields: pickFields,
+    pickFilFields: pickFilFields,
     topics: TOPICS,
     exportPatch: exportPatch,
     normalize: normalize,
     resolveKey: resolveKey,
-    byKey: BY_KEY
+    byKey: BY_KEY,
+    filByKey: FIL_BY_KEY
   };
 })();

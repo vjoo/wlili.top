@@ -439,7 +439,7 @@ tbody tr:hover{background:var(--panel);}
 /* 登录页 */
 #loginView,#publicBlocked{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:100;padding:20px;}
 .login-card{width:392px;max-width:100%;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:38px 36px;}
-.login-logo{width:52px;height:52px;border-radius:15px;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:19px;margin-bottom:22px;}
+.login-logo{width:52px;height:52px;border-radius:50%;background:var(--hero-grad);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;margin-bottom:22px;}
 .login-card h1{font-size:22px;letter-spacing:-.02em;}
 .login-card .sub{font-size:13px;color:var(--muted);margin:8px 0 26px;line-height:1.6;}
 .field{margin-bottom:14px;}
@@ -449,6 +449,13 @@ tbody tr:hover{background:var(--panel);}
   background:var(--panel);font-size:13.5px;color:var(--ink);outline:none;transition:.15s;
 }
 .field input:focus{border-color:var(--accent);background:var(--card);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:46px;}
+.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:none;background:transparent;border-radius:9px;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;padding:0;}
+.pw-eye:hover{background:var(--panel);color:var(--ink);}
+.pw-eye svg{width:18px;height:18px;}
+.remember-row{display:flex;align-items:center;gap:7px;margin:2px 0 4px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none;width:fit-content;}
+.remember-row input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;margin:0;flex:none;}
 .login-btn{width:100%;justify-content:center;padding:12px;font-size:14px;margin-top:8px;}
 .login-warn{font-size:12px;color:#e5484d;background:rgba(229,72,77,.08);border:1px solid rgba(229,72,77,.28);border-radius:12px;padding:10px 12px;margin-top:14px;line-height:1.65;}
 .login-tip{text-align:center;font-size:11.5px;color:var(--muted);margin-top:16px;}
@@ -880,13 +887,22 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 <!-- ============ 登录页 ============ -->
 <div id="loginView">
   <div class="login-card">
-    <div class="login-logo">wl</div>
+    <div class="login-logo">W.</div>
     <h1>wlili 综合管理后台</h1>
     <p class="sub">同一管理账号 · 一个后台地址<br>通过菜单切换管理全部工具</p>
     <div class="field"><label>账号</label><input id="loginUser" value="wl" autocomplete="username"></div>
-    <div class="field"><label>密码</label><input id="loginPass" type="password" placeholder="请输入密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+    <div class="field"><label>密码</label>
+      <div class="pw-wrap">
+        <input id="loginPass" type="password" placeholder="请输入密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()">
+        <button type="button" class="pw-eye" title="显示 / 隐藏密码" onclick="togglePw()">
+          <svg id="pwEyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="pwEyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.39-1.61"/><path d="m2 2 20 20"/></svg>
+        </button>
+      </div>
+    </div>
+    <label class="remember-row"><input type="checkbox" id="rememberPass" checked>保存密码</label>
     <button class="btn primary login-btn" onclick="doAdminLogin()">进入后台</button>
-    <p class="login-tip">统一后台 · server.py token 鉴权 · 数据经 /api/* 双通道落盘</p>
+    <p class="login-tip">© 2025 WLi. All rights reserved.</p>
     <p class="login-warn hide" id="fileWarn">当前是<b>双击文件</b>方式打开（file://），连不上服务必然登录失败。<br>请先运行 <b>启动服务.bat</b>，再用 <b>http://&lt;本机IP&gt;:8080/tools/_shared/admin.html</b> 打开。</p>
   </div>
 </div>
@@ -894,7 +910,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 <!-- ============ 外网不可访问提示（后台仅本地/局域网） ============ -->
 <div id="publicBlocked" class="hide">
   <div class="login-card">
-    <div class="login-logo">wl</div>
+    <div class="login-logo">W.</div>
     <h1>统一后台 · 不对公网开放</h1>
     <p class="sub">此页面仅在本机或局域网内可用。<br>请运行 <b>启动服务.bat</b>，再用<br><b>http://&lt;本机IP&gt;:8080/tools/_shared/admin.html</b> 打开。</p>
     <p class="login-tip">管理端不部署到公网 · 公网仅保留工具展示页</p>
@@ -953,6 +969,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modal" onclick="event.stopPropagation()"></div></div>
 <div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightboxClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button><img id="lightboxImg" src="" alt=""></div>
+<script src="bambu-filament-schema.js?v=20261004k"></script>
+<script src="bambu-filament-migrate.js?v=20261004k"></script>
 <script>
 /* ================= 数据模型：工具 + 子菜单（收编各工具原有后台功能） ================= */
 /* ★ 本项目文档分层：通用规范 tools/DEVELOPMENT_GUIDE.md · 后台 UI 规范 tools/_shared/DESIGN_SYSTEM.md
@@ -1037,10 +1055,66 @@ var PRDATA = {"records": [{"id": "7k29ml4gk9k35h", "title": "天宫巨构·内�
 
 var SPDATA = {"patterns": [{"id": "PAT-msbx4zzkhm86", "name": "夜空浅蓝 02：夜空装饰元素更丰富，适合秋冬系列延展。四方连图", "prompt": "无缝四方连续纺织印花图案，治愈绘本卡通平涂风格，软萌小熊、白兔、卡通草莓果子、笑脸云朵、月亮、星星灯串、爱心、四角星元素散点错位散落排布，元素丰富但不拥挤，疏密均衡。\n底色雾感灰蓝 #E2EBF2，允许使用图案色彩池共5色：奶油黄#FFE8B3、淡蜜桃#F9C2C8、浅天蓝#B3D8F2、浅薰衣草紫#D6C8E8、浅青灰#C2D9E6，轮廓线条柔和深灰#444444。\n严格限制仅使用给定色板，禁止新增任何色彩。明度分层：高明度浅色作为视觉主体，中明度色块作为基底，少量暗色点缀。饱和度统一35~58，拒绝艳丽高饱和色彩。冷色调底色，柔和浅色系图案，户外可视度良好。\n干净iPad矢量画笔轮廓，线条顺滑闭合，无纸张纹理、无笔触噪点、无渐变、无厚重阴影、无肌理杂色，纯色平整色块，适合AI矢量描摹、数码布艺印花。画面整洁，不要水印，8K高清，正方形构图", "elements": {"subjects": [], "decorations": []}, "paletteId": "p2", "paletteName": "莫兰迪灰调", "layout": "", "style": "", "platform": "doubao", "generatedDate": "2026-08-02", "thumbnail": "", "fingerprint": "", "notes": "", "createdAt": "2026-08-02T14:51:44.048Z", "updatedAt": "2026-08-02T14:51:55.796Z", "type": "pattern", "kind": "图案", "palette": "莫兰迪灰调", "date": "2026-08-02"}, {"id": "CHAR-msfoqqrrw7v0", "name": "小贝壳香蕉", "prompt": "卡通IP设计（character IP design），韩系奶油简约简笔风风格，萌系小贝壳，原生动物体态，自然趴卧正面视角，完整展现角色全身特征。角色居中构图，正面平视视角，自然趴卧体态，角色为画面唯一主体。主体角色保留原生动物体态特征，不直立不行走，保持自然四肢着地或趴卧姿态。禁止拟人直立，不要人形身体，不要人类四肢结构，不添加任何服饰服装，保持动物原始体态。角色周围可点缀装饰元素周围点缀香蕉、五角星、爱心、气球、sweet，装饰元素不穿戴在角色身上。文字元素：画面中的英文单词（sweet）作为独立文字装饰元素出现，采用气球膨胀体：圆润膨胀的气球立体字母，充气感饱满，带有微妙的3D体积和高光，字形圆润无尖角，可爱俏皮。文字元素专属约束：去除所有外轮廓描边、无白色包边、无贴纸白光晕、无剪贴贴纸效果，字母无外圈边框；纯粹色块构成字体，字体边缘柔和融合底色，仅依靠形体膨胀塑造体积，不依靠线条描边区分边界。重要约束：字体全程不添加任何外轮廓线条，不存在任何粗细的描边（黑/灰/白描边全部禁止），不要白边、不要轮廓框；依靠色块自身形态与微弱高光表现充气膨胀感，字母边界平滑，无分割线条。单词作为小型装饰点缀，大小约为角色头部的1/4，各单词有不同的轻微旋转角度，颜色使用色板内色彩。底色奶油白 #FFF9EF，严格限定图案仅使用5种色彩：蜜桃粉 #F8C8CD、浅杏 #FBE2B9、浅杏1 #F9D3B8、薄荷绿 #C9E8D8、浅蓝 #C6E2F2，柔和深灰 #444444 纤细轮廓线。禁止生成色板以外任何颜色。三层明度秩序：大面积中间明度色彩，高明度亮色作为主体视觉，少量低明度色彩点缀；饱和度控制20~48，禁止高饱和荧光色。暖色为主，少量薄荷蓝平衡色调。所有元素造型全部圆润无尖角，平滑曲线，五官简化为豆豆眼加弧线小嘴，幼态软萌。干净iPad矢量平涂，顺滑闭合线条，无纸张纹理、无笔触噪点、无渐变、无阴影、无肌理杂色，纯色平整色块，适合AI矢量描摹、数码印花应用。画面整洁，不要水印，8K高清，正方形画布。", "elements": {"subjects": ["小贝壳"], "outfits": [], "props": ["香蕉", "五角星", "爱心", "气球", "sweet"]}, "paletteId": "p1", "paletteName": "奶油马卡龙", "style": "韩系奶油简约简笔风", "type": "character", "platform": "doubao", "generatedDate": "2026-08-05", "thumbnail": "", "notes": "", "createdAt": "2026-08-05T06:07:46.695Z", "updatedAt": "2026-08-05T06:22:35.700Z", "kind": "IP角色", "palette": "奶油马卡龙", "date": "2026-08-05"}], "palettes": [{"id": "p1", "name": "奶油马卡龙", "bgColor": "#FFF9EF", "colors": ["#F8C8CD", "#FBE2B9", "#F9D3B8", "#C9E8D8", "#C6E2F2"], "lineColor": "#444444", "desc": "浅蜜桃粉、奶杏黄、柔橘、薄荷绿、晴空蓝"}, {"id": "p2", "name": "莫兰迪灰调", "bgColor": "#F5F3F0", "colors": ["#C5B8A5", "#D4C5B0", "#B5C4B1", "#A8B5C4", "#C4B5B5"], "lineColor": "#555555", "desc": "低饱和灰调，温柔高级感"}, {"id": "p3", "name": "森林清新", "bgColor": "#F5F9F5", "colors": ["#A8D5BA", "#C5E1A5", "#B2DFDB", "#DCEDC8", "#A5D6A7"], "lineColor": "#3E5C3E", "desc": "清新自然，绿意盎然"}, {"id": "p4", "name": "蜜桃奶油", "bgColor": "#FFF5F0", "colors": ["#FFD0D0", "#FFE0B2", "#FFCCBC", "#F8BBD0", "#FFCDD2"], "lineColor": "#5D4037", "desc": "甜美柔和，粉嫩可爱"}, {"id": "p5", "name": "莫兰迪色系", "bgColor": "#F8F8F8", "colors": ["#D3C8B5", "#B79D81", "#E2C87D", "#A2A65B", "#04416D"], "lineColor": "#333333", "desc": ""}, {"id": "p6", "name": "暖杏奶油色卡", "bgColor": "#F8F8F8", "colors": ["#F0CDDA", "#FBEBCB", "#FCE6AC", "#FAC484"], "lineColor": "#333333", "desc": ""}, {"id": "p7", "name": "裸棕渐变色系", "bgColor": "#F8F8F8", "colors": ["#EADDD5", "#D2C1B0", "#D2B49A", "#9D6F57"], "lineColor": "#333333", "desc": ""}, {"id": "p8", "name": "暖色系氛围感", "bgColor": "#F8F8F8", "colors": ["#DFCBB0", "#F2D698", "#E0BB52", "#B18F6A"], "lineColor": "#333333", "desc": ""}, {"id": "p9", "name": "夏日海岸色", "bgColor": "#F8F8F8", "colors": ["#D6D0C4", "#AFC9D4", "#E2B947", "#81A4B7"], "lineColor": "#333333", "desc": ""}, {"id": "p10", "name": "绿野仙踪色系", "bgColor": "#F8F8F8", "colors": ["#E7DED3", "#D5BDA5", "#AF957A", "#6A836E"], "lineColor": "#333333", "desc": ""}, {"id": "p11", "name": "雾霾蓝调氛围感", "bgColor": "#F8F8F8", "colors": ["#E3EDE8", "#C8C1B9", "#223D5F", "#C1D5E0"], "lineColor": "#333333", "desc": ""}, {"id": "p12", "name": "紫色系氛围感", "bgColor": "#F8F8F8", "colors": ["#CEC3E5", "#AC84B8", "#C5AAD5", "#9A90B9"], "lineColor": "#333333", "desc": ""}, {"id": "p13", "name": "橘子海色系", "bgColor": "#F8F8F8", "colors": ["#F4E2CE", "#F3C38C", "#D46301", "#247A90"], "lineColor": "#333333", "desc": ""}, {"id": "p14", "name": "海盐黄蓝调", "bgColor": "#F8F8F8", "colors": ["#E3DEC5", "#8DBCC2", "#FDE89E", "#F1CC17"], "lineColor": "#333333", "desc": ""}, {"id": "p15", "name": "奶蓝湖水调", "bgColor": "#F8F8F8", "colors": ["#BACDD3", "#92B7CA", "#62A5D4", "#3D8BAD"], "lineColor": "#333333", "desc": ""}, {"id": "p16", "name": "松弛感治愈配色", "bgColor": "#F8F8F8", "colors": ["#DDD5C8", "#F2D479", "#83B7CC", "#488299"], "lineColor": "#333333", "desc": ""}, {"id": "p17", "name": "雾感大地色系·暖棕", "bgColor": "#F8F8F8", "colors": ["#CBC6C2", "#B4A393", "#D9C37F", "#B19780"], "lineColor": "#333333", "desc": ""}, {"id": "p18", "name": "雾感大地色系·蓝绿", "bgColor": "#F8F8F8", "colors": ["#84CDD6", "#8EBACC", "#E6C079", "#6989A0"], "lineColor": "#333333", "desc": ""}, {"id": "p19", "name": "雾感大地色系·陶土", "bgColor": "#F8F8F8", "colors": ["#D7C7AF", "#D3B684", "#DBBA72", "#AA7C4B"], "lineColor": "#333333", "desc": ""}, {"id": "p20", "name": "温柔系神仙配色", "bgColor": "#F8F8F8", "colors": ["#F4CECD", "#EED95C", "#EAB5B4", "#537F9D"], "lineColor": "#333333", "desc": ""}, {"id": "p21", "name": "雾面高级灰", "bgColor": "#F8F8F8", "colors": ["#D8D2CE", "#C6BFB8", "#B0A9A2", "#8F8882"], "lineColor": "#333333", "desc": ""}, {"id": "p22", "name": "低饱和莫兰迪", "bgColor": "#F8F8F8", "colors": ["#B8C3D1", "#9DB0C5", "#8A9FB0", "#74859A"], "lineColor": "#333333", "desc": ""}, {"id": "p23", "name": "耐看莫兰迪色卡", "bgColor": "#F8F8F8", "colors": ["#E3D5CA", "#D4C4B8", "#C5B3A7", "#B5A296"], "lineColor": "#333333", "desc": ""}, {"id": "p24", "name": "莫兰迪柔色", "bgColor": "#F8F8F8", "colors": ["#D6C6B8", "#C7B7A9", "#B8A89A", "#A9998B"], "lineColor": "#333333", "desc": ""}, {"id": "p25", "name": "低饱和大地色", "bgColor": "#F8F8F8", "colors": ["#A69484", "#8C796A", "#725F50"], "lineColor": "#333333", "desc": ""}, {"id": "p26", "name": "暖棕大地色", "bgColor": "#F8F8F8", "colors": ["#C9B09A", "#B09178", "#96735A", "#7B553C"], "lineColor": "#333333", "desc": ""}, {"id": "p27", "name": "莫兰迪渐变色", "bgColor": "#F8F8F8", "colors": ["#E5C9C8", "#C8909B", "#A66773", "#7B4449"], "lineColor": "#333333", "desc": ""}, {"id": "p28", "name": "松弛感治愈指南", "bgColor": "#F8F8F8", "colors": ["#F7E0B9", "#F9DE96", "#E88F4E", "#D15E36"], "lineColor": "#333333", "desc": ""}, {"id": "p29", "name": "摄影色彩世界", "bgColor": "#F8F8F8", "colors": ["#769C9D", "#A36D24", "#99150E", "#3D6354"], "lineColor": "#333333", "desc": ""}, {"id": "p30", "name": "海边浪漫色", "bgColor": "#F8F8F8", "colors": ["#DDCABC", "#E8BA52", "#AED1D7", "#87A5AD"], "lineColor": "#333333", "desc": ""}, {"id": "p31", "name": "插画海报配色", "bgColor": "#F8F8F8", "colors": ["#9ECE9E", "#9CC76B", "#47B590", "#14783A"], "lineColor": "#333333", "desc": ""}, {"id": "p32", "name": "多巴胺配色", "bgColor": "#F8F8F8", "colors": ["#ADCFAF", "#31806C", "#CBD693"], "lineColor": "#333333", "desc": ""}, {"id": "p33", "name": "夏日氛围感", "bgColor": "#F8F8F8", "colors": ["#6298C7", "#FFE558", "#3B82B2"], "lineColor": "#333333", "desc": ""}, {"id": "p34", "name": "电影海报撞色", "bgColor": "#F8F8F8", "colors": ["#7CB2A5", "#CBD893", "#C52526"], "lineColor": "#333333", "desc": ""}], "licenses": [{"id": "LIC-msbx9uc8rcsg", "patternId": "PAT-msbx4zzkhm86", "licensee": "我是授权方名字", "licenseType": "buyout", "exclusiveScope": "", "productScope": "single-channel", "productCategories": ["睡衣"], "amount": 509, "durationType": "permanent", "startDate": "2026-08-02", "endDate": "", "deposit": 200, "balance": 309, "paymentStatus": "paid", "freeModCount": 2, "usedModCount": 0, "status": "active", "contractRef": "HT-20260803-4PTS", "certStatus": "issued", "creditRetained": true, "notes": "", "createdAt": "2026-08-02T14:55:30.008Z"}], "elements": {"subjects": [{"category": "动物系列", "items": ["软萌坐姿小熊", "坐立垂耳白兔", "圆脸小白猫咪", "小羊崽", "小鸡", "小鸭", "小仓鼠", "小鹿", "柯基小狗", "企鹅", "小恐龙", "小猪崽", "圆头小青蛙", "小海豹", "小狐狸", "小柴犬", "小刺猬", "小猫头鹰", "小水獭", "小树懒", "小熊猫", "小考拉", "小松鼠", "小乌龟", "小鳄鱼"]}, {"category": "海洋系列", "items": ["小鲸鱼", "小章鱼", "小螃蟹", "小海星", "小河豚", "小贝壳", "小水母"]}, {"category": "昆虫系列", "items": ["小蜜蜂", "小蝴蝶", "小瓢虫", "小蜗牛", "小蜻蜓"]}, {"category": "融合角色", "items": ["云朵兔", "云朵熊", "云朵猫", "棉花糖小兔", "星光小鹿", "花瓣猫咪", "彩虹小鱼"]}, {"category": "头像系列", "items": ["简约兔子头像", "简约小熊头像", "简约猫咪头像", "简约小狗头像", "简约小猪头像"]}], "outfits": [{"category": "服装", "items": ["穿连帽卫衣", "穿围裙", "穿背带裤", "穿连衣裙", "穿毛衣", "穿校服", "穿和服", "穿披风", "穿雨衣", "穿睡衣", "穿西装马甲", "穿厨师服", "穿医生白大褂", "穿飞行员夹克", "穿芭蕾舞裙", "穿运动套装", "穿牛仔外套", "穿棉袄", "穿泳装", "穿魔法师长袍", "穿小斗篷"]}, {"category": "头饰", "items": ["戴贝雷帽", "戴渔夫帽", "戴花环头饰", "戴毛线帽", "戴皇冠", "戴蝴蝶结发夹", "戴草帽", "戴兔耳发箍", "戴礼帽", "戴护士帽", "戴厨师帽", "戴飞行帽", "戴猫耳发箍", "戴圣诞帽", "戴花朵草编帽", "戴星星发夹", "戴丝带蝴蝶结", "戴小蓝帽", "戴小蘑菇帽", "戴小樱桃发饰"]}, {"category": "围巾眼镜", "items": ["系围巾", "架小眼镜", "戴墨镜"]}, {"category": "手持配饰", "items": ["背小书包", "拿气球", "拿冰淇淋", "拿小花束", "拿咖啡杯", "拿小信封", "挎斜挎包", "推小推车", "骑木马", "拿魔法棒", "拿画笔调色板", "拿小铲子", "拿听诊器", "拿放大镜", "拿吉他", "拿小相机", "拿书本", "拿雨伞", "拿篮球", "捧南瓜灯"]}, {"category": "表情动作", "items": ["闭眼微笑", "睁大眼睛好奇", "吐舌调皮", "歪头卖萌", "双手比心", "举爪打招呼", "捂嘴偷笑", "托腮发呆", "叉腰自信", "蹲坐抱膝", "踮脚张望", "趴着撑下巴", "张开双臂", "吹口哨", "跳舞旋转", "摔倒坐地", "挥手打招呼", "蹲坐抱蛋"]}, {"category": "职业套装", "items": ["小厨师（厨师帽+围裙+小铲子）", "小医生（白大褂+听诊器+护士帽）", "小画家（贝雷帽+画笔+调色板）", "小飞行员（飞行帽+夹克+护目镜）", "小魔法师（魔法帽+长袍+魔法棒）", "小音乐家（礼帽+吉他+乐谱）", "小探险家（草帽+背包+放大镜）", "小芭蕾舞者（花环+芭蕾裙+踮脚）"]}], "decorations": [{"category": "水果系列", "items": ["草莓", "水蜜桃", "香蕉", "苹果", "青提", "橙子", "樱桃", "梨子", "芒果"]}, {"category": "天空星空", "items": ["简约云朵", "弯月牙", "四角闪光星", "五角星", "星星灯串", "小彩虹", "流星", "星球小环"]}, {"category": "花草植物", "items": ["小雏菊", "郁金香", "三叶草", "简笔画小花", "嫩叶", "小樱花", "小花苞"]}, {"category": "可爱图形", "items": ["爱心", "蝴蝶结", "气球", "糖果", "小圆波点", "小饼干", "冰淇淋"]}, {"category": "线条挂件", "items": ["波浪拉旗", "细绳挂饰", "小圆珠链条", "弧形灯串线", "曲线彩带"]}, {"category": "生活物件", "items": ["吐司面包", "牛奶盒", "小鱼", "蘑菇", "胡萝卜", "信封", "小帐篷"]}, {"category": "英文单词", "items": ["happy", "luck", "nice", "sweet", "love", "joy", "dream", "smile", "star", "sun", "cute", "hello", "honey", "fun", "bloom"]}]}, "stats": {"count": 2, "pat": 1, "char": 1, "platforms": {"doubao": 2}, "palettes": {"莫兰迪灰调": 1, "奶油马卡龙": 1}}};
 var BKDATA = {"categories": [{"key": "design", "label": "设计资源"}, {"key": "dev", "label": "开发工具"}, {"key": "ai", "label": "AI 工具"}, {"key": "video", "label": "影视娱乐"}, {"key": "productivity", "label": "效率工具"}, {"key": "reference", "label": "查询参考"}], "bookmarks": [], "stats": {"count": 0, "cats": 6}};
-var BAMBU_BUILTIN = [{"id":"preset_petg_pla_support","name":"PETG + PLA 异料支撑（易拆）","subType":"异料支撑","machine":"X2D","filamentType":"PETG + PLA","createdDate":"2026-09-30T14:56:53.605Z","notes":"异料支撑（模型 PETG + PLA 做支撑界面）：两料互不粘连，一撕即落、底面光滑。依据 Bambu 官方 wiki：PLA【只做支撑界面】，支撑主体保持「默认」＝沿用模型料 PETG —— 把 PLA 用到整个支撑主体会明显增加打印时间（几乎每层都要换喷嘴）且支撑有脱落风险。关键项：顶部/底部 Z 距离都设 0（异料不必留缝）、接触面 3 层且线距 0（整片可抓取）、主体与支撑面图案都用 Rectilinear。PLA 料盘位置见导入脚本顶部的 PLA_SLOT。提醒：PETG 喷嘴温度高于 PLA，耗材预设里请分别设好温度并充分干燥。","bpValues":{"layer_height":"0.1","initial_layer_print_height":"0.1","enable_mixed_color_sublayer":"0","line_width":"0.22","initial_layer_line_width":"0.25","outer_wall_line_width":"0.22","inner_wall_line_width":"0.22","top_surface_line_width":"0.22","sparse_infill_line_width":"0.22","internal_solid_infill_line_width":"0.22","support_line_width":"0.22","seam_position":"aligned","seam_placement_away_from_overhangs":"0","seam_gap":"15","seam_slope_conditional":"1","scarf_angle_threshold":"155","seam_slope_entire_loop":"0","seam_slope_steps":"10","seam_slope_inner_walls":"1","override_filament_scarf_seam_setting":"0","seam_slope_type":"none","seam_slope_start_height":"10%","seam_slope_gap":"0","seam_slope_min_length":"10","wipe_speed":"80","role_base_wipe_speed":"1","slice_closing_radius":"0.049","resolution":"0.012","enable_arc_fitting":"1","xy_hole_compensation":"0","xy_contour_compensation":"0","enable_circle_compensation":"0","circle_compensation_manual_offset":"0","elefant_foot_compensation":"0.15","precise_outer_wall":"0","precise_z_height":"0","ironing_type":"no ironing","ironing_pattern":"zig-zag","ironing_speed":"30","ironing_flow":"10%","ironing_spacing":"0.15","ironing_inset":"0.11","ironing_direction":"45","wall_generator":"classic","wall_transition_angle":"10","wall_transition_filter_deviation":"25","wall_transition_length":"100","wall_distribution_count":"1","min_bead_width":"85","min_feature_size":"25","wall_sequence":"inner wall/outer wall","is_infill_first":"0","bridge_flow":"1.5","thick_bridges":"0","counterbore_hole_bridging":"none","print_flow_ratio":"1","top_solid_infill_flow_ratio":"1, 1, 1, 1","initial_layer_flow_ratio":"1","top_one_wall_type":"all top","top_area_threshold":"200","only_one_wall_first_layer":"0","detect_overhang_wall":"1","smooth_speed_discontinuity_area":"1","smooth_coefficient":"4","reduce_crossing_wall":"0","max_travel_detour_distance":"0","avoid_crossing_wall_includes_support":"0","z_direction_outwall_speed_continuous":"1","wall_loops":"4","alternate_extra_wall":"0","embedding_wall_into_infill":"0","detect_thin_wall":"0","interface_shells":"0","top_surface_pattern":"monotonicline","top_surface_density":"100","top_shell_layers":"7","top_shell_thickness":"0.8","top_color_penetration_layers":"7","bottom_surface_pattern":"monotonic","bottom_surface_density":"100","bottom_shell_layers":"5","bottom_shell_thickness":"0","bottom_color_penetration_layers":"5","infill_instead_top_bottom_surfaces":"0","internal_solid_infill_pattern":"zig-zag","sparse_infill_density":"15%","fill_multiline":"1","sparse_infill_pattern":"grid","locked_skin_infill_pattern":"crosszag","skin_infill_density":"15%","locked_skeleton_infill_pattern":"zigzag","skeleton_infill_density":"15%","infill_lock_depth":"1.0","skin_infill_depth":"2.0","skin_infill_line_width":"0.22","skeleton_infill_line_width":"0.22","symmetric_infill_y_axis":"0","infill_shift_step":"0.4","sparse_infill_lattice_angle_1":"-45","sparse_infill_lattice_angle_2":"45","infill_rotate_step":"0","sparse_infill_anchor":"400%","sparse_infill_anchor_max":"20","filter_out_gap_fill":"0","infill_wall_overlap":"15%","monotonic_travel_into_wall":"45.0","infill_direction":"45","bridge_angle":"0","minimum_sparse_infill_area":"15","infill_combination":"0","detect_narrow_internal_solid_infill":"1","ensure_vertical_shell_thickness":"enabled","detect_floating_vertical_shell":"1","internal_bridge_support_thickness":"0.8","initial_layer_speed":"40, 20, 20, 20","initial_layer_infill_speed":"70, 70, 70, 70","outer_wall_speed":"100, 120, 50, 50","inner_wall_speed":"150, 150, 150, 150","small_perimeter_speed":"50%, 50%, 50%, 50%","small_perimeter_threshold":"0, 0, 0, 0","sparse_infill_speed":"100, 100, 100, 100","internal_solid_infill_speed":"150, 150, 150, 150","vertical_shell_speed":"80%, 80%, 80%, 80%","top_surface_speed":"150, 150, 150, 150","enable_overhang_speed":"1, 1, 1, 1","overhang_1_4_speed":"0, 0, 0, 0","overhang_2_4_speed":"40, 40, 40, 40","overhang_3_4_speed":"30, 30, 30, 30","overhang_4_4_speed":"20, 20, 20, 20","overhang_totally_speed":"10, 10, 10, 10","enable_height_slowdown":"0, 0, 0, 0","slowdown_start_height":"0, 0, 0, 0","slowdown_start_speed":"1000, 1000, 1000, 1000","slowdown_start_acc":"100000, 100000, 100000, 100000","slowdown_end_height":"400, 400, 400, 400","slowdown_end_speed":"1000, 1000, 1000, 1000","slowdown_end_acc":"100000, 100000, 100000, 100000","bridge_speed":"25, 25, 25, 25","gap_infill_speed":"50, 50, 50, 50","support_speed":"150, 150, 150, 150","support_interface_speed":"80, 80, 80, 80","travel_speed":"1000, 1000, 1000, 1000","default_acceleration":"4000, 10000, 4000, 4000","travel_acceleration":"10000, 10000, 10000, 10000","travel_short_distance_acceleration":"250, 250, 250, 250","initial_layer_travel_acceleration":"6000, 6000, 6000, 6000","initial_layer_acceleration":"500, 500, 500, 500","outer_wall_acceleration":"2000, 5000, 4000, 4000","inner_wall_acceleration":"0, 0, 0, 0","top_surface_acceleration":"2000, 2000, 2000, 2000","sparse_infill_acceleration":"100%, 100%, 100%, 100%","accel_to_decel_enable":"0","accel_to_decel_factor":"50","default_jerk":"0","outer_wall_jerk":"9","inner_wall_jerk":"9","infill_jerk":"9","top_surface_jerk":"9","initial_layer_jerk":"9","travel_jerk":"9","max_volumetric_extrusion_rate_slope_positive":"0","max_volumetric_extrusion_rate_slope_negative":"0","enable_support":"1","support_type":"tree(auto)","support_style":"default","support_threshold_angle":"30","support_on_build_plate_only":"0","support_critical_regions_only":"0","support_remove_small_overhang":"1","enforce_support_layers":"0","raft_layers":"0","raft_contact_distance":"0.1","support_filament":"0","support_interface_filament":"2","support_interface_not_for_body":"1","enable_support_ironing":"0","support_ironing_pattern":"zig-zag","support_ironing_speed":"30","support_ironing_flow":"10%","support_ironing_spacing":"0.15","support_ironing_inset":"0.0","support_ironing_direction":"0","raft_first_layer_density":"90","raft_first_layer_expansion":"-1","tree_support_wall_count":"-1","support_top_z_distance":"0","support_bottom_z_distance":"0","support_base_pattern":"rectilinear","support_base_pattern_spacing":"2.5","support_angle":"0","support_interface_top_layers":"3","support_interface_bottom_layers":"2","support_interface_pattern":"rectilinear","support_interface_spacing":"0","support_bottom_interface_spacing":"0.5","support_expansion":"0","support_interface_loop_pattern":"0","support_object_xy_distance":"0.35","top_z_overrides_xy_distance":"0","support_object_first_layer_gap":"0.2","bridge_no_support":"0","max_bridge_length":"0","independent_support_layer_height":"1","tree_support_branch_distance":"5","tree_support_branch_diameter":"2","tree_support_branch_angle":"45","tree_support_branch_diameter_angle":"5","skirt_loops":"0","skirt_height":"1","skirt_distance":"2","draft_shield":"disabled","brim_type":"auto_brim","brim_width":"5","brim_object_gap":"0.1","enable_prime_tower":"1","prime_tower_skip_points":"1","prime_tower_enable_framework":"0","prime_tower_width":"35","prime_tower_max_speed":"90","prime_tower_brim_width":"-1","prime_tower_infill_gap":"150","prime_tower_rib_wall":"1","prime_tower_extra_rib_length":"0","prime_tower_rib_width":"8","prime_tower_fillet_wall":"1","enable_tower_interface_features":"1","flush_into_infill":"0","flush_into_objects":"0","flush_into_support":"1","slicing_mode":"regular","print_sequence":"by layer","spiral_mode":"0","spiral_mode_smooth":"0","spiral_mode_max_xy_smoothing":"200%","timelapse_type":"0","fuzzy_skin":"none","fuzzy_skin_mode":"displacement","fuzzy_skin_noise_type":"classic","fuzzy_skin_point_distance":"0.8","fuzzy_skin_thickness":"0.3","fuzzy_skin_scale":"1.0","fuzzy_skin_octaves":"4","fuzzy_skin_persistence":"0.5","fuzzy_skin_first_layer":"0","enable_wrapping_detection":"0","enable_order_independent_overlap_carving":"0","interlocking_beam":"0","mmu_segmented_region_max_width":"0","mmu_segmented_region_interlocking_depth":"0","interlocking_beam_width":"0.8","interlocking_orientation":"22.5","interlocking_beam_layer_count":"2","interlocking_depth":"2","interlocking_boundary_avoidance":"2","sparse_infill_filament":"0","solid_infill_filament":"0","wall_filament":"0","reduce_infill_retraction_mode":"Auto","gcode_add_line_number":"0","exclude_object":"0"},"processParams":[{"name":"开启支撑","value":"1"},{"name":"支撑/筏层界面","value":"2"},{"name":"顶部Z距离","value":"0"},{"name":"底部Z距离","value":"0"},{"name":"支撑主体图案","value":"rectilinear"},{"name":"顶部接触面层数","value":"3"},{"name":"支撑面图案","value":"rectilinear"},{"name":"顶部接触面线距","value":"0"}],"builtinVersion":1},{"id":"preset_overhang_improve","name":"悬垂改善（降速 + 厚桥）","subType":"质量·悬垂","machine":"X2D","filamentType":"通用（PLA/PETG/ABS）","createdDate":"2026-09-30T14:56:53.610Z","notes":"悬垂改善：把 悬垂降速 四个档位整体下调（25%→30、50%→20、75%→12、100%→8 mm/s），让悬垂处有足够时间冷却定型；同时开启 厚桥（桥接层按满流量打印，不易下垂）与 沉孔搭桥（孔口先搭一段防塌）。要点：悬垂质量主要由【冷却风扇】决定——请把耗材预设里的 风扇转速 拉满、必要时降低层高；若仍有薄壁悬垂发虚，可把 墙生成器 从 classic 改为 Arachne（变宽挤出，薄悬垂更饱满）。","bpValues":{"layer_height":"0.1","initial_layer_print_height":"0.1","enable_mixed_color_sublayer":"0","line_width":"0.22","initial_layer_line_width":"0.25","outer_wall_line_width":"0.22","inner_wall_line_width":"0.22","top_surface_line_width":"0.22","sparse_infill_line_width":"0.22","internal_solid_infill_line_width":"0.22","support_line_width":"0.22","seam_position":"aligned","seam_placement_away_from_overhangs":"0","seam_gap":"15","seam_slope_conditional":"1","scarf_angle_threshold":"155","seam_slope_entire_loop":"0","seam_slope_steps":"10","seam_slope_inner_walls":"1","override_filament_scarf_seam_setting":"0","seam_slope_type":"none","seam_slope_start_height":"10%","seam_slope_gap":"0","seam_slope_min_length":"10","wipe_speed":"80","role_base_wipe_speed":"1","slice_closing_radius":"0.049","resolution":"0.012","enable_arc_fitting":"1","xy_hole_compensation":"0","xy_contour_compensation":"0","enable_circle_compensation":"0","circle_compensation_manual_offset":"0","elefant_foot_compensation":"0.15","precise_outer_wall":"0","precise_z_height":"0","ironing_type":"no ironing","ironing_pattern":"zig-zag","ironing_speed":"30","ironing_flow":"10%","ironing_spacing":"0.15","ironing_inset":"0.11","ironing_direction":"45","wall_generator":"classic","wall_transition_angle":"10","wall_transition_filter_deviation":"25","wall_transition_length":"100","wall_distribution_count":"1","min_bead_width":"85","min_feature_size":"25","wall_sequence":"inner wall/outer wall","is_infill_first":"0","bridge_flow":"1.5","thick_bridges":"1","counterbore_hole_bridging":"partiallybridge","print_flow_ratio":"1","top_solid_infill_flow_ratio":"1, 1, 1, 1","initial_layer_flow_ratio":"1","top_one_wall_type":"all top","top_area_threshold":"200","only_one_wall_first_layer":"0","detect_overhang_wall":"1","smooth_speed_discontinuity_area":"1","smooth_coefficient":"4","reduce_crossing_wall":"0","max_travel_detour_distance":"0","avoid_crossing_wall_includes_support":"0","z_direction_outwall_speed_continuous":"1","wall_loops":"4","alternate_extra_wall":"0","embedding_wall_into_infill":"0","detect_thin_wall":"0","interface_shells":"0","top_surface_pattern":"monotonicline","top_surface_density":"100","top_shell_layers":"7","top_shell_thickness":"0.8","top_color_penetration_layers":"7","bottom_surface_pattern":"monotonic","bottom_surface_density":"100","bottom_shell_layers":"5","bottom_shell_thickness":"0","bottom_color_penetration_layers":"5","infill_instead_top_bottom_surfaces":"0","internal_solid_infill_pattern":"zig-zag","sparse_infill_density":"15%","fill_multiline":"1","sparse_infill_pattern":"grid","locked_skin_infill_pattern":"crosszag","skin_infill_density":"15%","locked_skeleton_infill_pattern":"zigzag","skeleton_infill_density":"15%","infill_lock_depth":"1.0","skin_infill_depth":"2.0","skin_infill_line_width":"0.22","skeleton_infill_line_width":"0.22","symmetric_infill_y_axis":"0","infill_shift_step":"0.4","sparse_infill_lattice_angle_1":"-45","sparse_infill_lattice_angle_2":"45","infill_rotate_step":"0","sparse_infill_anchor":"400%","sparse_infill_anchor_max":"20","filter_out_gap_fill":"0","infill_wall_overlap":"15%","monotonic_travel_into_wall":"45.0","infill_direction":"45","bridge_angle":"0","minimum_sparse_infill_area":"15","infill_combination":"0","detect_narrow_internal_solid_infill":"1","ensure_vertical_shell_thickness":"enabled","detect_floating_vertical_shell":"1","internal_bridge_support_thickness":"0.8","initial_layer_speed":"40, 20, 20, 20","initial_layer_infill_speed":"70, 70, 70, 70","outer_wall_speed":"100, 120, 50, 50","inner_wall_speed":"150, 150, 150, 150","small_perimeter_speed":"50%, 50%, 50%, 50%","small_perimeter_threshold":"0, 0, 0, 0","sparse_infill_speed":"100, 100, 100, 100","internal_solid_infill_speed":"150, 150, 150, 150","vertical_shell_speed":"80%, 80%, 80%, 80%","top_surface_speed":"150, 150, 150, 150","enable_overhang_speed":"1, 1, 1, 1","overhang_1_4_speed":"0, 0, 0, 0","overhang_2_4_speed":"30, 30, 30, 30","overhang_3_4_speed":"20, 20, 20, 20","overhang_4_4_speed":"12, 12, 12, 12","overhang_totally_speed":"8, 8, 8, 8","enable_height_slowdown":"0, 0, 0, 0","slowdown_start_height":"0, 0, 0, 0","slowdown_start_speed":"1000, 1000, 1000, 1000","slowdown_start_acc":"100000, 100000, 100000, 100000","slowdown_end_height":"400, 400, 400, 400","slowdown_end_speed":"1000, 1000, 1000, 1000","slowdown_end_acc":"100000, 100000, 100000, 100000","bridge_speed":"20, 20, 20, 20","gap_infill_speed":"50, 50, 50, 50","support_speed":"150, 150, 150, 150","support_interface_speed":"80, 80, 80, 80","travel_speed":"1000, 1000, 1000, 1000","default_acceleration":"4000, 10000, 4000, 4000","travel_acceleration":"10000, 10000, 10000, 10000","travel_short_distance_acceleration":"250, 250, 250, 250","initial_layer_travel_acceleration":"6000, 6000, 6000, 6000","initial_layer_acceleration":"500, 500, 500, 500","outer_wall_acceleration":"2000, 5000, 4000, 4000","inner_wall_acceleration":"0, 0, 0, 0","top_surface_acceleration":"2000, 2000, 2000, 2000","sparse_infill_acceleration":"100%, 100%, 100%, 100%","accel_to_decel_enable":"0","accel_to_decel_factor":"50","default_jerk":"0","outer_wall_jerk":"9","inner_wall_jerk":"9","infill_jerk":"9","top_surface_jerk":"9","initial_layer_jerk":"9","travel_jerk":"9","max_volumetric_extrusion_rate_slope_positive":"0","max_volumetric_extrusion_rate_slope_negative":"0","enable_support":"0","support_type":"tree(auto)","support_style":"default","support_threshold_angle":"30","support_on_build_plate_only":"0","support_critical_regions_only":"0","support_remove_small_overhang":"1","enforce_support_layers":"0","raft_layers":"0","raft_contact_distance":"0.1","support_filament":"0","support_interface_filament":"0","support_interface_not_for_body":"1","enable_support_ironing":"0","support_ironing_pattern":"zig-zag","support_ironing_speed":"30","support_ironing_flow":"10%","support_ironing_spacing":"0.15","support_ironing_inset":"0.0","support_ironing_direction":"0","raft_first_layer_density":"90","raft_first_layer_expansion":"-1","tree_support_wall_count":"-1","support_top_z_distance":"0.1","support_bottom_z_distance":"0.1","support_base_pattern":"default","support_base_pattern_spacing":"2.5","support_angle":"0","support_interface_top_layers":"2","support_interface_bottom_layers":"2","support_interface_pattern":"auto","support_interface_spacing":"0.5","support_bottom_interface_spacing":"0.5","support_expansion":"0","support_interface_loop_pattern":"0","support_object_xy_distance":"0.35","top_z_overrides_xy_distance":"0","support_object_first_layer_gap":"0.2","bridge_no_support":"0","max_bridge_length":"0","independent_support_layer_height":"1","tree_support_branch_distance":"5","tree_support_branch_diameter":"2","tree_support_branch_angle":"45","tree_support_branch_diameter_angle":"5","skirt_loops":"0","skirt_height":"1","skirt_distance":"2","draft_shield":"disabled","brim_type":"auto_brim","brim_width":"5","brim_object_gap":"0.1","enable_prime_tower":"1","prime_tower_skip_points":"1","prime_tower_enable_framework":"0","prime_tower_width":"35","prime_tower_max_speed":"90","prime_tower_brim_width":"-1","prime_tower_infill_gap":"150","prime_tower_rib_wall":"1","prime_tower_extra_rib_length":"0","prime_tower_rib_width":"8","prime_tower_fillet_wall":"1","enable_tower_interface_features":"1","flush_into_infill":"0","flush_into_objects":"0","flush_into_support":"1","slicing_mode":"regular","print_sequence":"by layer","spiral_mode":"0","spiral_mode_smooth":"0","spiral_mode_max_xy_smoothing":"200%","timelapse_type":"0","fuzzy_skin":"none","fuzzy_skin_mode":"displacement","fuzzy_skin_noise_type":"classic","fuzzy_skin_point_distance":"0.8","fuzzy_skin_thickness":"0.3","fuzzy_skin_scale":"1.0","fuzzy_skin_octaves":"4","fuzzy_skin_persistence":"0.5","fuzzy_skin_first_layer":"0","enable_wrapping_detection":"0","enable_order_independent_overlap_carving":"0","interlocking_beam":"0","mmu_segmented_region_max_width":"0","mmu_segmented_region_interlocking_depth":"0","interlocking_beam_width":"0.8","interlocking_orientation":"22.5","interlocking_beam_layer_count":"2","interlocking_depth":"2","interlocking_boundary_avoidance":"2","sparse_infill_filament":"0","solid_infill_filament":"0","wall_filament":"0","reduce_infill_retraction_mode":"Auto","gcode_add_line_number":"0","exclude_object":"0"},"processParams":[{"name":"厚桥","value":"1"},{"name":"沉孔搭桥","value":"partiallybridge"},{"name":"25% 悬垂","value":"30, 30, 30, 30"},{"name":"50% 悬垂","value":"20, 20, 20, 20"},{"name":"75% 悬垂","value":"12, 12, 12, 12"},{"name":"100% 悬垂","value":"8, 8, 8, 8"},{"name":"桥接","value":"20, 20, 20, 20"}],"builtinVersion":1}];
+var BAMBU_BUILTIN = [{"id":"preset_petg_pla_support","name":"PETG + PLA 异料支撑（易拆）","subType":"异料支撑","machine":"X2D","filamentType":"PETG + PLA","createdDate":"2026-09-30T14:56:53.605Z","notes":"异料支撑（模型 PETG + PLA 做支撑界面）：两料互不粘连，一撕即落、底面光滑。依据 Bambu 官方 wiki：PLA【只做支撑界面】，支撑主体保持「默认」＝沿用模型料 PETG —— 把 PLA 用到整个支撑主体会明显增加打印时间（几乎每层都要换喷嘴）且支撑有脱落风险。关键项：顶部/底部 Z 距离都设 0（异料不必留缝）、接触面 3 层且线距 0（整片可抓取）、主体与支撑面图案都用 Rectilinear。PLA 料盘位置见导入脚本顶部的 PLA_SLOT。提醒：PETG 喷嘴温度高于 PLA，耗材预设里请分别设好温度并充分干燥。","bpValues":{"layer_height":"0.2","initial_layer_print_height":"0.2","enable_mixed_color_sublayer":"0","line_width":"0.42","initial_layer_line_width":"0.5","outer_wall_line_width":"0.42","inner_wall_line_width":"0.45","top_surface_line_width":"0.42","sparse_infill_line_width":"0.45","internal_solid_infill_line_width":"0.42","support_line_width":"0.42","seam_position":"aligned","seam_placement_away_from_overhangs":"0","seam_gap":"15","seam_slope_conditional":"1","scarf_angle_threshold":"155","seam_slope_entire_loop":"0","seam_slope_steps":"10","seam_slope_inner_walls":"1","override_filament_scarf_seam_setting":"0","seam_slope_type":"none","seam_slope_start_height":"10%","seam_slope_gap":"0","seam_slope_min_length":"10","wipe_speed":"80","role_base_wipe_speed":"1","slice_closing_radius":"0.049","resolution":"0.012","enable_arc_fitting":"1","xy_hole_compensation":"0","xy_contour_compensation":"0","enable_circle_compensation":"0","circle_compensation_manual_offset":"0","elefant_foot_compensation":"0.15","precise_outer_wall":"0","precise_z_height":"0","ironing_type":"no ironing","ironing_pattern":"zig-zag","ironing_speed":"30","ironing_flow":"10%","ironing_spacing":"0.15","ironing_inset":"0.21","ironing_direction":"45","wall_generator":"classic","wall_transition_angle":"10","wall_transition_filter_deviation":"25","wall_transition_length":"100","wall_distribution_count":"1","min_bead_width":"85","min_feature_size":"25","wall_sequence":"inner wall/outer wall","is_infill_first":"0","bridge_flow":"1","thick_bridges":"0","counterbore_hole_bridging":"none","print_flow_ratio":"1","top_solid_infill_flow_ratio":"1, 1, 1, 1, 1, 1","initial_layer_flow_ratio":"1","top_one_wall_type":"all top","top_area_threshold":"200","only_one_wall_first_layer":"0","detect_overhang_wall":"1","smooth_speed_discontinuity_area":"1","smooth_coefficient":"4","reduce_crossing_wall":"0","max_travel_detour_distance":"0","avoid_crossing_wall_includes_support":"0","z_direction_outwall_speed_continuous":"1","wall_loops":"2","alternate_extra_wall":"0","embedding_wall_into_infill":"0","detect_thin_wall":"0","interface_shells":"0","top_surface_pattern":"monotonicline","top_surface_density":"100","top_shell_layers":"5","top_shell_thickness":"1.0","top_color_penetration_layers":"5","bottom_surface_pattern":"monotonic","bottom_surface_density":"100","bottom_shell_layers":"3","bottom_shell_thickness":"0","bottom_color_penetration_layers":"3","infill_instead_top_bottom_surfaces":"0","internal_solid_infill_pattern":"zig-zag","sparse_infill_density":"15%","fill_multiline":"1","sparse_infill_pattern":"grid","locked_skin_infill_pattern":"crosszag","skin_infill_density":"15%","locked_skeleton_infill_pattern":"zigzag","skeleton_infill_density":"15%","infill_lock_depth":"1.0","skin_infill_depth":"2.0","skin_infill_line_width":"0.45","skeleton_infill_line_width":"0.45","symmetric_infill_y_axis":"0","infill_shift_step":"0.4","sparse_infill_lattice_angle_1":"-45","sparse_infill_lattice_angle_2":"45","infill_rotate_step":"0","sparse_infill_anchor":"400%","sparse_infill_anchor_max":"20","filter_out_gap_fill":"0","infill_wall_overlap":"15%","monotonic_travel_into_wall":"45.0","infill_direction":"45","bridge_angle":"0","minimum_sparse_infill_area":"15","infill_combination":"0","detect_narrow_internal_solid_infill":"1","ensure_vertical_shell_thickness":"enabled","detect_floating_vertical_shell":"1","internal_bridge_support_thickness":"0.8","initial_layer_speed":"50, 50, 50, 50, 50, 50","initial_layer_infill_speed":"105, 105, 105, 105, 105, 105","outer_wall_speed":"200, 500, 500, 50, 50, 50","inner_wall_speed":"300, 600, 600, 200, 200, 200","small_perimeter_speed":"50%, 50%, 50%, 50%, 50%, 50%","small_perimeter_threshold":"0, 0, 0, 0, 0, 0","sparse_infill_speed":"270, 600, 600, 200, 200, 200","internal_solid_infill_speed":"250, 600, 600, 200, 200, 200","vertical_shell_speed":"80%, 80%, 80%, 80%, 80%, 80%","top_surface_speed":"200, 200, 200, 200, 200, 200","enable_overhang_speed":"1, 1, 1, 1, 0, 0","overhang_1_4_speed":"0, 0, 0, 0, 0, 0","overhang_2_4_speed":"50, 50, 50, 50, 50, 50","overhang_3_4_speed":"30, 20, 20, 30, 20, 20","overhang_4_4_speed":"10, 10, 10, 10, 10, 10","overhang_totally_speed":"10, 10, 10, 10, 10, 10","enable_height_slowdown":"0, 0, 0, 0, 0, 0","slowdown_start_height":"0, 0, 0, 0, 0, 0","slowdown_start_speed":"1000, 1000, 1000, 1000, 1000, 1000","slowdown_start_acc":"100000, 100000, 100000, 100000, 100000, 100000","slowdown_end_height":"400, 400, 400, 400, 400, 400","slowdown_end_speed":"1000, 1000, 1000, 1000, 1000, 1000","slowdown_end_acc":"100000, 100000, 100000, 100000, 100000, 100000","bridge_speed":"50, 50, 50, 50, 200, 200","gap_infill_speed":"250, 250, 250, 250, 250, 250","support_speed":"150, 150, 150, 150, 150, 150","support_interface_speed":"80, 80, 80, 80, 80, 80","travel_speed":"1000, 1000, 1000, 1000, 1000, 1000","default_acceleration":"10000, 10000, 10000, 1000, 1000, 1000","travel_acceleration":"10000, 10000, 10000, 10000, 10000, 10000","travel_short_distance_acceleration":"250, 250, 250, 250, 250, 250","initial_layer_travel_acceleration":"6000, 6000, 6000, 6000, 6000, 6000","initial_layer_acceleration":"500, 500, 500, 500, 500, 500","outer_wall_acceleration":"5000, 5000, 5000, 1000, 1000, 1000","inner_wall_acceleration":"0, 0, 0, 0, 0, 0","top_surface_acceleration":"2000, 2000, 2000, 1000, 1000, 1000","sparse_infill_acceleration":"100%, 100%, 100%, 100%, 100%, 100%","accel_to_decel_enable":"0","accel_to_decel_factor":"50","default_jerk":"0","outer_wall_jerk":"9","inner_wall_jerk":"9","infill_jerk":"9","top_surface_jerk":"9","initial_layer_jerk":"9","travel_jerk":"9","max_volumetric_extrusion_rate_slope_positive":"0","max_volumetric_extrusion_rate_slope_negative":"0","enable_support":"1","support_type":"tree(auto)","support_style":"default","support_threshold_angle":"30","support_on_build_plate_only":"0","support_critical_regions_only":"0","support_remove_small_overhang":"1","enforce_support_layers":"0","raft_layers":"0","raft_contact_distance":"0.1","support_filament":"0","support_interface_filament":"2","support_interface_not_for_body":"1","enable_support_ironing":"0","support_ironing_pattern":"zig-zag","support_ironing_speed":"30","support_ironing_flow":"10%","support_ironing_spacing":"0.15","support_ironing_inset":"0.0","support_ironing_direction":"0","raft_first_layer_density":"90","raft_first_layer_expansion":"-1","tree_support_wall_count":"-1","support_top_z_distance":"0","support_bottom_z_distance":"0","support_base_pattern":"rectilinear","support_base_pattern_spacing":"2.5","support_angle":"0","support_interface_top_layers":"3","support_interface_bottom_layers":"2","support_interface_pattern":"rectilinear","support_interface_spacing":"0","support_bottom_interface_spacing":"0.5","support_expansion":"0","support_interface_loop_pattern":"0","support_object_xy_distance":"0.35","top_z_overrides_xy_distance":"0","support_object_first_layer_gap":"0.2","bridge_no_support":"0","max_bridge_length":"0","independent_support_layer_height":"1","tree_support_branch_distance":"5","tree_support_branch_diameter":"2","tree_support_branch_angle":"45","tree_support_branch_diameter_angle":"5","skirt_loops":"0","skirt_height":"1","skirt_distance":"2","draft_shield":"disabled","brim_type":"auto_brim","brim_width":"5","brim_object_gap":"0.1","enable_prime_tower":"1","prime_tower_skip_points":"1","prime_tower_enable_framework":"0","prime_tower_width":"35","prime_tower_max_speed":"90","prime_tower_brim_width":"-1","prime_tower_infill_gap":"150","prime_tower_rib_wall":"1","prime_tower_extra_rib_length":"0","prime_tower_rib_width":"8","prime_tower_fillet_wall":"1","enable_tower_interface_features":"1","flush_into_infill":"0","flush_into_objects":"0","flush_into_support":"1","slicing_mode":"regular","print_sequence":"by layer","spiral_mode":"0","spiral_mode_smooth":"0","spiral_mode_max_xy_smoothing":"200%","timelapse_type":"0","fuzzy_skin":"none","fuzzy_skin_mode":"displacement","fuzzy_skin_noise_type":"classic","fuzzy_skin_point_distance":"0.8","fuzzy_skin_thickness":"0.3","fuzzy_skin_scale":"1.0","fuzzy_skin_octaves":"4","fuzzy_skin_persistence":"0.5","fuzzy_skin_first_layer":"0","enable_wrapping_detection":"0","enable_order_independent_overlap_carving":"0","interlocking_beam":"0","mmu_segmented_region_max_width":"0","mmu_segmented_region_interlocking_depth":"0","interlocking_beam_width":"0.8","interlocking_orientation":"22.5","interlocking_beam_layer_count":"2","interlocking_depth":"2","interlocking_boundary_avoidance":"2","sparse_infill_filament":"0","solid_infill_filament":"0","wall_filament":"0","reduce_infill_retraction_mode":"Auto","gcode_add_line_number":"0","exclude_object":"0"},"processParams":[{"name":"开启支撑","value":"1"},{"name":"支撑/筏层界面","value":"2"},{"name":"顶部Z距离","value":"0"},{"name":"底部Z距离","value":"0"},{"name":"支撑主体图案","value":"rectilinear"},{"name":"顶部接触面层数","value":"3"},{"name":"支撑面图案","value":"rectilinear"},{"name":"顶部接触面线距","value":"0"}],"builtinVersion":2},{"id":"preset_overhang_improve","name":"悬垂改善（降速 + 厚桥）","subType":"质量·悬垂","machine":"X2D","filamentType":"通用（PLA/PETG/ABS）","createdDate":"2026-09-30T14:56:53.610Z","notes":"悬垂改善：把 悬垂降速 四个档位整体下调（25%→30、50%→20、75%→12、100%→8 mm/s），让悬垂处有足够时间冷却定型；同时开启 厚桥（桥接层按满流量打印，不易下垂）与 沉孔搭桥（孔口先搭一段防塌）。要点：悬垂质量主要由【冷却风扇】决定——请把耗材预设里的 风扇转速 拉满、必要时降低层高；若仍有薄壁悬垂发虚，可把 墙生成器 从 classic 改为 Arachne（变宽挤出，薄悬垂更饱满）。","bpValues":{"layer_height":"0.2","initial_layer_print_height":"0.2","enable_mixed_color_sublayer":"0","line_width":"0.42","initial_layer_line_width":"0.5","outer_wall_line_width":"0.42","inner_wall_line_width":"0.45","top_surface_line_width":"0.42","sparse_infill_line_width":"0.45","internal_solid_infill_line_width":"0.42","support_line_width":"0.42","seam_position":"aligned","seam_placement_away_from_overhangs":"0","seam_gap":"15","seam_slope_conditional":"1","scarf_angle_threshold":"155","seam_slope_entire_loop":"0","seam_slope_steps":"10","seam_slope_inner_walls":"1","override_filament_scarf_seam_setting":"0","seam_slope_type":"none","seam_slope_start_height":"10%","seam_slope_gap":"0","seam_slope_min_length":"10","wipe_speed":"80","role_base_wipe_speed":"1","slice_closing_radius":"0.049","resolution":"0.012","enable_arc_fitting":"1","xy_hole_compensation":"0","xy_contour_compensation":"0","enable_circle_compensation":"0","circle_compensation_manual_offset":"0","elefant_foot_compensation":"0.15","precise_outer_wall":"0","precise_z_height":"0","ironing_type":"no ironing","ironing_pattern":"zig-zag","ironing_speed":"30","ironing_flow":"10%","ironing_spacing":"0.15","ironing_inset":"0.21","ironing_direction":"45","wall_generator":"classic","wall_transition_angle":"10","wall_transition_filter_deviation":"25","wall_transition_length":"100","wall_distribution_count":"1","min_bead_width":"85","min_feature_size":"25","wall_sequence":"inner wall/outer wall","is_infill_first":"0","bridge_flow":"1","thick_bridges":"1","counterbore_hole_bridging":"partiallybridge","print_flow_ratio":"1","top_solid_infill_flow_ratio":"1, 1, 1, 1, 1, 1","initial_layer_flow_ratio":"1","top_one_wall_type":"all top","top_area_threshold":"200","only_one_wall_first_layer":"0","detect_overhang_wall":"1","smooth_speed_discontinuity_area":"1","smooth_coefficient":"4","reduce_crossing_wall":"0","max_travel_detour_distance":"0","avoid_crossing_wall_includes_support":"0","z_direction_outwall_speed_continuous":"1","wall_loops":"2","alternate_extra_wall":"0","embedding_wall_into_infill":"0","detect_thin_wall":"0","interface_shells":"0","top_surface_pattern":"monotonicline","top_surface_density":"100","top_shell_layers":"5","top_shell_thickness":"1.0","top_color_penetration_layers":"5","bottom_surface_pattern":"monotonic","bottom_surface_density":"100","bottom_shell_layers":"3","bottom_shell_thickness":"0","bottom_color_penetration_layers":"3","infill_instead_top_bottom_surfaces":"0","internal_solid_infill_pattern":"zig-zag","sparse_infill_density":"15%","fill_multiline":"1","sparse_infill_pattern":"grid","locked_skin_infill_pattern":"crosszag","skin_infill_density":"15%","locked_skeleton_infill_pattern":"zigzag","skeleton_infill_density":"15%","infill_lock_depth":"1.0","skin_infill_depth":"2.0","skin_infill_line_width":"0.45","skeleton_infill_line_width":"0.45","symmetric_infill_y_axis":"0","infill_shift_step":"0.4","sparse_infill_lattice_angle_1":"-45","sparse_infill_lattice_angle_2":"45","infill_rotate_step":"0","sparse_infill_anchor":"400%","sparse_infill_anchor_max":"20","filter_out_gap_fill":"0","infill_wall_overlap":"15%","monotonic_travel_into_wall":"45.0","infill_direction":"45","bridge_angle":"0","minimum_sparse_infill_area":"15","infill_combination":"0","detect_narrow_internal_solid_infill":"1","ensure_vertical_shell_thickness":"enabled","detect_floating_vertical_shell":"1","internal_bridge_support_thickness":"0.8","initial_layer_speed":"50, 50, 50, 50, 50, 50","initial_layer_infill_speed":"105, 105, 105, 105, 105, 105","outer_wall_speed":"200, 500, 500, 50, 50, 50","inner_wall_speed":"300, 600, 600, 200, 200, 200","small_perimeter_speed":"50%, 50%, 50%, 50%, 50%, 50%","small_perimeter_threshold":"0, 0, 0, 0, 0, 0","sparse_infill_speed":"270, 600, 600, 200, 200, 200","internal_solid_infill_speed":"250, 600, 600, 200, 200, 200","vertical_shell_speed":"80%, 80%, 80%, 80%, 80%, 80%","top_surface_speed":"200, 200, 200, 200, 200, 200","enable_overhang_speed":"1, 1, 1, 1, 0, 0","overhang_1_4_speed":"0, 0, 0, 0, 0, 0","overhang_2_4_speed":"30, 30, 30, 30, 30, 30","overhang_3_4_speed":"20, 20, 20, 20, 20, 20","overhang_4_4_speed":"12, 12, 12, 12, 12, 12","overhang_totally_speed":"8, 8, 8, 8, 8, 8","enable_height_slowdown":"0, 0, 0, 0, 0, 0","slowdown_start_height":"0, 0, 0, 0, 0, 0","slowdown_start_speed":"1000, 1000, 1000, 1000, 1000, 1000","slowdown_start_acc":"100000, 100000, 100000, 100000, 100000, 100000","slowdown_end_height":"400, 400, 400, 400, 400, 400","slowdown_end_speed":"1000, 1000, 1000, 1000, 1000, 1000","slowdown_end_acc":"100000, 100000, 100000, 100000, 100000, 100000","bridge_speed":"20, 20, 20, 20, 20, 20","gap_infill_speed":"250, 250, 250, 250, 250, 250","support_speed":"150, 150, 150, 150, 150, 150","support_interface_speed":"80, 80, 80, 80, 80, 80","travel_speed":"1000, 1000, 1000, 1000, 1000, 1000","default_acceleration":"10000, 10000, 10000, 1000, 1000, 1000","travel_acceleration":"10000, 10000, 10000, 10000, 10000, 10000","travel_short_distance_acceleration":"250, 250, 250, 250, 250, 250","initial_layer_travel_acceleration":"6000, 6000, 6000, 6000, 6000, 6000","initial_layer_acceleration":"500, 500, 500, 500, 500, 500","outer_wall_acceleration":"5000, 5000, 5000, 1000, 1000, 1000","inner_wall_acceleration":"0, 0, 0, 0, 0, 0","top_surface_acceleration":"2000, 2000, 2000, 1000, 1000, 1000","sparse_infill_acceleration":"100%, 100%, 100%, 100%, 100%, 100%","accel_to_decel_enable":"0","accel_to_decel_factor":"50","default_jerk":"0","outer_wall_jerk":"9","inner_wall_jerk":"9","infill_jerk":"9","top_surface_jerk":"9","initial_layer_jerk":"9","travel_jerk":"9","max_volumetric_extrusion_rate_slope_positive":"0","max_volumetric_extrusion_rate_slope_negative":"0","enable_support":"0","support_type":"tree(auto)","support_style":"default","support_threshold_angle":"30","support_on_build_plate_only":"0","support_critical_regions_only":"0","support_remove_small_overhang":"1","enforce_support_layers":"0","raft_layers":"0","raft_contact_distance":"0.1","support_filament":"0","support_interface_filament":"0","support_interface_not_for_body":"1","enable_support_ironing":"0","support_ironing_pattern":"zig-zag","support_ironing_speed":"30","support_ironing_flow":"10%","support_ironing_spacing":"0.15","support_ironing_inset":"0.0","support_ironing_direction":"0","raft_first_layer_density":"90","raft_first_layer_expansion":"-1","tree_support_wall_count":"-1","support_top_z_distance":"0.2","support_bottom_z_distance":"0.2","support_base_pattern":"default","support_base_pattern_spacing":"2.5","support_angle":"0","support_interface_top_layers":"2","support_interface_bottom_layers":"2","support_interface_pattern":"auto","support_interface_spacing":"0.5","support_bottom_interface_spacing":"0.5","support_expansion":"0","support_interface_loop_pattern":"0","support_object_xy_distance":"0.35","top_z_overrides_xy_distance":"0","support_object_first_layer_gap":"0.2","bridge_no_support":"0","max_bridge_length":"0","independent_support_layer_height":"1","tree_support_branch_distance":"5","tree_support_branch_diameter":"2","tree_support_branch_angle":"45","tree_support_branch_diameter_angle":"5","skirt_loops":"0","skirt_height":"1","skirt_distance":"2","draft_shield":"disabled","brim_type":"auto_brim","brim_width":"5","brim_object_gap":"0.1","enable_prime_tower":"1","prime_tower_skip_points":"1","prime_tower_enable_framework":"0","prime_tower_width":"35","prime_tower_max_speed":"90","prime_tower_brim_width":"-1","prime_tower_infill_gap":"150","prime_tower_rib_wall":"1","prime_tower_extra_rib_length":"0","prime_tower_rib_width":"8","prime_tower_fillet_wall":"1","enable_tower_interface_features":"1","flush_into_infill":"0","flush_into_objects":"0","flush_into_support":"1","slicing_mode":"regular","print_sequence":"by layer","spiral_mode":"0","spiral_mode_smooth":"0","spiral_mode_max_xy_smoothing":"200%","timelapse_type":"0","fuzzy_skin":"none","fuzzy_skin_mode":"displacement","fuzzy_skin_noise_type":"classic","fuzzy_skin_point_distance":"0.8","fuzzy_skin_thickness":"0.3","fuzzy_skin_scale":"1.0","fuzzy_skin_octaves":"4","fuzzy_skin_persistence":"0.5","fuzzy_skin_first_layer":"0","enable_wrapping_detection":"0","enable_order_independent_overlap_carving":"0","interlocking_beam":"0","mmu_segmented_region_max_width":"0","mmu_segmented_region_interlocking_depth":"0","interlocking_beam_width":"0.8","interlocking_orientation":"22.5","interlocking_beam_layer_count":"2","interlocking_depth":"2","interlocking_boundary_avoidance":"2","sparse_infill_filament":"0","solid_infill_filament":"0","wall_filament":"0","reduce_infill_retraction_mode":"Auto","gcode_add_line_number":"0","exclude_object":"0"},"processParams":[{"name":"厚桥","value":"1"},{"name":"沉孔搭桥","value":"partiallybridge"},{"name":"25% 悬垂","value":"30, 30, 30, 30"},{"name":"50% 悬垂","value":"20, 20, 20, 20"},{"name":"75% 悬垂","value":"12, 12, 12, 12"},{"name":"100% 悬垂","value":"8, 8, 8, 8"},{"name":"桥接","value":"20, 20, 20, 20"}],"builtinVersion":2}];
 /* 内置预置：列表里缺失时自动补入；用户删除过的记进黑名单(bambu_builtin_deleted)，不再复活。
    注意 PSET 必须是克隆 —— AD.apply 会把它当作就地清空的"别名种子"。 */
 var PSET = JSON.parse(JSON.stringify(BAMBU_BUILTIN));
+/* 耗材丝预设（独立存储 bambu_filament_presets，与工艺 bambu_presets 分文件落盘）。
+   种子来自 bambu-filament-schema.js 的内置基准（官方 PLA / 官方 PETG·三绿兼容）；
+   同样必须克隆 —— AD.apply 的别名陷阱与 PSET 相同。 */
+var FILP = (window.BAMBU_FILAMENT_SCHEMA
+  ? JSON.parse(JSON.stringify([BAMBU_FILAMENT_SCHEMA.builtin.pla, BAMBU_FILAMENT_SCHEMA.builtin.petg]))
+  : []);
+/* 耗材丝记录迁移：v1 简化字段 → v2 完整真实 key → v3 官方 6 页签 + 6 驱动变体
+   旧数据（values 扁平）按官方 6 页签结构补全：缺失字段取内置基准的第 0 段值。
+   vec6 字段（官方 6 段数组）在本工具里只存第 0 段「直接驱动:标准」，导出时再补齐 6 段。
+   老字段别名照旧映射。 */
+function filMigrate(rec){
+  try{
+    var SC = window.BAMBU_FILAMENT_SCHEMA; if(!SC || !rec) return rec;
+    var bi = (SC.builtin || {})[rec.typeKey] || {};
+    var bk = bi.values || {};
+    if(!rec.values) rec.values = {};
+    var v = rec.values;
+    if(v.vendor != null){ if(v.filament_vendor == null) v.filament_vendor = v.vendor; delete v.vendor; }
+    if(v.price != null){ if(v.filament_cost == null) v.filament_cost = v.price; delete v.price; }
+    if(v.bed_temperature != null){ if(v.eng_plate_temp == null) v.eng_plate_temp = v.bed_temperature; delete v.bed_temperature; }
+    if(v.bed_range != null) delete v.bed_range;
+    if(v.nozzle_range){
+      var m = String(v.nozzle_range).split(/[–—-]/);
+      /* 官方字段名是 nozzle_temperature_range_low/high（PrintConfig.cpp）。
+         早先误写成 filament_temperature_range_* → 迁移结果是孤儿键，编辑器读不到，
+         于是「建议喷嘴温度」永远显示内置基准值。 */
+      if(v.nozzle_temperature_range_low == null && m[0]) v.nozzle_temperature_range_low = m[0].trim();
+      if(v.nozzle_temperature_range_high == null && m[1]) v.nozzle_temperature_range_high = m[1].trim();
+      delete v.nozzle_range;
+    }
+    if(v.max_volumetric_speed != null){ if(v.filament_max_volumetric_speed == null) v.filament_max_volumetric_speed = v.max_volumetric_speed; delete v.max_volumetric_speed; }
+    if(v.stringing != null) delete v.stringing;
+    // 按官方页签结构补全缺失字段（vec6 字段的值就是官方 6 段的第 0 段「直接驱动:标准」）
+    var idx = SC.index || {};
+    Object.keys(idx).forEach(function(k){
+      if(v[k] == null && bk[k] != null) v[k] = bk[k];
+    });
+  }catch(e){}
+  return rec;
+}
+/* 工艺预设迁移：没有 filId 的老预设自动关联一条耗材丝。
+   判据优先级：preset.filamentType（含 PETG → PETG）→ 预设名含 PETG → 默认 PLA。 */
+function presetFilMigrate(preset){
+  try{
+    if(!preset) return preset;
+    var has = FILP.some(function(f){ return f && f.id === preset.filId; });
+    if(has) return preset;
+    var hint = String(preset.filamentType == null ? "" : preset.filamentType) + " " + String(preset.name || "");
+    var isPetg = /petg/i.test(hint);
+    var pick = null;
+    FILP.forEach(function(f){ if(f && f.builtin && (f.typeKey === "petg") === isPetg && !pick) pick = f; });
+    if(!pick) pick = FILP[0];
+    if(pick) preset.filId = pick.id;
+  }catch(e){}
+  return preset;
+}
 var PKNOW = [{"id":"kb1","title":"PETG 拉丝问题解决","phenomenon":"打印时喷嘴与模型间有细丝，模型表面毛躁","machine":"X2D","credibility":"official","solution":"1. 将温度从255降至240℃(官方PETG范围240-270℃)；2. 回抽距离增加到1.2mm(官方推荐)；3. 降低打印速度至60mm/s；4. 开启风扇辅助散热。打印前确保PETG已烘干(65℃ 8h)。","relatedPresetIds":["preset2","preset5"],"tags":["拉丝","PETG","调参"],"imageBase64":null},{"id":"kb2","title":"TPU 堵头预防","phenomenon":"打印柔性材料时频繁堵头","machine":"X2D","credibility":"community","solution":"1. 使用主热端打印TPU(官方推荐)；2. 降低打印速度至30-40mm/s(官方TPU推荐)；3. 流量比例设为105%；4. 确保耗材干燥(70℃ 8h)。回抽距离0.6mm，回抽速度20mm/s。","relatedPresetIds":["preset7"],"tags":["TPU","堵头","柔性材料"],"imageBase64":null},{"id":"kb3","title":"首层不粘平台","phenomenon":"打印开始后首层脱落或翘边","machine":"X2D","credibility":"personal","solution":"1. 清洁平台；2. 提高热床温度5-10℃(PLA官方范围35-55℃涂胶/45-60℃PEI)；3. 降低首层速度至30mm/s；4. 使用胶棒辅助。如使用PETG，热床需60-80℃。","relatedPresetIds":["preset1","preset2"],"tags":["首层","翘边","平台附着"],"imageBase64":null}];
 const officialDocs = [
       {
@@ -1348,17 +1422,33 @@ function recentRecords(){
 }
 
 function viewDash(){
+  /* 「存储用量」小卡是异步测量（真实拉数据文件体积）→ 渲染完成后回填，同「存储与服务」页口径 */
+  setTimeout(function(){ QMINI.load(); }, 0);
   const elemTotal = (function(){ var e = getElements(); return ['subjects','outfits','decorations'].reduce(function(s,k){ return s + e[k].reduce(function(a,g){ return a+g.items.length; },0); },0); })();
   const dataRows = [['元素库', elemTotal],['色板', (SPDATA.palettes||[]).length],['AI 提示词', PROMPTS.length],['打印记录', (PRAW&&PRAW.records||[]).length],['四方图素材', (SPDATA&&SPDATA.patterns||[]).length],['精选收藏', (BKDATA&&BKDATA.stats&&BKDATA.stats.count)||0]];
   const stat = (ic,n,v,d)=>{ var vh = cuSpan(v); /* 统一走全局 cuSpan：兼容 ¥ 前缀 / 千分位 / 小数，带 HTML 时原样返回 */
     return `<div class="card stat"><div class="ic">${ICONS[ic]}</div><div class="num">${vh}</div><div class="sub">${n} · ${d}</div></div>`; };
+  /* —— 概览卡数字全部按真实数据现算 ——
+     此前是写死快照（「21 条 / 26 张配图」「hero 2,500 张 / 已用 500」「538 页 / 6 单 ¥53.80」「2 张」「0 条」），
+     与刚修掉的耗材仪表盘属同类缺陷，见 tools/_docs/mod-admin.md「已知技术债 · 概览假数据」。
+     这里只把数字接上数据，文案与视觉零改动。 */
+  const PREC = (PRAW && PRAW.records) || [];      /* 打印管理器 · 记账记录 */
+  const sumBy = (arr, k) => arr.reduce(function(s,x){ return s + (+x[k] || 0); }, 0);
+  /* 3D 耗材 hero 卡：直接复用仪表盘口径（flDashData），两处数字不会各算一套 */
+  const fdRaw = (flDashData().raw) || { count:0, consumed:0 };
+  const promptImgs  = PROMPTS.reduce(function(s,p){ return s + (+p.imgs || 0); }, 0);
+  const printPages  = sumBy(PREC, 'pages');
+  const printOrders = PREC.filter(function(r){ return r.type === 'order'; });
+  const printRev    = sumBy(printOrders, 'revenue');
+  const patCount    = ((SPDATA && SPDATA.patterns) || []).length;
+  const markCount   = (BKDATA && BKDATA.stats && BKDATA.stats.count) || 0;
   return `
   ${greetHead('晚上好，哆哆爸爸','一个后台，管理全部工具 —— 数据来自各工具本地真实数据汇总。')}
   <div class="grid">
     <div class="card c4">
       <div class="card-head"><h3>AI 提示词库</h3><span class="api-badge" style="margin-left:0">/api/prompts</span></div>
-      <div class="big" style="font-size:32px;font-weight:800;margin:14px 0 2px;letter-spacing:-.02em"><span data-cu="21">21</span></div>
-      <div class="sub">条提示词 · 26 张配图</div>
+      <div class="big" style="font-size:32px;font-weight:800;margin:14px 0 2px;letter-spacing:-.02em">${cuSpan(String(PROMPTS.length))}</div>
+      <div class="sub">条提示词 · ${promptImgs} 张配图</div>
       <div class="inner">
         <div class="svc"><span class="dot" style="background:#22c55e"></span><div class="n">标签 ${tagAgg().length} 个<small>含未使用 ${tagAgg().filter(function(t){return t[1]===0;}).length} 个</small></div></div>
         <div class="svc"><span class="dot" style="background:#22c55e"></span><div class="n">已发布 ${PROMPTS.filter(function(p){return p.published;}).length} 条<small>配图 ${PROMPTS.reduce(function(s,p){return s+(p.imgs||0);},0)} 张</small></div></div>
@@ -1371,12 +1461,12 @@ function viewDash(){
     <div class="c4 minis">
       <div class="card hero stat">
         <div class="ic" style="background:rgba(255,255,255,.18);color:#fff">${ICONS.cube}</div>
-        <div class="num"><span data-cu="2500">2,500</span><span style="font-size:13px;font-weight:400;color:rgba(255,255,255,.8)"> 张</span></div>
-        <div class="sub">3D 耗材 · A4 纸库存 · 已用 500 · 余 2,000</div>
+        <div class="num">${cuSpan(String(fdRaw.count))}<span style="font-size:13px;font-weight:400;color:rgba(255,255,255,.8)"> 盘</span></div>
+        <div class="sub">3D 耗材 · 已用 ${fdRaw.consumed}&nbsp;盘 · 余 ${fdRaw.count - fdRaw.consumed}&nbsp;盘</div>
       </div>
-      ${stat('printer','打印', '538<span style="font-size:13px;font-weight:400;color:var(--muted)"> 页</span>', '6 单 · 收入 ¥53.80')}
-      ${stat('pattern','四方图', '2<span style="font-size:13px;font-weight:400;color:var(--muted)"> 张</span>', 'doubao 平台')}
-      ${stat('star','精选收藏', '0<span style="font-size:13px;font-weight:400;color:var(--muted)"> 条</span>', BKDATA['stats']['cats']+' 个分类')}
+      ${stat('printer','打印', printPages+'<span style="font-size:13px;font-weight:400;color:var(--muted)"> 页</span>', printOrders.length+' 单 · 收入 ¥'+printRev.toFixed(2))}
+      ${stat('pattern','四方图', patCount+'<span style="font-size:13px;font-weight:400;color:var(--muted)"> 张</span>', 'doubao 平台')}
+      ${stat('star','精选收藏', markCount+'<span style="font-size:13px;font-weight:400;color:var(--muted)"> 条</span>', BKDATA['stats']['cats']+' 个分类')}
     </div>
     <div class="card c4">
       <div class="card-head"><h3>各工具数据量</h3><span class="api-badge" style="margin-left:0">真实条数</span></div>
@@ -1384,11 +1474,11 @@ function viewDash(){
     </div>
     <div class="card c4">
       <div class="card-head"><h3>存储用量</h3><span class="api-badge" style="margin-left:0">EdgeOne 25MB 红线</span></div>
-      <div class="progress"><i data-w="17%" style="width:0"></i></div>
-      <div class="kv"><span>4.2 MB 已用（17%）</span><span>安全</span></div>
-      <div class="inner">
-        <div class="svc"><span class="dot" style="background:#22c55e"></span><div class="n">server.py<small>192.168.0.31:8080 · 运行中</small></div><span class="delta up">正常</span></div>
-        <div class="svc"><span class="dot" style="background:#22c55e"></span><div class="n">双通道存储<small>localStorage ↔ 服务端文件一致</small></div><span class="delta up">一致</span></div>
+      <div class="progress"><i id="qmBar" style="width:0%"></i></div>
+      <div class="kv"><span id="qmUsed">测量中…</span><span id="qmPct">—</span></div>
+      <div class="inner" id="qmSvc">
+        <div class="svc"><span class="dot" style="background:#cbd5e0"></span><div class="n">server.py<small>检测中…</small></div><span class="delta">—</span></div>
+        <div class="svc"><span class="dot" style="background:#cbd5e0"></span><div class="n">数据端点<small>检测中…</small></div><span class="delta">—</span></div>
       </div>
     </div>
     <div class="card c8">
@@ -1445,7 +1535,7 @@ function HINT(t){
 /* 存储与服务：真实测量各数据文件体积（Blob 字节）+ 端点可达性 + health 延迟 */
 var QUOTA = {
   LIMIT: 25 * 1024 * 1024,
-  fmt: function(b){ return b >= 1024*1024 ? (b/1024/1024).toFixed(2) + ' MB' : (b/1024).toFixed(1) + ' KB'; },
+  fmt: function(b){ return b < 1024 ? (b + ' B') : (b >= 1024*1024 ? (b/1024/1024).toFixed(2) + ' MB' : (b/1024).toFixed(1) + ' KB'); },
   load: function(){
     var srcs = [
       ['server_data.json', '/api/data'],
@@ -1535,6 +1625,47 @@ var QUOTA = {
   }
 };
 
+/* 概览 · 「存储用量」小卡：与「存储与服务」页 QUOTA 同一测量口径
+   （真实拉四个数据文件算体积，取**最大单文件** / 25MB 部署红线）。
+   差异：小卡只回填「百分比 + 两行服务状态」，不铺明细表；目标 DOM 不在时静默跳过。
+   ⚠ 异步回填 —— 渲染时先占位「测量中…」，fetch 完成后覆盖；服务不可达时降级为「未连接服务 · 无法测量」。 */
+var QMINI = {
+  LIMIT: 25 * 1024 * 1024,
+  fmt: function(b){ return b < 1024 ? (b + ' B') : (b >= 1024*1024 ? (b/1024/1024).toFixed(2) + ' MB' : (b/1024).toFixed(1) + ' KB'); },
+  srcs: [
+    ['server_data.json', '/api/data'],
+    ['tools/prompt-library-data.json', '/api/prompts'],
+    ['tools/seamless-pattern-data.json', '/api/seamless'],
+    ['data/bookmarks.json', '/api/bookmarks']
+  ],
+  load: function(){
+    var bar = document.getElementById('qmBar');
+    if(!bar) return;                                       /* 已切走该页 → 不必测 */
+    Promise.all(QMINI.srcs.map(function(s){
+      return fetch(s[1]).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+        .then(function(d){ return { name: s[0], size: new Blob([JSON.stringify(d)]).size, ok: true }; })
+        .catch(function(){ return { name: s[0], size: 0, ok: false }; });
+    })).then(function(rs){
+      var max = rs.reduce(function(a,r){ return r.size > a.size ? r : a; }, { name:'-', size:0 });
+      var up  = rs.filter(function(r){ return r.ok; }).length;
+      var pct = max.size ? Math.min(100, Math.max(1, Math.round(max.size / QMINI.LIMIT * 100))) : 0;
+      bar.style.width = pct + '%';                         /* .progress i 自带 .9s width 过渡 → 天然生长动画 */
+      bar.style.background = pct >= 80 ? '#e5484d' : (pct >= 60 ? '#f5a623' : 'var(--accent-grad)');
+      var used = document.getElementById('qmUsed');
+      if(used) used.textContent = max.size ? ('最大单文件 ' + max.name + ' · ' + QMINI.fmt(max.size) + ' / 25 MB') : '未连接服务 · 无法测量';
+      var pe = document.getElementById('qmPct'); if(pe) pe.textContent = pct ? (pct + '%') : '—';
+      var svc = document.getElementById('qmSvc');
+      if(svc) svc.innerHTML =
+        '<div class="svc"><span class="dot" style="background:' + (AD.up ? '#22c55e' : '#e5484d') + '"></span>' +
+          '<div class="n">server.py<small>' + FUTIL.esc(location.host || 'file:// 直开') + ' · ' + (AD.up ? ('200 OK' + (AD.ping != null ? ' · ' + AD.ping + 'ms' : '')) : '未连接') + '</small></div>' +
+          '<span class="delta ' + (AD.up ? 'up' : 'down') + '">' + (AD.up ? '运行中' : '离线') + '</span></div>' +
+        '<div class="svc"><span class="dot" style="background:' + (up === rs.length ? '#22c55e' : '#f5a623') + '"></span>' +
+          '<div class="n">数据端点<small>' + up + ' / ' + rs.length + ' 个可达</small></div>' +
+          '<span class="delta ' + (up === rs.length ? 'up' : 'down') + '">' + (up === rs.length ? '全部正常' : '部分不可用') + '</span></div>';
+    });
+  }
+};
+
 /* ===== 模块仪表盘（按原工具真实统计排版 · Finexy 皮肤） ===== */
 function viewModuleDash(t){
   if(t.id==='filament') return viewFilamentDash(t);
@@ -1545,35 +1676,98 @@ function viewModuleDash(t){
   return viewPlaceholder(t, {name:'仪表盘', desc:'模块总览（迁移后按该工具真实统计接入）'});
 }
 
-/* 3D 耗材 · 仪表台 —— 五大块结构与 tools/filament-manager.html renderDashboardModule 一一对应，数字为示意 */
-const FDASH = { /* 真实数据：按原工具 renderDashboardModule 同逻辑，取自 server_data.json·bambu_filaments（13 盘） */
-  stats:[
-    {ic:'coin',  label:'总花费', val:'¥566.36', extra:''},
-    {ic:'cube',  label:'耗材总数', val:'13 盘',   extra:'消耗 2 盘'},
-    {ic:'weight',label:'耗材总量', val:'13.0 kg', extra:'消耗 2.0 kg'},
-    {ic:'tag',   label:'品牌数量', val:'3',       extra:''},
-  ],
-  brandCost:[['Bambu Lab',71.1,'¥402.56'],['SUNLU',23.1,'¥130.80'],['kexcelled',5.8,'¥33.00']],
-  channel:[['京东',69.2,'9'],['拼哆哆',30.8,'4']],
-  colors:[['白色','#FFFFFF',3],['黑色','#000000',3],['灰色','#75787B',3],['青色','#0BC5EA',1],['南瓜橙','#FF9016',1],['拓竹绿','#00AE42',1],['红色','#E53E3E',1]],
-  brandRank:[['Bambu Lab',8],['SUNLU',4],['kexcelled',1]],
-  typeRank:[['PLA',8],['PETG',4],['PETG HF',1]],
-  price:[['0 - 30 元',3],['31 - 50 元',6],['51 - 80 元',4],['81 - 100 元',0]],
-  extreme:[
-    ['最贵耗材','PLA Basic','Bambu Lab','¥53.72'],
-    ['最便宜耗材','PETG','SUNLU','¥29.30 <small style="font-weight:500;font-size:11px;color:var(--muted)">(均价)</small>'],
-    ['最高评分','PLA Basic','Bambu Lab','5 分'],
-    ['最低评分','K5 PETG 高速','kexcelled','1 分'],
-  ],
-  months:[0,0,0,0,0,13,0,0,0,0,0,0],
-};
+/* 3D 耗材 · 仪表台 —— 五大块结构与 tools/filament-manager.html renderDashboardModule 一一对应。
+   ⚠ 数字必须**每次渲染现算**（原工具 renderDashboardModule 就是现算）。
+   早期版本把仪表盘写成了「13 盘 / 消耗 2 盘 / 13.0 kg」这样的**静态快照**，
+   于是用户后来把耗材标成「已用完」时卡片纹丝不动 —— 这就是「消耗的数量不对」的根因。
+   口径与原工具完全一致：
+   · 套装按子盘数计（1 条套装 3 盘 = 3 盘 / 3×净重）
+   · 消耗只算**标记项**：单盘看 tags 含「已用完」，套装看 bundleItems[].consumed 个数
+   · 单价用均价（套装总价 ÷ 子盘数） */
+function flDashData(){
+  const F = (FDATA.filaments || []);
+  const num = v => parseFloat(v) || 0;
+  const qty = f => (f.isBundle && f.bundleItems) ? f.bundleItems.length : 1;
+  const nw  = f => num(f.netWeight) || 1000;
+  const doneQty = f => {                                     /* 该条的「已消耗盘数」 */
+    if(f.isBundle && f.bundleItems) return f.bundleItems.filter(b=>b.consumed).length;
+    return (f.tags && f.tags.includes('已用完')) ? 1 : 0;
+  };
+
+  const totalCost   = F.reduce((s,f)=>s+num(f.price),0);
+  const totalCount  = F.reduce((s,f)=>s+qty(f),0);
+  const totalWeight = F.reduce((s,f)=>s+qty(f)*nw(f),0)/1000;
+  const brandCount  = new Set(F.map(f=>f.brand).filter(Boolean)).size;
+  const consumedCount  = F.reduce((s,f)=>s+doneQty(f),0);
+  const consumedWeight = F.reduce((s,f)=>s+doneQty(f)*nw(f),0)/1000;
+
+  /* 聚合助手：按 key 累加盘数（套装算子盘），降序取前 n */
+  const agg = (keyFn,n=10)=>{ const m={}; F.forEach(f=>{ const k=keyFn(f)||'未知'; m[k]=(m[k]||0)+qty(f); });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n); };
+  const aggCost = (n=10)=>{ const m={}; F.forEach(f=>{ const k=f.brand||'未知'; m[k]=(m[k]||0)+num(f.price); });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n); };
+  /* 颜色名 → 色值：与耗材库列表 swatch 共用 F_CMAP，两处颜色必须一致 */
+  const colorHex = n => !n ? '#64748b' : (/^#[0-9A-Fa-f]{3,8}$/.test(n) ? n : (F_CMAP[n]||'#64748b'));
+
+  const bc = aggCost(), bcTotal = bc.reduce((s,e)=>s+e[1],0)||1;
+  const ch = agg(f=>f.purchaseChannel), chTotal = ch.reduce((s,e)=>s+e[1],0)||1;
+
+  const cl = {};                                             /* 颜色分布：套装拆子色 */
+  F.forEach(f=>{
+    if(f.isBundle && f.bundleItems) f.bundleItems.forEach(bi=>{ const c=bi.colorName||bi.colorValue||'未知'; cl[c]=(cl[c]||0)+1; });
+    else { const c=f.colorName||f.colorValue||'未知'; cl[c]=(cl[c]||0)+1; }
+  });
+  const colors = Object.entries(cl).sort((a,b)=>b[1]-a[1]).map(([n,c])=>[n,colorHex(n),c]);
+
+  const avgP = f => (f.isBundle && f.bundleItems && f.bundleItems.length) ? num(f.price)/f.bundleItems.length : num(f.price);
+  const ranges = [[0,31,'0 - 30 元'],[31,51,'31 - 50 元'],[51,81,'51 - 80 元'],[81,101,'81 - 100 元']];
+  const price = ranges.map(([min,max,l])=>[l, F.reduce((s,f)=>s+((avgP(f)>=min&&avgP(f)<max)?qty(f):0),0)]);
+
+  const byP = [...F].sort((a,b)=>avgP(b)-avgP(a));
+  const byR = F.filter(f=>f.rating&&f.rating>0).sort((a,b)=>b.rating-a.rating);
+  const most=byP[0], cheap=byP[byP.length-1], hi=byR[0], lo=byR[byR.length-1];
+  const pv = f => '¥'+avgP(f).toFixed(2)+(f.isBundle?' <small style="font-weight:500;font-size:11px;color:var(--muted)">(均价)</small>':'');
+  const exOne = (k,f,val)=>[k, f?FUTIL.esc(f.name||'-'):'--', f?FUTIL.esc(f.brand||'未分类'):'', f?val:'--'];
+
+  const months = new Array(12).fill(0);
+  F.forEach(f=>{ if(f.purchaseDate){ const m=new Date(f.purchaseDate).getMonth(); if(m>=0&&m<12) months[m]+=qty(f); } });
+
+  return {
+    empty: F.length===0,
+    stats:[
+      {ic:'coin',  label:'总花费',   val:'¥'+totalCost.toFixed(2), extra:''},
+      {ic:'cube',  label:'耗材总数', val:totalCount+' 盘',   extra:consumedCount>0 ? '消耗 '+consumedCount+' 盘' : ''},
+      {ic:'weight',label:'耗材总量', val:totalWeight.toFixed(1)+' kg', extra:consumedWeight>0 ? '消耗 '+consumedWeight.toFixed(1)+' kg' : ''},
+      {ic:'tag',   label:'品牌数量', val:String(brandCount), extra:''},
+    ],
+    brandCost: bc.map(([n,c])=>[FUTIL.esc(n), +(c/bcTotal*100).toFixed(1), '¥'+c.toFixed(2)]),
+    channel:   ch.map(([n,c])=>[FUTIL.esc(n), +(c/chTotal*100).toFixed(1), String(c)]),
+    colors,
+    brandRank: agg(f=>f.brand).map(([n,c])=>[FUTIL.esc(n),c]),
+    typeRank:  agg(f=>f.type).map(([n,c])=>[FUTIL.esc(n),c]),
+    price,
+    extreme:[
+      exOne('最贵耗材',   most,  most ?pv(most) :''),
+      exOne('最便宜耗材', cheap, cheap?pv(cheap):''),
+      exOne('最高评分',   hi,    hi   ?hi.rating+' 分':''),
+      exOne('最低评分',   lo,    lo   ?lo.rating+' 分':''),
+    ],
+    months,
+    /* 原始数值：供概览 hero 卡等复用，调用方不必去反解 '13 盘' / '消耗 4 盘' 这类格式化字符串 */
+    raw: { count: totalCount, consumed: consumedCount,
+           weight: totalWeight, consumedWeight: consumedWeight,
+           cost: totalCost, brandCount: brandCount },
+  };
+}
 
 function viewFilamentDash(t){
-  const d = FDASH;
+  const d = flDashData();
+  if(d.empty) return `${greetHead('仪表台','','<button class="add" title="入库登记" aria-label="入库登记" onclick="FAPP.openForm(null)">'+ADD_IC+'</button>')}
+    <div class="grid"><div class="card c12"><div class="fempty"><div class="big-ic">⛓</div><b>暂无耗材数据</b>点击右上角「＋」入库登记，这里会自动统计。</div></div></div>`;
   const chk  = 'repeating-conic-gradient(var(--line) 0% 25%, var(--card) 0% 50%) 50%/10px 10px';
   const chkS = 'repeating-conic-gradient(var(--line) 0% 25%, var(--card) 0% 50%) 50%/8px 8px';
-  const bar = (rows,color,fmt)=>rows.map(([n,c,v])=>
-    `<div class="ratio-row"><span class="n">${n}</span><div class="bar"><i style="width:0%;background:${color}" data-w="${(c/rows[0][1]*100).toFixed(1)}%"></i></div><span class="v" style="width:auto">${fmt(c,v)}</span></div>`).join('');
+  const bar = (rows,color,fmt)=>{ const mx=(rows.length?rows[0][1]:0)||1; return rows.map(([n,c,v])=>
+    `<div class="ratio-row"><span class="n">${n}</span><div class="bar"><i style="width:0%;background:${color}" data-w="${(c/mx*100).toFixed(1)}%"></i></div><span class="v" style="width:auto">${fmt(c,v)}</span></div>`).join(''); };
   return `
   ${greetHead('仪表台','', '<button class="add" title="入库登记" aria-label="入库登记" onclick="FAPP.openForm(null)">'+ADD_IC+'</button>')}
   <div class="grid">
@@ -2045,15 +2239,18 @@ function viewFilamentPresets(){
       <span class="flabel">共 ${data.length} 条</span>
     </div>
     ${data.length===0?`<div class="fempty"><div class="big-ic">🧩</div><b>暂无预设数据</b>点击右上角「＋」添加第一条预设。</div>`
-    :`<div class="table-wrap"><table class="fx"><thead><tr><th>名称</th><th>创建日期</th><th>备注</th><th>参数</th><th>操作</th></tr></thead>
+    :`<div class="table-wrap"><table class="fx"><thead><tr><th>名称</th><th>创建日期</th><th>备注</th><th>参数</th><th>耗材丝</th><th>操作</th></tr></thead>
     <tbody>${data.map(item=>{
       const processCount = item.bpValues ? (window.BAMBU_EDITOR ? BAMBU_EDITOR.modifiedCount(item.bpValues) : 0) : (item.processParams ? item.processParams.length : (item.parameters ? item.parameters.length : 0));
       const processDisplay = item.bpValues ? (processCount > 0 ? ('已改 ' + processCount) : '标准') : (processCount > 0 ? processCount : (item.subType ? '旧格式' : 0));
+      const filRec = (item.filId && typeof FILP !== 'undefined') ? FILP.find(f=>f.id===item.filId) : null;
+      const filDisplay = filRec ? filRec.name : '<span style="color:var(--muted)">未关联</span>';
       return `<tr data-pid="${item.id}">
         <td><b>${item.name}</b></td>
         <td style="white-space:nowrap;color:var(--muted)">${presDate(item.createdDate)}</td>
         <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.notes||''}">${item.notes||'-'}</td>
         <td>${processDisplay}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${filRec?filRec.name:''}">${filDisplay}</td>
         <td class="act-cell">
           <button class="btn-icon" title="查看详情" onclick="PAPP.view('${item.id}')">${P_ACT.eye}</button>
           <button class="btn-icon" title="编辑" onclick="PAPP.openForm('${item.id}')">${P_ACT.pencil}</button>
@@ -2886,6 +3083,7 @@ var AD = {
   /* /api/data 通道 key -> 内存值 getter（对象形态，序列化只发生在边界） */
   MAP: {
     bambu_filaments:  function(){ return FDATA.filaments; },
+    bambu_filament_presets: function(){ return FILP; },
     bambu_presets:    function(){ return PSET; },
     bambu_knowledge:  function(){ return PKNOW; },
     printManager:     function(){ return PRAW; }
@@ -3006,9 +3204,25 @@ var AD = {
   initData: function(){
     return AD.probe().then(function(){ return AD.up ? AD.pullData() : false; }).then(function(){
       AD.apply('bambu_filaments', FDATA.filaments, function(v){ FDATA.filaments = v; });
-      AD.apply('bambu_presets',   PSET,            function(v){ PSET.length = 0; (v||[]).forEach(function(x){ PSET.push(x); }); });
+      AD.apply('bambu_filament_presets', FILP, function(v){ FILP.length = 0; (v||[]).forEach(function(x){ FILP.push(filMigrate(x)); }); });
+      /* 耗材丝默认值纠错：服务端 bambu_filament_presets 是 v1 旧副本，落后于权威源
+         bambu-filament-schema.js 的 builtin（PETG 最大体积速度误抄了 PLA 基底层的 12，
+         官方 PETG Basic 终值是 15；另有密度 1.24→1.26、喷嘴温度 260→250、
+         斜拼接缝枚举 contour/wall→external/all）。AD.apply 是本地优先，
+         所以必须在 apply 之后就地纠。幂等，用户改过的值原样保留。 */
+      if(window.BAMBUF_MIGRATE){
+        var migF = window.BAMBUF_MIGRATE(FILP);
+        if(migF) AD.save('bambu_filament_presets');
+      }
+      AD.apply('bambu_presets',   PSET,            function(v){ PSET.length = 0; (v||[]).forEach(function(x){ PSET.push(presetFilMigrate(x)); }); });
       /* 内置预置缺了就补（删过的在黑名单里，不会复活） */
       AD.mergeBuiltins();
+      /* 基底迁移：0.2 喷嘴 0.10mm 档 → 0.4 喷嘴 0.20mm Standard 档
+         （层高 0.1→0.2、线宽 0.22→0.42、墙层数 4→2 等 60 项；幂等，你改过的项原样保留） */
+      if(window.BAMBUP_MIGRATE){
+        var migN = window.BAMBUP_MIGRATE(PSET);
+        if(migN) AD.save('bambu_presets');
+      }
       AD.apply('bambu_knowledge', PKNOW,           function(v){ PKNOW.length = 0; (v||[]).forEach(function(x){ PKNOW.push(x); }); });
       AD.apply('printManager',    PRAW,            function(v){ if(v && typeof v === 'object') PRAW = v; });
       return Promise.all([AD.pullPrompts(), AD.pullBookmarks()]);
@@ -3027,6 +3241,26 @@ var AD = {
 })();
 
 /* 真登录（server.py 单账号 token，与 portfolio 后台共用 wli_admin_token） */
+/* 眼睛切换密码明文 */
+function togglePw(){
+  var i = document.getElementById('loginPass');
+  var o = document.getElementById('pwEyeOpen'), c = document.getElementById('pwEyeClosed');
+  var show = i.type === 'password';
+  i.type = show ? 'text' : 'password';
+  if(o) o.style.display = show ? 'none' : '';
+  if(c) c.style.display = show ? '' : 'none';
+}
+/* 「保存密码」勾选时：登录成功存本地（wli_admin_cred），下次自动填充 */
+(function(){
+  try{
+    var c = JSON.parse(localStorage.getItem('wli_admin_cred') || 'null');
+    if(c && c.u && c.p){
+      var ui = document.getElementById('loginUser'), pi = document.getElementById('loginPass');
+      if(ui && !ui.value) ui.value = c.u;
+      if(pi) pi.value = c.p;
+    }
+  }catch(e){}
+})();
 function doAdminLogin(){
   var u = $('#loginUser').value.trim(), p = $('#loginPass').value;
   if(!u || !p){ toast('请输入账号和密码'); return; }
@@ -3039,7 +3273,12 @@ function doAdminLogin(){
       if(btn){ btn.disabled = false; btn.textContent = '进入后台'; }
       if(res.ok && res.d.token){
         AD.token = res.d.token;
-        try{ localStorage.setItem('wli_admin_token', res.d.token); localStorage.setItem('wli_admin_user', res.d.user || u); }catch(e){}
+        try{
+          localStorage.setItem('wli_admin_token', res.d.token); localStorage.setItem('wli_admin_user', res.d.user || u);
+          var rb = document.getElementById('rememberPass');
+          if(rb && rb.checked) localStorage.setItem('wli_admin_cred', JSON.stringify({ u:u, p:p }));
+          else localStorage.removeItem('wli_admin_cred');
+        }catch(e){}
         /* 登录成功后必须先拉数据再进后台：boot 时 server 可能还没启动（initData 已失败一次），
            若直接渲染会出现「全部 0 / 标签却是内嵌快照」等精分数据（2026-09-27 修复） */
         AD.initData().catch(function(){ return false; }).then(function(){
@@ -3066,12 +3305,12 @@ var FDATA = { filaments: [
  {"id":"fil1","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"有盘","netWeight":1000,"colorName":"白色","colorValue":"#FFFFFF","purchaseChannel":"京东","price":53.72,"purchaseDate":"2026-06-04","rating":5,"notes":"官方推荐：喷嘴 190-240℃，热床 35-55℃（涂胶）或 45-60℃（PEI）。效果完美，打印光滑无气味。"},
  {"id":"fil2","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"无盘","netWeight":1000,"colorName":"白色","colorValue":"#FFFFFF","purchaseChannel":"京东","price":46.92,"purchaseDate":"2026-06-04","rating":5,"notes":"官方推荐：喷嘴 240-270℃，热床 60-80℃。打印前必须烘干（65℃ 8小时），否则易拉丝。","tags":["已用完"]},
  {"id":"fil3","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"有盘","netWeight":1000,"colorName":"黑色","colorValue":"#1A1A1A","purchaseChannel":"京东","price":53.72,"purchaseDate":"2026-06-04","rating":5,"notes":"官方推荐：喷嘴 200-250℃，热床 30-45℃。需降低打印速度（30-50mm/s），避免堵头。"},
- {"id":"fil4","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"有盘","netWeight":1000,"color":"灰色","purchaseChannel":"京东","price":53.72,"purchaseDate":"2026-06-04","rating":5,"notes":"官方推荐：喷嘴 240-280℃，热床 90-100℃。X2D 主动腔温最高 65℃，适合打印 ABS。打印前建议烘干（80℃ 8小时）。","colorName":"灰色","colorValue":"#A0AEC0"},
+ {"id":"fil4","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"有盘","netWeight":1000,"color":"灰色","purchaseChannel":"京东","price":53.72,"purchaseDate":"2026-06-04","rating":5,"notes":"官方推荐：喷嘴 240-280℃，热床 90-100℃。X2D 主动腔温最高 65℃，适合打印 ABS。打印前建议烘干（80℃ 8小时）。","colorName":"灰色","colorValue":"#A0AEC0","tags":["已用完"]},
  {"id":"fil5","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"无盘","netWeight":1000,"color":"青色","purchaseChannel":"京东","price":46.92,"purchaseDate":"2026-06-04","rating":5,"notes":"官方推荐：喷嘴 240-280℃，热床 90-100℃。抗紫外线，适合户外使用。打印前建议烘干（80℃ 8小时）。","colorName":"青色","colorValue":"#0BC5EA"},
  {"id":"fil_1782010862349_mp3k97ccc","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"无盘","netWeight":1000,"colorName":"南瓜橙","colorValue":"#FF9016","purchaseChannel":"京东","price":46.92,"purchaseDate":"2026-06-04","rating":5,"notes":""},
  {"id":"fil_1782011003718_toiwr295b","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"无盘","netWeight":1000,"colorName":"拓竹绿","colorValue":"#00AE42","purchaseChannel":"京东","price":46.92,"purchaseDate":"2026-06-04","rating":5,"notes":""},
  {"id":"fil_1782011045530_p6ovmx2ej","brand":"Bambu Lab","name":"PLA Basic","type":"PLA","spoolType":"有盘","netWeight":1000,"color":"红色","purchaseChannel":"京东","price":53.72,"purchaseDate":"2026-06-04","rating":5,"notes":"","colorName":"红色","colorValue":"#E53E3E"},
- {"id":"fil_1782011091112_wnoixl22j","brand":"SUNLU","name":"Cool Gray 9 C","type":"PETG","spoolType":"有盘","netWeight":1000,"colorName":"灰色","colorValue":"#75787B","purchaseChannel":"京东","price":42.9,"purchaseDate":"2026-06-04","rating":5,"notes":""},
+ {"id":"fil_1782011091112_wnoixl22j","brand":"SUNLU","name":"Cool Gray 9 C","type":"PETG","spoolType":"有盘","netWeight":1000,"colorName":"灰色","colorValue":"#75787B","purchaseChannel":"京东","price":42.9,"purchaseDate":"2026-06-04","rating":5,"notes":"","tags":["已用完"]},
  {"id":"fil_1782111211153_gtfjvrg9q","brand":"SUNLU","name":"PETG","type":"PETG","spoolType":"有盘","netWeight":1000,"colorName":"黑色","colorValue":"#000000","purchaseChannel":"拼哆哆","price":87.9,"purchaseDate":"2026-06-15","rating":5,"notes":"","isBundle":true,"bundleId":"fil_1782111211153_gtfjvrg9q","bundleItems":[{"colorName":"黑色","colorValue":"#000000","consumed":false},{"colorName":"白色","colorValue":"#FFFFFF","consumed":false},{"colorName":"灰色","colorValue":"#75787B"}],"tags":[]},
  {"id":"fil_1782111506325_7s7od79b9","brand":"kexcelled","name":"K5 PETG 高速","type":"PETG HF","spoolType":"有盘","netWeight":1000,"colorName":"黑色","colorValue":"#000000","purchaseChannel":"拼哆哆","price":33,"purchaseDate":"2026-06-15","rating":1,"notes":"","tags":["已用完"]}
 ]};
@@ -3437,7 +3676,6 @@ Object.assign(FAPP,{
     this.closeModal(); setTimeout(()=>this.viewDetail(id),50); },
 });
 
-function enterApp(){ $('#loginView').classList.add('hide'); $('#appView').classList.remove('hide'); selectTool('overview'); toast('登录成功 · 欢迎回来'); }
 function logout(){ adminLogout('已退出登录'); }
 
 /* ================= 顶栏工具菜单：tools 弹窗同款分类布局，点击新窗口打开 ================= */
@@ -8953,11 +9191,12 @@ function upgradeUI(root) {
   }
 })();
 </script>
-<script src="bambu-params-schema.js"></script>
+<script src="bambu-params-schema.js?v=20261004j"></script>
 <script src="bambu-process-rules.js"></script>
 <script src="bambu-pattern-icons.js"></script>
 <script src="bambu-preset-patch.js"></script>
-<script src="bambu-preset-editor.js"></script>
+<script src="bambu-preset-editor.js?v=20261004k"></script>
+<script src="bambu-preset-migrate.js?v=20261004j"></script>
 
 <style id="cpPorted">
 /* ↓ 由 cp_port.py 从 portfolio 后台同步（改动色板取色器请改源后重跑本脚本） */

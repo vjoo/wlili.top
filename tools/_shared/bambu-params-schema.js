@@ -4,7 +4,7 @@ window.BAMBU_PROCESS_SCHEMA = {
  "meta": {
   "machine": "Bambu Lab X2D",
   "extruders": 2,
-  "source_preset": "0.10mm Standard @BBL X2D 0.2 nozzle.json",
+  "source_preset": "0.20mm Standard @BBL X2D.json",
   "bambu_version": "02.08.00.05",
   "total_params": 260,
   "extruder_columns": [
@@ -14,7 +14,7 @@ window.BAMBU_PROCESS_SCHEMA = {
    },
    {
     "label": "辅助：标准",
-    "idx": 2
+    "idx": 3
    }
   ],
   "generated_by": "build_schema.py"
@@ -39,7 +39,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.1",
+     "default": "0.2",
      "mode": "simple",
      "vec": false
     },
@@ -53,7 +53,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.1",
+     "default": "0.2",
      "mode": "simple",
      "vec": false
     },
@@ -83,7 +83,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": 10.0,
      "enum": [],
-     "default": "0.22",
+     "default": "0.42",
      "mode": "advanced",
      "vec": false
     },
@@ -97,7 +97,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.25",
+     "default": "0.5",
      "mode": "advanced",
      "vec": false
     },
@@ -111,7 +111,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.22",
+     "default": "0.42",
      "mode": "advanced",
      "vec": false
     },
@@ -125,7 +125,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.22",
+     "default": "0.45",
      "mode": "advanced",
      "vec": false
     },
@@ -139,7 +139,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.22",
+     "default": "0.42",
      "mode": "advanced",
      "vec": false
     },
@@ -153,7 +153,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.22",
+     "default": "0.45",
      "mode": "advanced",
      "vec": false
     },
@@ -167,7 +167,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.22",
+     "default": "0.42",
      "mode": "advanced",
      "vec": false
     },
@@ -181,7 +181,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.22",
+     "default": "0.42",
      "mode": "advanced",
      "vec": false
     }
@@ -690,7 +690,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": 100.0,
      "enum": [],
-     "default": "0.11",
+     "default": "0.21",
      "mode": "advanced",
      "vec": false
     },
@@ -875,7 +875,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": 2.0,
      "enum": [],
-     "default": "1.5",
+     "default": "1",
      "mode": "advanced",
      "vec": false
     },
@@ -947,7 +947,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": 2.0,
      "enum": [],
-     "default": "1, 1, 1, 1",
+     "default": "1, 1, 1, 1, 1, 1",
      "mode": "develop",
      "vec": true,
      "mv": true
@@ -1136,7 +1136,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": 1000.0,
      "enum": [],
-     "default": "4",
+     "default": "2",
      "mode": "simple",
      "vec": false
     },
@@ -1277,7 +1277,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "7",
+     "default": "5",
      "mode": "simple",
      "vec": false
     },
@@ -1291,7 +1291,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.8",
+     "default": "1.0",
      "mode": "simple",
      "vec": false
     },
@@ -1305,7 +1305,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 1.0,
      "max": null,
      "enum": [],
-     "default": "7",
+     "default": "5",
      "mode": "simple",
      "vec": false
     },
@@ -1388,7 +1388,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "5",
+     "default": "3",
      "mode": "simple",
      "vec": false
     },
@@ -1416,7 +1416,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 1.0,
      "max": null,
      "enum": [],
-     "default": "5",
+     "default": "3",
      "mode": "simple",
      "vec": false
     },
@@ -1910,7 +1910,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.22",
+     "default": "0.45",
      "mode": "advanced",
      "vec": false
     },
@@ -1924,7 +1924,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0.22",
+     "default": "0.45",
      "mode": "advanced",
      "vec": false
     },
@@ -2274,7 +2274,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "40, 20, 20, 20",
+     "default": "50, 50, 50, 50, 50, 50",
      "mode": "advanced",
      "vec": true
     },
@@ -2288,7 +2288,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 1.0,
      "max": null,
      "enum": [],
-     "default": "70, 70, 70, 70",
+     "default": "105, 105, 105, 105, 105, 105",
      "mode": "advanced",
      "vec": true
     }
@@ -2304,7 +2304,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "100, 120, 50, 50",
+     "default": "200, 500, 500, 50, 50, 50",
      "mode": "advanced",
      "vec": true
     },
@@ -2318,7 +2318,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "150, 150, 150, 150",
+     "default": "300, 600, 600, 200, 200, 200",
      "mode": "advanced",
      "vec": true
     },
@@ -2332,7 +2332,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "50%, 50%, 50%, 50%",
+     "default": "50%, 50%, 50%, 50%, 50%, 50%",
      "mode": "advanced",
      "vec": true
     },
@@ -2346,7 +2346,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0, 0, 0, 0",
+     "default": "0, 0, 0, 0, 0, 0",
      "mode": "advanced",
      "vec": true
     },
@@ -2360,7 +2360,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "100, 100, 100, 100",
+     "default": "270, 600, 600, 200, 200, 200",
      "mode": "advanced",
      "vec": true
     },
@@ -2374,7 +2374,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "150, 150, 150, 150",
+     "default": "250, 600, 600, 200, 200, 200",
      "mode": "advanced",
      "vec": true
     },
@@ -2388,7 +2388,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "80%, 80%, 80%, 80%",
+     "default": "80%, 80%, 80%, 80%, 80%, 80%",
      "mode": "advanced",
      "vec": true
     },
@@ -2402,7 +2402,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "150, 150, 150, 150",
+     "default": "200, 200, 200, 200, 200, 200",
      "mode": "advanced",
      "vec": true
     },
@@ -2416,7 +2416,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": null,
      "max": null,
      "enum": [],
-     "default": "1, 1, 1, 1",
+     "default": "1, 1, 1, 1, 0, 0",
      "mode": "advanced",
      "vec": true
     },
@@ -2430,7 +2430,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0, 0, 0, 0",
+     "default": "0, 0, 0, 0, 0, 0",
      "mode": "advanced",
      "vec": true
     },
@@ -2444,7 +2444,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "40, 40, 40, 40",
+     "default": "50, 50, 50, 50, 50, 50",
      "mode": "advanced",
      "vec": true
     },
@@ -2458,7 +2458,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "30, 30, 30, 30",
+     "default": "30, 20, 20, 30, 20, 20",
      "mode": "advanced",
      "vec": true
     },
@@ -2472,7 +2472,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "20, 20, 20, 20",
+     "default": "10, 10, 10, 10, 10, 10",
      "mode": "advanced",
      "vec": true
     },
@@ -2486,7 +2486,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "10, 10, 10, 10",
+     "default": "10, 10, 10, 10, 10, 10",
      "mode": "advanced",
      "vec": true
     },
@@ -2500,7 +2500,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": null,
      "max": null,
      "enum": [],
-     "default": "0, 0, 0, 0",
+     "default": "0, 0, 0, 0, 0, 0",
      "mode": "advanced",
      "vec": true
     },
@@ -2514,7 +2514,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0, 0, 0, 0",
+     "default": "0, 0, 0, 0, 0, 0",
      "mode": "advanced",
      "vec": true
     },
@@ -2528,7 +2528,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "1000, 1000, 1000, 1000",
+     "default": "1000, 1000, 1000, 1000, 1000, 1000",
      "mode": "advanced",
      "vec": true
     },
@@ -2542,7 +2542,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "100000, 100000, 100000, 100000",
+     "default": "100000, 100000, 100000, 100000, 100000, 100000",
      "mode": "advanced",
      "vec": true
     },
@@ -2556,7 +2556,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "400, 400, 400, 400",
+     "default": "400, 400, 400, 400, 400, 400",
      "mode": "advanced",
      "vec": true
     },
@@ -2570,7 +2570,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "1000, 1000, 1000, 1000",
+     "default": "1000, 1000, 1000, 1000, 1000, 1000",
      "mode": "advanced",
      "vec": true
     },
@@ -2584,7 +2584,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "100000, 100000, 100000, 100000",
+     "default": "100000, 100000, 100000, 100000, 100000, 100000",
      "mode": "advanced",
      "vec": true
     },
@@ -2598,7 +2598,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "25, 25, 25, 25",
+     "default": "50, 50, 50, 50, 200, 200",
      "mode": "advanced",
      "vec": true
     },
@@ -2612,7 +2612,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "50, 50, 50, 50",
+     "default": "250, 250, 250, 250, 250, 250",
      "mode": "advanced",
      "vec": true
     },
@@ -2626,7 +2626,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "150, 150, 150, 150",
+     "default": "150, 150, 150, 150, 150, 150",
      "mode": "advanced",
      "vec": true
     },
@@ -2640,7 +2640,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 1.0,
      "max": null,
      "enum": [],
-     "default": "80, 80, 80, 80",
+     "default": "80, 80, 80, 80, 80, 80",
      "mode": "advanced",
      "vec": true
     }
@@ -2656,7 +2656,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 1.0,
      "max": null,
      "enum": [],
-     "default": "1000, 1000, 1000, 1000",
+     "default": "1000, 1000, 1000, 1000, 1000, 1000",
      "mode": "advanced",
      "vec": true
     }
@@ -2672,7 +2672,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "4000, 10000, 4000, 4000",
+     "default": "10000, 10000, 10000, 1000, 1000, 1000",
      "mode": "advanced",
      "vec": true
     },
@@ -2686,7 +2686,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "10000, 10000, 10000, 10000",
+     "default": "10000, 10000, 10000, 10000, 10000, 10000",
      "mode": "advanced",
      "vec": true
     },
@@ -2700,7 +2700,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "250, 250, 250, 250",
+     "default": "250, 250, 250, 250, 250, 250",
      "mode": "develop",
      "vec": true
     },
@@ -2714,7 +2714,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "6000, 6000, 6000, 6000",
+     "default": "6000, 6000, 6000, 6000, 6000, 6000",
      "mode": "advanced",
      "vec": true
     },
@@ -2728,7 +2728,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "500, 500, 500, 500",
+     "default": "500, 500, 500, 500, 500, 500",
      "mode": "advanced",
      "vec": true
     },
@@ -2742,7 +2742,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "2000, 5000, 4000, 4000",
+     "default": "5000, 5000, 5000, 1000, 1000, 1000",
      "mode": "advanced",
      "vec": true
     },
@@ -2756,7 +2756,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "0, 0, 0, 0",
+     "default": "0, 0, 0, 0, 0, 0",
      "mode": "advanced",
      "vec": true
     },
@@ -2770,7 +2770,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "2000, 2000, 2000, 2000",
+     "default": "2000, 2000, 2000, 1000, 1000, 1000",
      "mode": "advanced",
      "vec": true
     },
@@ -2784,7 +2784,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": 0.0,
      "max": null,
      "enum": [],
-     "default": "100%, 100%, 100%, 100%",
+     "default": "100%, 100%, 100%, 100%, 100%, 100%",
      "mode": "advanced",
      "vec": true
     },
@@ -3372,7 +3372,7 @@ window.BAMBU_PROCESS_SCHEMA = {
        "en": "0.2 (detachable)"
       }
      ],
-     "default": "0.1",
+     "default": "0.2",
      "mode": "advanced",
      "vec": false
     },
@@ -3386,7 +3386,7 @@ window.BAMBU_PROCESS_SCHEMA = {
      "min": null,
      "max": null,
      "enum": [],
-     "default": "0.1",
+     "default": "0.2",
      "mode": "advanced",
      "vec": false
     },
