@@ -5101,22 +5101,28 @@ function bindCardSlotsField(f, section) {
   async function uploadFiles(files, atIdx) {
     const arr = Array.prototype.slice.call(files).filter(Boolean);
     if (!arr.length) return;
-    const prog = toastProgress('正在上传图片 0/' + arr.length + '...');
     const list = getList();
+    const prog = toastProgress('正在上传图片 0/' + arr.length + '...');
     try {
+      let done = 0;
       for (let i = 0; i < arr.length; i++) {
-        prog.update('正在上传图片 ' + (i + 1) + '/' + arr.length + '...');
+        if (atIdx == null && list.length >= max) break;   // 批量追加：达上限即停，不再上传（避免上传后被孤儿清理删掉）
+        prog.update('正在上传图片 ' + (done + 1) + '/' + arr.length + '...');
         const url = await uploadImage(arr[i], 'auto', section.type || '');
         if (atIdx != null && atIdx >= 0) {
           while (list.length <= atIdx) list.push({});
           list[atIdx] = { image: url };
           atIdx = null;                       // 后续文件顺延追加
         } else {
-          if (list.length >= max) break;
           list.push({ image: url });
         }
+        done++;
       }
-      prog.close('上传完成', 'success');
+      if (done < arr.length) {
+        prog.close('上传完成（已达上限 ' + max + ' 张，剩余 ' + (arr.length - done) + ' 张未添加）', 'success');
+      } else {
+        prog.close('上传完成', 'success');
+      }
     } catch (e) {
       prog.close('上传失败：' + (e && e.message ? e.message : '未知错误'), 'error');
     }

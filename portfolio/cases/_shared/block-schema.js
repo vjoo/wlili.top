@@ -744,7 +744,7 @@
           default: 'large', tab: '素材',
           hint: '大尺寸 = 大Banner首屏容器（100vh 铺满、四周 12px 小边距）；中尺寸 = 小Banner首屏容器（1136:608 比例居中、四周大边距）' },
 
-        { key: 'images', label: '卡片图', type: 'card-slots', min: 4, max: 16, recommend: 9, tab: '素材',
+        { key: 'images', label: '卡片图', type: 'card-slots', min: 4, max: 60, recommend: 24, tab: '素材',
           hint: '点空槽或「批量上传」加图；−/+ 调整数量；动效会循环使用这些图' },
 
         { key: 'effect', label: '动效', type: 'select', options: ['vortex', 'drift', 'brick', 'ticker'],
