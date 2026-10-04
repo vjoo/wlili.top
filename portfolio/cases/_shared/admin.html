@@ -5285,7 +5285,7 @@ function startMnLive() {
       const fl = f.dim > 0.01 ? 'brightness(' + (1 - f.dim * 0.75).toFixed(2) + ')' : '';
       if (c._fl !== fl) { c.style.filter = fl; c._fl = fl; }
       if (bwK > 0.001) {
-        const bwd = Math.max(1, Math.round(bwK * Math.min(dw, dh))) + 'px solid ' + bcCol;
+        const bwd = Math.max(1, Math.round(bwK * Math.min(f.w, f.h))) + 'px solid ' + bcCol;
         if (c._bd !== bwd) { c.style.border = bwd; c._bd = bwd; }
       } else if (c._bd) { c.style.border = ''; c._bd = ''; }
       if (c._rd !== radius) { c.style.borderRadius = radius; c._rd = radius; }

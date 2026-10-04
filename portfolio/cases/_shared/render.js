@@ -3707,7 +3707,7 @@ var CaseRenderer = (function () {
           var fl = f.dim > 0.01 ? 'brightness(' + (1 - f.dim * 0.75).toFixed(2) + ')' : '';
           if (c._fl !== fl) { c.style.filter = fl; c._fl = fl; }
           if (bwK > 0.001) {
-            var bwd = Math.max(1, Math.round(bwK * Math.min(dw, dh))) + 'px solid ' + bcCol;
+            var bwd = Math.max(1, Math.round(bwK * Math.min(f.w, f.h))) + 'px solid ' + bcCol;
             if (c._bd !== bwd) { c.style.border = bwd; c._bd = bwd; }
           }
         }
