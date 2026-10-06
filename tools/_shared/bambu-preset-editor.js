@@ -87,6 +87,17 @@
       if (b) b.classList.toggle("active", k === t);
     });
   };
+  /* 弹窗内耗材丝分页卡切换：详情弹窗的 #bpPaneFil 没有 pf_sel，
+     不能复用 bindFilTabs（它依赖 filCurrentRec），故用这个轻量 handler。 */
+  PAPP.filModalTab = function (name) {
+    var pane = document.getElementById("bpPaneFil"); if (!pane) return;
+    pane.querySelectorAll(".bp-tab[data-ftab]").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-ftab") === name);
+    });
+    pane.querySelectorAll(".bp-panel[data-fpanel]").forEach(function (p) {
+      p.classList.toggle("active", p.getAttribute("data-fpanel") === name);
+    });
+  };
   /* ---------- 静态标记：值恒定的「信息展示」字段 ----------
      官方标注 / 机型决定的信息项（安全标注、可打印性…）不是可操作项，
      渲染成控件就会挨两刀：① 满色太抢眼 ② 用户问"为什么不能改"。
@@ -215,6 +226,10 @@
     pane.querySelectorAll(".bp-group-head[data-toggle]").forEach(function (h) {
       h.addEventListener("click", function () { h.parentNode.classList.toggle("collapsed"); });
     });
+    /* 条件置灰：任意字段变动后重算联动（slow_down / 保持风扇常开 / 自适应体积速度 等开关） */
+    pane.addEventListener("change", filApplyRules);
+    pane.addEventListener("input", filApplyRules);
+    filApplyRules();
   }
   /* 打开弹窗后按 preset.filId 初始化耗材丝表单 */
   function filInitForm(preset) {
@@ -235,7 +250,56 @@
       el.value = v;
     });
     filSyncSel(document.getElementById("bpPaneFil"));
+    filApplyRules();   // 下拉切换后按当前值刷新条件置灰
   };
+  /* 当前选中的耗材丝记录（由下拉 pf_sel 决定） */
+  function filCurrentRec() {
+    var sel = document.getElementById("pf_sel");
+    return sel ? filById(sel.value) : null;
+  }
+  /* 收集当前表单值（只读字段 / hidden 字段取存储值，其余取控件当前值）—— 供条件规则 evaluate 使用 */
+  function filValueMap() {
+    var rec = filCurrentRec(), m = {};
+    filFields().forEach(function (f) {
+      if (FIL_RO[f.key]) { m[f.key] = filGet(rec, f.key); return; }
+      var el = document.getElementById("pf_" + f.key);
+      if (!el) { m[f.key] = filGet(rec, f.key); return; }   // hidden / 无控件字段（如体积流速系数）：取存储值
+      m[f.key] = f.type === "checkbox" ? (el.checked ? "1" : "0") : (el.value != null ? el.value : "");
+    });
+    return m;
+  }
+  /* 条件置灰：依据 FSCHEMA.evaluate(values) 的 en 映射，逐字段置灰/解灰控件 + 行视觉。
+     只读（ro）字段不参与（始终禁用，由 FIL_RO 处理）。 */
+  function filApplyRules() {
+    if (!FSCHEMA || !FSCHEMA.evaluate) return;
+    var res = FSCHEMA.evaluate(filValueMap());
+    if (!res || !res.en) return;
+    filFields().forEach(function (f) {
+      if (FIL_RO[f.key]) return;
+      var el = document.getElementById("pf_" + f.key);
+      if (!el) return;
+      var enabled = !(f.key in res.en) || res.en[f.key];
+      el.disabled = !enabled;
+      /* 视觉：单选行置灰 .bp-row，双列行置灰 .bp-subcell；开关与 .sel 外壳同步 */
+      var cell = el.closest ? el.closest(".bp-row, .bp-subcell") : null;
+      if (cell) cell.classList.toggle("disabled", !enabled);
+      var sw = el.closest ? el.closest(".bp-switch") : null;
+      if (sw) sw.classList.toggle("disabled", !enabled);
+      if (el.tagName === "SELECT") {
+        var selWrap = el.closest ? el.closest(".sel") : null;
+        if (selWrap) selWrap.classList.toggle("disabled", !enabled);
+      }
+    });
+  }
+  /* 暴露给测试：条件置灰的真实逻辑（filApplyRules / filValueMap / filCurrentRec），
+     供 Node 测试桩在最小 DOM 环境下直接驱动，验证「规则决策 → 控件禁用」映射。
+     浏览器中 PAPP 已存在，属无害暴露。 */
+  if (typeof PAPP !== "undefined") {
+    PAPP.filApplyRules = filApplyRules;
+    PAPP.filValueMap = filValueMap;
+    PAPP.filCurrentRec = filCurrentRec;
+    PAPP.filReadonlyHTML = filReadonlyHTML;
+  }
   /* 保存时收集耗材丝表单：写回 FILP 记录（有变化才落盘），返回是否写入 */
   function filCollectSave() {
     var sel = document.getElementById("pf_sel"); if (!sel || !FSCHEMA) return false;
@@ -251,48 +315,93 @@
     if (changed) AD.save("bambu_filament_presets");
     return changed;
   }
-  /* 详情弹窗的耗材丝块：摘要（材料/关键参数/偏离项数），点击展开全量（按官方页签顺序） */
+  /* 详情弹窗的耗材丝块：与编辑页同一套分页卡结构（bp-tab / bp-panel / bp-group）。
+     读取顺序：① preset.filId 关联的耗材丝记录；② 否则按 preset.filament.overrides
+     合并到基础 rec（无 filId 也能展示预设自带的耗材丝参数，含"风扇拉满"等 override）。
+     override 命中的字段打"预设覆盖"标记，让用户一眼看到"这条预设对耗材丝改了什么"。 */
+  function filReadonlyRec(preset) {
+    if (preset.filId) {
+      var r = filById(preset.filId);
+      if (r) return { rec: r, keys: [] };
+    }
+    var ov = preset.filament && preset.filament.overrides;
+    if (ov && Object.keys(ov).length) {
+      var rec = null, PFA = (typeof window !== "undefined" && window.BAMBU_PFA) || null;
+      if (PFA) rec = PFA.buildExportRec(preset, filList(), FSCHEMA);
+      if (!rec) {
+        rec = { id: "preset:" + (preset.id || ""), name: "（预设覆盖值）",
+          typeKey: (preset.filament.type || "").toLowerCase().indexOf("pla") >= 0 ? "pla" : "petg",
+          values: {} };
+        filFields().forEach(function (f) { if (f.key) filSet(rec, f.key, ""); });
+      }
+      var keys = Object.keys(ov);
+      keys.forEach(function (k) { filSet(rec, k, String(ov[k])); });
+      return { rec: rec, keys: keys };
+    }
+    return null;
+  }
+  function filRowReadonly(f, rec, okeys, isSub) {
+    var val = filGet(rec, f.key);
+    var ov = okeys && okeys.indexOf(f.key) >= 0;
+    var st = filMarkState(f, val);
+    var disp = st ? (st.icon + " " + st.text)
+      : (f.type === "checkbox" ? (val === "1" ? "✓" : "—") : (val === "" ? "—" : String(val)));
+    var tag = ov ? ' <span class="bp-ov-tag">预设覆盖</span>' : "";
+    if (isSub) {
+      return '<div class="bp-subcell"><span class="bp-sublabel">' + esc(f.label) + "</span>" +
+        '<b class="bp-ro-val' + (ov ? " bp-ov" : "") + '">' + esc(disp) + tag + "</b></div>";
+    }
+    return '<div class="bp-row"><div class="bp-label">' + esc(f.label) +
+      (f.unit ? ' <span class="bp-unit">' + esc(f.unit) + "</span>" : "") + "</div>" +
+      '<div class="bp-ctrlwrap"><b class="bp-ro-val' + (ov ? " bp-ov" : "") + '">' + esc(disp) + tag + "</b></div></div>";
+  }
+  function filGroupReadonly(g, rec, okeys) {
+    var body = g.fields.map(function (f) {
+      if (f.hidden) return "";
+      if (f.key) return filRowReadonly(f, rec, okeys);
+      var cols = (f.cols || []).map(function (c) { return filRowReadonly(c, rec, okeys, true); }).join("");
+      return '<div class="bp-row bp-row2"><div class="bp-label">' + esc(f.label) + "</div>" +
+        '<div class="bp-ctrlwrap bp-ctrlwrap2">' + cols + "</div></div>";
+    }).join("");
+    return '<div class="bp-group"><div class="bp-group-head" data-toggle><span class="bp-gtitle">' + esc(g.label) +
+      '</span><span class="bp-gcount"></span>' + CHEVRON + '</div>' +
+      '<div class="bp-group-body"><div class="bp-cols">' + body + "</div></div></div>";
+  }
+  function filReadonlyPane(rec, okeys) {
+    if (!FSCHEMA) return "";
+    var tabs = FSCHEMA.tabs.map(function (t, i) {
+      return '<button type="button" class="bp-tab' + (i === 0 ? " active" : "") + '" data-ftab="' + esc(t.id) +
+        '" onclick="PAPP.filModalTab(\'' + esc(t.id) + '\')">' + esc(t.label) + "</button>";
+    }).join("");
+    var panels = FSCHEMA.tabs.map(function (t, i) {
+      return '<div class="bp-panel' + (i === 0 ? " active" : "") + '" data-fpanel="' + esc(t.id) + '">' +
+        t.groups.map(function (g) { return filGroupReadonly(g, rec, okeys); }).join("") + "</div>";
+    }).join("");
+    return '<div class="bp-tabs">' + tabs + "</div>" + panels;
+  }
   function filReadonlyHTML(preset) {
     if (!FSCHEMA) return "";
-    var rec = preset.filId ? filById(preset.filId) : null;
-    if (!rec) return '<div class="bp-filro"><div class="ro-field" style="color:var(--muted)">未关联耗材丝</div></div>';
-    var all = filFields();
+    var info = filReadonlyRec(preset);
+    if (!info) return '<div class="bp-filro"><div class="ro-field" style="color:var(--muted)">未关联耗材丝 / 无耗材丝参数</div></div>';
+    var rec = info.rec, okeys = info.keys;
     var bvals = ((FSCHEMA.builtin || {})[rec.typeKey] || {}).values || {};
     var modCount = 0;
-    all.forEach(function (f) {
+    filFields().forEach(function (f) {
+      if (okeys.indexOf(f.key) >= 0) { modCount++; return; }   // 预设覆盖项也算"已改"
       if (String(filGet(rec, f.key)) !== String(bvals[f.key] == null ? "" : bvals[f.key])) modCount++;
     });
     function gv(k, fb) { var s = filGet(rec, k); return (s !== "" && s != null) ? s : (fb || "—"); }
-    function item(k, val) { return '<div><span>' + esc(k) + '</span><b>' + esc(val) + "</b></div>"; }
-    var summary = '<div class="bp-fil-sum">' +
-      '<div class="bp-fil-sumrow"><b>' + esc(rec.name) + "</b>" +
-      (modCount ? '<span class="bp-fil-modtag">' + modCount + " 项偏离内置</span>"
+    function item(k, val) { return '<div><span>' + esc(k) + "</span><b>" + esc(val) + "</b></div>"; }
+    var sumName = (preset.filament && preset.filament.type) || rec.name || "预设耗材丝参数";
+    var summary = '<div class="bp-fil-sum"><div class="bp-fil-sumrow"><b>' + esc(sumName) + "</b>" +
+      (modCount ? '<span class="bp-fil-modtag">' + modCount + " 项偏离内置 / 预设覆盖</span>"
         : '<span class="bp-fil-sametag">与官方基准一致</span>') + "</div>" +
       '<div class="bp-fil-sumgrid">' +
       item("类型", gv("filament_type")) + item("供应商", gv("filament_vendor", "官方")) +
       item("喷嘴温度", gv("nozzle_temperature") + " ℃") + item("热床温度", gv("eng_plate_temp") + " ℃") +
       item("流量比例", gv("filament_flow_ratio")) + item("最大流速", gv("filament_max_volumetric_speed") + " mm³/s") +
       "</div></div>";
-    var body = FSCHEMA.tabs.map(function (t) {
-      return '<div class="bp-fil-gtitle">' + esc(t.label) + "</div>" +
-        t.groups.map(function (g) {
-          return '<div class="bp-fil-rosub">' + esc(g.label) + "</div>" +
-            '<div class="bp-fil-rogrid">' + g.fields.map(function (f) {
-              var one = function (x) {
-                var v = filGet(rec, x.key);
-                var mk = filMarkState(x, v);          // 信息展示型字段：与编辑表单同一份语义
-                var disp = mk ? esc(mk.icon + " " + mk.text)
-                  : (x.type === "checkbox" ? (v === "1" ? "✓" : "—") : (v === "" ? "—" : esc(v)));
-                return '<div class="ro-field"><b>' + esc(x.label) + (x.unit && x.type !== "checkbox" ? " (" + esc(x.unit) + ")" : "") + '：</b>' +
-                  '<span class="bp-ro-val">' + disp + "</span></div>";
-              };
-              if (f.key) return one(f);
-              return '<div class="bp-fil-row2">' + (f.cols || []).map(one).join("") + "</div>";
-            }).join("") + "</div>";
-        }).join("");
-    }).join("");
-    return '<div class="bp-filro">' + summary +
-      '<details class="bp-fil-detail"><summary>展开全部 ' + all.length + ' 项参数</summary>' + body + "</details></div>";
+    return '<div class="bp-filro">' + summary + filReadonlyPane(rec, okeys) + "</div>";
   }
 
   var MODES = { simple: "简单", advanced: "高级", develop: "开发" };
@@ -1215,6 +1324,11 @@
       ".bp-row.disabled .bp-ctrl{background:var(--panel);color:var(--text-muted,#8a8f98);border-color:var(--line);opacity:1;cursor:not-allowed;-webkit-text-fill-color:var(--text-muted,#8a8f98);box-shadow:none}" +
       ".bp-row.disabled .bp-label{color:var(--text-muted,#8a8f98)}" +
       ".bp-row.disabled .bp-switch{opacity:.6}" +
+      /* 条件置灰（rules 联动，区别于 ro 静态只读）：双列子格 / 开关 / 下拉外壳统一灰显 */
+      ".bp-subcell.disabled{opacity:.55}" +
+      ".bp-subcell.disabled .bp-ctrl{color:var(--text-muted,#8a8f98);cursor:not-allowed}" +
+      ".bp-subcell.disabled .bp-switch{opacity:.55;cursor:not-allowed}" +
+      ".bp-row.disabled .sel.disabled .sel-trigger,.bp-subcell.disabled .sel.disabled .sel-trigger{opacity:.55;cursor:not-allowed;pointer-events:none}" +
       ".bp-ctrl:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}" +
       ".bp-row.modified .bp-ctrl{color:var(--bp-warn);border-color:var(--warning-line,var(--bp-warn))}" +
       /* ⚠️ 编辑弹窗嵌在 admin.html 的 `.fgroup` 里，而 `.fgroup input[type=text]` 的特异性是
@@ -1348,7 +1462,7 @@
       ".bp-row.disabled .bp-switch{cursor:not-allowed;opacity:.55}" +
       /* 双列行（首层/其它层、挤出机更换/热端更换）：column-span:all 独占整行；
          宽度够并排、不够自动上下排（flex 换行，无需断点） */
-      ".bp-cols .bp-row2{column-span:all;padding-left:0;padding-right:0}" +
+      ".bp-cols .bp-row2{column-span:all;padding:7px 6px 7px 24px}" +
       ".bp-row2 .bp-ctrlwrap2{display:flex;gap:10px 24px;flex-wrap:wrap}" +
       ".bp-row2 .bp-ctrlwrap2>div.bp-subcell{flex:0 1 auto;min-width:0;display:flex;align-items:center;gap:8px}" +
       ".bp-row2 .bp-ctrlwrap2 .bp-ctrl{flex:0 1 auto}" +
@@ -1377,6 +1491,10 @@
       ".bp-filro{--bp-warn:var(--warning,#f59e0b);padding-top:6px}" +
       ".bp-fil-mod{color:var(--bp-warn);font-weight:600}" +
       ".bp-fil-modtag{font-size:10.5px;padding:1px 6px;border-radius:999px;background:var(--warning-bg,#fff7e6);color:var(--bp-warn);margin-left:6px}" +
+      /* 详情弹窗耗材丝只读值 + 预设覆盖标记（与编辑页 bp-row 体系共用外观） */
+      ".bp-ro-val{font-weight:600;color:var(--ink)}" +
+      ".bp-ro-val.bp-ov{color:var(--accent)}" +
+      ".bp-ov-tag{font-size:10.5px;padding:1px 6px;border-radius:999px;background:var(--accent-light,#eef7e2);color:var(--accent);margin-left:6px;font-weight:600;white-space:nowrap}" +
       ".bp-json{margin:8px 0 0;padding:12px;max-height:320px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}" +
       /* —— 导入预览的耗材丝分段 —— */
       ".bp-imp-sec{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}" +
@@ -1513,11 +1631,42 @@
       '<div class="fmodal-head"><div class="fmodal-title">预设详情</div><button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
       '<div class="fmodal-body">' + body + "</div>" +
       '<div class="fmodal-foot">' +
+      (it.filament && it.filament.overrides && Object.keys(it.filament.overrides).length
+        ? '<button class="btn" title="把该预设的耗材丝参数写入匹配的耗材丝记录（会改你的耗材丝预设，已自动备份）" onclick="PAPP.applyPresetFilament(\'' + id + '\')">套用到耗材丝</button>'
+        : "") +
       '<button class="btn" onclick="PAPP.exportBambu(\'' + id + '\')">导出到 Bambu Studio</button>' +
       '<button class="btn" onclick="closeModal();setTimeout(function(){PAPP.openForm(\'' + id + '\')},100)">编辑</button><button class="btn" onclick="closeModal()">关闭</button></div>';
     document.getElementById("fmodalBox").style.width = "min(1060px,95vw)";
     document.getElementById("fmodalMask").classList.add("show");
+    /* 详情弹窗耗材丝分页卡：分组折叠（与编辑页 bindFilTabs 同语义，但 view 没有 pf_sel 故独立绑定） */
+    var fpView = document.getElementById("bpPaneFil");
+    if (fpView) {
+      fpView.querySelectorAll(".bp-group-head[data-toggle]").forEach(function (h) {
+        h.addEventListener("click", function () { h.parentNode.classList.toggle("collapsed"); });
+      });
+    }
     bindReadOnly(document.querySelector(".bp-readonly"));
+  };
+
+  /* 预设级耗材丝 override 的显式套用：把 overrides 写回匹配的耗材丝记录。
+   * 破坏性（会改用户的耗材丝预设），但套用前已自动备份到 localStorage bambu_filament_presets_bak。 */
+  PAPP.applyPresetFilament = function (id) {
+    var it = PSET.find(function (p) { return p.id === id; });
+    if (!it || !it.filament || !it.filament.overrides || !Object.keys(it.filament.overrides).length) {
+      toast("该预设没有可套用的耗材丝 override"); return;
+    }
+    var PFA = (typeof window !== "undefined" && window.BAMBU_PFA) || null;
+    var base = PFA ? PFA.resolveBaseRec(it, filList(), FSCHEMA) : null;
+    if (!base) { toast("找不到匹配的耗材丝记录（按 filId / filament.type）"); return; }
+    try { localStorage.setItem("bambu_filament_presets_bak", JSON.stringify(FILP)); } catch (e) { }
+    var changed = [];
+    Object.keys(it.filament.overrides).forEach(function (k) {
+      var nv = String(it.filament.overrides[k]);
+      if (filGet(base, k) !== nv) { filSet(base, k, nv); changed.push(k); }
+    });
+    AD.save("bambu_filament_presets");
+    renderMain();
+    toast("已把 " + changed.length + " 项耗材丝参数套用到「" + (base.name || base.typeKey) + "」（可从备份还原）");
   };
 
   /* ============================================================
@@ -1668,7 +1817,16 @@
   function bblFileName(name) { return String(name || "wlili").replace(/[\\/:*?"<>|]/g, "_").slice(0, 60); }
   function bblBuild(preset, noz) {
     var rec = preset.filId ? filById(preset.filId) : null;
-    return { proc: bblProcessJSON(preset, noz), fil: rec ? bblFilamentJSON(rec) : null };
+    var fil = null;
+    var PFA = (typeof window !== "undefined" && window.BAMBU_PFA) || null;
+    var ov = (preset.filament && preset.filament.overrides) || {};
+    if (PFA && preset.filament && Object.keys(ov).length) {
+      /* 新结构：预设自带耗材丝 override —— 导出时自动套用（切片时生效，非破坏性） */
+      fil = bblFilamentJSON(PFA.buildExportRec(preset, filList(), FSCHEMA));
+    } else if (rec) {
+      fil = bblFilamentJSON(rec); /* 老路径：仅 filId 关联 */
+    }
+    return { proc: bblProcessJSON(preset, noz), fil: fil };
   }
   PAPP.bblPreviewJSON = function (id, noz) {
     var it = PSET.find(function (p) { return p.id === id; }); if (!it) return null;
