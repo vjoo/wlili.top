@@ -48,6 +48,33 @@
     ro: {
       "filament_contact_safe": 1,      "filament_dev_ams_drying_ams_limitations": 1,      "filament_emission_safe": 1,      "filament_extruder_compatibility": 1,      "filament_extruder_variant": 1,      "filament_ingredients_safe": 1,      "filament_printable": 1,      "filament_type": 1,      "filament_vendor": 1,      "impact_strength_z": 1
     },
+    /* 条件置灰规则（对齐官方 Bambu Studio `TabFilament::toggle_options` 的联动逻辑）。
+       返回 { en:{key:bool}, vis:{key:bool} }：en[key]===false 表示该字段当前应禁用（灰显但保留导出值）。
+       依据（官方 UI 实测 + wiki.bambulab.com/zh/software/bambu-studio/auto-cooling）：
+       - Cooling 页：slow_down_for_layer_cooling（降低打印速度以得到更好的冷却）开启时，
+         cooling_slowdown_logic（冷却减速逻辑）与 no_slow_down_for_cooling_on_outwalls（不减慢外圈速度）
+         才可编辑；关闭则一并置灰（二者仅在 slow-down 生效时有意义）。
+       - reduce_fan_stop_start_freq（保持风扇常开）开启时，最小风扇速度阈值的层时间部分
+         （fan_min_speed / fan_cooling_layer_time）失去意义，置灰（风扇以最小转速常开，不再按层时间降速）。
+       - 体积速度：filament_adaptive_volumetric_speed（自适应体积速度）开启时，
+         filament_max_volumetric_speed（最大体积速度）由切片器自动管理，置灰；
+         而 volumetric_speed_coefficients（体积流速系数，hidden）全 0 时自适应无法启用，
+         故自适应开关本身置灰（官方：系数非 "0 0 0 0 0 0" 才允许勾选）。 */
+    evaluate: function (v) {
+      v = v || {};
+      var en = {};
+      var slow = String(v["slow_down_for_layer_cooling"]) === "1";
+      en["cooling_slowdown_logic"] = slow;
+      en["no_slow_down_for_cooling_on_outwalls"] = slow;
+      var reduce = String(v["reduce_fan_stop_start_freq"]) === "1";
+      if (reduce) { en["fan_min_speed"] = false; en["fan_cooling_layer_time"] = false; }
+      var adapt = String(v["filament_adaptive_volumetric_speed"]) === "1";
+      en["filament_max_volumetric_speed"] = !adapt;
+      var coef = String(v["volumetric_speed_coefficients"] || "").trim();
+      var coefOn = coef !== "" && coef.split(/\s+/).some(function (x) { return parseFloat(x) !== 0; });
+      en["filament_adaptive_volumetric_speed"] = coefOn;
+      return { en: en, vis: {} };
+    },
     tabs: [
       { id: "filament", label: "耗材丝", groups: [
         { label: "基础信息", fields: [
@@ -130,9 +157,9 @@
             { v: "uniform_cooling", l: "均匀冷却" }, { v: "consistent_surface", l: "表面一致性" }] },
           { key: "cooling_perimeter_transition_distance", label: "外圈过渡距离", type: "text", unit: "mm" },
           { key: "slow_down_min_speed", label: "最小打印速度", type: "text", unit: "mm/s", pin: 1, vec6: 1 },
-          { key: "overhang_fan_threshold", label: "冷却悬空阈值", type: "select", pin: 1, options: ["0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"] },
-          { key: "overhang_fan_speed", label: "参与冷却降速的悬垂阈值", type: "text" },
-          { key: "additional_cooling_fan_speed", label: "悬垂风扇速度", type: "text", unit: "%" },
+          { key: "overhang_fan_threshold", label: "参与冷却降速的悬垂阈值", type: "select", pin: 1, options: ["0%", "10%", "20%", "25%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"] },
+          { key: "overhang_fan_speed", label: "悬垂风扇速度", type: "text", unit: "%" },
+          { key: "additional_cooling_fan_speed", label: "悬垂/桥接强制冷却风速", type: "text", unit: "%" },
           { key: "during_print_exhaust_fan_speed", label: "打印中排气风扇转速", type: "text", unit: "%" },
           { key: "complete_print_exhaust_fan_speed", label: "打印结束排气风扇转速", type: "text", unit: "%" },
         ]},
@@ -229,7 +256,7 @@
      *   AMS 干燥类是 2/4 段（多 AMS 槽位 / 双挤出机），本工具只读，导出时沿用官方原值 */
     index: {
       "activate_air_filtration": ["启用空气过滤", "checkbox", "", 0, "advanced", "过滤与安全", 0, 1],
-      "additional_cooling_fan_speed": ["悬垂风扇速度", "text", "%", 0, "cooling", "部件冷却风扇", 0, 1],
+      "additional_cooling_fan_speed": ["悬垂/桥接强制冷却风速", "text", "%", 0, "cooling", "部件冷却风扇", 0, 1],
       "additional_fan_full_speed_layer": ["风扇速度", "text", "%", 0, "cooling", "辅助部件冷却风扇", 0, 1],
       "chamber_temperatures": ["腔体温度", "text", "℃", 0, "filament", "打印温度", 0, 1],
       "circle_compensation_speed": ["圆弧补偿速度", "text", "mm/s", 0, "advanced", "尺寸补偿", 0, 1],
@@ -348,8 +375,8 @@
       "nozzle_temperature_initial_layer": ["首层", "text", "℃", 1, "filament", "打印温度", 1, 6],
       "nozzle_temperature_range_high": ["最大", "text", "℃", 0, "filament", "打印温度", 0, 1],
       "nozzle_temperature_range_low": ["最小", "text", "℃", 0, "filament", "打印温度", 0, 1],
-      "overhang_fan_speed": ["参与冷却降速的悬垂阈值", "text", "", 0, "cooling", "部件冷却风扇", 0, 1],
-      "overhang_fan_threshold": ["冷却悬空阈值", "select", "", 0, "cooling", "部件冷却风扇", 1, 1],
+      "overhang_fan_speed": ["悬垂风扇速度", "text", "%", 0, "cooling", "部件冷却风扇", 0, 1],
+      "overhang_fan_threshold": ["参与冷却降速的悬垂阈值", "select", "", 0, "cooling", "部件冷却风扇", 1, 1],
       "override_process_overhang_speed": ["覆盖工艺悬垂速度", "checkbox", "", 1, "overrides", "速度", 1, 6],
       "reduce_fan_stop_start_freq": ["保持风扇常开", "checkbox", "", 0, "cooling", "部件冷却风扇", 0, 1],
       "required_nozzle_HRC": ["喷嘴硬度要求", "text", "", 0, "filament", "基础信息", 0, 1],

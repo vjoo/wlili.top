@@ -58,7 +58,14 @@
         key: f.key, label: f.label, tab: tabLabel, group: groupLabel,
         type: f.type === "checkbox" ? "bool" : (f.type === "select" ? "enum" : "text"),
         default: def, unit: f.unit || "",
-        enum: (f.options || []).map(function (x) { return { value: x, label: x }; }),
+        /* options 有两种写法：① 纯字符串（值=标签）；② {v,l}（v=官方内部键、l=中文标签）。
+           旧写法统一按字符串处理，遇到 ② 会把对象塞进 value，导致「写 uniform_cooling 或写
+           均匀冷却 都匹配不上」→ 合法枚举被误报 warn。这里两种都归一。 */
+        enum: (f.options || []).map(function (x) {
+          return (x && typeof x === "object")
+            ? { value: String(x.v), label: String(x.l != null ? x.l : x.v) }
+            : { value: String(x), label: String(x) };
+        }),
         ro: (FS.ro && FS.ro[f.key]) ? 1 : 0,
         vec6: f.vec6 ? 1 : 0, pin: pin ? 1 : 0
       };
