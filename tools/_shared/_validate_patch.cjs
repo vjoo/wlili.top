@@ -39,7 +39,7 @@ Object.keys(PS.tabs || {}).forEach(tn => {
   if (f.key) add(f); (f.cols || []).forEach(add);
 })));
 const RO_KEYS = new Set(Object.keys(FS2.ro || {}));
-const EXPECTED = 8;   // 2 条重建 + 2 条社区部分档 + 2 条待补录占位 + 2 条用户本地导出档
+const EXPECTED = 9;   // 2 条重建 + 2 条社区部分档 + 2 条待补录占位 + 2 条用户本地导出档 + 1 条 PETG 悬垂桥优化
 
 console.log("== 加载检查 ==");
 ok(!!ctx.window.BAMBU_PROCESS_SCHEMA, "BAMBU_PROCESS_SCHEMA 已加载（" + (ctx.window.BAMBU_PROCESS_SCHEMA.tabs_order || []).length + " 个页卡）");
@@ -142,6 +142,18 @@ res.presets.forEach(function (pr, i) {
   if (src.id === "preset_x2d_hq_v3_partial") {
     ok(Vo["bridge_speed"] === "40, 40, 40, 40, 40, 40", "桥接速度=40（低于默认 50）");
     ok(Vo["wall_loops"] === "3", "墙层数=3（作者推荐，默认 2）");
+  }
+
+  /* ⑪ PETG 悬垂桥优化 —— 源自叠放零件盒实测瑕疵的调优档 */
+  if (src.id === "preset_petg_overhang_bridge") {
+    ok(Vo["thick_bridges"] === "1", "厚桥=1（开，针对大跨桥②）");
+    ok(Vo["bridge_speed"] === "25, 25, 25, 25, 25, 25", "工艺桥接速度=25（默认50，大跨桥降速）");
+    ok(fvo["nozzle_temperature"] === "245", "其它层温度=245（原250，降5℃使熔体更挺）");
+    ok(fvo["nozzle_temperature_initial_layer"] === "245", "首层温度=245（保持，保附着）");
+    ok(fvo["overhang_fan_speed"] === "100", "悬垂风扇速度=100（原50，满冷抗悬垂①）");
+    ok(fvo["additional_cooling_fan_speed"] === "100", "悬垂/桥接强制冷却=100（桥接段拉满）");
+    ok(fvo["filament_bridge_speed"] === "25", "耗材丝桥接速度=25（与工艺双域同设）");
+    ok(pr.filType === "PETG", "耗材丝 type=PETG（满冷仅对 PETG 安全）");
   }
 });
 

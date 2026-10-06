@@ -215,6 +215,36 @@
       "filament": { "type": "PETG", "overrides": {} }
     },
 
+    /* ============ ⑪ PETG 悬垂桥优化（降5℃ + 满冷 + 厚桥 + 降桥速，源自叠放零件盒实测） ============ */
+    {
+      "format": "wlili-preset-patch/2",
+      "id": "preset_petg_overhang_bridge",
+      "name": "PETG 悬垂桥优化（降5℃+满冷+厚桥）",
+      "notes": "源自「叠放零件盒」官方默认参数打印的瑕疵诊断（3MF 几何反查）：① 蜂窝孔斜壁的朝下孔顶棚（45–60° 下向面约 6300 mm²）悬垂下塌被喷头刮成疤痕带；② 前沿翻边水平底面是一整幅约 13000 mm² 的大跨桥，无支撑 → 桥面波浪 + 缺口。两处均属悬垂/桥接缺陷，与温度无关（原 首层245/其他250 在 PETG 合理区间）。本预设针对 PETG 调：温度降 5℃ 使熔体更稠更挺（其他层 250→245，首层保持 245 保附着）；悬垂风扇速度 50→100%、悬垂/桥接强制冷却→100%（仅在悬垂/桥接段拉满，不伤普通墙面层间结合）；厚桥开 + 桥接速度 50→25（工艺与耗材丝双域同设定，确保任一域为权威都生效）。⚠ 全局风扇勿拉满（PETG 层间结合优先）；250→240 若仍下塌可再降；② 那种大跨桥最彻底是加树状支撑（仅悬空处）。",
+      "applicability": { "machine": "X2D", "nozzle": "0.4", "filament": ["PETG"] },
+      "caveats": [
+        "本预设是「冷却/桥接调优层」，不含流量校准；需流量补偿请叠加 ⑨（Basic 卷 flow=1.045）或 ⑤（White 卷 flow=0.98），或把本档的 filament.overrides 合并进你的校准档",
+        "桥接速度在「工艺(bridge_speed)」与「耗材丝(filament_bridge_speed)」两个域各设了一遍 25，确保任一域为权威都生效；若你的 PETG 料盘已单独设桥速，以料盘值为准",
+        "悬垂风扇/强制冷却=100% 仅针对 PETG 的悬垂/桥接段生效，普通墙面仍按正常冷却；若打印长直墙出现层裂/翘曲，降回 50–80%",
+        "② 大跨桥（>100mm 整幅）最稳仍是加支撑；本预设降桥速+厚桥能显著改善但非绝对平整",
+        "温度 245/245 偏保守，若层间结合感觉弱可回到 250；追求更挺悬垂可试其他层 240（勿低于 235）"
+      ],
+      "params": {
+        "thick_bridges": "1",
+        "bridge_speed": "25, 25, 25, 25, 25, 25"
+      },
+      "filament": {
+        "type": "PETG",
+        "overrides": {
+          "nozzle_temperature": "245",
+          "nozzle_temperature_initial_layer": "245",
+          "overhang_fan_speed": "100",
+          "additional_cooling_fan_speed": "100",
+          "filament_bridge_speed": "25"
+        }
+      }
+    },
+
     /* ============ ⑦ ⏳ 待补录：PERFECT PETG - Sunlu（P2S 取向：外观优先） ============ */
     {
       "format": "wlili-preset-patch/2",
