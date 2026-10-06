@@ -39,7 +39,7 @@ Object.keys(PS.tabs || {}).forEach(tn => {
   if (f.key) add(f); (f.cols || []).forEach(add);
 })));
 const RO_KEYS = new Set(Object.keys(FS2.ro || {}));
-const EXPECTED = 8;   // 2 条重建 + 6 条社区档（含 2 条待补录占位）
+const EXPECTED = 10;  // 2 条重建 + 6 条社区档（含 2 条待补录占位）+ 2 条用户本地导出档
 
 console.log("== 加载检查 ==");
 ok(!!ctx.window.BAMBU_PROCESS_SCHEMA, "BAMBU_PROCESS_SCHEMA 已加载（" + (ctx.window.BAMBU_PROCESS_SCHEMA.tabs_order || []).length + " 个页卡）");

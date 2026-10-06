@@ -291,6 +291,66 @@
       "filament": { "type": "PETG", "overrides": {} }
     },
 
+    /* ============ ⑨ 三绿 PETG Basic 流量校准（用户本地导出，仅 flow 覆盖） ============ */
+    {
+      "format": "wlili-preset-patch/2",
+      "id": "preset_sunlu_petg_basic_flow_cal",
+      "name": "三绿 PETG Basic 流量校准（本地导出）",
+      "source": {
+        "title": "三绿PETG Basic Flow Rate Calibrated",
+        "inherits": "Bambu PETG Basic @BBL X2D 0.4 nozzle",
+        "from": "User",
+        "version": "2.8.0.6",
+        "fetchedAt": "2026-10-06"
+      },
+      "notes": "用户从本机 Bambu Studio 导出的**流量校准档**：仅覆盖 `filament_flow_ratio = 1.045`（标准喷嘴段，其余变体继承），其余全部沿用官方 `Bambu PETG Basic @BBL X2D 0.4 nozzle`。与 ⑤（SUNLU PETG White，flow=0.98，用户确认正确）是**不同一卷丝**——⑤ 是 White 卷、本条是 Basic 卷，各自校准值都对，并存使用。flow 1.045 表示挤出量比官方默认多约 4.5%，用于补偿该卷丝实际直径/挤出偏差；换卷或换料需重新校准，勿照搬。",
+      "applicability": { "machine": "X2D", "nozzle": "0.4", "filament": ["PETG"] },
+      "caveats": [
+        "本条仅校准流量，温度/回抽/速度等全部继承官方 Basic —— 不要当全量预设单独用",
+        "flow 1.045 是你本卷 Basic 丝的实测值，勿与 ⑤ 的 0.98（White 卷）混淆",
+        "继承源为官方 PETG Basic，非 Rapid/HF 改性料，勿套到高速料"
+      ],
+      "params": {},
+      "filament": {
+        "type": "PETG",
+        "overrides": {
+          "filament_flow_ratio": "1.045"
+        }
+      }
+    },
+
+    /* ============ ⑩ 0.20mm Standard @BBL X2D - 魔方字体工艺档（用户本地导出） ============ */
+    {
+      "format": "wlili-preset-patch/2",
+      "id": "preset_x2d_mofang_font",
+      "name": "0.20mm 标准 @BBL X2D - 魔方字体",
+      "source": {
+        "title": "0.20mm Standard @BBL X2D - 魔方字体预设",
+        "inherits": "0.20mm Standard @BBL X2D",
+        "from": "User",
+        "version": "2.7.0.8",
+        "fetchedAt": "2026-10-06"
+      },
+      "notes": "用户从本机 Bambu Studio 导出的**工艺档**（非耗材丝）：继承 `0.20mm Standard @BBL X2D`，针对字体制件优化。关键改动：`wall_generator=arachne`（变宽挤出，薄壁/笔画更饱满）、`layer_height=0.16`（比默认 0.2 更细，台阶更小）、`reduce_crossing_wall=1`（减少穿墙拉丝）、`enable_arc_fitting=0`（关弧线拟合，字体锐角更锐）、`ironing_pattern=concentric`、`min_bead_width=50%`/`min_feature_size=15%`。原文件还带 `print_extruder_id`/`print_extruder_variant`（多色映射），属设备配置未录入。与 ⑥（X2D HQ V3 桥接/墙数）取向不同：本条主攻字体薄壁质量。",
+      "applicability": { "machine": "X2D", "nozzle": "0.4", "filament": ["PETG", "PLA"] },
+      "caveats": [
+        "纯工艺档，不含耗材丝参数；套用时需另配一条 PETG 耗材丝预设（如 ③/④/⑤/⑨）",
+        "layer_height 0.16 会拉长打印时间约 25%，纯外观件可接受",
+        "arachne 墙生成器对极细笔画更友好，但部分老固件对 arachne 接缝处理不同，注意首层附着"
+      ],
+      "params": {
+        "enable_arc_fitting": "0",
+        "ironing_pattern": "concentric",
+        "layer_height": "0.16",
+        "min_bead_width": "50%",
+        "min_feature_size": "15%",
+        "reduce_crossing_wall": "1",
+        "wall_generator": "arachne",
+        "wall_sequence": "outer wall/inner wall"
+      },
+      "filament": { "type": "PETG", "overrides": {} }
+    },
+
     /* ============ ⑦ ⏳ 待补录：PERFECT PETG - Sunlu（P2S 取向：外观优先） ============ */
     {
       "format": "wlili-preset-patch/2",
