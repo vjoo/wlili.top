@@ -5,6 +5,8 @@
 > 并用本项目自带权威 schema 做字段分类与基线对照（耗材丝 schema 135 项 / 工艺 schema 260 项，来源 Bambu Studio 官方 X2D 预设链）
 > 日期：2026-10-06
 
+> ⚠️ **历史归档**：本文件分析的 Rapid 预设（MW 3030155）已**不录入**系统（你只用基础款），其「建议新增 Rapid/HF 档案」「做喷嘴变体二选」等可执行项请勿照做，仅作技术沿革参考。
+
 ---
 
 ## 0. 最重要的一句话结论
@@ -163,7 +165,7 @@ V4 作者明示优于 V3，所以**V3 可以放弃**；DX 要看你是不是用�
 
 1. **新增「三绿 PETG Rapid / HF」档案，且必须做喷嘴变体二选**：不要像内置基线（15 mm³/s）那样一刀切 —— 内置基线偏保守，适合普通 PETG；Rapid 档建议标准喷嘴 24、高流量 35。
 2. **冷却组可吸收**：`fan_max 90` / `overhang_fan_speed 100` / `overhang_threshold 25%` / `slow_down_min_speed 20` —— 这组值与悬垂改善预设高度互补，可直接作为该档案的 override。
-3. **🎯 与现有胶接**：这套就是我之前建的 `wlili-preset-patch/2` 结构里 `filament.overrides` 该装的东西；改完记得跑 `node tests/bambu-tests.js` 与 `_validate_filament_apply.cjs` 做回归。
+3. **🎯 与现有胶接**：这套就是我之前建的 `wlili-preset-patch/2` 结构里 `filament.overrides` 该装的东西；改完记得跑 `node tools/_shared/_validate_patch.cjs` 做回归。
 4. **⚠️ 录入预设前的禁忌**：不要把 35 mm³/s 写进通用 PETG 档案；务必在备注里写明"仅适用 Rapid / HF 高流量料"。
 5. **那 5 份没数据的**：如需我也能一样分析，请拿到它们的 3MF（而不是 STL），或把截图里的数值贴出来给我。
 
