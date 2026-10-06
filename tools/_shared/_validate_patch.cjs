@@ -39,7 +39,7 @@ Object.keys(PS.tabs || {}).forEach(tn => {
   if (f.key) add(f); (f.cols || []).forEach(add);
 })));
 const RO_KEYS = new Set(Object.keys(FS2.ro || {}));
-const EXPECTED = 10;  // 2 条重建 + 6 条社区档（含 2 条待补录占位）+ 2 条用户本地导出档
+const EXPECTED = 8;   // 2 条重建 + 2 条社区部分档 + 2 条待补录占位 + 2 条用户本地导出档
 
 console.log("== 加载检查 ==");
 ok(!!ctx.window.BAMBU_PROCESS_SCHEMA, "BAMBU_PROCESS_SCHEMA 已加载（" + (ctx.window.BAMBU_PROCESS_SCHEMA.tabs_order || []).length + " 个页卡）");
@@ -127,28 +127,8 @@ res.presets.forEach(function (pr, i) {
     ok(fv["filament_dev_ams_drying_time"] === "8", "耗材丝 干燥时间=8h");
   }
 
-  /* ③④ 三绿/Jayo PETG Rapid Matte —— 同一切片档的两个挤出机变体，必须拆成两条且关键值不同 */
+  /* ⑤⑥ 共用：恢复被移除的高速档(③④)断言所定义的字段访问器 */
   const fvo = pr.filValues, Vo = pr.values;
-  if (src.id === "preset_sunlu_petg_rapid_std") {
-    ok(fvo["nozzle_temperature"] === "255", "标准喷嘴 喷嘴温度=255℃");
-    ok(fvo["filament_max_volumetric_speed"] === "24", "标准喷嘴 最大体积速度=24 mm³/s");
-    ok(fvo["filament_flow_ratio"] === "0.949", "标准喷嘴 流量比=0.949");
-    ok(fvo["filament_retraction_length"] === "0.4" && fvo["filament_z_hop_types"] === "Auto Lift", "标准喷嘴 回抽=0.4 + Auto Lift");
-    ok(fvo["fan_max_speed"] === "90" && fvo["overhang_fan_speed"] === "100", "强冷：最大风扇=90%、悬垂风扇=100%");
-    ok(fvo["overhang_fan_threshold"] === "25%", "悬垂判定阈值=25%（对应 50%速度=30 起降）");
-    ok(fvo["textured_plate_temp"] === "80", "纹理板热床=80℃（基线 70，需离型剂）");
-    ok(Vo["enable_arc_fitting"] === "0" && Vo["default_acceleration"].indexOf("8000") === 0, "工艺：关圆弧拟合 + 默认加速度首段 8000");
-    ok(Vo["sparse_infill_speed"].indexOf("350") === 0, "工艺：稀疏填充首段 350（默认 270）");
-  }
-  if (src.id === "preset_sunlu_petg_rapid_hf") {
-    ok(fvo["nozzle_temperature"] === "245", "高流量喷嘴 喷嘴温度=245℃（比标准档低 10℃）");
-    ok(fvo["filament_max_volumetric_speed"] === "35", "高流量喷嘴 最大体积速度=35 mm³/s");
-    ok(fvo["filament_flow_ratio"] === "0.97", "高流量喷嘴 流量比=0.97");
-    ok(fvo["filament_retraction_length"] === "0.6" && fvo["filament_z_hop_types"] === "Spiral Lift", "高流量喷嘴 回抽=0.6 + Spiral Lift");
-    // 与标准档必须不同，否则说明拆分失败
-    ok(fvo["filament_max_volumetric_speed"] !== "24" && fvo["nozzle_temperature"] !== "255", "与标准档确实拉开了差异（拆分有效）");
-  }
-
   /* ⑤ 三绿 PETG White Basic —— 部分摘录，只校验作者公开值，且不能是空档 */
   if (src.id === "preset_sunlu_petg_white_basic") {
     ok(fvo["nozzle_temperature"] === "270", "White Basic 喷嘴温度=270℃（偏高，公开校准值）");
