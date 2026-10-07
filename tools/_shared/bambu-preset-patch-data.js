@@ -29,7 +29,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_overhang_improve",
       "name": "悬垂改善（降速 + 厚桥 + PLA 满冷）",
-      "notes": "悬垂/桥接质量主要由【冷却】决定。工艺侧：四档悬垂降速整体下调（25/50/75/100% → 30/30/20/12 mm/s，全悬空 8）、开启厚桥(thick_bridges)与沉孔搭桥、detect_overhang_wall、墙生成器 Arachne（薄悬垂变宽挤出更饱满）、层高降到 0.16。耗材丝侧（PLA）：悬空强制满冷——overhang_fan_threshold=0%（任意悬空都强制冷）、overhang_fan_speed=100、fan_max_speed=100、additional_cooling_fan_speed=100。⚠ 风扇 100% 仅适用于 PLA；PETG 用 30–50%、ABS/ASA 接近 0，切勿照搬，否则翘曲/层裂。",
+
+      "meta": {
+        "evidence_level": "E3",
+        "permission": "P1",
+        "provenance": "reconstructed",
+        "case": null
+      },      "notes": "悬垂/桥接质量主要由【冷却】决定。工艺侧：四档悬垂降速整体下调（25/50/75/100% → 30/30/20/12 mm/s，全悬空 8）、开启厚桥(thick_bridges)与沉孔搭桥、detect_overhang_wall、墙生成器 Arachne（薄悬垂变宽挤出更饱满）、层高降到 0.16。耗材丝侧（PLA）：悬空强制满冷——overhang_fan_threshold=0%（任意悬空都强制冷）、overhang_fan_speed=100、fan_max_speed=100、additional_cooling_fan_speed=100。⚠ 风扇 100% 仅适用于 PLA；PETG 用 30–50%、ABS/ASA 接近 0，切勿照搬，否则翘曲/层裂。",
       "applicability": { "machine": "X2D", "nozzle": "0.4", "filament": ["PLA"] },
       "caveats": [
         "风扇 100% 仅适用于 PLA；PETG 建议 30–50%、ABS/ASA 接近 0，否则翘曲/层间开裂",
@@ -67,7 +73,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_petg_pla_support",
       "name": "PETG + PLA 异料支撑（易拆）",
-      "notes": "异料支撑（模型 PETG + PLA 做支撑界面）：两料互不粘连，一撕即落、底面光滑。依据 Bambu 官方「Support for PLA/PETG」材料页：顶部/底部 Z 距离都设 0（异料不必留缝）、接触面 3 层且线距 0（整片可抓取）、主体与支撑面图案都用 Rectilinear。PLA 只做支撑界面（support_interface_filament），支撑主体保持默认＝沿用模型料 PETG（support_filament=0），避免每层换喷嘴；树状支撑时切勿把支撑料用于主体（本预设已规避）。提醒：PETG 喷嘴温度高于 PLA，耗材预设里请分别设好温度并充分干燥（Support for PLA/PETG 官方建议 75℃/8h）。",
+
+      "meta": {
+        "evidence_level": "E3",
+        "permission": "P2",
+        "provenance": "reconstructed",
+        "case": null
+      },      "notes": "异料支撑（模型 PETG + PLA 做支撑界面）：两料互不粘连，一撕即落、底面光滑。依据 Bambu 官方「Support for PLA/PETG」材料页：顶部/底部 Z 距离都设 0（异料不必留缝）、接触面 3 层且线距 0（整片可抓取）、主体与支撑面图案都用 Rectilinear。PLA 只做支撑界面（support_interface_filament），支撑主体保持默认＝沿用模型料 PETG（support_filament=0），避免每层换喷嘴；树状支撑时切勿把支撑料用于主体（本预设已规避）。提醒：PETG 喷嘴温度高于 PLA，耗材预设里请分别设好温度并充分干燥（Support for PLA/PETG 官方建议 75℃/8h）。",
       "applicability": { "machine": "X2D", "nozzle": "0.4", "filament": ["PETG", "PLA"] },
       "caveats": [
         "support_interface_filament（界面用 PLA）的料盘槽位因机器而异，请在编辑器里按实际 PLA 槽位设置（旧导入脚本用 PLA_SLOT 自动改写）",
@@ -101,7 +113,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_sunlu_petg_white_basic",
       "name": "三绿 PETG White Basic（部分校准值）",
-      "source": {
+
+      "meta": {
+        "evidence_level": "E3",
+        "permission": "P2",
+        "provenance": "community-mw",
+        "case": null
+      },      "source": {
         "title": "Calibrated & Optimized Profile - SUNLU PETG White",
         "url": "https://makerworld.com/en/models/2819469",
         "fetchedAt": "2026-10-06"
@@ -134,7 +152,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_x2d_hq_v3_partial",
       "name": "X2D 高质量 V3（部分摘录）",
-      "source": {
+
+      "meta": {
+        "evidence_level": "E3",
+        "permission": "P2",
+        "provenance": "community-mw",
+        "case": null
+      },      "source": {
         "title": "X2D Print Profile V3",
         "url": "https://www.makerworld.com/en/models/3248759",
         "fetchedAt": "2026-10-06"
@@ -160,7 +184,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_sunlu_petg_basic_flow_cal",
       "name": "三绿 PETG Basic 流量校准（本地导出）",
-      "source": {
+
+      "meta": {
+        "evidence_level": "E4",
+        "permission": "P1",
+        "provenance": "user-export",
+        "case": null
+      },      "source": {
         "title": "三绿PETG Basic Flow Rate Calibrated",
         "inherits": "Bambu PETG Basic @BBL X2D 0.4 nozzle",
         "from": "User",
@@ -188,7 +218,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_x2d_mofang_font",
       "name": "0.20mm 标准 @BBL X2D - 魔方字体",
-      "source": {
+
+      "meta": {
+        "evidence_level": "E4",
+        "permission": "P2",
+        "provenance": "user-export",
+        "case": null
+      },      "source": {
         "title": "0.20mm Standard @BBL X2D - 魔方字体预设",
         "inherits": "0.20mm Standard @BBL X2D",
         "from": "User",
@@ -220,7 +256,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_petg_overhang_bridge",
       "name": "PETG 悬垂桥优化（降5℃+满冷+厚桥）",
-      "notes": "源自「叠放零件盒」官方默认参数打印的瑕疵诊断（3MF 几何反查）：① 蜂窝孔斜壁的朝下孔顶棚（45–60° 下向面约 6300 mm²）悬垂下塌被喷头刮成疤痕带；② 前沿翻边水平底面是一整幅约 13000 mm² 的大跨桥，无支撑 → 桥面波浪 + 缺口。两处均属悬垂/桥接缺陷，与温度无关（原 首层245/其他250 在 PETG 合理区间）。本预设针对 PETG 调：温度降 5℃ 使熔体更稠更挺（其他层 250→245，首层保持 245 保附着）；悬垂风扇速度 50→100%、悬垂/桥接强制冷却→100%（仅在悬垂/桥接段拉满，不伤普通墙面层间结合）；厚桥开 + 桥接速度 50→25（工艺与耗材丝双域同设定，确保任一域为权威都生效）。⚠ 全局风扇勿拉满（PETG 层间结合优先）；250→240 若仍下塌可再降；② 那种大跨桥最彻底是加树状支撑（仅悬空处）。",
+
+      "meta": {
+        "evidence_level": "E4",
+        "permission": "P1",
+        "provenance": "reconstructed",
+        "case": "Case #001 叠放零件盒251023"
+      },      "notes": "源自「叠放零件盒」官方默认参数打印的瑕疵诊断（3MF 几何反查）：① 蜂窝孔斜壁的朝下孔顶棚（45–60° 下向面约 6300 mm²）悬垂下塌被喷头刮成疤痕带；② 前沿翻边水平底面是一整幅约 13000 mm² 的大跨桥，无支撑 → 桥面波浪 + 缺口。两处均属悬垂/桥接缺陷，与温度无关（原 首层245/其他250 在 PETG 合理区间）。本预设针对 PETG 调：温度降 5℃ 使熔体更稠更挺（其他层 250→245，首层保持 245 保附着）；悬垂风扇速度 50→100%、悬垂/桥接强制冷却→100%（仅在悬垂/桥接段拉满，不伤普通墙面层间结合）；厚桥开 + 桥接速度 50→25（工艺与耗材丝双域同设定，确保任一域为权威都生效）。⚠ 全局风扇勿拉满（PETG 层间结合优先）；250→240 若仍下塌可再降；② 那种大跨桥最彻底是加树状支撑（仅悬空处）。",
       "applicability": { "machine": "X2D", "nozzle": "0.4", "filament": ["PETG"] },
       "caveats": [
         "本预设是「冷却/桥接调优层」，不含流量校准；需流量补偿请叠加 ⑨（Basic 卷 flow=1.045）或 ⑤（White 卷 flow=0.98），或把本档的 filament.overrides 合并进你的校准档",
@@ -250,7 +292,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_perfect_petg_sunlu_pending",
       "name": "⏳ PERFECT PETG - Sunlu（待补录）",
-      "source": {
+
+      "meta": {
+        "evidence_level": "pending",
+        "permission": "NA",
+        "provenance": "community-mw",
+        "case": null
+      },      "source": {
         "title": "PERFECT PETG - Sunlu",
         "url": "https://www.makerworld.com/en/models/2899633",
         "fetchedAt": "2026-10-06"
@@ -270,7 +318,13 @@
       "format": "wlili-preset-patch/2",
       "id": "preset_x2d_v4_dx_pending",
       "name": "⏳ X2D V4 + DX 右喷嘴（待补录）",
-      "source": {
+
+      "meta": {
+        "evidence_level": "pending",
+        "permission": "NA",
+        "provenance": "community-mw",
+        "case": null
+      },      "source": {
         "title": "X2D High Quality Print Profile V4 / X2D Print profile DX",
         "url": "https://makerworld.com/it/models/3047873-x2d-high-quality-print-profile-v4#profileId-3428275",
         "fetchedAt": "2026-10-06"
@@ -349,11 +403,22 @@
     if (typeof toast === "function") toast("已导入 " + (added.length + updated.length) + " 条预设（新结构）");
   }
 
-  if (typeof PSET !== "undefined") {
+  /* 自动导入开关：默认在「控制台粘贴本文件」时生效（PSET 已存在）。
+     ⚠ 后台 admin.html 会为了读取 PRESET_PATCHES 而加载本文件 —— 此时绝不能顺带把
+       9 条精选预设写进用户的 PSET 并存盘（那会污染用户自己的预设库）。
+       故提供 window.PATCH_NO_AUTO_IMPORT：admin 在加载本文件前置为 true 即可只读不导入。 */
+  var noAuto = (typeof window !== "undefined" && window.PATCH_NO_AUTO_IMPORT === true);
+  if (typeof PSET !== "undefined" && !noAuto) {
     importPatches();
   }
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = PATCHES;
+  }
+
+  /* 浏览器直读：挂到 window，供 tools/3d-management.html 等静态工具页消费
+     （Node 校验脚本走 module.exports；document 守卫避免污染 vm 校验上下文） */
+  if (typeof document !== "undefined" && typeof window !== "undefined") {
+    window.PRESET_PATCHES = PATCHES;
   }
 })();

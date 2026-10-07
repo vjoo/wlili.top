@@ -1616,6 +1616,12 @@
     if (it.subType) h += '<div class="ro-field"><b>预设类型：</b>' + esc(it.subType) + "</div>";
     h += '<div class="ro-field"><b>创建日期：</b>' + esc(presDate(it.createdDate)) + "</div>";
     if (it.notes) h += '<div class="ro-field"><b>备注：</b>' + esc(it.notes).replace(/\n/g, "<br>") + "</div>";
+    /* 诊断结果（由 admin.html 的 PAPP.diagnose 写入 item.diagnosis）—— 预设内直接可见结论 */
+    if (it.diagnosis) {
+      var dl = (typeof pappDiagLevel === "function") ? pappDiagLevel(it.diagnosis.overall) : "已诊断";
+      var dc = (typeof pappDiagColor === "function") ? pappDiagColor(it.diagnosis.overall) : "var(--muted)";
+      h += '<div class="ro-field"><b>诊断：</b><span style="color:' + dc + ';font-weight:600">' + dl + '</span>　' + esc(it.diagnosis.summary || "") + "</div>";
+    }
     var mod = modifiedCount(vals);
     var procBody = '<div class="ro-field" style="color:var(--muted)">共 ' + Object.keys(vals).length + " 项参数 · 已修改 " + mod + " 项</div>" + renderReadOnly(vals);
     var filBody = FSCHEMA ? filReadonlyHTML(it) : "";
@@ -1634,6 +1640,10 @@
       (it.filament && it.filament.overrides && Object.keys(it.filament.overrides).length
         ? '<button class="btn" title="把该预设的耗材丝参数写入匹配的耗材丝记录（会改你的耗材丝预设，已自动备份）" onclick="PAPP.applyPresetFilament(\'' + id + '\')">套用到耗材丝</button>'
         : "") +
+      (it.diagnosis
+        ? '<button class="btn" title="查看诊断结果" onclick="closeModal();setTimeout(function(){PAPP.viewDiagnosis(\'' + id + '\')},100)">诊断结果（' +
+            ((typeof pappDiagLevel === "function") ? pappDiagLevel(it.diagnosis.overall) : "已诊断") + '）</button>'
+        : '<button class="btn" title="用工艺库规则 + 精选预设给这条预设做体检" onclick="closeModal();setTimeout(function(){PAPP.diagnose(\'' + id + '\')},100)">分析诊断</button>') +
       '<button class="btn" onclick="PAPP.exportBambu(\'' + id + '\')">导出到 Bambu Studio</button>' +
       '<button class="btn" onclick="closeModal();setTimeout(function(){PAPP.openForm(\'' + id + '\')},100)">编辑</button><button class="btn" onclick="closeModal()">关闭</button></div>';
     document.getElementById("fmodalBox").style.width = "min(1060px,95vw)";
