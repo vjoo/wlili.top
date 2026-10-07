@@ -3054,7 +3054,7 @@ function plibDiag(){
    · 建议分级纪律（V2.0 §26）：几何层结论一律 E1，建议只给「可回写的安全参数」，明确需切片验证。 */
 // tab:'viz'(3D 可视化 · 问题定位，默认) | 'geom'(几何体检)；仅页卡位置持久化，分析结果不落盘
 var OPT = { buf:null, name:'', kind:null, project:null, diag:null, busy:false, suggestions:[],
-            catChecked:{1:true,2:true,3:true,4:true}, supportScheme:'mixed', supportFilSlot:'',
+            catChecked:{1:true,2:true,3:true,4:true,5:true}, supportScheme:'mixed', supportFilSlot:'',
             tab:(plibLsGet('wli_opt_tab') || 'viz') };
 // 几何层 finding.code → 可回写的参数建议（仅当该参数当前为 0/空时才默认勾选）
 var OPT_SUGGEST_MAP = {
@@ -3068,7 +3068,7 @@ var OPT_SUGGEST_MAP = {
    ⚠ 文件从未上传服务器、也没写 localStorage，所以「刷新」或点这里即彻底释放，磁盘不留残留。 */
 function optReset(){
   OPT.buf=null; OPT.project=null; OPT.diag=null; OPT.suggestions=[]; OPT.kind=null; OPT.name='';
-  OPT.catChecked={1:true,2:true,3:true,4:true}; OPT.supportScheme='mixed'; OPT.supportFilSlot='';
+  OPT.catChecked={1:true,2:true,3:true,4:true,5:true}; OPT.supportScheme='mixed'; OPT.supportFilSlot='';
   optClearSession();
   disposeOpt3D(); renderMain();   // 页卡位置 OPT.tab 保留，不清
 }
@@ -3266,7 +3266,8 @@ function optModelCard(it){
 
 /* ===================== 模型优化 · 3D 可视化 + 问题→调优参数 ===================== */
 // 类别色（与 model-3d.js / mesh-health.js faceFlags 约定一致）
-var OPT_PROB_SW = { 1: '#ff3b30', 2: '#ffd60a', 3: '#ff9f0a', 4: '#bf5af2' };
+// 类别 5 = 缓坡悬垂(30–45°)：切片器默认阈值 30° 不生成支撑 → 塌陷高发（品红）
+var OPT_PROB_SW = { 1: '#ff3b30', 2: '#ffd60a', 3: '#ff9f0a', 4: '#bf5af2', 5: '#e91e8c' };
 // 从工程 config 读数值型当前值（Bambu 标量也存成数组，取首段；无法解析返回 null）
 function optCfgNum(cfg, key) {
   try {
@@ -3279,7 +3280,21 @@ function optCfgNum(cfg, key) {
     return isNaN(n) ? null : n;
   } catch (e) { return null; }
 }
-// 统一入口：显式输入 > 站内预设经验（support_interface_filament）> 双头辅头自动；返回槽位字符串或 null
+// 检出最大桥接跨度（mm）：取各实例 bridgeSpanMax 的最大值；0 = 未检出
+function optBridgeSpan(diag){
+  var max = 0;
+  (((diag || (OPT && OPT.diag)) || {}).mesh && ((diag || (OPT && OPT.diag)).mesh).instances || []).forEach(function (it) {
+    var v = Number(it.bridgeSpanMax || 0);
+    if (v > max) max = v;
+  });
+  return max;
+}
+function optBridgeSpanNote(){
+  var s = optBridgeSpan();
+  if (!s) return '';
+  return '　检出最大跨度约 ' + Math.round(s) + ' mm'
+    + (s > 40 ? '（超 PLA/PETG 实测极限 40mm → 需加大流量 + 降速）' : '（在 40mm 安全范围内，无需改流量）');
+}
 function optSupIfaceSlot(){
   var raw = String(OPT.supportFilSlot || '').trim();
   if (raw) return optResolveSupSlot();
@@ -3322,7 +3337,6 @@ var PROBLEM_TUNING = {
           { key: 'enable_support', cn: '开启支撑', value: '开启', w: '1', ref: 'Bambu Studio 工艺预设标准键，默认关闭', note: '配套下方支撑类型与距离，组合才是完整方案' },
           { key: 'support_type', cn: '支撑类型', value: '树状（tree）', w: 'tree(auto)', ref: 'PrintConfig 源码枚举：normal(auto)/tree(auto)/normal(manual)/tree(manual)', note: '树状省料好拆' },
           { key: 'support_interface_filament', cn: '支撑/筏层界面耗材', value: '填槽位号或耗材类型', dyn: 'filslot', ref: 'PrintConfig：0=跟随主体耗材；默认值取自站内预设「PETG + PLA 异料支撑（易拆）」interface=2；双头机可用 filament_map 识别辅头', note: '填槽位号，或直接填耗材类型（如 PETG）；留空=预设值，无预设则用辅助头槽位' },
-          { key: 'support_threshold_angle', cn: '支撑悬挑角度阈值', value: '45°', wfn: function (cfg) { var n = optCfgNum(cfg, 'support_threshold_angle'); if (n == null) n = 30; return (n < 45) ? '45' : null; }, ref: 'PrintConfig 源码默认 30°；坡角低于阈值才生成支撑——你塌陷的斜坡边约 40–45°，30° 阈值漏掉了它', note: '调到 45° 后斜坡边（缓悬垂）也会生成支撑；已 ≥45 则不动' },
           { key: 'support_top_z_distance', cn: '顶部 Z 距离', value: '0 mm', w: '0', ref: '异料互不粘连，无需留空气缝（实测经验）；出厂 0.2 是同料留缝逻辑', note: '直接贴合，悬垂表面质量最好' },
           { key: 'support_bottom_z_distance', cn: '底部 Z 距离', value: '0 mm', w: '0', ref: '同顶部：异料直接贴合', note: '异料同样不留缝' },
           { key: 'support_interface_top_layers', cn: '顶部接触面层数', value: '3', w: '3', ref: '站内预设「PETG + PLA 异料支撑（易拆）」', note: '接触面 3 层更牢固，整片可抓取' },
@@ -3336,7 +3350,6 @@ var PROBLEM_TUNING = {
         tunes: [
           { key: 'enable_support', cn: '开启支撑', value: '开启', w: '1', ref: 'Bambu Studio 工艺预设标准键，默认关闭', note: '同上' },
           { key: 'support_type', cn: '支撑类型', value: '树状（tree）', w: 'tree(auto)', ref: 'PrintConfig 源码枚举', note: '树状在同料下也相对好拆' },
-          { key: 'support_threshold_angle', cn: '支撑悬挑角度阈值', value: '45°', wfn: function (cfg) { var n = optCfgNum(cfg, 'support_threshold_angle'); if (n == null) n = 30; return (n < 45) ? '45' : null; }, ref: 'PrintConfig 源码默认 30°；坡角低于阈值才生成支撑，斜坡边（40–45°）需调到 45 才被覆盖', note: '调到 45° 后斜坡边也会生成支撑；已 ≥45 则不动' },
           { key: 'support_top_z_distance', cn: '顶部 Z 距离', value: '0.2 mm', w: '0.2', ref: '同料必须留缝；Bambu 出厂工艺预设默认 0.2mm', note: '留缝才拆得下来' },
           { key: 'support_bottom_z_distance', cn: '底部 Z 距离', value: '0.2 mm', w: '0.2', ref: 'PrintConfig 源码默认值 0.2', note: '同上' },
           { key: 'overhang_fan_speed', cn: '悬垂风扇', value: '80–100% (PETG)', w: '100%', ref: '耗材丝预设键', note: '增强冷却（耗材丝组参数）' },
@@ -3352,10 +3365,15 @@ var PROBLEM_TUNING = {
     ] },
   3: { title: '桥接面 (近似)', kb: '桥接', note: '近似几何启发式：下方暴露的水平跨度。可能误标实体顶部（实体内部为空），以切片软件桥接检测为准，建议关闭对照。',
     tunes: [
-      { key: 'bridge_flow', cn: '桥接流量', value: '1.5（跨度 >4cm）', w: '1.5', ref: '实测经验（2026-10-07）：PLA/PETG 桥接跨度极限约 4cm，超限塌陷；源码 bridge_flow coFloat 默认 1、上限 2.0', note: '跨度超过 4cm 必调，配合降速' },
-      { key: 'bridge_speed', cn: '桥接速度', value: '10 mm/s（跨度 >4cm）', w: '10', ref: '实测经验：跨度 >4cm 用 10；常规短桥 20–25 即可', note: '长桥大幅降速' },
+      { key: 'bridge_flow', cn: '桥接流量', value: '1.5（跨度 >4cm）', wfn: function (cfg, diag) { return optBridgeSpan(diag) > 40 ? '1.5' : null; }, ref: '实测经验：PLA/PETG 跨度极限约 4cm，超限塌陷；源码 bridge_flow coFloat 默认 1、上限 2.0', note: '仅当跨度 >40mm 才调（短桥调了会过挤）' },
+      { key: 'bridge_speed', cn: '桥接速度', value: '10（>4cm）/ 22（常规）', wfn: function (cfg, diag) { return optBridgeSpan(diag) > 40 ? '10' : '22'; }, ref: '实测：跨度 >4cm 用 10；常规短桥 22', note: '按检出跨度自动分档' },
       { key: 'thick_bridges', cn: '加厚桥层', value: '1', w: '1', ref: '工艺预设布尔键', note: '开启加宽桥上层' },
       { key: 'additional_cooling_fan_speed', cn: '辅助冷却风扇', value: '开启', note: '耗材丝组参数（本工具分组表未收录，不做一键盲写）；桥接区增强冷却' }
+    ] },
+  5: { title: '缓坡悬垂 (30–45°)', kb: '支撑', note: '★塌陷高发区：支撑悬挑角度阈值默认 30°，这些面切片器不会生成支撑，却又不像陡壁能自支撑——实测 PLA/PETG 会塌。',
+    tunes: [
+      { key: 'support_threshold_angle', cn: '支撑悬挑角度阈值', value: '45°', wfn: function (cfg) { var n = optCfgNum(cfg, 'support_threshold_angle'); if (n == null) n = 30; return (n < 45) ? '45' : null; }, ref: 'PrintConfig 源码默认 30°；坡角低于阈值才生成支撑——调 45° 即覆盖本类面', note: '仅有检出缓坡面时才需要（本卡出现即代表需要）' },
+      { key: 'enable_support', cn: '开启支撑', value: '开启', w: '1', ref: 'Bambu Studio 工艺预设标准键，默认关闭', note: '配合阈值使用：开了支撑却阈值不够，缓坡仍然不撑' }
     ] },
   4: { title: '薄壁 / 细特征', kb: '薄壁', note: '厚度接近挤出宽度的壁/柱，易缺料、易断、细节丢失。',
     tunes: [
@@ -3365,6 +3383,14 @@ var PROBLEM_TUNING = {
     ] }
 };
 // 当前生效类别的参数清单（cat1 走方案制，其余走 tunes）
+function optCatDetected(cat){
+  var insts = ((OPT.diag && OPT.diag.mesh) ? OPT.diag.mesh.instances : null) || [];
+  if (!insts.length) return true;                       // 无诊断数据 → 不过滤（保持下发）
+  var keyMap = { 1: 'overhang', 2: 'steep', 3: 'bridge', 4: 'thin', 5: 'slope' };
+  var k = keyMap[cat], sum = 0;
+  insts.forEach(function (it) { var f = it.flagCounts || {}; sum += f[k] || 0; });
+  return sum > 0;                                       // 几何没检出该类面 → 不下发其参数
+}
 function optCatTunes(cat){
   var t = PROBLEM_TUNING[cat];
   if (t.schemes) return t.schemes[(OPT.supportScheme === 'same') ? 'same' : 'mixed'].tunes;
@@ -3375,14 +3401,15 @@ function optProblemPanel(d, insts, showOthers) {
   if (!insts) insts = (d && d.mesh && d.mesh.instances) || [];
   if (!insts.length) return '<div class="opt-viz-empty">无几何数据可分析。</div>';
   var total = 0; insts.forEach(function (it) { total += it.triangleCount || 0; });
-  var fc = { 1: 0, 2: 0, 3: 0, 4: 0 };
-  insts.forEach(function (it) { var f = it.flagCounts || {}; fc[1] += f.overhang || 0; fc[2] += f.steep || 0; fc[3] += f.bridge || 0; fc[4] += f.thin || 0; });
+  var fc = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  insts.forEach(function (it) { var f = it.flagCounts || {}; fc[1] += f.overhang || 0; fc[2] += f.steep || 0; fc[3] += f.bridge || 0; fc[4] += f.thin || 0; fc[5] += f.slope || 0; });
   var html = '<div class="opt-phead">可定位问题面</div>'
     + '<div class="plib-note" style="margin:2px 0 8px">模型上各类面的显示/隐藏：点视窗左上角图例色块行。右侧开关只管一件事：是否把该类「可回写」调优参数写入下方回写清单（回写下载即生效）。</div>', any = false;
-  [1, 2, 3, 4].forEach(function (cat) {
+  [1, 2, 3, 4, 5].forEach(function (cat) {
     if (!fc[cat]) return; any = true;
     var pct = total ? Math.round(fc[cat] / total * 100) : 0;
     var t = PROBLEM_TUNING[cat];
+    var note = t.note + (cat === 3 ? optBridgeSpanNote() : '');
     var tunes = optCatTunes(cat).map(function (x) {
       var badge = x.dyn === 'filslot' ? '<span class="tag-badge" style="color:var(--accent-deep);border-color:var(--accent-deep);font-size:10px;padding:1px 5px">填槽位后回写</span>'
         : (x.w != null ? '<span class="tag-badge" style="color:var(--accent);border-color:var(--accent);font-size:10px;padding:1px 5px">可回写</span>'
@@ -3393,12 +3420,13 @@ function optProblemPanel(d, insts, showOthers) {
         + (x.note ? '<br><span style="color:var(--muted)">' + plibEsc(x.note) + '</span>' : '')
         + (x.ref ? '<br><span style="color:var(--muted);opacity:.75">依据：' + plibEsc(x.ref) + '</span>' : '') + '</div>';
     }).join('');
+    var ccAll = OPT.catChecked || { 1:true, 2:true, 3:true, 4:true, 5:true };
     html += '<div class="opt-prob">'
-      + '<label class="opt-prob-top"><span class="opt-switch"><input type="checkbox" checked onchange="optToggleCategory(' + cat + ',this.checked)"><i></i></span>'
+      + '<label class="opt-prob-top"><span class="opt-switch"><input type="checkbox"' + (ccAll[cat] ? ' checked' : '') + ' onchange="optToggleCategory(' + cat + ',this.checked)"><i></i></span>'
       + '<span class="opt-swatch" style="background:' + OPT_PROB_SW[cat] + '"></span>'
       + '<span class="opt-prob-title">' + plibEsc(t.title) + '</span>'
       + '<span class="opt-prob-meta">' + fc[cat] + ' 面 · ' + pct + '%</span></label>'
-      + '<div class="opt-prob-body"><div>' + plibEsc(t.note) + '</div>'
+      + '<div class="opt-prob-body"><div>' + plibEsc(note) + '</div>'
       + (t.schemes
           ? '<div class="gen-tabs" style="margin-top:8px">'
             + '<span class="gen-tab' + (OPT.supportScheme !== 'same' ? ' active' : '') + '" onclick="optSetScheme(\'mixed\')">异料支撑（PLA↔PETG）</span>'
@@ -3493,8 +3521,8 @@ function optCollectChanges(){
   var cfg = (OPT.project && OPT.project.config) || {};
   function tuneValue(x){
     if (x.dyn === 'filslot') return optSupIfaceSlot();   // 手填 > 站内预设经验 > 双头辅头自动
-    if (x.w != null) return x.w;
-    if (typeof x.wfn === 'function') { try { return x.wfn(cfg); } catch (e) { return null; } }
+        if (x.w != null) return x.w;
+    if (typeof x.wfn === 'function') { try { return x.wfn(cfg, OPT.diag || {}); } catch (e) { return null; } }
     return null;
   }
   (OPT.suggestions||[]).forEach(function(s){
@@ -3503,9 +3531,10 @@ function optCollectChanges(){
     var on = (cbEl && typeof cbEl.checked === 'boolean') ? cbEl.checked : s.apply;
     if(on) arr.push({ key: s.key, value: s.value, cn: s.cn || '', src: '优化建议', grp: optKeyGroupRaw(s.key) });
   });
-  [1,2,3,4].forEach(function(c){
-    var cc = OPT.catChecked || { 1:true, 2:true, 3:true, 4:true };   // 缺省视为全开
+  [1,2,3,4,5].forEach(function(c){
+    var cc = OPT.catChecked || { 1:true, 2:true, 3:true, 4:true, 5:true };   // 缺省视为全开
     if(!cc[c]) return;
+    if(!optCatDetected(c)) return;   // 几何未检出该类面 → 即使开关打开也不下发（几何驱动）
     optCatTunes(c).forEach(function(x){
       var wv = tuneValue(x);
       if(wv == null || wv === '') return;
@@ -10688,7 +10717,7 @@ function upgradeUI(root) {
   "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
 } }
 </script>
-<script type="module" src="model-3d.js?v=20261007f"></script>
+<script type="module" src="model-3d.js?v=20261007g"></script>
 <script src="mesh-health.js?v=20261007b"></script>
 <script src="bambu-diagnose.js"></script>
 <script src="bambu-3mf-io.js?v=20261007h"></script>

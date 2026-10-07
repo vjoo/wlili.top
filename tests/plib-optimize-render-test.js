@@ -225,6 +225,33 @@ const keys = ["OPT", "wli_opt_buf", "wli_opt_diag"];
 ok(!keys.some(k => sandbox.localStorage.getItem(k) !== null),
    "分析结果未写入 localStorage（不堆积垃圾）");
 
+/* ---- 几何驱动：缓坡(30–45°)→阈值建议；桥接跨度→流量/速度分档 ---- */
+console.log("\n【几何驱动：缓坡 + 桥接跨度】");
+try {
+  sandbox.OPT.catChecked = { 1: true, 2: false, 3: true, 4: false, 5: true };
+  sandbox.OPT.suggestions = [];
+  sandbox.OPT.supportScheme = "mixed"; sandbox.OPT.supportFilSlot = ""; sandbox.OPT.project = { config: {} };
+  // 检出缓坡 + 大跨度桥接（52mm > 40mm 极限）
+  sandbox.OPT.diag = { mesh: { instances: [{ flagCounts: { overhang: 2, slope: 7, bridge: 3 }, bridgeSpanMax: 52 }] } };
+  let l2 = sandbox.optCollectChanges();
+  ok(sandbox.optBridgeSpan(sandbox.OPT.diag) === 52, "optBridgeSpan 读到 52mm（实得 " + sandbox.optBridgeSpan(sandbox.OPT.diag) + "）");
+  const thr = l2.find(x => x.key === "support_threshold_angle");
+  ok(thr && thr.value === "45", "检出缓坡 → 阈值建议 45（实得 " + (thr ? thr.value : "缺失") + "）");
+  const keysOf2 = (l) => l.map(x => x.key).join("|");
+  const bf = l2.find(x => x.key === "bridge_flow"), bs = l2.find(x => x.key === "bridge_speed");
+  ok(bf && bf.value === "1.5" && bs && bs.value === "10",
+     "跨度 52mm → 流量 1.5 + 速度 10（实得 " + (bf ? bf.value : "缺失") + "/" + (bs ? bs.value : "缺失") + "；键=" + keysOf2(l2) + "）");
+  ok(/超 PLA\/PETG 实测极限/.test(sandbox.optBridgeSpanNote()), "跨度说明文案提示超限");
+  // 短桥 + 无缓坡 → 都不下发
+  sandbox.OPT.diag = { mesh: { instances: [{ flagCounts: { overhang: 2, slope: 0, bridge: 3 }, bridgeSpanMax: 18 }] } };
+  l2 = sandbox.optCollectChanges();
+  ok(l2.find(x => x.key === "bridge_flow") === undefined && l2.find(x => x.key === "bridge_speed").value === "22",
+     "跨度 18mm → 不改流量、速度 22（实得 " + (l2.find(x => x.key === "bridge_speed") || {}).value + "）");
+  ok(l2.find(x => x.key === "support_threshold_angle") === undefined, "无缓坡面 → 不下发阈值建议");
+  ok(/在 40mm 安全范围内/.test(sandbox.optBridgeSpanNote()), "短桥说明文案");
+  sandbox.OPT.diag = null;
+} catch (e) { ok(false, "几何驱动抛错：" + (e && e.stack || e)); }
+
 /* ---- 会话持久化 + 知识推荐 ---- */
 console.log("\n【会话持久化 + 知识推荐】");
 try {
@@ -304,22 +331,21 @@ try {
 /* ---- 勾选联动回写：类别开关 + 建议勾选 → optCollectChanges 统一回写清单 ---- */
 console.log("\n【回写清单联动】");
 try {
-  sandbox.OPT.catChecked = { 1: true, 2: true, 3: true, 4: true };
+  sandbox.OPT.catChecked = { 1: true, 2: true, 3: true, 4: true, 5: true };
   sandbox.OPT.suggestions = [];
   sandbox.OPT.supportScheme = "mixed"; sandbox.OPT.supportFilSlot = "";
+  // 本场景：仅检出悬垂面（无陡壁/桥接/薄壁/缓坡）→ 只应下发悬垂类参数
+  sandbox.OPT.diag = { mesh: { instances: [{ flagCounts: { overhang: 5, steep: 0, bridge: 0, thin: 0, slope: 0 } }] } };
   let list = sandbox.optCollectChanges();
   const keysOf = (l) => l.map(x => x.key).join("|");
-  ok(keysOf(list) === "enable_support|support_type|support_threshold_angle|support_top_z_distance|support_bottom_z_distance|support_interface_top_layers|support_base_pattern|overhang_fan_speed|thick_bridges|bridge_flow|bridge_speed",
-     "全开关（异料方案、未填槽位）→ 11 键（实得 " + keysOf(list) + "）");
+  ok(keysOf(list) === "enable_support|support_type|support_top_z_distance|support_bottom_z_distance|support_interface_top_layers|support_base_pattern|overhang_fan_speed|thick_bridges",
+     "几何驱动：只检出悬垂 → 只下发悬垂类 8 键（实得 " + keysOf(list) + "）");
   ok(list.find(x => x.key === "support_type").value === "tree(auto)", "support_type=tree(auto)（源码枚举，非 tree_auto）");
-  ok(list.find(x => x.key === "support_threshold_angle").value === "45", "阈值默认 30 → 写 45（覆盖斜坡边）");
-  ok(list.find(x => x.key === "bridge_flow").value === "1.5" && list.find(x => x.key === "bridge_speed").value === "10",
-     "桥接经验：流量 1.5 + 速度 10（跨度 >4cm）");
   ok(list.find(x => x.key === "support_top_z_distance").value === "0"
      && list.find(x => x.key === "support_bottom_z_distance").value === "0", "异料方案 Z 距离=0/0");
   sandbox.OPT.supportFilSlot = "2";
   list = sandbox.optCollectChanges();
-  ok(keysOf(list) === "enable_support|support_type|support_interface_filament|support_threshold_angle|support_top_z_distance|support_bottom_z_distance|support_interface_top_layers|support_base_pattern|overhang_fan_speed|thick_bridges|bridge_flow|bridge_speed"
+  ok(keysOf(list) === "enable_support|support_type|support_interface_filament|support_top_z_distance|support_bottom_z_distance|support_interface_top_layers|support_base_pattern|overhang_fan_speed|thick_bridges"
      && list.find(x => x.key === "support_interface_filament").value === "2",
      "填槽位 2 → support_interface_filament=2 入清单（实得 " + keysOf(list) + "）");
   sandbox.OPT.supportFilSlot = "PETG";
@@ -361,16 +387,18 @@ try {
   sandbox.OPT.catChecked = { 1: true, 2: true, 3: true, 4: true };
   sandbox.OPT.suggestions = [];
   const html = sandbox.optChangesHtml();
-  ok(/写入 \.3mf（10）/.test(html) && /耗材丝参数（1 · 不参与回写/.test(html),
-     "清单按去向分两组：3mf 组 10 项 + 耗材丝段（只展示，手动调整）");
-  ok(/开启支撑/.test(html) && /桥接速度/.test(html), "中文界面名渲染（类别参数自带 cn）");
+  ok(/写入 \.3mf（7）/.test(html) && /耗材丝参数（1 · 不参与回写/.test(html),
+     "清单按去向分两组：3mf 组 7 项 + 耗材丝段（只展示，手动调整）");
+  ok(/开启支撑/.test(html) && /顶部 Z 距离/.test(html), "中文界面名渲染（类别参数自带 cn）");
   ok(html.indexOf("下载耗材丝预设") < 0 && sandbox.optApplyFilament === undefined, "JSON 导入路线已移除");
   const listAll = sandbox.optCollectChanges();
-  ok(listAll.find(x => x.key === "overhang_fan_speed").grp === "filament"
-     && listAll.find(x => x.key === "bridge_speed").grp === "print", "grp 字段正确");
+  const ofan = listAll.find(x => x.key === "overhang_fan_speed"), esup = listAll.find(x => x.key === "enable_support");
+  ok(ofan && ofan.grp === "filament" && esup && esup.grp === "print", "grp 字段正确（悬垂风扇=耗材丝组 / 开启支撑=工艺组）");
 
   /* ---- wfn 按当前值计算：壁数+1 / 外壁速度-15% / 填充密度+10% ---- */
   sandbox.OPT.catChecked = { 1: false, 2: true, 3: false, 4: true };
+  // 本场景检出陡壁 + 薄壁面 → 下发其按当前值折算的参数
+  sandbox.OPT.diag = { mesh: { instances: [{ flagCounts: { overhang: 0, steep: 3, bridge: 0, thin: 4, slope: 0 } }] } };
   sandbox.OPT.project = { config: { wall_loops: ["2"], outer_wall_speed: ["60"], sparse_infill_density: ["13%"], filament_type: ["PLA"] } };
   const dyn = sandbox.optCollectChanges();
   const get = (k) => { const it = dyn.find(x => x.key === k); return it && it.value; };

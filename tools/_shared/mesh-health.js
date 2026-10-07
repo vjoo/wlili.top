@@ -55,6 +55,7 @@
     return (ax * (by * cz - bz * cy) + ay * (bz * cx - bx * cz) + az * (bx * cy - by * cx)) / 6;
   }
 
+  function round1(v) { return Math.round(v * 10) / 10; }
   function round2(v) { return Math.round(v * 100) / 100; }
   function round4(v) { return Math.round(v * 10000) / 10000; }
 
@@ -499,11 +500,13 @@
     var size = [bbMax[0] - bbMin[0], bbMax[1] - bbMin[1], bbMax[2] - bbMin[2]];
     var diagonal = Math.sqrt(size[0] * size[0] + size[1] * size[1] + size[2] * size[2]);
 
-    // —— 逐面分类（供 3D 可视化红/橙/紫叠加）——
-    // 类别：0 正常 · 1 悬垂(需支撑,红) · 2 陡壁(45–70°,琥珀) · 3 桥接(橙) · 4 薄壁/细特征(紫)
+    // 逐面分类（供 3D 可视化红/橙/紫叠加）
+    // 类别：0 正常 · 1 悬垂(slope<30°,红) · 2 陡壁(45–70°,琥珀) · 3 桥接(橙) · 4 薄壁/细特征(紫)
+    //       5 缓坡悬垂(30–45°,品红) ★切片器 support_threshold_angle 默认 30° 不生成支撑 → 塌陷高发区
     var faceFlags = new Uint8Array(n);
-    var steepCount = 0, bridgeCount = 0, thinCount = 0;
+    var steepCount = 0, bridgeCount = 0, thinCount = 0, slopeCount = 0;
     var OVERHANG_NZ = -0.7071;   // 法线朝下 >45°
+    var SLOPE_NZ = -0.8660;      // 朝下 30–45°（cos30）：缓坡悬垂
     var STEEP_NZ = -0.3420;      // 法线朝下 45–70°（离 +Z 轴 110°..135°）
     var zMin = bbMin[2], contactBand = zMin + 0.5;
     for (var j = 0; j < n; j++) {
@@ -512,21 +515,22 @@
                            positions[p + 3], positions[p + 4], positions[p + 5],
                            positions[p + 6], positions[p + 7], positions[p + 8]);
       var nz = nrmJ[2];
-      if (nz < OVERHANG_NZ) {                        // 朝下 >45°
+      if (nz < 0) {                                  // 朝下的面
         var zc = (positions[p + 2] + positions[p + 5] + positions[p + 8]) / 3;
         if (zc < contactBand) { bottomCount++; }      // 贴底板（正常色，不标红）
-        else { overhangCount++; faceFlags[j] = 1; }   // 悬垂 → 红
-      } else if (nz < STEEP_NZ) {                     // 朝下 45–70° → 陡壁
-        steepCount++; faceFlags[j] = 2;
+        else if (nz < SLOPE_NZ) { overhangCount++; faceFlags[j] = 1; }        // slope<30° → 悬垂(默认会撑)
+        else if (nz < OVERHANG_NZ) { slopeCount++; faceFlags[j] = 5; }        // 30–45° → 缓坡(默认不撑!)
+        else if (nz < STEEP_NZ) { steepCount++; faceFlags[j] = 2; }           // 45–70° → 陡壁
       }
       // 其余（朝上 / 近垂直）→ 默认 0，待桥接/薄壁射线检测升级
     }
     // 桥接 + 薄壁：基于射线的近似检测；超限则跳过（标注 sampled）
     var faceFlagsSampled = false, faceFlagsSampledNote = "";
+    var rcSpan = null;   // 最大桥接跨度 mm（PLA/PETG 实测极限约 40mm）
     if (n > LIMITS.maxTrianglesForRaycast) {
       faceFlagsSampled = true;
       faceFlagsSampledNote = "三角形数 " + n + " 超过射线检测上限 " + LIMITS.maxTrianglesForRaycast +
-        "，桥接/薄壁检测已跳过（overhang/陡壁 仍全量；以切片软件实测为准）";
+        "，桥接/薄壁/跨度检测已跳过（悬垂/缓坡/陡壁 仍全量；以切片软件实测为准）";
     } else {
       var rc = detectRaycastCategories(positions, n, faceFlags, {
         contactBand: contactBand,
@@ -535,6 +539,7 @@
       });
       faceFlagsSampled = rc.sampled;
       faceFlagsSampledNote = rc.note || "";
+      rcSpan = rc.bridgeSpanMax || null;
     }
     // 整体法线反向：封闭实体的有向体积为负（开放网格此项不可靠，仅在流形时采信）
     var normalsInverted = volume < 0;
@@ -658,6 +663,20 @@
       issues.push({ code: "low_bottom_contact", severity: "info", value: facts.bottomContactPercent,
         detail: "只有 " + facts.bottomContactPercent + "% 的三角形贴底板（首层附着面积小）" });
     }
+    // 缓坡悬垂（30–45°）：切片器 support_threshold_angle 默认 30° 不会给这些面生成支撑 → 塌陷高发
+    if (slopeCount > 0) {
+      issues.push({
+        code: "slope_overhang", severity: "warning", value: slopeCount,
+        detail: "检出 " + slopeCount + " 个缓坡悬垂面（30–45°，品红）：支撑阈值默认 30° 不会给它们生成支撑，是塌陷高发区——把「支撑悬挑角度阈值」调到 45° 即可覆盖"
+      });
+    }
+    // 大跨度桥接：PLA/PETG 实测极限约 40mm
+    if (rcSpan != null && rcSpan > 40) {
+      issues.push({
+        code: "bridge_span_exceed", severity: "warning", value: rcSpan,
+        detail: "检出最大桥接跨度约 " + rcSpan + " mm（PLA/PETG 实测极限约 40mm，超限易塌陷）——建议桥接流量 1.5、桥接速度 10"
+      });
+    }
     if (facts.volume < 1e-6) {
       issues.push({ code: "zero_volume", severity: "error", value: facts.volume,
         detail: "体积≈0，可能不是实体（只有表面片/开放面）" });
@@ -669,11 +688,15 @@
     // 逐面分类结果（3D 可视化用）
     facts.faceFlags = faceFlags;
     facts.flagCounts = {
-      overhang: overhangCount, steep: steepCount, bridge: bridgeCount, thin: thinCount,
-      normal: n - overhangCount - steepCount - bridgeCount - thinCount
+      overhang: overhangCount, steep: steepCount, bridge: bridgeCount, thin: thinCount, slope: slopeCount,
+      normal: n - overhangCount - steepCount - bridgeCount - thinCount - slopeCount
     };
     facts.faceFlagsSampled = faceFlagsSampled;
     facts.faceFlagsSampledNote = faceFlagsSampledNote;
+    // 缓坡（30–45°）与桥接跨度：切片器默认阈值 30° 不撑缓坡；跨度 >40mm 桥接易塌（实测 PLA/PETG）
+    facts.slopeTriangles = slopeCount;
+    facts.slopePercent = round4((slopeCount / n) * 100);
+    facts.bridgeSpanMax = rcSpan;
 
     facts.issues = issues;
     facts.score = scoreOf(issues);
@@ -946,6 +969,7 @@
     }
 
     // 桥接：近水平朝上、且下方 bridgeMax 内无支撑（暴露下表面）的小面 → 近似
+    var bridgeIdxs = [];
     for (var bi = 0; bi < n; bi++) {
       if (faceFlags[bi] !== 0) continue;
       var nbm = normalOf(bi);
@@ -953,11 +977,30 @@
       if (maxEdge(bi) > bridgeMaxEdge) continue;    // 大平面（多为实体顶）→ 不标
       var c2 = centroid(bi);
       var dd = probe(c2[0], c2[1], c2[2], 0, 0, -1, bridgeMax, bi);
-      if (dd > bridgeMax) cb.onBridge(bi);          // 下方 bridgeMax 内均无支撑
+      if (dd > bridgeMax) { cb.onBridge(bi); bridgeIdxs.push(bi); }   // 下方 bridgeMax 内均无支撑
+    }
+
+    /* 桥接跨度：从桥接面质心沿 ±X/±Y 水平探到最近的壁，取最大开口距离（≈该处桥接跨度）。
+       经验阈值：PLA/PETG 跨度 >40mm 易塌陷，需 bridge_flow 1.5 + bridge_speed 10。 */
+    var bridgeSpanMax = 0;
+    var spanCap = 60;                                   // 上限 mm，避免长射线开销
+    var spanStep = Math.max(1, Math.ceil(bridgeIdxs.length / 60));   // 最多采样 ~60 个桥接面
+    var dirs4 = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]];
+    for (var si = 0; si < bridgeIdxs.length; si += spanStep) {
+      var idx = bridgeIdxs[si], cc = centroid(idx), bestOpen = 0;
+      for (var di = 0; di < 4; di++) {
+        var dv = dirs4[di];
+        // 起点沿 +Z 微抬 0.05mm：避免射线与桥面/壁底边共面导致相交判定退化（会误判为完全开口）
+        var dist = probe(cc[0], cc[1], cc[2] + 0.05, dv[0], dv[1], dv[2], spanCap, idx);
+        if (!isFinite(dist)) dist = spanCap;            // 完全开口（悬空边缘）
+        if (dist > bestOpen) bestOpen = dist;
+      }
+      if (bestOpen > bridgeSpanMax) bridgeSpanMax = bestOpen;
     }
 
     return {
       sampled: sampled,
+      bridgeSpanMax: round1(bridgeSpanMax),
       note: sampled ? ("桥接/薄壁为近似几何启发式，已对部分三角形采样检测（步长 " + thinStep + "）；桥接可能误标实体顶部，仅供参考，可关闭。") : ""
     };
   }

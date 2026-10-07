@@ -470,6 +470,25 @@ ok(stlA.triangleCount === 12 && stlA.format === "stl-ascii",
   ok(blk5.faceFlags[0] === 0 && blk5.flagCounts.overhang === 0,
      "贴底板面 → 不标红(overhang=0)，faceFlags[0]=" + blk5.faceFlags[0]);
 
+  // 5.6 缓坡悬垂（30–45°）→ flag5（切片器阈值 30° 不撑，塌陷高发区）
+  // 平面 z = 40 − 0.7x：法线 nz ≈ −0.819 → slope ≈ 35°（落在 30–45° 区间）
+  const slopeTri = triPos([[0, 0, 40], [0, 1, 40], [1, 0, 39.3]]);
+  const blk6 = MH.analyze(concat(tpos(cube.V, cube.T), slopeTri), 13);
+  ok(blk6.faceFlags[12] === 5 && blk6.flagCounts.slope === 1,
+     "缓坡面(30–45°) → flag5，faceFlags[12]=" + blk6.faceFlags[12] + " slope=" + blk6.flagCounts.slope);
+  ok(blk6.issues.some(function (f) { return f.code === "slope_overhang"; }),
+     "缓坡 → 生成 slope_overhang 提示（建议阈值 45°）");
+
+  // 5.7 桥接跨度：孤立小面居中（两壁相距 100mm）→ 检出跨度应 >40mm
+  const wallL = concat(triPos([[0, 0, 20], [0, 10, 20], [0, 10, 21]]), triPos([[0, 0, 20], [0, 10, 21], [0, 0, 21]]));
+  const wallR = concat(triPos([[100, 0, 20], [100, 10, 21], [100, 10, 20]]), triPos([[100, 0, 20], [100, 0, 21], [100, 10, 21]]));
+  const smallUp = triPos([[50, 5, 20], [51, 5, 20], [50, 6, 20]]);   // 朝上小面，下方无支撑 → bridge
+  const blk7 = MH.analyze(concat(wallL, wallR, smallUp), 5);
+  ok(blk7.flagCounts.bridge >= 1, "孤立小面 → 标为 bridge（实得 " + blk7.flagCounts.bridge + "）");
+  ok(blk7.bridgeSpanMax > 40, "两壁相距 100mm → 检出跨度 >40mm（实得 " + blk7.bridgeSpanMax + "）");
+  ok(blk7.issues.some(function (f) { return f.code === "bridge_span_exceed"; }),
+     "跨度超限 → 生成 bridge_span_exceed 提示（流量1.5/速度10）");
+
   console.log(fail ? "\n❌ 失败 " + fail + " 项" : "\n✅ 全部通过");
   process.exit(fail ? 1 : 0);
 })();

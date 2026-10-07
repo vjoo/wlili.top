@@ -58,6 +58,11 @@ function makeSandbox(override) {
   s.PSET = [];
   s.AD = { save() {} };
   s.renderMain = function () {};
+  // PLIB.tab 初始化会读 localStorage 恢复页卡位置（这两个 helper 是单行函数，extractFn 抽不干净），
+  // 故在沙箱里给出等价桩：读不到即回落到默认页卡 'presets'。
+  s.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, clear() {} };
+  s.plibLsGet = function () { return null; };
+  s.plibLsSet = function () {};
   vm.createContext(s);
   for (const f of SHARED_FILES) {
     const src = fs.readFileSync(path.join(SHARED, f), "utf8");

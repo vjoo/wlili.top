@@ -10,13 +10,15 @@ const CAT_COLORS = {
   1: [1.00, 0.23, 0.19],   // 悬垂/需支撑 — 红
   2: [1.00, 0.84, 0.04],   // 陡壁(45–70°) — 黄
   3: [1.00, 0.62, 0.04],   // 桥接(近似) — 橙
-  4: [0.75, 0.35, 0.95]    // 薄壁/细特征 — 紫
+  4: [0.75, 0.35, 0.95],   // 薄壁/细特征 — 紫
+  5: [0.91, 0.12, 0.55]    // 缓坡悬垂(30–45°，切片器默认不撑) — 品红
 };
 const CAT_NAMES = {
   1: '悬垂 / 需支撑',
   2: '陡壁 (45–70°)',
   3: '桥接 (近似)',
-  4: '薄壁 / 细特征'
+  4: '薄壁 / 细特征',
+  5: '缓坡悬垂 (30–45°)'
 };
 
 function mount(container, instances) {
@@ -63,7 +65,7 @@ function mount(container, instances) {
   const partsGroup = new THREE.Group(); group.add(partsGroup);
   let arranged = false;
 
-  const visibleCats = { 1: true, 2: true, 3: true, 4: true };
+  const visibleCats = { 1: true, 2: true, 3: true, 4: true, 5: true };
   const recs = [];
 
   function rebuildOverlay(rec) {
@@ -203,7 +205,7 @@ function mount(container, instances) {
   const legend = document.createElement('div');
   legend.style.cssText = 'position:absolute;left:10px;top:10px;background:rgba(18,22,30,.8);border:1px solid #2a3040;border-radius:8px;padding:8px 10px;font:12px/1.6 ui-sans-serif,system-ui;color:#dfe5ee;z-index:5;max-width:210px';
   let keys = '';
-  for (const k of [1, 2, 3, 4]) {
+  for (const k of [1, 2, 3, 4, 5]) {
     const c = CAT_COLORS[k];
     const hex = '#' + [c[0], c[1], c[2]].map(x => ('0' + Math.round(x * 255).toString(16)).slice(-2)).join('');
     keys += '<div class="__m3d_cat" data-cat="' + k + '" title="点击显示/隐藏该类问题面" style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;transition:opacity .15s">'
