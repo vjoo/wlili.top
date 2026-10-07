@@ -21,9 +21,9 @@ load(DIR + "/bambu-params-schema.js");
 load(DIR + "/bambu-filament-schema.js");
 load(DIR + "/bambu-preset-patch.js");
 load(DIR + "/bambu-preset-patch-data.js"); // 末尾 module.exports = PATCHES
-
 const PATCH = ctx.window.BAMBU_PATCH;
-const PATCHES = ctx.module.exports;
+const PATCHES = ctx.module.exports;         // 立即捕获，避免被后续 load 覆盖
+load(DIR + "/bambu-defect-rules.js");        // 缺陷诊断因果链规则库（GPT §7/§10/§13）
 let fail = 0;
 function ok(cond, msg) { console.log((cond ? "  ✓ " : "  ✗ ") + msg); if (!cond) fail++; }
 
@@ -47,9 +47,50 @@ ok(!!ctx.window.BAMBU_FILAMENT_SCHEMA, "BAMBU_FILAMENT_SCHEMA 已加载");
 ok(!!PATCH && typeof PATCH.normalize === "function", "BAMBU_PATCH.normalize 可用");
 ok(Array.isArray(PATCHES) && PATCHES.length === EXPECTED, "预设共 " + EXPECTED + " 条（实得 " + (PATCHES || []).length + "）");
 
+/* 缺陷诊断规则库（对齐 GPT《X2D_FDM_工艺知识库_V0.1》§7 支撑策略 / §10 因果链 / §13 验证测试） */
+console.log("\n== 缺陷诊断规则库 ==");
+const DEFECT = ctx.window.BAMBU_DEFECT_RULES;
+ok(!!DEFECT, "BAMBU_DEFECT_RULES 已加载（schema v" + (DEFECT && DEFECT.schema_version) + "）");
+const presetIds = new Set(PATCHES.map(p => p.id));
+const seenIds = new Set();
+if (DEFECT) {
+  const E = DEFECT.enums, REQ = DEFECT.required, RULES = DEFECT.rules;
+  const ruleCount = Object.keys(RULES).length;
+  ok(ruleCount > 0, "规则条数 = " + ruleCount);
+  Object.keys(RULES).forEach(function (rk) {
+    const r = RULES[rk];
+    ok(rk === r.id, "[" + rk + "] 对象 key 与 id 一致");
+    ok(!seenIds.has(r.id), "[" + r.id + "] id 唯一");
+    seenIds.add(r.id);
+    REQ.forEach(function (f) {
+      ok(r[f] !== undefined && r[f] !== null && r[f] !== "",
+        "[" + r.id + "] 必填字段 " + f + " 已填");
+    });
+    ok(E.evidence_level.indexOf(r.evidence_level) >= 0, "[" + r.id + "] evidence_level 合法（" + r.evidence_level + "）");
+    ok(E.permission.indexOf(r.auto_action) >= 0, "[" + r.id + "] auto_action 权限合法（" + r.auto_action + "）");
+    ok(E.support_strategy.indexOf(r.support_strategy) >= 0, "[" + r.id + "] support_strategy 合法（" + r.support_strategy + "）");
+    ok(E.feature.indexOf(r.feature) >= 0, "[" + r.id + "] feature 合法（" + r.feature + "）");
+    ok(Array.isArray(r.validation_test) && r.validation_test.length > 0, "[" + r.id + "] validation_test 非空数组");
+    (r.validation_test || []).forEach(function (t) {
+      ok(E.validation_test.indexOf(t) >= 0, "[" + r.id + "] validation_test " + t + " 合法");
+    });
+    if (r.recommended_preset) {
+      ok(presetIds.has(r.recommended_preset),
+        "[" + r.id + "] recommended_preset 指向真实预设（" + r.recommended_preset + "）");
+    }
+  });
+}
+
 /* 字段合法性：工艺 key 必须在工艺 schema 里；耗材丝 key 必须在耗材丝 schema 且不在只读区 */
 console.log("\n== 字段合法性（对照真实 schema） ==");
 PATCHES.forEach(function (src) {
+  // 0) 规则元数据（对齐 GPT 知识库框架：每条预设必须带 evidence_level / permission / provenance）
+  const meta = src.meta || {};
+  const E_OK = ["E0","E1","E2","E3","E4","E5","pending"];
+  const P_OK = ["P0","P1","P2","P3","NA"];
+  ok(E_OK.indexOf(meta.evidence_level) >= 0, "[" + src.id + "] meta.evidence_level 合法（" + (meta.evidence_level || "缺失") + "）");
+  ok(P_OK.indexOf(meta.permission) >= 0, "[" + src.id + "] meta.permission 合法（" + (meta.permission || "缺失") + "）");
+  ok(typeof meta.provenance === "string" && meta.provenance.length > 0, "[" + src.id + "] meta.provenance 已填写");
   const badP = Object.keys(src.params || {}).filter(k => !PROC_KEYS.has(k));
   ok(badP.length === 0, "[" + src.id + "] 工艺参数全部合法" + (badP.length ? " → 未知 key: " + badP.join(",") : ""));
   const fs = ((src.filament || {}).overrides) || {};
