@@ -23,9 +23,27 @@
     "rule_result": { "rule_id": "BRIDGE_001", "status": "candidate", "evidence_level": "E1", "feature_ids": [], "current": {}, "proposed": {}, "reason": "", "expected_effect": "", "side_effect": "", "rollback": "", "validation_test": "", "action_level": "P1" },
 
     /* —— 主动回填区（2026-10-08 新增）——
-       当前为空：尚未与用户确认任何有意义的切片/实测结论。
+       当前 1 条实测记录（ER_001：E5 本机 PETG 桥接速度 25→20，已确认有效，2026-10-08 由用户对话确认）。
        每条记录由 X2D_SLICE_V21.backfill(record) 追加，结构见 validateRecord。 */
-    "empirical_records": []
+    "empirical_records": [
+      {
+        "record_id": "ER_001",
+        "case_id": "CASE_001",
+        "schema_version": "2.1",
+        "test_id": "E5-BRIDGE-SPEED-PETG-20261008",
+        "evidence_level": "E5",
+        "status": "confirmed",
+        "rule_id": "BRIDGE_001",
+        "machine": "X2D",
+        "nozzle_mm": 0.4,
+        "material": "PETG",
+        "params": { "bridge_speed_mm_s_before": 25, "bridge_speed_mm_s_after": 20 },
+        "result": "桥接层更整齐，无下垂/拉丝；长跨距悬空桥底面连续、无断丝。",
+        "measurement": "目视 + 桥接测试件（长跨距悬空桥）对比",
+        "conclusion": "Bridge Speed 25 mm/s → 20 mm/s 在本机 X2D + 0.4mm + PETG 实测有效：桥接层更整齐、无下垂与拉丝，建议作为本机 PETG 桥接默认速度。",
+        "date": "2026-10-08"
+      }
+    ]
   };
 
   /* 回填校验：缺关键字段直接抛错，避免脏数据进库。
