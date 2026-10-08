@@ -3231,7 +3231,7 @@ function viewFilamentPresets(){
       const filRec = (item.filId && typeof FILP !== 'undefined') ? FILP.find(f=>f.id===item.filId) : null;
       const filDisplay = filRec ? filRec.name : '<span style="color:var(--muted)">未关联</span>';
       const diag = item.diagnosis || null;
-      const diagBadge = diag ? ` <span class="tag-badge" style="color:${pappDiagColor(diag.overall)};border-color:${pappDiagColor(diag.overall)};font-size:11px" title="${pappEsc(diag.summary||'')}">${pappDiagLevel(diag.overall)}</span>` : '';
+      const diagBadge = diag ? ` <span class="tag" style="color:${pappDiagColor(diag.overall)};border-color:${pappDiagColor(diag.overall)}" title="${pappEsc(diag.summary||'')}">${pappDiagLevel(diag.overall)}</span>` : '';
       return `<tr data-pid="${item.id}">
         <td><b>${item.name}</b>${diagBadge}</td>
         <td style="white-space:nowrap;color:var(--muted)">${presDate(item.createdDate)}</td>
