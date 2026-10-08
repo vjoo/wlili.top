@@ -146,6 +146,59 @@
     return -1;
   }
 
+  /* --- ZIP64 ---
+     部分导出器（含 3MF 测试集）会写 ZIP64：经典 EOCD 里的 entry 数 / 中央目录偏移
+     被置为占位值 0xFFFF / 0xFFFFFFFF，真实值在 ZIP64 EOCD 记录里。
+     不处理时表现为「伪损坏」——文件其实完好，却扫不到任何 entry（报"未找到 3D 模型"）。
+     定位链：经典 EOCD → 往前 20 字节的 ZIP64 locator(0x07064b50) → ZIP64 EOCD(0x06064b50)。 */
+  function findZip64EOCD(dv, len, eocd) {
+    var loc = eocd - 20;
+    if (loc < 0 || dv.getUint32(loc, true) !== 0x07064b50) return null;
+    // 64 位偏移：低 4 字节在前（little-endian）
+    var off = dv.getUint32(loc + 8, true) + dv.getUint32(loc + 12, true) * 4294967296;
+    if (!(off >= 0) || off + 56 > len || dv.getUint32(off, true) !== 0x06064b50) return null;
+    var count = dv.getUint32(off + 32, true);
+    var cdOff = dv.getUint32(off + 48, true) + dv.getUint32(off + 52, true) * 4294967296;
+    if (!(cdOff >= 0) || cdOff >= len) return null;
+    return { count: count, cdOff: cdOff };
+  }
+
+  // 读小端 64 位整数（JS Number 足够表示 3MF 尺度）
+  function readU64(dv, off) {
+    return dv.getUint32(off, true) + dv.getUint32(off + 4, true) * 4294967296;
+  }
+
+  // 单条 entry 的 ZIP64 补丁：经典字段为占位值 0xFFFFFFFF 时，
+  // 从 extra field(id=0x0001) 按顺序取真值（原始大小 → 压缩大小 → 本地头偏移）。
+  // 顺序必须严格按规范推进指针：即便某个字段不是占位值也要跳过它占用的 8 字节。
+  function fixZip64(dv, extraStart, extraLen, rec) {
+    var end = extraStart + extraLen, p = extraStart;
+    while (p + 4 <= end) {
+      var id = dv.getUint16(p, true);
+      var size = dv.getUint16(p + 2, true);
+      var body = p + 4, bodyEnd = Math.min(body + size, end);
+      if (id === 0x0001) {
+        var q = body;
+        if (rec.uncompSize === 0xFFFFFFFF && q + 8 <= bodyEnd) { rec.uncompSize = readU64(dv, q); q += 8; }
+        if (rec.compSize === 0xFFFFFFFF && q + 8 <= bodyEnd) { rec.compSize = readU64(dv, q); q += 8; }
+        if (rec.localOff === 0xFFFFFFFF && q + 8 <= bodyEnd) { rec.localOff = readU64(dv, q); q += 8; }
+      }
+      p = body + size;
+    }
+    return rec;
+  }
+
+  // 统一取「entry 数 + 中央目录偏移」，自动兼容 ZIP64
+  function readCentralDirectory(dv, len, eocd) {
+    var count = dv.getUint16(eocd + 10, true);
+    var cdOff = dv.getUint32(eocd + 16, true);
+    if (count === 0xFFFF || cdOff === 0xFFFFFFFF) {
+      var z = findZip64EOCD(dv, len, eocd);
+      if (z) { count = z.count; cdOff = z.cdOff; }
+    }
+    return { count: count, cdOff: cdOff };
+  }
+
   async function inflateRawBytes(bytes) {
     if (typeof DecompressionStream !== "undefined") {
       try {
@@ -178,19 +231,23 @@
     var len = bytes.byteLength;
     var eocd = findEOCD(dv, len);
     if (eocd < 0) throw new Error("不是有效的 3MF/zip：未找到中央目录");
-    var count = dv.getUint16(eocd + 10, true);
-    var cdOff = dv.getUint32(eocd + 16, true);
+    var cd = readCentralDirectory(dv, len, eocd);
+    var count = cd.count, cdOff = cd.cdOff;
 
     var p = cdOff;
     for (var i = 0; i < count && p + 46 <= len; i++) {
       if (dv.getUint32(p, true) !== 0x02014b50) break;
       var method = dv.getUint16(p + 10, true);
       var compSize = dv.getUint32(p + 20, true);
+      var uncompSize = dv.getUint32(p + 24, true);
       var nameLen = dv.getUint16(p + 28, true);
       var extraLen = dv.getUint16(p + 30, true);
       var commentLen = dv.getUint16(p + 32, true);
       var localOff = dv.getUint32(p + 42, true);
       var name = decodeText(bytes.subarray(p + 46, p + 46 + nameLen));
+      var rec = fixZip64(dv, p + 46 + nameLen, extraLen,
+        { compSize: compSize, uncompSize: uncompSize, localOff: localOff });
+      compSize = rec.compSize; localOff = rec.localOff;
       p += 46 + nameLen + extraLen + commentLen;
 
       if (!nameRe.test(name)) continue;
@@ -258,8 +315,8 @@
     var bytes = asBytes(buf), dv = dataViewOf(bytes), len = bytes.byteLength;
     var eocd = findEOCD(dv, len);
     if (eocd < 0) return [];
-    var count = dv.getUint16(eocd + 10, true);
-    var cdOff = dv.getUint32(eocd + 16, true);
+    var cd = readCentralDirectory(dv, len, eocd);
+    var count = cd.count, cdOff = cd.cdOff;
     var res = [], p = cdOff;
     for (var i = 0; i < count && p + 46 <= len; i++) {
       if (dv.getUint32(p, true) !== 0x02014b50) break;
@@ -270,6 +327,9 @@
       var commentLen = dv.getUint16(p + 32, true);
       var localOff = dv.getUint32(p + 42, true);
       var name = decodeText(bytes.subarray(p + 46, p + 46 + nameLen));
+      var rec2 = fixZip64(dv, p + 46 + nameLen, extraLen,
+        { compSize: compSize, uncompSize: dv.getUint32(p + 24, true), localOff: localOff });
+      compSize = rec2.compSize; localOff = rec2.localOff;
       p += 46 + nameLen + extraLen + commentLen;
       if (!nameRe.test(name)) continue;
       if (dv.getUint32(localOff, true) !== 0x04034b50) continue;
@@ -328,17 +388,46 @@
       objects[id] = { verts: verts, tris: tris, components: components, name: name };
     }
 
+    // production 扩展：<p:path id="p1"><p:pathnode objectid="1" transform="..."/>...</p:path>
+    // 切片器（Bambu/Prusa/Cura）导出时常把实例列在 path 里，build item 只写 p:path="p1"。
+    var paths = {};
+    var pr = new RegExp("<" + TAG + "path\\b([^>]*)>([\\s\\S]*?)<\\/" + TAG + "path\\s*>", "g"), pm2;
+    while ((pm2 = pr.exec(xml)) !== null) {
+      var pid = attr(pm2[1], "id");
+      if (pid == null) continue;
+      var nodes = [];
+      var nr = new RegExp("<" + TAG + "pathnode\\b([^>]*?)\\/?>", "g"), nm2;
+      while ((nm2 = nr.exec(pm2[2])) !== null) {
+        nodes.push({
+          objectid: attr(nm2[1], "objectid"),
+          transform: parseTransform(attr(nm2[1], "transform"))
+        });
+      }
+      if (nodes.length) paths[pid] = nodes;
+    }
+
     // build 节点：<item objectid transform>
     var items = [];
     var br = new RegExp("<" + TAG + "build\\b[^>]*>([\\s\\S]*?)<\\/" + TAG + "build\\s*>", "g"), bm;
     while ((bm = br.exec(xml)) !== null) {
       var ir = new RegExp("<" + TAG + "item\\b([^>]*?)\\/?>", "g"), im;
       while ((im = ir.exec(bm[1])) !== null) {
-        items.push({
-          objectid: attr(im[1], "objectid"),
-          transform: parseTransform(attr(im[1], "transform")),
-          name: attr(im[1], "name") || null
-        });
+        var oid = attr(im[1], "objectid");
+        var pth = attr(im[1], "path");   // 形如 p:path="p1"，attr 的 \b 也能命中带前缀的写法
+        var itemTf = parseTransform(attr(im[1], "transform"));
+        var iname = attr(im[1], "name") || null;
+        // item 只给 path 不给 objectid → 展开该 path 下的全部 pathnode 作为独立实例
+        if ((oid == null || oid === "") && pth && paths[pth]) {
+          paths[pth].forEach(function (nd) {
+            items.push({
+              objectid: nd.objectid,
+              transform: concatTransform(itemTf, nd.transform || null),
+              name: iname
+            });
+          });
+          continue;
+        }
+        items.push({ objectid: oid, transform: itemTf, name: iname });
       }
     }
     if (!items.length) {
