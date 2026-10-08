@@ -1,0 +1,16 @@
+# 编辑器层面统一换行符 / 缩进，配合 .gitattributes 双保险防 CRLF 复发
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2
