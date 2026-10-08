@@ -1958,6 +1958,42 @@ var BAMBU_BUILTIN = [
    }
   ],
   "builtinVersion": 1
+ },
+ {
+  "id": "preset_ksr_fdm_test",
+  "name": "欧特克 FDM 测试模型",
+  "subType": "测试·欧特克FDM",
+  "machine": "X2D",
+  "filamentType": "通用（建议 PLA；PETG/ABS 冷却需另行调）",
+  "createdDate": "2026-10-08T14:54:51.000Z",
+  "notes": "针对 Autodesk × Kickstarter「欧特克 FDM 测试」(Bambu Studio 内置 ksmFDMTest) 这种高压应力测试件，规避其最易翻车的桥接 / 悬垂缺陷的工艺调优。聚合社区经验共识（证据等级 E3，非本机实测）：① 桥接——bridge_speed 50→25 mm/s、bridge_flow 1→0.95、开厚桥(thick_bridges)；② 悬垂——enable_overhang_speed 全层开启 + 四档降速(30/20/12/8 mm/s) + detect_overhang_wall；③ 层高 0.2→0.16 提升悬垂/桥接稳定性。⚠ 关键注意：a) 冷却/风扇是【耗材丝侧】参数（overhang_fan_threshold/fan_max_speed 等），本预设未含——PLA 可悬空强制 100% 冷，但 PETG 仅 30–50%、ABS/ASA 接近 0，切勿照搬，否则翘曲/层裂；b) 拉丝属回抽（耗材丝侧 retract_length/speed），工艺侧无解，需另调耗材丝；c) 桥接跨距 >40–50mm 任何参数都救不了，应加支撑或旋转模型。待本机跑该测试拿到 E5 实测后再回填 V2.1（见知识库「3D打印-欧特克FDM测试模型-异常调优映射」）。",
+  "bpValues": {
+   "layer_height": "0.16",
+   "bridge_flow": "0.95",
+   "thick_bridges": "1",
+   "bridge_speed": "25, 25, 25, 25, 25, 25",
+   "detect_overhang_wall": "1",
+   "enable_overhang_speed": "1, 1, 1, 1, 1, 1",
+   "overhang_1_4_speed": "0, 0, 0, 0, 0, 0",
+   "overhang_2_4_speed": "30, 30, 30, 30, 30, 30",
+   "overhang_3_4_speed": "20, 20, 20, 20, 20, 20",
+   "overhang_4_4_speed": "12, 12, 12, 12, 12, 12",
+   "overhang_totally_speed": "8, 8, 8, 8, 8, 8"
+  },
+  "processParams": [
+   { "name": "layer_height", "value": "0.16" },
+   { "name": "bridge_flow", "value": "0.95" },
+   { "name": "thick_bridges", "value": "1" },
+   { "name": "bridge_speed", "value": "25, 25, 25, 25, 25, 25" },
+   { "name": "detect_overhang_wall", "value": "1" },
+   { "name": "enable_overhang_speed", "value": "1, 1, 1, 1, 1, 1" },
+   { "name": "overhang_1_4_speed", "value": "0, 0, 0, 0, 0, 0" },
+   { "name": "overhang_2_4_speed", "value": "30, 30, 30, 30, 30, 30" },
+   { "name": "overhang_3_4_speed", "value": "20, 20, 20, 20, 20, 20" },
+   { "name": "overhang_4_4_speed", "value": "12, 12, 12, 12, 12, 12" },
+   { "name": "overhang_totally_speed", "value": "8, 8, 8, 8, 8, 8" }
+  ],
+  "builtinVersion": 1
  }
 ];;
 /* 内置预置：列表里缺失时自动补入；用户删除过的记进黑名单(bambu_builtin_deleted)，不再复活。
