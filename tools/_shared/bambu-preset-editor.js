@@ -1593,6 +1593,18 @@
     if (fsel) { preset.filId = fsel.value; filCollectSave(); }
     if (id) { var i = PSET.findIndex(function (p) { return p.id === id; }); if (i !== -1) PSET[i] = preset; }
     else PSET.push(preset);
+    /* 保存即重算诊断（2026-10-08）：diagnosis 是派生数据，参数/关联耗材丝一变
+       结论就可能变，不落陈旧结果 —— 与启动自动诊断同一语义。失败不阻断保存。 */
+    try {
+      if (typeof BAMBU_DIAGNOSE !== "undefined") {
+        var dr = BAMBU_DIAGNOSE.diagnosePreset(preset, {
+          name: preset.name,
+          material: (typeof pappMaterial === "function") ? pappMaterial(preset) : (preset.filamentType || null),
+          linkedFilament: preset.filId || null
+        }, { presets: PSET, filamentPresets: FILP });
+        if (dr) preset.diagnosis = dr;
+      }
+    } catch (eDiag) { /* 诊断失败不阻断保存 */ }
     AD.save("bambu_presets"); closeModal(); renderMain(); toast("已保存 · 已同步落盘");
   };
 

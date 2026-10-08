@@ -253,7 +253,9 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, 
 /* 打印参数预设：操作列固定容纳 4 个图标按钮（诊断/查看/编辑/删除）。
    ⚠ 历史坑（2026-10-06）：原来「分析诊断」和「查看诊断」是两个按钮 → 一行最多 5 个，
    而本列被 .fx 钉死 120px（只够 3 个）→ 内容溢出到 196px，表格出现横向滚动条。
-   现合并为一个按钮（未诊断=分析，已诊断=查看，详情弹窗内可重新诊断）恒为 4 个。
+   现合并为一个按钮恒为 4 个。2026-10-08 起诊断在启动时自动全量重算 + 保存即重算，
+   正常情况下每条都已有结论（按钮=查看，中性样式与相邻按钮一致；引擎缺失时才
+   退化显示"分析诊断"入口，样式同样式仅图标不同）。
    列宽算式（与全站其它 act-cell 同一配比：每按钮 40px = 28px 按钮 + 8px 间距）：
      4×28(按钮) + 3×8(gap 4 + 全局 .btn-icon + .btn-icon 的 margin-left 4) + 12×2(padding) = 160，留 2px 余量。
    ⚠ 再加/减按钮必须同步改这个宽度，否则又会撑出横向滚动条。 */
@@ -3244,11 +3246,11 @@ function viewFilamentPresets(){
         <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.notes||''}">${item.notes||'-'}</td>
         <td>${processDisplay}</td>
         <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${filRec?filRec.name:''}">${filDisplay}</td>
-        <td class="act-cell"><div class="act-row">
+        <td class="act-cell">        <div class="act-row">
           ${PAPP._busy===item.id
             ? `<span class="btn-icon" style="opacity:.75;cursor:default" title="诊断中…">${DIAG_SPIN}</span>`
             : (diag
-              ? `<button class="btn-icon diag" style="color:${pappDiagColor(diag.overall)};border-color:${pappDiagColor(diag.overall)}" title="查看诊断结果（${pappDiagLevel(diag.overall)}）· 打开后可重新诊断" onclick="PAPP.viewDiagnosis('${item.id}')">${DIAG_VIEW_IC}</button>`
+              ? `<button class="btn-icon" title="诊断结果（${pappDiagLevel(diag.overall)}）· 打开后可重新诊断" onclick="PAPP.viewDiagnosis('${item.id}')">${DIAG_VIEW_IC}</button>`
               : `<button class="btn-icon" title="分析诊断：用工艺库规则 + 精选预设给这条预设做体检" onclick="PAPP.diagnose('${item.id}')">${DIAG_IC}</button>`)}
           <button class="btn-icon" title="查看详情" onclick="PAPP.view('${item.id}')">${P_ACT.eye}</button>
           <button class="btn-icon" title="编辑" onclick="PAPP.openForm('${item.id}')">${P_ACT.pencil}</button>
@@ -3265,8 +3267,10 @@ const PAPP = {
 
 /* —— 分析诊断（工艺库 ↔ 后台预设 的串联核心）——
    流程：合并「工艺 bpValues + 关联耗材丝 FILP.values」→ BAMBU_DIAGNOSE 诊断
-        → 结果写回 item.diagnosis → AD.save('bambu_presets') 落盘
-        → 列表出现「查看诊断」图标按钮 + 总体结论徽标。 */
+        → 结果写回 item.diagnosis → AD.save('bambu_presets') 落盘。
+   2026-10-08 起：启动时自动全量重算（AD.initData 末尾）、保存预设时自动重算
+   （bambu-preset-editor.js PAPP.save）—— diagnosis 是派生数据，不随时间变化，
+   只有参数/耗材丝/规则引擎变才会变；手动诊断仅剩弹窗内"重新诊断"兜底入口。 */
 PAPP._busy = null;
 PAPP.diagnose = function(id){
   const it = PSET.find(p=>p.id===id);
@@ -5844,6 +5848,25 @@ var AD = {
       }
       AD.apply('bambu_knowledge', PKNOW,           function(v){ PKNOW.length = 0; (v||[]).forEach(function(x){ PKNOW.push(x); }); });
       AD.apply('printManager',    PRAW,            function(v){ if(v && typeof v === 'object') PRAW = v; });
+      /* 启动自动诊断（2026-10-08）：diagnosis 是纯派生数据 —— 由预设当前参数 +
+         关联耗材丝 + 诊断引擎内置规则算出，不随时间自然变化。每次启动全量重算，
+         列表永远显示「当前规则/参数」下的最新结论，用户不再看到"未诊断"初始态，
+         也不存在"改了参数但结论还是旧的"的陈旧态。幂等：结论没变不落盘
+         （比较时剔除 generatedAt 时间戳，否则每次都误判为有变化）。 */
+      (function pappAutoDiagnoseAll(){
+        if(typeof BAMBU_DIAGNOSE === 'undefined') return;
+        function diagSig(d){ if(!d) return ''; var c = JSON.parse(JSON.stringify(d)); delete c.generatedAt; return JSON.stringify(c); }
+        var changed = false;
+        PSET.forEach(function(it){
+          try{
+            var r = BAMBU_DIAGNOSE.diagnosePreset(it, {
+              name: it.name, material: pappMaterial(it), linkedFilament: it.filId || null
+            }, { presets: PSET, filamentPresets: FILP });
+            if(r && diagSig(r) !== diagSig(it.diagnosis)){ it.diagnosis = r; changed = true; }
+          }catch(e){ /* 单条失败不阻断启动 */ }
+        });
+        if(changed) AD.save('bambu_presets');
+      })();
       return Promise.all([AD.pullPrompts(), AD.pullBookmarks()]);
     }).catch(function(){ return false; });
   }
