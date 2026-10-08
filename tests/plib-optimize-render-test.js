@@ -411,5 +411,24 @@ try {
      "当前值缺失 → 动态项跳过，仅剩静态项（实得 " + dyn2.map(x => x.key).join("|") + "）");
 } catch (e) { ok(false, "回写清单场景抛错：" + (e && e.stack || e)); }
 
-console.log(fail ? ("\n❌ " + fail + " 项失败") : "\n✅ 全部通过（页卡 · div 配平 · 持久化 · 无垃圾残留）");
+/* ============================================================
+ *  输出文件名带时间戳（用户要求：区分原始模型与每次不同时间的输出）
+ * ============================================================ */
+console.log("\n== 3mf 输出命名 ==");
+try {
+  const run = (name) => { sandbox.OPT.name = name; return sandbox.optOutName(); };
+  const n1 = run("bracket-v2.3mf");
+  ok(/-x2d-\d{8}-\d{4}\.3mf$/.test(n1), "格式为 <原名>-x2d-YYYYMMDD-HHmm.3mf（实得 " + n1 + "）");
+  ok(n1.indexOf("bracket-v2-x2d-") === 0, "保留原文件名主干（实得 " + n1 + "）");
+  ok(n1.indexOf("bracket-v2.3mf-x2d") < 0, "原扩展名不重复拼接");
+  const n2 = run("a/b:c*?.3mf");
+  ok(/[\\/:*?"<>|]/.test(n2) === false, "Windows 非法字符已剔除（实得 " + n2 + "）");
+  const n3 = run(undefined);
+  ok(/-x2d-\d{8}-\d{4}\.3mf$/.test(n3), "无文件名时有兜底（实得 " + n3 + "）");
+  const n4 = run("三绿 PETG 支架 v1.3mf");
+  ok(n4.indexOf("三绿 PETG 支架") === 0, "中文名保留（实得 " + n4 + "）");
+  ok(sandbox.optDownload !== undefined && html.indexOf("optOutName()") > 0, "下载走 optOutName()（optApply 不再自己拼名字）");
+} catch (e) { ok(false, "命名场景抛错：" + (e && e.stack || e)); }
+
+console.log(fail ? ("\n❌ " + fail + " 项失败") : "\n✅ 全部通过（页卡 · div 配平 · 持久化 · 输出命名 · 无垃圾残留）");
 process.exit(fail ? 1 : 0);

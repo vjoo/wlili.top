@@ -287,10 +287,80 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, 
    （2026-10-06 用户反馈「留白很多」）。窄屏自动降回单列。
    .fbar（页签说明）与 slice 页的 details 需要横跨整行。 */
 .card.plib-host{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:12px;align-items:start;}
-.card.plib-host > .fbar,.card.plib-host > details{grid-column:1/-1;}
+/* fbar 与「裸 details」横跨整行；⚠ 折叠卡片卡也是 <details>（plib-card），必须排除，
+   否则全部卡片被撑成整行、两列网格失效（2026-10-07 截图自查抓到） */
+.card.plib-host > .fbar,.card.plib-host > details:not(.plib-card){grid-column:1/-1;}
 .card.plib-host > .plib-card{margin-bottom:0;}
 /* 模型优化页（向导式单栏流程）：铺满 plib-host 整行，避免被挤成 430px 单列 + 双层卡片嵌套 */
 .card.plib-host > .opt-wrap{grid-column:1/-1;display:block;}
+/* ===== 工艺库卡片层级焕新（2026-10-07 用户反馈：除模型优化外，其余页卡没层级感、文字堆积）=====
+   三条纪律：① 卡片默认只给「标题 + 一句摘要 + 关键标签」，详情一律折叠（.plib-fold）；
+             ② 元信息用灰胶囊（.plib-meta），不再在标题旁堆一排彩色 chip；
+             ③ 左侧状态色条 + hover 微抬 → 可扫描的层级。 */
+.plib-tabs{display:flex;gap:22px;margin:0 0 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.card.plib-host > .plib-tabs{grid-column:1/-1;}
+.card.plib-host > .plib-note{grid-column:1/-1;margin-top:-4px;}
+.plib-tabs button{border:none;background:none;padding:8px 2px 10px;font-size:13.5px;color:var(--muted);cursor:pointer;position:relative;letter-spacing:.02em;}
+.plib-tabs button:hover{color:var(--ink);}
+.plib-tabs button.on{color:var(--ink);font-weight:700;}
+.plib-tabs button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--accent);border-radius:2px;}
+.plib-tabs button .n{font-size:11px;font-weight:600;color:var(--muted);margin-left:5px;font-variant-numeric:tabular-nums;}
+.plib-tabs button.on .n{color:var(--accent);}
+.plib-stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;grid-column:1/-1;}
+.plib-stat{flex:1 1 118px;min-width:112px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+.plib-stat b{display:block;font-size:19px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;}
+.plib-stat span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;}
+.plib-stat.hi b{color:#e5484d;}
+.plib-stat.warn b{color:#f59e0b;}
+.plib-stat.ok b{color:#30a46c;}
+.plib-card.fold{padding-left:15px;border-left:3px solid var(--line);transition:box-shadow .18s,transform .18s,border-color .18s;}
+.plib-card.fold:hover{box-shadow:0 10px 26px rgba(0,0,0,.07);transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));}
+/* 区块容器（含子卡片）：底色下沉一档，让内层卡片浮出来（诊断入口的两大块用）；整行铺开，内部再分列 */
+.plib-card.group{background:var(--panel);}
+.card.plib-host > .plib-card.group{grid-column:1/-1;}
+.plib-card.fold.risk{border-left-color:#e5484d;}
+.plib-card.fold.warn{border-left-color:#f59e0b;}
+.plib-card.fold.ok{border-left-color:#30a46c;}
+/* hover 的 border-color 会把左侧状态色条一起改掉 → 按风险补回左色条（特异性更高，胜出） */
+.plib-card.fold.risk:hover{border-left-color:#e5484d;}
+.plib-card.fold.warn:hover{border-left-color:#f59e0b;}
+.plib-card.fold.ok:hover{border-left-color:#30a46c;}
+/* 整卡可点 → 弹窗看详情（2026-10-07 用户反馈：内联展开把卡片拉得太长）。
+   卡片只留「标题 + 一句摘要 + 元信息」，完整正文放进 <template>（不占文档流、不撑高卡片），
+   点击时取它的 innerHTML 渲染进弹窗，列表高度稳定、可一屏扫完。 */
+.plib-card.fold.tap{cursor:pointer;user-select:none;transition:box-shadow .18s,transform .18s,border-color .18s;}
+.plib-card.fold.tap:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.plib-card.fold.tap:hover .plib-more{color:var(--accent);border-color:var(--accent);}
+.plib-more{display:inline-flex;align-items:center;margin-top:9px;font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px;}
+.plib-fold-body{padding:2px 16px 14px 15px;}
+/* 详情弹窗：比默认弹窗宽一号（正文含参数表），层级高于通用弹窗，避免互相遮挡 */
+.fmodal-mask.plib-mask{z-index:220;}
+.fmodal.plib-modal{width:min(880px,94vw);}
+.plib-modal .fmodal-body{padding:16px 20px 20px;}
+.plib-modal .plib-sec:first-child{margin-top:0;}
+.plib-sub{font-size:12.5px;color:var(--ink);opacity:.86;line-height:1.6;margin-top:7px;}
+.plib-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+.plib-meta span{font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.plib-fold{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;}
+.plib-fold > summary{cursor:pointer;font-size:12.5px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px;user-select:none;}
+.plib-fold > summary::-webkit-details-marker{display:none;}
+.plib-fold > summary::before{content:'▸';font-size:10px;display:inline-block;transition:transform .18s;}
+.plib-fold[open] > summary::before{transform:rotate(90deg);}
+.plib-fold > summary:hover{color:var(--accent);}
+.plib-sec{margin-top:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;}
+.plib-sec > h4{margin:0 0 6px;font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.04em;}
+.plib-sec .plib-kv{margin-top:0;}
+.plib-pair{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;}
+.plib-pair .v{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-variant-numeric:tabular-nums;}
+.plib-pair .v.cur{color:var(--muted);}
+.plib-pair .v.next{color:var(--accent-deep);border-color:color-mix(in srgb,var(--accent) 50%,var(--line));font-weight:700;}
+.plib-pair .arrow{color:var(--muted);font-size:11px;}
+.plib-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.plib-chips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px;color:var(--ink);cursor:pointer;transition:.15s;}
+.plib-chips button:hover{border-color:var(--accent);color:var(--accent);}
+.plib-chips button.zero{opacity:.5;}
+.plib-chips button .c{font-size:11px;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums;}
+.plib-list{margin:4px 0 0;padding-left:18px;font-size:12.5px;line-height:1.7;}
 .opt-drop{border:1px dashed var(--line);border-radius:14px;padding:34px 20px;text-align:center;color:var(--muted);cursor:pointer;background:var(--panel);transition:border-color .15s,background .15s;}
 .opt-drop:hover{border-color:var(--accent);}
 .opt-sug{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;}
@@ -1072,6 +1142,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 <!-- 耗材库迁移：居中模态弹窗（对齐原工具 modal 结构） -->
 <div class="fmodal-mask" id="fmodalMask"><div class="fmodal" id="fmodalBox"></div></div>
 
+<!-- 3D 打印工艺库：卡片详情弹窗（独立一套，宽一号；点遮罩 / Esc / 关闭按钮都能关） -->
+<div class="fmodal-mask plib-mask" id="plibModalMask" onclick="if(event.target===this)plibCloseModal()"><div class="fmodal plib-modal" id="plibModalBox"></div></div>
+
 <!-- 移动端展开菜单 -->
 <div class="mmenu" id="mmenu">
   <div class="mm-mask" onclick="toggleMM(false)"></div>
@@ -1175,15 +1248,731 @@ var PRDATA = {"records": [{"id": "7k29ml4gk9k35h", "title": "天宫巨构·内�
 
 var SPDATA = {"patterns": [{"id": "PAT-msbx4zzkhm86", "name": "夜空浅蓝 02：夜空装饰元素更丰富，适合秋冬系列延展。四方连图", "prompt": "无缝四方连续纺织印花图案，治愈绘本卡通平涂风格，软萌小熊、白兔、卡通草莓果子、笑脸云朵、月亮、星星灯串、爱心、四角星元素散点错位散落排布，元素丰富但不拥挤，疏密均衡。\n底色雾感灰蓝 #E2EBF2，允许使用图案色彩池共5色：奶油黄#FFE8B3、淡蜜桃#F9C2C8、浅天蓝#B3D8F2、浅薰衣草紫#D6C8E8、浅青灰#C2D9E6，轮廓线条柔和深灰#444444。\n严格限制仅使用给定色板，禁止新增任何色彩。明度分层：高明度浅色作为视觉主体，中明度色块作为基底，少量暗色点缀。饱和度统一35~58，拒绝艳丽高饱和色彩。冷色调底色，柔和浅色系图案，户外可视度良好。\n干净iPad矢量画笔轮廓，线条顺滑闭合，无纸张纹理、无笔触噪点、无渐变、无厚重阴影、无肌理杂色，纯色平整色块，适合AI矢量描摹、数码布艺印花。画面整洁，不要水印，8K高清，正方形构图", "elements": {"subjects": [], "decorations": []}, "paletteId": "p2", "paletteName": "莫兰迪灰调", "layout": "", "style": "", "platform": "doubao", "generatedDate": "2026-08-02", "thumbnail": "", "fingerprint": "", "notes": "", "createdAt": "2026-08-02T14:51:44.048Z", "updatedAt": "2026-08-02T14:51:55.796Z", "type": "pattern", "kind": "图案", "palette": "莫兰迪灰调", "date": "2026-08-02"}, {"id": "CHAR-msfoqqrrw7v0", "name": "小贝壳香蕉", "prompt": "卡通IP设计（character IP design），韩系奶油简约简笔风风格，萌系小贝壳，原生动物体态，自然趴卧正面视角，完整展现角色全身特征。角色居中构图，正面平视视角，自然趴卧体态，角色为画面唯一主体。主体角色保留原生动物体态特征，不直立不行走，保持自然四肢着地或趴卧姿态。禁止拟人直立，不要人形身体，不要人类四肢结构，不添加任何服饰服装，保持动物原始体态。角色周围可点缀装饰元素周围点缀香蕉、五角星、爱心、气球、sweet，装饰元素不穿戴在角色身上。文字元素：画面中的英文单词（sweet）作为独立文字装饰元素出现，采用气球膨胀体：圆润膨胀的气球立体字母，充气感饱满，带有微妙的3D体积和高光，字形圆润无尖角，可爱俏皮。文字元素专属约束：去除所有外轮廓描边、无白色包边、无贴纸白光晕、无剪贴贴纸效果，字母无外圈边框；纯粹色块构成字体，字体边缘柔和融合底色，仅依靠形体膨胀塑造体积，不依靠线条描边区分边界。重要约束：字体全程不添加任何外轮廓线条，不存在任何粗细的描边（黑/灰/白描边全部禁止），不要白边、不要轮廓框；依靠色块自身形态与微弱高光表现充气膨胀感，字母边界平滑，无分割线条。单词作为小型装饰点缀，大小约为角色头部的1/4，各单词有不同的轻微旋转角度，颜色使用色板内色彩。底色奶油白 #FFF9EF，严格限定图案仅使用5种色彩：蜜桃粉 #F8C8CD、浅杏 #FBE2B9、浅杏1 #F9D3B8、薄荷绿 #C9E8D8、浅蓝 #C6E2F2，柔和深灰 #444444 纤细轮廓线。禁止生成色板以外任何颜色。三层明度秩序：大面积中间明度色彩，高明度亮色作为主体视觉，少量低明度色彩点缀；饱和度控制20~48，禁止高饱和荧光色。暖色为主，少量薄荷蓝平衡色调。所有元素造型全部圆润无尖角，平滑曲线，五官简化为豆豆眼加弧线小嘴，幼态软萌。干净iPad矢量平涂，顺滑闭合线条，无纸张纹理、无笔触噪点、无渐变、无阴影、无肌理杂色，纯色平整色块，适合AI矢量描摹、数码印花应用。画面整洁，不要水印，8K高清，正方形画布。", "elements": {"subjects": ["小贝壳"], "outfits": [], "props": ["香蕉", "五角星", "爱心", "气球", "sweet"]}, "paletteId": "p1", "paletteName": "奶油马卡龙", "style": "韩系奶油简约简笔风", "type": "character", "platform": "doubao", "generatedDate": "2026-08-05", "thumbnail": "", "notes": "", "createdAt": "2026-08-05T06:07:46.695Z", "updatedAt": "2026-08-05T06:22:35.700Z", "kind": "IP角色", "palette": "奶油马卡龙", "date": "2026-08-05"}], "palettes": [{"id": "p1", "name": "奶油马卡龙", "bgColor": "#FFF9EF", "colors": ["#F8C8CD", "#FBE2B9", "#F9D3B8", "#C9E8D8", "#C6E2F2"], "lineColor": "#444444", "desc": "浅蜜桃粉、奶杏黄、柔橘、薄荷绿、晴空蓝"}, {"id": "p2", "name": "莫兰迪灰调", "bgColor": "#F5F3F0", "colors": ["#C5B8A5", "#D4C5B0", "#B5C4B1", "#A8B5C4", "#C4B5B5"], "lineColor": "#555555", "desc": "低饱和灰调，温柔高级感"}, {"id": "p3", "name": "森林清新", "bgColor": "#F5F9F5", "colors": ["#A8D5BA", "#C5E1A5", "#B2DFDB", "#DCEDC8", "#A5D6A7"], "lineColor": "#3E5C3E", "desc": "清新自然，绿意盎然"}, {"id": "p4", "name": "蜜桃奶油", "bgColor": "#FFF5F0", "colors": ["#FFD0D0", "#FFE0B2", "#FFCCBC", "#F8BBD0", "#FFCDD2"], "lineColor": "#5D4037", "desc": "甜美柔和，粉嫩可爱"}, {"id": "p5", "name": "莫兰迪色系", "bgColor": "#F8F8F8", "colors": ["#D3C8B5", "#B79D81", "#E2C87D", "#A2A65B", "#04416D"], "lineColor": "#333333", "desc": ""}, {"id": "p6", "name": "暖杏奶油色卡", "bgColor": "#F8F8F8", "colors": ["#F0CDDA", "#FBEBCB", "#FCE6AC", "#FAC484"], "lineColor": "#333333", "desc": ""}, {"id": "p7", "name": "裸棕渐变色系", "bgColor": "#F8F8F8", "colors": ["#EADDD5", "#D2C1B0", "#D2B49A", "#9D6F57"], "lineColor": "#333333", "desc": ""}, {"id": "p8", "name": "暖色系氛围感", "bgColor": "#F8F8F8", "colors": ["#DFCBB0", "#F2D698", "#E0BB52", "#B18F6A"], "lineColor": "#333333", "desc": ""}, {"id": "p9", "name": "夏日海岸色", "bgColor": "#F8F8F8", "colors": ["#D6D0C4", "#AFC9D4", "#E2B947", "#81A4B7"], "lineColor": "#333333", "desc": ""}, {"id": "p10", "name": "绿野仙踪色系", "bgColor": "#F8F8F8", "colors": ["#E7DED3", "#D5BDA5", "#AF957A", "#6A836E"], "lineColor": "#333333", "desc": ""}, {"id": "p11", "name": "雾霾蓝调氛围感", "bgColor": "#F8F8F8", "colors": ["#E3EDE8", "#C8C1B9", "#223D5F", "#C1D5E0"], "lineColor": "#333333", "desc": ""}, {"id": "p12", "name": "紫色系氛围感", "bgColor": "#F8F8F8", "colors": ["#CEC3E5", "#AC84B8", "#C5AAD5", "#9A90B9"], "lineColor": "#333333", "desc": ""}, {"id": "p13", "name": "橘子海色系", "bgColor": "#F8F8F8", "colors": ["#F4E2CE", "#F3C38C", "#D46301", "#247A90"], "lineColor": "#333333", "desc": ""}, {"id": "p14", "name": "海盐黄蓝调", "bgColor": "#F8F8F8", "colors": ["#E3DEC5", "#8DBCC2", "#FDE89E", "#F1CC17"], "lineColor": "#333333", "desc": ""}, {"id": "p15", "name": "奶蓝湖水调", "bgColor": "#F8F8F8", "colors": ["#BACDD3", "#92B7CA", "#62A5D4", "#3D8BAD"], "lineColor": "#333333", "desc": ""}, {"id": "p16", "name": "松弛感治愈配色", "bgColor": "#F8F8F8", "colors": ["#DDD5C8", "#F2D479", "#83B7CC", "#488299"], "lineColor": "#333333", "desc": ""}, {"id": "p17", "name": "雾感大地色系·暖棕", "bgColor": "#F8F8F8", "colors": ["#CBC6C2", "#B4A393", "#D9C37F", "#B19780"], "lineColor": "#333333", "desc": ""}, {"id": "p18", "name": "雾感大地色系·蓝绿", "bgColor": "#F8F8F8", "colors": ["#84CDD6", "#8EBACC", "#E6C079", "#6989A0"], "lineColor": "#333333", "desc": ""}, {"id": "p19", "name": "雾感大地色系·陶土", "bgColor": "#F8F8F8", "colors": ["#D7C7AF", "#D3B684", "#DBBA72", "#AA7C4B"], "lineColor": "#333333", "desc": ""}, {"id": "p20", "name": "温柔系神仙配色", "bgColor": "#F8F8F8", "colors": ["#F4CECD", "#EED95C", "#EAB5B4", "#537F9D"], "lineColor": "#333333", "desc": ""}, {"id": "p21", "name": "雾面高级灰", "bgColor": "#F8F8F8", "colors": ["#D8D2CE", "#C6BFB8", "#B0A9A2", "#8F8882"], "lineColor": "#333333", "desc": ""}, {"id": "p22", "name": "低饱和莫兰迪", "bgColor": "#F8F8F8", "colors": ["#B8C3D1", "#9DB0C5", "#8A9FB0", "#74859A"], "lineColor": "#333333", "desc": ""}, {"id": "p23", "name": "耐看莫兰迪色卡", "bgColor": "#F8F8F8", "colors": ["#E3D5CA", "#D4C4B8", "#C5B3A7", "#B5A296"], "lineColor": "#333333", "desc": ""}, {"id": "p24", "name": "莫兰迪柔色", "bgColor": "#F8F8F8", "colors": ["#D6C6B8", "#C7B7A9", "#B8A89A", "#A9998B"], "lineColor": "#333333", "desc": ""}, {"id": "p25", "name": "低饱和大地色", "bgColor": "#F8F8F8", "colors": ["#A69484", "#8C796A", "#725F50"], "lineColor": "#333333", "desc": ""}, {"id": "p26", "name": "暖棕大地色", "bgColor": "#F8F8F8", "colors": ["#C9B09A", "#B09178", "#96735A", "#7B553C"], "lineColor": "#333333", "desc": ""}, {"id": "p27", "name": "莫兰迪渐变色", "bgColor": "#F8F8F8", "colors": ["#E5C9C8", "#C8909B", "#A66773", "#7B4449"], "lineColor": "#333333", "desc": ""}, {"id": "p28", "name": "松弛感治愈指南", "bgColor": "#F8F8F8", "colors": ["#F7E0B9", "#F9DE96", "#E88F4E", "#D15E36"], "lineColor": "#333333", "desc": ""}, {"id": "p29", "name": "摄影色彩世界", "bgColor": "#F8F8F8", "colors": ["#769C9D", "#A36D24", "#99150E", "#3D6354"], "lineColor": "#333333", "desc": ""}, {"id": "p30", "name": "海边浪漫色", "bgColor": "#F8F8F8", "colors": ["#DDCABC", "#E8BA52", "#AED1D7", "#87A5AD"], "lineColor": "#333333", "desc": ""}, {"id": "p31", "name": "插画海报配色", "bgColor": "#F8F8F8", "colors": ["#9ECE9E", "#9CC76B", "#47B590", "#14783A"], "lineColor": "#333333", "desc": ""}, {"id": "p32", "name": "多巴胺配色", "bgColor": "#F8F8F8", "colors": ["#ADCFAF", "#31806C", "#CBD693"], "lineColor": "#333333", "desc": ""}, {"id": "p33", "name": "夏日氛围感", "bgColor": "#F8F8F8", "colors": ["#6298C7", "#FFE558", "#3B82B2"], "lineColor": "#333333", "desc": ""}, {"id": "p34", "name": "电影海报撞色", "bgColor": "#F8F8F8", "colors": ["#7CB2A5", "#CBD893", "#C52526"], "lineColor": "#333333", "desc": ""}], "licenses": [{"id": "LIC-msbx9uc8rcsg", "patternId": "PAT-msbx4zzkhm86", "licensee": "我是授权方名字", "licenseType": "buyout", "exclusiveScope": "", "productScope": "single-channel", "productCategories": ["睡衣"], "amount": 509, "durationType": "permanent", "startDate": "2026-08-02", "endDate": "", "deposit": 200, "balance": 309, "paymentStatus": "paid", "freeModCount": 2, "usedModCount": 0, "status": "active", "contractRef": "HT-20260803-4PTS", "certStatus": "issued", "creditRetained": true, "notes": "", "createdAt": "2026-08-02T14:55:30.008Z"}], "elements": {"subjects": [{"category": "动物系列", "items": ["软萌坐姿小熊", "坐立垂耳白兔", "圆脸小白猫咪", "小羊崽", "小鸡", "小鸭", "小仓鼠", "小鹿", "柯基小狗", "企鹅", "小恐龙", "小猪崽", "圆头小青蛙", "小海豹", "小狐狸", "小柴犬", "小刺猬", "小猫头鹰", "小水獭", "小树懒", "小熊猫", "小考拉", "小松鼠", "小乌龟", "小鳄鱼"]}, {"category": "海洋系列", "items": ["小鲸鱼", "小章鱼", "小螃蟹", "小海星", "小河豚", "小贝壳", "小水母"]}, {"category": "昆虫系列", "items": ["小蜜蜂", "小蝴蝶", "小瓢虫", "小蜗牛", "小蜻蜓"]}, {"category": "融合角色", "items": ["云朵兔", "云朵熊", "云朵猫", "棉花糖小兔", "星光小鹿", "花瓣猫咪", "彩虹小鱼"]}, {"category": "头像系列", "items": ["简约兔子头像", "简约小熊头像", "简约猫咪头像", "简约小狗头像", "简约小猪头像"]}], "outfits": [{"category": "服装", "items": ["穿连帽卫衣", "穿围裙", "穿背带裤", "穿连衣裙", "穿毛衣", "穿校服", "穿和服", "穿披风", "穿雨衣", "穿睡衣", "穿西装马甲", "穿厨师服", "穿医生白大褂", "穿飞行员夹克", "穿芭蕾舞裙", "穿运动套装", "穿牛仔外套", "穿棉袄", "穿泳装", "穿魔法师长袍", "穿小斗篷"]}, {"category": "头饰", "items": ["戴贝雷帽", "戴渔夫帽", "戴花环头饰", "戴毛线帽", "戴皇冠", "戴蝴蝶结发夹", "戴草帽", "戴兔耳发箍", "戴礼帽", "戴护士帽", "戴厨师帽", "戴飞行帽", "戴猫耳发箍", "戴圣诞帽", "戴花朵草编帽", "戴星星发夹", "戴丝带蝴蝶结", "戴小蓝帽", "戴小蘑菇帽", "戴小樱桃发饰"]}, {"category": "围巾眼镜", "items": ["系围巾", "架小眼镜", "戴墨镜"]}, {"category": "手持配饰", "items": ["背小书包", "拿气球", "拿冰淇淋", "拿小花束", "拿咖啡杯", "拿小信封", "挎斜挎包", "推小推车", "骑木马", "拿魔法棒", "拿画笔调色板", "拿小铲子", "拿听诊器", "拿放大镜", "拿吉他", "拿小相机", "拿书本", "拿雨伞", "拿篮球", "捧南瓜灯"]}, {"category": "表情动作", "items": ["闭眼微笑", "睁大眼睛好奇", "吐舌调皮", "歪头卖萌", "双手比心", "举爪打招呼", "捂嘴偷笑", "托腮发呆", "叉腰自信", "蹲坐抱膝", "踮脚张望", "趴着撑下巴", "张开双臂", "吹口哨", "跳舞旋转", "摔倒坐地", "挥手打招呼", "蹲坐抱蛋"]}, {"category": "职业套装", "items": ["小厨师（厨师帽+围裙+小铲子）", "小医生（白大褂+听诊器+护士帽）", "小画家（贝雷帽+画笔+调色板）", "小飞行员（飞行帽+夹克+护目镜）", "小魔法师（魔法帽+长袍+魔法棒）", "小音乐家（礼帽+吉他+乐谱）", "小探险家（草帽+背包+放大镜）", "小芭蕾舞者（花环+芭蕾裙+踮脚）"]}], "decorations": [{"category": "水果系列", "items": ["草莓", "水蜜桃", "香蕉", "苹果", "青提", "橙子", "樱桃", "梨子", "芒果"]}, {"category": "天空星空", "items": ["简约云朵", "弯月牙", "四角闪光星", "五角星", "星星灯串", "小彩虹", "流星", "星球小环"]}, {"category": "花草植物", "items": ["小雏菊", "郁金香", "三叶草", "简笔画小花", "嫩叶", "小樱花", "小花苞"]}, {"category": "可爱图形", "items": ["爱心", "蝴蝶结", "气球", "糖果", "小圆波点", "小饼干", "冰淇淋"]}, {"category": "线条挂件", "items": ["波浪拉旗", "细绳挂饰", "小圆珠链条", "弧形灯串线", "曲线彩带"]}, {"category": "生活物件", "items": ["吐司面包", "牛奶盒", "小鱼", "蘑菇", "胡萝卜", "信封", "小帐篷"]}, {"category": "英文单词", "items": ["happy", "luck", "nice", "sweet", "love", "joy", "dream", "smile", "star", "sun", "cute", "hello", "honey", "fun", "bloom"]}]}, "stats": {"count": 2, "pat": 1, "char": 1, "platforms": {"doubao": 2}, "palettes": {"莫兰迪灰调": 1, "奶油马卡龙": 1}}};
 var BKDATA = {"categories": [{"key": "design", "label": "设计资源"}, {"key": "dev", "label": "开发工具"}, {"key": "ai", "label": "AI 工具"}, {"key": "video", "label": "影视娱乐"}, {"key": "productivity", "label": "效率工具"}, {"key": "reference", "label": "查询参考"}], "bookmarks": [], "stats": {"count": 0, "cats": 6}};
-var BAMBU_BUILTIN = [{"id":"preset_petg_pla_support","name":"PETG + PLA 异料支撑（易拆）","subType":"异料支撑","machine":"X2D","filamentType":"PETG + PLA","createdDate":"2026-09-30T14:56:53.605Z","notes":"异料支撑（模型 PETG + PLA 做支撑界面）：两料互不粘连，一撕即落、底面光滑。依据 Bambu 官方 wiki：PLA【只做支撑界面】，支撑主体保持「默认」＝沿用模型料 PETG —— 把 PLA 用到整个支撑主体会明显增加打印时间（几乎每层都要换喷嘴）且支撑有脱落风险。关键项：顶部/底部 Z 距离都设 0（异料不必留缝）、接触面 3 层且线距 0（整片可抓取）、主体与支撑面图案都用 Rectilinear。PLA 料盘位置见导入脚本顶部的 PLA_SLOT。提醒：PETG 喷嘴温度高于 PLA，耗材预设里请分别设好温度并充分干燥。","bpValues":{"layer_height":"0.2","initial_layer_print_height":"0.2","enable_mixed_color_sublayer":"0","line_width":"0.42","initial_layer_line_width":"0.5","outer_wall_line_width":"0.42","inner_wall_line_width":"0.45","top_surface_line_width":"0.42","sparse_infill_line_width":"0.45","internal_solid_infill_line_width":"0.42","support_line_width":"0.42","seam_position":"aligned","seam_placement_away_from_overhangs":"0","seam_gap":"15","seam_slope_conditional":"1","scarf_angle_threshold":"155","seam_slope_entire_loop":"0","seam_slope_steps":"10","seam_slope_inner_walls":"1","override_filament_scarf_seam_setting":"0","seam_slope_type":"none","seam_slope_start_height":"10%","seam_slope_gap":"0","seam_slope_min_length":"10","wipe_speed":"80","role_base_wipe_speed":"1","slice_closing_radius":"0.049","resolution":"0.012","enable_arc_fitting":"1","xy_hole_compensation":"0","xy_contour_compensation":"0","enable_circle_compensation":"0","circle_compensation_manual_offset":"0","elefant_foot_compensation":"0.15","precise_outer_wall":"0","precise_z_height":"0","ironing_type":"no ironing","ironing_pattern":"zig-zag","ironing_speed":"30","ironing_flow":"10%","ironing_spacing":"0.15","ironing_inset":"0.21","ironing_direction":"45","wall_generator":"classic","wall_transition_angle":"10","wall_transition_filter_deviation":"25","wall_transition_length":"100","wall_distribution_count":"1","min_bead_width":"85","min_feature_size":"25","wall_sequence":"inner wall/outer wall","is_infill_first":"0","bridge_flow":"1","thick_bridges":"0","counterbore_hole_bridging":"none","print_flow_ratio":"1","top_solid_infill_flow_ratio":"1, 1, 1, 1, 1, 1","initial_layer_flow_ratio":"1","top_one_wall_type":"all top","top_area_threshold":"200","only_one_wall_first_layer":"0","detect_overhang_wall":"1","smooth_speed_discontinuity_area":"1","smooth_coefficient":"4","reduce_crossing_wall":"0","max_travel_detour_distance":"0","avoid_crossing_wall_includes_support":"0","z_direction_outwall_speed_continuous":"1","wall_loops":"2","alternate_extra_wall":"0","embedding_wall_into_infill":"0","detect_thin_wall":"0","interface_shells":"0","top_surface_pattern":"monotonicline","top_surface_density":"100","top_shell_layers":"5","top_shell_thickness":"1.0","top_color_penetration_layers":"5","bottom_surface_pattern":"monotonic","bottom_surface_density":"100","bottom_shell_layers":"3","bottom_shell_thickness":"0","bottom_color_penetration_layers":"3","infill_instead_top_bottom_surfaces":"0","internal_solid_infill_pattern":"zig-zag","sparse_infill_density":"15%","fill_multiline":"1","sparse_infill_pattern":"grid","locked_skin_infill_pattern":"crosszag","skin_infill_density":"15%","locked_skeleton_infill_pattern":"zigzag","skeleton_infill_density":"15%","infill_lock_depth":"1.0","skin_infill_depth":"2.0","skin_infill_line_width":"0.45","skeleton_infill_line_width":"0.45","symmetric_infill_y_axis":"0","infill_shift_step":"0.4","sparse_infill_lattice_angle_1":"-45","sparse_infill_lattice_angle_2":"45","infill_rotate_step":"0","sparse_infill_anchor":"400%","sparse_infill_anchor_max":"20","filter_out_gap_fill":"0","infill_wall_overlap":"15%","monotonic_travel_into_wall":"45.0","infill_direction":"45","bridge_angle":"0","minimum_sparse_infill_area":"15","infill_combination":"0","detect_narrow_internal_solid_infill":"1","ensure_vertical_shell_thickness":"enabled","detect_floating_vertical_shell":"1","internal_bridge_support_thickness":"0.8","initial_layer_speed":"50, 50, 50, 50, 50, 50","initial_layer_infill_speed":"105, 105, 105, 105, 105, 105","outer_wall_speed":"200, 500, 500, 50, 50, 50","inner_wall_speed":"300, 600, 600, 200, 200, 200","small_perimeter_speed":"50%, 50%, 50%, 50%, 50%, 50%","small_perimeter_threshold":"0, 0, 0, 0, 0, 0","sparse_infill_speed":"270, 600, 600, 200, 200, 200","internal_solid_infill_speed":"250, 600, 600, 200, 200, 200","vertical_shell_speed":"80%, 80%, 80%, 80%, 80%, 80%","top_surface_speed":"200, 200, 200, 200, 200, 200","enable_overhang_speed":"1, 1, 1, 1, 0, 0","overhang_1_4_speed":"0, 0, 0, 0, 0, 0","overhang_2_4_speed":"50, 50, 50, 50, 50, 50","overhang_3_4_speed":"30, 20, 20, 30, 20, 20","overhang_4_4_speed":"10, 10, 10, 10, 10, 10","overhang_totally_speed":"10, 10, 10, 10, 10, 10","enable_height_slowdown":"0, 0, 0, 0, 0, 0","slowdown_start_height":"0, 0, 0, 0, 0, 0","slowdown_start_speed":"1000, 1000, 1000, 1000, 1000, 1000","slowdown_start_acc":"100000, 100000, 100000, 100000, 100000, 100000","slowdown_end_height":"400, 400, 400, 400, 400, 400","slowdown_end_speed":"1000, 1000, 1000, 1000, 1000, 1000","slowdown_end_acc":"100000, 100000, 100000, 100000, 100000, 100000","bridge_speed":"50, 50, 50, 50, 200, 200","gap_infill_speed":"250, 250, 250, 250, 250, 250","support_speed":"150, 150, 150, 150, 150, 150","support_interface_speed":"80, 80, 80, 80, 80, 80","travel_speed":"1000, 1000, 1000, 1000, 1000, 1000","default_acceleration":"10000, 10000, 10000, 1000, 1000, 1000","travel_acceleration":"10000, 10000, 10000, 10000, 10000, 10000","travel_short_distance_acceleration":"250, 250, 250, 250, 250, 250","initial_layer_travel_acceleration":"6000, 6000, 6000, 6000, 6000, 6000","initial_layer_acceleration":"500, 500, 500, 500, 500, 500","outer_wall_acceleration":"5000, 5000, 5000, 1000, 1000, 1000","inner_wall_acceleration":"0, 0, 0, 0, 0, 0","top_surface_acceleration":"2000, 2000, 2000, 1000, 1000, 1000","sparse_infill_acceleration":"100%, 100%, 100%, 100%, 100%, 100%","accel_to_decel_enable":"0","accel_to_decel_factor":"50","default_jerk":"0","outer_wall_jerk":"9","inner_wall_jerk":"9","infill_jerk":"9","top_surface_jerk":"9","initial_layer_jerk":"9","travel_jerk":"9","max_volumetric_extrusion_rate_slope_positive":"0","max_volumetric_extrusion_rate_slope_negative":"0","enable_support":"1","support_type":"tree(auto)","support_style":"default","support_threshold_angle":"30","support_on_build_plate_only":"0","support_critical_regions_only":"0","support_remove_small_overhang":"1","enforce_support_layers":"0","raft_layers":"0","raft_contact_distance":"0.1","support_filament":"0","support_interface_filament":"2","support_interface_not_for_body":"1","enable_support_ironing":"0","support_ironing_pattern":"zig-zag","support_ironing_speed":"30","support_ironing_flow":"10%","support_ironing_spacing":"0.15","support_ironing_inset":"0.0","support_ironing_direction":"0","raft_first_layer_density":"90","raft_first_layer_expansion":"-1","tree_support_wall_count":"-1","support_top_z_distance":"0","support_bottom_z_distance":"0","support_base_pattern":"rectilinear","support_base_pattern_spacing":"2.5","support_angle":"0","support_interface_top_layers":"3","support_interface_bottom_layers":"2","support_interface_pattern":"rectilinear","support_interface_spacing":"0","support_bottom_interface_spacing":"0.5","support_expansion":"0","support_interface_loop_pattern":"0","support_object_xy_distance":"0.35","top_z_overrides_xy_distance":"0","support_object_first_layer_gap":"0.2","bridge_no_support":"0","max_bridge_length":"0","independent_support_layer_height":"1","tree_support_branch_distance":"5","tree_support_branch_diameter":"2","tree_support_branch_angle":"45","tree_support_branch_diameter_angle":"5","skirt_loops":"0","skirt_height":"1","skirt_distance":"2","draft_shield":"disabled","brim_type":"auto_brim","brim_width":"5","brim_object_gap":"0.1","enable_prime_tower":"1","prime_tower_skip_points":"1","prime_tower_enable_framework":"0","prime_tower_width":"35","prime_tower_max_speed":"90","prime_tower_brim_width":"-1","prime_tower_infill_gap":"150","prime_tower_rib_wall":"1","prime_tower_extra_rib_length":"0","prime_tower_rib_width":"8","prime_tower_fillet_wall":"1","enable_tower_interface_features":"1","flush_into_infill":"0","flush_into_objects":"0","flush_into_support":"1","slicing_mode":"regular","print_sequence":"by layer","spiral_mode":"0","spiral_mode_smooth":"0","spiral_mode_max_xy_smoothing":"200%","timelapse_type":"0","fuzzy_skin":"none","fuzzy_skin_mode":"displacement","fuzzy_skin_noise_type":"classic","fuzzy_skin_point_distance":"0.8","fuzzy_skin_thickness":"0.3","fuzzy_skin_scale":"1.0","fuzzy_skin_octaves":"4","fuzzy_skin_persistence":"0.5","fuzzy_skin_first_layer":"0","enable_wrapping_detection":"0","enable_order_independent_overlap_carving":"0","interlocking_beam":"0","mmu_segmented_region_max_width":"0","mmu_segmented_region_interlocking_depth":"0","interlocking_beam_width":"0.8","interlocking_orientation":"22.5","interlocking_beam_layer_count":"2","interlocking_depth":"2","interlocking_boundary_avoidance":"2","sparse_infill_filament":"0","solid_infill_filament":"0","wall_filament":"0","reduce_infill_retraction_mode":"Auto","gcode_add_line_number":"0","exclude_object":"0"},"processParams":[{"name":"开启支撑","value":"1"},{"name":"支撑/筏层界面","value":"2"},{"name":"顶部Z距离","value":"0"},{"name":"底部Z距离","value":"0"},{"name":"支撑主体图案","value":"rectilinear"},{"name":"顶部接触面层数","value":"3"},{"name":"支撑面图案","value":"rectilinear"},{"name":"顶部接触面线距","value":"0"}],"builtinVersion":2},{"id":"preset_overhang_improve","name":"悬垂改善（降速 + 厚桥）","subType":"质量·悬垂","machine":"X2D","filamentType":"通用（PLA/PETG/ABS）","createdDate":"2026-09-30T14:56:53.610Z","notes":"悬垂改善：把 悬垂降速 四个档位整体下调（25%→30、50%→20、75%→12、100%→8 mm/s），让悬垂处有足够时间冷却定型；同时开启 厚桥（桥接层按满流量打印，不易下垂）与 沉孔搭桥（孔口先搭一段防塌）。要点：悬垂质量主要由【冷却风扇】决定——请把耗材预设里的 风扇转速 拉满、必要时降低层高；若仍有薄壁悬垂发虚，可把 墙生成器 从 classic 改为 Arachne（变宽挤出，薄悬垂更饱满）。","bpValues":{"layer_height":"0.2","initial_layer_print_height":"0.2","enable_mixed_color_sublayer":"0","line_width":"0.42","initial_layer_line_width":"0.5","outer_wall_line_width":"0.42","inner_wall_line_width":"0.45","top_surface_line_width":"0.42","sparse_infill_line_width":"0.45","internal_solid_infill_line_width":"0.42","support_line_width":"0.42","seam_position":"aligned","seam_placement_away_from_overhangs":"0","seam_gap":"15","seam_slope_conditional":"1","scarf_angle_threshold":"155","seam_slope_entire_loop":"0","seam_slope_steps":"10","seam_slope_inner_walls":"1","override_filament_scarf_seam_setting":"0","seam_slope_type":"none","seam_slope_start_height":"10%","seam_slope_gap":"0","seam_slope_min_length":"10","wipe_speed":"80","role_base_wipe_speed":"1","slice_closing_radius":"0.049","resolution":"0.012","enable_arc_fitting":"1","xy_hole_compensation":"0","xy_contour_compensation":"0","enable_circle_compensation":"0","circle_compensation_manual_offset":"0","elefant_foot_compensation":"0.15","precise_outer_wall":"0","precise_z_height":"0","ironing_type":"no ironing","ironing_pattern":"zig-zag","ironing_speed":"30","ironing_flow":"10%","ironing_spacing":"0.15","ironing_inset":"0.21","ironing_direction":"45","wall_generator":"classic","wall_transition_angle":"10","wall_transition_filter_deviation":"25","wall_transition_length":"100","wall_distribution_count":"1","min_bead_width":"85","min_feature_size":"25","wall_sequence":"inner wall/outer wall","is_infill_first":"0","bridge_flow":"1","thick_bridges":"1","counterbore_hole_bridging":"partiallybridge","print_flow_ratio":"1","top_solid_infill_flow_ratio":"1, 1, 1, 1, 1, 1","initial_layer_flow_ratio":"1","top_one_wall_type":"all top","top_area_threshold":"200","only_one_wall_first_layer":"0","detect_overhang_wall":"1","smooth_speed_discontinuity_area":"1","smooth_coefficient":"4","reduce_crossing_wall":"0","max_travel_detour_distance":"0","avoid_crossing_wall_includes_support":"0","z_direction_outwall_speed_continuous":"1","wall_loops":"2","alternate_extra_wall":"0","embedding_wall_into_infill":"0","detect_thin_wall":"0","interface_shells":"0","top_surface_pattern":"monotonicline","top_surface_density":"100","top_shell_layers":"5","top_shell_thickness":"1.0","top_color_penetration_layers":"5","bottom_surface_pattern":"monotonic","bottom_surface_density":"100","bottom_shell_layers":"3","bottom_shell_thickness":"0","bottom_color_penetration_layers":"3","infill_instead_top_bottom_surfaces":"0","internal_solid_infill_pattern":"zig-zag","sparse_infill_density":"15%","fill_multiline":"1","sparse_infill_pattern":"grid","locked_skin_infill_pattern":"crosszag","skin_infill_density":"15%","locked_skeleton_infill_pattern":"zigzag","skeleton_infill_density":"15%","infill_lock_depth":"1.0","skin_infill_depth":"2.0","skin_infill_line_width":"0.45","skeleton_infill_line_width":"0.45","symmetric_infill_y_axis":"0","infill_shift_step":"0.4","sparse_infill_lattice_angle_1":"-45","sparse_infill_lattice_angle_2":"45","infill_rotate_step":"0","sparse_infill_anchor":"400%","sparse_infill_anchor_max":"20","filter_out_gap_fill":"0","infill_wall_overlap":"15%","monotonic_travel_into_wall":"45.0","infill_direction":"45","bridge_angle":"0","minimum_sparse_infill_area":"15","infill_combination":"0","detect_narrow_internal_solid_infill":"1","ensure_vertical_shell_thickness":"enabled","detect_floating_vertical_shell":"1","internal_bridge_support_thickness":"0.8","initial_layer_speed":"50, 50, 50, 50, 50, 50","initial_layer_infill_speed":"105, 105, 105, 105, 105, 105","outer_wall_speed":"200, 500, 500, 50, 50, 50","inner_wall_speed":"300, 600, 600, 200, 200, 200","small_perimeter_speed":"50%, 50%, 50%, 50%, 50%, 50%","small_perimeter_threshold":"0, 0, 0, 0, 0, 0","sparse_infill_speed":"270, 600, 600, 200, 200, 200","internal_solid_infill_speed":"250, 600, 600, 200, 200, 200","vertical_shell_speed":"80%, 80%, 80%, 80%, 80%, 80%","top_surface_speed":"200, 200, 200, 200, 200, 200","enable_overhang_speed":"1, 1, 1, 1, 0, 0","overhang_1_4_speed":"0, 0, 0, 0, 0, 0","overhang_2_4_speed":"30, 30, 30, 30, 30, 30","overhang_3_4_speed":"20, 20, 20, 20, 20, 20","overhang_4_4_speed":"12, 12, 12, 12, 12, 12","overhang_totally_speed":"8, 8, 8, 8, 8, 8","enable_height_slowdown":"0, 0, 0, 0, 0, 0","slowdown_start_height":"0, 0, 0, 0, 0, 0","slowdown_start_speed":"1000, 1000, 1000, 1000, 1000, 1000","slowdown_start_acc":"100000, 100000, 100000, 100000, 100000, 100000","slowdown_end_height":"400, 400, 400, 400, 400, 400","slowdown_end_speed":"1000, 1000, 1000, 1000, 1000, 1000","slowdown_end_acc":"100000, 100000, 100000, 100000, 100000, 100000","bridge_speed":"20, 20, 20, 20, 20, 20","gap_infill_speed":"250, 250, 250, 250, 250, 250","support_speed":"150, 150, 150, 150, 150, 150","support_interface_speed":"80, 80, 80, 80, 80, 80","travel_speed":"1000, 1000, 1000, 1000, 1000, 1000","default_acceleration":"10000, 10000, 10000, 1000, 1000, 1000","travel_acceleration":"10000, 10000, 10000, 10000, 10000, 10000","travel_short_distance_acceleration":"250, 250, 250, 250, 250, 250","initial_layer_travel_acceleration":"6000, 6000, 6000, 6000, 6000, 6000","initial_layer_acceleration":"500, 500, 500, 500, 500, 500","outer_wall_acceleration":"5000, 5000, 5000, 1000, 1000, 1000","inner_wall_acceleration":"0, 0, 0, 0, 0, 0","top_surface_acceleration":"2000, 2000, 2000, 1000, 1000, 1000","sparse_infill_acceleration":"100%, 100%, 100%, 100%, 100%, 100%","accel_to_decel_enable":"0","accel_to_decel_factor":"50","default_jerk":"0","outer_wall_jerk":"9","inner_wall_jerk":"9","infill_jerk":"9","top_surface_jerk":"9","initial_layer_jerk":"9","travel_jerk":"9","max_volumetric_extrusion_rate_slope_positive":"0","max_volumetric_extrusion_rate_slope_negative":"0","enable_support":"0","support_type":"tree(auto)","support_style":"default","support_threshold_angle":"30","support_on_build_plate_only":"0","support_critical_regions_only":"0","support_remove_small_overhang":"1","enforce_support_layers":"0","raft_layers":"0","raft_contact_distance":"0.1","support_filament":"0","support_interface_filament":"0","support_interface_not_for_body":"1","enable_support_ironing":"0","support_ironing_pattern":"zig-zag","support_ironing_speed":"30","support_ironing_flow":"10%","support_ironing_spacing":"0.15","support_ironing_inset":"0.0","support_ironing_direction":"0","raft_first_layer_density":"90","raft_first_layer_expansion":"-1","tree_support_wall_count":"-1","support_top_z_distance":"0.2","support_bottom_z_distance":"0.2","support_base_pattern":"default","support_base_pattern_spacing":"2.5","support_angle":"0","support_interface_top_layers":"2","support_interface_bottom_layers":"2","support_interface_pattern":"auto","support_interface_spacing":"0.5","support_bottom_interface_spacing":"0.5","support_expansion":"0","support_interface_loop_pattern":"0","support_object_xy_distance":"0.35","top_z_overrides_xy_distance":"0","support_object_first_layer_gap":"0.2","bridge_no_support":"0","max_bridge_length":"0","independent_support_layer_height":"1","tree_support_branch_distance":"5","tree_support_branch_diameter":"2","tree_support_branch_angle":"45","tree_support_branch_diameter_angle":"5","skirt_loops":"0","skirt_height":"1","skirt_distance":"2","draft_shield":"disabled","brim_type":"auto_brim","brim_width":"5","brim_object_gap":"0.1","enable_prime_tower":"1","prime_tower_skip_points":"1","prime_tower_enable_framework":"0","prime_tower_width":"35","prime_tower_max_speed":"90","prime_tower_brim_width":"-1","prime_tower_infill_gap":"150","prime_tower_rib_wall":"1","prime_tower_extra_rib_length":"0","prime_tower_rib_width":"8","prime_tower_fillet_wall":"1","enable_tower_interface_features":"1","flush_into_infill":"0","flush_into_objects":"0","flush_into_support":"1","slicing_mode":"regular","print_sequence":"by layer","spiral_mode":"0","spiral_mode_smooth":"0","spiral_mode_max_xy_smoothing":"200%","timelapse_type":"0","fuzzy_skin":"none","fuzzy_skin_mode":"displacement","fuzzy_skin_noise_type":"classic","fuzzy_skin_point_distance":"0.8","fuzzy_skin_thickness":"0.3","fuzzy_skin_scale":"1.0","fuzzy_skin_octaves":"4","fuzzy_skin_persistence":"0.5","fuzzy_skin_first_layer":"0","enable_wrapping_detection":"0","enable_order_independent_overlap_carving":"0","interlocking_beam":"0","mmu_segmented_region_max_width":"0","mmu_segmented_region_interlocking_depth":"0","interlocking_beam_width":"0.8","interlocking_orientation":"22.5","interlocking_beam_layer_count":"2","interlocking_depth":"2","interlocking_boundary_avoidance":"2","sparse_infill_filament":"0","solid_infill_filament":"0","wall_filament":"0","reduce_infill_retraction_mode":"Auto","gcode_add_line_number":"0","exclude_object":"0"},"processParams":[{"name":"厚桥","value":"1"},{"name":"沉孔搭桥","value":"partiallybridge"},{"name":"25% 悬垂","value":"30, 30, 30, 30"},{"name":"50% 悬垂","value":"20, 20, 20, 20"},{"name":"75% 悬垂","value":"12, 12, 12, 12"},{"name":"100% 悬垂","value":"8, 8, 8, 8"},{"name":"桥接","value":"20, 20, 20, 20"}],"builtinVersion":2}];
+var BAMBU_BUILTIN = [
+ {
+  "id": "preset_petg_pla_support",
+  "name": "PETG + PLA 异料支撑（易拆）",
+  "subType": "异料支撑",
+  "machine": "X2D",
+  "filamentType": "PETG + PLA",
+  "createdDate": "2026-09-30T14:56:53.605Z",
+  "notes": "异料支撑（模型 PETG + PLA 做支撑界面）：两料互不粘连，一撕即落、底面光滑。依据 Bambu 官方「Support for PLA/PETG」材料页：顶部/底部 Z 距离都设 0（异料不必留缝）、接触面 3 层且线距 0（整片可抓取）、主体与支撑面图案都用 Rectilinear。PLA 只做支撑界面（support_interface_filament），支撑主体保持默认＝沿用模型料 PETG（support_filament=0），避免每层换喷嘴；树状支撑时切勿把支撑料用于主体（本预设已规避）。提醒：PETG 喷嘴温度高于 PLA，耗材预设里请分别设好温度并充分干燥（Support for PLA/PETG 官方建议 75℃/8h）。",
+  "bpValues": {
+   "layer_height": "0.2",
+   "initial_layer_print_height": "0.2",
+   "enable_mixed_color_sublayer": "0",
+   "line_width": "0.42",
+   "initial_layer_line_width": "0.5",
+   "outer_wall_line_width": "0.42",
+   "inner_wall_line_width": "0.45",
+   "top_surface_line_width": "0.42",
+   "sparse_infill_line_width": "0.45",
+   "internal_solid_infill_line_width": "0.42",
+   "support_line_width": "0.42",
+   "seam_position": "aligned",
+   "seam_placement_away_from_overhangs": "0",
+   "seam_gap": "15",
+   "seam_slope_conditional": "1",
+   "scarf_angle_threshold": "155",
+   "seam_slope_entire_loop": "0",
+   "seam_slope_steps": "10",
+   "seam_slope_inner_walls": "1",
+   "override_filament_scarf_seam_setting": "0",
+   "seam_slope_type": "none",
+   "seam_slope_start_height": "10%",
+   "seam_slope_gap": "0",
+   "seam_slope_min_length": "10",
+   "wipe_speed": "80",
+   "role_base_wipe_speed": "1",
+   "slice_closing_radius": "0.049",
+   "resolution": "0.012",
+   "enable_arc_fitting": "1",
+   "xy_hole_compensation": "0",
+   "xy_contour_compensation": "0",
+   "enable_circle_compensation": "0",
+   "circle_compensation_manual_offset": "0",
+   "elefant_foot_compensation": "0.15",
+   "precise_outer_wall": "0",
+   "precise_z_height": "0",
+   "ironing_type": "no ironing",
+   "ironing_pattern": "zig-zag",
+   "ironing_speed": "30",
+   "ironing_flow": "10%",
+   "ironing_spacing": "0.15",
+   "ironing_inset": "0.21",
+   "ironing_direction": "45",
+   "wall_generator": "classic",
+   "wall_transition_angle": "10",
+   "wall_transition_filter_deviation": "25",
+   "wall_transition_length": "100",
+   "wall_distribution_count": "1",
+   "min_bead_width": "85",
+   "min_feature_size": "25",
+   "wall_sequence": "inner wall/outer wall",
+   "is_infill_first": "0",
+   "bridge_flow": "1",
+   "thick_bridges": "0",
+   "counterbore_hole_bridging": "none",
+   "print_flow_ratio": "1",
+   "top_solid_infill_flow_ratio": "1, 1, 1, 1, 1, 1",
+   "initial_layer_flow_ratio": "1",
+   "top_one_wall_type": "all top",
+   "top_area_threshold": "200",
+   "only_one_wall_first_layer": "0",
+   "detect_overhang_wall": "1",
+   "smooth_speed_discontinuity_area": "1",
+   "smooth_coefficient": "4",
+   "reduce_crossing_wall": "0",
+   "max_travel_detour_distance": "0",
+   "avoid_crossing_wall_includes_support": "0",
+   "z_direction_outwall_speed_continuous": "1",
+   "wall_loops": "2",
+   "alternate_extra_wall": "0",
+   "embedding_wall_into_infill": "0",
+   "detect_thin_wall": "0",
+   "interface_shells": "0",
+   "top_surface_pattern": "monotonicline",
+   "top_surface_density": "100",
+   "top_shell_layers": "5",
+   "top_shell_thickness": "1.0",
+   "top_color_penetration_layers": "5",
+   "bottom_surface_pattern": "monotonic",
+   "bottom_surface_density": "100",
+   "bottom_shell_layers": "3",
+   "bottom_shell_thickness": "0",
+   "bottom_color_penetration_layers": "3",
+   "infill_instead_top_bottom_surfaces": "0",
+   "internal_solid_infill_pattern": "zig-zag",
+   "sparse_infill_density": "15%",
+   "fill_multiline": "1",
+   "sparse_infill_pattern": "grid",
+   "locked_skin_infill_pattern": "crosszag",
+   "skin_infill_density": "15%",
+   "locked_skeleton_infill_pattern": "zigzag",
+   "skeleton_infill_density": "15%",
+   "infill_lock_depth": "1.0",
+   "skin_infill_depth": "2.0",
+   "skin_infill_line_width": "0.45",
+   "skeleton_infill_line_width": "0.45",
+   "symmetric_infill_y_axis": "0",
+   "infill_shift_step": "0.4",
+   "sparse_infill_lattice_angle_1": "-45",
+   "sparse_infill_lattice_angle_2": "45",
+   "infill_rotate_step": "0",
+   "sparse_infill_anchor": "400%",
+   "sparse_infill_anchor_max": "20",
+   "filter_out_gap_fill": "0",
+   "infill_wall_overlap": "15%",
+   "monotonic_travel_into_wall": "45.0",
+   "infill_direction": "45",
+   "bridge_angle": "0",
+   "minimum_sparse_infill_area": "15",
+   "infill_combination": "0",
+   "detect_narrow_internal_solid_infill": "1",
+   "ensure_vertical_shell_thickness": "enabled",
+   "detect_floating_vertical_shell": "1",
+   "internal_bridge_support_thickness": "0.8",
+   "initial_layer_speed": "50, 50, 50, 50, 50, 50",
+   "initial_layer_infill_speed": "105, 105, 105, 105, 105, 105",
+   "outer_wall_speed": "200, 500, 500, 50, 50, 50",
+   "inner_wall_speed": "300, 600, 600, 200, 200, 200",
+   "small_perimeter_speed": "50%, 50%, 50%, 50%, 50%, 50%",
+   "small_perimeter_threshold": "0, 0, 0, 0, 0, 0",
+   "sparse_infill_speed": "270, 600, 600, 200, 200, 200",
+   "internal_solid_infill_speed": "250, 600, 600, 200, 200, 200",
+   "vertical_shell_speed": "80%, 80%, 80%, 80%, 80%, 80%",
+   "top_surface_speed": "200, 200, 200, 200, 200, 200",
+   "enable_overhang_speed": "1, 1, 1, 1, 0, 0",
+   "overhang_1_4_speed": "0, 0, 0, 0, 0, 0",
+   "overhang_2_4_speed": "50, 50, 50, 50, 50, 50",
+   "overhang_3_4_speed": "30, 20, 20, 30, 20, 20",
+   "overhang_4_4_speed": "10, 10, 10, 10, 10, 10",
+   "overhang_totally_speed": "10, 10, 10, 10, 10, 10",
+   "enable_height_slowdown": "0, 0, 0, 0, 0, 0",
+   "slowdown_start_height": "0, 0, 0, 0, 0, 0",
+   "slowdown_start_speed": "1000, 1000, 1000, 1000, 1000, 1000",
+   "slowdown_start_acc": "100000, 100000, 100000, 100000, 100000, 100000",
+   "slowdown_end_height": "400, 400, 400, 400, 400, 400",
+   "slowdown_end_speed": "1000, 1000, 1000, 1000, 1000, 1000",
+   "slowdown_end_acc": "100000, 100000, 100000, 100000, 100000, 100000",
+   "bridge_speed": "50, 50, 50, 50, 200, 200",
+   "gap_infill_speed": "250, 250, 250, 250, 250, 250",
+   "support_speed": "150, 150, 150, 150, 150, 150",
+   "support_interface_speed": "80, 80, 80, 80, 80, 80",
+   "travel_speed": "1000, 1000, 1000, 1000, 1000, 1000",
+   "default_acceleration": "10000, 10000, 10000, 1000, 1000, 1000",
+   "travel_acceleration": "10000, 10000, 10000, 10000, 10000, 10000",
+   "travel_short_distance_acceleration": "250, 250, 250, 250, 250, 250",
+   "initial_layer_travel_acceleration": "6000, 6000, 6000, 6000, 6000, 6000",
+   "initial_layer_acceleration": "500, 500, 500, 500, 500, 500",
+   "outer_wall_acceleration": "5000, 5000, 5000, 1000, 1000, 1000",
+   "inner_wall_acceleration": "0, 0, 0, 0, 0, 0",
+   "top_surface_acceleration": "2000, 2000, 2000, 1000, 1000, 1000",
+   "sparse_infill_acceleration": "100%, 100%, 100%, 100%, 100%, 100%",
+   "accel_to_decel_enable": "0",
+   "accel_to_decel_factor": "50",
+   "default_jerk": "0",
+   "outer_wall_jerk": "9",
+   "inner_wall_jerk": "9",
+   "infill_jerk": "9",
+   "top_surface_jerk": "9",
+   "initial_layer_jerk": "9",
+   "travel_jerk": "9",
+   "max_volumetric_extrusion_rate_slope_positive": "0",
+   "max_volumetric_extrusion_rate_slope_negative": "0",
+   "enable_support": "1",
+   "support_type": "tree(auto)",
+   "support_style": "default",
+   "support_threshold_angle": "30",
+   "support_on_build_plate_only": "0",
+   "support_critical_regions_only": "0",
+   "support_remove_small_overhang": "1",
+   "enforce_support_layers": "0",
+   "raft_layers": "0",
+   "raft_contact_distance": "0.1",
+   "support_filament": "0",
+   "support_interface_filament": "2",
+   "support_interface_not_for_body": "1",
+   "enable_support_ironing": "0",
+   "support_ironing_pattern": "zig-zag",
+   "support_ironing_speed": "30",
+   "support_ironing_flow": "10%",
+   "support_ironing_spacing": "0.15",
+   "support_ironing_inset": "0.0",
+   "support_ironing_direction": "0",
+   "raft_first_layer_density": "90",
+   "raft_first_layer_expansion": "-1",
+   "tree_support_wall_count": "-1",
+   "support_top_z_distance": "0",
+   "support_bottom_z_distance": "0",
+   "support_base_pattern": "rectilinear",
+   "support_base_pattern_spacing": "2.5",
+   "support_angle": "0",
+   "support_interface_top_layers": "3",
+   "support_interface_bottom_layers": "2",
+   "support_interface_pattern": "rectilinear",
+   "support_interface_spacing": "0",
+   "support_bottom_interface_spacing": "0.5",
+   "support_expansion": "0",
+   "support_interface_loop_pattern": "0",
+   "support_object_xy_distance": "0.35",
+   "top_z_overrides_xy_distance": "0",
+   "support_object_first_layer_gap": "0.2",
+   "bridge_no_support": "0",
+   "max_bridge_length": "0",
+   "independent_support_layer_height": "1",
+   "tree_support_branch_distance": "5",
+   "tree_support_branch_diameter": "2",
+   "tree_support_branch_angle": "45",
+   "tree_support_branch_diameter_angle": "5",
+   "skirt_loops": "0",
+   "skirt_height": "1",
+   "skirt_distance": "2",
+   "draft_shield": "disabled",
+   "brim_type": "auto_brim",
+   "brim_width": "5",
+   "brim_object_gap": "0.1",
+   "enable_prime_tower": "1",
+   "prime_tower_skip_points": "1",
+   "prime_tower_enable_framework": "0",
+   "prime_tower_width": "35",
+   "prime_tower_max_speed": "90",
+   "prime_tower_brim_width": "-1",
+   "prime_tower_infill_gap": "150",
+   "prime_tower_rib_wall": "1",
+   "prime_tower_extra_rib_length": "0",
+   "prime_tower_rib_width": "8",
+   "prime_tower_fillet_wall": "1",
+   "enable_tower_interface_features": "1",
+   "flush_into_infill": "0",
+   "flush_into_objects": "0",
+   "flush_into_support": "1",
+   "slicing_mode": "regular",
+   "print_sequence": "by layer",
+   "spiral_mode": "0",
+   "spiral_mode_smooth": "0",
+   "spiral_mode_max_xy_smoothing": "200%",
+   "timelapse_type": "0",
+   "fuzzy_skin": "none",
+   "fuzzy_skin_mode": "displacement",
+   "fuzzy_skin_noise_type": "classic",
+   "fuzzy_skin_point_distance": "0.8",
+   "fuzzy_skin_thickness": "0.3",
+   "fuzzy_skin_scale": "1.0",
+   "fuzzy_skin_octaves": "4",
+   "fuzzy_skin_persistence": "0.5",
+   "fuzzy_skin_first_layer": "0",
+   "enable_wrapping_detection": "0",
+   "enable_order_independent_overlap_carving": "0",
+   "interlocking_beam": "0",
+   "mmu_segmented_region_max_width": "0",
+   "mmu_segmented_region_interlocking_depth": "0",
+   "interlocking_beam_width": "0.8",
+   "interlocking_orientation": "22.5",
+   "interlocking_beam_layer_count": "2",
+   "interlocking_depth": "2",
+   "interlocking_boundary_avoidance": "2",
+   "sparse_infill_filament": "0",
+   "solid_infill_filament": "0",
+   "wall_filament": "0",
+   "reduce_infill_retraction_mode": "Auto",
+   "gcode_add_line_number": "0",
+   "exclude_object": "0"
+  },
+  "processParams": [
+   {
+    "name": "开启支撑",
+    "value": "1"
+   },
+   {
+    "name": "支撑/筏层界面",
+    "value": "2"
+   },
+   {
+    "name": "顶部Z距离",
+    "value": "0"
+   },
+   {
+    "name": "底部Z距离",
+    "value": "0"
+   },
+   {
+    "name": "支撑主体图案",
+    "value": "rectilinear"
+   },
+   {
+    "name": "顶部接触面层数",
+    "value": "3"
+   },
+   {
+    "name": "支撑面图案",
+    "value": "rectilinear"
+   },
+   {
+    "name": "顶部接触面线距",
+    "value": "0"
+   }
+  ],
+  "builtinVersion": 2
+ },
+ {
+  "id": "preset_overhang_improve",
+  "name": "悬垂改善（降速 + 厚桥）",
+  "subType": "质量·悬垂",
+  "machine": "X2D",
+  "filamentType": "通用（PLA/PETG/ABS）",
+  "createdDate": "2026-09-30T14:56:53.610Z",
+  "notes": "悬垂/桥接质量主要由【冷却】决定。工艺侧：四档悬垂降速整体下调（25/50/75/100% → 30/30/20/12 mm/s，全悬空 8）、开启厚桥(thick_bridges)与沉孔搭桥、detect_overhang_wall、墙生成器 Arachne（薄悬垂变宽挤出更饱满）、层高降到 0.16。耗材丝侧（PLA）：悬空强制满冷——overhang_fan_threshold=0%（任意悬空都强制冷）、overhang_fan_speed=100、fan_max_speed=100、additional_cooling_fan_speed=100。⚠ 风扇 100% 仅适用于 PLA；PETG 用 30–50%、ABS/ASA 接近 0，切勿照搬，否则翘曲/层裂。",
+  "bpValues": {
+   "layer_height": "0.2",
+   "initial_layer_print_height": "0.2",
+   "enable_mixed_color_sublayer": "0",
+   "line_width": "0.42",
+   "initial_layer_line_width": "0.5",
+   "outer_wall_line_width": "0.42",
+   "inner_wall_line_width": "0.45",
+   "top_surface_line_width": "0.42",
+   "sparse_infill_line_width": "0.45",
+   "internal_solid_infill_line_width": "0.42",
+   "support_line_width": "0.42",
+   "seam_position": "aligned",
+   "seam_placement_away_from_overhangs": "0",
+   "seam_gap": "15",
+   "seam_slope_conditional": "1",
+   "scarf_angle_threshold": "155",
+   "seam_slope_entire_loop": "0",
+   "seam_slope_steps": "10",
+   "seam_slope_inner_walls": "1",
+   "override_filament_scarf_seam_setting": "0",
+   "seam_slope_type": "none",
+   "seam_slope_start_height": "10%",
+   "seam_slope_gap": "0",
+   "seam_slope_min_length": "10",
+   "wipe_speed": "80",
+   "role_base_wipe_speed": "1",
+   "slice_closing_radius": "0.049",
+   "resolution": "0.012",
+   "enable_arc_fitting": "1",
+   "xy_hole_compensation": "0",
+   "xy_contour_compensation": "0",
+   "enable_circle_compensation": "0",
+   "circle_compensation_manual_offset": "0",
+   "elefant_foot_compensation": "0.15",
+   "precise_outer_wall": "0",
+   "precise_z_height": "0",
+   "ironing_type": "no ironing",
+   "ironing_pattern": "zig-zag",
+   "ironing_speed": "30",
+   "ironing_flow": "10%",
+   "ironing_spacing": "0.15",
+   "ironing_inset": "0.21",
+   "ironing_direction": "45",
+   "wall_generator": "classic",
+   "wall_transition_angle": "10",
+   "wall_transition_filter_deviation": "25",
+   "wall_transition_length": "100",
+   "wall_distribution_count": "1",
+   "min_bead_width": "85",
+   "min_feature_size": "25",
+   "wall_sequence": "inner wall/outer wall",
+   "is_infill_first": "0",
+   "bridge_flow": "1",
+   "thick_bridges": "1",
+   "counterbore_hole_bridging": "partiallybridge",
+   "print_flow_ratio": "1",
+   "top_solid_infill_flow_ratio": "1, 1, 1, 1, 1, 1",
+   "initial_layer_flow_ratio": "1",
+   "top_one_wall_type": "all top",
+   "top_area_threshold": "200",
+   "only_one_wall_first_layer": "0",
+   "detect_overhang_wall": "1",
+   "smooth_speed_discontinuity_area": "1",
+   "smooth_coefficient": "4",
+   "reduce_crossing_wall": "0",
+   "max_travel_detour_distance": "0",
+   "avoid_crossing_wall_includes_support": "0",
+   "z_direction_outwall_speed_continuous": "1",
+   "wall_loops": "2",
+   "alternate_extra_wall": "0",
+   "embedding_wall_into_infill": "0",
+   "detect_thin_wall": "0",
+   "interface_shells": "0",
+   "top_surface_pattern": "monotonicline",
+   "top_surface_density": "100",
+   "top_shell_layers": "5",
+   "top_shell_thickness": "1.0",
+   "top_color_penetration_layers": "5",
+   "bottom_surface_pattern": "monotonic",
+   "bottom_surface_density": "100",
+   "bottom_shell_layers": "3",
+   "bottom_shell_thickness": "0",
+   "bottom_color_penetration_layers": "3",
+   "infill_instead_top_bottom_surfaces": "0",
+   "internal_solid_infill_pattern": "zig-zag",
+   "sparse_infill_density": "15%",
+   "fill_multiline": "1",
+   "sparse_infill_pattern": "grid",
+   "locked_skin_infill_pattern": "crosszag",
+   "skin_infill_density": "15%",
+   "locked_skeleton_infill_pattern": "zigzag",
+   "skeleton_infill_density": "15%",
+   "infill_lock_depth": "1.0",
+   "skin_infill_depth": "2.0",
+   "skin_infill_line_width": "0.45",
+   "skeleton_infill_line_width": "0.45",
+   "symmetric_infill_y_axis": "0",
+   "infill_shift_step": "0.4",
+   "sparse_infill_lattice_angle_1": "-45",
+   "sparse_infill_lattice_angle_2": "45",
+   "infill_rotate_step": "0",
+   "sparse_infill_anchor": "400%",
+   "sparse_infill_anchor_max": "20",
+   "filter_out_gap_fill": "0",
+   "infill_wall_overlap": "15%",
+   "monotonic_travel_into_wall": "45.0",
+   "infill_direction": "45",
+   "bridge_angle": "0",
+   "minimum_sparse_infill_area": "15",
+   "infill_combination": "0",
+   "detect_narrow_internal_solid_infill": "1",
+   "ensure_vertical_shell_thickness": "enabled",
+   "detect_floating_vertical_shell": "1",
+   "internal_bridge_support_thickness": "0.8",
+   "initial_layer_speed": "50, 50, 50, 50, 50, 50",
+   "initial_layer_infill_speed": "105, 105, 105, 105, 105, 105",
+   "outer_wall_speed": "200, 500, 500, 50, 50, 50",
+   "inner_wall_speed": "300, 600, 600, 200, 200, 200",
+   "small_perimeter_speed": "50%, 50%, 50%, 50%, 50%, 50%",
+   "small_perimeter_threshold": "0, 0, 0, 0, 0, 0",
+   "sparse_infill_speed": "270, 600, 600, 200, 200, 200",
+   "internal_solid_infill_speed": "250, 600, 600, 200, 200, 200",
+   "vertical_shell_speed": "80%, 80%, 80%, 80%, 80%, 80%",
+   "top_surface_speed": "200, 200, 200, 200, 200, 200",
+   "enable_overhang_speed": "1, 1, 1, 1, 0, 0",
+   "overhang_1_4_speed": "0, 0, 0, 0, 0, 0",
+   "overhang_2_4_speed": "30, 30, 30, 30, 30, 30",
+   "overhang_3_4_speed": "20, 20, 20, 20, 20, 20",
+   "overhang_4_4_speed": "12, 12, 12, 12, 12, 12",
+   "overhang_totally_speed": "8, 8, 8, 8, 8, 8",
+   "enable_height_slowdown": "0, 0, 0, 0, 0, 0",
+   "slowdown_start_height": "0, 0, 0, 0, 0, 0",
+   "slowdown_start_speed": "1000, 1000, 1000, 1000, 1000, 1000",
+   "slowdown_start_acc": "100000, 100000, 100000, 100000, 100000, 100000",
+   "slowdown_end_height": "400, 400, 400, 400, 400, 400",
+   "slowdown_end_speed": "1000, 1000, 1000, 1000, 1000, 1000",
+   "slowdown_end_acc": "100000, 100000, 100000, 100000, 100000, 100000",
+   "bridge_speed": "20, 20, 20, 20, 20, 20",
+   "gap_infill_speed": "250, 250, 250, 250, 250, 250",
+   "support_speed": "150, 150, 150, 150, 150, 150",
+   "support_interface_speed": "80, 80, 80, 80, 80, 80",
+   "travel_speed": "1000, 1000, 1000, 1000, 1000, 1000",
+   "default_acceleration": "10000, 10000, 10000, 1000, 1000, 1000",
+   "travel_acceleration": "10000, 10000, 10000, 10000, 10000, 10000",
+   "travel_short_distance_acceleration": "250, 250, 250, 250, 250, 250",
+   "initial_layer_travel_acceleration": "6000, 6000, 6000, 6000, 6000, 6000",
+   "initial_layer_acceleration": "500, 500, 500, 500, 500, 500",
+   "outer_wall_acceleration": "5000, 5000, 5000, 1000, 1000, 1000",
+   "inner_wall_acceleration": "0, 0, 0, 0, 0, 0",
+   "top_surface_acceleration": "2000, 2000, 2000, 1000, 1000, 1000",
+   "sparse_infill_acceleration": "100%, 100%, 100%, 100%, 100%, 100%",
+   "accel_to_decel_enable": "0",
+   "accel_to_decel_factor": "50",
+   "default_jerk": "0",
+   "outer_wall_jerk": "9",
+   "inner_wall_jerk": "9",
+   "infill_jerk": "9",
+   "top_surface_jerk": "9",
+   "initial_layer_jerk": "9",
+   "travel_jerk": "9",
+   "max_volumetric_extrusion_rate_slope_positive": "0",
+   "max_volumetric_extrusion_rate_slope_negative": "0",
+   "enable_support": "0",
+   "support_type": "tree(auto)",
+   "support_style": "default",
+   "support_threshold_angle": "30",
+   "support_on_build_plate_only": "0",
+   "support_critical_regions_only": "0",
+   "support_remove_small_overhang": "1",
+   "enforce_support_layers": "0",
+   "raft_layers": "0",
+   "raft_contact_distance": "0.1",
+   "support_filament": "0",
+   "support_interface_filament": "0",
+   "support_interface_not_for_body": "1",
+   "enable_support_ironing": "0",
+   "support_ironing_pattern": "zig-zag",
+   "support_ironing_speed": "30",
+   "support_ironing_flow": "10%",
+   "support_ironing_spacing": "0.15",
+   "support_ironing_inset": "0.0",
+   "support_ironing_direction": "0",
+   "raft_first_layer_density": "90",
+   "raft_first_layer_expansion": "-1",
+   "tree_support_wall_count": "-1",
+   "support_top_z_distance": "0.2",
+   "support_bottom_z_distance": "0.2",
+   "support_base_pattern": "default",
+   "support_base_pattern_spacing": "2.5",
+   "support_angle": "0",
+   "support_interface_top_layers": "2",
+   "support_interface_bottom_layers": "2",
+   "support_interface_pattern": "auto",
+   "support_interface_spacing": "0.5",
+   "support_bottom_interface_spacing": "0.5",
+   "support_expansion": "0",
+   "support_interface_loop_pattern": "0",
+   "support_object_xy_distance": "0.35",
+   "top_z_overrides_xy_distance": "0",
+   "support_object_first_layer_gap": "0.2",
+   "bridge_no_support": "0",
+   "max_bridge_length": "0",
+   "independent_support_layer_height": "1",
+   "tree_support_branch_distance": "5",
+   "tree_support_branch_diameter": "2",
+   "tree_support_branch_angle": "45",
+   "tree_support_branch_diameter_angle": "5",
+   "skirt_loops": "0",
+   "skirt_height": "1",
+   "skirt_distance": "2",
+   "draft_shield": "disabled",
+   "brim_type": "auto_brim",
+   "brim_width": "5",
+   "brim_object_gap": "0.1",
+   "enable_prime_tower": "1",
+   "prime_tower_skip_points": "1",
+   "prime_tower_enable_framework": "0",
+   "prime_tower_width": "35",
+   "prime_tower_max_speed": "90",
+   "prime_tower_brim_width": "-1",
+   "prime_tower_infill_gap": "150",
+   "prime_tower_rib_wall": "1",
+   "prime_tower_extra_rib_length": "0",
+   "prime_tower_rib_width": "8",
+   "prime_tower_fillet_wall": "1",
+   "enable_tower_interface_features": "1",
+   "flush_into_infill": "0",
+   "flush_into_objects": "0",
+   "flush_into_support": "1",
+   "slicing_mode": "regular",
+   "print_sequence": "by layer",
+   "spiral_mode": "0",
+   "spiral_mode_smooth": "0",
+   "spiral_mode_max_xy_smoothing": "200%",
+   "timelapse_type": "0",
+   "fuzzy_skin": "none",
+   "fuzzy_skin_mode": "displacement",
+   "fuzzy_skin_noise_type": "classic",
+   "fuzzy_skin_point_distance": "0.8",
+   "fuzzy_skin_thickness": "0.3",
+   "fuzzy_skin_scale": "1.0",
+   "fuzzy_skin_octaves": "4",
+   "fuzzy_skin_persistence": "0.5",
+   "fuzzy_skin_first_layer": "0",
+   "enable_wrapping_detection": "0",
+   "enable_order_independent_overlap_carving": "0",
+   "interlocking_beam": "0",
+   "mmu_segmented_region_max_width": "0",
+   "mmu_segmented_region_interlocking_depth": "0",
+   "interlocking_beam_width": "0.8",
+   "interlocking_orientation": "22.5",
+   "interlocking_beam_layer_count": "2",
+   "interlocking_depth": "2",
+   "interlocking_boundary_avoidance": "2",
+   "sparse_infill_filament": "0",
+   "solid_infill_filament": "0",
+   "wall_filament": "0",
+   "reduce_infill_retraction_mode": "Auto",
+   "gcode_add_line_number": "0",
+   "exclude_object": "0"
+  },
+  "processParams": [
+   {
+    "name": "厚桥",
+    "value": "1"
+   },
+   {
+    "name": "沉孔搭桥",
+    "value": "partiallybridge"
+   },
+   {
+    "name": "25% 悬垂",
+    "value": "30, 30, 30, 30"
+   },
+   {
+    "name": "50% 悬垂",
+    "value": "20, 20, 20, 20"
+   },
+   {
+    "name": "75% 悬垂",
+    "value": "12, 12, 12, 12"
+   },
+   {
+    "name": "100% 悬垂",
+    "value": "8, 8, 8, 8"
+   },
+   {
+    "name": "桥接",
+    "value": "20, 20, 20, 20"
+   }
+  ],
+  "builtinVersion": 2
+ },
+ {
+  "id": "preset_x2d_hq_v3_partial",
+  "name": "X2D 高质量 V3（部分摘录）",
+  "subType": "PETG",
+  "machine": "X2D",
+  "filamentType": "PETG + PLA",
+  "createdDate": "2026-10-08T01:55:55.067Z",
+  "notes": "⚠️ **本条不完整**：作者在页面只公布了少量可考数值，其余为定性描述（多半机上实测，未列出具体值）。可考值：桥接 **Flow 1.0 / Speed 40 mm/s**（极端几何建议 Flow 1.4 / Speed 10）、墙数建议 **3 层**、熨烫针对 PLA 与 PETG 已预配但**默认关闭**。其余公开方向：优化外墙速度消除 VFA、优化加速度/振动管理、优化回抽减少拉丝、墙序建议「内→外→内」。**注意**：同作者在 V3 页面顶部明确推荐使用更新的 **V4**，V3 仅作对比保留。",
+  "bpValues": {
+   "bridge_speed": "40, 40, 40, 40, 40, 40",
+   "wall_loops": "3"
+  },
+  "processParams": [
+   {
+    "name": "bridge_speed",
+    "value": "40, 40, 40, 40, 40, 40"
+   },
+   {
+    "name": "wall_loops",
+    "value": "3"
+   }
+  ],
+  "builtinVersion": 1
+ },
+ {
+  "id": "preset_x2d_mofang_font",
+  "name": "0.20mm 标准 @BBL X2D - 魔方字体",
+  "subType": "PETG",
+  "machine": "X2D",
+  "filamentType": "PETG + PLA",
+  "createdDate": "2026-10-08T01:55:55.070Z",
+  "notes": "用户从本机 Bambu Studio 导出的**工艺档**（非耗材丝）：继承 `0.20mm Standard @BBL X2D`，针对字体制件优化。关键改动：`wall_generator=arachne`（变宽挤出，薄壁/笔画更饱满）、`layer_height=0.16`（比默认 0.2 更细，台阶更小）、`reduce_crossing_wall=1`（减少穿墙拉丝）、`enable_arc_fitting=0`（关弧线拟合，字体锐角更锐）、`ironing_pattern=concentric`、`min_bead_width=50%`/`min_feature_size=15%`。原文件还带 `print_extruder_id`/`print_extruder_variant`（多色映射），属设备配置未录入。与 ⑥（X2D HQ V3 桥接/墙数）取向不同：本条主攻字体薄壁质量。",
+  "bpValues": {
+   "enable_arc_fitting": "0",
+   "ironing_pattern": "concentric",
+   "layer_height": "0.16",
+   "min_bead_width": "50%",
+   "min_feature_size": "15%",
+   "reduce_crossing_wall": "1",
+   "wall_generator": "arachne",
+   "wall_sequence": "outer wall/inner wall"
+  },
+  "processParams": [
+   {
+    "name": "enable_arc_fitting",
+    "value": "0"
+   },
+   {
+    "name": "ironing_pattern",
+    "value": "concentric"
+   },
+   {
+    "name": "layer_height",
+    "value": "0.16"
+   },
+   {
+    "name": "min_bead_width",
+    "value": "50%"
+   },
+   {
+    "name": "min_feature_size",
+    "value": "15%"
+   },
+   {
+    "name": "reduce_crossing_wall",
+    "value": "1"
+   },
+   {
+    "name": "wall_generator",
+    "value": "arachne"
+   },
+   {
+    "name": "wall_sequence",
+    "value": "outer wall/inner wall"
+   }
+  ],
+  "builtinVersion": 1
+ },
+ {
+  "id": "preset_petg_overhang_bridge",
+  "name": "PETG 悬垂桥优化（降5℃+满冷+厚桥）",
+  "subType": "PETG",
+  "machine": "X2D",
+  "filamentType": "PETG",
+  "createdDate": "2026-10-08T01:55:55.070Z",
+  "notes": "源自「叠放零件盒」官方默认参数打印的瑕疵诊断（3MF 几何反查）：① 蜂窝孔斜壁的朝下孔顶棚（45–60° 下向面约 6300 mm²）悬垂下塌被喷头刮成疤痕带；② 前沿翻边水平底面是一整幅约 13000 mm² 的大跨桥，无支撑 → 桥面波浪 + 缺口。两处均属悬垂/桥接缺陷，与温度无关（原 首层245/其他250 在 PETG 合理区间）。本预设针对 PETG 调：温度降 5℃ 使熔体更稠更挺（其他层 250→245，首层保持 245 保附着）；悬垂风扇速度 50→100%、悬垂/桥接强制冷却→100%（仅在悬垂/桥接段拉满，不伤普通墙面层间结合）；厚桥开 + 桥接速度 50→25（工艺与耗材丝双域同设定，确保任一域为权威都生效）。⚠ 全局风扇勿拉满（PETG 层间结合优先）；250→240 若仍下塌可再降；② 那种大跨桥最彻底是加树状支撑（仅悬空处）。",
+  "bpValues": {
+   "thick_bridges": "1",
+   "bridge_speed": "25, 25, 25, 25, 25, 25"
+  },
+  "processParams": [
+   {
+    "name": "thick_bridges",
+    "value": "1"
+   },
+   {
+    "name": "bridge_speed",
+    "value": "25, 25, 25, 25, 25, 25"
+   }
+  ],
+  "builtinVersion": 1
+ }
+];;
 /* 内置预置：列表里缺失时自动补入；用户删除过的记进黑名单(bambu_builtin_deleted)，不再复活。
    注意 PSET 必须是克隆 —— AD.apply 会把它当作就地清空的"别名种子"。 */
 var PSET = JSON.parse(JSON.stringify(BAMBU_BUILTIN));
 /* 耗材丝预设（独立存储 bambu_filament_presets，与工艺 bambu_presets 分文件落盘）。
-   种子来自 bambu-filament-schema.js 的内置基准（官方 PLA / 官方 PETG·三绿兼容）；
+   种子来自 bambu-filament-schema.js 的内置基准（官方 PLA / 官方 PETG·三绿兼容）
+   + 用户特调校准条目（calibratedRecords：官方基线 + 稀疏覆盖，2026-10-08 由「工艺库·精选预设库」并入）。
    同样必须克隆 —— AD.apply 的别名陷阱与 PSET 相同。 */
 var FILP = (window.BAMBU_FILAMENT_SCHEMA
-  ? JSON.parse(JSON.stringify([BAMBU_FILAMENT_SCHEMA.builtin.pla, BAMBU_FILAMENT_SCHEMA.builtin.petg]))
+  ? JSON.parse(JSON.stringify(
+      [BAMBU_FILAMENT_SCHEMA.builtin.pla, BAMBU_FILAMENT_SCHEMA.builtin.petg]
+        .concat(Object.keys(BAMBU_FILAMENT_SCHEMA.calibratedRecords || {})
+          .map(function(k){ return BAMBU_FILAMENT_SCHEMA.calibratedRecords[k]; }))
+    ))
   : []);
 /* 耗材丝记录迁移：v1 简化字段 → v2 完整真实 key → v3 官方 6 页签 + 6 驱动变体
    旧数据（values 扁平）按官方 6 页签结构补全：缺失字段取内置基准的第 0 段值。
@@ -2357,6 +3146,17 @@ const DIAG_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" str
 const DIAG_VIEW_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>';
 const DIAG_SPIN = '<svg class="diag-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
 function pappEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+/* 按 id 定位并高亮一行（表格行带 data-pid）。用于「从别处跳过来指认某条预设」。
+   用 getElementById 拼字符串是错的——id 含下划线虽合法，但这里走属性选择器更稳。 */
+function presetFindRow(id, ms){
+  var el = document.querySelector('.preset-tbl tbody tr[data-pid="' + String(id).replace(/"/g,'') + '"]');
+  if(!el) return false;
+  el.scrollIntoView({ block:'center' });
+  el.style.transition = 'box-shadow .2s';
+  el.style.boxShadow = '0 0 0 3px var(--accent-soft)';
+  setTimeout(function(){ el.style.boxShadow = ''; }, 2600);
+  return true;
+}
 function pappDiagLevel(l){ return l==='risk'?'风险':l==='warn'?'警告':l==='info'?'提示':'正常'; }
 function pappDiagColor(l){ return l==='risk'?'#e5484d':l==='warn'?'#f59e0b':'var(--muted)'; }
 /* 材质判定：优先 preset.filamentType，其次关联耗材丝(FILP)的 typeKey —— 决定走哪套规则 */
@@ -2620,8 +3420,7 @@ const KNOW = {
 };
 
 /* ===================== 3D 打印工艺库（原独立页 tools/3d-management.html 已折叠进后台） =====================
-   只读知识视图，四个页签：
-     精选预设库     9 条人工维护的精选预设（window.PRESET_PATCHES）
+   只读知识视图，五个页签（2026-08 撤掉「精选预设库」，数据并入 PSET/FILP）：
      V2.0 规则目录  17 条可执行规则（window.X2D_RULES_V2 + 中文层 X2D_RULES_CN）
      实测诊断       E1 候选缺陷规则（window.BAMBU_DEFECT_RULES）
      V2.1 Slice     切片验证 Schema（window.X2D_SLICE_V21）
@@ -2635,7 +3434,12 @@ const KNOW = {
 /* 页卡位置持久化（仅存字符串，几十字节；不存分析结果/文件，避免堆积） */
 function plibLsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function plibLsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
-const PLIB = { tab: (plibLsGet('wli_plib_tab') || 'presets'), feat: '' };
+/* 默认页签：'rules'。原为 'presets'（精选预设库），该页签 2026-08 已撤除。
+   ⚠ 还要兜住老用户 localStorage 里存着的 'presets' —— 否则 setTab 不走、渲染会掉进 else 分支。 */
+const PLIB = { tab: (function(){
+  var saved = plibLsGet('wli_plib_tab');
+  return (saved && saved !== 'presets') ? saved : 'rules';
+})(), feat: '' };
 function plibEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function plibChip(t, c){
   c = c || 'var(--muted)';
@@ -2712,8 +3516,22 @@ function plibParamCn(k){
   var X = (typeof window !== 'undefined' && window.X2D_PARAM_CN) || {};
   return X[k] || plibParamMap()[k] || '';
 }
-function plibEv(v){ var M=(typeof window!=='undefined'&&window.X2D_EVIDENCE_CN)||{}; return M[v]||''; }
-function plibLv(v){ var M=(typeof window!=='undefined'&&window.X2D_ACTION_LEVEL_CN)||{}; return M[v]||''; }
+/* 证据等级 / 自主度 → 中文。⚠ 复合等级（如 "E1/E3"、"E2/E3"）在映射表里没有整键，
+   直接查会返回 ''，界面就渲染出「依据 」这种后面空白的胶囊（2026-10-08 渲染自查抓到）→ 拆段再拼。 */
+function plibEv(v){
+  var M = (typeof window !== 'undefined' && window.X2D_EVIDENCE_CN) || {};
+  return M[v] || plibEvJoin(v, M) || '';
+}
+function plibLv(v){
+  var M = (typeof window !== 'undefined' && window.X2D_ACTION_LEVEL_CN) || {};
+  return M[v] || plibEvJoin(v, M) || '';
+}
+function plibEvJoin(v, M){
+  if(!v || typeof v !== 'string' || M[v]) return '';
+  var parts = v.split(/[/+、,]/).map(function(s){ return s.trim(); }).filter(Boolean);
+  if(parts.length < 2) return '';
+  return parts.map(function(s){ return M[s] || s; }).join(' / ');
+}
 function plibRisk(v){ var M=(typeof window!=='undefined'&&window.X2D_RISK_CN)||{}; return M[v]||v||'—'; }
 function plibVal(v){ var M=(typeof window!=='undefined'&&window.X2D_VALIDATION_CN)||{}; return M[v]||''; }
 /* 值 → 可显示字符串。⚠ 必须兜住对象/数组：rule_result.current 是 {}、feature_ids 是 []，
@@ -2774,59 +3592,160 @@ function plibStatusView(obj){
   return o;
 }
 PLIB.setTab = function(t){ PLIB.tab = t; plibLsSet('wli_plib_tab', t); renderMain(); };
+/* —— 卡片层级组件（2026-10-07）：统计条 / 一句摘要 / 元信息胶囊 / 折叠分组 ——
+   目的：长内容默认收起，卡片只留「标题 + 摘要 + 关键标签」，消除大段文字堆砌。 */
+function plibStatStrip(items){
+  if(!items || !items.length) return '';
+  return '<div class="plib-stats">' + items.map(function(it){
+    return '<div class="plib-stat' + (it.tone ? ' ' + it.tone : '') + '"><b>' + plibEsc(it.n) + '</b><span>' + plibEsc(it.label) + '</span></div>';
+  }).join('') + '</div>';
+}
+/* items 内元素已是可信 HTML（调用方自行 plibEsc/annotate）；空值自动剔除 */
+function plibMeta(items){
+  var arr = (items || []).filter(function(x){ return x != null && x !== ''; });
+  if(!arr.length) return '';
+  return '<div class="plib-meta">' + arr.map(function(x){ return '<span>' + x + '</span>'; }).join('') + '</div>';
+}
+function plibSec(title, inner){
+  if(!inner) return '';
+  return '<div class="plib-sec">' + (title ? '<h4>' + plibEsc(title) + '</h4>' : '') + inner + '</div>';
+}
+function plibFold(label, inner){
+  if(!inner) return '';
+  return '<details class="plib-fold"><summary>' + plibEsc(label) + '</summary>' + inner + '</details>';
+}
+/* 长文本 → 一句摘要（优先取到第一个句号，其次按长度截断，避免 NOTE 整段铺开） */
+function plibBrief(text, max){
+  var s = String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
+  if(!s) return '';
+  var m = s.match(/^(.{12,160}?)(?:[。！？；]|\.\s)/);
+  if(m) s = m[1];
+  var lim = max || 88;
+  return s.length > lim ? s.slice(0, lim) + '…' : s;
+}
+/* 风险值 → 卡片左侧色条类名（high/warn/ok/默认） */
+function plibTone(risk){
+  var r = String(risk || '').toLowerCase();
+  if(r === 'high') return 'risk';
+  if(r === 'medium' || r === 'mid') return 'warn';
+  if(r === 'low') return 'ok';
+  return '';
+}
+/* 统一卡片：整张卡可点 → 弹窗看详情（2026-10-07：内联 <details> 展开会把卡片拉得很长，改弹窗）。
+   有 detail 才是可点卡，否则是只读普通卡。
+   o = { id, title, chips, sub, meta, detail, tone } —— sub/meta/chips 内容由调用方转义。
+   ⚠ 详情正文塞进 <template> 而不是属性：正文里有引号/标签时无需再做属性转义，
+      且 template 内容不进文档流，不会撑高卡片。点击时取 innerHTML 交给弹窗。 */
+function plibCard(o){
+  o = o || {};
+  var tone = o.tone ? ' ' + o.tone : '';
+  var idAttr = o.id ? ' id="' + plibEsc(o.id) + '"' : '';
+  var sum = '<div class="plib-head"><b>' + (o.title || '') + '</b>' + (o.chips || '') + '</div>'
+    + (o.sub ? '<div class="plib-sub">' + o.sub + '</div>' : '')
+    + (o.meta || '');
+  if(!o.detail) return '<div class="plib-card fold' + tone + '"' + idAttr + '>' + sum + '</div>';
+  var tAttr = ' data-plib-title="' + plibEsc(String(o.title || '详情')) + '"';
+  return '<div class="plib-card fold tap' + tone + '"' + idAttr + tAttr
+    + ' role="button" tabindex="0"'
+    + ' onclick="plibCardOpen(this)" onkeydown="plibCardKey(event,this)">'
+    + sum + '<span class="plib-more">查看详情 ▸</span>'
+    + '<template class="plib-detail">' + o.detail + '</template></div>';
+}
+/* 键盘可达：Enter / 空格 等同点击（卡片是 div，不是原生 button） */
+function plibCardKey(e, el){
+  if(!e) return;
+  if(e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){ e.preventDefault(); plibCardOpen(el); }
+}
+/* 卡片 → 弹窗：标题取 data-plib-title，正文 = 卡片的 chips + 摘要 + 元信息 + template 详情 */
+function plibCardOpen(el){
+  if(!el) return;
+  var t = el.querySelector('template.plib-detail');
+  var detail = t ? t.innerHTML : '';
+  var headEl = el.querySelector('.plib-head');
+  var chips = '';
+  if(headEl){
+    var c = headEl.cloneNode(true), b = c.querySelector('b');
+    if(b && b.parentNode) b.parentNode.removeChild(b);
+    chips = c.innerHTML;
+  }
+  var subEl = el.querySelector('.plib-sub');
+  var metaEl = el.querySelector('.plib-meta');
+  var body = (chips ? '<div class="plib-head">' + chips + '</div>' : '')
+    + (subEl ? '<div class="plib-sub">' + subEl.innerHTML + '</div>' : '')
+    + (metaEl ? '<div class="plib-meta">' + metaEl.innerHTML + '</div>' : '')
+    + detail;
+  plibOpenModal(el.getAttribute('data-plib-title') || '详情', body);
+}
+/* 工艺库详情弹窗：独立一套 mask/box（不动全站 .fmodal 的 class，避免污染别的弹窗宽度） */
+function plibOpenModal(title, bodyHtml){
+  var box = document.getElementById('plibModalBox'), mask = document.getElementById('plibModalMask');
+  if(!box || !mask){ /* 兜底：静默失败会让人以为点了没反应，退回全站弹窗 */
+    if(typeof openDetail === 'function'){ openDetail(plibEsc(title), bodyHtml); return; }
+    return;
+  }
+  box.innerHTML = '<div class="fmodal-head"><div class="fmodal-title">' + plibEsc(title) + '</div>'
+    + '<button class="fmodal-x" onclick="plibCloseModal()" title="关闭 (Esc)">✕</button></div>'
+    + '<div class="fmodal-body">' + (bodyHtml || '<div class="plib-note">（暂无详情）</div>') + '</div>'
+    + '<div class="fmodal-foot"><button class="btn" onclick="plibCloseModal()">关闭</button></div>';
+  mask.classList.add('show');
+  document.addEventListener('keydown', plibModalEsc);
+}
+function plibModalEsc(e){ if(e && e.key === 'Escape') plibCloseModal(); }
+function plibCloseModal(){
+  var mask = document.getElementById('plibModalMask');
+  if(mask) mask.classList.remove('show');
+  document.removeEventListener('keydown', plibModalEsc);
+}
+/* 页签角标数量（读不到数据的页签不显示数字，不猜） */
+function plibCountRules(){ var A = (typeof window !== 'undefined' && window.X2D_RULES_V2) || []; return A.length; }
+function plibCountDefects(){ var D = (typeof window !== 'undefined' && window.BAMBU_DEFECT_RULES) || null; return (D && D.rules) ? Object.keys(D.rules).length : 0; }
 function viewProcessLibrary(){
-  const tabs = [['presets','精选预设库'],['rules','V2.0 规则目录'],['defects','实测诊断'],['slice','V2.1 Slice 验证'],['diag','诊断入口'],['optimize','模型优化']];
-  const bar = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
-    + tabs.map(function(t){ return '<button class="btn' + (PLIB.tab===t[0]?' primary':'') + '" onclick="PLIB.setTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('')
+  /* 2026-10-08 撤掉「精选预设库」页签：它的数据是写死的只读副本，与「打印参数预设」(PSET) 重复且无法编辑。
+     已并入 PSET（工艺参数）/ FILP（耗材丝校准），这里不再展示第二份。 */
+  const tabs = [['rules','V2.0 规则目录'],['defects','实测诊断'],['slice','V2.1 Slice 验证'],['diag','诊断入口'],['optimize','模型优化']];
+  /* 下划线式页签（与「模型优化」页一致），带条目数角标 —— 替代原来一排实心按钮 */
+  const TAB_N = { rules: plibCountRules(), defects: plibCountDefects() };
+  const bar = '<div class="plib-tabs">'
+    + tabs.map(function(t){
+        var n = TAB_N[t[0]];
+        return '<button class="' + (PLIB.tab===t[0]?'on':'') + '" onclick="PLIB.setTab(\'' + t[0] + '\')">' + t[1]
+          + (n ? '<span class="n">' + n + '</span>' : '') + '</button>';
+      }).join('')
     + '</div>';
   let body;
   if(PLIB.tab==='rules') body = plibRules();
   else if(PLIB.tab==='defects') body = plibDefects();
   else if(PLIB.tab==='slice') body = plibSlice();
   else if(PLIB.tab==='diag') body = plibDiag();
-  else if(PLIB.tab==='optimize') body = plibOptimize();
-  else body = plibPresets();
+  else body = plibOptimize();
   /* card 默认 padding 20px，内层还有 .plib-card 自己的 14/16px → 嵌套过厚、显「留白多」。这里收到 16px。
      plib-host 把卡片区改成自适应网格（宽屏两列），消除右侧大片空白。 */
-  return greetHead('3D 打印工艺库','',bar) + '<div class="grid"><div class="card c12 plib-host" style="padding:16px">' + body + '</div></div>';
+  return greetHead('3D 打印工艺库','','') + '<div class="grid"><div class="card c12 plib-host" style="padding:16px">' + bar + body + '</div></div>';
 }
-/* —— 页签 1：精选预设库 —— */
-function plibPresets(){
-  var P = (typeof window !== 'undefined' && window.PRESET_PATCHES) || [];
-  if(!P.length) return '<div class="fempty"><div class="big-ic">🧩</div><b>未加载到精选预设</b>请确认底部脚本 bambu-preset-patch-data.js 已加载。</div>';
-  var h = '<div class="fbar"><span class="flabel">共 ' + P.length + ' 条精选预设 · 只读知识，不会写入你的预设库</span></div>';
-  h += P.map(function(pr){
-    var m = pr.meta || {}, params = pr.params || {}, fil = (pr.filament && pr.filament.overrides) || {};
-    var n = Object.keys(params).length + Object.keys(fil).length;
-    /* 每行：中文名（大字）+ 字段名（灰小字）| 值 | 域 —— 中文名查不到时如实标「未收录中文名」，不编造 */
-    function row(k, v, domain, color){
-      var cn = plibParamCn(k);
-      return '<tr><td>'
-        + (cn ? '<b>' + plibEsc(cn) + '</b>' : '<span style="color:var(--muted)">未收录中文名</span>')
-        + plibEn(k) + '</td>'
-        + '<td>' + plibEsc(plibValStr(v)) + '</td><td>' + plibChip(domain, color) + '</td></tr>';
-    }
-    var rows = Object.keys(params).map(function(k){ return row(k, params[k], '工艺', 'var(--accent-deep)'); }).join('')
-      + Object.keys(fil).map(function(k){ return row(k, fil[k], '耗材丝', '#8b5cf6'); }).join('');
-    var caveats = (pr.caveats || []).map(function(c){ return '<li>' + plibAnnotate(c) + '</li>'; }).join('');
-    return '<div class="plib-card" id="plib-preset-' + plibEsc(pr.id) + '">'
-      + '<div class="plib-head"><b>' + plibEsc(pr.name) + '</b>'
-      + (m.evidence_level ? plibChip('证据 ' + m.evidence_level + ' · ' + plibEv(m.evidence_level)) : '')
-      + (m.permission ? plibChip('权限 ' + m.permission + ' · ' + plibLv(m.permission)) : '')
-      + (m.case ? plibChip(m.case) : '') + '</div>'
-      + (pr.notes ? '<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;color:var(--muted)">备注 / 依据</summary><div class="plib-note" style="white-space:pre-wrap;margin-top:6px;color:var(--ink)">' + plibAnnotate(pr.notes) + '</div></details>' : '')
-      + (caveats ? '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;color:var(--muted)">注意事项</summary><ul style="font-size:12.5px;margin-top:6px;padding-left:20px;line-height:1.65">' + caveats + '</ul></details>' : '')
-      + (rows
-          ? '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;color:var(--muted)">参数（' + n + ' 项）</summary>'
-            + '<div class="table-wrap" style="margin-top:10px"><table class="fx plib-tbl">'
-            + '<colgroup><col style="width:32%"><col><col style="width:92px"></colgroup>'
-            + '<thead><tr><th>参数（中文名 / 字段名）</th><th>值</th><th>域</th></tr></thead><tbody>' + rows + '</tbody></table></div></details>'
-          : '<div class="plib-note" style="margin-top:8px">（占位记录，暂无参数）</div>')
-      + '</div>';
-  }).join('');
-  return h;
+/* 2026-08：原 plibPresets()（精选预设库页签）已撤除 —— 那 9 条是写死的只读副本，与「打印参数预设」(PSET)
+   内容重复且无法编辑增删。数据去向：工艺参数 → PSET；耗材丝校准 → FILP（bambu-filament-schema.js
+   的 calibrated，官方基线 + 稀疏覆盖）。此处保留说明，避免以后重新引入同一份重复数据。 */
+/* 「怎么解决」是规则卡正面唯一的主体信息 → 不走 plibBrief（它会在首个句号截断，
+   会把"降一档；确认冷却；不要自动加支撑"砍成前半句）。只按长度兜底截断。 */
+function plibBriefSolve(text, max){
+  var s = String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
+  var lim = max || 140;
+  return s.length > lim ? s.slice(0, lim) + '…' : s;
 }
 /* —— 页签 2：V2.0 规则目录（中文标签来自 X2D_RULES_CN / X2D_FEATURE_CN） —— */
+/* 「怎么解决」优先取规则的中文处理动作；源规则没写动作的（BRIDGE_002 / FLOW_001 / TEMP_001），
+   退化成"参数建议"的人话表述 —— 不编造动作，只把已有的 current/proposed/range/test_matrix 说清楚。 */
+function plibRuleActionText(r, z){
+  if(z.action) return z.action;
+  var p = r.parameter || {}, u = p.unit ? (' ' + p.unit) : '', bits = [];
+  if(p.current != null && p.proposed != null) bits.push('当前 ' + p.current + u + ' → 建议 ' + p.proposed + u);
+  else if(p.current != null && p.range) bits.push('当前 ' + p.current + u + '，建议区间 ' + p.range + u);
+  else if(p.proposed != null) bits.push('建议值 ' + p.proposed + u);
+  else if(p.range) bits.push('建议区间 ' + p.range + u);
+  if(p.test_matrix && p.test_matrix.length) bits.push('逐档实测 ' + p.test_matrix.join(' / ') + u);
+  if(bits.length) return '【' + (plibParamCn(p.name) || '参数') + '】' + bits.join('；');
+  return '源规则未写处理动作与参数建议 —— 这条只登记了适用条件，具体怎么改待补。';
+}
 function plibRules(){
   var ALL = (typeof window !== 'undefined' && window.X2D_RULES_V2) || [];
   var CN = (typeof window !== 'undefined' && window.X2D_RULES_CN) || {};
@@ -2836,56 +3755,88 @@ function plibRules(){
   /* 「诊断入口」的症状点击会设置 PLIB.feat 跳到这里按特征域筛选 */
   var feat = PLIB.feat || '';
   var R = feat ? ALL.filter(function(r){ return r.feature === feat; }) : ALL;
-  var h = '<div class="fbar"><span class="flabel">'
+  var nRisk = R.filter(function(r){ return r.risk === 'high'; }).length;
+  var feats = {};
+  R.forEach(function(r){ if(r.feature) feats[r.feature] = 1; });
+  var h = plibStatStrip([
+    { n: R.length, label: '条可执行规则' },
+    { n: Object.keys(feats).length, label: '个特征域' },
+    { n: nRisk, label: '条高风险', tone: nRisk ? 'hi' : 'ok' }
+  ]);
+  h += '<div class="plib-note">'
     + (feat
         ? '已按「' + plibEsc(FC[feat] || feat) + '」筛选：' + R.length + ' / ' + ALL.length + ' 条'
-        : '共 ' + R.length + ' 条可执行规则 · 中文为释义，灰字是源文件里的原始英文标识（便于对照与检索）')
-    + '</span>'
-    + (feat ? '<button class="btn sm" onclick="PLIB.feat=\'\';renderMain()">显示全部</button>' : '')
+        : '共 ' + R.length + ' 条规则 · 每条只讲两件事：<b>什么时候用</b>、<b>怎么解决</b>；英文标识与判定表达式收在弹窗底部「规则原文」里，一般不用看')
     + '</div>';
+  if(feat) h += '<div style="grid-column:1/-1;margin-top:8px"><button class="btn sm" onclick="PLIB.feat=\'\';renderMain()">显示全部</button></div>';
   if(!R.length) return h + '<div class="fempty"><div class="big-ic">🔎</div><b>该特征域暂无规则</b>V2.0 规则库还没覆盖这个症状，可到「实测诊断」看有没有对应案例。</div>';
   h += R.map(function(r){
     var z = ZH[r.id] || {};
-    var kv = '';
-    if(z.trigger) kv += '<dt>触发条件</dt><dd>' + plibEsc(z.trigger) + plibEn(r.trigger) + '</dd>';
-    if(z.formula) kv += '<dt>判定公式</dt><dd>' + plibEsc(z.formula) + plibEn(r.formula) + '</dd>';
-    if(z.action)  kv += '<dt>处理动作</dt><dd>' + plibEsc(z.action) + plibEn(r.action) + '</dd>';
     var p = r.parameter || {};
+    /* 判定公式的中文其实也是给人看的（"壁厚比 = 实际壁厚 ÷ 有效线宽" → 怎么量），
+       只有英文那半行 unsupported_ratio=... 是给引擎匹配的。所以中文进正面/参数块，英文进「规则原文」。 */
+    var formulaCn = z.formula || '';
+    var whenCn = z.trigger || '';
+    var howTo = plibRuleActionText(r, z);
+    /* 涉及参数：中文名 + 当前→建议。英文 key / test_matrix / constraint 英文 → 规则原文 */
+    var paramHtml = '';
     if(p && p.name){
-      var bits = [];
-      if(p.current != null) bits.push('当前 <b>' + plibEsc(p.current) + '</b>');
-      if(p.proposed != null) bits.push('建议 <b>' + plibEsc(p.proposed) + '</b>');
-      if(p.second_step != null) bits.push('第二步 ' + plibEsc(p.second_step));
-      if(p.range) bits.push('范围 ' + plibEsc(p.range));
-      if(p.test_matrix) bits.push('测试矩阵 ' + plibEsc((p.test_matrix || []).join(' / ')));
-      if(p.unit) bits.push(plibEsc(p.unit));
-      if(p.rollback != null) bits.push('回退 ' + plibEsc(p.rollback));
-      if(p.constraint) bits.push('约束 ' + plibEsc(((typeof window !== 'undefined' && window.X2D_CONSTRAINT_CN) || {})[p.constraint] || p.constraint));
       var pcn = plibParamCn(p.name);
-      kv += '<dt>涉及参数</dt><dd>' + (pcn ? '<b>' + plibEsc(pcn) + '</b> ' : '')
-        + '<code style="font-size:11.5px;color:var(--muted)">' + plibEsc(p.name) + '</code>'
-        + (bits.length ? '<br>' + bits.join(' · ') : '') + '</dd>';
+      var pair = (p.current != null || p.proposed != null || p.range)
+        ? '<div class="plib-pair">'
+          + (p.current != null ? '<span class="v cur">当前 ' + plibEsc(p.current) + (p.unit ? ' ' + plibEsc(p.unit) : '') + '</span>' : '')
+          + (p.proposed != null || p.range ? '<span class="arrow">→</span>' : '')
+          + (p.proposed != null ? '<span class="v next">建议 ' + plibEsc(p.proposed) + (p.unit ? ' ' + plibEsc(p.unit) : '') + '</span>' : '')
+          + (p.proposed == null && p.range ? '<span class="v next">区间 ' + plibEsc(p.range) + (p.unit ? ' ' + plibEsc(p.unit) : '') + '</span>' : '')
+          + '</div>'
+        : '';
+      var tip = [];
+      if(p.second_step != null) tip.push('仍不行 → ' + plibEsc(p.second_step) + (p.unit ? ' ' + plibEsc(p.unit) : ''));
+      if(p.fallback != null) tip.push('回退到 ' + plibEsc(p.fallback));
+      if(p.test_matrix && p.test_matrix.length) tip.push('逐档实测 ' + plibEsc((p.test_matrix || []).join(' / ')) + (p.unit ? ' ' + plibEsc(p.unit) : ''));
+      if(p.constraint) tip.push(plibEsc(((typeof window !== 'undefined' && window.X2D_CONSTRAINT_CN) || {})[p.constraint] || p.constraint));
+      if(p.next && p.next.length) tip.push('候选档位 ' + plibEsc((p.next || []).join(' / ')));
+      paramHtml = '<div style="font-size:13px">' + (pcn ? '<b>' + plibEsc(pcn) + '</b>' : '') + '</div>'
+        + pair
+        + (tip.length ? '<div class="plib-note" style="margin-top:6px">' + tip.join(' · ') + '</div>' : '');
     }
-    if(z.validation){
-      var vals = Array.isArray(r.validation) ? r.validation : (r.validation ? [r.validation] : []);
-      var hasCn = vals.some(function(v){ return plibVal(v) && plibVal(v) !== v; });
-      kv += '<dt>验证件</dt><dd>' + vals.map(function(v){ return plibEsc(plibVal(v) || v); }).join('、')
-        + (hasCn ? plibEn(vals.join(' / ')) : '') + '</dd>';
-    }
+    /* 怎么验证：中文验证件名 + 中文前置条件 */
+    var verify = '';
+    if(z.validation) verify += '<dt>怎么验证</dt><dd>' + plibEsc(z.validation) + '</dd>';
     if(r.prerequisites && r.prerequisites.length){
       var PM = (typeof window !== 'undefined' && window.X2D_PREREQ_CN) || {};
-      kv += '<dt>前置条件</dt><dd>' + r.prerequisites.map(function(x){ return plibEsc(PM[x] || x); }).join('、') + plibEn(r.prerequisites.join(' / ')) + '</dd>';
+      verify += '<dt>前置条件</dt><dd>' + r.prerequisites.map(function(x){ return plibEsc(PM[x] || x); }).join('、') + '</dd>';
     }
-    return '<div class="plib-card">'
-      + '<div class="plib-head"><b>' + plibEsc(CN[r.id] || r.id) + '</b>'
-      + (r.risk ? plibChip(plibRisk(r.risk), r.risk === 'high' ? '#e5484d' : '#f59e0b') : '')
-      + (r.action_level ? plibChip('权限 ' + r.action_level + ' · ' + plibLv(r.action_level)) : '')
-      + (r.evidence_level ? plibChip('证据 ' + r.evidence_level + ' · ' + plibEv(r.evidence_level)) : '') + '</div>'
-      + '<div class="plib-note" style="margin-top:6px">特征域：' + plibEsc(FC[r.feature] || r.feature)
-      + '　·　规则 ID <span class="en inline">' + plibEsc(r.id) + '</span>'
-      + '　·　版本 ' + plibEsc(r.version || '—') + '</div>'
-      + (kv ? '<dl class="plib-kv">' + kv + '</dl>' : '')
-      + '</div>';
+    /* —— 机器字段：英文 id / 表达式 / 伪代码，默认折叠（给排查与检索用，不是给用户读的） —— */
+    var raw = '<dl class="plib-kv">'
+      + '<dt>规则 ID</dt><dd class="en" style="display:inline">' + plibEsc(r.id) + ' · v' + plibEsc(r.version || '—') + '</dd>'
+      + '<dt>特征域</dt><dd>' + plibEsc(r.feature || '—') + '</dd>'
+      + (r.trigger ? '<dt>触发条件</dt><dd>' + plibEn(r.trigger) + '</dd>' : '')
+      + (r.formula ? '<dt>判定公式</dt><dd>' + plibEn(r.formula) + '</dd>' : '')
+      + (r.action  ? '<dt>处理动作</dt><dd>' + plibEn(r.action) + '</dd>' : '')
+      + (p.name    ? '<dt>参数键</dt><dd>' + plibEn(p.name) + '</dd>' : '')
+      + '</dl>';
+    var detail = plibSec('什么时候用', whenCn ? '<div class="plib-note" style="color:var(--ink)">' + plibEsc(whenCn) + '</div>' : '')
+      + (formulaCn ? plibSec('怎么量', '<div class="plib-note" style="color:var(--ink)">' + plibEsc(formulaCn) + '</div>') : '')
+      + plibSec('怎么解决', '<div style="font-size:13px;line-height:1.7">' + plibEsc(howTo) + '</div>')
+      + plibSec('涉及参数', paramHtml)
+      + (verify ? plibSec('怎么验证', '<dl class="plib-kv">' + verify + '</dl>') : '')
+      + plibFold('规则原文（程序匹配用，一般不用看）', raw);
+    /* 元信息胶囊：等级类字段必须「拿到中文才拼」，否则会渲染出「自主度 」这种尾随空白的胶囊 */
+    var lvCn = r.action_level ? plibLv(r.action_level) : '';
+    var evCn = r.evidence_level ? plibEv(r.evidence_level) : '';
+    return plibCard({
+      tone: plibTone(r.risk),
+      title: plibEsc(CN[r.id] || r.id),
+      chips: r.risk ? plibChip(plibRisk(r.risk), r.risk === 'high' ? '#e5484d' : '#f59e0b') : '',
+      sub: '<b>怎么解决：</b>' + plibEsc(plibBriefSolve(howTo)),
+      meta: plibMeta([
+          '适用 ' + plibEsc(FC[r.feature] || r.feature || '—'),
+          lvCn ? '自主度 ' + plibEsc(r.action_level) + ' · ' + plibEsc(lvCn) : '',
+          evCn ? '依据 ' + plibEsc(r.evidence_level) + ' · ' + plibEsc(evCn) : ''
+        ]),
+      detail: detail
+    });
   }).join('');
   return h;
 }
@@ -2895,7 +3846,14 @@ function plibDefects(){
   var R = (D && D.rules) || null;
   var keys = R ? Object.keys(R) : [];
   if(!keys.length) return '<div class="fempty"><div class="big-ic">🔬</div><b>未加载到实测诊断规则</b>请确认底部脚本 bambu-defect-rules.js 已加载。</div>';
-  var h = '<div class="fbar"><span class="flabel">共 ' + keys.length + ' 条 · 均为 E1 候选（切片待验证，未实际切片前不得声称存在 G-code 特征）</span></div>';
+  var nHigh = keys.filter(function(k){ return (R[k] || {}).risk === 'high'; }).length;
+  var nPending = keys.filter(function(k){ var r = R[k] || {}; return r.validation_status === 'candidate' || r.slice_validation_status === 'pending'; }).length;
+  var h = plibStatStrip([
+    { n: keys.length, label: '条实测案例' },
+    { n: nHigh, label: '条高风险', tone: nHigh ? 'hi' : 'ok' },
+    { n: nPending, label: '条待切片验证', tone: nPending ? 'warn' : 'ok' }
+  ]);
+  h += '<div class="plib-note">均为 E1 候选（切片待验证，未实际切片前不得声称存在 G-code 特征）；点卡片弹窗查看条件与处理建议。</div>';
   h += keys.map(function(k){
     var r = R[k] || {};
     /* 嵌套条件对象（geometry_condition / slice_condition …）本来是 JSON.stringify 直接打印的英文键名，
@@ -2910,25 +3868,38 @@ function plibDefects(){
       }).join('');
     }
     var lis = function(arr){ return (arr || []).map(function(x){ return '<li>' + plibAnnotate(x) + '</li>'; }).join(''); };
-    var kv = sub(r.geometry_condition, '几何 · ') + sub(r.slice_condition, '切片 · ')
-      + sub(r.material_condition, '材料 · ') + sub(r.machine_condition, '机型 · ');
-    if(r.cause && r.cause.length) kv += '<dt>可能根因</dt><dd><ul style="margin:0;padding-left:18px;line-height:1.65">' + lis(r.cause) + '</ul></dd>';
-    if(r.recommendation && r.recommendation.length) kv += '<dt>处理建议</dt><dd><ul style="margin:0;padding-left:18px;line-height:1.65">' + lis(r.recommendation) + '</ul></dd>';
-    if(r.alternative && r.alternative.length) kv += '<dt>替代方案</dt><dd><ul style="margin:0;padding-left:18px;line-height:1.65">' + lis(r.alternative) + '</ul></dd>';
-    if(r.recommended_preset) kv += '<dt>推荐预设</dt><dd><span class="en inline">' + plibEsc(r.recommended_preset) + '</span></dd>';
-    if(r.validation_test && r.validation_test.length) kv += '<dt>验证件</dt><dd>' + plibEsc(r.validation_test.join('、')) + '</dd>';
-    return '<div class="plib-card">'
-      + '<div class="plib-head"><b>' + plibEsc(r.symptom || r.id || k) + '</b>'
-      + plibChip(plibRisk(r.risk), r.risk === 'high' ? '#e5484d' : '#f59e0b')
-      + plibChip('特征 ' + (PLIB_DEFECT_FEATURE_CN[r.feature] || r.feature || '—'))
-      + (r.evidence_level ? plibChip('证据 ' + r.evidence_level + ' · ' + plibEv(r.evidence_level)) : '')
-      + ((r.validation_status === 'candidate' || r.slice_validation_status === 'pending') ? plibChip('候选 · 切片待验证', '#f59e0b') : '')
-      + (r.support_strategy ? plibChip('支撑策略 ' + r.support_strategy) : '')
-      + (r.case ? plibChip(r.case) : '') + '</div>'
-      + '<div class="plib-note" style="margin-top:6px">规则 ID <span class="en inline">' + plibEsc(r.id || k) + '</span>'
-      + (r.confidence ? '　·　置信度 ' + plibEsc(r.confidence) : '') + '</div>'
-      + (kv ? '<dl class="plib-kv">' + kv + '</dl>' : '')
-      + '</div>';
+    /* 四组条件各自成段（原来混进同一条 dl，键名前缀还带「几何 · 」→ 一长条看不出结构） */
+    function condSec(title, obj){
+      var s = sub(obj, '');
+      return s ? '<div style="margin-bottom:8px"><div class="plib-note" style="font-weight:700">' + plibEsc(title) + '</div>'
+        + '<dl class="plib-kv" style="margin-top:2px">' + s + '</dl></div>' : '';
+    }
+    var condHtml = condSec('几何', r.geometry_condition) + condSec('切片', r.slice_condition)
+      + condSec('材料', r.material_condition) + condSec('机型', r.machine_condition);
+    var tail = '';
+    if(r.recommended_preset) tail += '<dt>推荐预设</dt><dd><span class="en inline">' + plibEsc(r.recommended_preset) + '</span></dd>';
+    if(r.validation_test && r.validation_test.length) tail += '<dt>验证件</dt><dd>' + plibEsc(r.validation_test.join('、')) + '</dd>';
+    var detail = plibSec('触发条件', condHtml)
+      + (r.cause && r.cause.length ? plibSec('可能根因', '<ul class="plib-list">' + lis(r.cause) + '</ul>') : '')
+      + (r.recommendation && r.recommendation.length ? plibSec('处理建议', '<ul class="plib-list">' + lis(r.recommendation) + '</ul>') : '')
+      + (r.alternative && r.alternative.length ? plibSec('替代方案', '<ul class="plib-list">' + lis(r.alternative) + '</ul>') : '')
+      + plibSec('预设与验证', tail ? '<dl class="plib-kv">' + tail + '</dl>' : '');
+    return plibCard({
+      tone: plibTone(r.risk),
+      title: plibEsc(r.symptom || r.id || k),
+      chips: plibChip(plibRisk(r.risk), r.risk === 'high' ? '#e5484d' : '#f59e0b'),
+      sub: plibAnnotate(plibBrief((r.recommendation || [])[0] || (r.cause || [])[0] || '')),
+      meta: plibMeta([
+          '特征 ' + plibEsc(PLIB_DEFECT_FEATURE_CN[r.feature] || r.feature || '—'),
+          r.evidence_level ? '证据 ' + plibEsc(r.evidence_level) + ' · ' + plibEsc(plibEv(r.evidence_level)) : '',
+          r.confidence ? '置信度 ' + plibEsc(r.confidence) : '',
+          (r.validation_status === 'candidate' || r.slice_validation_status === 'pending') ? '候选 · 切片待验证' : '',
+          r.support_strategy ? '支撑策略 ' + plibEsc(r.support_strategy) : '',
+          r.case ? plibEsc(r.case) : '',
+          plibEsc(r.id || k)
+        ]),
+      detail: detail
+    });
   }).join('');
   return h;
 }
@@ -2943,27 +3914,60 @@ function plibSlice(){
     return '<dt>' + plibEsc(PLIB_SLICE_FACT_CN[k] || k) + plibEn(k) + '</dt>'
       + '<dd>' + (v == null ? '<span style="color:var(--muted)">— 待切片填充</span>' : plibEsc(v)) + '</dd>';
   }).join('');
-  var baseKv = plibKv('机型', (m.model || '') + (m.nozzle_mm ? (' / ' + m.nozzle_mm + ' mm 喷嘴') : ''))
-    + plibKv('材料', mat.type || '') + plibKvFrom(p, PLIB_SLICE_PROCESS_CN);
+  /* 基线三块分组（机型 / 材料 / 切片设置）—— 一条长 dl 平铺看不出结构 */
+  var baseDetail = plibSec('机型', '<dl class="plib-kv">' + plibKv('机型', (m.model || '') + (m.nozzle_mm ? (' / ' + m.nozzle_mm + ' mm 喷嘴') : '')) + '</dl>')
+    + plibSec('材料', '<dl class="plib-kv">' + plibKv('材料', mat.type || '') + '</dl>')
+    + plibSec('切片设置', '<dl class="plib-kv">' + plibKvFrom(p, PLIB_SLICE_PROCESS_CN) + '</dl>');
   var st = c.slice_validation_status;
-  return '<div class="fbar"><span class="flabel">' + plibEsc(c.case_id || 'CASE_001') + ' · '
-      + (st === 'pending' ? '切片尚未验证（待跑 Bambu Studio 切片）' : plibEsc(PLIB_STATUS_CN[st] || st || '')) + '</span></div>'
-    + '<div class="plib-note">几何证据 ' + plibEsc(plibEv(c.geometry_evidence) || plibEn(c.geometry_evidence) || '—')
-      + '　·　切片证据 ' + (plibEv(c.slice_evidence) || plibEsc(c.slice_evidence || '—'))
-      + '　·　机型实测 ' + (plibEv(c.machine_empirical) || plibEsc(c.machine_empirical || '—')) + '</div>'
-    + '<div class="plib-note" style="margin-top:6px">按 V2.1 纪律：几何候选 ≠ 真实桥接/悬垂；未实际切片前，不得声称存在 G-code 特征。</div>'
-    + '<details open style="margin-top:12px"><summary style="cursor:pointer;font-weight:600;font-size:13px">基线（机型 / 材料 / 切片设置）</summary>'
-    +   '<dl class="plib-kv">' + baseKv + '</dl></details>'
-    + '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600;font-size:13px">Slice Fact 契约（' + Object.keys(sf).length + ' 个字段）</summary>'
-    +   '<div class="plib-note" style="margin-top:6px">V2.1 规定切片后必须提取的字段。当前全部待填充 —— 跑 Bambu Studio CLI 切片并解析切片数据后回填。</div>'
-    +   '<dl class="plib-kv">' + sfKv + '</dl></details>'
-    + '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600;font-size:13px">规则验证结果 <span class="en inline">rule_result</span></summary>'
-    +   '<dl class="plib-kv">' + plibKvFrom(plibStatusView(rr), PLIB_RULE_RESULT_CN) + '</dl></details>'
-    + '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600;font-size:13px">V2.1 证据阶梯（比 V2.0 更细，二者不可混比）</summary>'
-    +   '<dl class="plib-kv" style="grid-template-columns:56px minmax(0,1fr)">'
-    +     plibKv('E0', '理论 / 未验证') + plibKv('E1', '几何数学分析（本案例当前所处）') + plibKv('E2', '实际切片行为')
-    +     plibKv('E3', '官方文档 / 源码') + plibKv('E4', '标准化测试验证') + plibKv('E5', '当前 X2D + 0.4 mm + 当前 PETG 实测验证')
-    +   '</dl></details>';
+  var nTodo = Object.keys(sf).filter(function(k){ return sf[k] == null; }).length;
+  var nSf = Object.keys(sf).length;
+  var stText = st === 'pending' ? '切片尚未验证（待跑 Bambu Studio 切片）' : plibEsc(PLIB_STATUS_CN[st] || st || '—');
+  var h = plibStatStrip([
+    { n: st === 'pending' ? '待验证' : plibEsc(PLIB_STATUS_CN[st] || st || '—'), label: '切片验证状态', tone: st === 'pending' ? 'warn' : 'ok' },
+    { n: (nSf - nTodo) + ' / ' + nSf, label: 'Slice Fact 已回填' },
+    { n: 'E1', label: '当前证据等级' }
+  ]);
+  h += '<div class="plib-note">按 V2.1 纪律：几何候选 ≠ 真实桥接/悬垂；未实际切片前，不得声称存在 G-code 特征。</div>';
+  /* 卡①：案例基线 */
+  h += plibCard({
+    tone: st === 'pending' ? 'warn' : 'ok',
+    title: plibEsc(c.case_id || 'CASE_001'),
+    chips: plibChip(stText, st === 'pending' ? '#f59e0b' : '#30a46c'),
+    sub: '几何证据 ' + plibEsc(plibEv(c.geometry_evidence) || c.geometry_evidence || '—')
+      + '　·　切片证据 ' + plibEsc(plibEv(c.slice_evidence) || c.slice_evidence || '—')
+      + '　·　机型实测 ' + plibEsc(plibEv(c.machine_empirical) || c.machine_empirical || '—'),
+    meta: plibMeta([   /* 英文原值保留在胶囊里，便于与源文件对照检索 */
+        'geometry_evidence ' + plibEsc(c.geometry_evidence || '—'),
+        'slice_evidence ' + plibEsc(c.slice_evidence || '—'),
+        'machine_empirical ' + plibEsc(c.machine_empirical || '—')
+      ]),
+    detail: baseDetail
+  });
+  /* 卡②：Slice Fact 契约 */
+  h += plibCard({
+    title: 'Slice Fact 契约',
+    chips: plibChip(nSf + ' 个字段'),
+    sub: 'V2.1 规定切片后必须提取的字段。当前全部待填充 —— 跑 Bambu Studio CLI 切片并解析切片数据后回填。',
+    detail: '<dl class="plib-kv">' + sfKv + '</dl>'
+  });
+  /* 卡③：规则验证结果 */
+  h += plibCard({
+    title: '规则验证结果',
+    chips: plibEn('rule_result'),
+    sub: plibEsc(plibStatusView(rr).status ? ('当前状态 ' + plibStatusView(rr).status) : '见展开的状态字段'),
+    detail: '<dl class="plib-kv">' + plibKvFrom(plibStatusView(rr), PLIB_RULE_RESULT_CN) + '</dl>'
+  });
+  /* 卡④：证据阶梯 */
+  h += plibCard({
+    title: 'V2.1 证据阶梯',
+    chips: plibChip('E0 → E5'),
+    sub: '比 V2.0 更细，二者不可混比；本案例当前处于 E1（几何数学分析）。',
+    detail: '<dl class="plib-kv" style="grid-template-columns:56px minmax(0,1fr)">'
+      + plibKv('E0', '理论 / 未验证') + plibKv('E1', '几何数学分析（本案例当前所处）') + plibKv('E2', '实际切片行为')
+      + plibKv('E3', '官方文档 / 源码') + plibKv('E4', '标准化测试验证') + plibKv('E5', '当前 X2D + 0.4 mm + 当前 PETG 实测验证')
+      + '</dl>'
+  });
+  return h;
 }
 /* —— 页签 5：诊断入口（原 tools/3d-management.html 的 diag 页签，2026-10-06 折叠进后台） ——
    两块：① 按症状查规则（点症状 → 跳规则目录并按特征域筛选，症状清单直接取 FEATURE_CN，
@@ -2978,27 +3982,34 @@ function plibDiag(){
   var byFeat = {};
   R.forEach(function(r){ byFeat[r.feature] = (byFeat[r.feature] || 0) + 1; });
 
-  var h = '<div class="plib-card">'
+  var h = '<div class="plib-card group">'
     + '<div class="plib-head"><b>① 还没打，想预防 —— 按症状查规则</b></div>'
     + '<div class="plib-note" style="margin-top:6px">点下面的症状，会跳到「V2.0 规则目录」并按该特征域筛选。括号里是当前覆盖的规则条数，为 0 表示这个症状还没有规则。</div>'
-    + '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'
+    + '<div class="plib-chips">'
     + Object.keys(FC).map(function(f){
         var n = byFeat[f] || 0;
-        return '<button class="btn sm" ' + (n ? '' : 'style="opacity:.5" ')
+        return '<button ' + (n ? '' : 'class="zero" ') + (n ? '' : 'style="opacity:.5" ')
           + 'onclick="PLIB.feat=\'' + plibEsc(f) + '\';PLIB.tab=\'rules\';renderMain()">'
           + plibEsc(FC[f]) + '<span class="en inline" style="margin-left:4px">(' + n + ')</span></button>';
       }).join('')
     + '</div></div>';
 
   var keys = Object.keys(D);
-  h += '<div class="plib-card">'
+  h += '<div class="plib-card group">'
     + '<div class="plib-head"><b>② 已经翻车了 —— 真实案例</b>'
     + plibChip('共 ' + keys.length + ' 条 · E1 几何候选', '#f59e0b') + '</div>';
   if(!keys.length){
     h += '<div class="plib-note" style="margin-top:8px">未加载到案例（请确认底部脚本 bambu-defect-rules.js 已加载）。</div></div>';
     return h;
   }
-  h += '<div style="margin-top:10px">' + keys.map(function(k){
+  var nHigh = keys.filter(function(k){ return (D[k] || {}).risk === 'high'; }).length;
+  var nPre = keys.filter(function(k){ return !!(D[k] || {}).recommended_preset; }).length;
+  h += plibStatStrip([
+    { n: keys.length, label: '条真实案例' },
+    { n: nHigh, label: '条高风险', tone: nHigh ? 'hi' : 'ok' },
+    { n: nPre, label: '条已关联预设' }
+  ]);
+  h += '<div style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;align-items:start">' + keys.map(function(k){
     var r = D[k];
     var riskColor = r.risk === 'high' ? '#e5484d' : (r.risk === 'medium' ? '#f59e0b' : 'var(--muted)');
     var FCN = (typeof window !== 'undefined' && window.PLIB_DEFECT_FEATURE_CN) || {};
@@ -3020,29 +4031,38 @@ function plibDiag(){
       ? '<div style="margin-top:8px;font-size:12.5px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">'
         + '<span style="color:var(--muted)">推荐预设：</span><b>' + plibEsc(pre.name) + '</b>'
         + '<span class="en inline">' + plibEsc(pre.id) + '</span>'
-        + '<button class="btn sm" onclick="PLIB.tab=\'presets\';renderMain();var t=document.getElementById(\'plib-preset-' + plibEsc(pre.id) + '\');if(t){t.scrollIntoView({block:\'center\'});t.style.boxShadow=\'0 0 0 3px var(--accent-soft)\';}">看预设</button>'
+        /* 按钮在详情弹窗里：先关弹窗再跳「打印参数预设」页并高亮目标行。
+           ⚠ 2026-10-08：原写法跳工艺库 'presets' 页签，但该页签已撤（精选预设库并入 PSET），
+           预览数据源也从 PRESET_PATCHES 改为 PSET —— 继续跳会落到不存在的页签。
+           presetFindRow() 在预设页按 id 找行并高亮，与该页现有定位方式一致。 */
+        + '<button class="btn sm" onclick="plibCloseModal();state.tool=\'filament\';state.sub=\'presets\';syncHash();renderMain();setTimeout(function(){presetFindRow(\'' + plibEsc(pre.id) + '\');},80)">看预设</button>'
         + '</div>'
       : (r.recommended_preset
-          ? '<div class="plib-note" style="margin-top:8px">推荐预设 <span class="en inline">' + plibEsc(r.recommended_preset) + '</span> 不在精选预设库里（可能已被重命名或删除）。</div>'
+          ? '<div class="plib-note" style="margin-top:8px">推荐预设 <span class="en inline">' + plibEsc(r.recommended_preset) + '</span> 不在打印参数预设里（可能已被重命名或删除）。</div>'
           : '');
-    return '<div style="border-left:3px solid ' + riskColor + ';padding:8px 0 8px 12px;margin-bottom:14px">'
-      + '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px">'
-      + plibChip(plibRisk(r.risk), riskColor)
-      + (r.feature ? plibChip(FCN[r.feature] || r.feature) : '')
-      + plibChip(r.id)
-      + (r.evidence_level ? plibChip('证据 ' + r.evidence_level + ' · ' + plibEv(r.evidence_level)) : '')
-      + (r.auto_action ? plibChip('权限 ' + r.auto_action + ' · ' + plibLv(r.auto_action)) : '')
-      + (r.confidence ? plibChip('置信度 ' + (CONF_CN[r.confidence] || r.confidence)) : '')
-      + (r.slice_validation_status ? plibChip(SVS_CN[r.slice_validation_status] || r.slice_validation_status) : '')
-      + '</div>'
-      + '<div style="font-size:13px;line-height:1.65"><b>现象：</b>' + plibAnnotate(r.symptom || '') + '</div>'
-      + (r.cause ? '<div style="font-size:12.5px;margin-top:6px"><b>成因：</b>' + list(r.cause) + '</div>' : '')
-      + (r.recommendation ? '<div style="font-size:12.5px;margin-top:6px"><b>建议：</b>' + list(r.recommendation) + '</div>' : '')
-      + (vt.length ? '<div style="font-size:12.5px;margin-top:6px;color:var(--muted)"><b>验证件：</b>'
+    /* 详情：成因 / 建议 / 验证件 / 推荐预设 分块（原来挤成三段小字，层级不明） */
+    var lis2 = function(arr){ return (arr || []).map(function(x){ return '<li>' + plibAnnotate(String(x)) + '</li>'; }).join(''); };
+    var detail = (r.cause ? plibSec('成因', '<ul class="plib-list">' + lis2(r.cause) + '</ul>') : '')
+      + (r.recommendation ? plibSec('建议', '<ul class="plib-list">' + lis2(r.recommendation) + '</ul>') : '')
+      + (vt.length ? plibSec('验证件', '<div style="font-size:12.5px">'
           + vt.map(function(v){ return plibEsc(String(v).replace(/^Test /, '验证件 ')); }).join('、')
-          + '<span class="en inline" style="margin-left:6px">' + plibEsc(vt.join(' / ')) + '</span></div>' : '')
-      + presetBlock
-      + '</div>';
+          + '<span class="en inline" style="margin-left:6px">' + plibEsc(vt.join(' / ')) + '</span></div>') : '')
+      + (presetBlock ? plibSec('推荐预设', presetBlock) : '');
+    return plibCard({
+      tone: plibTone(r.risk),
+      title: plibEsc(r.symptom || r.id || k),
+      chips: plibChip(plibRisk(r.risk), riskColor),
+      sub: '<b>现象：</b>' + plibAnnotate(r.symptom || ''),
+      meta: plibMeta([
+          r.feature ? '特征 ' + plibEsc(FCN[r.feature] || r.feature) : '',
+          plibEsc(r.id),
+          r.evidence_level ? '证据 ' + plibEsc(r.evidence_level) + ' · ' + plibEsc(plibEv(r.evidence_level)) : '',
+          r.auto_action ? '权限 ' + plibEsc(r.auto_action) + ' · ' + plibEsc(plibLv(r.auto_action)) : '',
+          r.confidence ? '置信度 ' + plibEsc(CONF_CN[r.confidence] || r.confidence) : '',
+          r.slice_validation_status ? plibEsc(SVS_CN[r.slice_validation_status] || r.slice_validation_status) : ''
+        ]),
+      detail: detail
+    });
   }).join('') + '</div></div>';
   return h;
 }
@@ -3163,6 +4183,22 @@ function optLevelChip(level){
   var c = optLevelColor(level), t = level==='risk'?'风险':level==='warn'?'警告':'提示';
   return '<span class="tag-badge" style="color:'+c+';border-color:'+c+'">'+t+'</span>';
 }
+/* 输出文件名：<原文件名>-x2d-YYYYMMDD-HHmm.3mf
+   ⚠ 必须带时间戳（用户要求）：同一模型会反复回写多次，原名 + 固定 "-x2d" 会互相覆盖，
+   分不清哪个是原始模型、哪个是哪次调参后的结果。分钟精度足够区分「一轮调参」的多次输出。
+   文件名里的 : 等非法字符（Windows）已在 optSafeName 里剔除。 */
+function optOutName(){
+  var base = String(OPT.name || 'model').replace(/\.3mf$/i, '');
+  var d = new Date();
+  var p = function(n){ return (n < 10 ? '0' : '') + n; };
+  var stamp = '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate())
+    + '-' + p(d.getHours()) + p(d.getMinutes());
+  return optSafeName(base) + '-x2d-' + stamp + '.3mf';
+}
+/* 文件名安全化：剔除 Windows 文件名非法字符，保留中文（用户文件名常带中文） */
+function optSafeName(s){
+  return String(s || '').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 80) || 'model';
+}
 function optApply(){
   if(!(OPT.project && OPT.project.config)){ toast('仅 .3mf 支持回写参数'); return; }
   if(OPT.busy) return;
@@ -3174,7 +4210,7 @@ function optApply(){
   try{
     var res = BAMBU_3MF_IO.applyConfigChanges(OPT.project.config, changes);
     BAMBU_3MF_IO.writeProject(OPT.project, { config: res.config }).then(function(outBytes){
-      optDownload(outBytes, (OPT.name||'model').replace(/\.3mf$/i,'') + '-x2d.3mf');
+      optDownload(outBytes, optOutName());
       OPT.busy = false; renderMain();
       toast('已回写 ' + res.changedKeys.length + ' 项参数并下载');
     }).catch(function(err){ OPT.busy=false; renderMain(); toast('回写失败：' + ((err&&err.message)||err)); });
@@ -4699,6 +5735,22 @@ var AD = {
     return AD.probe().then(function(){ return AD.up ? AD.pullData() : false; }).then(function(){
       AD.apply('bambu_filaments', FDATA.filaments, function(v){ FDATA.filaments = v; });
       AD.apply('bambu_filament_presets', FILP, function(v){ FILP.length = 0; (v||[]).forEach(function(x){ FILP.push(filMigrate(x)); }); });
+      /* 种子补入：AD.apply 是「本地/服务端优先、内嵌种子兜底」，所以老用户本地已有
+         落盘数据时，新增的内置种子永远不会自动出现（2026-10-08 用户特调耗材丝并入时踩到）。
+         这里显式补齐：种子里有、用户库里没有的，补进去；用户已删的记入黑名单不再复活 ——
+         与 PSET 的 AD.mergeBuiltins 同一套语义，幂等。 */
+      (function seedMissingFilaments(){
+        var seeds = (window.BAMBU_FILAMENT_SCHEMA && BAMBU_FILAMENT_SCHEMA.calibratedRecords) || {};
+        var gone = AD.lsParse(AD.BUILTIN_DEL) || [];
+        var added = 0;
+        Object.keys(seeds).forEach(function(id){
+          if(gone.indexOf(id) !== -1) return;
+          if(FILP.some(function(f){ return f && f.id === id; })) return;
+          FILP.push(filMigrate(JSON.parse(JSON.stringify(seeds[id]))));
+          added++;
+        });
+        if(added) AD.save('bambu_filament_presets');
+      })();
       /* 耗材丝默认值纠错：服务端 bambu_filament_presets 是 v1 旧副本，落后于权威源
          bambu-filament-schema.js 的 builtin（PETG 最大体积速度误抄了 PLA 基底层的 12，
          官方 PETG Basic 终值是 15；另有密度 1.24→1.26、喷嘴温度 260→250、

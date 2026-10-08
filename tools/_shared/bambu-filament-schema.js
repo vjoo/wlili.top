@@ -1231,5 +1231,84 @@
       }
     },
     },
+    /* ---------- 用户特调耗材丝（基于官方 PETG 基线的校准变体）----------
+     *
+     * 为什么是「变体」而不是新物种：官方 fil-petg-basic 是完整基线（135 键 + 6 驱动变体），
+     * 用户的特调（如 filament_flow_ratio 0.95 → 1.045）就是在这套结构上改几个键。
+     * 所以这里只存**稀疏覆盖**（overrides），运行时展开成完整记录 ——
+     * 直接把 135 键复制三份会让本文件凭空多 43KB，且与官方基线脱钩、改官方值时不同步。
+     *
+     * 来源标记（2026-10-08 用户定调）：
+     *   user-export  = 用户从本机 Bambu Studio 导出的实测校准（E4，实测证据）
+     *   community-mw = 社区公开参数（E3，官方文档级；未实测）
+     *   reconstructed= 由真实打印瑕疵诊断反推（E4）
+     * 展开逻辑见下方 expandCalibrated()，加载后挂到 SCHEMA.calibrated。 */
+    calibrated: {
+      "fil-sunlu-petg-basic-flow-cal": {
+        name: "三绿 PETG Basic · 我的流量校准",
+        provenance: "user-export",
+        evidence_level: "E4",
+        overrides: { "filament_flow_ratio": "1.045" },
+        notes: "【来源】用户从本机 Bambu Studio 导出的流量校准档（三绿PETG Basic Flow Rate Calibrated · 源版本 2.8.0.6）。\n【含义】filament_flow_ratio 官方 0.95 → 本卷实测 1.045，表示挤出量比官方默认多约 4.5%，用于补偿该卷丝实际直径/挤出偏差。\n【范围】仅本卷丝、仅流量；温度/回抽/速度全部继承官方 Bambu PETG Basic @BBL X2D 0.4 nozzle。换卷或换料需重新校准，勿照搬。\n【区别】与下方「White Basic（flow 0.98）」是**不同一卷丝**（本条 Basic 卷 / 那条 White 卷），各自校准值都对，并存使用、不可互换。\n【合并说明】2026-10-08 由原「工艺库·精选预设库」并入，以官方基线 + 稀疏覆盖表示。"
+      },
+      "fil-sunlu-petg-white-basic": {
+        name: "三绿 PETG White Basic（社区校准值·未实测）",
+        provenance: "community-mw",
+        evidence_level: "E3",
+        overrides: {
+          "filament_flow_ratio": "0.98",
+          "nozzle_temperature": "270",
+          "filament_max_volumetric_speed": "22",
+          "filament_retraction_length": "0.4",
+          "filament_z_hop_types": "Spiral Lift",
+          "filament_wipe": "1"
+        },
+        notes: "⚠️ **本条不完整且未实测**（证据 E3 = 官方文档级，非本机验证）。来源：MakerWorld《Calibrated & Optimized Profile - SUNLU PETG White》，只拿到页面上公开的校准值，未取得该档 3MF 全量参数，其余项沿用官方三绿 PETG 基线。\n【公开值】喷嘴 270℃（明显偏高，作者为追求极致层/表面结合在 H2D + 0.4 硬化喷嘴实测所得）、流量比 0.98、最大体积速度 22 mm³/s、回抽 0.4mm + Spiral Z-hop + 擦拭。\n【无法录入】压力提前 Factor K = 0.028 —— 本工具耗材丝 schema 无该字段，需在 Bambu Studio 校准页手动录入。\n【易混淆】本卷是普通 PETG，上限仅 22 且需更高温度；与「Rapid Matte」（高速改性料，上限 24–35 但温度更低）**绝不可互换**。\n【与 Basic 卷的区别】flow 0.98 是 White 卷，与上方 Basic 卷的 1.045 是不同卷丝，各自正确。\n【合并说明】2026-10-08 由原「工艺库·精选预设库」并入。"
+      },
+      "fil-petg-overhang-bridge": {
+        name: "三绿 PETG · 悬垂桥接调优（冷却/桥接层）",
+        provenance: "reconstructed",
+        evidence_level: "E4",
+        overrides: {
+          "nozzle_temperature": "245",
+          "nozzle_temperature_initial_layer": "245",
+          "overhang_fan_speed": "100",
+          "additional_cooling_fan_speed": "100",
+          "filament_bridge_speed": "25"
+        },
+        notes: "源自「叠放零件盒」官方默认参数打印的瑕疵诊断（3MF 几何反查）：① 蜂窝孔斜壁的朝下孔顶棚（45–60° 下向面约 6300 mm²）悬垂下塌被喷头刮成疤痕带；② 前沿翻边水平底面是一整幅约 13000 mm² 的大跨桥，无支撑 → 桥面波浪 + 缺口。两处均属悬垂/桥接缺陷，与温度无关。\n【调整】其他层温度 250→245（熔体更稠更挺；首层保持 245 保附着）；悬垂风扇 50→100%、悬垂/桥接强制冷却→100%（仅在这些段拉满，不伤普通墙面层间结合）；桥接速度 50→25。\n【配套】工艺侧同条预设 preset_petg_overhang_bridge 已设 thick_bridges=1 + bridge_speed=25（工艺与耗材丝双域同设定，任一域为权威都生效）；若料盘已单设桥速，以料盘值为准。\n【注意】⚠ 全局风扇勿拉满（PETG 层间结合优先）；250→240 若仍下塌可再降，但勿低于 235。出现长直墙层裂/翘曲，把悬垂/桥接风扇降回 50–80%。>100mm 整幅大跨桥最稳仍是加支撑，本预设能显著改善但非绝对平整。\n【合并说明】2026-10-08 由原「工艺库·精选预设库」并入。"
+      }
+    },
   };
+  /* 稀疏覆盖 → 完整记录：以官方 PETG 基线深拷贝，逐键覆盖。
+     ⚠ 必须深拷贝：直接改 baseline 会污染官方内置记录（官方值应保持"出厂"状态）。
+     ⚠ 变体 v3–v5（远程驱动）与本机 X2D（直驱）无关，只展开 v0–v2；远程三档保持官方原值。 */
+  (function expandCalibrated() {
+    var S = window.BAMBU_FILAMENT_SCHEMA;
+    if (!S || !S.calibrated || !S.builtin || !S.builtin.petg) return;
+    var DIRECT = ["v0", "v1", "v2"];
+    S.calibratedRecords = {};
+    Object.keys(S.calibrated).forEach(function (id) {
+      var src = S.calibrated[id];
+      var rec = JSON.parse(JSON.stringify(S.builtin.petg));
+      rec.id = id;
+      rec.name = src.name;
+      rec.builtin = false;
+      rec.createdDate = "2026-10-08T00:00:00.000Z";
+      rec.provenance = src.provenance;
+      rec.evidence_level = src.evidence_level;
+      rec.notes = src.notes;
+      rec.overrides = src.overrides;   /* 留痕：哪些键是特调的，界面需能区分「继承」与「特调」 */
+      Object.keys(src.overrides).forEach(function (k) {
+        if (Object.prototype.hasOwnProperty.call(rec.values, k)) {
+          rec.values[k] = src.overrides[k];
+        } else {
+          DIRECT.forEach(function (v) {
+            if (rec.variants && rec.variants[v] && k in rec.variants[v]) rec.variants[v][k] = src.overrides[k];
+          });
+        }
+      });
+      S.calibratedRecords[id] = rec;
+    });
+  })();
 })();

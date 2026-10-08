@@ -21,11 +21,54 @@ function extractFn(name) {
   if (end < 0) throw new Error("函数 " + name + " 的结束花括号没找到");
   return html.slice(start + 1, end + 2);
 }
+/* 稳健版：按花括号配对取完整函数体（跳过字符串/模板串/行注释/块注释）。
+   用途：plibRules 这类大函数体里会含 "}\n" 形态的文本，不能用「下一个 \n}\n」猜边界。 */
+function extractFnBrace(name) {
+  const start = html.indexOf("\nfunction " + name + "(");
+  if (start < 0) throw new Error("admin.html 里找不到函数 " + name);
+  const bs = html.indexOf("{", start);
+  let depth = 0, i = bs, inStr = null, esc = false;
+  for (; i < html.length; i++) {
+    const c = html[i], n = html[i + 1];
+    if (esc) { esc = false; continue; }
+    if (c === "\\") { esc = true; continue; }
+    if (inStr) { if (c === inStr) inStr = null; continue; }
+    if (c === "/" && n === "/") { while (i < html.length && html[i] !== "\n") i++; continue; }
+    if (c === "/" && n === "*") { i = html.indexOf("*/", i + 2); if (i < 0) throw new Error(name + " 块注释未闭合"); i++; continue; }
+    if (c === '"' || c === "'" || c === "`") { inStr = c; continue; }
+    if (c === "{") depth++;
+    else if (c === "}") { depth--; if (depth === 0) { i++; break; } }
+  }
+  if (depth !== 0) throw new Error("函数 " + name + " 花括号未配平");
+  return html.slice(start + 1, i + 1);
+}
 function extractConst(decl) {
   const start = html.indexOf("\n" + decl);
   if (start < 0) throw new Error("找不到声明 " + decl);
-  const end = html.indexOf("\n", start + 1);
-  return html.slice(start + 1, end);
+  /* 单行声明按行尾截断即可；但若值是多行表达式（IIFE / 对象字面量），
+     必须按花括号配对找真正的结尾 —— 否则只取到 "const X = { a:1" 这种半截代码，
+     拼进 vm 会报 SyntaxError: Unexpected end of input（本轮踩过）。
+     判据：单行内若已配平（含分号）就用单行，否则继续吃下一行。 */
+  const lineEnd = html.indexOf("\n", start + 1);
+  const oneLine = html.slice(start + 1, lineEnd);
+  if (oneLine.trim().endsWith(";") && bracesBalanced(oneLine)) return oneLine;
+  const bs = html.indexOf("{", start + 1);
+  let depth = 0, i = bs, inStr = null, esc = false;
+  for (; i < html.length; i++) {
+    const c = html[i];
+    if (esc) { esc = false; continue; }
+    if (c === "\\") { esc = true; continue; }
+    if (inStr) { if (c === inStr) inStr = null; continue; }
+    if (c === '"' || c === "'" || c === "`") { inStr = c; continue; }
+    if (c === "{") depth++;
+    else if (c === "}") { depth--; if (depth === 0) { i++; break; } }
+  }
+  return html.slice(start + 1, i).trim();
+}
+function bracesBalanced(s) {
+  let d = 0;
+  for (const c of s) { if (c === "{") d++; else if (c === "}") d--; }
+  return d === 0;
 }
 // 抽取对象字面量常量（含嵌套花括号，需配对计数）
 function extractObjectConst(name) {
@@ -89,8 +132,13 @@ const CODE = [
   extractConst("const PLIB = "),
   extractObjectConst("PLIB_PHRASE_CN"),
   extractFn("plibEsc"), extractFn("plibChip"), extractFn("plibEn"),
-  extractFn("plibRisk"), extractFn("plibLv"), extractFn("plibEv"),
+  extractFn("plibRisk"), extractFn("plibLv"), extractFn("plibEv"), extractFn("plibEvJoin"),
   extractFn("plibParamCn"), extractFn("plibAnnotate"), extractFn("plibVal"),
+  // 卡片层级组件（2026-10-07 卡片焕新后 plibDiag 依赖）：统计条 / 摘要 / 元信息 / 折叠 / 分组 / 色条
+  extractFn("plibStatStrip"), extractFn("plibMeta"), extractFn("plibSec"),
+  extractFn("plibFold"), extractFn("plibBrief"), extractFn("plibTone"), extractFn("plibCard"),
+  // 规则页依赖（2026-10-08 规则页「只讲怎么解决」改造）：漏抽会 ReferenceError
+  extractFn("plibBriefSolve"), extractFn("plibRuleActionText"),
   extractFn("plibDiag"),
 ].join("\n") + "\nglobalThis.PLIB = PLIB;";
 
@@ -143,16 +191,19 @@ ok(out.indexOf("② 已经翻车了") >= 0, "含区块二标题");
 dKeys.forEach(k => {
   ok(out.indexOf(DEF[k].id) >= 0, "含案例 " + DEF[k].id);
 });
-// 关联预设：必须在精选预设库里找得到，并渲染「看预设」按钮
+// 关联预设：2026-08 起「精选预设库」页签已撤，数据并入 PSET（打印参数预设）。
+// 因此判据从"页签里有卡片"改为"数据源里有该预设 + 渲染出跳往预设页的按钮"。
 const PRESETS = sandbox.PRESET_PATCHES || [];
 const withPreset = dKeys.filter(k => DEF[k].recommended_preset);
 ok(withPreset.length > 0, withPreset.length + " 条案例关联了推荐预设");
 withPreset.forEach(k => {
   const pid = DEF[k].recommended_preset;
   const found = PRESETS.some(p => p.id === pid);
-  ok(found && out.indexOf("plib-preset-" + pid) >= 0,
-     "案例 " + k + " → 推荐预设 " + pid + (found ? " 存在且有跳转按钮" : " ⚠ 不在精选预设库"));
+  ok(found && out.indexOf("presetFindRow('" + pid + "')") >= 0,
+     "案例 " + k + " → 推荐预设 " + pid + (found ? " 存在且有跳往预设页的按钮" : " ⚠ 数据源里没有"));
 });
+ok(out.indexOf("PLIB.tab='presets'") < 0, "不再跳已撤除的 presets 页签（否则点了没反应）");
+ok(out.indexOf("plib-preset-") < 0, "不再引用已删除的 plib-preset-* 卡片 id");
 // 字段名必须与数据源一致 —— 第一版把 auto_action 误写成 permission，权限标签整块没渲染出来
 const plibDiagSrc = (function () {
   const start = html.indexOf("\nfunction plibDiag(");
@@ -193,25 +244,29 @@ const noAct = makeSandbox({
 ok(noAct.indexOf("权限 P" + first.auto_action.slice(1)) >= 0, "另一条案例的权限标签仍在");
 ok((noAct.match(/权限 P\d/g) || []).length === (out.match(/权限 P\d/g) || []).length - 1,
    "去掉一条 auto_action → 权限标签少一个（证敏：不是恒渲染）");
-// 证敏：虚构一个不存在的推荐预设 id，应落到"不在精选预设库"分支而不是静默消失
+// 证敏：虚构一个不存在的推荐预设 id，应落到"不在打印参数预设"分支而不是静默消失
 const fakeOut = (function () {
   const patched = JSON.parse(JSON.stringify(DEF));
   patched[Object.keys(patched)[0]].recommended_preset = "__NOT_EXIST__";
   const s2 = makeSandbox({ BAMBU_DEFECT_RULES: { rules: patched } });
   return s2.plibDiag();
 })();
-ok(fakeOut.indexOf("不在精选预设库里") >= 0, "推荐预设找不到时如实标注（证敏：不是恒走「看预设」分支）");
+ok(fakeOut.indexOf("不在打印参数预设里") >= 0,
+   "推荐预设找不到时如实标注（证敏：不是恒走「看预设」分支）");
 ok(fakeOut.indexOf("__NOT_EXIST__") >= 0, "并回显原始 id，便于排查");
 
 /* ============================================================
  *  四、规则目录的按特征筛选（诊断入口的落点）
  * ============================================================ */
 console.log("\n【四】规则目录筛选联动");
-const plibRulesSrc = (function () {
-  const start = html.indexOf("\nfunction plibRules(");
-  const end = html.indexOf("\n}\n", start);
-  return html.slice(start + 1, end + 2);
-})();
+// ⚠ 这里必须连 plibRuleActionText / plibBriefSolve 一起抽：plibRules 已依赖它们。
+//   且用花括号配对（extractFn 的「下一个 \n}\n」法在函数体内出现同形文本时会切错，
+//   本轮就因此报过 SyntaxError: Unexpected end of input）。
+const plibRulesSrc = [
+  extractFnBrace("plibRuleActionText"),
+  extractFnBrace("plibBriefSolve"),
+  extractFnBrace("plibRules"),
+].join("\n");
 vm.runInContext(plibRulesSrc, sandbox);
 
 sandbox.PLIB.feat = "";
@@ -239,9 +294,12 @@ const vpl = (function () {
 ok(/\[\'diag\',\'诊断入口\'\]/.test(vpl), "viewProcessLibrary 页签表含「诊断入口」");
 ok(/PLIB\.tab===\'diag\'/.test(vpl), "分发到 plibDiag()");
 ok(vpl.indexOf("plibDiag()") >= 0, "确实调用 plibDiag()");
-ok(/\[\'presets\',\'精选预设库\'\]/.test(vpl) && /\[\'rules\',\'V2\.0 规则目录\'\]/.test(vpl)
+ok(/\[\'rules\',\'V2\.0 规则目录\'\]/.test(vpl)
    && /\[\'defects\',\'实测诊断\'\]/.test(vpl) && /\[\'slice\',\'V2\.1 Slice 验证\'\]/.test(vpl),
-   "原 4 个页签未丢（预设库 / 规则目录 / 实测诊断 / Slice 验证）");
+   "其余页签未丢（规则目录 / 实测诊断 / Slice 验证 / 诊断入口 / 模型优化）");
+/* 2026-08 撤除「精选预设库」：数据并入 PSET/FILP，工艺库不再展示第二份 */
+ok(/\[\'presets\',\'精选预设库\'\]/.test(vpl) === false, "「精选预设库」页签已撤除（避免与打印参数预设重复）");
+ok(/saved !== 'presets'/.test(CODE), "默认页签兜住 localStorage 旧值 'presets'（否则老用户掉进空页）");
 
 console.log("\n" + (fail ? "❌ 失败 " + fail + " 项" : "✅ 全部通过"));
 process.exit(fail ? 1 : 0);
