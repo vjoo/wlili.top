@@ -18,6 +18,10 @@
  *   5. tunnel        光隧道    Light Tunnel       (WebGL 2.0)
  *   6. topography    地形线    Topography         (WebGL 2.0)
  *   7. silk          丝绸      Silk               (WebGL 1.0)
+ *   8. dotmatrix     半调点阵  Dotmatrix          (WebGL 2.0 · 双 pass)
+ *      —— 来自 amotion.app 首页 hero（非 react-bits）：噪声场 → 离屏 FBO → 半调网点。
+ *         需要透明画布 + FBO 双 pass，单 pass 壳不适用 → 自管 WebGL 实例，
+ *         仍返回引擎兼容的 { update(t), destroy() }，调度/可见性/销毁由引擎托管。
  * ===================================================================== */
 (function () {
   if (window.AnimatedBG) return;
@@ -1213,6 +1217,285 @@
     }
   };
 
+  /* =====================================================================
+   * 8. Dotmatrix — 半调点阵（WebGL 2.0 · 双 pass）
+   *    复刻 amotion.app 首页 hero 背景（非 react-bits）：
+   *    pass1 把 3D simplex 噪声（uv×frequency + t×speed → hue → HSV）渲染进离屏 FBO；
+   *    pass2 逐网格采样 FBO，按灰度决定圆点半径与三段调色板颜色。
+   *    与其他效果的两点差异：
+   *    ① 需要透明画布（点隙露出 CSS 背景色），不走 createGL 的不透明深色清屏；
+   *    ② 双 pass + FBO，makeWebGLInstance 单 pass 壳不适用 → 自管 WebGL2 实例，
+   *       仍返回 { update(t), destroy() } 引擎兼容实例（调度/可见性/销毁由引擎托管）。
+   *    ⚠ 噪声着色器必须 highp：permute 内乘法可达千万量级，fp16 溢出成 NaN。
+   * ===================================================================== */
+  var E_Dotmatrix = {
+    label: '点阵 Dotmatrix',
+    defaults: {
+      backgroundColor: '#f7f8fa',
+      color1: '#f1f2f4',
+      color2: '#dfe2e7',
+      color3: '#c8cdd4',
+      frequency: 1.5,
+      speed: 2,
+      cellSize: 10,
+      gamma: 4,
+      paletteBias: 1,
+      opacity: 1.0
+    },
+    create: function (container, params) {
+      var canvas = makeCanvas(container);
+      canvas.style.background = params.backgroundColor || '#f7f8fa';
+      var gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false });
+      var destroyCanvas = function () { if (canvas.parentNode === container) container.removeChild(canvas); };
+      if (!gl) {
+        /* WebGL2 不可用：静态斜向光带兜底，保持页面不空白 */
+        canvas.style.backgroundImage =
+          'linear-gradient(115deg, transparent 22%, rgba(255,255,255,0.9) 36%, transparent 52%),' +
+          'linear-gradient(115deg, transparent 55%, rgba(200,205,212,0.28) 70%, transparent 86%)';
+        return { update: function () {}, destroy: destroyCanvas };
+      }
+
+      function compile(type, src) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error('[animated-bg][dotmatrix] shader:', gl.getShaderInfoLog(s));
+          return null;
+        }
+        return s;
+      }
+      function link(vsSrc, fsSrc) {
+        var vs = compile(gl.VERTEX_SHADER, vsSrc);
+        var fs = compile(gl.FRAGMENT_SHADER, fsSrc);
+        if (!vs || !fs) return null;
+        var p = gl.createProgram();
+        gl.attachShader(p, vs);
+        gl.attachShader(p, fs);
+        gl.linkProgram(p);
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+          console.error('[animated-bg][dotmatrix] link:', gl.getProgramInfoLog(p));
+          return null;
+        }
+        return p;
+      }
+
+      var VS = [
+        '#version 300 es',
+        'in vec2 position;',
+        'out vec2 vUv;',
+        'void main() {',
+        '  vUv = position * 0.5 + 0.5;',
+        '  gl_Position = vec4(position, 0.0, 1.0);',
+        '}'
+      ].join('\n');
+
+      /* pass1：3D simplex 噪声 → HSV 色场（amotion 原版片元，highp） */
+      var NOISE_FRAG = [
+        '#version 300 es',
+        'precision highp float;',
+        'uniform float uFrequency;',
+        'uniform float uTime;',
+        'uniform vec2 uResolution;',
+        'in vec2 vUv;',
+        'out vec4 fragColor;',
+        'vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }',
+        'vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }',
+        'vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }',
+        'vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }',
+        'float snoise(vec3 v) {',
+        '  const vec2  C = vec2(1.0/6.0, 1.0/3.0);',
+        '  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);',
+        '  vec3 i  = floor(v + dot(v, C.yyy));',
+        '  vec3 x0 = v - i + dot(i, C.xxx);',
+        '  vec3 g = step(x0.yzx, x0.xyz);',
+        '  vec3 l = 1.0 - g;',
+        '  vec3 i1 = min(g.xyz, l.zxy);',
+        '  vec3 i2 = max(g.xyz, l.zxy);',
+        '  vec3 x1 = x0 - i1 + C.xxx;',
+        '  vec3 x2 = x0 - i2 + C.yyy;',
+        '  vec3 x3 = x0 - D.yyy;',
+        '  i = mod289(i);',
+        '  vec4 p = permute(permute(permute(',
+        '             i.z + vec4(0.0, i1.z, i2.z, 1.0))',
+        '           + i.y + vec4(0.0, i1.y, i2.y, 1.0))',
+        '           + i.x + vec4(0.0, i1.x, i2.x, 1.0));',
+        '  float n_ = 0.142857142857;',
+        '  vec3  ns = n_ * D.wyz - D.xzx;',
+        '  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);',
+        '  vec4 x_ = floor(j * ns.z);',
+        '  vec4 y_ = floor(j - 7.0 * x_);',
+        '  vec4 x = x_ * ns.x + ns.yyyy;',
+        '  vec4 y = y_ * ns.x + ns.yyyy;',
+        '  vec4 h = 1.0 - abs(x) - abs(y);',
+        '  vec4 b0 = vec4(x.xy, y.xy);',
+        '  vec4 b1 = vec4(x.zw, y.zw);',
+        '  vec4 s0 = floor(b0) * 2.0 + 1.0;',
+        '  vec4 s1 = floor(b1) * 2.0 + 1.0;',
+        '  vec4 sh = -step(h, vec4(0.0));',
+        '  vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;',
+        '  vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;',
+        '  vec3 p0 = vec3(a0.xy, h.x);',
+        '  vec3 p1 = vec3(a0.zw, h.y);',
+        '  vec3 p2 = vec3(a1.xy, h.z);',
+        '  vec3 p3 = vec3(a1.zw, h.w);',
+        '  vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));',
+        '  p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;',
+        '  vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);',
+        '  m = m * m;',
+        '  return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));',
+        '}',
+        'vec3 hsv2rgb(vec3 c) {',
+        '  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);',
+        '  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);',
+        '  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);',
+        '}',
+        'void main() {',
+        '  vec2 uv = vUv;',
+        '  float aspect = uResolution.x / max(uResolution.y, 1.0);',
+        '  uv = (uv - 0.5) * vec2(aspect, 1.0) + 0.5;',
+        '  float hue = abs(snoise(vec3(uv * uFrequency, uTime)));',
+        '  fragColor = vec4(hsv2rgb(vec3(hue, 1.0, 1.0)), 1.0);',
+        '}'
+      ].join('\n');
+
+      /* pass2：半调网点（amotion 原版片元，预乘 alpha 输出配 ONE/ONE_MINUS_SRC_ALPHA） */
+      var DOTS_FRAG = [
+        '#version 300 es',
+        'precision highp float;',
+        'uniform vec2 uResolution;',
+        'uniform sampler2D uTexture;',
+        'uniform vec3 uColor1;',
+        'uniform vec3 uColor2;',
+        'uniform vec3 uColor3;',
+        'uniform float uCellSize;',
+        'uniform float uGamma;',
+        'uniform float uPaletteBias;',
+        'uniform float uOpacity;',
+        'in vec2 vUv;',
+        'out vec4 fragColor;',
+        'void main() {',
+        '  vec2 pix = gl_FragCoord.xy;',
+        '  float cell = max(uCellSize, 1.0);',
+        '  vec2 cellCenter = (floor(pix / cell) + 0.5) * cell;',
+        '  vec3 col = texture(uTexture, cellCenter / uResolution.xy).rgb;',
+        '  float gray = 0.3 * col.r + 0.59 * col.g + 0.11 * col.b;',
+        '  gray = pow(clamp(gray, 0.0001, 1.0), uGamma);',
+        '  vec2 cellUV = fract(pix / cell) - 0.5;',
+        '  float dist = length(cellUV);',
+        '  float radius = clamp(gray + uPaletteBias, 0.0, 1.0) * 0.5;',
+        '  float aa = fwidth(dist) + 1e-4;',
+        '  float mark = 1.0 - smoothstep(radius - aa, radius + aa, dist);',
+        '  float g2 = clamp(gray + uPaletteBias, 0.0, 1.0);',
+        '  float scaled = g2 * 2.0;',           /* 3 色 → 2 段插值 */
+        '  float seg = min(floor(scaled), 1.0);',
+        '  float f = scaled - seg;',
+        '  vec3 dotCol = seg < 0.5 ? mix(uColor1, uColor2, f) : mix(uColor2, uColor3, f);',
+        '  float a = mark * uOpacity;',
+        '  fragColor = vec4(dotCol * a, a);',
+        '}'
+      ].join('\n');
+
+      var noiseProg = link(VS, NOISE_FRAG);
+      var dotsProg = link(VS, DOTS_FRAG);
+      if (!noiseProg || !dotsProg) {
+        return { update: function () {}, destroy: destroyCanvas };
+      }
+
+      /* 全屏三角形（两个 program 共用一个 VAO） */
+      var vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      var buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      [noiseProg, dotsProg].forEach(function (p) {
+        var loc = gl.getAttribLocation(p, 'position');
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      });
+      gl.bindVertexArray(null);
+
+      /* 参数换算（与 amotion 组件内部 ie/ae/oe/se/ce 一致；cellSize×dpr 保持 CSS 视觉密度稳定） */
+      function lerp(v, a, b, c, d) { return a === b ? d : c + (v - a) / (b - a) * (d - c); }
+      var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      gl.useProgram(dotsProg);
+      gl.uniform1i(gl.getUniformLocation(dotsProg, 'uTexture'), 0);
+      gl.uniform3fv(gl.getUniformLocation(dotsProg, 'uColor1'), new Float32Array(hexToRGB(params.color1)));
+      gl.uniform3fv(gl.getUniformLocation(dotsProg, 'uColor2'), new Float32Array(hexToRGB(params.color2)));
+      gl.uniform3fv(gl.getUniformLocation(dotsProg, 'uColor3'), new Float32Array(hexToRGB(params.color3)));
+      gl.uniform1f(gl.getUniformLocation(dotsProg, 'uCellSize'), lerp(params.cellSize, 1, 100, 6, 60) * dpr);
+      gl.uniform1f(gl.getUniformLocation(dotsProg, 'uGamma'), lerp(params.gamma, 1, 20, 0.5, 8));
+      gl.uniform1f(gl.getUniformLocation(dotsProg, 'uPaletteBias'), params.paletteBias * 0.05);
+      gl.uniform1f(gl.getUniformLocation(dotsProg, 'uOpacity'), params.opacity == null ? 1 : params.opacity);
+      gl.useProgram(noiseProg);
+      gl.uniform1f(gl.getUniformLocation(noiseProg, 'uFrequency'), lerp(params.frequency, 1, 10, 0.3, 6));
+      var nTimeLoc = gl.getUniformLocation(noiseProg, 'uTime');
+      var nResLoc = gl.getUniformLocation(noiseProg, 'uResolution');
+      var dResLoc = gl.getUniformLocation(dotsProg, 'uResolution');
+
+      /* 离屏 FBO（噪声图） */
+      var noiseTex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      var fbo = gl.createFramebuffer();
+
+      var inst = { destroyed: false, _visible: true, _inView: true, _lastW: 0, _lastH: 0, _lastFrame: -1e9 };
+      inst.update = function (t) {
+        if (inst.destroyed) return;
+        var now = performance.now();
+        if (now - inst._lastFrame < 33.3333) return;   /* 30fps 节流（amotion 同款） */
+        inst._lastFrame = now;
+        /* 尺寸同步（容器隐藏/无布局时跳过，与引擎 sizeCanvas 同思路） */
+        var w = container.clientWidth || (container.parentNode ? container.parentNode.clientWidth : 0);
+        var h = container.clientHeight || (container.parentNode ? container.parentNode.clientHeight : 0);
+        if (!w || !h) return;
+        var W = Math.round(w * dpr), H = Math.round(h * dpr);
+        if (inst._lastW !== W || inst._lastH !== H) {
+          inst._lastW = W; inst._lastH = H;
+          canvas.width = W;
+          canvas.height = H;
+          gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+          gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, noiseTex, 0);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          gl.useProgram(noiseProg);
+          gl.uniform2f(nResLoc, W, H);
+          gl.useProgram(dotsProg);
+          gl.uniform2f(dResLoc, W, H);
+        }
+        /* pass1：噪声 → FBO */
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.viewport(0, 0, W, H);
+        gl.disable(gl.BLEND);
+        gl.useProgram(noiseProg);
+        gl.bindVertexArray(vao);
+        gl.uniform1f(nTimeLoc, t * (params.speed || 0) * 0.05);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        /* pass2：半调网点 → 屏幕 */
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, W, H);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.useProgram(dotsProg);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      };
+      inst.destroy = function () {
+        inst.destroyed = true;
+        try { var ext = gl.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext(); } catch (e) {}
+        destroyCanvas();
+      };
+      return inst;
+    }
+  };
+
   /* ---------------- 注册 + 启动 ---------------- */
   var effectRegistry = {};
   var instances = [];
@@ -1225,7 +1508,8 @@
     galaxy: E_Galaxy,
     tunnel: E_Tunnel,
     topography: E_Topo,
-    silk: E_Silk
+    silk: E_Silk,
+    dotmatrix: E_Dotmatrix
   };
   for (var name in _effects) {
     var e = _effects[name];

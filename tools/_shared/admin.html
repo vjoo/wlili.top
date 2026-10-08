@@ -2362,17 +2362,20 @@ function recentRecords(){
   (PROMPTS||[]).forEach(function(p){ rows.push({date:p.date||'', mod:'AI 提示词库', act:'提示词「'+(p.title||'').slice(0,16)+'」', st:p.published?'已发布':'草稿', ok:!!p.published}); });
   ((PRAW&&PRAW.records)||[]).forEach(function(r){ rows.push({date:r.date||'', mod:'打印管理器', act:'打印 '+(r.pages||0)+' 页 · '+(r.type==='order'?'订单 ¥'+(r.revenue||0).toFixed(2):'自用'), st:r.type==='order'?'订单':'自用', ok:r.type==='order'}); });
   ((SPDATA&&SPDATA.patterns)||[]).forEach(function(p){ if(p.updatedAt||p.createdAt) rows.push({date:fmtDate(p.updatedAt||p.createdAt), mod:'四方连图素材库', act:'素材「'+(p.name||'').slice(0,16)+'」', st:p.platform||'doubao', ok:true}); });
-  /* 备份 / 导入是本机操作，不落在任何业务数据里 —— 单独从 wli_dh_last 取（见 DH._mark）。
-     注：只保留**最近一次**的时间，不是历史列表；要完整审计需另建日志结构。 */
+  /* 备份 / 导入是本机操作，不落在任何业务数据里 —— 从 wli_dh_history 取全部历史（DH._mark 写入）。
+     数据总管页不再显示「上次备份」小字，记录统一在这里展示（上限 50 条，见 DH.HISTORY_MAX）。 */
   try{
-    var L = JSON.parse(localStorage.getItem('wli_dh_last') || '{}') || {};
-    var hhmm = function(iso){
-      var d = new Date(iso); if(isNaN(d.getTime())) return '';
-      var p = function(x){ return (x < 10 ? '0' : '') + x; };
-      return ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-    };
-    if(L.backupAt) rows.push({date:fmtDate(L.backupAt), mod:'数据总管', act:'全量备份' + (L.backupName ? '「' + L.backupName + '」' : '') + hhmm(L.backupAt), st:'导出', ok:true});
-    if(L.importAt) rows.push({date:fmtDate(L.importAt), mod:'数据总管', act:'导入数据' + (L.importName ? '（' + L.importName + '）' : '') + hhmm(L.importAt), st:'导入', ok:true});
+    var H = JSON.parse(localStorage.getItem('wli_dh_history') || '[]') || [];
+    if(!H.length){
+      /* 兼容旧数据：历史为空时回读旧「最近一次」结构，避免升级后日志突然空白 */
+      var L = JSON.parse(localStorage.getItem('wli_dh_last') || '{}') || {};
+      if(L.backupAt) H.push({ type:'backup', name: L.backupName || '', time: L.backupAt });
+      if(L.importAt) H.push({ type:'import', name: L.importName || '', time: L.importAt });
+    }
+    H.forEach(function(h){
+      if(h.type === 'backup') rows.push({date:fmtDate(h.time), mod:'数据总管', act:'备份导出' + (h.name ? '「' + h.name + '」' : ''), st:'导出', ok:true});
+      if(h.type === 'import') rows.push({date:fmtDate(h.time), mod:'数据总管', act:'导入数据' + (h.name ? '（' + h.name + '）' : ''), st:'导入', ok:true});
+    });
   }catch(e){}
   return rows.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
 }
@@ -2848,17 +2851,16 @@ function viewDataHub(){
       <td style="white-space:nowrap;text-align:right"><button class="mini-btn" onclick="DH.exportOne('${r.key}')">导出</button> <button class="mini-btn" onclick="DH.importOne('${r.key}')">导入</button> <button class="mini-btn" style="color:#e5484d" onclick="DH.clearOne('${r.key}')">清空</button></td>
     </tr>`).join('');
   /* 注：作品集 / 钟乐乐的站点内容不在此表 —— 它们有各自的后台，备份归各自后台管 */
-  setTimeout(function(){ if(window.DH){ DH.sizes(); DH._paintLast(); } }, 0);
+  setTimeout(function(){ if(window.DH){ DH.sizes(); } }, 0);
   /* ⚠ .greet 是 space-between：头部多个按钮必须包进一个 flex 组（参照「打印参数预设」页的教训） */
   const dhActs = '<div style="display:flex;gap:10px;align-items:center">' +
     '<button class="btn" title="选择此前导出的数据包，覆盖恢复各工具数据" onclick="DH.importOne(\'all\')">导入数据包</button>' +
-    '<button class="btn primary" title="导出综合后台全部数据（不含作品集 / 钟乐乐，它们归各自后台备份）" onclick="DH.exportAll()">⇩ 全量备份</button></div>';
+    '<button class="btn primary" title="先选择保存目录，再导出综合后台全部数据（不含作品集 / 钟乐乐，它们归各自后台备份）" onclick="DH.exportAll()">⇩ 全量备份</button></div>';
   return `
   ${greetHead('数据总管','',dhActs)}
   <div class="grid">
     <div class="card c12">
       <div class="card-head"><h3>数据文件一览</h3><span class="api-badge" style="margin-left:0">真实文件 · 经 /api 读写</span></div>
-      <div class="sub" style="margin:0;padding:0 18px 14px"><b id="dh-last">…</b><span style="color:var(--muted)"> · 图片类资产不在 JSON 备份内，需单独复制目录</span></div>
       <div class="table-wrap"><table class="dh-tbl"><thead><tr><th>归属工具</th><th>数据文件</th><th>端点</th><th style="text-align:right">大小</th><th style="text-align:right">操作</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
     </div>
@@ -2882,39 +2884,22 @@ var DH = {
     var blob = new Blob([JSON.stringify(obj, null, 2)], { type:'application/json' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 800);
-    DH._mark('backupAt', { backupName: name });   // 记备份时间（含单项导出）
+    DH._mark('backup', name);   // 记备份历史（单项导出也记，进操作日志）
     toast('已导出 ' + name);
   },
-  /* ---------- 备份 / 导入时间戳 ----------
-     只存本机 localStorage，不打包进备份文件本身（它是"元信息"，不是业务数据）。
-     用途：回答「我上次什么时候备份的 / 上次导入是什么时候」。 */
-  LAST_KEY: 'wli_dh_last',
-  _last: function(){
-    try{ return JSON.parse(localStorage.getItem(DH.LAST_KEY) || '{}') || {}; }catch(e){ return {}; }
-  },
-  _mark: function(field, extra){
+  /* ---------- 备份 / 导入历史（本机 localStorage，不进备份文件本身） ----------
+     数据总管页不再显示「上次备份/上次导入」小字，记录统一进「操作日志」页
+     （recentRecords 读这里的 wli_dh_history）。上限 50 条，新的在前。 */
+  HISTORY_KEY: 'wli_dh_history',
+  HISTORY_MAX: 50,
+  _mark: function(type, name){
     try{
-      var o = DH._last();
-      o[field] = new Date().toISOString();
-      if(extra) Object.keys(extra).forEach(function(k){ o[k] = extra[k]; });
-      localStorage.setItem(DH.LAST_KEY, JSON.stringify(o));
+      var list = [];
+      try{ list = JSON.parse(localStorage.getItem(DH.HISTORY_KEY) || '[]') || []; }catch(e){ list = []; }
+      list.unshift({ type: type, name: name || '', time: new Date().toISOString() });
+      if(list.length > DH.HISTORY_MAX) list.length = DH.HISTORY_MAX;
+      localStorage.setItem(DH.HISTORY_KEY, JSON.stringify(list));
     }catch(e){ /* localStorage 不可用时静默跳过，不影响导入导出本身 */ }
-    DH._paintLast();
-  },
-  _fmtWhen: function(iso){
-    if(!iso) return '—';
-    var d = new Date(iso);
-    if(isNaN(d.getTime())) return '—';
-    var p = function(n){ return (n < 10 ? '0' : '') + n; };
-    return (d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-  },
-  _lastText: function(){
-    var o = DH._last();
-    return '上次备份 ' + DH._fmtWhen(o.backupAt) + ' · 上次导入 ' + DH._fmtWhen(o.importAt);
-  },
-  _paintLast: function(){
-    var el = document.getElementById('dh-last');
-    if(el) el.textContent = DH._lastText();
   },
   sizes: function(){
     Object.keys(DH.SRC).forEach(function(k){
@@ -2949,12 +2934,42 @@ var DH = {
   },
   exportAll: function(){
     /* 只含综合后台自己的数据。作品集 / 钟乐乐有各自的后台，备份归各自后台管，
-       不混进这里（站点内容采集/回写逻辑保留在 _siteBundle/_restoreSite，供各自后台复用）。 */
-    Promise.all([DH._get('/api/data'), DH._get('/api/prompts'), DH._get('/api/seamless'), DH._get('/api/bookmarks')])
-      .then(function(rs){
-        DH._save('wlili-tools-backup-' + new Date().toISOString().slice(0,10) + '.json',
-          { backupDate: new Date().toISOString(), serverData: rs[0], prompts: rs[1], seamless: rs[2], bookmarks: rs[3] });
-      }).catch(function(){ toast('备份失败 · 服务不可达'); });
+       不混进这里（站点内容采集/回写逻辑保留在 _siteBundle/_restoreSite，供各自后台复用）。
+       流程：点击后**先选保存目录**（趁点击手势内打开系统目录选择器），选完再拉数据
+       直接写入该目录；用户取消选择则静默结束。老浏览器（无 File System Access API）
+       回退为普通下载（_save）。 */
+    var collect = function(){
+      return Promise.all([DH._get('/api/data'), DH._get('/api/prompts'), DH._get('/api/seamless'), DH._get('/api/bookmarks')])
+        .then(function(rs){
+          return {
+            name: 'wlili-tools-backup-' + new Date().toISOString().slice(0,10) + '.json',
+            data: { backupDate: new Date().toISOString(), serverData: rs[0], prompts: rs[1], seamless: rs[2], bookmarks: rs[3] }
+          };
+        });
+    };
+    if (!window.showDirectoryPicker) {
+      return collect().then(function(b){ DH._save(b.name, b.data); })
+        .catch(function(){ toast('备份失败 · 服务不可达'); });
+    }
+    window.showDirectoryPicker({ id: 'wli-dh-backup', mode: 'readwrite', startIn: 'documents' })
+      .then(function(dir){
+        return collect().then(function(b){
+          return dir.getFileHandle(b.name, { create: true }).then(function(fh){
+            return fh.createWritable().then(function(w){
+              return w.write(new Blob([JSON.stringify(b.data, null, 2)], { type: 'application/json' }))
+                .then(function(){ return w.close(); });
+            });
+          }).then(function(){ return { dir: dir, name: b.name }; });
+        });
+      })
+      .then(function(r){
+        DH._mark('backup', r.name);
+        toast('已备份到「' + r.dir.name + '」/ ' + r.name);
+      })
+      .catch(function(err){
+        if (err && err.name === 'AbortError') { toast('已取消备份'); return; }   // 用户取消选目录
+        toast('备份失败 · ' + (err && err.message ? err.message : '服务不可达'));
+      });
   },
   /* ⚠ 导入必须「双写」：AD.apply 是 **localStorage 优先**（本地非空就用本地，服务器只当兜底）。
      只 POST 到服务器的话，随后 AD.initData() 拉回来的新数据会被浏览器里的旧值顶掉，
@@ -3060,7 +3075,7 @@ var DH = {
         if(!st || !st.contents){ toast('不是有效的站点内容备份'); return; }
         if(!confirm('将用备份覆盖各页内容 / 导航 / 主题 / 底部联系 / 钟乐乐首页（' + Object.keys(st.contents).length + ' 页）。\n\n⚠ 图片不在备份里：服务器会清理「未被内容引用」的上传图片，备份时间点之后新增的图片可能被删。\n\n确定继续？')) return;
         DH._restoreSite(st).then(function(r){
-          DH._mark('importAt', { importName: 'site' });
+          DH._mark('import', 'site');
           toast('站点内容已导入' + (r.skipped.length ? '（跳过 ' + r.skipped.length + ' 个不存在的页面）' : ''));
           renderMain();
         }).catch(function(){ toast('导入失败 · 服务不可达或格式不符'); });
@@ -3080,11 +3095,11 @@ var DH = {
         if(!jobs.length){ toast('数据包内没有可导入的数据'); return; }
         Promise.all(jobs).then(function(){
           return Promise.all([AD.pullPrompts(), AD.pullBookmarks(), AD.initData()]);
-        }).then(function(){ DH._mark('importAt', { importName: '数据包' }); toast('数据包已导入'); renderMain(); }).catch(function(){ toast('导入失败 · 部分数据可能未写入'); });
+        }).then(function(){ DH._mark('import', '数据包'); toast('数据包已导入'); renderMain(); }).catch(function(){ toast('导入失败 · 部分数据可能未写入'); });
         return;
       }
       if(!confirm('导入将覆盖该工具现有数据，确定继续？')) return;
-      DH._importKey(key, d).then(function(){ DH._mark('importAt', { importName: key }); toast('导入成功'); renderMain(); })
+      DH._importKey(key, d).then(function(){ DH._mark('import', key); toast('导入成功'); renderMain(); })
         .catch(function(){ toast('导入失败 · 服务不可达或格式不符'); });
     };
     reader.readAsText(file);

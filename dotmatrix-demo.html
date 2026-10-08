@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dotmatrix 背景预览（amotion.app 首页 hero 复刻）</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+    background: #f7f8fa;
+    color: #12131a;
+    transition: background 0.4s, color 0.4s;
+    overflow: hidden;
+  }
+  body.dark { background: #000000; color: #eef1f7; }
+  #dotmatrix { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  #dotmatrix canvas { width: 100%; height: 100%; display: block; }
+  .ui {
+    position: relative; z-index: 2;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 24px;
+  }
+  h1 { font-size: 40px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 12px; }
+  p { opacity: 0.7; max-width: 560px; line-height: 1.6; }
+  .toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 3;
+    padding: 9px 16px; border-radius: 980px; border: 1px solid rgba(128,128,128,0.4);
+    background: rgba(128,128,128,0.12); color: inherit; cursor: pointer;
+    font-size: 13px; backdrop-filter: blur(8px);
+  }
+  .toggle:hover { background: rgba(128,128,128,0.22); }
+  .hint { position: fixed; bottom: 16px; left: 0; right: 0; text-align: center; z-index: 3;
+          font-size: 12px; opacity: 0.5; }
+</style>
+</head>
+<body>
+  <div id="dotmatrix" aria-hidden="true"></div>
+  <button class="toggle" id="toggle">切换 浅色 / 深色</button>
+  <div class="ui">
+    <h1>W. Studio</h1>
+    <p>amotion.app 首页 hero 的 Dotmatrix 双 pass 着色器（WebGL2 原样复刻）：噪声场 → 半调网点。参数与官网一致（frequency 1.5 / speed 2 / cellSize 10 / gamma 4 / paletteBias 1）。</p>
+  </div>
+  <div class="hint">两套配色均取自 amotion 官网：浅色 #f1f2f4/#dfe2e7/#c8cdd4 on #f7f8fa · 深色 #01050f/#041735/#082c68 on #000</div>
+
+<script>
+(function () {
+  var VERT = `#version 300 es
+in vec2 position;
+out vec2 vUv;
+void main() {
+  vUv = position * 0.5 + 0.5;
+  gl_Position = vec4(position, 0.0, 1.0);
+}`;
+
+  var NOISE_FRAG = `#version 300 es
+/* highp：permute 内乘法可达千万量级，fp16 会溢出 NaN */
+precision highp float;
+uniform float uFrequency;
+uniform float uTime;
+uniform float uSpeed;
+uniform float uValue;
+uniform vec2 uResolution;
+in vec2 vUv;
+out vec4 fragColor;
+vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
+vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+float snoise(vec3 v) {
+  const vec2  C = vec2(1.0/6.0, 1.0/3.0);
+  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+  vec3 i  = floor(v + dot(v, C.yyy));
+  vec3 x0 = v - i + dot(i, C.xxx);
+  vec3 g = step(x0.yzx, x0.xyz);
+  vec3 l = 1.0 - g;
+  vec3 i1 = min(g.xyz, l.zxy);
+  vec3 i2 = max(g.xyz, l.zxy);
+  vec3 x1 = x0 - i1 + C.xxx;
+  vec3 x2 = x0 - i2 + C.yyy;
+  vec3 x3 = x0 - D.yyy;
+  i = mod289(i);
+  vec4 p = permute(permute(permute(
+             i.z + vec4(0.0, i1.z, i2.z, 1.0))
+           + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+           + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+  float n_ = 0.142857142857;
+  vec3  ns = n_ * D.wyz - D.xzx;
+  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+  vec4 x_ = floor(j * ns.z);
+  vec4 y_ = floor(j - 7.0 * x_);
+  vec4 x = x_ * ns.x + ns.yyyy;
+  vec4 y = y_ * ns.x + ns.yyyy;
+  vec4 h = 1.0 - abs(x) - abs(y);
+  vec4 b0 = vec4(x.xy, y.xy);
+  vec4 b1 = vec4(x.zw, y.zw);
+  vec4 s0 = floor(b0) * 2.0 + 1.0;
+  vec4 s1 = floor(b1) * 2.0 + 1.0;
+  vec4 sh = -step(h, vec4(0.0));
+  vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+  vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+  vec3 p0 = vec3(a0.xy, h.x);
+  vec3 p1 = vec3(a0.zw, h.y);
+  vec3 p2 = vec3(a1.xy, h.z);
+  vec3 p3 = vec3(a1.zw, h.w);
+  vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+  p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+  vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+  m = m * m;
+  return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
+}
+vec3 hsv2rgb(vec3 c) {
+  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+void main() {
+  vec2 uv = vUv;
+  float aspect = uResolution.x / max(uResolution.y, 1.0);
+  uv = (uv - 0.5) * vec2(aspect, 1.0) + 0.5;
+  float hue = abs(snoise(vec3(uv * uFrequency, uTime * uSpeed)));
+  vec3 rainbowColor = hsv2rgb(vec3(hue, 1.0, uValue));
+  fragColor = vec4(rainbowColor, 1.0);
+}`;
+
+  var DOTS_FRAG = `#version 300 es
+precision highp float;
+uniform vec2 uResolution;
+uniform sampler2D uTexture;
+uniform int uPaletteCount;
+uniform vec3 uPalette[10];
+uniform float uPaletteA[10];
+uniform float uCellSize;
+uniform float uGamma;
+uniform float uPaletteBias;
+in vec2 vUv;
+out vec4 fragColor;
+void main() {
+  vec2 pix = gl_FragCoord.xy;
+  float cell = max(uCellSize, 1.0);
+  vec2 cellIdx = floor(pix / cell);
+  vec2 cellCenter = (cellIdx + 0.5) * cell;
+  vec3 col = texture(uTexture, cellCenter / uResolution.xy).rgb;
+  float gray = 0.3 * col.r + 0.59 * col.g + 0.11 * col.b;
+  gray = pow(clamp(gray, 0.0001, 1.0), uGamma);
+  vec2 cellUV = fract(pix / cell) - 0.5;
+  float dist = length(cellUV);
+  float radius = clamp(gray + uPaletteBias, 0.0, 1.0) * 0.5;
+  float aa = fwidth(dist) + 1e-4;
+  float mark = 1.0 - smoothstep(radius - aa, radius + aa, dist);
+  float g2 = clamp(gray + uPaletteBias, 0.0, 1.0);
+  int cnt = max(uPaletteCount, 1);
+  vec3 dotCol;
+  float dotOpacity;
+  if (cnt <= 1) { dotCol = uPalette[0]; dotOpacity = uPaletteA[0]; }
+  else {
+    float scaled = g2 * float(cnt - 1);
+    int i0 = int(floor(scaled));
+    i0 = clamp(i0, 0, cnt - 2);
+    float f = scaled - float(i0);
+    dotCol = mix(uPalette[i0], uPalette[i0 + 1], f);
+    dotOpacity = mix(uPaletteA[i0], uPaletteA[i0 + 1], f);
+  }
+  fragColor = vec4(dotCol, mark * dotOpacity);
+}`;
+
+  var container = document.getElementById('dotmatrix');
+  var canvas = document.createElement('canvas');
+  container.appendChild(canvas);
+  var gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: false, antialias: true });
+  if (!gl) {
+    container.style.background = '#f7f8fa';
+    container.style.backgroundImage =
+      'linear-gradient(115deg, transparent 22%, rgba(255,255,255,0.9) 36%, transparent 52%),' +
+      'linear-gradient(115deg, transparent 55%, rgba(200,205,212,0.28) 70%, transparent 86%)';
+    return;
+  }
+
+  function compile(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(s)); return null; } return s; }
+  function link(v, f) { var vs = compile(gl.VERTEX_SHADER, v), fs = compile(gl.FRAGMENT_SHADER, f); if (!vs || !fs) return null; var p = gl.createProgram(); gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(p)); return null; } return p; }
+  var noiseProg = link(VERT, NOISE_FRAG), dotsProg = link(VERT, DOTS_FRAG);
+
+  var vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  [noiseProg, dotsProg].forEach(function (p) { var loc = gl.getAttribLocation(p, 'position'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0); });
+  gl.bindVertexArray(null);
+
+  function lerp(v, a, b, c, d) { return a === b ? d : c + (v - a) / (b - a) * (d - c); }
+  var nFreq = gl.getUniformLocation(noiseProg, 'uFrequency'), nTime = gl.getUniformLocation(noiseProg, 'uTime'),
+      nSpeed = gl.getUniformLocation(noiseProg, 'uSpeed'), nValue = gl.getUniformLocation(noiseProg, 'uValue'),
+      nRes = gl.getUniformLocation(noiseProg, 'uResolution');
+  var dRes = gl.getUniformLocation(dotsProg, 'uResolution'), dTex = gl.getUniformLocation(dotsProg, 'uTexture'),
+      dCnt = gl.getUniformLocation(dotsProg, 'uPaletteCount'), dPal = gl.getUniformLocation(dotsProg, 'uPalette[0]'),
+      dPalA = gl.getUniformLocation(dotsProg, 'uPaletteA[0]'), dCell = gl.getUniformLocation(dotsProg, 'uCellSize'),
+      dGamma = gl.getUniformLocation(dotsProg, 'uGamma'), dBias = gl.getUniformLocation(dotsProg, 'uPaletteBias');
+
+  var palRgb = new Float32Array(30), palA = new Float32Array(10);
+  ['#f1f2f4', '#dfe2e7', '#c8cdd4'].forEach(function (hex, i) {
+    var h = hex.replace('#', '');
+    palRgb[i * 3]     = parseInt(h.substr(0, 2), 16) / 255;
+    palRgb[i * 3 + 1] = parseInt(h.substr(2, 2), 16) / 255;
+    palRgb[i * 3 + 2] = parseInt(h.substr(4, 2), 16) / 255;
+    palA[i] = 1;
+  });
+  gl.useProgram(dotsProg);
+  gl.uniform1i(dTex, 0);
+  gl.uniform1i(dCnt, 3);
+  gl.uniform3fv(dPal, palRgb);
+  gl.uniform1fv(dPalA, palA);
+  gl.uniform1f(dCell, lerp(10, 1, 100, 6, 60));
+  gl.uniform1f(dGamma, lerp(4, 1, 20, 0.5, 8));
+  gl.uniform1f(dBias, 1 * 0.05);
+  gl.useProgram(noiseProg);
+  gl.uniform1f(nFreq, lerp(1.5, 1, 10, 0.3, 6));
+  gl.uniform1f(nSpeed, 2 * 0.05);
+  gl.uniform1f(nValue, 1.0);
+
+  var noiseTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  var fbo = gl.createFramebuffer();
+
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = container.offsetWidth || window.innerWidth, h = container.offsetHeight || window.innerHeight;
+    canvas.width = Math.max(1, (w * dpr) | 0);
+    canvas.height = Math.max(1, (h * dpr) | 0);
+    gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, canvas.width, canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, noiseTex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.useProgram(noiseProg); gl.uniform2f(nRes, canvas.width, canvas.height);
+    gl.useProgram(dotsProg); gl.uniform2f(dRes, canvas.width, canvas.height);
+  }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(container);
+  resize();
+
+  var raf = 0, visible = true, last = 0;
+  function frame(now) {
+    raf = requestAnimationFrame(frame);
+    if (!visible || now - last < 33.3333) return;
+    last = now;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.disable(gl.BLEND);
+    gl.useProgram(noiseProg);
+    gl.bindVertexArray(vao);
+    gl.uniform1f(nTime, now * 0.001);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(dotsProg);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  raf = requestAnimationFrame(frame);
+  document.addEventListener('visibilitychange', function () { visible = !document.hidden; });
+
+  /* 浅色 / 深色切换（配色取自 amotion 官网） */
+  var THEMES = {
+    light: { bg: '#f7f8fa', colors: ['#f1f2f4', '#dfe2e7', '#c8cdd4'] },
+    dark:  { bg: '#000000', colors: ['#01050f', '#041735', '#082c68'] }
+  };
+  function setPalette(t) {
+    var rgb = new Float32Array(30), a = new Float32Array(10);
+    t.colors.forEach(function (hex, i) {
+      var h = hex.replace('#', '');
+      rgb[i*3] = parseInt(h.substr(0,2),16)/255;
+      rgb[i*3+1] = parseInt(h.substr(2,2),16)/255;
+      rgb[i*3+2] = parseInt(h.substr(4,2),16)/255;
+      a[i] = 1;
+    });
+    gl.useProgram(dotsProg);
+    gl.uniform1i(dCnt, t.colors.length);
+    gl.uniform3fv(dPal, rgb);
+    gl.uniform1fv(dPalA, a);
+  }
+  var dark = false;
+  document.getElementById('toggle').addEventListener('click', function () {
+    dark = !dark;
+    document.body.classList.toggle('dark', dark);
+    container.style.background = dark ? THEMES.dark.bg : THEMES.light.bg;
+    setPalette(dark ? THEMES.dark : THEMES.light);
+  });
+})();
+</script>
+</body>
+</html>

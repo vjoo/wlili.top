@@ -21,7 +21,8 @@
     topography: '地形线 Topography',
     tunnel: '光隧道 Light Tunnel',
     galaxy: '星系 Galaxy',
-    silk: '丝绸 Silk'
+    silk: '丝绸 Silk',
+    dotmatrix: '点阵 Dotmatrix'
   };
   const ANIM_EFFECT_KEYS = Object.keys(ANIM_EFFECT_OPTIONS);
   
@@ -158,6 +159,18 @@
       { key: 'scale',           label: '图案缩放',       type: 'range',  min: 0.1,  max: 10,   step: 0.1,  default: 1 },
       { key: 'noiseIntensity',  label: '噪点强度',       type: 'range',  min: 0,    max: 5,    step: 0.01, default: 1.5 },
       { key: 'rotation',        label: '旋转角度',      type: 'range',  min: 0,    max: 6.28, step: 0.01, default: 0, hint: '弧度，0-2π' }
+    ],
+    dotmatrix: [
+      { key: 'backgroundColor',label: '背景色',           type: 'color',  default: '#f7f8fa', hint: '点隙露出的底色；浅色底配浅灰点、深色底配深蓝点' },
+      { key: 'color1',         label: '点色·疏（最浅）', type: 'color',  default: '#f1f2f4', hint: '噪声最暗处（点最小）的颜色' },
+      { key: 'color2',         label: '点色·中',         type: 'color',  default: '#dfe2e7' },
+      { key: 'color3',         label: '点色·密（最深）', type: 'color',  default: '#c8cdd4', hint: '噪声最亮处（点最大）的颜色' },
+      { key: 'frequency',      label: '噪声频率',        type: 'range',  min: 0.2,  max: 5,    step: 0.1,  default: 1.5, hint: '越大波纹越碎、光带越多' },
+      { key: 'speed',          label: '流动速度',        type: 'range',  min: 0,    max: 10,   step: 0.1,  default: 2 },
+      { key: 'cellSize',       label: '网格间距',        type: 'range',  min: 4,    max: 40,   step: 1,    default: 10, hint: '点阵格子大小（px），随屏显密度自动缩放' },
+      { key: 'gamma',          label: '灰度曲线',        type: 'range',  min: 0.5,  max: 8,    step: 0.1,  default: 4, hint: '越大暗区点越小、疏密对比越强' },
+      { key: 'paletteBias',    label: '点大小偏置',      type: 'range',  min: -0.5, max: 2,    step: 0.05, default: 1, hint: '正值整体放大点的半径，负值缩小' },
+      { key: 'opacity',        label: '整体不透明度',    type: 'range',  min: 0,    max: 1,    step: 0.01, default: 1 }
     ]
   };
   // 兼容旧引用（部分代码仍读取 ANIM_PARAM_EXTRA / ANIM_COMMON_PARAMS）
