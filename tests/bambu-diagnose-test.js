@@ -51,6 +51,39 @@ const baseWarn = r2.findings.filter(f => f.id.indexOf("baseline:") === 0);
 ok(baseWarn.length === 0, "无 baseline 误报（多值串已正确解析，⑪ 自身参数完全匹配）");
 ok(!r2.findings.some(f => /252525252525/.test(f.message)), "无 252525252525 数值串污染");
 
+/* ============================================================
+ *  PSET 格式基线比对（2026-10-08 接断链）
+ *  背景：精选预设库并入 PSET 后，引擎的基线比对若只读旧格式 pr.params，
+ *  用户在「打印参数预设」里调的参数就进不了比对 —— 表现为"改了预设但诊断没反应"。
+ *  这里用行为断言（不是 grep）证明链路真的通了。
+ * ============================================================ */
+console.log("\n== 4) PSET 格式能进入基线比对（接断链回归）==");
+function psetCtx(temp) {
+  return {
+    presets: [{ id: "pset_petg", name: "三绿 PETG 调优", filamentType: "PETG", machine: "X2D",
+      bpValues: { nozzle_temperature: temp }, processParams: [{ name: "bridge_speed", value: "25" }] }],
+    filamentPresets: [{ id: "f1", name: "三绿PETG", values: { filament_flow_ratio: "1.045" } }],
+  };
+}
+const probe = { bpValues: { nozzle_temperature: "260" } };
+const rDiff = D.diagnosePreset(probe, { name: "探针", material: "PETG" }, psetCtx("245"));
+const bDiff = rDiff.findings.filter(f => String(f.id).indexOf("baseline:") === 0);
+ok(bDiff.length === 1, "基线 245 / 当前 260 → 报 1 条 baseline 偏离（实得 " + bDiff.length + "）");
+ok(bDiff.length > 0 && bDiff[0].message.indexOf("245") >= 0, "偏离信息里含基线值 245（可比对的具体数值）");
+
+// 证敏：把基线改成与当前一致 → 偏离必须消失。缺这一步，bDiff.length===1 可能是恒真
+const rSame = D.diagnosePreset(probe, { name: "探针", material: "PETG" }, psetCtx("260"));
+ok(rSame.findings.filter(f => String(f.id).indexOf("baseline:") === 0).length === 0,
+   "证敏：基线改成 260（与当前一致）→ 偏离消失（说明上条不是恒报）");
+
+// 材质过滤仍然生效：拿 PLA 的基线去比 PETG 当前值，不应产生 baseline 偏离
+const rMat = D.diagnosePreset(probe, { name: "探针", material: "PETG" }, {
+  presets: [{ id: "pla_only", name: "PLA 基线", filamentType: "PLA", bpValues: { nozzle_temperature: "220" } }],
+  filamentPresets: []
+});
+ok(rMat.findings.filter(f => String(f.id).indexOf("baseline:") === 0).length === 0,
+   "材质不匹配的预设不参与比对（同材质过滤仍在）");
+
 console.log("\n== 4) 空参数 ==");
 var r3 = D.diagnosePreset({}, {}, ctx);
 show("用例3", r3);

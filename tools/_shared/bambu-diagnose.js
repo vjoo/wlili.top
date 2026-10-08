@@ -243,23 +243,35 @@
     },
     {
       id: "baseline-deviation",
-      // 思路：只与「同材质 + 非占位 + 参数重叠最多」的精选预设做参照比对，
+      // 思路：只与「同材质 + 非占位 + 参数重叠最多」的预设做参照比对，
       // 避免与用途不同的预设（如 White Basic 270℃）无谓告警，噪声最小且最贴合用户意图。
+      //
+      // ⚠ 2026-10-08 修断链：原先 mergeBase 只读旧精选库格式（pr.params /
+      // pr.filament.overrides）。精选预设库已并入 PSET（2026-08），这里若不认 PSET
+      // 字段名，用户在「打印参数预设」里调的参数就完全进不了比对 —— 表现为
+      // "改了预设但诊断没反应"。现统一走 mergePresetParams，两种格式都认。
       fn: function (params, ctx, meta) {
         var out = [];
         var presets = (ctx && ctx.presets) || [];
         if (!presets.length) return out;
         var mat = (meta.material || "").toUpperCase();
         function mergeBase(pr) {
-          var base = {};
-          if (pr.params) Object.assign(base, pr.params);
-          if (pr.filament && pr.filament.overrides) Object.assign(base, pr.filament.overrides);
-          return base;
+          // mergePresetParams 已覆盖 bpValues / processParams / parameters /
+          // filament.overrides / 关联耗材丝 FILP.values，是唯一的摊平入口，不重复实现。
+          return mergePresetParams(pr, ctx);
+        }
+        // 材质判定要兼容两种格式：旧精选库用 applicability.filament 数组，
+        // PSET 用 filamentType 字符串（"PETG + PLA" / "PETG"）。
+        function matOf(pr) {
+          if (pr.applicability && pr.applicability.filament) return pr.applicability.filament;
+          if (pr.filamentType) return String(pr.filamentType).toUpperCase().split(/[+、,/]/);
+          return [];
         }
         // 候选：同材质 + 有可比对参数（排除 pending 占位）
         var cands = presets.filter(function (pr) {
-          if (!pr.applicability || !pr.applicability.filament) return false;
-          if (pr.applicability.filament.indexOf(mat) < 0) return false;
+          if (!pr || (pr.subType === "" && pr.name && pr.name.indexOf("待补录") >= 0)) return false;
+          if (pr.id && /pending/i.test(pr.id)) return false;   // 待补录占位：无参数可比
+          if (matOf(pr).indexOf(mat) < 0) return false;
           return Object.keys(mergeBase(pr)).length > 0;
         });
         if (!cands.length) return out;

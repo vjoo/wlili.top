@@ -3236,8 +3236,13 @@ PAPP.diagnose = function(id){
   setTimeout(function(){
     let r = null, err = null;
     try{
+      /* ⚠ 2026-10-08 接断链：原先传 window.PRESET_PATCHES（旧精选库，只读副本），
+         但它已在 2026-08 并入 PSET —— 用户在「打印参数预设」里调的参数因此进不了
+         引擎的基线比对，表现为"改了预设但诊断没反应"。现直接传 PSET 本身
+         （引擎的 mergePresetParams 已支持 bpValues/processParams 两种字段名）。
+         待补录占位条目无参数可比，引擎内会按 id 含 pending 过滤掉。 */
       const ctx = {
-        presets: (window.PRESET_PATCHES || []),
+        presets: (typeof PSET !== 'undefined' ? PSET : []),
         filamentPresets: (typeof FILP !== 'undefined' ? FILP : [])
       };
       r = BAMBU_DIAGNOSE.diagnosePreset(it, {
@@ -3977,7 +3982,10 @@ function plibDiag(){
   var R  = (typeof window !== 'undefined' && window.X2D_RULES_V2) || [];
   var DN = (typeof window !== 'undefined' && window.BAMBU_DEFECT_RULES) || null;
   var D  = (DN && DN.rules) || {};
-  var P  = (typeof window !== 'undefined' && window.PRESET_PATCHES) || [];
+  /* 推荐预设名从 PSET 取（2026-08 精选库并入 PSET 后，预设的唯一真相源是 PSET）。
+     另保留旧精选库兜底 —— 若将来还有只存在于那里的条目，名仍能显示。 */
+  var P  = (typeof PSET !== 'undefined' && PSET.length) ? PSET
+         : ((typeof window !== 'undefined' && window.PRESET_PATCHES) || []);
 
   var byFeat = {};
   R.forEach(function(r){ byFeat[r.feature] = (byFeat[r.feature] || 0) + 1; });
@@ -11754,10 +11762,11 @@ function upgradeUI(root) {
 <script src="bambu-preset-editor.js?v=20261004k"></script>
 <script src="bambu-preset-migrate.js?v=20261004j"></script>
 
-<!-- 3D 打印工艺库（预设「分析诊断」用）：精选预设基线 + V2.0 规则中文层 + 缺陷规则 + 诊断引擎
+<!-- 3D 打印工艺库（预设「分析诊断」用）：V2.0 规则中文层 + 缺陷规则 + 诊断引擎
      ⚠ PATCH_NO_AUTO_IMPORT 必须在加载 patch-data 之前置位：
-        本页加载它只是为了读取 PRESET_PATCHES 做基线比对，
-        绝不能把那 9 条精选预设自动导入到用户的 PSET 并存盘（会污染用户自己的预设库）。 -->
+        加载 patch-data 只为读 PRESET_PATCHES（作为 PSET 缺失时的兜底），
+        绝不能把那 9 条精选预设自动导入到用户的 PSET 并存盘（会污染用户自己的预设库）。
+        2026-10-08 起引擎基线比对已改读 PSET 本身，这里只是兼容兜底。 -->
 <script>window.PATCH_NO_AUTO_IMPORT = true;</script>
 <script src="bambu-preset-patch-data.js"></script>
 <script src="x2d-rules-v2.js"></script>
