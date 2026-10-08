@@ -260,6 +260,8 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, 
 .table-wrap table.fx.preset-tbl th:last-child,.table-wrap table.fx.preset-tbl td:last-child{width:162px;min-width:162px;max-width:162px;}
 .table-wrap table.fx.preset-tbl .act-row{display:flex;align-items:center;justify-content:flex-end;gap:4px;}
 .table-wrap table.fx.preset-tbl .act-row > *{flex:none;}
+/* 诊断列复用工艺库 .plib-meta 灰胶囊；重置其在卡片里的默认上边距，避免与名称列错位 */
+.table-wrap table.fx.preset-tbl td .plib-meta{margin:0;}
 /* ===== 3D 打印工艺库（只读知识视图）=====
    ⚠ 两个坑（2026-10-06 用户反馈「留白很多 / 字太贴 / 大片空白」）：
    1) 上面 .fx 有一条全局规则「最后一列定宽 120px」—— 那是给操作列用的；
@@ -3224,16 +3226,20 @@ function viewFilamentPresets(){
       <span class="flabel">共 ${data.length} 条</span>
     </div>
     ${data.length===0?`<div class="fempty"><div class="big-ic">🧩</div><b>暂无预设数据</b>点击右上角「＋」添加第一条预设。</div>`
-    :`<div class="table-wrap"><table class="fx preset-tbl"><thead><tr><th>名称</th><th>创建日期</th><th>备注</th><th>参数</th><th>耗材丝</th><th>操作</th></tr></thead>
+    :`<div class="table-wrap"><table class="fx preset-tbl"><thead><tr><th>名称</th><th>诊断</th><th>创建日期</th><th>备注</th><th>参数</th><th>耗材丝</th><th>操作</th></tr></thead>
     <tbody>${data.map(item=>{
       const processCount = item.bpValues ? (window.BAMBU_EDITOR ? BAMBU_EDITOR.modifiedCount(item.bpValues) : 0) : (item.processParams ? item.processParams.length : (item.parameters ? item.parameters.length : 0));
       const processDisplay = item.bpValues ? (processCount > 0 ? ('已改 ' + processCount) : '标准') : (processCount > 0 ? processCount : (item.subType ? '旧格式' : 0));
       const filRec = (item.filId && typeof FILP !== 'undefined') ? FILP.find(f=>f.id===item.filId) : null;
       const filDisplay = filRec ? filRec.name : '<span style="color:var(--muted)">未关联</span>';
       const diag = item.diagnosis || null;
-      const diagBadge = diag ? ` <span class="tag" style="color:${pappDiagColor(diag.overall)};border-color:${pappDiagColor(diag.overall)}" title="${pappEsc(diag.summary||'')}">${pappDiagLevel(diag.overall)}</span>` : '';
+      /* 诊断标签移到独立「诊断」列，复用工艺库 .plib-meta 灰胶囊样式（与打印知识库标签统一），不新写/不写死 */
+      const diagBadge = diag
+        ? `<div class="plib-meta"><span title="${pappEsc(diag.summary||'')}">${pappDiagLevel(diag.overall)}</span></div>`
+        : `<span style="color:var(--muted)">—</span>`;
       return `<tr data-pid="${item.id}">
-        <td><b>${item.name}</b>${diagBadge}</td>
+        <td><b>${item.name}</b></td>
+        <td>${diagBadge}</td>
         <td style="white-space:nowrap;color:var(--muted)">${presDate(item.createdDate)}</td>
         <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.notes||''}">${item.notes||'-'}</td>
         <td>${processDisplay}</td>
