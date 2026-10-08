@@ -28,6 +28,9 @@ const read = (p) => fs.readFileSync(p, "utf8");
 const admin = read(path.join(SHARED, "admin.html"));
 const engine = read(path.join(SHARED, "bambu-diagnose.js"));
 const schema = read(path.join(SHARED, "bambu-filament-schema.js"));
+// V2.1 回填模块（任务 42）：require 进单例，用来检查回填 API 是否齐备
+let v21 = null;
+try { v21 = require(path.join(SHARED, "x2d-slice-v2.1.js")); } catch (e) { v21 = null; }
 
 /* ---------- 扫全仓（含内联脚本）里对某个标识的引用 ---------- */
 function scanRepo(pattern, opts) {
@@ -250,6 +253,29 @@ const CONTRACTS = [
         pass: consumers.length === 0 || producers.length > 0,
         detail: "生产者 " + producers.length + " 处 / 消费者 " + consumers.length + " 处" +
                 (consumers.length ? "：" + consumers.slice(0, 3).map(h => h.file + ":" + h.line).join(", ") : ""),
+      };
+    },
+  },
+  {
+    id: "V21-BACKFILL-READY",
+    title: "V2.1 回填区已就绪（empirical_records + backfill API）",
+    why: "2026-10-08 任务 42：V2.1 从只读骨架升级为「主动回填」。回填入口（backfill / toPKNOWEntry）" +
+         "若被删，plibSlice 的「实测记录」卡会永远显示空、且 PKNOW 沉淀失去唯一入口 —— 表现为" +
+         "「代码里说支持回填、界面上却永远没记录」的静默断链。",
+    severity: "P1",
+    check() {
+      const okStruct = !!v21
+        && Array.isArray(v21.empirical_records)
+        && typeof v21.backfill === "function"
+        && typeof v21.toPKNOWEntry === "function";
+      const rendererReads = /empirical_records/.test(admin);
+      return {
+        pass: okStruct && rendererReads,
+        detail: (v21 ? ("empirical_records:" + Array.isArray(v21.empirical_records)
+          + " backfill:" + (typeof v21.backfill)
+          + " toPKNOWEntry:" + (typeof v21.toPKNOWEntry))
+          : "⚠ 模块未加载（require 失败）")
+          + "；渲染器引用 empirical_records:" + rendererReads,
       };
     },
   },

@@ -135,8 +135,33 @@ geometry_validation: E1
 slice_behavior: E2_pending
 official_source: E3
 machine_empirical: E5_pending
+backfill_ready: true          # 2026-10-08 任务 42：回填区已就绪
+empirical_records: 0          # 当前尚无有意义实测结论回填（不记作废/仅试验）
 next_required_artifact:
   - Bambu Studio sliced 3MF
   - slicing data
   - optional G-code
+  - 一条经 AI 与用户确认有意义的实测结论（触发回填）
 ```
+
+## 17. 回填机制（2026-10-08 任务 42 新增）
+V2.1 从「只读骨架」升级为「实测结论可沉淀」的闭环。回填**只由 AI 与用户对话确认一个有意义结论后触发**，不在网页里让用户手填表单；不记「作废 / 仅试验」这类无结论记录。
+
+### 17.1 数据落点
+- 结构单一源：`tools/_shared/x2d-slice-v2.1.js` → `window.X2D_SLICE_V21.empirical_records`（数组，当前为空）。
+- 展示面：`admin.html` 的 `plibSlice()`（页签「V2.1 Slice 验证」）卡⑤「实测记录（主动回填）」只读渲染该数组。
+
+### 17.2 回填 API（`window.X2D_SLICE_V21_BACKFILL`）
+- `backfill(record)`：校验必填字段（`test_id` / `evidence_level` / `status` / `conclusion` / `date`），自动补 `record_id`（ER_001…）与 `case_id`，推入 `empirical_records`。缺字段或取值非法直接抛错，拒绝脏数据。
+- `toPKNOWEntry(record)`：生成一份 PKNOW（知识库大脑）条目 Markdown 文本，由 AI 写入 `知识库大脑/知识/3D打印/工艺/V2.1实测.md`。
+- `validateRecord(record)`：纯校验，供调用方预先检查。
+
+### 17.3 一次回填的标准动作
+1. 用户与 AI 在对话中确认某个切片/实测结论（例如「Bridge Speed 25→20 在本机 PETG 实测有效」）。
+2. AI 调用 `backfill({ test_id, evidence_level, status, conclusion, ... })` 写入 `empirical_records`。
+3. AI 调用 `toPKNOWEntry(rec)` 取条目文本，追加到 `知识库大脑/知识/3D打印/工艺/V2.1实测.md`（新文件，按 17.2 结构沉淀）。
+4. 用户在后台「V2.1 Slice 验证」页签即可看到该结论；知识库同时多一条可检索经验。
+
+### 17.4 纪律（不可破）
+- 每次回填必须有结论；无意义的尝试（作废 / 仅试验 / 填错重来）不记。
+- 证据等级必须真实：未实际切片不得标 E2；未在当前机器实测不得标 E5。

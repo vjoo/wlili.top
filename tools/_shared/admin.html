@@ -3926,11 +3926,13 @@ function plibSlice(){
   var st = c.slice_validation_status;
   var nTodo = Object.keys(sf).filter(function(k){ return sf[k] == null; }).length;
   var nSf = Object.keys(sf).length;
+  var erCount = (S.empirical_records || []).length;
   var stText = st === 'pending' ? '切片尚未验证（待跑 Bambu Studio 切片）' : plibEsc(PLIB_STATUS_CN[st] || st || '—');
   var h = plibStatStrip([
     { n: st === 'pending' ? '待验证' : plibEsc(PLIB_STATUS_CN[st] || st || '—'), label: '切片验证状态', tone: st === 'pending' ? 'warn' : 'ok' },
     { n: (nSf - nTodo) + ' / ' + nSf, label: 'Slice Fact 已回填' },
-    { n: 'E1', label: '当前证据等级' }
+    { n: 'E1', label: '当前证据等级' },
+    { n: erCount, label: '实测记录（回填）', tone: erCount ? 'ok' : 'muted' }
   ]);
   h += '<div class="plib-note">按 V2.1 纪律：几何候选 ≠ 真实桥接/悬垂；未实际切片前，不得声称存在 G-code 特征。</div>';
   /* 卡①：案例基线 */
@@ -3971,6 +3973,27 @@ function plibSlice(){
       + plibKv('E0', '理论 / 未验证') + plibKv('E1', '几何数学分析（本案例当前所处）') + plibKv('E2', '实际切片行为')
       + plibKv('E3', '官方文档 / 源码') + plibKv('E4', '标准化测试验证') + plibKv('E5', '当前 X2D + 0.4 mm + 当前 PETG 实测验证')
       + '</dl>'
+  });
+  /* 卡⑤：实测记录（主动回填，2026-10-08 任务 42）
+     只读展示：数据来自 X2D_SLICE_V21.empirical_records，由 AI 与用户确认一个
+     「有意义」的切片/实测结论后，通过 backfill 机制写入；不记作废/仅试验。 */
+  var ER = (S.empirical_records || []);
+  var erBody = ER.length ? ER.map(function (rec) {
+    return '<dl class="plib-kv">'
+      + plibKv('记录', plibEsc((rec.record_id || '—') + ' · ' + (rec.test_id || '')))
+      + plibKv('证据', plibEsc((rec.evidence_level || '') + ' / ' + (rec.status || '')) + (rec.rule_id ? (' · 规则 ' + plibEsc(rec.rule_id)) : ''))
+      + plibKv('结论', plibEsc(rec.conclusion || ''))
+      + (rec.measurement ? plibKv('测量', plibEsc(rec.measurement)) : '')
+      + (rec.slicer_version ? plibKv('切片器', plibEsc(rec.slicer_version)) : '')
+      + plibKv('日期', plibEsc(rec.date || ''))
+      + '</dl>';
+  }).join('<hr class="plib-sep">') :
+    '<div class="plib-note">尚无回填记录。与 AI 对话确认一个「有意义」的切片 / 实测结论后，由 AI 通过回填机制写入（作废 / 仅试验不记）。</div>';
+  h += plibCard({
+    title: '实测记录（主动回填）',
+    chips: plibChip(ER.length + ' 条'),
+    sub: ER.length ? '以下为已验证并沉淀到知识库的实测结论。' : '等待首个有意义实测结论回填。',
+    detail: erBody
   });
   return h;
 }
