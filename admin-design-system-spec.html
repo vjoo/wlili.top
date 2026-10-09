@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio Tools · 综合后台设计系统</title>
+<script>
+  // 无闪烁主题预置（跟随系统 / localStorage）
+  (function(){
+    try{
+      var t = localStorage.getItem('admin-ds-theme');
+      if(!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    }catch(e){}
+  })();
+</script>
+<style>
+/* ===================== 设计令牌（实时抄自 tools/_shared/admin.html 的 :root，2026-10-09 核对） ===================== */
+:root{
+  --bg:#e9eaee; --panel:#f5f5f7; --card:#ffffff; --ink:#14171c; --muted:#71767f; --line:#e6e7eb;
+  --accent:#84cc16; --accent-deep:#4d7c0f; --accent-soft:#f1f8e3; --accent-hover:#65a30d;
+  --accent-light:var(--accent-soft);
+  --accent-grad:linear-gradient(135deg,#a3e635 0%,#65a30d 100%);
+  --cap-bg:#14171c; --cap-ink:#ffffff;
+  --success:#16a34a; --warning:#f59e0b; --info:#2563eb; --danger:#e5484d;
+  --radius-sm:8px; --radius-md:10px; --radius-lg:14px; --radius-xl:16px; --radius-pill:999px;
+  --r-lg:20px; --r-md:14px;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow-md:0 4px 10px rgba(16,24,40,.08);
+  --shadow-lg:0 10px 20px rgba(16,24,40,.12);
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px -10px rgba(16,24,40,.08);
+  --sp-0:0; --sp-1:2px; --sp-2:4px; --sp-3:6px; --sp-4:8px; --sp-5:10px;
+  --sp-6:12px; --sp-7:14px; --sp-8:16px; --sp-9:20px; --sp-10:24px; --sp-11:32px;
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-15:15px;
+  --fs-22:22px; --fs-27:27px; --fs-34:34px;
+  --dur-fast:.12s; --dur-base:.2s; --dur-slow:.3s; --dur-bar:.9s;
+  --ease-out:cubic-bezier(.22,.61,.36,1); --ease-inout:cubic-bezier(.32,.72,0,1);
+  --z-rail:30; --z-drawer:80; --z-toast:99; --z-tooltip:1000;
+  --sidebar-width:240px;
+  --font:"Inter","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#08090b; --panel:#0e1114; --card:#161a1f; --ink:#e8eaee; --muted:#8b93a1; --line:#232a33;
+  --accent-soft:#1c2410; --cap-bg:#e8eaee; --cap-ink:#14171c;
+  --success-bg:color-mix(in srgb,#16a34a 26%,var(--card));
+  --warning-bg:color-mix(in srgb,#f59e0b 26%,var(--card));
+  --info-bg:color-mix(in srgb,#2563eb 28%,var(--card));
+  --danger-bg:color-mix(in srgb,#e5484d 26%,var(--card));
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  --shadow-md:0 4px 10px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 20px rgba(0,0,0,.45);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px -10px rgba(0,0,0,.5);
+}
+
+/* ===================== 页面骨架 ===================== */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--panel);color:var(--ink);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+a{color:var(--accent-deep);}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 120px;}
+
+/* 顶栏 */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+  padding:14px 24px;background:color-mix(in srgb,var(--panel) 86%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.topbar .logo{width:32px;height:32px;border-radius:50%;background:var(--accent-grad);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none;}
+.topbar .tb-title{min-width:0;flex:1;}
+.topbar h1{font-size:15px;font-weight:600;letter-spacing:-.01em;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar .sub{color:var(--muted);font-size:12px;font-weight:400;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar .spacer{flex:1;}
+.tbtn{height:36px;padding:0 14px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+  transition:.15s;text-decoration:none;}
+.tbtn:hover{transform:translateY(-1px);border-color:var(--muted);}
+.tbtn svg{width:16px;height:16px;flex:none;}
+/* 移动端：顶栏按钮只留图标（文字隐藏），标题块收缩截断，避免溢出 */
+@media(max-width:680px){
+  .topbar{gap:8px;padding:12px 16px;}
+  .topbar .sub{display:none;}
+  .tbtn-txt,#themeTxt{display:none;}
+  .tbtn{width:36px;height:36px;padding:0;justify-content:center;}
+}
+
+/* Hero */
+.hero{position:relative;overflow:hidden;padding:64px 0 36px;}
+.hero .wm{position:absolute;right:-4px;top:0;font-size:200px;font-weight:800;line-height:.8;
+  color:var(--accent);opacity:.07;pointer-events:none;letter-spacing:-.04em;}
+.hero h2{font-size:34px;font-weight:800;letter-spacing:-.02em;position:relative;}
+.hero p{color:var(--muted);max-width:640px;margin-top:10px;position:relative;}
+.hero .tag{display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;padding:5px 12px;
+  border:1px solid var(--line);background:var(--card);border-radius:999px;font-size:12px;color:var(--muted);position:relative;}
+.hero .tag i{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+
+/* 布局：侧栏 + 内容 */
+.layout{display:grid;grid-template-columns:210px 1fr;gap:36px;align-items:start;margin-top:24px;}
+.toc{position:sticky;top:78px;display:flex;flex-direction:column;gap:2px;}
+.toc a{padding:8px 12px;border-radius:9px;color:var(--muted);text-decoration:none;font-size:13px;
+  border-left:2px solid transparent;transition:.15s;}
+.toc a:hover{color:var(--ink);background:var(--card);}
+.toc a.on{color:var(--accent-deep);border-left-color:var(--accent);background:var(--card);font-weight:600;}
+@media(max-width:820px){.layout{grid-template-columns:1fr;}.toc{display:none;}}
+
+/* 分区 */
+section{padding:30px 0 8px;scroll-margin-top:78px;}
+section > h3{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px;display:flex;align-items:center;gap:10px;}
+section > h3 .idx{font-size:12px;font-weight:700;color:#fff;background:var(--accent);width:24px;height:24px;
+  border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex:none;}
+section > .lead{color:var(--muted);font-size:13px;margin-bottom:18px;}
+.note{margin:10px 0 0;padding:10px 14px;border:1px dashed var(--line);border-radius:10px;font-size:12.5px;color:var(--muted);}
+.note b{color:var(--ink);}
+
+/* specimen 框：标签在上、虚线框在下（与首页规范同语言） */
+.spec{margin:14px 0;}
+.spec > .lab{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:7px;display:flex;align-items:center;gap:8px;}
+.spec > .lab code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--accent-deep);
+  background:var(--accent-soft);padding:1px 6px;border-radius:5px;text-transform:none;}
+.spec > .box{border:1px dashed var(--line);border-radius:14px;padding:20px;background:var(--card);}
+
+/* 色卡 */
+.grid{display:grid;gap:12px;}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g5{grid-template-columns:repeat(5,1fr);}
+@media(max-width:680px){.g3,.g4,.g5{grid-template-columns:repeat(2,1fr);}}
+.colorcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);}
+.colorcard .sw{height:64px;}
+.colorcard .meta{padding:10px 12px;}
+.colorcard .meta .nm{font-size:13px;font-weight:600;}
+.colorcard .meta .tk{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);word-break:break-all;}
+.colorcard .meta .vl{font-family:ui-monospace,monospace;font-size:11px;color:var(--accent-deep);}
+
+/* 字阶标本 */
+.type-row{display:flex;align-items:baseline;gap:18px;padding:10px 0;border-bottom:1px dashed var(--line);}
+.type-row .fs{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);width:96px;flex:none;}
+.type-row .ex{flex:1;}
+.type-row .sm{font-size:11px;color:var(--muted);margin-left:8px;}
+
+/* 圆角标本 */
+.rad{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.rad .sq{width:100%;height:56px;background:var(--accent);}
+.rad .nm{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace;}
+.rad .rz{font-size:11px;font-weight:600;}
+
+/* 阴影标本 */
+.sh{height:70px;border-radius:14px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;}
+
+/* 间距标本 */
+.sp-row{display:flex;align-items:center;gap:14px;padding:6px 0;}
+.sp-row .nm{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);width:120px;flex:none;}
+.sp-row .bar{height:14px;background:var(--accent);border-radius:4px;}
+
+/* 层级标本 */
+.z-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border:1px solid var(--line);
+  border-radius:10px;background:var(--panel);margin-bottom:8px;}
+.z-row .nm{font-family:ui-monospace,monospace;font-size:12px;}
+.z-row .vl{font-weight:700;color:var(--accent-deep);}
+
+/* 断点标本 */
+.bp{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);}
+.bp .w{font-weight:700;font-family:ui-monospace,monospace;}
+.bp .d{font-size:11.5px;color:var(--muted);}
+
+/* ===== 组件标本（抄自 admin 真实规则） ===== */
+.cap{display:inline-block;padding:8px 18px;border:none;background:transparent;border-radius:999px;font-size:13.5px;color:var(--muted);cursor:pointer;white-space:nowrap;}
+.cap.lvl1{background:var(--cap-bg);color:var(--cap-ink);font-weight:600;margin-right:3px;}
+.cap.on{background:var(--accent-grad);color:#fff;font-weight:600;}
+.pill{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
+.pill.on{background:var(--accent);border-color:transparent;color:#fff;}
+/* 分页钮：admin 里是原生 <button>，靠 UA 默认样式实现文字水平+垂直居中；
+   本页标本用 span/button 都需显式居中，否则 blockify 后文字左上对齐（min-width 会把偏左放大）。 */
+.pg-btn{display:inline-flex;align-items:center;justify-content:center;font-family:inherit;min-width:30px;height:30px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:8px;font-size:12.5px;cursor:pointer;padding:0 8px;}
+.pg-btn.on{background:var(--accent);border-color:transparent;color:#fff;font-weight:600;}
+.pg-btn:disabled{opacity:.4;cursor:default;}
+.btn-primary{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:600;cursor:pointer;}
+.btn-grad{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent-grad);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;}
+.rbtn-demo{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
+.rbtn-demo svg{width:16px;height:16px;}
+.r-item-demo{width:40px;height:40px;border-radius:50%;border:none;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;}
+.r-item-demo.on{background:var(--cap-bg);color:var(--cap-ink);}
+.opt-switch{position:relative;display:inline-block;width:34px;height:20px;}
+.opt-switch input{opacity:0;width:0;height:0;position:absolute;margin:0;}
+.opt-switch i{position:absolute;inset:0;border-radius:999px;background:var(--line);transition:.18s;cursor:pointer;}
+.opt-switch input:checked + i{background:var(--accent);}
+.opt-switch input:checked + i::after{transform:translateX(14px);}
+.opt-switch i::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.demo-input{width:240px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:9px 14px;font-size:13px;color:var(--ink);outline:none;}
+.demo-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent);}
+.comp-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:8px 0;}
+
+/* 动效 demo */
+.ease-demo{margin-top:10px;}
+.ease-label{font-size:12px;color:var(--muted);margin:14px 0 6px;display:flex;justify-content:space-between;}
+.track{height:10px;background:var(--line);border-radius:999px;position:relative;overflow:hidden;}
+.ball{position:absolute;top:-4px;left:0;width:18px;height:18px;border-radius:50%;background:var(--accent);}
+.play-btn{margin-top:10px;}
+
+/* 待收敛表 */
+.todo{border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+.todo .r{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);align-items:start;}
+.todo .r:last-child{border-bottom:none;}
+.todo .sev{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex:none;}
+.sev-m{background:var(--warning);}
+.sev-s{background:var(--info);}
+.sev-done{background:#84cc16;}
+.todo .tt{font-size:13.5px;}
+.todo .tt b{font-weight:700;}
+.todo .tt .fix{display:block;margin-top:4px;font-size:12px;color:var(--muted);font-family:ui-monospace,monospace;}
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:2px 6px;color:var(--accent-deep);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">W.</div>
+  <div class="tb-title">
+    <h1>Studio Tools · 综合后台设计系统</h1>
+    <div class="sub">实时核对自 tools/_shared/admin.html · 主题色 <span class="code">--accent:#84cc16</span> 青柠绿</div>
+  </div>
+  <div class="spacer"></div>
+  <a class="tbtn" href="/tools/_shared/admin.html" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/></svg>
+    <span class="tbtn-txt">返回后台</span>
+  </a>
+  <button class="tbtn" id="themeBtn" onclick="toggleTheme()">
+    <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <span id="themeTxt">深色</span>
+  </button>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="wm">Tokens</div>
+    <span class="tag"><i></i> 设计系统规范 · 2026-10-09 核对版</span>
+    <h2>综合后台 Design System</h2>
+    <p>本页是 <b>tools/_shared/admin.html</b> 设计令牌与组件的可读镜像，全部取值实时抄自源文件 <code style="font-family:ui-monospace">:root</code> 与组件规则（2026-10-09 现场核对）。源文件改动后，本页会漂移——它以源文件为唯一权威。</p>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" id="toc">
+      <a href="#overview">概述</a>
+      <a href="#color">01 品牌 / 中性色</a>
+      <a href="#semantic">02 语义状态色</a>
+      <a href="#dark">03 深色主题</a>
+      <a href="#type">04 字阶</a>
+      <a href="#radius">05 圆角</a>
+      <a href="#shadow">06 阴影</a>
+      <a href="#spacing">07 间距</a>
+      <a href="#motion">08 动效</a>
+      <a href="#z">09 层级</a>
+      <a href="#breakpoint">10 响应式断点</a>
+      <a href="#component">11 组件</a>
+      <a href="#consistency">12 一致性待收敛</a>
+    </nav>
+
+    <main>
+      <!-- 概述 -->
+      <section id="overview">
+        <h3><span class="idx">★</span>概述</h3>
+        <p class="lead">综合后台（Studio Tools）是 wlili.top 三条产品线之一，主题色为青柠绿。设计令牌集中在 <span class="code">admin.html</span> 顶部两个 <span class="code">:root</span> 块，含一套 2026-09-27 补全的标尺层（间距 / 字阶 / 圆角 / 阴影 / 动效 / 层级 / 语义色）。深浅主题靠 <span class="code">[data-theme="dark"]</span> 切换。</p>
+        <div class="grid g4">
+          <div class="colorcard"><div class="sw" style="background:var(--accent)"></div><div class="meta"><div class="nm">主色 Accent</div><div class="tk">--accent</div><div class="vl">#84cc16</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--panel)"></div><div class="meta"><div class="nm">面板 Panel</div><div class="tk">--panel</div><div class="vl">#f5f5f7</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--card)"></div><div class="meta"><div class="nm">卡片 Card</div><div class="tk">--card</div><div class="vl">#ffffff</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--ink)"></div><div class="meta"><div class="nm">文字 Ink</div><div class="tk">--ink</div><div class="vl">#14171c</div></div></div>
+        </div>
+        <p class="note"><b>注意：</b>本页与首页 <span class="code">design-system-spec.html</span> 是<b>两套独立</b>设计系统——首页（W. Studio）走 Apple 风浅灰 token，综合后台走青柠绿 token。二者不要混用。</p>
+      </section>
+
+      <!-- 01 颜色 -->
+      <section id="color">
+        <h3><span class="idx">01</span>品牌色 / 中性色</h3>
+        <p class="lead">品牌色全部围绕青柠绿，含渐变与深/浅派生；中性色为灰阶表面体系。</p>
+        <div class="spec"><div class="lab">品牌色 <code>Brand</code></div><div class="box"><div class="grid g4">
+          <div class="colorcard"><div class="sw" style="background:var(--accent)"></div><div class="meta"><div class="nm">Accent</div><div class="tk">--accent</div><div class="vl">#84cc16</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--accent-deep)"></div><div class="meta"><div class="nm">Accent Deep</div><div class="tk">--accent-deep</div><div class="vl">#4d7c0f</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--accent-hover)"></div><div class="meta"><div class="nm">Accent Hover</div><div class="tk">--accent-hover</div><div class="vl">#65a30d</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--accent-soft)"></div><div class="meta"><div class="nm">Accent Soft</div><div class="tk">--accent-soft</div><div class="vl">#f1f8e3</div></div></div>
+          <div class="colorcard" style="grid-column:span 4"><div class="sw" style="background:var(--accent-grad);height:40px"></div><div class="meta"><div class="nm">Accent Gradient（胶囊类选中 / 主按钮）</div><div class="tk">--accent-grad</div><div class="vl">linear-gradient(135deg,#a3e635,#65a30d)</div></div></div>
+        </div></div></div>
+        <div class="spec"><div class="lab">中性表面 <code>Neutrals</code></div><div class="box"><div class="grid g3">
+          <div class="colorcard"><div class="sw" style="background:var(--bg)"></div><div class="meta"><div class="nm">Bg</div><div class="tk">--bg</div><div class="vl">#e9eaee</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--panel)"></div><div class="meta"><div class="nm">Panel</div><div class="tk">--panel</div><div class="vl">#f5f5f7</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--card)"></div><div class="meta"><div class="nm">Card</div><div class="tk">--card</div><div class="vl">#ffffff</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--ink)"></div><div class="meta"><div class="nm">Ink</div><div class="tk">--ink</div><div class="vl">#14171c</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--muted)"></div><div class="meta"><div class="nm">Muted</div><div class="tk">--muted</div><div class="vl">#71767f</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--line)"></div><div class="meta"><div class="nm">Line</div><div class="tk">--line</div><div class="vl">#e6e7eb</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--cap-bg)"></div><div class="meta"><div class="nm">Cap Bg（深色反转面）</div><div class="tk">--cap-bg</div><div class="vl">#14171c</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--cap-ink)"></div><div class="meta"><div class="nm">Cap Ink</div><div class="tk">--cap-ink</div><div class="vl">#ffffff</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--hero-grad)"></div><div class="meta"><div class="nm">Hero Grad（=accent-grad）</div><div class="tk">--hero-grad</div><div class="vl">同 accent-grad</div></div></div>
+        </div></div></div>
+      </section>
+
+      <!-- 02 语义色 -->
+      <section id="semantic">
+        <h3><span class="idx">02</span>语义状态色</h3>
+        <p class="lead">状态反馈色：浅色底 = 14% 混卡面（<span class="code">color-mix</span>），深色主题提高到 26~28% 保对比；描边 = 30% 混透明。</p>
+        <div class="spec"><div class="lab">状态色 + 背景 + 描边 <code>Semantic</code></div><div class="box"><div class="grid g4">
+          <div class="colorcard"><div class="sw" style="background:var(--success)"></div><div class="meta"><div class="nm">Success</div><div class="tk">--success</div><div class="vl">#16a34a</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--warning)"></div><div class="meta"><div class="nm">Warning</div><div class="tk">--warning</div><div class="vl">#f59e0b</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--info)"></div><div class="meta"><div class="nm">Info</div><div class="tk">--info</div><div class="vl">#2563eb</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--danger)"></div><div class="meta"><div class="nm">Danger</div><div class="tk">--danger</div><div class="vl">#e5484d</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--success-bg)"></div><div class="meta"><div class="nm">Success Bg</div><div class="tk">--success-bg</div><div class="vl">mix 14%</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--warning-bg)"></div><div class="meta"><div class="nm">Warning Bg</div><div class="tk">--warning-bg</div><div class="vl">mix 14%</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--info-bg)"></div><div class="meta"><div class="nm">Info Bg</div><div class="tk">--info-bg</div><div class="vl">mix 14%</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--danger-bg)"></div><div class="meta"><div class="nm">Danger Bg</div><div class="tk">--danger-bg</div><div class="vl">mix 14%</div></div></div>
+        </div></div></div>
+        <p class="note">状态底色在 <span class="code">[data-theme="dark"]</span> 下混合比升至 26~28%（<span class="code">--success-bg 26% / --info-bg 28%</span>），因深底上 14% 不够可辨。</p>
+      </section>
+
+      <!-- 03 深色 -->
+      <section id="dark">
+        <h3><span class="idx">03</span>深色主题令牌</h3>
+        <p class="lead">切换顶栏「深色」即可预览。下列为 <span class="code">[data-theme="dark"]</span> 对中性面与部分语义的覆盖值（点上方按钮已在本页生效）。</p>
+        <div class="grid g4">
+          <div class="colorcard"><div class="sw" style="background:var(--bg)"></div><div class="meta"><div class="nm">Bg</div><div class="tk">--bg</div><div class="vl">#08090b</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--panel)"></div><div class="meta"><div class="nm">Panel</div><div class="tk">--panel</div><div class="vl">#0e1114</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--card)"></div><div class="meta"><div class="nm">Card</div><div class="tk">--card</div><div class="vl">#161a1f</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--ink)"></div><div class="meta"><div class="nm">Ink</div><div class="tk">--ink</div><div class="vl">#e8eaee</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--muted)"></div><div class="meta"><div class="nm">Muted</div><div class="tk">--muted</div><div class="vl">#8b93a1</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--line)"></div><div class="meta"><div class="nm">Line</div><div class="tk">--line</div><div class="vl">#232a33</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--cap-bg)"></div><div class="meta"><div class="nm">Cap Bg（反转）</div><div class="tk">--cap-bg</div><div class="vl">#e8eaee</div></div></div>
+          <div class="colorcard"><div class="sw" style="background:var(--cap-ink)"></div><div class="meta"><div class="nm">Cap Ink（反转）</div><div class="tk">--cap-ink</div><div class="vl">#14171c</div></div></div>
+        </div>
+      </section>
+
+      <!-- 04 字阶 -->
+      <section id="type">
+        <h3><span class="idx">04</span>字阶 Type Scale</h3>
+        <p class="lead">字体栈 <span class="code">Inter / PingFang SC / Microsoft YaHei</span>，正文 14px。字阶为<b>非连续</b>命名令牌（含明显跳档，见下注）。</p>
+        <div class="spec"><div class="lab">真实渲染 <code>--fs-*</code></div><div class="box">
+          <div class="type-row"><span class="fs">--fs-11</span><span class="ex" style="font-size:var(--fs-11)">授权草稿状态小字 Aa</span><span class="sm">11px</span></div>
+          <div class="type-row"><span class="fs">--fs-12</span><span class="ex" style="font-size:var(--fs-12)">次要说明文字 Aa</span><span class="sm">12px</span></div>
+          <div class="type-row"><span class="fs">--fs-13</span><span class="ex" style="font-size:var(--fs-13)">正文 / 胶囊标签 Aa</span><span class="sm">13px</span></div>
+          <div class="type-row"><span class="fs">--fs-14</span><span class="ex" style="font-size:var(--fs-14)">基础正文 Aa</span><span class="sm">14px</span></div>
+          <div class="type-row"><span class="fs">--fs-15</span><span class="ex" style="font-size:var(--fs-15)">卡片标题 Aa</span><span class="sm">15px</span></div>
+          <div class="type-row"><span class="fs">--fs-16</span><span class="ex" style="font-size:var(--fs-16)">中间档 Aa</span><span class="sm">16px</span></div>
+          <div class="type-row"><span class="fs">--fs-17</span><span class="ex" style="font-size:var(--fs-17)">中间档 Aa</span><span class="sm">17px</span></div>
+          <div class="type-row"><span class="fs">--fs-18</span><span class="ex" style="font-size:var(--fs-18)">中间档 Aa</span><span class="sm">18px</span></div>
+          <div class="type-row"><span class="fs">--fs-19</span><span class="ex" style="font-size:var(--fs-19)">中间档 Aa</span><span class="sm">19px</span></div>
+          <div class="type-row"><span class="fs">--fs-20</span><span class="ex" style="font-size:var(--fs-20)">中间档 Aa</span><span class="sm">20px</span></div>
+          <div class="type-row"><span class="fs">--fs-21</span><span class="ex" style="font-size:var(--fs-21)">中间档 Aa</span><span class="sm">21px</span></div>
+          <div class="type-row"><span class="fs">--fs-22</span><span class="ex" style="font-size:var(--fs-22)">区块标题 Aa</span><span class="sm">22px</span></div>
+          <div class="type-row"><span class="fs">--fs-27</span><span class="ex" style="font-size:var(--fs-27)">页标题 Aa</span><span class="sm">27px</span></div>
+          <div class="type-row"><span class="fs">--fs-34</span><span class="ex" style="font-size:var(--fs-34)">大标题 Aa</span><span class="sm">34px</span></div>
+        </div></div>
+        <p class="note"><b>跳档提示：</b>字阶 11–22 已连续（含 2026-10-09 补的 16–21）；仅余 22→27（缺 23–26）、27→34（缺 28–33）两处 legacy 大跳档。这属「 legacy 命名 + 新标尺并存」的过渡态，新代码一律用 <span class="code">--fs-*</span>，避免散写裸值。</p>
+      </section>
+
+      <!-- 05 圆角 -->
+      <section id="radius">
+        <h3><span class="idx">05</span>圆角 Radius</h3>
+        <p class="lead">两套并存：<span class="code">--r-*</span> 为后台卡片命名，<span class="code">--radius-*</span> 为 legacy 旧页命名，新代码用 <span class="code">--r-*</span> / 单列尺寸令牌。</p>
+        <div class="spec"><div class="lab">圆角标本 <code>Radius</code></div><div class="box"><div class="grid g5">
+          <div class="rad"><div class="sq" style="border-radius:var(--radius-sm)"></div><div class="nm">--radius-sm</div><div class="rz">8px</div></div>
+          <div class="rad"><div class="sq" style="border-radius:var(--radius-md)"></div><div class="nm">--radius-md</div><div class="rz">10px</div></div>
+          <div class="rad"><div class="sq" style="border-radius:var(--radius-lg)"></div><div class="nm">--radius-lg</div><div class="rz">14px</div></div>
+          <div class="rad"><div class="sq" style="border-radius:var(--radius-xl)"></div><div class="nm">--radius-xl</div><div class="rz">16px</div></div>
+          <div class="rad"><div class="sq" style="border-radius:var(--radius-pill)"></div><div class="nm">--radius-pill</div><div class="rz">999px</div></div>
+          <div class="rad"><div class="sq" style="border-radius:var(--r-md)"></div><div class="nm">--r-md</div><div class="rz">14px</div></div>
+          <div class="rad"><div class="sq" style="border-radius:var(--r-lg)"></div><div class="nm">--r-lg</div><div class="rz">20px</div></div>
+        </div></div></div>
+      </section>
+
+      <!-- 06 阴影 -->
+      <section id="shadow">
+        <h3><span class="idx">06</span>阴影 Shadow</h3>
+        <p class="lead">三级阴影标尺，深色主题自动加深。</p>
+        <div class="spec"><div class="lab">阴影标本 <code>Shadow</code></div><div class="box"><div class="grid g3">
+          <div class="sh" style="box-shadow:var(--shadow-sm)">--shadow-sm</div>
+          <div class="sh" style="box-shadow:var(--shadow-md)">--shadow-md</div>
+          <div class="sh" style="box-shadow:var(--shadow-lg)">--shadow-lg</div>
+        </div></div></div>
+      </section>
+
+      <!-- 07 间距 -->
+      <section id="spacing">
+        <h3><span class="idx">07</span>间距 Spacing</h3>
+        <p class="lead">以 2px 为最小步进，<span class="code">--sp-0 … --sp-11</span>。现存 3/5/7/9/11 等非标值逐步收敛到最近档。</p>
+        <div class="spec"><div class="lab">间距标尺 <code>--sp-*</code></div><div class="box">
+          <div class="sp-row"><span class="nm">--sp-1</span><span class="bar" style="width:var(--sp-1)"></span><span style="color:var(--muted);font-size:11px">2px</span></div>
+          <div class="sp-row"><span class="nm">--sp-2</span><span class="bar" style="width:var(--sp-2)"></span><span style="color:var(--muted);font-size:11px">4px</span></div>
+          <div class="sp-row"><span class="nm">--sp-3</span><span class="bar" style="width:var(--sp-3)"></span><span style="color:var(--muted);font-size:11px">6px</span></div>
+          <div class="sp-row"><span class="nm">--sp-4</span><span class="bar" style="width:var(--sp-4)"></span><span style="color:var(--muted);font-size:11px">8px</span></div>
+          <div class="sp-row"><span class="nm">--sp-5</span><span class="bar" style="width:var(--sp-5)"></span><span style="color:var(--muted);font-size:11px">10px</span></div>
+          <div class="sp-row"><span class="nm">--sp-6</span><span class="bar" style="width:var(--sp-6)"></span><span style="color:var(--muted);font-size:11px">12px</span></div>
+          <div class="sp-row"><span class="nm">--sp-7</span><span class="bar" style="width:var(--sp-7)"></span><span style="color:var(--muted);font-size:11px">14px</span></div>
+          <div class="sp-row"><span class="nm">--sp-8</span><span class="bar" style="width:var(--sp-8)"></span><span style="color:var(--muted);font-size:11px">16px</span></div>
+          <div class="sp-row"><span class="nm">--sp-9</span><span class="bar" style="width:var(--sp-9)"></span><span style="color:var(--muted);font-size:11px">20px</span></div>
+          <div class="sp-row"><span class="nm">--sp-10</span><span class="bar" style="width:var(--sp-10)"></span><span style="color:var(--muted);font-size:11px">24px</span></div>
+          <div class="sp-row"><span class="nm">--sp-11</span><span class="bar" style="width:var(--sp-11)"></span><span style="color:var(--muted);font-size:11px">32px</span></div>
+        </div></div>
+      </section>
+
+      <!-- 08 动效 -->
+      <section id="motion">
+        <h3><span class="idx">08</span>动效 Motion</h3>
+        <p class="lead">时长 + 缓动两套令牌。下列小球用 <span class="code">--ease-out</span> 实跑一遍。</p>
+        <div class="spec"><div class="lab">时长 / 缓动 <code>Motion</code></div><div class="box">
+          <div class="type-row" style="border:none;padding:4px 0"><span class="fs">--dur-fast</span><span class="ex">.12s</span></div>
+          <div class="type-row" style="border:none;padding:4px 0"><span class="fs">--dur-base</span><span class="ex">.2s</span></div>
+          <div class="type-row" style="border:none;padding:4px 0"><span class="fs">--dur-slow</span><span class="ex">.3s</span></div>
+          <div class="type-row" style="border:none;padding:4px 0"><span class="fs">--dur-bar</span><span class="ex">.9s（进度条）</span></div>
+          <div class="type-row" style="border:none;padding:4px 0"><span class="fs">--ease-out</span><span class="ex" style="font-size:11px">cubic-bezier(.22,.61,.36,1)</span></div>
+          <div class="type-row" style="border:none;padding:4px 0"><span class="fs">--ease-inout</span><span class="ex" style="font-size:11px">cubic-bezier(.32,.72,0,1)</span></div>
+          <div class="ease-demo">
+            <div class="ease-label"><span>演示：--ease-out 缓动</span><span id="easeVal">idle</span></div>
+            <div class="track"><div class="ball" id="ball"></div></div>
+            <button class="btn-primary play-btn" onclick="playEase()">▶ 重播动效</button>
+          </div>
+        </div></div>
+      </section>
+
+      <!-- 09 层级 -->
+      <section id="z">
+        <h3><span class="idx">09</span>层级 Z-Index</h3>
+        <p class="lead">现有裸值集中登记为令牌，避免随意写大数。</p>
+        <div class="spec"><div class="lab">层级标尺 <code>--z-*</code></div><div class="box">
+          <div class="z-row"><span class="nm">--z-rail</span><span class="vl">30</span></div>
+          <div class="z-row"><span class="nm">--z-drawer</span><span class="vl">80</span></div>
+          <div class="z-row"><span class="nm">--z-toast</span><span class="vl">99</span></div>
+          <div class="z-row"><span class="nm">--z-tooltip</span><span class="vl">1000</span></div>
+        </div></div>
+        <p class="note">基础层 <span class="code">--z-base:1</span>、吸顶 <span class="code">--z-sticky:3</span>。菜单浮层 tooltip 取最高 1000。</p>
+      </section>
+
+      <!-- 10 断点 -->
+      <section id="breakpoint">
+        <h3><span class="idx">10</span>响应式断点 Breakpoints</h3>
+        <p class="lead">源文件实际命中的 <span class="code">@media(max-width)</span> 断点（比记忆里的 1024/767/480 更细）。Desktop-first。</p>
+        <div class="spec"><div class="lab">断点 <code>@media</code></div><div class="box"><div class="grid g4">
+          <div class="bp"><span class="w">1280px</span><span class="d">c3 占 4 列</span></div>
+          <div class="bp"><span class="w">1024px</span><span class="d">opt-viz 单列；c3 占 6 列</span></div>
+          <div class="bp"><span class="w">900px</span><span class="d">stats 2 列</span></div>
+          <div class="bp"><span class="w">820px</span><span class="d">顶栏 2 列降级</span></div>
+          <div class="bp"><span class="w">768px</span><span class="d">c3/c4/c6/c8 整行</span></div>
+          <div class="bp"><span class="w">734px</span><span class="d">stats 紧凑</span></div>
+          <div class="bp"><span class="w">560px</span><span class="d">stats 1 列</span></div>
+          <div class="bp"><span class="w">480px</span><span class="d">pattern-grid 1 列</span></div>
+        </div></div></div>
+        <p class="note" style="margin-top:14px"><b>命名令牌（2026-10-09 沉淀）：</b>源文件 <span class="code">:root</span> 已登记命名断点 <span class="code">--bp-mobile:480 / --bp-xs:560 / --bp-phablet:734 / --bp-tablet:768 / --bp-netbook:820 / --bp-md:900 / --bp-laptop:1024 / --bp-lg:1200 / --bp-xl:1280</span>，供人工对照与 JS <span class="code">matchMedia</span> 引用。
+        ⚠ <b>纯 CSS 的 <span class="code">@media</span> 条件不能使用 <span class="code">var()</span></b>——上方各 <span class="code">@media(max-width:…)</span> 仍写裸值，<b>切勿</b>替换为 <span class="code">var(--bp-*)</span>（媒体查询条件里 var() 无效，会整体失效）。真正的令牌化需 JS 驱动 matchMedia 或构建步骤，当前零构建，未做（避免破坏）。</p>
+      </section>
+
+      <!-- 11 组件 -->
+      <section id="component">
+        <h3><span class="idx">11</span>组件 Components</h3>
+        <p class="lead">下列为后台真实组件规则的可视化标本（直接复用源 CSS）。</p>
+        <div class="spec"><div class="lab">顶栏圆形钮 <code>.rbtn</code>（你要加的「查看设计规范」即用此样式）</div><div class="box"><div class="comp-row">
+          <span class="rbtn-demo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span>
+          <span class="rbtn-demo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H16a6 6 0 0 0 6-6c0-4.4-4.5-8-10-8Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg></span>
+          <span style="color:var(--muted);font-size:12px">40×40 圆钮 · 1px 描边 · 悬停上浮 1px</span>
+        </div></div></div>
+        <div class="spec"><div class="lab">左栏圆形钮 <code>.r-item</code></div><div class="box"><div class="comp-row">
+          <span class="r-item-demo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>
+          <span class="r-item-demo on"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>
+          <span style="color:var(--muted);font-size:12px">选中态 = --cap-bg 深墨 + 白字（非绿渐变）</span>
+        </div></div></div>
+        <div class="spec"><div class="lab">胶囊标签 <code>.cap</code></div><div class="box"><div class="comp-row">
+          <span class="cap lvl1">概览</span><span class="cap">内容</span><span class="cap">设置</span><span class="cap on">当前选中</span>
+        </div></div></div>
+        <div class="spec"><div class="lab">胶囊 / 分页 <code>.pill</code> <code>.pg-btn</code></div><div class="box"><div class="comp-row">
+          <span class="pill">未选</span><span class="pill on">已选</span>
+          <button class="pg-btn">1</button><button class="pg-btn on">2</button><button class="pg-btn">3</button><button class="pg-btn" disabled>›</button>
+        </div></div></div>
+        <div class="spec"><div class="lab">主按钮 <code>.btn.primary</code> / <code>.btn-primary</code></div><div class="box"><div class="comp-row">
+          <span class="btn-grad">主按钮（渐变胶囊）</span>
+          <span class="btn-primary">主按钮（实色圆角）</span>
+          <span style="color:var(--muted);font-size:12px">⚠ 两个类名并存，见 §12</span>
+        </div></div></div>
+        <div class="spec"><div class="lab">开关 / 输入框聚焦 <code>.opt-switch</code> <code>input:focus</code></div><div class="box"><div class="comp-row">
+          <label class="opt-switch"><input type="checkbox" checked><i></i></label>
+          <input class="demo-input" value="聚焦时绿环 + 12% 混色" onclick="this.focus()">
+        </div></div></div>
+      </section>
+
+      <!-- 12 一致性 -->
+      <section id="consistency">
+        <h3><span class="idx">12</span>一致性待收敛</h3>
+        <p class="lead">以下为现场核对发现的、与「主系统青柠绿」不一致的残留。A/B 与下列三项均已收敛（2026-10-09）；本节作为收敛记录留存。</p>
+        <div class="todo">
+          <div class="r"><span class="sev sev-done">✓</span><div class="tt">
+            <b>子组件聚焦/选中色写死靛蓝回退 <span class="code">#6366f1</span></b>
+            <span class="fix">日历(.cal-day)、下拉搜索(.sel-search-input)、取色器(.form-swatch/.form-range)、表单聚焦(.form-input:focus) 等用 <span class="code">var(--accent-color)</span>（无回退 → 失效）与硬编码 <span class="code">rgba(99,102,241,.1)</span> 环。</span>
+            <span class="fix"><b>已收敛（2026-10-09）</b>：:root 补 <span class="code">--accent-color:var(--accent)</span>（实色绿）与 <span class="code">--accent-ring:rgba(132,204,22,.18)</span>；焦点环 rgba(99,102,241,.1) 全量替换为 --accent-ring。子组件聚焦/选中/滑块/取色器统一转绿，靛蓝环清零。状态色 #6366f1（SD 买断 / 收入图表）属语义数据色，保留。</span>
+          </div></div>
+          <div class="r"><span class="sev sev-done">✓</span><div class="tt">
+            <b>主按钮类名两套并存 <span class="code">.btn.primary</span> 与 <span class="code">.btn-primary</span></b>
+            <span class="fix"><b>已收敛（2026-10-09）</b>：合并为单一规则 <span class="code">.btn.primary, .btn-primary</span>（绿渐变 + 白字 + 胶囊 999px，padding 10/18、13px，含 hover/active/disabled）；删除 line 890 发散实色圆角定义、.sp-wrap .btn-primary* 覆盖及 11996 区重复定义。SP 模块按钮尺寸（原 8/16、14px）与外壳统一为 10/18、13px。HTML 无需改动（两类名等价）。</span>
+          </div></div>
+          <div class="r"><span class="sev sev-done">✓</span><div class="tt">
+            <b>次级按钮尺寸分歧 &amp; 小按钮类名错配</b>
+            <span class="fix"><b>已收敛（2026-10-09）</b>：① <span class="code">.btn-secondary</span> 实为两段裸定义——全局 8/16+radius-md（被覆盖的死代码）与文件更后的 10/18+999px 胶囊（生效）。删除死定义，单一来源 = 胶囊 10/18（与 .btn.primary 同形），零视觉变化。② HTML 三处 <span class="code">class="btn sm"</span>（空格，L3849/4142/4914）无对应 CSS → 小号未生效；改为 <span class="code">class="btn btn-sm"</span> 命中既有 <span class="code">.btn-sm</span>（padding 7/14、12px），三个按钮（显示全部 / 看预设 / 清除并重新选择）恢复应有的小尺寸。</span>
+          </div></div>
+          <div class="r"><span class="sev sev-done">✓</span><div class="tt">
+            <b>字阶跳档（15→22 缺 16–21）</b>
+            <span class="fix"><b>已收敛（2026-10-09）</b>：:root 补 <span class="code">--fs-16~21</span>（16/17/18/19/20/21px），15→22 主缺口闭合、标尺连续（§04 已同步标本）。23–26、28–33 仍属 legacy 大跳档，留待后续；新代码一律用 --fs-*，不散写裸值。</span>
+          </div></div>
+          <div class="r"><span class="sev sev-done">✓</span><div class="tt">
+            <b>断点集合较碎（1280/1200/1024/900/820/768/734/560/480 共 9 个）</b>
+            <span class="fix"><b>已收敛（2026-10-09）</b>：:root 沉淀命名断点 <span class="code">--bp-mobile:480 / --bp-xs:560 / --bp-phablet:734 / --bp-tablet:768 / --bp-netbook:820 / --bp-md:900 / --bp-laptop:1024 / --bp-lg:1200 / --bp-xl:1280</span>（§10 已列出），供人工对照与 JS matchMedia 引用。
+            ⚠ <b>纯 CSS <span class="code">@media</span> 条件不能用 <span class="code">var()</span></b>——下方各 @media 仍写裸值，<b>未</b>替换为 var(--bp-*)（否则媒体查询整体失效）。真正令牌化需 JS 驱动 matchMedia 或构建步骤，当前零构建，未做（避免破坏）。</span>
+          </div></div>
+        </div>
+      </section>
+
+      <footer>
+        Studio Tools 综合后台设计系统 · 2026-10-09 实时核对版 · 全部取值抄自 <span class="code">tools/_shared/admin.html</span>。<br>
+        本页为源文件的镜像快照，源文件改动后此处会漂移——以源文件 <span class="code">:root</span> 与组件规则为唯一权威。
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+function toggleTheme(){
+  var el=document.documentElement;
+  var next=el.getAttribute('data-theme')==='dark'?'light':'dark';
+  el.setAttribute('data-theme',next);
+  try{localStorage.setItem('admin-ds-theme',next);}catch(e){}
+  document.getElementById('themeTxt').textContent = next==='dark'?'浅色':'深色';
+}
+document.getElementById('themeTxt').textContent =
+  document.documentElement.getAttribute('data-theme')==='dark'?'浅色':'深色';
+
+// 动效演示
+function playEase(){
+  var ball=document.getElementById('ball'), val=document.getElementById('easeVal');
+  ball.style.transition='none'; ball.style.left='0'; val.textContent='running';
+  // 强制重排
+  void ball.offsetWidth;
+  ball.style.transition='left var(--dur-bar) var(--ease-out)';
+  ball.style.left='calc(100% - 18px)';
+  setTimeout(function(){ val.textContent='done'; }, 950);
+}
+
+// 导航 scrollspy
+var links=[].slice.call(document.querySelectorAll('#toc a'));
+var sections=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+function spy(){
+  var y=window.scrollY+120, cur=sections[0];
+  sections.forEach(function(s){ if(s && s.offsetTop<=y) cur=s; });
+  links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href')==='#'+cur.id); });
+}
+window.addEventListener('scroll',spy,{passive:true});
+spy();
+</script>
+</body>
+</html>

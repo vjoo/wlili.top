@@ -3,461 +3,770 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>wlili.top 设计系统规范 · Design System Spec</title>
+<title>wlili.top 设计系统规范 · Design System Spec（v3 · 实时核对版）</title>
 <style>
-  /* ============ 文档自身即使用本套 Token，正反证系统可用 ============ */
+  /* ============================================================
+     文档外壳：使用本套 Token 的镜像值渲染（与设计系统视觉一致）。
+     权威取值见 portfolio/cases/_shared/design-tokens.css。
+     ============================================================ */
   :root{
-    --c-ink:#0a0a0a; --c-ink-2:rgba(10,10,10,.6); --c-ink-3:rgba(10,10,10,.4);
-    --c-paper:#fbfbfa; --c-card:#ffffff; --c-line:rgba(10,10,10,.09); --c-line-soft:rgba(10,10,10,.05);
-    --c-accent:#006fff; --c-green:#40a53c;
-    --r:14px; --r-sm:8px; --r-lg:22px;
-    --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-7:32px;--sp-8:40px;--sp-10:56px;--sp-12:72px;
-    --maxw:1180px;
-    --ease-enter:cubic-bezier(0,0,.2,1); --ease-emph:cubic-bezier(.4,0,.2,1);
+    --c-ink:#0a0a0a; --c-ink-2:rgba(10,10,10,.6); --c-ink-3:rgba(10,10,10,.38);
+    --c-paper:#f6f6f4; --c-card:#ffffff; --c-line:rgba(10,10,10,.1); --c-line-soft:rgba(10,10,10,.045);
+    --c-accent:#006fff; --c-green:#1d7a2e; --c-warn:#8a6100;
+    --c-ok-bg:rgba(64,165,60,.08); --c-warn-bg:rgba(255,147,0,.09);
+    --c-mark:rgba(10,10,10,.035);
+    --r:16px; --r-sm:9px; --r-lg:24px;
+    --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:20px;--s6:24px;--s7:32px;--s8:40px;--s9:56px;--s10:72px;--s11:104px;
     --mono:'SF Mono',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
     --sans:'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+  }
+  html[data-theme="dark"]{
+    --c-ink:#f5f5f5; --c-ink-2:rgba(245,245,245,.72); --c-ink-3:rgba(245,245,245,.45);
+    --c-paper:#0a0a0a; --c-card:#161616; --c-line:rgba(255,255,255,.14); --c-line-soft:rgba(255,255,255,.06);
+    --c-accent:#4d94ff; --c-green:#5cc457; --c-warn:#e0a72a;
+    --c-ok-bg:rgba(92,196,87,.12); --c-warn-bg:rgba(224,167,42,.14);
+    --c-mark:rgba(255,255,255,.045);
+    color-scheme:dark;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{font-family:var(--sans);color:var(--c-ink);background:var(--c-paper);
-    font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+    font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    transition:background .25s ease,color .25s ease}
   a{color:var(--c-accent);text-decoration:none}
-  a:hover{text-decoration:underline}
+  code{font-family:var(--mono)}
 
-  /* 布局：左侧 sticky 导航 + 右侧正文 */
-  .shell{display:grid;grid-template-columns:248px minmax(0,1fr);gap:0;max-width:1480px;margin:0 auto}
-  nav{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:var(--sp-8) var(--sp-6);
-    border-right:1px solid var(--c-line);background:linear-gradient(180deg,#fff,#fafafa)}
-  nav .brand{font-weight:700;font-size:15px;letter-spacing:-.01em;margin-bottom:2px}
-  nav .brand small{display:block;font-weight:400;font-size:11px;color:var(--c-ink-3);letter-spacing:.04em;margin-top:3px}
-  nav ol{list-style:none;margin-top:var(--sp-7);display:flex;flex-direction:column;gap:2px}
-  nav li a{display:flex;gap:10px;padding:7px 10px;border-radius:var(--r-sm);color:var(--c-ink-2);font-size:13px;line-height:1.3}
+  /* ---------- 布局骨架 ---------- */
+  .shell{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1480px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:var(--s8) var(--s6) var(--s9);
+    border-right:1px solid var(--c-line);background:var(--c-card)}
+  nav .brand{font-weight:700;font-size:15px;letter-spacing:-.01em}
+  nav .brand small{display:block;font-weight:400;font-size:11px;color:var(--c-ink-3);letter-spacing:.05em;margin-top:4px}
+  nav ol{list-style:none;margin-top:var(--s7);display:flex;flex-direction:column;gap:1px}
+  nav li a{display:flex;gap:10px;padding:7px 10px;border-radius:var(--r-sm);color:var(--c-ink-2);font-size:13px;line-height:1.3;transition:background .15s,color .15s}
   nav li a:hover{background:var(--c-line-soft);text-decoration:none;color:var(--c-ink)}
+  nav li a.on{background:var(--c-mark);color:var(--c-ink);font-weight:600}
   nav li a .n{font-family:var(--mono);font-size:11px;color:var(--c-ink-3);min-width:18px}
-  nav .leg{margin-top:var(--sp-8);font-size:11px;color:var(--c-ink-3);line-height:1.7;border-top:1px solid var(--c-line);padding-top:var(--sp-5)}
-  nav .leg b{display:block;color:var(--c-ink-2);margin-bottom:6px;font-weight:600}
+  nav li a.on .n{color:var(--c-accent)}
+  nav .leg{margin-top:var(--s7);font-size:11px;color:var(--c-ink-3);line-height:1.8;border-top:1px solid var(--c-line);padding-top:var(--s5)}
+  nav .leg b{display:block;color:var(--c-ink-2);margin-bottom:6px;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
   .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
 
-  main{padding:var(--sp-12) var(--sp-10);min-width:0}
-  @media(max-width:920px){.shell{grid-template-columns:1fr}nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--c-line)}}
+  main{padding:var(--s11) var(--s10) var(--s10);min-width:0}
+  @media(max-width:980px){.shell{grid-template-columns:1fr}nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--c-line)}main{padding:var(--s8) var(--s6)}}
 
-  /* 页头 */
-  .hero{padding-bottom:var(--sp-8);border-bottom:1px solid var(--c-line);margin-bottom:var(--sp-10)}
-  .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--c-ink-3);font-weight:600}
-  h1{font-size:clamp(34px,5vw,56px);line-height:1.05;letter-spacing:-.025em;font-weight:700;margin:14px 0 10px}
-  .lede{font-size:18px;line-height:1.55;color:var(--c-ink-2);max-width:62ch}
-  .meta{display:flex;flex-wrap:wrap;gap:var(--sp-6);margin-top:var(--sp-7);font-size:13px;color:var(--c-ink-3)}
+  /* ---------- HERO ---------- */
+  .hero{position:relative;overflow:hidden;padding-bottom:var(--s9);border-bottom:1px solid var(--c-line);margin-bottom:var(--s10)}
+  .hero .wm{position:absolute;right:-2%;top:-4%;font-size:clamp(120px,17vw,240px);font-weight:300;letter-spacing:-.05em;
+    line-height:.85;color:var(--c-mark);pointer-events:none;user-select:none;z-index:0;white-space:nowrap}
+  .hero>*{position:relative;z-index:1}
+  .eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--c-ink-3);font-weight:600}
+  h1{font-size:clamp(34px,5vw,58px);line-height:1.03;letter-spacing:-.028em;font-weight:700;margin:14px 0 12px;max-width:16ch}
+  .lede{font-size:18px;line-height:1.6;color:var(--c-ink-2);max-width:64ch}
+  .meta{display:flex;flex-wrap:wrap;gap:var(--s3) var(--s6);margin-top:var(--s7);font-size:13px;color:var(--c-ink-3)}
   .meta b{color:var(--c-ink);font-weight:600}
+  .meta .kv{display:inline-flex;gap:8px;align-items:baseline}
+  .toolbar{margin-top:var(--s7);display:flex;gap:var(--s3);flex-wrap:wrap}
+  .tbtn{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--c-ink);background:var(--c-card);
+    border:1px solid var(--c-line);border-radius:var(--r-sm);padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background .15s}
+  .tbtn:hover{background:var(--c-line-soft)}
 
-  section{margin-bottom:var(--sp-12);scroll-margin-top:24px}
-  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:var(--sp-6)}
+  /* ---------- 分区 ---------- */
+  section{margin-bottom:var(--s11);scroll-margin-top:24px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:var(--s4)}
   .sec-head .idx{font-family:var(--mono);font-size:13px;color:var(--c-accent);font-weight:600}
-  h2{font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;font-weight:700;line-height:1.15}
-  .sec-sub{color:var(--c-ink-2);font-size:15px;margin:-6px 0 var(--sp-6);max-width:64ch}
-  h3{font-size:17px;font-weight:600;margin:var(--sp-7) 0 var(--sp-3);letter-spacing:-.01em}
+  h2{font-size:clamp(24px,3.2vw,34px);letter-spacing:-.022em;font-weight:700;line-height:1.12}
+  .sec-sub{color:var(--c-ink-2);font-size:15px;margin:0 0 var(--s7);max-width:70ch}
+  h3{font-size:16px;font-weight:600;margin:var(--s8) 0 var(--s4);letter-spacing:-.01em}
 
-  .card{background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r);padding:var(--sp-6)}
-  .grid{display:grid;gap:var(--sp-5)}
+  /* ---------- specimen 框（参考图版式核心：标签在上、虚线框在下） ---------- */
+  .specfig{margin:var(--s6) 0 var(--s8)}
+  .specfig>.label{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:11px;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--c-ink-3);font-weight:600}
+  .specfig>.label .badge{margin-left:auto;letter-spacing:0}
+  .spec{border:1px dashed var(--c-line);border-radius:var(--r-lg);padding:var(--s6)}
+
+  /* ---------- 卡片 / 网格 ---------- */
+  .card{background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r);padding:var(--s6)}
+  .grid{display:grid;gap:var(--s5)}
   .grid.c2{grid-template-columns:repeat(2,1fr)}
   .grid.c3{grid-template-columns:repeat(3,1fr)}
   .grid.c4{grid-template-columns:repeat(4,1fr)}
-  @media(max-width:760px){.grid.c2,.grid.c3,.grid.c4{grid-template-columns:1fr}}
+  .grid.c5{grid-template-columns:repeat(5,1fr)}
+  @media(max-width:820px){.grid.c2,.grid.c3,.grid.c4,.grid.c5{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.grid.c2,.grid.c3,.grid.c4,.grid.c5{grid-template-columns:1fr}}
 
-  /* 色板 */
-  .sw{display:flex;flex-direction:column;gap:0}
-  .sw .chip{height:74px;border-radius:var(--r-sm);border:1px solid var(--c-line-soft)}
-  .sw .nm{font-size:12.5px;font-weight:600;margin-top:10px;font-family:var(--mono)}
-  .sw .vl{font-size:12px;color:var(--c-ink-3);font-family:var(--mono)}
-  .sw .ds{font-size:12px;color:var(--c-ink-2);margin-top:2px}
+  /* ---------- 色阶砖 ---------- */
+  .colorcard{margin-bottom:2px}
+  .colorcard .blk{height:60px;border-radius:11px;border:1px solid var(--c-line-soft);display:flex;align-items:flex-end;
+    justify-content:flex-end;padding:9px 12px;font-family:var(--mono);font-size:11.5px}
+  .colorcard .cap{display:flex;justify-content:space-between;gap:10px;margin-top:7px;align-items:baseline}
+  .colorcard .cap b{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:-.01em}
+  .colorcard .cap span{font-size:11.5px;color:var(--c-ink-3);text-align:right}
 
-  /* token 行 */
-  .tok{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--c-line-soft)}
-  .tok:last-child{border-bottom:0}
-  .tok .chip{width:34px;height:34px;border-radius:9px;border:1px solid var(--c-line-soft);flex:none}
-  .tok .code{font-family:var(--mono);font-size:12.5px;font-weight:600}
-  .tok .val{font-family:var(--mono);font-size:12px;color:var(--c-ink-3);margin-left:auto;text-align:right}
+  /* ---------- 字阶标本 ---------- */
+  .ladder{border-top:1px solid var(--c-line-soft)}
+  .tl{display:grid;grid-template-columns:160px minmax(0,1fr);gap:var(--s5);align-items:baseline;padding:var(--s4) 0;border-bottom:1px solid var(--c-line-soft)}
+  .tl .m b{font-family:var(--mono);font-size:12.5px;display:block;font-weight:600}
+  .tl .m span{font-family:var(--mono);font-size:11.5px;color:var(--c-ink-3)}
+  .tl .sp{font-weight:600;line-height:1.08;letter-spacing:-.012em;white-space:nowrap;overflow:hidden}
+  @media(max-width:560px){.tl{grid-template-columns:1fr}}
 
-  code.k{font-family:var(--mono);font-size:12.5px;background:var(--c-line-soft);padding:2px 7px;border-radius:6px;color:var(--c-ink)}
+  .wl{display:flex;flex-wrap:wrap;gap:var(--s7);align-items:baseline}
+  .wl .w b{display:block;font-size:44px;line-height:1;font-weight:inherit;letter-spacing:-.02em}
+  .wl .w span{font-family:var(--mono);font-size:11.5px;color:var(--c-ink-3)}
 
-  /* 状态徽标 */
-  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid}
-  .b-ok{color:#1d7a2e;border-color:rgba(29,122,46,.3);background:rgba(64,165,60,.08)}
-  .b-warn{color:#9a6b00;border-color:rgba(255,147,0,.35);background:rgba(255,147,0,.08)}
-  .b-bad{color:#b42318;border-color:rgba(180,35,24,.3);background:rgba(180,35,24,.07)}
+  .litext{font-size:14px;color:var(--c-ink-2);background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r-sm);padding:var(--s4)}
+  .litext b{color:var(--c-ink)}
 
-  /* 表格 */
+  /* ---------- 间距条 / 圆角 / 阴影 / 其他标本 ---------- */
+  .barrow{display:grid;grid-template-columns:170px 1fr auto;gap:var(--s5);align-items:center;padding:var(--s3) 0;border-bottom:1px solid var(--c-line-soft)}
+  .barrow .m b{font-family:var(--mono);font-size:12.5px;display:block;font-weight:600}
+  .barrow .m span{font-family:var(--mono);font-size:11.5px;color:var(--c-ink-3)}
+  .barrow .bar{height:20px;border-radius:6px;background:var(--c-ink);opacity:.88}
+  .barrow .val{font-family:var(--mono);font-size:12px;color:var(--c-ink-3)}
+  @media(max-width:560px){.barrow{grid-template-columns:1fr}}
+
+  .radcard{height:104px;background:var(--c-ink);opacity:.9;border:0}
+  .cap-lbl{margin-top:10px;font-family:var(--mono);font-size:12px;font-weight:600}
+  .cap-lbl em{display:block;font-style:normal;font-family:var(--sans);font-size:11.5px;color:var(--c-ink-3);font-weight:400;margin-top:2px}
+
+  .shcard{background:var(--c-card);border-radius:var(--r);padding:var(--s6);min-height:120px}
+  .shcard b{font-family:var(--mono);font-size:12.5px}
+  .shcard .v{font-family:var(--mono);font-size:11.5px;color:var(--c-ink-3);margin-top:8px;word-break:break-all}
+
+  .opsq{height:76px;border-radius:10px;background:var(--c-ink)}
+  .ratio-box{width:100%;background:var(--c-ink);opacity:.88;border-radius:8px}
+  .grad-box{height:76px;border-radius:10px;border:1px solid var(--c-line-soft)}
+  .surf{height:64px;border-radius:10px;border:1px solid var(--c-line-soft)}
+
+  /* ---------- 断点示意 ---------- */
+  .bpwrap{display:flex;flex-direction:column;gap:var(--s5)}
+  .bpbar{position:relative;height:44px;border-radius:8px;background:var(--c-mark);border:1px solid var(--c-line-soft);overflow:hidden}
+  .bpbar .seg{position:absolute;inset:0;background:linear-gradient(90deg,var(--c-ink) 0%,var(--c-ink) 100%);opacity:.14}
+  .bpline{position:absolute;top:0;bottom:0;width:2px;background:var(--c-accent)}
+  .bpline i{position:absolute;top:-1px;left:6px;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--c-accent);white-space:nowrap}
+
+  /* ---------- 动效 ---------- */
+  .ease-demo{display:flex;align-items:center;gap:var(--s5);padding:var(--s3) 0}
+  .ease-label{width:230px;flex:none;font-family:var(--mono);font-size:11.5px;color:var(--c-ink-2);line-height:1.5}
+  .track{position:relative;flex:1;height:26px;background:var(--c-mark);border-radius:999px}
+  .ball{position:absolute;top:4px;left:0;width:18px;height:18px;border-radius:50%;background:var(--c-ink)}
+  .btn-demo{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--c-ink);background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r-sm);padding:8px 14px;cursor:pointer}
+  .btn-demo:hover{background:var(--c-line-soft)}
+
+  /* ---------- 表格 / 徽标 / 备注 ---------- */
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid;white-space:nowrap}
+  .b-ok{color:var(--c-green);border-color:rgba(64,165,60,.32);background:var(--c-ok-bg)}
+  .b-warn{color:var(--c-warn);border-color:rgba(255,147,0,.35);background:var(--c-warn-bg)}
+  .b-mute{color:var(--c-ink-3);border-color:var(--c-line);background:transparent}
+
   table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--c-line-soft);vertical-align:top}
-  th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--c-ink-3);font-weight:600}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--c-line-soft);vertical-align:top}
+  th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--c-ink-3);font-weight:600}
   td code{font-family:var(--mono);font-size:12px}
   tr:hover td{background:var(--c-line-soft)}
 
-  /* 盲区卡片 */
-  .gap{border:1px solid var(--c-line);border-left:3px solid var(--b-color,#b42318);border-radius:var(--r);padding:var(--sp-5) var(--sp-6);background:var(--c-card)}
-  .gap .gh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .gap h4{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
-  .gap .ev{font-family:var(--mono);font-size:11.5px;color:var(--c-ink-3);background:var(--c-line-soft);padding:2px 8px;border-radius:6px}
-  .gap p{font-size:13.5px;color:var(--c-ink-2);margin-top:10px;line-height:1.6}
-  .gap .fix{margin-top:10px;font-size:13px}
-  .gap .fix b{color:var(--c-ink)}
-  .pri{font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
-  .pri-H{background:#fde8e6;color:#b42318}.pri-M{background:#fff3da;color:#92670a}.pri-L{background:#e9f4eb;color:#1d7a2e}
-
-  /* 动效可视化 */
-  .ease-demo{display:flex;align-items:center;gap:18px;margin-top:8px}
-  .track{width:100%;height:40px;position:relative;border-bottom:1px dashed var(--c-line)}
-  .ball{position:absolute;top:4px;width:18px;height:18px;border-radius:50%;background:var(--c-accent)}
-  .ease-label{font-family:var(--mono);font-size:12px;color:var(--c-ink-2);min-width:170px}
-  .btn-demo{padding:10px 20px;border-radius:999px;background:var(--c-ink);color:#fff;border:0;font-size:13px;cursor:pointer;font-family:var(--sans)}
-  .btn-demo:hover{background:var(--c-accent)}
-
-  .note{background:#fff;border:1px solid var(--c-line);border-radius:var(--r);padding:var(--sp-5) var(--sp-6);font-size:13.5px;color:var(--c-ink-2);line-height:1.65}
+  code.k{font-family:var(--mono);font-size:12.5px;background:var(--c-line-soft);padding:2px 7px;border-radius:6px;color:var(--c-ink);white-space:nowrap}
+  .mono-block{font-family:var(--mono);font-size:12px;color:var(--c-ink-2);line-height:1.95;white-space:pre-wrap;word-break:break-word}
+  .note{background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r);padding:var(--s5) var(--s6);font-size:13.5px;color:var(--c-ink-2);line-height:1.7}
   .note b{color:var(--c-ink)}
-  .footer{margin-top:var(--sp-10);padding-top:var(--sp-6);border-top:1px solid var(--c-line);font-size:12px;color:var(--c-ink-3)}
-  .kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--c-line);border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+  .stat{background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r);padding:var(--s5) var(--s6)}
+  .stat .num{font-size:30px;font-weight:700;line-height:1.1}
+  .stat .lbl{color:var(--c-ink-2);font-size:13px;margin-top:5px}
+  .footer{margin-top:var(--s10);padding-top:var(--s6);border-top:1px solid var(--c-line);font-size:12px;color:var(--c-ink-3);line-height:1.8}
+
+  /* ---------- 应用示意 ---------- */
+  .demo-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--s6)}
+  @media(max-width:820px){.demo-wrap{grid-template-columns:1fr}}
+  .demo-card{border-radius:1.5625rem;box-shadow:0 .75rem 2rem rgba(0,0,0,.12);overflow:hidden;background:#fff;border:1px solid rgba(10,10,10,.06)}
+  .demo-thumb{height:150px;background:linear-gradient(135deg,#e9e9ef,#f6f6f8);display:flex;align-items:center;justify-content:center;color:rgba(10,10,10,.3);font-family:var(--mono);font-size:12px}
+  .demo-body{padding:1.5rem}
+  .demo-badge{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:6.25rem;border:1px solid rgba(64,165,60,.32);background:rgba(64,165,60,.08);color:#1d7a2e}
+  .demo-body h4{font-size:1.5rem;letter-spacing:-.02em;margin:.625rem 0 .5rem;font-weight:600}
+  .demo-body p{font-size:.875rem;color:rgba(10,10,10,.6);line-height:1.55}
+  .demo-row{display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap}
+  .demo-btn{font-family:var(--sans);font-size:.875rem;font-weight:600;color:#fff;background:#0a0a0a;border:1px solid #0a0a0a;border-radius:6.25rem;padding:.625rem 1.125rem;cursor:pointer}
+  .demo-btn.ghost{background:transparent;color:#0a0a0a}
+  .demo-input{margin-top:1rem;width:100%;font-family:var(--sans);font-size:.875rem;padding:.625rem .875rem;border:1px solid rgba(10,10,10,.14);border-radius:.375rem;background:#fff;color:#0a0a0a}
+  .demo-input:focus{outline:none;box-shadow:0 0 0 3px rgba(0,0,0,.12);border-color:rgba(0,0,0,.3)}
+  .demo-code{background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r);padding:var(--s5) var(--s6)}
 </style>
 </head>
 <body>
 <div class="shell">
   <!-- ============ 侧边导航 ============ -->
   <nav>
-    <div class="brand">wlili.top 设计系统<small>DESIGN SYSTEM SPEC · v1.0</small></div>
-    <ol>
+    <div class="brand">wlili.top 设计系统<small>DESIGN SYSTEM SPEC · v3（实时核对版）</small></div>
+    <ol id="toc">
       <li><a href="#overview"><span class="n">00</span>现状总览</a></li>
       <li><a href="#color"><span class="n">01</span>颜色 Color</a></li>
       <li><a href="#type"><span class="n">02</span>字体排印 Type</a></li>
       <li><a href="#space"><span class="n">03</span>间距 Spacing</a></li>
       <li><a href="#radius"><span class="n">04</span>圆角 Radius</a></li>
       <li><a href="#shadow"><span class="n">05</span>阴影 Shadow</a></li>
-      <li><a href="#motion"><span class="n">06</span>动效 Motion</a></li>
-      <li><a href="#z"><span class="n">07</span>层级 z-index</a></li>
-      <li><a href="#blocks"><span class="n">08</span>块级 Token</a></li>
-      <li><a href="#dark"><span class="n">09</span>深色模式</a></li>
-      <li><a href="#gaps"><span class="n">10</span>设计盲区 · 未覆盖角落</a></li>
+      <li><a href="#surface"><span class="n">06</span>表面·透明度</a></li>
+      <li><a href="#ratio"><span class="n">07</span>宽高比·渐变</a></li>
+      <li><a href="#bp"><span class="n">08</span>断点·交互态</a></li>
+      <li><a href="#motion"><span class="n">09</span>动效 Motion</a></li>
+      <li><a href="#z"><span class="n">10</span>层级 z-index</a></li>
+      <li><a href="#blocks"><span class="n">11</span>块级 Token --pd-*</a></li>
+      <li><a href="#landed"><span class="n">12</span>原盲区 A–L（已收口）</a></li>
+      <li><a href="#intentional"><span class="n">13</span>故意保留裸写</a></li>
+      <li><a href="#apply"><span class="n">14</span>应用示意</a></li>
     </ol>
     <div class="leg">
       <b>状态图例</b>
       <span class="dot" style="background:#1d7a2e"></span>✅ 已落地·单一源<br>
-      <span class="dot" style="background:#92670a"></span>🟡 已落地但重复硬编码<br>
-      <span class="dot" style="background:#b42318"></span>🔴 完全未覆盖（盲区）
+      <span class="dot" style="background:#1d7a2e"></span>🔗 已落地·已接线（组件消费 var）<br>
+      <span class="dot" style="background:#8a6100"></span>🟡 已落地但仍有字面硬编码未替换
     </div>
   </nav>
 
   <!-- ============ 正文 ============ -->
   <main>
     <header class="hero">
+      <div class="wm" aria-hidden="true">Tokens</div>
       <div class="eyebrow">Design System · 单一 Token 权威源</div>
       <h1>wlili.top 设计系统规范</h1>
-      <p class="lede">本规范把作品集前台（8 个案例页）实际使用的设计语言收口成一套可发现的 Token，并如实标注哪
-        些维度已经 Token 化、哪些仍是散落硬编码。文档自身即采用本套 Token 排版，正反验证系统可用性。</p>
+      <p class="lede">本规范依据作品集前台（<code class="k">portfolio/cases</code>）实时 CSS 盘点生成，全部取值与
+        <code class="k">portfolio/cases/_shared/design-tokens.css</code> 完全一致。文档外壳即采用本套 Token 的镜像值排版，正反验证系统可用。</p>
       <div class="meta">
-        <span><b>生成日期</b> 2026-09-28</span>
-        <span><b>权威源</b> _shared/design-tokens.css</span>
-        <span><b>接入</b> 8 个 index.html 在 site-shell.css 前引用</span>
-        <span><b>约束</b> 零构建 · 不引入框架</span>
+        <span class="kv"><b>生成日期</b> 2026-10-09（v3 · 实时核对版）</span>
+        <span class="kv"><b>权威源</b> portfolio/cases/_shared/design-tokens.css</span>
+        <span class="kv"><b>接入</b> 各案例页在 site-shell.css 前以 <code class="k">?v=&lt;md5&gt;</code> 引用</span>
+        <span class="kv"><b>约束</b> 零构建 · 不引入框架</span>
+      </div>
+      <div class="toolbar">
+        <button class="tbtn" id="themeBtn">◐ 切换深/浅预览</button>
+        <button class="tbtn" id="replayTop">▶ 重播动效</button>
       </div>
     </header>
 
     <!-- ============ 00 总览 ============ -->
     <section id="overview">
       <div class="sec-head"><span class="idx">00</span><h2>现状总览</h2></div>
-      <p class="sec-sub">经过方案 A（全局 token 迁收）、圆角/阴影接线、<code class="k">--pd-*</code> 块级收口三轮收口后，
-        体系已成"单一可发现源"。但排印、间距体系、容器、透明度、深色组件表面、渐变、断点等仍是盲区。</p>
+      <p class="sec-sub">经方案 A（全局 token 迁收）+ 盲区 A–L 补漏 + px→rem 迁移三轮收口后，体系已成「单一可发现源」。
+        全部 21 个维度已 Token 化并接线；仅余「字面硬编码未替换」这类纯度问题（零视觉风险）。</p>
       <div class="grid c4">
-        <div class="card"><div style="font-size:30px;font-weight:700">9</div><div style="color:var(--c-ink-2);font-size:13px;margin-top:4px">已落地的 Token 维度</div></div>
-        <div class="card"><div style="font-size:30px;font-weight:700;color:#92670a">1</div><div style="color:var(--c-ink-2);font-size:13px;margin-top:4px">已落地但重复硬编码（完整性问题）</div></div>
-        <div class="card"><div style="font-size:30px;font-weight:700;color:#b42318">11</div><div style="color:var(--c-ink-2);font-size:13px;margin-top:4px">完全未覆盖的设计角落</div></div>
-        <div class="card"><div style="font-size:30px;font-weight:700">58</div><div style="color:var(--c-ink-2);font-size:13px;margin-top:4px">前台页已接线的 CSS 变量引用</div></div>
+        <div class="stat"><div class="num">21</div><div class="lbl">已落地的 Token 维度</div></div>
+        <div class="stat"><div class="num" style="color:var(--c-green)">0</div><div class="lbl">完全未覆盖的盲区（v1 的 11 项已全部收口）</div></div>
+        <div class="stat"><div class="num" style="color:var(--c-warn)">1</div><div class="lbl">已落地但仍有字面硬编码（纯度问题）</div></div>
+        <div class="stat"><div class="num">~120+</div><div class="lbl">前台页已接线的 CSS 变量引用</div></div>
+      </div>
+      <div class="note" style="margin-top:var(--s6)">
+        <b>版本沿革：</b> v1（2026-09-28）声明权威源路径 <code class="k">_shared/design-tokens.css</code> 已失效、仍显示 px 取值、并把已完成的 11 项盲区标为「🔴 未覆盖」；
+        v2（2026-10-09）修正取值与路径但版式单调、且动效演示区 CSS 缺失；
+        <b>v3（本版）</b>改用 specimen 版式（真实渲染的字阶 / 圆角 / 间距标本 + 色阶砖 + 深色实时预览），并补齐动效演示样式。
       </div>
     </section>
 
     <!-- ============ 01 颜色 ============ -->
     <section id="color">
       <div class="sec-head"><span class="idx">01</span><h2>颜色 Color</h2></div>
-      <p class="sec-sub">品牌 / 中性 / 文本 / 边框 / 状态色已收口为单一源；强调色板与块级前景/背景色也已在文件内。
-        但深色模式下的"组件表面色"与若干灰阶、特殊色尚未纳入（见 §10-盲区 H/I）。</p>
+      <p class="sec-sub">品牌 / 中性 / 文本 / 边框 / 状态色已收口为单一源，并配套深色 <code class="k">[data-theme="dark"]</code> 反转。</p>
 
-      <h3>中性 & 文本 & 语义</h3>
-      <div class="grid c4">
-        <div class="sw"><div class="chip" style="background:#000"></div><div class="nm">--color-primary</div><div class="vl">#000</div><div class="ds">主强调</div></div>
-        <div class="sw"><div class="chip" style="background:#0a0a0a"></div><div class="nm">--color-black</div><div class="vl">#0a0a0a</div><div class="ds">正文/标题</div></div>
-        <div class="sw"><div class="chip" style="background:#fff;border:1px solid var(--c-line)"></div><div class="nm">--color-white</div><div class="vl">#fff</div><div class="ds">卡底/反白</div></div>
-        <div class="sw"><div class="chip" style="background:#f5f5f5"></div><div class="nm">--color-background</div><div class="vl">#f5f5f5</div><div class="ds">浅色页面底</div></div>
-        <div class="sw"><div class="chip" style="background:rgba(10,10,10,.6)"></div><div class="nm">--color-text-secondary</div><div class="vl">rgba(10,10,10,.6)</div><div class="ds">次级文本</div></div>
-        <div class="sw"><div class="chip" style="background:rgba(10,10,10,.04)"></div><div class="nm">--color-gray-ultra-light</div><div class="vl">rgba(10,10,10,.04)</div><div class="ds">极淡边框/底纹</div></div>
-        <div class="sw"><div class="chip" style="background:rgba(255,255,255,.16)"></div><div class="nm">--color-gray-border</div><div class="vl">rgba(255,255,255,.16)</div><div class="ds">深色分割线</div></div>
-        <div class="sw"><div class="chip" style="background:#40a53c"></div><div class="nm">--color-green</div><div class="vl">#40a53c</div><div class="ds">成功/已保存</div></div>
+      <div class="specfig">
+        <div class="label">中性 · 文本 · 语义（浅色）<span class="badge b-ok">✅ 已落地</span></div>
+        <div class="spec grid c3">
+          <div class="colorcard"><div class="blk" style="background:#000;color:#fff">#000</div><div class="cap"><b>--color-primary</b><span>主强调·按钮/关键线</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:#0a0a0a;color:#fff">#0a0a0a</div><div class="cap"><b>--color-black</b><span>正文/标题主色</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:#fff;color:#0a0a0a">#ffffff</div><div class="cap"><b>--color-white</b><span>卡底/反白</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:#f5f5f5;color:#0a0a0a">#f5f5f5</div><div class="cap"><b>--color-background</b><span>浅色页面底</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:#0a0a0a;color:#fff">#0a0a0a</div><div class="cap"><b>--color-background-dark</b><span>深色页面底</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:rgba(10,10,10,.6);color:#fff">rgba(10,10,10,.6)</div><div class="cap"><b>--color-text-secondary</b><span>次级文本</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:rgba(255,255,255,.6);color:#0a0a0a">rgba(255,255,255,.6)</div><div class="cap"><b>--color-text-tertiary</b><span>深色底三级文本</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:rgba(10,10,10,.04);color:#0a0a0a">rgba(10,10,10,.04)</div><div class="cap"><b>--color-gray-ultra-light</b><span>极淡边框/底纹</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:rgba(255,255,255,.16);color:#0a0a0a">rgba(255,255,255,.16)</div><div class="cap"><b>--color-gray-border</b><span>深色分割线</span></div></div>
+        </div>
       </div>
 
-      <h3>强调色板（块级预设 <code class="k">--pd-accent-*</code>）</h3>
-      <div class="grid c4">
-        <div class="sw"><div class="chip" style="background:#006fff"></div><div class="nm">--pd-accent-blue</div><div class="vl">#006fff</div></div>
-        <div class="sw"><div class="chip" style="background:#ff9300"></div><div class="nm">--pd-accent-orange</div><div class="vl">#ff9300</div></div>
-        <div class="sw"><div class="chip" style="background:#eb0000"></div><div class="nm">--pd-accent-red</div><div class="vl">#eb0000</div></div>
-        <div class="sw"><div class="chip" style="background:#26ee00"></div><div class="nm">--pd-accent-green</div><div class="vl">#26ee00</div></div>
+      <div class="specfig">
+        <div class="label">强调色板 <code class="k">--pd-accent-*</code><span class="badge b-ok">✅ 已落地</span></div>
+        <div class="spec grid c4">
+          <div class="colorcard"><div class="blk" style="background:#006fff;color:#fff">#006fff</div><div class="cap"><b>--pd-accent-blue</b><span>蓝</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:#ff9300;color:#0a0a0a">#ff9300</div><div class="cap"><b>--pd-accent-orange</b><span>橙</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:#eb0000;color:#fff">#eb0000</div><div class="cap"><b>--pd-accent-red</b><span>红</span></div></div>
+          <div class="colorcard"><div class="blk" style="background:#26ee00;color:#0a0a0a">#26ee00</div><div class="cap"><b>--pd-accent-green</b><span>绿</span></div></div>
+        </div>
       </div>
-      <div class="note"><b>完整性提示（🟡）：</b> 当前仍有 <code class="k">#ffffff×23</code>、<code class="k">#0a0a0a×13</code>、<code class="k">#888888×5</code> 等字面硬编码散布在组件里，
-        它们与现有 token 值完全一致却未走变量——属于"已落地但未接线"，不改视觉，只影响单一源纯度。建议全站替换为 <code class="k">var(--color-white)</code> 等。</div>
+
+      <div class="specfig">
+        <div class="label">状态色 &amp; 深色反转（实时预览）<span class="badge b-ok">✅ 已落地</span></div>
+        <div class="spec">
+          <div class="grid c2" style="gap:var(--s6)">
+            <div>
+              <div class="colorcard" style="margin-bottom:var(--s4)"><div class="blk" style="background:#40a53c;color:#fff">#40a53c</div><div class="cap"><b>--color-green</b><span>成功/已保存态</span></div></div>
+              <div class="note" style="font-size:12.5px"><b>语义：</b>深色模式只反转「页面背景 / 文字 / 卡片底」；顶部导航 / 移动菜单 / 底部 footer / hero / services / testimonials / 轮播等经 <code class="k">site-shell.css</code> 的豁免区保持浅色逻辑（用户要求）。</div>
+            </div>
+            <div class="dark-demo" data-theme="dark" style="background:#0a0a0a;border-radius:var(--r);padding:var(--s6);color:#f5f5f5">
+              <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.5;font-weight:600">[data-theme="dark"] 实时样例</div>
+              <div style="background:#1a1a1a;border-radius:1.125rem;padding:1rem 1.125rem;margin-top:.875rem">
+                <div style="font-size:1.25rem;font-weight:600;letter-spacing:-.02em">深色卡片样例</div>
+                <div style="color:rgba(245,245,245,.72);font-size:.875rem;margin-top:.375rem;line-height:1.55">背景 #0a0a0a · 文字 #f5f5f5 · 卡底 #1a1a1a · 次级 rgba(245,245,245,.72)</div>
+              </div>
+            </div>
+          </div>
+          <table style="margin-top:var(--s6)">
+            <thead><tr><th>Token</th><th>浅色</th><th>深色 [data-theme="dark"]</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td><code>--color-background</code></td><td><code>#f5f5f5</code></td><td><code>#0a0a0a</code></td><td>页面底</td></tr>
+              <tr><td><code>--color-text</code></td><td><code>#0a0a0a</code></td><td><code>#f5f5f5</code></td><td>主文本</td></tr>
+              <tr><td><code>--color-text-secondary</code></td><td><code>rgba(10,10,10,.6)</code></td><td><code>rgba(245,245,245,.72)</code></td><td>次级文本</td></tr>
+              <tr><td><code>--color-text-tertiary</code></td><td><code>rgba(255,255,255,.6)</code></td><td><code>rgba(245,245,245,.5)</code></td><td>三级文本</td></tr>
+              <tr><td><code>--color-black</code></td><td><code>#0a0a0a</code></td><td><code>#f5f5f5</code></td><td>主文字/深填充 → 浅</td></tr>
+              <tr><td><code>--color-white</code></td><td><code>#fff</code></td><td><code>#1a1a1a</code></td><td>白卡底 → 深卡</td></tr>
+              <tr><td><code>--color-gray-ultra-light</code></td><td><code>rgba(10,10,10,.04)</code></td><td><code>rgba(255,255,255,.06)</code></td><td>极淡边框/底纹</td></tr>
+              <tr><td><code>--color-primary</code></td><td><code>#000</code></td><td><code>#f5f5f5</code></td><td>主强调</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- ============ 02 字体排印 ============ -->
     <section id="type">
       <div class="sec-head"><span class="idx">02</span><h2>字体排印 Typography</h2></div>
-      <p class="sec-sub">字体族已 Token 化，但<b>字号阶梯、行高、字距、字重</b>四类全部是散落硬编码（🔴 盲区 A/B/C/D）。下表左侧"现状"为真实频次，右侧为建议 Token。</p>
+      <p class="sec-sub">字体族 + 字号阶梯 + 行高 + 字距 + 字重全部 Token 化并接线（含 v1 的盲区 A/B/C/D）。字号已是 rem（16px → 1rem）。</p>
 
-      <h3>字体族 <span class="badge b-ok">✅ 已落地</span></h3>
-      <div class="card"><code class="k">--font-family: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif</code></div>
-
-      <h3>字号阶梯 <span class="badge b-bad">🔴 未覆盖</span></h3>
-      <div class="grid c2">
-        <div class="card">
-          <b style="font-size:12px;color:var(--c-ink-3);text-transform:uppercase;letter-spacing:.05em">现状 · 散落硬编码（节选）</b>
-          <div style="margin-top:10px;line-height:2;font-size:13px;color:var(--c-ink-2)">
-            12 / 13 / 14 / 15 / 16 / 18 / 20 / 22 / 34 / 36 / 52 / 148 px<br>
-            clamp(34px,4.5vw,52px) · clamp(42px,5.5vw,84px)<br>
-            clamp(80px,18vw,280px) · clamp(2.25rem,6vw,6.5rem)
+      <div class="specfig">
+        <div class="label">字体族 <code class="k">--font-family</code><span class="badge b-ok">✅ 已落地</span></div>
+        <div class="spec grid c2" style="align-items:center;gap:var(--s6)">
+          <div style="display:flex;align-items:baseline;gap:var(--s5)">
+            <div style="font-size:76px;font-weight:700;letter-spacing:-.04em;line-height:1">Aa1</div>
+            <div style="line-height:1.7">
+              <div style="font-weight:400;color:var(--c-ink-2)">Regular</div>
+              <div style="font-weight:500;color:var(--c-ink-2)">Medium</div>
+              <div style="font-weight:600;color:var(--c-ink-2)">Semibold</div>
+              <div style="font-weight:700">Bold</div>
+            </div>
           </div>
-          <div style="font-family:var(--mono);font-size:11.5px;color:var(--c-ink-3);margin-top:8px">→ 20+ 个不同取值，无统一阶梯</div>
-        </div>
-        <div class="card">
-          <b style="font-size:12px;color:var(--c-ink-3);text-transform:uppercase;letter-spacing:.05em">建议 Token（按用途聚类）</b>
-          <div style="margin-top:10px;line-height:2;font-size:13px">
-            <code class="k">--fs-display</code> clamp(56px,12vw,148px)<br>
-            <code class="k">--fs-h1</code> clamp(40px,6vw,84px)<br>
-            <code class="k">--fs-h2</code> clamp(28px,4vw,52px)<br>
-            <code class="k">--fs-h3</code> 22px · <code class="k">--fs-h4</code> 18px<br>
-            <code class="k">--fs-body</code> 16px · <code class="k">--fs-sm</code> 14px<br>
-            <code class="k">--fs-xs</code> 12px
+          <div>
+            <div class="mono-block">'Inter', -apple-system,
+'PingFang SC', 'Microsoft YaHei',
+'Noto Sans SC', sans-serif</div>
+            <div class="note" style="margin-top:var(--s4);font-size:12.5px">无本地字体文件，Inter 缺失时按栈回退到系统无衬线（不引 CDN，符合零构建约束）。</div>
           </div>
         </div>
       </div>
 
-      <h3>行高 / 字距 / 字重 <span class="badge b-bad">🔴 未覆盖</span></h3>
-      <div class="grid c3">
-        <div class="card"><b>行高（现状 1.05–1.7 共 12 档）</b><div style="margin-top:8px;font-size:13px;color:var(--c-ink-2);line-height:1.9">
-          <code class="k">--lh-tight</code> 1.05（大标题）<br><code class="k">--lh-snug</code> 1.15（标题）<br>
-          <code class="k">--lh-normal</code> 1.5（正文）<br><code class="k">--lh-relaxed</code> 1.7（长文）</div></div>
-        <div class="card"><b>字距（现状 -7.4px … +0.08em 共 15 档）</b><div style="margin-top:8px;font-size:13px;color:var(--c-ink-2);line-height:1.9">
-          <code class="k">--tracking-tightest</code> -.04em<br><code class="k">--tracking-tight</code> -.02em<br>
-          <code class="k">--tracking-normal</code> 0<br><code class="k">--tracking-wide</code> .04em（eyebrow）</div></div>
-        <div class="card"><b>字重（现状 300–900 共 8 档）</b><div style="margin-top:8px;font-size:13px;color:var(--c-ink-2);line-height:1.9">
-          <code class="k">--fw-regular</code> 400<br><code class="k">--fw-medium</code> 500<br>
-          <code class="k">--fw-semibold</code> 600<br><code class="k">--fw-bold</code> 700</div>
-          <div style="font-family:var(--mono);font-size:11px;color:var(--c-ink-3);margin-top:6px">主力：600(33) / 500(22) / 400(12)</div></div>
+      <div class="specfig">
+        <div class="label">字号阶梯 <code class="k">--fs-*</code>（真实渲染）<span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec">
+          <div class="ladder">
+            <div class="tl"><div class="m"><b>--fs-12</b><span>0.75rem · 12px</span></div><div class="sp" style="font-size:.75rem">设计系统 Aa 0123</div></div>
+            <div class="tl"><div class="m"><b>--fs-14</b><span>0.875rem · 14px</span></div><div class="sp" style="font-size:.875rem">设计系统 Aa 0123</div></div>
+            <div class="tl"><div class="m"><b>--fs-16</b><span>1rem · 16px</span></div><div class="sp" style="font-size:1rem">设计系统 Aa 0123</div></div>
+            <div class="tl"><div class="m"><b>--fs-18</b><span>1.125rem · 18px</span></div><div class="sp" style="font-size:1.125rem">设计系统 Aa 0123</div></div>
+            <div class="tl"><div class="m"><b>--fs-20</b><span>1.25rem · 20px</span></div><div class="sp" style="font-size:1.25rem">设计系统 Aa 0123</div></div>
+            <div class="tl"><div class="m"><b>--fs-24</b><span>1.5rem · 24px</span></div><div class="sp" style="font-size:1.5rem">设计系统 Aa 0123</div></div>
+            <div class="tl"><div class="m"><b>--fs-30</b><span>1.875rem · 30px</span></div><div class="sp" style="font-size:1.875rem">设计系统 Aa 0123</div></div>
+            <div class="tl"><div class="m"><b>--fs-36</b><span>2.25rem · 36px</span></div><div class="sp" style="font-size:2.25rem">设计系统 Aa</div></div>
+            <div class="tl"><div class="m"><b>--fs-48</b><span>3rem · 48px</span></div><div class="sp" style="font-size:3rem">设计 Aa</div></div>
+            <div class="tl"><div class="m"><b>--fs-56</b><span>3.5rem · 56px</span></div><div class="sp" style="font-size:3.5rem">设计 Aa</div></div>
+            <div class="tl"><div class="m"><b>--fs-80</b><span>5rem · 80px</span></div><div class="sp" style="font-size:5rem">设计 Aa</div></div>
+            <div class="tl"><div class="m"><b>--fs-96</b><span>6rem · 96px</span></div><div class="sp" style="font-size:6rem">Aa</div></div>
+            <div class="tl"><div class="m"><b>--fs-144</b><span>9rem · 144px</span></div><div class="sp" style="font-size:9rem">Aa</div></div>
+            <div class="tl"><div class="m"><b>--fs-200</b><span>12.5rem · 200px</span></div><div class="sp" style="font-size:12.5rem">Aa</div></div>
+          </div>
+          <div class="note" style="margin-top:var(--s5);font-size:12.5px">响应式 <code class="k">clamp()</code> 流体字号属设计意图，<b>故意保留裸写</b>（见 §13）。</div>
+        </div>
+      </div>
+
+      <div class="specfig">
+        <div class="label">行高 <code class="k">--lh-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec grid c3">
+          <div><div class="litext" style="line-height:1.1"><b>--lh-110</b>（1.1）<br>设计系统把散落取值收口为单一源，标题用紧行高。</div></div>
+          <div><div class="litext" style="line-height:1.5"><b>--lh-150</b>（1.5）<br>设计系统把散落取值收口为单一源，正文用中等行高。</div></div>
+          <div><div class="litext" style="line-height:1.8"><b>--lh-180</b>（1.8）<br>设计系统把散落取值收口为单一源，长文用宽松行高。</div></div>
+        </div>
+        <div class="mono-block" style="margin-top:var(--s5)">--lh-090:0.9  --lh-095:0.95  --lh-100:1  --lh-105:1.05  --lh-110:1.1  --lh-115:1.15  --lh-120:1.2
+--lh-130:1.3  --lh-140:1.4  --lh-145:1.45  --lh-150:1.5  --lh-155:1.55  --lh-160:1.6  --lh-170:1.7  --lh-180:1.8
+（仅无量纲行高；精确 px 行高如 162.8px 为垂直居中专用，保留裸写）</div>
+      </div>
+
+      <div class="specfig">
+        <div class="label">字距 <code class="k">--ls-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec">
+          <div class="barrow" style="grid-template-columns:170px 1fr auto"><div class="m"><b>--ls-045</b><span>-0.045em</span></div><div class="sp" style="font-size:20px;font-weight:700;letter-spacing:-.045em">DESIGN SYSTEM 设计系统</div><div class="val">收紧</div></div>
+          <div class="barrow" style="grid-template-columns:170px 1fr auto"><div class="m"><b>--ls-02</b><span>-0.02em</span></div><div class="sp" style="font-size:20px;font-weight:700;letter-spacing:-.02em">DESIGN SYSTEM 设计系统</div><div class="val">微收</div></div>
+          <div class="barrow" style="grid-template-columns:170px 1fr auto"><div class="m"><b>--ls-04</b><span>+0.04em</span></div><div class="sp" style="font-size:20px;font-weight:700;letter-spacing:.04em">DESIGN SYSTEM 设计系统</div><div class="val">微开</div></div>
+          <div class="barrow" style="grid-template-columns:170px 1fr auto"><div class="m"><b>--ls-12</b><span>+0.12em</span></div><div class="sp" style="font-size:20px;font-weight:700;letter-spacing:.12em">DESIGN SYSTEM 设计系统</div><div class="val">宽阔·标签</div></div>
+          <div class="mono-block" style="margin-top:var(--s5)">相对 em（12）：--ls-005 / -01 / -02 / -03 / -045 / -05 / -04 / 04 / 06 / 08 / 12 / -040
+高频 px（20+，已折算 rem）：--ls-1px(-0.0625rem) … --ls-74px(-0.4625rem)，含正距 --ls-02px_pos / --ls-04px_pos
+美术字距（如 -7.4px 巨标题）一并纳入便于统一调</div>
+        </div>
+      </div>
+
+      <div class="specfig">
+        <div class="label">字重 <code class="k">--fw-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec">
+          <div class="wl">
+            <div class="w" style="font-weight:300"><b>Aa1</b><span>--fw-300</span></div>
+            <div class="w" style="font-weight:400"><b>Aa1</b><span>--fw-400</span></div>
+            <div class="w" style="font-weight:500"><b>Aa1</b><span>--fw-500</span></div>
+            <div class="w" style="font-weight:600"><b>Aa1</b><span>--fw-600</span></div>
+            <div class="w" style="font-weight:700"><b>Aa1</b><span>--fw-700</span></div>
+            <div class="w" style="font-weight:800"><b>Aa1</b><span>--fw-800</span></div>
+            <div class="w" style="font-weight:900"><b>Aa1</b><span>--fw-900</span></div>
+          </div>
+          <div class="mono-block" style="margin-top:var(--s5)">--fw-normal:400（normal → 400，统一字重语义）</div>
+        </div>
       </div>
     </section>
 
     <!-- ============ 03 间距 ============ -->
     <section id="space">
       <div class="sec-head"><span class="idx">03</span><h2>间距 Spacing</h2></div>
-      <p class="sec-sub">目前只有"区块左右留白"四档（<code class="k">--padding-*</code>）。内部元素间距（gap / margin）全部为裸 rem/px（🔴 盲区 E）。</p>
-      <h3>区块留白 <span class="badge b-ok">✅ 已落地</span></h3>
-      <div class="grid c4">
-        <div class="sw"><div class="chip" style="background:var(--c-ink)"></div><div class="nm">--padding-xl</div><div class="vl">190px</div></div>
-        <div class="sw"><div class="chip" style="background:var(--c-ink)"></div><div class="nm">--padding-lg</div><div class="vl">160px</div></div>
-        <div class="sw"><div class="chip" style="background:var(--c-ink)"></div><div class="nm">--padding-md</div><div class="vl">120px</div></div>
-        <div class="sw"><div class="chip" style="background:var(--c-ink)"></div><div class="nm">--padding-sm</div><div class="vl">36px</div></div>
+      <p class="sec-sub">区块留白四档 + 组件 gap 尺度 + 容器宽度，全部已落地·已接线。已是 rem（v1 显示 px，现已迁移）。下方条形长度即真实取值。</p>
+
+      <div class="specfig">
+        <div class="label">区块留白 <code class="k">--padding-*</code> <span class="badge b-ok">✅ 已落地</span></div>
+        <div class="spec">
+          <div class="barrow"><div class="m"><b>--padding-xl</b><span>11.875rem (190px)</span></div><div class="bar" style="width:190px;max-width:100%"></div><div class="val">190px</div></div>
+          <div class="barrow"><div class="m"><b>--padding-lg</b><span>10rem (160px)</span></div><div class="bar" style="width:160px;max-width:100%"></div><div class="val">160px</div></div>
+          <div class="barrow"><div class="m"><b>--padding-md</b><span>7.5rem (120px)</span></div><div class="bar" style="width:120px;max-width:100%"></div><div class="val">120px</div></div>
+          <div class="barrow"><div class="m"><b>--padding-sm</b><span>2.25rem (36px)</span></div><div class="bar" style="width:36px;max-width:100%"></div><div class="val">36px</div></div>
+        </div>
       </div>
-      <h3>组件内间距 <span class="badge b-bad">🔴 未覆盖</span></h3>
-      <div class="card" style="font-size:13px;color:var(--c-ink-2);line-height:1.9">
-        现状裸值（频次）：<code class="k">gap:1rem×11</code> · <code class="k">24px×6</code> · <code class="k">20px×6</code> · <code class="k">1.5rem×6</code> · <code class="k">16px×4</code> · <code class="k">40px×3</code> · <code class="k">32px×3</code> · <code class="k">14px×3</code> · <code class="k">8/6/4px</code> …
-        <br><b>建议</b>：在 4px 基准上建立 <code class="k">--space-1…--space-12</code>（4/8/12/16/20/24/32/40/48/56/64/72），并配套 <code class="k">--gap-*</code> 语义别名。
+
+      <div class="specfig">
+        <div class="label">组件内间距 <code class="k">--gap-*</code>（4px 基准）<span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec">
+          <div class="barrow"><div class="m"><b>--gap-4</b><span>0.25rem</span></div><div class="bar" style="width:4px;max-width:100%"></div><div class="val">4px</div></div>
+          <div class="barrow"><div class="m"><b>--gap-8</b><span>0.5rem</span></div><div class="bar" style="width:8px;max-width:100%"></div><div class="val">8px</div></div>
+          <div class="barrow"><div class="m"><b>--gap-12</b><span>0.75rem</span></div><div class="bar" style="width:12px;max-width:100%"></div><div class="val">12px</div></div>
+          <div class="barrow"><div class="m"><b>--gap-16</b><span>1rem</span></div><div class="bar" style="width:16px;max-width:100%"></div><div class="val">16px</div></div>
+          <div class="barrow"><div class="m"><b>--gap-24</b><span>1.5rem</span></div><div class="bar" style="width:24px;max-width:100%"></div><div class="val">24px</div></div>
+          <div class="barrow"><div class="m"><b>--gap-32</b><span>2rem</span></div><div class="bar" style="width:32px;max-width:100%"></div><div class="val">32px</div></div>
+          <div class="barrow"><div class="m"><b>--gap-48</b><span>3rem</span></div><div class="bar" style="width:48px;max-width:100%"></div><div class="val">48px</div></div>
+          <div class="barrow"><div class="m"><b>--gap-64</b><span>4rem</span></div><div class="bar" style="width:64px;max-width:100%"></div><div class="val">64px</div></div>
+          <div class="barrow"><div class="m"><b>--gap-96</b><span>6rem（左文/右二维码）</span></div><div class="bar" style="width:96px;max-width:100%"></div><div class="val">96px</div></div>
+          <div class="mono-block" style="margin-top:var(--s5)">全谱：--gap-4/6/8/10/12/14/16/20/24/32/36/40/48/64/96（0.25rem → 6rem）</div>
+        </div>
+      </div>
+
+      <div class="specfig">
+        <div class="label">容器宽度 <code class="k">--container-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec">
+          <table>
+            <thead><tr><th>Token</th><th>rem</th><th>px</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td><code>--container-page</code></td><td>95rem</td><td>1520</td><td>全站通栏上限</td></tr>
+              <tr><td><code>--container-read</code></td><td>42.5rem</td><td>680</td><td>阅读栏（正文/副标题限宽）</td></tr>
+              <tr><td><code>--container-card</code></td><td>32.5rem</td><td>520</td><td>卡片/焦点预览面板</td></tr>
+              <tr><td><code>--container-mock</code></td><td>33.75rem</td><td>540</td><td>mockup 副标题限宽</td></tr>
+              <tr><td><code>--container-mock2</code></td><td>35rem</td><td>560</td><td>mockup 副标题限宽（变体）</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
     <!-- ============ 04 圆角 ============ -->
     <section id="radius">
       <div class="sec-head"><span class="idx">04</span><h2>圆角 Radius</h2></div>
-      <p class="sec-sub">已落地并接线（带 fallback）。全站圆角一处改全局生效。</p>
-      <div class="grid c5" style="grid-template-columns:repeat(5,1fr)">
-        <div class="sw"><div class="chip" style="border-radius:100px;background:var(--c-ink)"></div><div class="nm">--radius-pill</div><div class="vl">100px</div></div>
-        <div class="sw"><div class="chip" style="border-radius:50%;background:var(--c-ink)"></div><div class="nm">--radius-circle</div><div class="vl">50%</div></div>
-        <div class="sw"><div class="chip" style="border-radius:25px;background:var(--c-ink)"></div><div class="nm">--radius-xl</div><div class="vl">25px</div></div>
-        <div class="sw"><div class="chip" style="border-radius:18px;background:var(--c-ink)"></div><div class="nm">--radius-lg</div><div class="vl">18px</div></div>
-        <div class="sw"><div class="chip" style="border-radius:6px;background:var(--c-ink)"></div><div class="nm">--radius-sm</div><div class="vl">6px</div></div>
+      <p class="sec-sub">已落地并接线（带 fallback）。全站圆角一处改全局生效。已是 rem。下方方块即真实圆角。</p>
+      <div class="specfig">
+        <div class="spec grid c5">
+          <div><div class="radcard" style="border-radius:6.25rem"></div><div class="cap-lbl">--radius-pill<em>6.25rem (100px)</em></div></div>
+          <div><div class="radcard" style="border-radius:50%"></div><div class="cap-lbl">--radius-circle<em>50%</em></div></div>
+          <div><div class="radcard" style="border-radius:1.5625rem"></div><div class="cap-lbl">--radius-xl<em>1.5625rem (25px)</em></div></div>
+          <div><div class="radcard" style="border-radius:1.125rem"></div><div class="cap-lbl">--radius-lg<em>1.125rem (18px)</em></div></div>
+          <div><div class="radcard" style="border-radius:.375rem"></div><div class="cap-lbl">--radius-sm<em>0.375rem (6px)</em></div></div>
+        </div>
       </div>
     </section>
 
     <!-- ============ 05 阴影 ============ -->
     <section id="shadow">
       <div class="sec-head"><span class="idx">05</span><h2>阴影 Shadow</h2></div>
-      <p class="sec-sub">已落地并接线。一次性定制阴影仍保留硬编码（ROI 低，不强制收口）。</p>
-      <div class="grid c2">
-        <div class="card" style="box-shadow:0 12px 32px rgba(0,0,0,.12)"><b>--shadow-card</b><div style="font-family:var(--mono);font-size:12px;color:var(--c-ink-3);margin-top:6px">0 12px 32px rgba(0,0,0,.12)</div><div style="font-size:13px;color:var(--c-ink-2);margin-top:8px">通用卡片浮起</div></div>
-        <div class="card" style="box-shadow:0 1px 3px rgba(0,0,0,.06)"><b>--shadow-sm</b><div style="font-family:var(--mono);font-size:12px;color:var(--c-ink-3);margin-top:6px">0 1px 3px rgba(0,0,0,.06)</div><div style="font-size:13px;color:var(--c-ink-2);margin-top:8px">极淡描边感</div></div>
+      <p class="sec-sub">已落地并接线。一次性定制阴影仍保留硬编码（ROI 低，不强制收口）。已是 rem。</p>
+      <div class="specfig">
+        <div class="spec grid c2">
+          <div class="shcard" style="box-shadow:0 .75rem 2rem rgba(0,0,0,.12)"><b>--shadow-card</b><div class="v">0 0.75rem 2rem rgba(0,0,0,.12)</div><div style="font-size:13px;color:var(--c-ink-2);margin-top:10px">通用卡片浮起（= 0 12px 32px）</div></div>
+          <div class="shcard" style="box-shadow:0 .0625rem .1875rem rgba(0,0,0,.06)"><b>--shadow-sm</b><div class="v">0 0.0625rem 0.1875rem rgba(0,0,0,.06)</div><div style="font-size:13px;color:var(--c-ink-2);margin-top:10px">极淡描边感（= 0 1px 3px）</div></div>
+        </div>
       </div>
     </section>
 
-    <!-- ============ 06 动效 ============ -->
+    <!-- ============ 06 表面 · 透明度 ============ -->
+    <section id="surface">
+      <div class="sec-head"><span class="idx">06</span><h2>表面色 &amp; 透明度</h2></div>
+      <p class="sec-sub">深色表面色（盲区 H）与透明度层级（盲区 G）均已收口。</p>
+
+      <div class="specfig">
+        <div class="label">深色表面色 <code class="k">--surface-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec grid c4">
+          <div><div class="surf" style="background:#0f0f11"></div><div class="cap-lbl">--surface-d1<em>#0f0f11 · 最深</em></div></div>
+          <div><div class="surf" style="background:#14161a"></div><div class="cap-lbl">--surface-d2<em>#14161a</em></div></div>
+          <div><div class="surf" style="background:#1c1c22"></div><div class="cap-lbl">--surface-d3<em>#1c1c22</em></div></div>
+          <div><div class="surf" style="background:#2a2a2a"></div><div class="cap-lbl">--surface-d4<em>#2a2a2a · 装饰面</em></div></div>
+        </div>
+      </div>
+
+      <div class="specfig">
+        <div class="label">透明度层级 <code class="k">--opacity-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec grid c4">
+          <div><div class="opsq" style="opacity:0"></div><div class="cap-lbl">--opacity-hide<em>0 · 入场前</em></div></div>
+          <div><div class="opsq" style="opacity:.5"></div><div class="cap-lbl">--opacity-dim<em>0.5 · 占位/蒙层</em></div></div>
+          <div><div class="opsq" style="opacity:.55"></div><div class="cap-lbl">--opacity-dim2<em>0.55</em></div></div>
+          <div><div class="opsq" style="opacity:.6"></div><div class="cap-lbl">--opacity-dim3<em>0.6</em></div></div>
+          <div><div class="opsq" style="opacity:.85"></div><div class="cap-lbl">--opacity-085<em>0.85</em></div></div>
+          <div><div class="opsq" style="opacity:.4"></div><div class="cap-lbl">--opacity-04<em>0.4</em></div></div>
+          <div><div class="opsq" style="opacity:1"></div><div class="cap-lbl">--opacity-show<em>1 · 完全显示</em></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 07 宽高比 · 渐变 ============ -->
+    <section id="ratio">
+      <div class="sec-head"><span class="idx">07</span><h2>宽高比 &amp; 渐变</h2></div>
+      <p class="sec-sub">可复用的通用比例与可复用渐变已收口；精确像素比例与美术渐变刻意保留裸写。</p>
+
+      <div class="specfig">
+        <div class="label">宽高比 <code class="k">--ratio-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec grid c4">
+          <div><div class="ratio-box" style="aspect-ratio:4/3"></div><div class="cap-lbl">--ratio-4-3<em>4 / 3</em></div></div>
+          <div><div class="ratio-box" style="aspect-ratio:4/5"></div><div class="cap-lbl">--ratio-4-5<em>4 / 5</em></div></div>
+          <div><div class="ratio-box" style="aspect-ratio:5/3"></div><div class="cap-lbl">--ratio-5-3<em>5 / 3</em></div></div>
+          <div><div class="ratio-box" style="aspect-ratio:16/9"></div><div class="cap-lbl">--ratio-16-9<em>16 / 9</em></div></div>
+        </div>
+      </div>
+
+      <div class="specfig">
+        <div class="label">渐变 <code class="k">--gradient-*</code>（仅可复用项）<span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec grid c3">
+          <div><div class="grad-box" style="background:linear-gradient(to top,rgba(0,0,0,.6) 0%,rgba(0,0,0,.2) 55%,transparent 100%)"></div><div class="cap-lbl">--gradient-scrim<em>图片蒙层</em></div></div>
+          <div><div class="grad-box" style="background:linear-gradient(to top,rgba(0,0,0,.78) 0%,rgba(0,0,0,.35) 60%,transparent 100%)"></div><div class="cap-lbl">--gradient-scrim-strong<em>强蒙层</em></div></div>
+          <div><div class="grad-box" style="background:linear-gradient(100deg,#ececef 30%,#f6f6f8 50%,#ececef 70%)"></div><div class="cap-lbl">--gradient-shimmer<em>骨架屏</em></div></div>
+        </div>
+        <div class="note" style="margin-top:var(--s5);font-size:12.5px">3D mockup 的美术渐变（金属/玻璃/屏幕）为逐件设计，刻意不抽，保留裸写。</div>
+      </div>
+    </section>
+
+    <!-- ============ 08 断点 · 交互态 ============ -->
+    <section id="bp">
+      <div class="sec-head"><span class="idx">08</span><h2>响应式断点 &amp; 交互态</h2></div>
+      <p class="sec-sub">盲区 J / L。断点已统一，消除 767/768 同时使用的 off-by-one 隐患。</p>
+
+      <div class="specfig">
+        <div class="label">断点 <code class="k">--bp-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec">
+          <div class="bpwrap">
+            <div>
+              <div class="bpbar"><div class="seg"></div><div class="bpline" style="left:36.8%"><i>--bp-mobile 560px</i></div><div class="bpline" style="left:50.5%"><i>--bp-tablet 767px</i></div></div>
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--c-ink-3);margin-top:6px"><span>0</span><span>全站通栏上限 1520px</span></div>
+            </div>
+          </div>
+          <div class="note" style="margin-top:var(--s5);font-size:12.5px">统一以 <code class="k">max-width:767px</code> 表示「平板及以下」、<code class="k">max-width:560px</code> 表示「手机」。文档自身断点采用 980 / 820 / 560。</div>
+        </div>
+      </div>
+
+      <div class="specfig">
+        <div class="label">交互态 <code class="k">--state-*</code> <span class="badge b-ok">✅ 已落地·已接线</span></div>
+        <div class="spec grid c2">
+          <div class="card"><b style="font-family:var(--mono);font-size:12.5px">--state-hover-bg</b><div class="mono-block" style="margin-top:6px">rgba(0,0,0,.04)</div><div style="margin-top:12px;background:rgba(0,0,0,.04);border-radius:8px;padding:12px;font-size:13px;color:var(--c-ink-2)">hover 态底纹样例</div></div>
+          <div class="card"><b style="font-family:var(--mono);font-size:12.5px">--state-focus-ring</b><div class="mono-block" style="margin-top:6px">rgba(0,0,0,.12)</div><div style="margin-top:12px;border:1px solid rgba(0,0,0,.14);border-radius:8px;padding:12px;font-size:13px;color:var(--c-ink-2);box-shadow:0 0 0 3px rgba(0,0,0,.12)">focus 环样例</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 09 动效 ============ -->
     <section id="motion">
-      <div class="sec-head"><span class="idx">06</span><h2>动效 Motion</h2></div>
-      <p class="sec-sub">时长与缓动曲线已 Token 化。下方为缓动曲线可视化（点击重播）。</p>
-      <div class="card">
-        <div class="ease-demo"><span class="ease-label">--motion-easing-enter<br>cubic-bezier(0,0,.2,1)</span><div class="track"><div class="ball" data-ease="cubic-bezier(0,0,.2,1)"></div></div></div>
-        <div class="ease-demo"><span class="ease-label">--motion-easing-emphasized<br>cubic-bezier(.4,0,.2,1)</span><div class="track"><div class="ball" data-ease="cubic-bezier(.4,0,.2,1)"></div></div></div>
-        <div class="ease-demo"><span class="ease-label">--motion-easing-exit<br>cubic-bezier(.4,0,1,1)</span><div class="track"><div class="ball" data-ease="cubic-bezier(.4,0,1,1)"></div></div></div>
-        <button class="btn-demo" id="replay" style="margin-top:14px">▶ 重播动效</button>
+      <div class="sec-head"><span class="idx">09</span><h2>动效 Motion</h2></div>
+      <p class="sec-sub">时长与缓动曲线已 Token 化。下方为缓动曲线可视化（点「重播动效」或顶部按钮）。</p>
+      <div class="specfig">
+        <div class="spec">
+          <div class="ease-demo"><span class="ease-label">--motion-easing-enter<br>cubic-bezier(0,0,.2,1)</span><div class="track"><div class="ball" data-ease="cubic-bezier(0,0,.2,1)"></div></div></div>
+          <div class="ease-demo"><span class="ease-label">--motion-easing-emphasized<br>cubic-bezier(.4,0,.2,1)</span><div class="track"><div class="ball" data-ease="cubic-bezier(.4,0,.2,1)"></div></div></div>
+          <div class="ease-demo"><span class="ease-label">--motion-easing-exit<br>cubic-bezier(.4,0,1,1)</span><div class="track"><div class="ball" data-ease="cubic-bezier(.4,0,1,1)"></div></div></div>
+          <button class="btn-demo" id="replay" style="margin-top:6px">▶ 重播动效</button>
+        </div>
+        <div class="grid c3" style="margin-top:var(--s5)">
+          <div class="card"><b style="font-family:var(--mono);font-size:12.5px">--motion-duration-fast</b><div class="mono-block" style="margin-top:6px">150ms</div></div>
+          <div class="card"><b style="font-family:var(--mono);font-size:12.5px">--motion-duration-normal</b><div class="mono-block" style="margin-top:6px">300ms</div></div>
+          <div class="card"><b style="font-family:var(--mono);font-size:12.5px">--motion-duration-slow</b><div class="mono-block" style="margin-top:6px">500ms</div></div>
+        </div>
+        <div class="mono-block" style="margin-top:var(--s5)">--transition-base: 0.3s ease-in-out   --transition-fast: 0.15s ease-in-out   --transition-slow: 0.5s ease-in-out</div>
+        <div class="note" style="margin-top:var(--s5)"><b>注：</b> 后台拖拽 FLIP 用临界阻尼曲线 <code class="k">cubic-bezier(0.22,1,0.36,1)</code> / 380ms（无过冲），与上方「强调缓动」不同——前者是交互手感专项，未纳入通用 Token，属合理例外。</div>
       </div>
-      <div class="grid c3" style="margin-top:var(--sp-5)">
-        <div class="card"><b>--motion-duration-fast</b><div class="vl" style="font-family:var(--mono);color:var(--c-ink-3)">150ms</div></div>
-        <div class="card"><b>--motion-duration-normal</b><div class="vl" style="font-family:var(--mono);color:var(--c-ink-3)">300ms</div></div>
-        <div class="card"><b>--motion-duration-slow</b><div class="vl" style="font-family:var(--mono);color:var(--c-ink-3)">500ms</div></div>
-      </div>
-      <div class="note" style="margin-top:var(--sp-5)"><b>注：</b> 后台拖拽 FLIP 用的是临界阻尼曲线 <code class="k">cubic-bezier(0.22,1,0.36,1)</code> / 380ms（无过冲），与上方"强调缓动"不同——前者是交互手感专项，未纳入通用 Token，属合理例外。</div>
     </section>
 
-    <!-- ============ 07 层级 ============ -->
+    <!-- ============ 10 层级 ============ -->
     <section id="z">
-      <div class="sec-head"><span class="idx">07</span><h2>层级 z-index</h2></div>
+      <div class="sec-head"><span class="idx">10</span><h2>层级 z-index</h2></div>
       <p class="sec-sub">已落地，命名清晰，覆盖下拉到 tooltip 全谱。</p>
-      <div class="card" style="font-family:var(--mono);font-size:12.5px;line-height:2;color:var(--c-ink-2)">
-        --z-dropdown:1000 · --z-sticky:1020 · --z-fixed:1030 · --z-modal-backdrop:1040 · --z-modal:1050 · --z-popover:1060 · --z-tooltip:1070
+      <div class="specfig">
+        <div class="spec">
+          <table>
+            <thead><tr><th>值</th><th>Token</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td><code>1000</code></td><td><code>--z-dropdown</code></td><td>下拉菜单</td></tr>
+              <tr><td><code>1020</code></td><td><code>--z-sticky</code></td><td>吸顶元素</td></tr>
+              <tr><td><code>1030</code></td><td><code>--z-fixed</code></td><td>固定层</td></tr>
+              <tr><td><code>1040</code></td><td><code>--z-modal-backdrop</code></td><td>弹窗遮罩</td></tr>
+              <tr><td><code>1050</code></td><td><code>--z-modal</code></td><td>弹窗</td></tr>
+              <tr><td><code>1060</code></td><td><code>--z-popover</code></td><td>浮层</td></tr>
+              <tr><td><code>1070</code></td><td><code>--z-tooltip</code></td><td>气泡提示</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
-    <!-- ============ 08 块级 ============ -->
+    <!-- ============ 11 块级 ============ -->
     <section id="blocks">
-      <div class="sec-head"><span class="idx">08</span><h2>块级 Token · --pd-* 家族</h2></div>
-      <p class="sec-sub">24 个板块局部 token 已从各 <code class="k">.pd-*</code> 选择器收口为单一源（✅ 已落地）。命名带前缀、值多引用全局 token，属正确做法。</p>
-      <div class="grid c2">
-        <div class="card"><b>eyebrow / intro / split</b><div style="margin-top:8px;font-family:var(--mono);font-size:12px;color:var(--c-ink-2);line-height:1.9">
-          --pd-eyebrow-color · --pd-intro-fg / fg2<br>--pd-split-accent / fg / fg2</div></div>
-        <div class="card"><b>hero（12 个）</b><div style="margin-top:8px;font-family:var(--mono);font-size:12px;color:var(--c-ink-2);line-height:1.9">
-          --pd-hero-accent / bg / bg2 / card-bg / img-bg<br>--pd-hero-fg / fg2 / fg3 / border / border-strong<br>--pd-hero-divider / divider2</div></div>
-        <div class="card"><b>scene-grid（6 个）</b><div style="margin-top:8px;font-family:var(--mono);font-size:12px;color:var(--c-ink-2);line-height:1.9">
-          --pd-grid-accent / fg / fg2 / fg3<br>--pd-grid-card-bg / border</div></div>
-        <div class="card"><b>语义说明</b><div style="margin-top:8px;font-size:13px;color:var(--c-ink-2);line-height:1.6">
-          <code class="k">fg</code>=主前景 · <code class="k">fg2/fg3</code>=次级前景 · <code class="k">accent</code>=强调（默认 #888）· <code class="k">border/divider</code>=分割。</div></div>
+      <div class="sec-head"><span class="idx">11</span><h2>块级 Token · --pd-* 家族</h2></div>
+      <p class="sec-sub">24 个板块局部 token 已从各 <code class="k">.pd-*</code> 选择器收口为单一源（✅ 已落地·本文件权威源）。组件内只「消费」不「定义」。</p>
+      <div class="specfig">
+        <div class="spec grid c2">
+          <div class="card"><b>eyebrow / intro / split</b><div class="mono-block" style="margin-top:8px">--pd-eyebrow-color:#888888
+--pd-intro-fg / fg2
+--pd-split-accent / fg / fg2</div></div>
+          <div class="card"><b>hero（12 个）</b><div class="mono-block" style="margin-top:8px">--pd-hero-accent:#888888 / bg / bg2 / card-bg / img-bg
+--pd-hero-fg / fg2 / fg3 / border / border-strong
+--pd-hero-divider / divider2</div></div>
+          <div class="card"><b>scene-grid（6 个）</b><div class="mono-block" style="margin-top:8px">--pd-grid-accent:#888888 / fg / fg2 / fg3
+--pd-grid-card-bg / border</div></div>
+          <div class="card"><b>语义说明</b><div style="margin-top:8px;font-size:13px;color:var(--c-ink-2);line-height:1.65"><code class="k">fg</code>=主前景 · <code class="k">fg2/fg3</code>=次级前景 · <code class="k">accent</code>=强调（默认 #888）· <code class="k">border/divider</code>=分割。</div></div>
+        </div>
+        <div class="note" style="margin-top:var(--s5)"><b>完整性提示（🟡）：</b> 仍有 <code class="k">#ffffff×23</code>、<code class="k">#0a0a0a×13</code>、<code class="k">#888888×5</code> 等字面硬编码散布在组件里，与现有 token 值完全一致却未走变量——属「已落地但未接线」，不改视觉，只影响单一源纯度。建议全量替换为 <code class="k">var(--color-white)</code> 等（可用脚本安全替换，带 fallback）。</div>
       </div>
     </section>
 
-    <!-- ============ 09 深色 ============ -->
-    <section id="dark">
-      <div class="sec-head"><span class="idx">09</span><h2>深色模式 Dark</h2></div>
-      <p class="sec-sub">页面级反转已 Token 化（✅），导航/footer/hero 等通过 site-shell.css 豁免区保持浅色逻辑（用户要求）。但<b>深色下的组件表面/渐变未纳入 Token</b>（🔴 盲区 H/I）。</p>
-      <div class="grid c3">
-        <div class="sw"><div class="chip" style="background:#0a0a0a"></div><div class="nm">--color-background</div><div class="vl">#0a0a0a（反转）</div></div>
-        <div class="sw"><div class="chip" style="background:#f5f5f5"></div><div class="nm">--color-text</div><div class="vl">#f5f5f5（反转）</div></div>
-        <div class="sw"><div class="chip" style="background:#1a1a1a"></div><div class="nm">--color-white</div><div class="vl">#1a1a1a（深卡）</div></div>
+    <!-- ============ 12 原盲区 A–L（已收口） ============ -->
+    <section id="landed">
+      <div class="sec-head"><span class="idx">12</span><h2>原盲区 A–L（已全部收口）</h2></div>
+      <p class="sec-sub">v1 快照中标记为「🔴 未覆盖」的 11 个维度，现均已在 <code class="k">design-tokens.css</code> 落地并接线（§10–§21）。下表为当前真实状态。</p>
+      <table>
+        <thead><tr><th>原盲区</th><th>维度</th><th>落地 Token</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>字号阶梯</td><td><code>--fs-12 … --fs-200</code>（14 档，rem）</td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>B</td><td>行高</td><td><code>--lh-090 … --lh-180</code>（14 档）</td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>C</td><td>字距</td><td><code>--ls-*</code>（em 12 + px 20+）</td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>D</td><td>字重</td><td><code>--fw-300 … --fw-900</code> / <code>--fw-normal</code></td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>E</td><td>统一间距体系</td><td><code>--gap-4 … --gap-96</code>（4px 基准）</td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>F</td><td>容器宽度</td><td><code>--container-*</code>（page/read/card/mock/mock2）</td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>G</td><td>透明度层级</td><td><code>--opacity-hide/dim/dim2/dim3/show/085/04</code></td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>H</td><td>深色组件表面色</td><td><code>--surface-d1 … d4</code></td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>I</td><td>渐变</td><td><code>--gradient-scrim</code> / <code>scrim-strong</code> / <code>shimmer</code></td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>J</td><td>响应式断点</td><td><code>--bp-tablet:767px</code> / <code>--bp-mobile:560px</code></td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>K</td><td>宽高比</td><td><code>--ratio-4-3 / 4-5 / 5-3 / 16-9</code></td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+          <tr><td>L</td><td>交互态色彩</td><td><code>--state-hover-bg</code> / <code>--state-focus-ring</code></td><td><span class="badge b-ok">✅ 已落地·已接线</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============ 13 故意保留 ============ -->
+    <section id="intentional">
+      <div class="sec-head"><span class="idx">13</span><h2>故意保留裸写（非遗漏）</h2></div>
+      <p class="sec-sub">以下属「设计意图」，抽成 token 无收益且易误改，刻意保留裸写：</p>
+      <div class="card" style="font-size:13.5px;color:var(--c-ink-2);line-height:1.9">
+        · <b>流体字号</b> <code class="k">clamp(...)</code>：响应式设计意图，抽 token 反增噪音。<br>
+        · <b>精确 px 行高</b>（如 162.8px）：特定标题垂直居中专用。<br>
+        · <b>精确像素宽高比</b>（如 1136/608）：图片原始比例，必须原样。<br>
+        · <b>美术渐变</b>（mockup 金属/玻璃/屏幕）：逐件设计，抽 token 破坏表现。
       </div>
     </section>
 
-    <!-- ============ 10 盲区 ============ -->
-    <section id="gaps">
-      <div class="sec-head"><span class="idx">10</span><h2>设计盲区 · 未覆盖角落</h2></div>
-      <p class="sec-sub">以下维度在现有 Token 体系中<b>完全缺席</b>，仍靠散落硬编码维持。每个都附真实频次证据、风险与建议 Token、优先级（H 高 / M 中 / L 低）。</p>
-
-      <div class="grid">
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>A · 字号阶梯</h4><span class="ev">20+ 个不同取值</span><span class="pri pri-H">H</span></div>
-          <p>font-size 散落 12–148px 与多个 clamp()，无统一阶梯，跨页标题层级易漂移。</p>
-          <div class="fix"><b>建议：</b><code class="k">--fs-display / h1 / h2 / h3 / h4 / body / sm / xs</code>，按用途聚类而非按像素。</div>
+    <!-- ============ 14 应用示意 ============ -->
+    <section id="apply">
+      <div class="sec-head"><span class="idx">14</span><h2>应用示意</h2></div>
+      <p class="sec-sub">用本套 Token 组合出的示意件，验证「改一处 token → 全局生效」。
+        <span class="badge b-mute">说明：wlili 无通用 UI 组件库（components.css 为内容板块库），此处仅演示 Token 组合效果，非现成组件。</span></p>
+      <div class="specfig">
+        <div class="demo-wrap">
+          <div class="demo-card">
+            <div class="demo-thumb">--gradient · --ratio-*</div>
+            <div class="demo-body">
+              <span class="demo-badge">已上线</span>
+              <h4>案例封面卡</h4>
+              <p>圆角 <code class="k">--radius-xl</code> · 浮起 <code class="k">--shadow-card</code> · 文字 <code class="k">--fs-24/--fs-14</code> · 间距 <code class="k">--gap-12/--gap-24</code>。</p>
+              <div class="demo-row">
+                <button class="demo-btn">查看案例</button>
+                <button class="demo-btn ghost">收藏</button>
+              </div>
+              <input class="demo-input" placeholder="输入框 · --radius-sm · --state-focus-ring（点我聚焦）">
+            </div>
+          </div>
+          <div class="demo-code">
+            <div class="mono-block">.demo-card{
+  border-radius: var(--radius-xl);
+  box-shadow:    var(--shadow-card);
+  background:    var(--color-white);
+}
+.demo-btn{
+  border-radius: var(--radius-pill);
+  background:    var(--color-black);
+  color:         var(--color-white);
+}
+.demo-input:focus{
+  box-shadow: 0 0 0 3px var(--state-focus-ring);
+}</div>
+            <div class="note" style="margin-top:var(--s5);font-size:12.5px">上排为渲染结果，下排为对应 token 写法——直接对照，改 token 即改外观。</div>
+          </div>
         </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>B · 行高</h4><span class="ev">12 档 (1.05–1.7)</span><span class="pri pri-H">H</span></div>
-          <p>行高裸写，标题与正文混用，长文可读性靠巧合。</p>
-          <div class="fix"><b>建议：</b><code class="k">--lh-tight / snug / normal / relaxed</code>。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>C · 字距 Letter-spacing</h4><span class="ev">15 档 (-7.4px…+0.08em)</span><span class="pri pri-H">H</span></div>
-          <p>大负数 px 字距绑定超大显示字，零散且不可复用；eyebrow 的 +em 字距未统一。</p>
-          <div class="fix"><b>建议：</b><code class="k">--tracking-tightest / tight / normal / wide</code>。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>D · 字重</h4><span class="ev">8 档 (300–900)</span><span class="pri pri-M">M</span></div>
-          <p>仅字体族有 token，字重裸写。主力是 600/500/400，但 800/900 偶发，易破坏视觉节奏。</p>
-          <div class="fix"><b>建议：</b><code class="k">--fw-regular/medium/semibold/bold</code>。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>E · 统一间距体系</h4><span class="ev">gap 10+ 种裸值</span><span class="pri pri-H">H</span></div>
-          <p>只有区块留白四档；组件内 gap/margin 全是 1rem/24px/20px… 无基准尺度，改间距要满文件找。</p>
-          <div class="fix"><b>建议：</b><code class="k">--space-1…12</code>（4px 基准）+ <code class="k">--gap-*</code> 语义别名。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>F · 容器宽度</h4><span class="ev">1520px / 680px / 560px…</span><span class="pri pri-M">M</span></div>
-          <p>主容器 1520px、正文阅读宽度 680px 等裸写，响应式下无统一 max-width 语义。</p>
-          <div class="fix"><b>建议：</b><code class="k">--container-max</code>(1520) / <code class="k">--container-text</code>(680)。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>G · 透明度层级</h4><span class="ev">0 / .5 / .55 / .6 / .85</span><span class="pri pri-M">M</span></div>
-          <p>disabled / hover / overlay 的 opacity 裸写，缺少语义命名。</p>
-          <div class="fix"><b>建议：</b><code class="k">--opacity-disabled/.muted/.soft</code>。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>H · 深色组件表面色</h4><span class="ev">#0f0f11/#14161a/#1c1c22/#2a2a2a</span><span class="pri pri-H">H</span></div>
-          <p><b>真实盲区：</b>深色模式 Token 只反转了"页面底/文字/卡底"，但暗色下的组件表面（深卡、深块背景）用的是一批未管理的 hex（#0f0f11、#14161a、#1c1c22、#2a2a2a、#1a1a1a），与 <code class="k">--color-white→#1a1a1a</code> 重叠却各自为政，深色主题无法一处调。</p>
-          <div class="fix"><b>建议：</b>新增 <code class="k">--color-surface-dark-1…4</code> 收纳这批深色表面，并让梯度（I）引用它们。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>I · 渐变 Gradients</h4><span class="ev">13+ 种写法</span><span class="pri pri-M">M</span></div>
-          <p>深色 hero/卡渐变（#2d2d44→#1a1a2e、radial #1c1f25→#0c0d1x）、浅色遮罩、奶油渐变（#c8b8a8→#e8dcc8）全部裸写，且绑定了盲区 H 的未管理深色。</p>
-          <div class="fix"><b>建议：</b>把高频渐变提为 <code class="k">--grad-dark-hero / --grad-dark-card / --grad-overlay-light</code>。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#b42318">
-          <div class="gh"><h4>J · 响应式断点</h4><span class="ev">1024/768/767/900/480/1500</span><span class="pri pri-M">M</span></div>
-          <p><b>存在隐患：</b>同时使用了 <code class="k">max-width:768px</code> 与 <code class="k">max-width:767px</code>（×5 与 ×2），off-by-one 会导致同一视口命中两套规则。无命名断点。</p>
-          <div class="fix"><b>建议：</b><code class="k">--bp-sm(480)/md(768)/lg(1024)/xl(1500)</code>，并统一 768（弃用 767）。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#92670a">
-          <div class="gh"><h4>K · 宽高比 Aspect-ratio</h4><span class="ev">4/3·4/5·16/9·1/1…</span><span class="pri pri-L">L</span></div>
-          <p>布局型比例（4/3、4/5、16/9、1/1、5/3）可 Token 化；但 <code class="k">1136/608</code>、<code class="k">1448/905</code> 等是图片原生比例，应保留硬编码。</p>
-          <div class="fix"><b>建议：</b>仅把布局比例提为 <code class="k">--ratio-*</code>，图片原生比例不碰。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#92670a">
-          <div class="gh"><h4>L · 交互态色彩</h4><span class="ev">hover/focus/active 未系统管理</span><span class="pri pri-L">L</span></div>
-          <p>按钮 hover 背景、焦点环(focus-ring)、active 态多为局部硬编码，未与 token 联动。</p>
-          <div class="fix"><b>建议：</b><code class="k">--state-hover / --state-focus-ring</code>，复用 accent 与 surface。</div>
-        </div>
-
-        <div class="gap" style="--b-color:#92670a">
-          <div class="gh"><h4>🟡 完整性 · 已落地 token 未接线</h4><span class="ev">#fff×23 / #0a0a0a×13</span><span class="pri pri-L">L</span></div>
-          <p>并非新角落，而是"已有 token 但组件里仍写死字面"：<code class="k">#ffffff</code>×23、<code class="k">#0a0a0a</code>×13、<code class="k">#888888</code>×5 等。零视觉风险，但削弱单一源纯度。</p>
-          <div class="fix"><b>建议：</b>一次性全量替换为对应 <code class="k">var()</code>（可用脚本安全替换，带 fallback）。</div>
-        </div>
-      </div>
-
-      <div class="note" style="margin-top:var(--sp-6)">
-        <b>优先级建议（先做高 ROI）：</b><br>
-        ① <b>A+B+C+D 排印四件套</b> + <b>E 间距体系</b> —— 这五项覆盖 80% 的"视觉不一致"来源，且彼此关联，建议打包成一次"排印与间距基础"收口；<br>
-        ② <b>H 深色表面 + I 渐变</b> —— 解决深色主题无法一处调的真问题；<br>
-        ③ <b>J 断点</b> 顺手修掉 767/768 冲突；<br>
-        ④ <b>F/G/K/L</b> 与 🟡 完整性清理 —— 收益递减，按空闲推进。
       </div>
     </section>
 
     <div class="footer">
-      本文档由 WorkBuddy 依据 wlili.top 实时 CSS（components.css / site-shell.css / design-tokens.css）自动盘点生成。
-      Token 取值与代码完全一致，仅改变现位置、不臆造。如需把 §10 盲区落地，可逐维度接入 design-tokens.css 并 bump 版本号。
+      本文档由 WorkBuddy 依据 wlili.top 实时 CSS（portfolio/cases/_shared/design-tokens.css）核对生成，<b>v3 · 2026-10-09</b>。
+      Token 取值与代码完全一致（rem 写法，括号内为 px 等价），仅改变呈现形式、不臆造。
+      沿革：v1（2026-09-28，含失效路径与未收口盲区）→ <code class="k">design-system-spec-v1-20260928.html</code>；
+      v2（2026-10-09，修正取值但版式单调、动效 CSS 缺失）→ <code class="k">design-system-spec-v2-20261009.html</code>。
+      如需把 §11 的「字面硬编码未替换」纯度问题落地，可全量替换为对应 var() 并 bump 版本号。
     </div>
   </main>
 </div>
 
 <script>
-  // 缓动曲线可视化：让小球按对应 cubic-bezier 从左侧滑到右侧
+  /* ---- 动效演示 ---- */
   function play(){
     document.querySelectorAll('.ball').forEach(function(b){
       var ease=b.getAttribute('data-ease');
       b.style.transition='none';
       b.style.left='0px';
-      // 触发重排
       void b.offsetWidth;
       b.style.transition='left 900ms '+ease;
       b.style.left='calc(100% - 18px)';
     });
   }
   document.getElementById('replay').addEventListener('click',play);
+  /* 顶部按钮：先平滑滚到 §09 动效区，待滚动停稳再重播。
+     动效在 11,000+px 之下、约 14 屏外，不滚过去点了看不见；
+     用「停稳检测」代替固定延时——长距离平滑滚动耗时不确定，固定延时会在滚动未完时就开播。 */
+  document.getElementById('replayTop').addEventListener('click',function(){
+    var m=document.getElementById('motion');
+    if(!m){ play(); return; }
+    var last=window.scrollY, still=0, t0=Date.now();
+    m.scrollIntoView({behavior:'smooth',block:'center'});
+    var iv=setInterval(function(){
+      var y=window.scrollY;
+      still=(Math.abs(y-last)<1)?still+1:0;
+      last=y;
+      if(still>=5||Date.now()-t0>2200){ clearInterval(iv); play(); }
+    },60);
+  });
   window.addEventListener('load',function(){ setTimeout(play,300); });
+
+  /* ---- 深/浅预览切换 ---- */
+  var themeBtn=document.getElementById('themeBtn');
+  themeBtn.addEventListener('click',function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', cur==='dark'?'light':'dark');
+  });
+
+  /* ---- 导航 scrollspy ---- */
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function spy(){
+    var y=window.scrollY+140, idx=0;
+    secs.forEach(function(s,i){ if(s && s.offsetTop<=y) idx=i; });
+    links.forEach(function(a,i){ a.classList.toggle('on', i===idx); });
+  }
+  window.addEventListener('scroll',spy,{passive:true});
+  window.addEventListener('load',spy);
 </script>
 </body>
 </html>

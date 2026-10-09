@@ -13,6 +13,9 @@
   --accent-hover:#65a30d; --accent-light:var(--accent-soft); --ink-tertiary:var(--muted);
   --accent-grad:linear-gradient(135deg,#a3e635 0%,#65a30d 100%);
   --hero-grad:linear-gradient(135deg,#a3e635 0%,#65a30d 100%);
+  /* 一致性收敛（2026-10-09）：子组件聚焦/选中色统一走实色绿，替代写死 #6366f1 回退与 rgba(99,102,241,.1) 靛蓝环 */
+  --accent-color:var(--accent);
+  --accent-ring:rgba(132,204,22,0.18);
   --cap-bg:#14171c; --cap-ink:#ffffff;
   --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px -10px rgba(16,24,40,.08);
   --rail-w:68px; --r-lg:20px; --r-md:14px;
@@ -59,7 +62,7 @@
   --sp-6:12px; --sp-7:14px; --sp-8:16px; --sp-9:20px; --sp-10:24px; --sp-11:32px;
 
   /* —— 字阶（正文 13 / 次要 12 / 卡片标题 15 / 页标题 27）—— */
-  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-15:15px;
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-15:15px; --fs-16:16px; --fs-17:17px; --fs-18:18px; --fs-19:19px; --fs-20:20px; --fs-21:21px;
   --fs-22:22px; --fs-27:27px; --fs-34:34px;
 
   /* —— 动效：时长 + 缓动 —— */
@@ -71,6 +74,11 @@
 
   /* —— 布局 —— */
   --sidebar-width:240px;
+  /* 响应式断点参考集（命名令牌，供人工 / JS matchMedia 引用）。
+     ⚠ 纯 CSS @media 条件不能使用 var() —— 下方 @media 仍写裸值，
+       切勿替换为 var(--bp-*)（媒体查询条件里 var() 无效，会整体失效）。 */
+  --bp-mobile:480px; --bp-xs:560px; --bp-phablet:734px; --bp-tablet:768px;
+  --bp-netbook:820px; --bp-md:900px; --bp-laptop:1024px; --bp-lg:1200px; --bp-xl:1280px;
 }
 
 /* 深色主题：语义色底提高混合比，保证深底上的状态可辨 */
@@ -607,7 +615,11 @@ tbody tr:hover{background:var(--panel);}
   background:var(--card);color:var(--ink);transition:.15s;
 }
 .btn:hover{transform:translateY(-1px);}
-.btn.primary{background:var(--accent-grad);color:#fff;border:none;}
+/* 主按钮：单一来源，统一「绿渐变 + 白字 + 胶囊」。.btn-primary 为 .btn.primary 的等价别名（2026-10-09 收敛双类名） */
+.btn.primary, .btn-primary{ background:var(--accent-grad); color:#fff; border:none; border-radius:999px; display:inline-flex; align-items:center; gap:8px; padding:10px 18px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:filter .15s,transform .15s; }
+.btn.primary:hover, .btn-primary:hover{ filter:brightness(.96); }
+.btn.primary:active, .btn-primary:active{ transform:scale(.98); }
+.btn.primary:disabled, .btn-primary:disabled{ opacity:.5; cursor:not-allowed; }
 .btn.danger{background:#e5484d;color:#fff;border:none;}
 .btn.danger:hover{filter:brightness(1.06);}
 .btn.dark{background:var(--cap-bg);color:var(--cap-ink);border:none;}
@@ -880,11 +892,10 @@ input:focus:not([type=checkbox]):not([type=radio]),select:focus,textarea:focus{b
 
 .sp-wrap /* Layout */
 .app-container{ display:flex; min-height:100vh;}.sp-wrap .sidebar{ width:var(--sidebar-width); background:var(--bg-sidebar); border-right:1px solid var(--border-color); display:flex; flex-direction:column; position:fixed; height:calc(100vh - 48px); left:0; top:48px; z-index:100;}.sp-wrap .nav-menu{ flex:1; padding:8px 0; overflow-y:auto;}.sp-wrap .nav-item{ display:flex; align-items:center; gap:10px; padding:9px 16px; margin:2px 8px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.2s; color:var(--text-secondary); font-size:14px; font-weight:500;}.sp-wrap .nav-item:hover{ background:var(--bg-hover); color:var(--text-primary);}.sp-wrap .nav-item.active{ background:var(--bg-white); color:var(--accent); box-shadow:var(--shadow-sm);}.sp-wrap .nav-icon{ width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}.sp-wrap .nav-icon svg{ width:16px; height:16px;}.sp-wrap .sidebar-footer{ padding:10px 16px; border-top:1px solid var(--border-color);}.sp-wrap .sidebar-footer-text{ text-align:center; color:var(--text-muted); font-size:12px;}.sp-wrap .main-content{ flex:1; margin-left:var(--sidebar-width); display:flex; flex-direction:column; min-height:100vh; min-width:0;}.sp-wrap .top-bar{ background:var(--bg-secondary); border-bottom:1px solid var(--border-color); padding:0 20px; height:52px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;}.sp-wrap .top-bar-left{ display:flex; align-items:center; gap:12px;}.sp-wrap .module-title{ font-size:18px; font-weight:700;}.sp-wrap .top-bar-right{ display:flex; align-items:center; gap:10px;}.sp-wrap .mobile-menu-btn{ display:none; width:36px; height:36px; border:none; background:transparent; border-radius:var(--radius-md); cursor:pointer; align-items:center; justify-content:center; color:var(--text-secondary); flex-shrink:0;}.sp-wrap .mobile-menu-btn:hover{ background:var(--bg-hover);}.sp-wrap .mobile-menu-btn svg{ width:24px; height:24px;}.sp-wrap .sidebar-overlay{ display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:99; opacity:0; transition:opacity 0.3s;}.sp-wrap .sidebar-overlay.active{ display:block; opacity:1;}.sp-wrap .content-area{ flex:1; padding:20px; min-width:0; overflow-x:hidden;}.sp-wrap /* Buttons */
-.btn-primary{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--accent); color:var(--fill-white); border:none; border-radius:var(--radius-md); font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap;}/* 按钮统一复用设计规范主按钮（.btn.primary：主色渐变 + 白字 + 胶囊）
-   此前 hover 用未定义的 --accent-hover → var() 失效 → 背景回退透明，看着像「变灰糊在底色里」。 */
-.sp-wrap .btn-primary{ background:var(--accent-grad); color:#fff; border:none; border-radius:999px;}
-.sp-wrap .btn-primary:hover{ background:var(--accent-grad); filter:brightness(.96);}
-.sp-wrap .btn-primary:active{ transform:scale(0.98);}
+/* .btn-primary 已收敛到上方 .btn.primary 统一规则（2026-10-09 消除双类名 + 尺寸分歧） */
+/* (收敛：见 .btn.primary 统一规则) */
+/* (收敛) */
+/* (收敛) */
 .sp-wrap .btn-sm{ padding:7px 14px; font-size:12.5px;}.sp-wrap .btn-secondary{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--bg-white); color:var(--text-primary); border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;}.sp-wrap .btn-secondary:hover{ background:var(--bg-hover); border-color:var(--text-muted);}.sp-wrap .btn-secondary:active{ transform:scale(0.98);}.sp-wrap .btn-danger{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--bg-white); color:var(--danger); border:1px solid rgba(229,72,77,0.3); border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;}.sp-wrap .btn-danger:hover{ background:var(--danger-bg); border-color:var(--danger);}.sp-wrap .btn-sm{ padding:5px 12px; font-size:13px;}.sp-wrap .btn-icon-sm{ width:28px; height:28px; border-radius:6px; border:1px solid var(--border-light); background:var(--fill-white); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); transition:all 0.2s; flex-shrink:0;}.sp-wrap .btn-icon-sm:hover{ background:var(--bg-hover); color:var(--danger); border-color:var(--danger);}.sp-wrap .btn-icon{ width:30px; height:30px; border:1px solid var(--border-color); border-radius:var(--radius-sm); background:var(--bg-white); color:var(--text-secondary); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0;}.sp-wrap .btn-icon:hover{ border-color:var(--text-muted); color:var(--text-primary);}.sp-wrap .btn-icon svg{ width:16px; height:16px;}.sp-wrap /* Search */
 .search-box{ position:relative; width:240px;}.sp-wrap .search-box input{ width:100%; padding:7px 12px 7px 34px; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-primary); font-size:14px; outline:none; transition:all 0.2s;}.sp-wrap .search-box input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(101,163,13,0.1);}.sp-wrap .search-icon{ position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-muted);}.sp-wrap /* Filter */
 .filter-bar{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;}.sp-wrap .filter-select{ padding:6px 32px 6px 10px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:14px; outline:none; cursor:pointer; min-width:100px; appearance:none; -webkit-appearance:none; background:var(--bg-primary) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;}/* ⛔ Stats 基础定义必须是**全局**规则，绝不能塞进任何 @media。
@@ -1124,6 +1135,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
     </div>
     <nav class="capsules" id="capsules"></nav>
     <div class="top-actions">
+      <a class="rbtn" id="designSysBtn" href="/admin-design-system-spec.html" target="_blank" rel="noopener" title="查看设计规范" style="text-decoration:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H16a6 6 0 0 0 6-6c0-4.4-4.5-8-10-8Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg></a>
       <button class="rbtn" id="toolsMenuBtn" title="工具菜单 · 新窗口打开其他工具" onclick="toggleToolsMenu(event)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></button>
       <div class="rbtn-menu mega" id="toolsMenuPanel" onclick="event.stopPropagation()">
         <div class="rbtn-mega-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><input type="text" id="toolsMenuSearch" placeholder="搜索工具..." autocomplete="off" oninput="toolsMenuFilter(this.value)"></div>
@@ -3834,7 +3846,7 @@ function plibRules(){
         ? '已按「' + plibEsc(FC[feat] || feat) + '」筛选：' + R.length + ' / ' + ALL.length + ' 条'
         : '共 ' + R.length + ' 条规则 · 每条只讲两件事：<b>什么时候用</b>、<b>怎么解决</b>；英文标识与判定表达式收在弹窗底部「规则原文」里，一般不用看')
     + '</div>';
-  if(feat) h += '<div style="grid-column:1/-1;margin-top:8px"><button class="btn sm" onclick="PLIB.feat=\'\';renderMain()">显示全部</button></div>';
+  if(feat) h += '<div style="grid-column:1/-1;margin-top:8px"><button class="btn btn-sm" onclick="PLIB.feat=\'\';renderMain()">显示全部</button></div>';
   if(!R.length) return h + '<div class="fempty"><div class="big-ic">🔎</div><b>该特征域暂无规则</b>V2.0 规则库还没覆盖这个症状，可到「实测诊断」看有没有对应案例。</div>';
   h += R.map(function(r){
     var z = ZH[r.id] || {};
@@ -4127,7 +4139,7 @@ function plibDiag(){
            ⚠ 2026-10-08：原写法跳工艺库 'presets' 页签，但该页签已撤（精选预设库并入 PSET），
            预览数据源也从 PRESET_PATCHES 改为 PSET —— 继续跳会落到不存在的页签。
            presetFindRow() 在预设页按 id 找行并高亮，与该页现有定位方式一致。 */
-        + '<button class="btn sm" onclick="plibCloseModal();state.tool=\'filament\';state.sub=\'presets\';syncHash();renderMain();setTimeout(function(){presetFindRow(\'' + plibEsc(pre.id) + '\');},80)">看预设</button>'
+        + '<button class="btn btn-sm" onclick="plibCloseModal();state.tool=\'filament\';state.sub=\'presets\';syncHash();renderMain();setTimeout(function(){presetFindRow(\'' + plibEsc(pre.id) + '\');},80)">看预设</button>'
         + '</div>'
       : (r.recommended_preset
           ? '<div class="plib-note" style="margin-top:8px">推荐预设 <span class="en inline">' + plibEsc(r.recommended_preset) + '</span> 不在打印参数预设里（可能已被重命名或删除）。</div>'
@@ -4899,7 +4911,7 @@ function plibOptimize(){
   h += '<div class="fbar"><span class="flabel">文件：' + plibEsc(OPT.name) + '　·　类型 ' + (OPT.kind==='stl'?'STL':'3MF') + '</span>'
     + (OPT.busy ? '<span class="flabel">分析中…</span>' : '')
     + '<span class="flabel" style="color:var(--muted)">仅在本机内存中处理，不上传服务器</span>'
-    + '<button class="btn sm" onclick="optReset()">清除并重新选择</button></div>';
+    + '<button class="btn btn-sm" onclick="optReset()">清除并重新选择</button></div>';
   if(OPT.busy && !OPT.diag){
     h += '<div class="plib-card"><div class="plib-note">正在分析模型…</div></div></div>';
     return h;
@@ -10889,7 +10901,7 @@ var BK = {
 /* 聚焦/展开态与全站表单统一（.form-input:focus 同款：蓝边 + 10% 靛蓝 ring）。
    注意要写 :focus 而非只写 :focus-visible —— 鼠标点击不触发 focus-visible。 */
 .sel-trigger:focus, .sel-trigger:focus-visible, .sel.is-open .sel-trigger {
-  border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, rgba(99,102,241,0.1)); outline: none;
+  border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, var(--accent-ring)); outline: none;
 }
 .sel-chevron { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px;
   color: var(--text-muted); pointer-events: none; transition: transform .15s; }
@@ -10935,7 +10947,7 @@ var BK = {
 .sel-search { position: sticky; top: 0; z-index: 1; padding: 0 0 4px; background: var(--bg-primary); }
 .sel-search-input { width: 100%; padding: 5px 9px; border: 1px solid var(--border-color); border-radius: 7px;
   font-size: 13px; font-family: inherit; background: var(--bg-primary); color: var(--text-primary); outline: none; }
-.sel-search-input:focus { border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, rgba(99,102,241,0.1)); }
+.sel-search-input:focus { border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, var(--accent-ring)); }
 /* 选项图标 / 色块圆点 */
 .sel-opt-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
   margin-right: 7px; flex: none; color: var(--text-secondary); }
@@ -10972,7 +10984,7 @@ var BK = {
   background: var(--bg-primary); color: var(--text-primary); font-size: 13px; text-align: left; cursor: pointer; }
 .cal-trigger:hover { border-color: var(--text-muted); }
 .cal-trigger:focus, .cal-trigger:focus-visible, .cal.is-open .cal-trigger {
-  border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, rgba(99,102,241,0.1)); outline: none;
+  border-color: var(--accent-color, var(--accent, #6366f1)); box-shadow: 0 0 0 3px var(--accent-light, var(--accent-ring)); outline: none;
 }
 .cal-ico { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px;
   color: var(--text-muted); pointer-events: none; }
@@ -11017,7 +11029,7 @@ var BK = {
 .cal-hint b { color: var(--accent-color, var(--accent, #6366f1)); font-weight: 600; }
 .cal-months { display: flex; gap: 14px; }
 .cal-month { flex: 1 1 0; min-width: 0; }
-.cal-day.in-range { background: var(--accent-light, rgba(99,102,241,.14)); border-radius: 0; color: var(--text-primary); }
+.cal-day.in-range { background: var(--accent-light, var(--accent-ring)); border-radius: 0; color: var(--text-primary); }
 .cal-day.range-start, .cal-day.range-end {
   background: var(--accent-color, var(--accent, #6366f1)); color: #fff; font-weight: 500; }
 .cal-day.range-start { border-radius: 999px 0 0 999px; }
@@ -11943,8 +11955,8 @@ function upgradeUI(root) {
 
 
 /* ↓ 表单基础样式（由 css_extract.py 从 portfolio 后台按选择器精确抽取） */
-.btn-secondary { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-secondary); border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
-.btn-secondary:hover { background: var(--bg-hover); }
+/* .btn-secondary 收敛（2026-10-09）：删除此处被下方「按钮类」区覆盖的重复定义，
+   单一来源见 .btn-secondary（pill 10/18，与 .btn.primary 同形）。 */
 .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .form-group.full { grid-column: 1 / -1; }
 .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
@@ -11953,7 +11965,7 @@ function upgradeUI(root) {
 .form-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--accent-color); cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
 .form-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--border-color); }
 .form-input, .form-select, .form-textarea { padding: 9px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 14px; outline: none; transition: all .2s; font-family: inherit; background: var(--bg-primary); width: 100%; }
-.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px var(--accent-ring); }
 .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
 .form-textarea { resize: vertical; min-height: 80px; }
 .form-select { cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--bg-primary) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; }
@@ -11985,11 +11997,9 @@ function upgradeUI(root) {
 .btn-icon-sm svg { width:14px; height:14px; --ic-sw:2; }
 /* ↓ 按钮类（按 tools 后台规格重写，而非照搬 portfolio 的深灰 #2B3033 ——
    tools 的主色是亮绿渐变胶囊，档案规定主按钮 = .btn.primary：accent 渐变 + 白字 + 胶囊、无投影） */
-.btn-primary { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:999px;
-  font-size:13px; font-weight:600; cursor:pointer; border:1px solid transparent;
-  background:var(--accent-grad); color:#fff; }
-.btn-primary:hover { filter:brightness(.96); }
-.btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+/* .btn-primary 收敛：见 .btn.primary 统一规则（2026-10-09） */
+/* (收敛) */
+/* (收敛) */
 .btn-secondary { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:999px;
   font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--border-color);
   background:var(--bg-primary); color:var(--text-secondary); transition:background .2s,color .2s; }

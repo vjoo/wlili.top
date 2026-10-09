@@ -47,6 +47,7 @@ html { touch-action: manipulation; }
   --z-sidebar: 1000;
   --z-modal: 2000;
   --z-toast: 3000;
+  --dm-base: #f7f8fa; /* dotmatrix 背景底色，随主题切换 */
 }
 
 body {
@@ -75,7 +76,8 @@ body {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background: #f7f8fa; /* amotion hero bgColor（浅色） */
+  background: var(--dm-base); /* 随主题切换的 dotmatrix 底色（默认浅色） */
+  transition: background-color 0.6s ease;
 }
 .dotmatrix-bg canvas {
   width: 100%;
@@ -253,12 +255,61 @@ body {
     scroll-behavior: auto !important;
   }
 }
+/* ===== 主题切换：深色模式 token 覆盖 ===== */
+[data-theme="dark"] {
+  --ink: #ECEDEE;
+  --ink-secondary: #C9CBD1;
+  --ink-tertiary: #9CA0AA;
+  --ink-quaternary: #6E727C;
+  --bg: #161922;
+  --bg-white: #12151C;
+  --bg-elevated: #1B1F29;
+  --border: #2C313C;
+  --border-light: #23272F;
+  --link: #8B91F5;
+  --link-hover: #6AA6FF;
+  --fill-white: #ECEDEE;
+  --green: #32D45B;
+  --red: #FF5247;
+  --orange: #FFA31A;
+  --dm-base: #0B0D12;
+}
+body { transition: background-color 0.6s ease, color 0.6s ease; }
+.dotmatrix-bg canvas { transition: opacity 0.35s ease; }
+.card { transition: border-color 0.3s cubic-bezier(0.22,0.61,0.36,1), box-shadow 0.3s cubic-bezier(0.22,0.61,0.36,1), transform 0.3s cubic-bezier(0.22,0.61,0.36,1), background-color 0.4s ease; }
+
+/* ===== 右上角圆形图标按钮 ===== */
+.theme-switch { position: fixed; top: 18px; right: 18px; z-index: 1000; display: flex; gap: 10px; }
+.icon-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--border-light);
+  background: rgba(255,255,255,0.72); color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease;
+}
+.icon-btn:hover { transform: translateY(-2px); border-color: var(--border); }
+.icon-btn:active { transform: scale(0.93); }
+.icon-btn svg { display: block; }
+[data-theme="dark"] .icon-btn { background: rgba(20,23,31,0.66); border-color: var(--border-light); }
+
 </style>
+<script>try{var t=localStorage.getItem('wlili-theme');if(t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
 </head>
 <body>
 
 <!-- Dotmatrix WebGL 半调点阵背景（全屏，复刻 amotion.app 首页 hero） -->
 <div class="dotmatrix-bg" id="dotmatrix-bg" aria-hidden="true"></div>
+
+<!-- 右上角圆形图标按钮：主题切换 + 设计系统规范 -->
+<div class="theme-switch">
+  <button class="icon-btn" id="btnTheme" type="button" aria-label="切换深色 / 亮色" title="切换深色 / 亮色"></button>
+  <a class="icon-btn" id="btnSpec" href="/design-system-spec.html" target="_blank" rel="noopener" aria-label="查看设计系统规范" title="查看设计系统规范">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12.5" r="1.5" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c1.7 0 2-1.2 1.5-2.2-.5-1 .3-2.3 1.6-2.3H18c2.2 0 4-1.8 4-4 0-4.4-4.5-8-10-8z"/></svg>
+  </a>
+</div>
 
 <!-- Hero -->
 <div class="hero">
@@ -500,8 +551,10 @@ void main() {
     var gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: false, antialias: true });
     if (!gl) { container.classList.add('dotmatrix-fallback'); return; }
 
-    /* —— amotion 首页 hero 的原始参数（light 模式） —— */
-    var COLORS = ['#f1f2f4', '#dfe2e7', '#c8cdd4'];
+    /* —— amotion 首页 hero 的原始参数；点阵前景色随主题切换 —— */
+    var DM_LIGHT = ['#f1f2f4', '#dfe2e7', '#c8cdd4'];
+    var DM_DARK  = ['#232a38', '#313a4b', '#454f63'];
+    var COLORS = (document.documentElement.getAttribute('data-theme') === 'dark') ? DM_DARK : DM_LIGHT;
     var FREQ = 1.5, SPEED = 2, CELL = 10, GAMMA = 4, BIAS = 1;
 
     function compile(type, src) {
@@ -590,6 +643,28 @@ void main() {
     gl.uniform1f(dCell, uCellSize);
     gl.uniform1f(dGamma, uGamma);
     gl.uniform1f(dBias, uBias);
+
+    /* 暴露主题调色板接口：主题按钮切换时调用，平滑过渡点阵前景色 */
+    window.__dmSetPalette = function (hexArr) {
+      (hexArr || COLORS).slice(0, MAXC).forEach(function (hex, i) {
+        var h = hex.replace('#', '');
+        palRgb[i*3]   = parseInt(h.substr(0, 2), 16) / 255;
+        palRgb[i*3+1] = parseInt(h.substr(2, 2), 16) / 255;
+        palRgb[i*3+2] = parseInt(h.substr(4, 2), 16) / 255;
+        palA[i] = 1;
+      });
+      gl.useProgram(dotsProg);
+      gl.uniform3fv(dPal, palRgb);
+      gl.uniform1fv(dPalA, palA);
+    };
+    window.__dmSwapTheme = function (toDark) {
+      var cv = container.querySelector('canvas');
+      if (cv) cv.style.opacity = '0.25';
+      setTimeout(function () {
+        window.__dmSetPalette(toDark ? DM_DARK : DM_LIGHT);
+        if (cv) cv.style.opacity = '1';
+      }, 220);
+    };
     gl.useProgram(noiseProg);
     gl.uniform1f(nFreq, uFrequency);
     gl.uniform1f(nSpeed, uSpeedVal);
@@ -681,6 +756,30 @@ void main() {
      用双 pass WebGL2 着色器实时渲染流动点阵，替代原来的 CSS 模糊光斑。
      背景动画始终保留完整幅度，reduced-motion 不限制。 */
   initDotmatrix(document.getElementById('dotmatrix-bg'));
+
+  /* ===== 主题切换（深色/亮色）：按钮 + 持久化 ===== */
+  (function () {
+    var root = document.documentElement;
+    var THEME_KEY = 'wlili-theme';
+    var btnTheme = document.getElementById('btnTheme');
+    var ICON_MOON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    var ICON_SUN  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+    function syncIcon() {
+      var isDark = root.getAttribute('data-theme') === 'dark';
+      if (btnTheme) btnTheme.innerHTML = isDark ? ICON_SUN : ICON_MOON;
+    }
+    function toggleTheme() {
+      var isDark = root.getAttribute('data-theme') === 'dark';
+      var toDark = !isDark;
+      if (toDark) root.setAttribute('data-theme', 'dark');
+      else root.removeAttribute('data-theme');
+      try { localStorage.setItem(THEME_KEY, toDark ? 'dark' : 'light'); } catch (e) {}
+      if (window.__dmSwapTheme) window.__dmSwapTheme(toDark);
+      syncIcon();
+    }
+    if (btnTheme) btnTheme.addEventListener('click', toggleTheme);
+    syncIcon();
+  })();
 
   /* ===== 内容入场动画（reduced-motion 下跳过位移） ===== */
   if (!reduce) {
