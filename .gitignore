@@ -14,6 +14,11 @@ tools/*-data.json*
 
 # 提示词库本机图片存储（server.py /api/pl/img 写入；发布快照会拷贝到 imgs/pl-web/ 再入库）
 tools/imgs/pl/
+# imgs 根目录禁止放原始大图：上传图必须经 server.py PIL 压缩为 WebP 存入 pl/，根目录只允许子目录
+# 曾有 5 张 ~2MB 的 Krea 2 源图遗忘在根目录（11MB），未压缩且零引用，有误入库 + EdgeOne 25MB 风险
+tools/imgs/*.png
+tools/imgs/*.jpg
+tools/imgs/*.jpeg
 
 # 本地工具与运行时缓存
 _restart_server.py
@@ -38,17 +43,20 @@ scripts/check_redundant_files.py
 # WorkBuddy 本地工具数据（工作日志/会话记忆，仅本地使用，不上传部署）
 .workbuddy/
 
-# ⚠️ 设计过程产物：仅本地留档，不上线（2026-09-27）
-# tools/_concept/ 含概念稿、探针页（单文件 4.6MB）、190+ 张设计截图、本地迁移脚本、__pycache__，共 ~37MB
+# ⚠️ 设计过程产物已统一收口到项目外的 D:\wl共享文件夹\_暂存区\<项目>\（按项目分子目录），天然不进本仓库。
+#    以下仅保留项目目录内的临时文件护栏 + 唯一必须入库的构建源。
+# tools/_concept/ 现仅保留 icon-naming-review.html（Ext 层图标资产构建源：icon_naming_review.py 生成、
+#   icon_sync.py/build-ext 读取；不入库则换机器重建 Ext 与线上不一致）。其余 227 个历史文件已于
+#   2026-10-09 迁出至 D:\wl共享文件夹\_暂存区\wlili-top\_concept\。
 # 注意用 `/*` 而不是 `/`：**目录级忽略会让 git 不进入该目录，目录内的 `!` 例外一律失效**。
 tools/_concept/*
-# 例外：图标命名归档页必须入库 —— 它是 Ext 层资产（icons.ext.js）的唯一来源，
-# 不入库则换机器/新克隆时 build-ext 重建出的 Ext 会与线上不一致。
+# 例外：图标命名归档页必须入库（Ext 层资产唯一来源）
 !tools/_concept/icon-naming-review.html
 # 根目录设计截图（授权表单等）
 _shots/
 # 本地归档的旧工具页（已从线上移除，仅本地回退备份，不对外提供）
 tools/_archive/
+# 设计系统规范 design-system-spec.html 已转正为根目录正式页面（随仓库部署），不再用 _spec 暂存副本
 
 # 一次性探针页 / 临时脚本与目录（含本机路径），用完即弃，禁止入库
 _probe_*.html
