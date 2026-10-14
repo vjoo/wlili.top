@@ -66,7 +66,8 @@ var CaseRenderer = (function () {
     'ad-banner': renderAdBanner,         // 广告 Banner（大标题裂开 + 16:9 图片无缝跑马灯 + 上下副标题）
     'text-fill-banner': renderTextFillBanner, // 字图填充 Banner（超大字母镂空填图贴上半屏 + 副标题压字底）
     'icon-wall': renderIconWall,          // 图标动画墙（GIF/APNG/Lottie 散落全屏）
-    'device-screen': renderDeviceScreen   // 设备屏幕嵌入（人物手持样机图 + 透视贴合嵌入设计稿/视频）
+    'device-screen': renderDeviceScreen,  // 设备屏幕嵌入（人物手持样机图 + 透视贴合嵌入设计稿/视频）
+    'gallery-banner': renderGalleryBanner // 卡片长廊Banner（图片隧道：双侧卡片纵深漏斗流向镜头）
   };
 
   var TYPE_LABELS = {};
@@ -98,7 +99,7 @@ var CaseRenderer = (function () {
     var grid = '<section class="sk-grid"><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div><div class="sk-media sk"></div></section>';
     switch (type) {
       case 'intro': case 'hero': case 'hero-banner': case 'big-banner':
-      case 'title': case 'ad-banner': case 'text-fill-banner': case 'mockup-banner': case 'motion-banner': case 'double-banner':
+      case 'title': case 'ad-banner': case 'text-fill-banner': case 'mockup-banner': case 'motion-banner': case 'double-banner': case 'gallery-banner':
       case 'double-image': case 'masonry': case 'stats':
         return hero;
       case 'showcase': case 'image': case 'gallery': case 'carousel':
@@ -122,7 +123,11 @@ var CaseRenderer = (function () {
     if (!container) return;
     var sections = (data && data.sections) || [];
 
-    // 无内容（content.json 拉取失败 / 空配置）：保留骨架占位，避免「中间空白」错觉
+    // 隐藏区块（section.hidden === true）：前端不渲染，仍保留在后台可重新启用
+    // 放在迁移之前过滤，隐藏区块衍生的 title / brand-logo 子区块也一并不生成
+    sections = sections.filter(function (s) { return !(s && s.hidden === true); });
+
+    // 无内容（content.json 拉取失败 / 空配置 / 全部已隐藏）：保留骨架占位，避免「中间空白」错觉
     if (!sections.length) {
       container.innerHTML = '<section class="sk-note sk"></section>';
       try {
@@ -208,6 +213,7 @@ var CaseRenderer = (function () {
       safeDownstream(function () { initViewportMedia(container); }, 'initViewportMedia');
       safeDownstream(function () { initMockupBanners(); }, 'initMockupBanners');
       safeDownstream(function () { initMotionBanners(); }, 'initMotionBanners');
+      safeDownstream(function () { initGalleryBanners(); }, 'initGalleryBanners');
       safeDownstream(function () {
         var runAB = function () { initAdBanners(); };
         if (window.gsap) { runAB(); return; }
@@ -3483,6 +3489,395 @@ var CaseRenderer = (function () {
   }
 
 
+  // ===== 卡片长廊Banner gallery-banner（图片隧道首屏）===========================
+  // 【来源】rbp-imageworks 模板 hero 隧道复刻（数学模型逐条移植）：双侧 3:2 图片卡沿
+  //   对数深度漏斗流向镜头（幂律横向映射 + 顶点弯曲 + 出屏走廊几何收缩甩出）；
+  //   已去除原站导航/按钮/角标，只留动效本体。中央标题/副标题可配。
+  // 【运行时】复用各 case 页已 async 加载的 lib-three.min.js（window.THREE，r128 API：
+  //   outputEncoding 时代 —— 自定义 ShaderMaterial 直采 sRGB 纹理原样输出，所见即所得，
+  //   不做线性空间换算）。THREE 迟迟未加载/启动失败 → 静态 CSS 图片网格兜底，不白屏。
+  // 【纪律】离屏即停 rAF（IntersectionObserver）；prefers-reduced-motion 只画一帧不循环。
+  var GLB_QUEUE = [];
+
+  function renderGalleryBanner(s) {
+    var section = sec('gallery-banner-section');
+    var list = Array.isArray(s.images) ? s.images : [];
+    var imgs = list.map(function (x) { return x && x.image; }).filter(Boolean);
+
+    /* 文字属性（reactbits 式可控项）：字号随相框宽度缩放（cqi 容器查询单位）+ 字重/字距/行高/对齐 */
+    function glbAlignSt(v) {
+      return v === 'left' ? 'justify-content:flex-start;text-align:left'
+        : v === 'right' ? 'justify-content:flex-end;text-align:right' : '';
+    }
+    var tStyle = 'color:' + esc(s.titleColor || '#f5f5f4') +
+      ';font-size:max(2rem,' + (glbNum(s.titleScale, 0.045) * 100).toFixed(2) + 'cqi)' +
+      ';font-weight:' + glbNum(s.titleWeight, 400) +
+      ';letter-spacing:' + glbNum(s.titleTracking, -0.02) + 'em' +
+      ';line-height:' + glbNum(s.titleLineHeight, 1.04);
+    var titleHtml = s.title
+      ? '<div class="glb-title-row"' + (glbAlignSt('center') ? ' style="' + glbAlignSt('center') + '"' : '') + '><h2 class="glb-title" style="' + tStyle + '">' + esc(s.title) + '</h2></div>'
+      : '';
+    var bStyle = 'color:' + esc(s.subtitleColor || 'rgba(245,245,244,0.8)') +
+      ';font-size:' + glbNum(s.subSize, 16) + 'px' +
+      ';font-weight:' + glbNum(s.subWeight, 400) +
+      ';letter-spacing:' + glbNum(s.subTracking, 0) + 'em' +
+      ';line-height:' + glbNum(s.subLineHeight, 1.7);
+    var subHtml = s.subtitle
+      ? '<div class="glb-sub-row"' + (glbAlignSt('center') ? ' style="' + glbAlignSt('center') + '"' : '') + '><p class="glb-sub" style="' + bStyle + '">' + esc(s.subtitle) + '</p></div>'
+      : '';
+
+    /* 只渲染隧道本体（canvas 舞台）+ 可选文字；不挂载静态网格兜底（用户只要卡片长廊）。 */
+    section.innerHTML = '<div class="glb-frame" style="background:' + esc(s.bgColor || '#0c0c0d') + '">' +
+      /* 背景点阵（DOT FIELD，2D canvas）：高斯衰减 + 呼吸波 + 鼠标推开涟漪，移植自克隆页 */
+      '<canvas class="glb-dots" aria-hidden="true"></canvas>' +
+      '<div class="glb-stage" aria-hidden="true"></div>' +
+      ((titleHtml || subHtml) ? '<div class="glb-copy">' + titleHtml + subHtml + '</div>' : '') +
+      '</div>';
+    section._glbS = s;
+    section._glbImgs = imgs;
+    GLB_QUEUE.push(section);
+    return section;
+  }
+
+  // 无 WebGL / THREE 不可用：用户明确不要静态网格兜底，故只隐藏空舞台，保留深色相框 + 文字，
+  // 不出网格、不白屏（glbBoot 失败时相框本来就是空的，这里仅确保 stage 无残留）。
+  function glbFallback(section) {
+    var stage = section.querySelector('.glb-stage');
+    if (stage) stage.style.display = 'none';
+  }
+
+  function initGalleryBanners() {
+    if (!GLB_QUEUE.length) return;
+    var reduced = false;
+    try { reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    /* three.js 是各页 <script async> 引入：轮询等待最多 ~4s，超时回退静态兜底 */
+    var waited = 0;
+    (function whenTHREE() {
+      var pending = GLB_QUEUE; GLB_QUEUE = [];
+      if (window.THREE) {
+        pending.forEach(function (section) {
+          try { glbBoot(section, window.THREE, reduced); }
+          catch (e) { console.warn('[gallery-banner] WebGL 启动失败，回退静态：', e); glbFallback(section); }
+        });
+      } else if (waited < 4000) {
+        waited += 120; GLB_QUEUE = pending; setTimeout(whenTHREE, 120);
+      } else {
+        pending.forEach(glbFallback);
+      }
+    })();
+  }
+
+  function glbNum(v, d) { var n = parseFloat(v); return isNaN(n) ? d : n; }
+  function glbClamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  function glbBoot(section, THREE, reduced) {
+    var frame = section.querySelector('.glb-frame');
+    var host = section.querySelector('.glb-stage');
+    var s = section._glbS || {};
+    var imgs = section._glbImgs || [];
+    if (!frame || !host || !THREE) { glbFallback(section); return; }
+    if (window.__GLB_DEBUG) section._glb = { booted: true, reduced: reduced, hasImgs: imgs.length, hasWebGL: true, texLoaded: 0 };
+
+    var renderer;
+    try {
+      /* preserveDrawingBuffer 仅在 E2E 验证时经 window.__GLB_PRESERVE 开启（否则默认 false 省开销）；
+         开启后 CDP 才能截到真实画面，用于「动画在跑」像素级比对 */
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power', preserveDrawingBuffer: !!window.__GLB_PRESERVE });
+    } catch (e) { glbFallback(section); return; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0, 0); renderer.sortObjects = true;   // 不设 outputEncoding：ShaderMaterial 直采 sRGB 纹理原样输出
+    var dom = renderer.domElement;
+    dom.setAttribute('aria-hidden', 'true');
+    host.appendChild(dom);
+
+    var scene = new THREE.Scene();
+    var cam = new THREE.PerspectiveCamera(40, 1, .05, 400);
+    var geo = new THREE.PlaneGeometry(1.5, 1, 24, 1);            // 3:2 横卡
+    var maxAniso = renderer.capabilities.getMaxAnisotropy();
+    /* 长廊图片全是同源上传文件（相对 URL），three 默认 crossOrigin='anonymous' 对同源请求无影响，
+       纹理可正常加载；file:// 直开环境的 CORS 限制由 E2E 改用 data URL 注入规避，不污染生产代码。 */
+    var loader = new THREE.TextureLoader();
+
+    /* 纹理池：图少卡多，LRU 复用（bank.serial 记次数，lastUsed 记最近使用） */
+    var bank = { textures: imgs.map(function () { return null; }), serial: 0, lastUsed: imgs.map(function () { return -Infinity; }) };
+    var loadTex = function (url) {
+      return new Promise(function (res, rej) {
+        loader.load(url, function (t) {
+          t.minFilter = THREE.LinearMipmapLinearFilter;
+          t.generateMipmaps = true; t.anisotropy = maxAniso;
+          res(t);
+        }, undefined, rej);
+      });
+    };
+    imgs.forEach(function (url, i) { loadTex(url).then(function (t) { bank.textures[i] = t; if (window.__GLB_DEBUG) section._glb.texLoaded = (section._glb.texLoaded || 0) + 1; }).catch(function (e) { if (window.__GLB_DEBUG) { section._glb.texErr = section._glb.texErr || []; if (section._glb.texErr.length < 3) section._glb.texErr.push(String(e && (e.message || e) || 'loadfail')); } }); });
+
+    /* 无上传图：canvas 画 8 张「素材 N」占位纹理（暗渐变 + 虚线框，对齐 motion-banner
+       占位卡视觉），隧道照常跑动画 —— 上传前就能看到完整版式与流动效果（用户要求 2026-10-10）。 */
+    if (!imgs.length) {
+      for (var phI = 0; phI < 8; phI++) {
+        var phCv = document.createElement('canvas'); phCv.width = 600; phCv.height = 400;
+        var phG = phCv.getContext('2d');
+        var phGrd = phG.createLinearGradient(0, 0, 600, 400);
+        phGrd.addColorStop(0, '#27272c'); phGrd.addColorStop(1, '#1a1a1f');
+        phG.fillStyle = phGrd; phG.fillRect(0, 0, 600, 400);
+        phG.strokeStyle = 'rgba(255,255,255,0.30)'; phG.lineWidth = 3;
+        phG.setLineDash([12, 9]); phG.strokeRect(16, 16, 568, 368);
+        phG.setLineDash([]);
+        phG.fillStyle = 'rgba(255,255,255,0.62)';
+        phG.font = '500 34px "PingFang SC", "Microsoft YaHei", sans-serif';
+        phG.textAlign = 'center'; phG.textBaseline = 'middle';
+        phG.fillText('素材 ' + (phI + 1), 300, 200);
+        var phT = new THREE.CanvasTexture(phCv);
+        phT.minFilter = THREE.LinearMipmapLinearFilter; phT.generateMipmaps = true; phT.anisotropy = maxAniso;
+        bank.textures[phI] = phT; bank.lastUsed[phI] = -Infinity;
+      }
+    }
+
+    var pick = function (card) {
+      var best = -1, score = -Infinity;
+      for (var i = 0; i < bank.textures.length; i++) {
+        if (!bank.textures[i]) continue;
+        var sc = bank.serial - bank.lastUsed[i];
+        if (sc > score) { score = sc; best = i; }
+      }
+      if (best < 0) return false;
+      bank.lastUsed[best] = bank.serial++;
+      card.slot = best;
+      var tex = bank.textures[best];
+      var iw = tex.image.width || 3, ih = tex.image.height || 2;
+      var At = iw / ih, Ap = 1.5;                                // 平面 3:2；cover 裁剪对齐
+      var rep = new THREE.Vector2(1, 1), off = new THREE.Vector2(0, 0);
+      if (At > Ap) { rep.x = Ap / At; off.x = (1 - rep.x) / 2; }
+      else { rep.y = At / Ap; off.y = (1 - rep.y) / 2; }
+      var u = card.mesh.material.uniforms;
+      u.uMap.value = tex; u.uRepeat.value = rep; u.uOffset.value = off;
+      return true;
+    };
+
+    var CARD_W = 1.5, CARD_H = 1.0, TURN = 52 * Math.PI / 180;
+    var CROSS = .1, BASE_AMP = 1.12, BASE_POW = .8, CORR_G = 3.4;
+    var xsBase = function (tau) { return BASE_AMP * Math.pow(glbClamp01(tau), BASE_POW) - CROSS; };
+
+    // ⚠ 不设手写 #extension：three r128 会在你的 shader 前拼一大段 prefix（含 precision/define），
+    // 手写 #extension 会被顶到非 preprocessor 语句之后 → 编译器报「extension 必须在所有非预处理语句前」→
+    // 着色器静默编译失败（three 只 console.error 不抛异常，表现为 canvas 全透明、两帧相同）。
+    // 正确姿势：用 material.extensions.derivatives=true，three 会把 #extension 注入到合法位置；
+    // WebGL2 上下文里 fwidth 为核心函数，three 会自动剥离该扩展指令，无需分支。
+    var VERT = 'uniform float uBend; varying vec2 vUv;\n' +
+      'void main(){ vUv = uv; vec3 p = position; p.z += uBend * p.x * p.x;\n' +
+      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0); }';
+    var FRAG = 'precision highp float;\n' +
+      'uniform sampler2D uMap; uniform vec2 uRepeat; uniform vec2 uOffset;\n' +
+      'uniform float uOpacity; uniform float uRadius; uniform float uAspect;\n' +
+      'uniform float uExposure; uniform float uLift; varying vec2 vUv;\n' +
+      'void main(){\n' +
+      '  vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0);\n' +
+      '  vec2 half_ = vec2(uAspect, 1.0) * 0.5 - uRadius;\n' +
+      '  vec2 q = abs(p) - half_;\n' +
+      '  float d = length(max(q,0.0)) + min(max(q.x,q.y),0.0) - uRadius;\n' +
+      '  float aa = fwidth(d);\n' +
+      '  float mask = 1.0 - smoothstep(-aa, aa, d);\n' +
+      '  vec4 c = texture2D(uMap, vUv * uRepeat + uOffset);\n' +
+      '  vec3 rgb = clamp(c.rgb * uExposure + uLift, 0.0, 1.0);\n' +
+      '  gl_FragColor = vec4(rgb, c.a * mask * uOpacity);\n' +
+      '}';
+
+    var MAX_PER_SIDE = 26, BASE_N = 13;
+    var cards = [];
+    [-1, 1].forEach(function (side) {
+      for (var i = 0; i < MAX_PER_SIDE; i++) {
+        var mat = new THREE.ShaderMaterial({
+          vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false,
+          extensions: { derivatives: true },
+          uniforms: {
+            uMap: { value: null }, uRepeat: { value: new THREE.Vector2(1, 1) }, uOffset: { value: new THREE.Vector2(0, 0) },
+            uOpacity: { value: 0 }, uRadius: { value: glbClamp01(glbNum(s.cornerRadius, 0.03)) },
+            uAspect: { value: 1.5 }, uBend: { value: 0 },
+            uExposure: { value: 1.14 }, uLift: { value: .04 }
+          }
+        });
+        var mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);   // 两侧相位错半格：否则两侧同一 tau 网格同步远离中心 → 大屏中心空洞
+        cards.push({ mesh: mesh, side: side, index0: i, phase: (i + (side > 0 ? .5 : 0)) / MAX_PER_SIDE, lap: -1, slot: -1, pending: false });
+      }
+    });
+
+    var geom = null;
+    function layout() {
+      var R = frame.getBoundingClientRect();
+      var vw = Math.max(1, R.width), vh = Math.max(1, R.height);
+      cam.aspect = vw / vh; cam.fov = 40; cam.updateProjectionMatrix();
+      renderer.setSize(vw, vh, false);
+      var tanV = Math.tan(cam.fov * Math.PI / 360);
+      var tanH = tanV * cam.aspect;
+      /* 对数深度漏斗：中心卡 ~10.5% 视口高 → 最外卡 ~38%（screen-h = CARD_H/(2·z·tanV)） */
+      var zFar = CARD_H / (2 * tanV * 0.105);
+      var zNear = CARD_H / (2 * tanV * 0.38);
+      /* 出屏走廊：深度按 CORR_G 几何收缩（每槽 ~10%，与漏斗段一致 → 后卡收进前卡轮廓内，
+         不再出现近等尺寸旋转卡顶角探出的台阶碎片）；横向同速率指数增长 → 内缘加速扫合，
+         卡片向镜头膨胀甩出。tMax 数值求「完全出屏」点，各宽高比自适配。 */
+      var zOf = function (t) { return t <= 1 ? zFar * Math.pow(zNear / zFar, t) : zNear * Math.pow(1 / CORR_G, t - 1); };
+      var halfWOf = function (t) { return (CARD_W * 0.5) / (zOf(t) * tanH); };
+      var corrK = 3 * halfWOf(1);
+      var sxOf = function (t) { return t <= 1 ? xsBase(t) : (BASE_AMP - CROSS) + corrK * (Math.pow(CORR_G, t - 1) - 1); };
+      var tMax = 3;
+      for (var t = 1; t <= 3; t += 0.005) { if (sxOf(t) >= 1 + halfWOf(t) + .02) { tMax = t; break; } }
+      var n = Math.min(MAX_PER_SIDE, Math.round(BASE_N * tMax));
+      cards.forEach(function (c) { c.mesh.visible = c.index0 < n; c.phase = (c.index0 + (c.side > 0 ? .5 : 0)) / n; });
+      geom = { tanV: tanV, tanH: tanH, zFar: zFar, zNear: zNear, tMax: tMax, corrK: corrK };
+      if (typeof dotsResize === 'function') dotsResize();   // 点阵画布随框同步重设
+    }
+
+    var place = function (c, tau) {
+      var g = geom; if (!g) return;
+      var z = tau <= 1 ? g.zFar * Math.pow(g.zNear / g.zFar, tau) : g.zNear * Math.pow(1 / CORR_G, tau - 1);
+      var k = Math.min(tau, 1);
+      var sx = c.side * (tau <= 1 ? xsBase(tau) : (BASE_AMP - CROSS) + g.corrK * (Math.pow(CORR_G, tau - 1) - 1));
+      var x = sx * z * g.tanH;
+      c.mesh.position.set(x, 0, -z);
+      c.mesh.rotation.y = -c.side * TURN * Math.pow(k, 1.5);
+      var u = c.mesh.material.uniforms;
+      u.uBend.value = .18 * Math.pow(k, 1.4);
+      /* 全程不透明（靠视口裁切自然消失，同参考站）；tMax 保证回卷前完全出屏，
+         屏外最后 2% 微渐隐只是防回卷跳变的保险 */
+      u.uOpacity.value = tau >= g.tMax ? 0 : glbClamp01((g.tMax - tau) / .02);
+    };
+
+    var cycle = Math.min(120, Math.max(6, glbNum(s.speed, 26)));
+    var started = false, time = 0, last = 0, raf = 0, visible = true;
+
+    /* ===== 背景点阵 DOT FIELD（移植克隆页 initDotField）=====
+       26px 网格、以隧道中心为圆心高斯衰减、向外呼吸波、鼠标靠近推点涟漪（指数平滑跟随）。
+       点色按 bgColor 亮度自适配（深底白点 / 浅底深点）；进场 0.35s 延迟 + 2.6s 淡入同隧道。 */
+    var dotCv = frame.querySelector('.glb-dots');
+    var dctx = dotCv ? dotCv.getContext('2d') : null;
+    var dW = 1, dH = 1, dDpr = 1, dcx = 0, dcy = 0, drad = 1;
+    var dmx = 0, dmy = 0, dpow = 0, dtx = 0, dty = 0, dtp = 0;
+    var dSt = (function () {
+      var m = /^#([0-9a-f]{6})$/i.exec(String(s.bgColor || '#0c0c0d'));
+      if (m) {
+        var v = parseInt(m[1], 16);
+        var lum = (0.2126 * ((v >> 16) & 255) + 0.7152 * ((v >> 8) & 255) + 0.0722 * (v & 255)) / 255;
+        if (lum > 0.55) return { color: '#0f172a', alpha: 0.20 };
+      }
+      return { color: '#ffffff', alpha: 0.30 };
+    })();
+    var glbSmooth = function (t) { return t * t * (3 - 2 * t); };
+    function dotsResize() {
+      if (!dctx) return;
+      var R = frame.getBoundingClientRect();
+      dW = Math.max(1, R.width); dH = Math.max(1, R.height);
+      dDpr = Math.min(window.devicePixelRatio || 1, 2);
+      dotCv.width = Math.round(dW * dDpr); dotCv.height = Math.round(dH * dDpr);
+      dcx = dW / 2; dcy = dH / 2; drad = 0.78 * Math.hypot(dW / 2, dH / 2);
+      dctx.setTransform(dDpr, 0, 0, dDpr, 0, 0);
+    }
+    function drawDots(tSec) {
+      if (!dctx) return;
+      dctx.clearRect(0, 0, dW, dH);
+      dctx.fillStyle = dSt.color;
+      var fade = 1 - Math.pow(1 - glbClamp01((tSec - 0.35) / 2.6), 3);
+      if (fade <= 0) return;
+      var reach = fade * (drad + 160);
+      var wave = tSec / 5.5 * Math.PI * 2, grid = 26;
+      var x0 = dcx - grid * Math.ceil(dcx / grid), y0 = dcy - grid * Math.ceil(dcy / grid);
+      for (var y = y0; y <= dH + grid; y += grid) {
+        for (var x = x0; x <= dW + grid; x += grid) {
+          var d = Math.hypot(x - dcx, y - dcy), nd = d / drad;
+          if (nd > 1.2) continue;
+          var g = Math.exp(-3 * nd * nd) * glbSmooth(glbClamp01(y / 160)) * glbSmooth(glbClamp01((dH - y) / 160));
+          var a = dSt.alpha * fade * g, r = 1.2, px = x, py = y;
+          var wv = 0.5 + 0.5 * Math.sin(d / 110 - wave);
+          a *= 0.55 + 0.45 * wv; r *= 1 + 0.3 * (wv - 0.5);
+          a *= glbClamp01((reach - d) / 140);
+          if (dtp > 0.001) {
+            var dx = x - dmx, dy = y - dmy, dist = Math.hypot(dx, dy);
+            if (dist < 170) {
+              var k = 1 - dist / 170, f = k * k * dpow, push = 14 * f / (dist || 1);
+              px += dx * push; py += dy * push; r *= 1 + 1.1 * f; a += 0.4 * f * (0.35 + 0.65 * g);
+            }
+          }
+          if (a < 0.004) continue;
+          dctx.globalAlpha = Math.min(a, 1);
+          dctx.beginPath(); dctx.arc(px, py, r, 0, 2 * Math.PI); dctx.fill();
+        }
+      }
+      dctx.globalAlpha = 1;
+    }
+    if (!reduced && dctx) {
+      section.addEventListener('pointermove', function (e) {
+        var r = frame.getBoundingClientRect();
+        dtx = e.clientX - r.left; dty = e.clientY - r.top;
+        var inside = dtx >= 0 && dty >= 0 && dtx <= r.width && dty <= r.height;
+        if (inside && dpow === 0) { dmx = dtx; dmy = dty; }
+        dtp = inside ? 1 : 0;
+      }, { passive: true });
+      document.addEventListener('pointerleave', function () { dtp = 0; });
+      window.addEventListener('blur', function () { dtp = 0; });
+    }
+
+    function frameLoop(t) {
+      raf = requestAnimationFrame(frameLoop);
+      var dt = Math.min(t - last, 100) / 1000; last = t; time += dt;
+      /* 点阵鼠标状态平滑跟随（指数趋近，同克隆页） */
+      dmx += (dtx - dmx) * (1 - Math.exp(-9 * dt));
+      dmy += (dty - dmy) * (1 - Math.exp(-9 * dt));
+      dpow += (dtp - dpow) * (1 - Math.exp(-5 * dt));
+      drawDots(time);
+      var enter = Math.min(1, Math.max(0, (time - .1) / 2.8));
+      var ease = enter >= 1 ? 1 : 1 - Math.pow(2, -9 * enter) * (1 - .35 * enter);
+      var flow = time / cycle;
+      for (var i = 0; i < cards.length; i++) {
+        var c = cards[i];
+        if (!c.mesh.visible) continue;
+        var u = c.phase + flow;
+        var lap = Math.floor(u);
+        if (lap !== c.lap) { c.lap = lap; c.pending = !pick(c); }
+        else if (c.pending) { c.pending = !pick(c); }
+        place(c, (u - lap) * (geom ? geom.tMax : 1) * ease);
+      }
+      renderer.render(scene, cam);
+      if (window.__GLB_DEBUG) section._glb = section._glb || {}, section._glb.frames = (section._glb.frames || 0) + 1;
+    }
+    var start = function () { if (!raf && started && visible && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frameLoop); if (window.__GLB_DEBUG) section._glb = section._glb || {}, section._glb.on = true; } };
+    var stop = function () { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+
+    layout();
+    if (typeof ResizeObserver === 'function') {
+      var ro = new ResizeObserver(layout); ro.observe(frame);
+    } else {
+      window.addEventListener('resize', layout);
+    }
+
+    if (reduced) {
+      /* 静态单帧（减少动效偏好）：取一帧好看的相位画一次。
+         （无图不再走这里：占位纹理已就位，隧道照常动画；空纹理池 pick 失败即不画卡，安全。） */
+      time = 19.4;
+      var flow0 = time / cycle;
+      cards.forEach(function (c) {
+        if (!c.mesh.visible) return;
+        var u = c.phase + flow0, lap = Math.floor(u); c.lap = lap;
+        pick(c); place(c, (u - lap) * (geom ? geom.tMax : 1));
+      });
+      renderer.render(scene, cam);
+      drawDots(time);   /* reduced 静态帧也画点阵（fade=1，无鼠标涟漪） */
+      return;
+    }
+    var boot = function () { if (!started) { started = true; start(); } };
+    if (typeof Promise.allSettled === 'function') {
+      Promise.allSettled(imgs.slice(0, 6).map(loadTex)).then(boot);
+    }
+    setTimeout(boot, 1500);   // 兜底：纹理慢/失败也启动（未加载卡先复用旧图池）
+    if (typeof IntersectionObserver === 'function') {
+      new IntersectionObserver(function (es) {
+        visible = es[0] ? es[0].isIntersecting : true;
+        if (window.__GLB_DEBUG) section._glb = section._glb || {}, section._glb.ioVisible = visible;
+        visible ? start() : stop();
+      }, { rootMargin: '80px' }).observe(section);
+    }
+    document.addEventListener('visibilitychange', function () { document.hidden ? stop() : start(); });
+  }
+
   // ===== 动效首屏 motion-banner（多图卡按动效算法流动 + 可配文字排版）=============
   // 【来源】amotion.app/editor 的动效预设体系（逆向）：每个动效 = 一个 compute(参数, 宽, 高, 张数, 时间)，
   //   返回每张卡的 {x, y, scale, rotation, alpha, zIndex, dim, w, h, slot} ——
@@ -4264,24 +4659,34 @@ var CaseRenderer = (function () {
   function renderIconWall(s) {
     var section = sec('icon-wall-section');
     var icons = (Array.isArray(s.icons) ? s.icons : []).filter(function (it) { return it && it.src; });
+    /* 无上传图标：渲染 7 个占位虚线框（同 motion-banner 占位卡思路），散落版式与浮动动画
+       在上传前即可见；上传任一图标后自动切回真实渲染，占位不残留（用户要求 2026-10-10）。 */
+    var phMode = !icons.length;
+    var items = phMode ? [{}, {}, {}, {}, {}, {}, {}] : icons;
     var floatOn = s.float !== false;     // 默认开浮动
     var frameOn = !!s.frame;             // 默认不显示卡片底
-    var positions = computeIconWallScatter(icons, s);
+    var positions = computeIconWallScatter(items, s);
 
     section.innerHTML = headHtml(s) + '<div class="iw-stage">' +
-      icons.map(function (it, idx) {
-        var isJson = /\.json(\?|#|$)/i.test(it.src);
+      items.map(function (it, idx) {
         var pos = positions[idx] || { x: 50, y: 50 };
-        var x = mkNum(it.x, pos.x);
-        var y = mkNum(it.y, pos.y);
-        // 若数据里仍残留 x/y，优先尊重；否则用自动散落位置
-        if (it.x === undefined || it.x === null || String(it.x).trim() === '') x = pos.x;
-        if (it.y === undefined || it.y === null || String(it.y).trim() === '') y = pos.y;
-        var scale = mkNum(it.scale, 1);
-        var z = mkNum(it.z, 1);
-        var delay = mkNum(it.delay, idx * 0.06);
+        var x = pos.x, y = pos.y, scale = 1, z = 1, delay = idx * 0.06;
+        if (!phMode) {
+          var isJson = /\.json(\?|#|$)/i.test(it.src);
+          // 若数据里仍残留 x/y，优先尊重；否则用自动散落位置
+          x = mkNum(it.x, pos.x);
+          y = mkNum(it.y, pos.y);
+          if (it.x === undefined || it.x === null || String(it.x).trim() === '') x = pos.x;
+          if (it.y === undefined || it.y === null || String(it.y).trim() === '') y = pos.y;
+          scale = mkNum(it.scale, 1);
+          z = mkNum(it.z, 1);
+          delay = mkNum(it.delay, idx * 0.06);
+        }
         var style = 'left:' + x.toFixed(2) + '%;top:' + y.toFixed(2) + '%;' +
           '--iw-scale:' + scale + ';--iw-z:' + z + ';--iw-delay:' + delay + 's;';
+        if (phMode) {
+          return '<div class="iw-icon is-ph" style="' + style + '"><span>图标 ' + (idx + 1) + '</span></div>';
+        }
         var cls = 'iw-icon' + (frameOn ? ' framed' : '') + (isJson ? ' lottie' : '');
         if (isJson) {
           return '<div class="' + cls + '" data-src="' + esc(it.src) + '" style="' + style + '"></div>';

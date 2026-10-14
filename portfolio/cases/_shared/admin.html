@@ -823,6 +823,32 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 隐藏板块：卡片变灰 + 「已隐藏」徽标，仍可点开编辑 / 重新启用 */
+.card-item.hidden-section { opacity: .5; }
+.card-item.hidden-section:hover { opacity: .82; }
+.card-hidden-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  margin-top: 2px; padding: 2px 8px; border-radius: 999px;
+  background: var(--warning-color, #f59e0b); color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1.4; white-space: nowrap; flex-shrink: 0;
+}
+/* 编辑器顶部「已隐藏」横幅 */
+.editor-hidden-banner {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px; padding: 10px 14px;
+  border: 1px solid var(--warning-color, #f59e0b); border-radius: 12px;
+  background: rgba(245, 158, 11, .12);
+  color: var(--text-primary); font-size: 13px;
+}
+.editor-hidden-banner .ehb-ico { font-size: 15px; line-height: 1; }
+.editor-hidden-banner .ehb-text { flex: 1; min-width: 0; }
+.editor-hidden-banner .ehb-btn {
+  flex-shrink: 0; padding: 6px 12px; border: none; border-radius: 9px;
+  background: var(--accent-color); color: #fff; font-weight: 700; font-size: 13px;
+  cursor: pointer; font-family: inherit;
+}
+.editor-hidden-banner .ehb-btn:hover { filter: brightness(1.05); }
+
 .card-actions {
   /* 浮在缩略图底部居中，不占 card-head 行空间 */
   position: absolute;
@@ -1002,14 +1028,19 @@ body {
 .cp-swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 10px; }
 .cp-sw { aspect-ratio: 1/1; border-radius: 7px; border: 1px solid rgba(127,127,127,.3); cursor: pointer; padding: 0; }
 .cp-sw:hover { transform: scale(1.12); }
-.cp-rgb { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-.cp-rgb-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-.cp-rgb-row label { width: 14px; flex: none; }
-.cp-rgb-row input[type=range] { flex: 1; accent-color: var(--accent-color); }
-.cp-rgb-row b { width: 30px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
 .cp-hexrow { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .cp-hexrow label { font-size: 12px; color: var(--text-secondary); flex: none; }
-.cp-hexrow input { flex: 1; height: 30px; border: 1px solid var(--border-color); border-radius: 8px; padding: 0 8px; font-size: 13px; font-family: monospace; }
+/* 移除 .cp-rgb 相关全部样式（用户 2026-10-10：色盘里不再显示 R/G/B/A 滑块明细） */
+.cp-hexrow input { flex: 1; min-width: 0; height: 30px; border: 1px solid var(--border-color); border-radius: 8px; padding: 0 8px; font-size: 13px; font-family: monospace; }
+/* 色值格式切换按钮（HEX → RGB → RGBA → HSL） */
+.cp-fmt-btn {
+  flex: none; height: 30px; min-width: 56px; padding: 0 9px; cursor: pointer;
+  border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary,#fff);
+  font-size: 11px; font-weight: 600; letter-spacing: .02em; color: var(--text-secondary);
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+}
+.cp-fmt-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+.cp-fmt-btn .cp-fmt-arrow { font-size: 9px; opacity: .7; }
 .form-tab-panel { min-width: 0; }
 #editorFormContainer, #editorFormContainer > * { max-width: 100%; box-sizing: border-box; }
 .form-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
@@ -1141,10 +1172,27 @@ body {
 .ani-param-row .form-label > *:first-child { min-width: 0; flex-shrink: 1; }
 .ani-param-row .ani-val { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* range 滑块 */
+/* ===== 滑块 · 复刻 reactbits.dev 自定义属性面板 ==============================
+   规格来源（实测抓取 reactbits.dev /assets/index-BEKo7Ql3.css，浅色主题值）：
+     .docs-qs-track       → height:4px; border-radius:999px; background:#18181b1a
+     .docs-qs-fill        → background:#18181b8c   （轨道左侧→滑块之间的「已填充段」）
+     .docs-qs-fill:after  → 12px 白色圆点 + 0 1px 3px #18181b40, inset 0 0 0 1px #18181b14
+   参考站是自绘 track+fill+thumb；原生 input[type=range] 无法表达分段背景，
+   故用线性渐变在 input 背景上画出填充段。--fill 为 0~1 实时进度（JS 写入），
+   停止点按 12px 滑块半径做补偿，使填充边缘始终跟随滑块圆心。
+   注：配色为中性灰階（非主题色），与参考站一致 —— 参考站滑块不带品牌色。 */
 .form-range {
   -webkit-appearance: none; appearance: none;
-  width: 100%; height: 4px; border-radius: 2px;
-  background: var(--border-color);
+  width: 100%; height: 4px; border-radius: 999px;
+  --rb-track: rgba(24, 24, 27, 0.10);
+  --rb-fill: rgba(24, 24, 27, 0.55);
+  --rb-thumb-shadow: 0 1px 3px rgba(24, 24, 27, 0.25), inset 0 0 0 1px rgba(24, 24, 27, 0.08);
+  background:
+    linear-gradient(to right,
+      var(--rb-fill)  0%,
+      var(--rb-fill)  calc(6px + var(--fill, 0) * (100% - 12px)),
+      var(--rb-track) calc(6px + var(--fill, 0) * (100% - 12px)),
+      var(--rb-track) 100%);
   outline: none; cursor: pointer;
   margin: 8px 0 2px;
   box-sizing: border-box;
@@ -1152,24 +1200,275 @@ body {
 }
 .form-range::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 16px; height: 16px; border-radius: 50%;
-  background: var(--accent-color); cursor: pointer;
-  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #fff; cursor: pointer;
+  box-shadow: var(--rb-thumb-shadow);
   transition: transform .15s;
 }
 .form-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
 .form-range::-moz-range-thumb {
-  width: 16px; height: 16px; border-radius: 50%;
-  background: var(--accent-color); cursor: pointer;
-  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #fff; cursor: pointer; border: none;
+  box-shadow: var(--rb-thumb-shadow);
 }
-.form-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--border-color); }
+/* Firefox：让 ::-moz-range-track 透出 input 自带的渐变（填充段得以显示） */
+.form-range::-moz-range-track { height: 4px; border-radius: 999px; background: transparent; }
 /* range 行：滑块 + 数值显示 */
 .form-range-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .form-range-row .form-range { flex: 1; min-width: 0; margin: 8px 0 2px; }
 .form-range-val { font-size: 12px; color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 34px; text-align: right; }
 .form-range-val.is-default { color: var(--text-muted); font-weight: 500; }
-.form-range-val.is-default::after { content: ' 默认'; font-size: 10px; font-weight: 400; color: var(--text-muted); }
+/* 注：原先这里有一条 `.is-default::after { content: ' 默认' }`，
+   会让「字号/字重/行高/字距」等每条滑块后面都挂一个「默认」字样（如 "0.045px 默认"），视觉很吵。
+   已按用户 2026-10-10 要求移除 —— 「默认」二字只保留在下拉选项文案里（因为下拉没有重置按钮）。
+   滑块的默认值信息保留在数值元素的 title 提示里（渲染时写 title="默认 x"），悬停可见。 */
+
+/* ===== reactbits「scrubber」式属性行（实测复刻，非目测近似）====================
+   规格来源：reactbits.dev /text-animations/masked-heading，data-theme=light。
+   该站滑块是**自绘 div**（页面里 input[type=range] 数量 = 0），DOM 结构：
+     .scrubber-track            40px 高、圆角胶囊、overflow:hidden，本身就是命中区
+       └ .scrubber-fill          width:X%（inset:0 auto 0 0）
+       └ .scrubber-ticks         inset:0，内含 9 根刻度（left:10%…90%）
+       └ .scrubber-thumb-wrapper left:X% → .scrubber-thumb  5×26 竖条
+       └ .scrubber-label         absolute left:12px（--text-muted）
+       └ .scrubber-value         absolute right:12px（--text-primary）
+   实测浅色值：填充 #18181b17 / 竖条 #71717a / 刻度 #d1d1d4 / 标签 #52525b /
+   数值 #18181b / --radius-sm 10px；网格 3 列 gap:8px。
+   竖条静止 opacity .32 + scale(.7)，激活（hover/拖动/聚焦）→ .9 + scale(1)。
+   本实现保留一个 opacity:0 的原生 range 铺满整行做拖动与键盘命中区，
+   以复用既有 data-bind-key 绑定 / 重置逻辑；视觉全部由上述 div 绘制。 */
+/* ---- 外壳：复刻参考站 .customize-frame + .preview-options + .customize-heading ----
+   实测值（浅色）：frame #fafafa 底 / 1px solid #e7e7e9 / 圆角 14px / padding 4px；
+   options #fff 底 / 1px solid rgba(24,24,27,.14) / 圆角 9px（= --radius-lg − 5px）/ padding 14px 12px / gap 8px；
+   heading 高 48.39px（padding 8px 12px 10.4px 14.4px），标题 16px/400 墨色，重置按钮 12px/500 高 30px 圆角 7px。 */
+/* 外壳必须跨满整行（用户 2026-10-10 定）：
+   .form-grid 是两列网格，不加 grid-column 的话外壳只占右列，
+   于是「主标题」字段在左、外壳在右，形成左右并排。
+   改成 1/-1 后 = 标题在上、属性组在下（.fgc-frame 内部 .compact-grid 仍按 auto-fill 多列）。*/
+.fgc-frame {
+  grid-column: 1 / -1;
+  margin-top: 14px;
+  padding: 4px;
+  background: #fafafa;
+  border: 1px solid #e7e7e9;
+  border-radius: 14px;
+}
+.fgc-frame-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  min-height: 46px; padding: 8px 12px 10.4px 14.4px;
+}
+/* 对齐后台分组标题统一风格（.side-sub .nav-item 等 = 13px/600/text-secondary），
+   原 16px/400 是参考站 customize-frame 的规格，在本后台里是"最大字号+最细字重"，观感突兀 */
+.fgc-frame-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); letter-spacing: normal; margin: 0; }
+.fgc-frame-reset {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 30px; padding: 0 9px; border: 1px solid transparent; border-radius: 7px;
+  background: transparent; color: #52525b; font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+  transition: border-color .18s cubic-bezier(.23, 1, .32, 1), background .18s cubic-bezier(.23, 1, .32, 1), color .18s cubic-bezier(.23, 1, .32, 1), transform .12s cubic-bezier(.23, 1, .32, 1);
+}
+.fgc-frame-reset:hover { background: #fff; border-color: #e7e7e9; color: #18181b; }
+.fgc-frame-reset:active { transform: scale(.97); }
+.fgc-frame-reset svg { width: 14px; height: 14px; }
+/* options 层：白底 + 内嵌网格，网格由 .compact-grid 承担 */
+.fgc-frame .compact-grid {
+  grid-column: auto;
+  margin: 0;
+  padding: 14px 12px;
+  background: #fff;
+  border: 1px solid rgba(24, 24, 27, .14);
+  border-radius: 9px;
+}
+/* gallery-banner「文字」tab：主标题/副标题 text 字段注入到对应属性 frame 顶部，
+   与紧凑网格形成「输入框在上、属性在下」的两个并列框（文字主标题 / 文字副标题）；
+   输入框本身放进与 compact-grid 同款的白色圆角框内 */
+.fgc-frame .fgc-text-group { padding: 12px; margin: 0 0 8px; background: #fff; border: 1px solid rgba(24, 24, 27, .14); border-radius: 9px; }
+.compact-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(172px, 1fr)); gap: 8px; }
+.fgc {
+  --fgc-right: 12px;                    /* 右侧数值/控件默认内边距 */
+  position: relative; min-width: 0; height: 40px; box-sizing: border-box;
+  /* 实测：demo 页 light 主题命中的是 --surface-ghost-track（浅灰半透明），
+     .rb-tools-page 的白底覆盖只作用于 tools 页；边框保持 transparent。
+     圆角 7px 来自 .customize-frame .scrubber-track 覆盖（优先于 --radius-sm:10px）。 */
+  background: #18181b0e;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  /* 不用 overflow:hidden 裁圆角 —— 它会把溢出内容全裁掉：
+     ① 色块 hover 的色值气泡（.form-color-dot::after 向上弹出）
+     ② 标签里的 ⓘ hint 气泡（.hint-bubble）
+     两者都需要溢出显示。改为把圆角交给内部绝对定位层自己处理：
+     .fgc-fill / .fgc-ticks / .fgc-thumb 都已显式带 border-radius 或尺寸受限，不会溢出。 */
+}
+.fgc.has-reset { --fgc-right: 40px; }   /* 让位给行内重置按钮 */
+.fgc.has-ctl   { --fgc-right: 40px; }   /* 下拉/文本右对齐 */
+.fgc.has-dot   { --fgc-right: 46px; }   /* 颜色：让位给色点 */
+.fgc:focus-within { border-color: var(--accent-color, var(--accent)); }
+/* 填充段 */
+.fgc-fill { position: absolute; inset: 0 auto 0 0; background: #18181b17; border-radius: 7px; pointer-events: none; }
+/* 刻度：9 根，10%…90%
+   实测参考站的 9 根刻度确实横跨整条轨道（隐藏标签后可见），靠 1px 浅灰被文字笔画「压住」达到不重叠的观感；
+   但中文标签比英文短（如「字号」仅 26px 宽），盖不住 10% 处那根 → 这里改为按标签/数值实测宽度裁剪刻度区，
+   由 JS 写 --fgc-tick-a / --fgc-tick-b（px），保证中文下刻度始终从标签右侧、数值左侧开始。 */
+.fgc-ticks { position: absolute; top: 0; bottom: 0; left: var(--fgc-tick-a, 10%); right: var(--fgc-tick-b, 10%); pointer-events: none; }
+.fgc-tick { position: absolute; top: 50%; width: 1px; height: 8px; border-radius: 999px; background: #d1d1d4; transform: translate(-50%) translateY(-50%); }
+/* 竖条滑块
+   注：参考站是 wrapper(定位) + thumb(外观) 两层，wrapper 带 margin-left:-6px，
+   实测竖条中心落在填充末端**左移 6px**（压在填充段内侧），这里照搬该偏移。 */
+.fgc-thumb {
+  position: absolute; top: 50%; margin-left: -6px;
+  width: 5px; height: 26px; border-radius: 999px;
+  background: #71717a; opacity: .32; pointer-events: none; z-index: 3;
+  transform: translate(-50%) translateY(-50%) scaleX(.7) scaleY(.7);
+  transition: opacity .2s cubic-bezier(.23, 1, .32, 1), transform .2s cubic-bezier(.23, 1, .32, 1);
+}
+.fgc.is-active .fgc-thumb { opacity: .9; transform: translate(-50%) translateY(-50%) scaleX(1) scaleY(1); }
+/* 标签 / 数值：绝对定位叠层 */
+.fgc-label {
+  position: absolute; top: 50%; left: 12px; transform: translateY(-50%);
+  white-space: nowrap; color: #52525b; font-size: 13px; font-weight: 500;
+  /* 参考站标签/数值行高 19.5px（13×1.5），居中偏移 -9.75px；用行高对齐消除 1.25px 差 */
+  line-height: 19.5px;
+  letter-spacing: .01em; pointer-events: none; z-index: 4;
+  max-width: calc(100% - 128px); overflow: hidden;
+  display: inline-flex; align-items: center; gap: 3px;
+  /* 标签文字过长时省略号截断（nowrap + overflow:hidden 已是硬截断，补 text-overflow 才是省略号） */
+  text-overflow: ellipsis;
+}
+.fgc .form-range-val {
+  position: absolute; top: 50%; right: var(--fgc-right); transform: translateY(-50%);
+  color: #18181b; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
+  line-height: 19.5px;
+  min-width: 0; text-align: right; pointer-events: none; z-index: 4;
+}
+/* 透明原生 range：铺满整行做命中区 */
+.fgc > .form-range {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  margin: 0; padding: 0; opacity: 0; cursor: pointer; z-index: 5;
+  background: none; -webkit-appearance: none; appearance: none;
+}
+.fgc .form-select, .fgc .form-input {
+  position: absolute; top: 50%; right: var(--fgc-right); transform: translateY(-50%);
+  height: 28px; min-width: 0; max-width: calc(100% - 150px); padding: 0 6px; margin: 0;
+  background: transparent; border-color: transparent; box-shadow: none;
+  text-align: right; font-size: 13px; font-weight: 500; color: #18181b; z-index: 5;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 下拉：从标签右侧到箭头左侧（left 由 layoutFgcTicks 按标签实测宽度写 --fgc-sel-left）。
+   原来用 max-width:calc(100% - 150px)，窄 pill 里只剩 20px，文字被裁成「射齐默认)」。 */
+.fgc .form-select { left: var(--fgc-sel-left, 48px); max-width: none; }
+/* 颜色行的 hex 输入框：只占「色块左侧 → 标签右侧」这一段。
+   注意两点：
+   ① 绝不能沿用下拉的 left:84px + right:var(--fgc-right) —— 那会让它铺满整行、盖住色块与重置按钮
+      （表现就是「点色块没反应」＝颜色选择失败），并露出一圈多余的边框。
+   ② 必须显式 width:auto —— 基础规则 `.form-input, .form-select {... width:100%}` 会让
+      width 盖过 right，left+width 组合直接铺满整行（实测 hex 右缘 671 > pill 右缘 624）。 */
+.fgc .form-input {
+  left: var(--fgc-sel-left, 48px);
+  right: calc(var(--fgc-right) + 34px);   /* 让位 26px 色块 + 8px 间隙 */
+  width: auto; max-width: none;
+}
+/* 颜色行改为「标签 + 正方形色块」后，可见文本框不再需要 ——
+   隐藏取值源别再吃绝对定位（虽然 display:none 已让它不渲染，显式排除更清晰）。 */
+.fgc .form-input[type="hidden"] { display: none; }
+.fgc .form-select { cursor: pointer; }
+/* 下拉箭头（复刻参考站 .scrubber-caret）；原生 select 箭头隐藏，改由自绘指示 */
+.fgc .form-select { appearance: none; -webkit-appearance: none; right: 30px; padding-right: 0; }
+.fgc.has-reset .form-select { right: 58px; }
+.fgc-caret {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  color: #71717a; pointer-events: none; z-index: 6; display: inline-flex; align-items: center;
+}
+/* text 类型紧凑行（副标题等自由文本）：一行 172px 根本放不下 label + placeholder，
+   之前 input 是绝对定位 right + max-width:calc(100% - 150px)，pill 一窄 placeholder 就溢出压住标签
+   （截图里「副标题（选填）」和「一组沿纵深漏斗滑向镜头的画面」叠成一团）。
+   改法（用户 2026-10-10 定「放不下就放下面单独一行」）：
+     ① .compact-grid 里 has-text 用 grid-column:1/-1 跨满整行 —— grid 稀疏流会把它推到本组最后一行；
+     ② 行内从绝对定位切回 flex：label 左固定、input 占剩余宽度、placeholder 省略号截断，永不重叠。*/
+.compact-grid .fgc.has-text { grid-column: 1 / -1; }
+.fgc.has-text { display: flex; align-items: center; gap: 10px; padding: 0 12px; overflow: hidden; }
+.fgc.has-text .fgc-label { position: static; transform: none; flex: 0 0 auto; max-width: 45%; }
+.fgc.has-text .form-input {
+  position: static; transform: none; flex: 1 1 auto;
+  width: auto; height: 26px; max-width: none; padding: 0;
+  text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* ---- 紧凑行里的下拉：.sel wrapper 适配（真根因修复）----
+   紧凑行的 select.form-select 同样会被 upgradeSelect 升级（`scope.querySelectorAll('select.form-select')` 全量匹配），
+   原生 select 变成 `.sel > select` 的隐藏真值源，可见的是 `.sel-trigger`。
+   但 .fgc 场景下 .sel / .sel-trigger 没有任何样式：
+     - .fgc 不是 flex（除 has-text），.sel 作为块级子元素 width:auto = 撑满整行，
+       .sel-trigger 又 width:100% + padding-left:10px + 白底边框 → 触发器文字直接压在
+       绝对定位的 .fgc-label 上（截图里「对齐」与「中（默认）」叠成「射齐默认)」）；
+     - 触发器自带边框/背景/34px 高度，与 pill 的无边框 40px 高视觉不搭。
+   改法：把 .sel 绝对定位到「标签右侧 → 箭头左侧」区间，trigger 去掉自身边框背景、行高对齐 pill。
+   左边界用 --fgc-sel-left（由 layoutFgcTicks 按标签实测右缘 + GAP 写入；缺省 48px 兜底）——
+   写死 84px 会浪费 pill 宽度导致「中（默认）」被截成「中（...」。 */
+.fgc .sel {
+  position: absolute; top: 50%; left: var(--fgc-sel-left, 48px); right: 26px;
+  transform: translateY(-50%); height: 28px;
+}
+.fgc .sel-trigger {
+  min-height: 28px; height: 28px; width: 100%;
+  padding: 0 2px 0 6px; border: 0; border-radius: 6px;
+  background: transparent; box-shadow: none; outline: none;
+  font-size: 13px; font-weight: 500; color: #18181b;
+}
+.fgc .sel-trigger:hover { border-color: transparent; background: transparent; }
+.fgc .sel-trigger:focus, .fgc .sel-trigger:focus-visible,
+.fgc .sel.is-open .sel-trigger { border-color: transparent; box-shadow: none; background: transparent; }
+/* 真根因：.sel-trigger 是 display:flex，光给 trigger 写 text-align:right 没用 ——
+   里面的 .sel-label 是个 flex item，宽度由内容决定、不占剩余空间，
+   `text-align` 只对「块级盒内部的行内内容」生效，对一个收缩成内容宽度的 span 无效。
+   修法：label 撑满剩余宽度（flex:1）后再 text-align:right，文字才真正贴右。
+   （原来还漏了右内边距，贴到箭头上了 —— 补 6px，与箭头 26px 区间衔接。） */
+.fgc .sel-label {
+  flex: 1 1 auto; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; text-align: right;
+}
+.fgc .sel-chevron { display: none; }            /* 已由 .fgc-caret 自绘箭头 */
+/* has-text 行是 flex 布局，下拉/输入走普通流，不需要绝对定位 */
+.fgc.has-text .sel { position: static; transform: none; flex: 1 1 auto; height: 26px; }
+/* 下拉面板宽度 = pill 宽度（用户 2026-10-10 定）。
+   .sel 被绝对定位收窄成「标签右侧 → 箭头左侧」，面板 width:100% 会跟着变窄，
+   展开后比 pill 短一截（截图里「对齐」面板明显比 pill 窄）→
+   用 --fgc-pill-w（layoutFgcTicks 按 pill 实测宽度写入）把面板撑回整行宽度并右对齐。 */
+.fgc .sel-panel {
+  width: var(--fgc-pill-w, 100%);
+  left: auto; right: 0;
+  min-width: max-content;
+}
+.fgc.has-reset .fgc-caret { right: 40px; }
+.fgc .form-select:focus, .fgc .form-input:focus { border-color: var(--accent-color, var(--accent)); }
+/* ---- 颜色行：正方形色块（用户 2026-10-10：「颜色块改成正方形」）----
+   紧凑行里不再显示色值输入框（rgba(...) 太长放不下），色值只在取色面板里输入，
+   所以这里只剩「标签 + 色块」；hidden input 不占视觉空间但仍是取值源。 */
+.fgc .form-color-dot {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; padding: 0;
+  border-radius: 7px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.55);
+}
+.fgc.has-reset .form-color-dot { right: 40px; }
+/* 隐藏取值源：不参与布局（position:absolute 已保证），但要保证可被 focus/写回 */
+.fgc input[type="hidden"].form-input { display: none; }
+/* 气泡：CSS 绘制（不用 JS 定位，.fgc 有 overflow:hidden 会裁掉超出部分，故用 ::after 向上弹出） */
+.fgc .form-color-dot::after {
+  content: attr(data-dot-cur);
+  position: absolute; right: 0; bottom: calc(100% + 8px);
+  padding: 4px 8px; border-radius: 6px;
+  background: #18181b; color: #fafafa; font-size: 11px; line-height: 1.4;
+  font-weight: 500; white-space: nowrap; pointer-events: none;
+  opacity: 0; transform: translateY(3px); transition: opacity .16s, transform .16s;
+  z-index: 20;
+}
+.fgc .form-color-dot:hover::after { opacity: 1; transform: translateY(0); }
+.fgc .field-reset {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; padding: 2px; border: none; background: transparent;
+  border-radius: 6px; color: var(--text-muted); cursor: pointer; z-index: 6;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.fgc .field-reset:hover { background: var(--bg-hover); color: var(--text-primary); }
+.fgc .field-reset svg { width: 13px; height: 13px; }
 /* 颜色选择器 */
 .ani-color-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .ani-color-input {
@@ -2235,6 +2534,42 @@ body.auth-pending .pages-view { visibility: hidden; }
 .mnl-chip:active{cursor:grabbing}
 .mnl-chip.is-empty{color:rgba(255,255,255,.45);font-style:italic}
 
+/* ===== 卡片长廊 实时预览（glb-live）=====
+   与 mn-live 同一位置（页卡栏之后、各 .form-tab-panel 之前）→ 切页卡时它不随面板隐藏，常驻可见。
+   前台隧道是 three.js 的，后台没加载 THREE，所以这里按 motion-banner 的既有做法：
+   只移植**几何数学**（zOf/sxOf/place，见 render.js glbBoot），用 DOM 卡片画出来。
+   ⚠ 字体必须用「虚拟视口」：前台 .glb-frame 是 container-type:inline-size，cqi ≈ 整屏宽(1900px)，
+   而预览框只有 ~520px —— 直接在预览框上算 cqi 会被 max(2rem) 下限卡死，字号滑块低段完全看不出变化。
+   故内层固定 1440×810 虚拟视口、外层 transform:scale 缩放，保证 cqi 基准与前台同比例。 */
+.glb-live-stage { position: relative; height: 300px; overflow: hidden; background: #0c0c0d; }
+.glb-live-view {
+  position: absolute; top: 0; left: 0; width: 1440px; height: 810px;
+  transform-origin: 0 0; container-type: inline-size; overflow: hidden;
+}
+.glb-live-deck { position: absolute; inset: 0; perspective: 1400px; }
+.glb-live-card {
+  position: absolute; transform-style: preserve-3d; overflow: hidden;
+  background-size: cover; background-position: center;
+  box-shadow: 0 6px 26px rgba(0,0,0,.45);
+}
+.glb-live-card.is-ph {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #27272c, #1a1a1f);
+  border: 2px dashed rgba(255,255,255,.30);
+  color: rgba(255,255,255,.62); font-size: 22px;
+}
+.glb-live-copy {
+  position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column;
+  align-items: center; pointer-events: none; padding: 0 20px; box-sizing: border-box;
+}
+.glb-live-title-row, .glb-live-sub-row {
+  flex: 1 1 0; display: flex; align-items: center; justify-content: center; text-align: center;
+}
+.glb-live-title-row { padding-top: 20px; }
+.glb-live-sub-row { padding-bottom: 20px; }
+.glb-live-title { margin: 0; font-family: "Instrument Serif", Georgia, "Times New Roman", serif; text-wrap: balance; }
+.glb-live-sub { margin: 0; max-width: 26rem; text-wrap: pretty; }
+
 /* 文字条目编辑器（文字页卡：chips + 选中条目属性） */
 .mnt-wrap{display:flex;flex-direction:column;gap:12px}
 .mnt-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -2815,20 +3150,29 @@ function fileToBase64(file) {
   });
 }
 
+// 常驻隐藏 file input：只创建一次、反复复用、永不删除。
+// 用 opacity:0 + 留在视口内(1px) 的“真实可聚焦”节点，避免文件对话框关闭时浏览器
+// 无处归还焦点 → Windows+Chromium 下表现为窗口最小化/切到桌面。
+// （离屏定位 top/left:-9999px 在部分 Chrome 版本仍会触发该 bug，故改为视口内 1px 透明。）
+let _pickFileInput = null;
 function pickFile(accept) {
   return new Promise((resolve) => {
-    const inp = document.createElement('input');
-    inp.type = 'file';
+    if (!_pickFileInput) {
+      _pickFileInput = document.createElement('input');
+      _pickFileInput.type = 'file';
+      _pickFileInput.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;';
+      document.body.appendChild(_pickFileInput);
+    }
+    const inp = _pickFileInput;
     inp.accept = accept || '*';
-    // 必须挂到 DOM，Chrome/Safari 才允许触发 click()
-    inp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;z-index:-1;';
-    document.body.appendChild(inp);
+    try { inp.value = ''; } catch (_) {} // 允许重复选同一文件
     let done = false;
     const cleanup = () => {
       if (done) return;
       done = true;
-      try { inp.remove(); } catch (_) {}
       clearTimeout(t);
+      // 选完图后强制把浏览器窗口拉回前台（兜底修正 Windows 焦点归还失败）
+      setTimeout(() => { try { window.focus(); } catch (_) {} }, 0);
     };
     inp.onchange = () => {
       const f = inp.files && inp.files[0];
@@ -3133,12 +3477,16 @@ function renderSectionList() {
 
   cards.forEach((s, i) => {
     const el = document.createElement('div');
-    el.className = 'card-item' + (i === selectedIndex ? ' selected' : '');
+    el.className = 'card-item' + (i === selectedIndex ? ' selected' : '') + (s.hidden ? ' hidden-section' : '');
     el.draggable = true;
     el.dataset.index = i;
 
     const label = TYPE_LABELS[s.type] || s.type;
     const thumbHtml = buildCardThumbnail(s);
+    // 眼睛图标：可见态显示「睁眼」（点按=隐藏），隐藏态显示「闭眼划线」（点按=显示）
+    const eyeSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+    const eyeOffSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M6.61 6.61A18.5 18.5 0 0 0 2 12s3 8 10 8a9.1 9.1 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
+    const hideTitle = s.hidden ? '显示此板块' : '隐藏此板块';
 
     el.innerHTML = `
       <div class="card-head">
@@ -3147,12 +3495,14 @@ function renderSectionList() {
           <div class="card-head-titles">
             <div class="card-title" title="${esc(label)}">${esc(label)}</div>
             <div class="card-slug" title="${esc(s.type)}">${esc(s.type)}</div>
+            ${s.hidden ? '<span class="card-hidden-badge">已隐藏</span>' : ''}
           </div>
         </div>
       </div>
       <div class="card-thumb-area">
         <div class="card-thumb-box">${thumbHtml}</div>
         <div class="card-actions">
+          <button class="btn-icon" title="${hideTitle}" data-act="hide">${s.hidden ? eyeOffSvg : eyeSvg}</button>
           <button class="btn-icon" title="编辑" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg></button>
           <button class="btn-icon" title="复制到页面" data-act="more"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
           <button class="btn-icon delete" title="删除" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
@@ -3165,6 +3515,7 @@ function renderSectionList() {
       selectSection(i);
     });
 
+    el.querySelector('[data-act="hide"]').onclick = (e) => { e.stopPropagation(); toggleSectionHidden(i); };
     el.querySelector('[data-act="edit"]').onclick = (e) => { e.stopPropagation(); selectSection(i); };
     el.querySelector('[data-act="more"]').onclick = (e) => { e.stopPropagation(); openCopySectionModal(i); };
     el.querySelector('[data-act="delete"]').onclick = (e) => { e.stopPropagation(); deleteSection(i); };
@@ -3411,6 +3762,24 @@ function buildCardThumbnail(s) {
         return '<div class="wf f0">' + icons + '<div class="wf-ovl-bottom" style="align-items:center;text-align:center">' + bar('t w40', '40%') + '</div></div>';
       }
 
+      case 'motion-banner':
+        // 动效首屏 = 多张旋转散落卡片 + 底部居中标题/副标题（对齐 renderMotionBanner 版式；浅灰线框统一风格）
+        return '<div class="wf f0">' +
+          '<div class="wf-media" style="position:absolute;width:24%;height:32%;left:13%;top:14%;transform:rotate(-12deg);border-radius:5px"></div>' +
+          '<div class="wf-media" style="position:absolute;width:28%;height:38%;right:12%;top:10%;transform:rotate(9deg);border-radius:5px"></div>' +
+          '<div class="wf-media" style="position:absolute;width:20%;height:26%;left:31%;bottom:9%;transform:rotate(5deg);border-radius:5px;opacity:.8"></div>' +
+          '<div class="wf-ovl-bottom" style="align-items:center;text-align:center;z-index:2">' + bar('t w45', '45%') + bar('s w30', '30%') + '</div></div>';
+
+      case 'gallery-banner':
+        // 卡片长廊 = 隧道纵深：中央近卡大而清晰、两侧远卡渐小带透视收合 + 底部居中标题（浅灰线框统一风格，远卡用 sk-line 深一档表纵深）
+        return '<div class="wf f0">' +
+          '<div class="wf-media" style="position:absolute;width:34%;height:46%;left:33%;top:22%;border-radius:7px;z-index:2"></div>' +
+          '<div class="wf-media" style="position:absolute;width:19%;height:27%;left:7%;top:18%;transform:perspective(90px) rotateY(26deg);border-radius:5px;background:var(--sk-line,#d7dae1);opacity:.85"></div>' +
+          '<div class="wf-media" style="position:absolute;width:19%;height:27%;right:7%;top:18%;transform:perspective(90px) rotateY(-26deg);border-radius:5px;background:var(--sk-line,#d7dae1);opacity:.85"></div>' +
+          '<div class="wf-media" style="position:absolute;width:13%;height:19%;left:1%;top:24%;transform:perspective(90px) rotateY(34deg);border-radius:4px;background:var(--sk-line-2,#b4bac4);opacity:.6"></div>' +
+          '<div class="wf-media" style="position:absolute;width:13%;height:19%;right:1%;top:24%;transform:perspective(90px) rotateY(-34deg);border-radius:4px;background:var(--sk-line-2,#b4bac4);opacity:.6"></div>' +
+          '<div class="wf-ovl-bottom" style="align-items:center;text-align:center;z-index:3">' + bar('t w40', '40%') + '</div></div>';
+
       case 'device-screen':
         return '<div class="wf f0"><div class="wf-frame" style="inset:15px;border-radius:13px"></div></div>';
 
@@ -3519,6 +3888,7 @@ function renderRightPanel() {
     const s = state.sections[selectedIndex];
     const typeLabel = TYPE_LABELS[s.type] || s.type;
     right.innerHTML = `
+      ${s.hidden ? `<div class="editor-hidden-banner"><span class="ehb-ico">🔒</span><span class="ehb-text">此板块已隐藏，保存后前台不再显示（数据仍保留，可随时重新启用）</span><button class="ehb-btn" id="btnShowSection">显示板块</button></div>` : ''}
       <div class="editor-body">
         <div id="editorFormContainer"></div>
       </div>
@@ -3537,6 +3907,7 @@ function renderRightPanel() {
     renderEditorForm(s);
     $('#btnDeleteEditor').onclick = () => deleteSection(selectedIndex);
     $('#btnCancelChanges').onclick = () => cancelSectionChanges();
+    if ($('#btnShowSection')) $('#btnShowSection').onclick = () => toggleSectionHidden(selectedIndex);
     updateEditorFooterStatus();
     return;
   }
@@ -3602,7 +3973,11 @@ function updateEditorFooterStatus() {
   };
 
   function floatPanel(panel, wrap) {
-  var r = wrap.getBoundingClientRect();
+  /* 测量基准：紧凑属性行里的 .sel 被绝对定位收窄成「标签右→箭头左」，
+     若按 wrap 自身宽度量，展开面板会比 pill 窄一截（用户 2026-10-10 反馈）。
+     故先探测最近的 .fgc 祖先，命中就用 pill 的宽度与左缘。 */
+  var pillBox = wrap.closest ? wrap.closest('.fgc') : null;
+  var r = (pillBox || wrap).getBoundingClientRect();
   if (panel.parentNode !== document.body) document.body.appendChild(panel);
   panel.style.position = 'fixed';
   panel.style.zIndex = '9999';
@@ -3624,11 +3999,13 @@ function updateEditorFooterStatus() {
     panel.style.maxWidth = 'calc(100vw - 16px)';
   }
   var ph = panel.offsetHeight, pw = panel.offsetWidth;
-  var left = r.left;
+  var anchor = pillBox || wrap;
+  var ar = anchor.getBoundingClientRect();
+  var left = ar.left;
   if (left + pw > window.innerWidth - 8) left = Math.max(8, window.innerWidth - 8 - pw);
-  var top = r.bottom + 4;
+  var top = ar.bottom + 4;
   /* 垂直：默认向下，下方空间不足且上方够则向上展开 */
-  if (top + ph > window.innerHeight - 8 && r.top - 4 - ph >= 8) top = r.top - 4 - ph;
+  if (top + ph > window.innerHeight - 8 && ar.top - 4 - ph >= 8) top = ar.top - 4 - ph;
   panel.style.left = Math.round(left) + 'px';
   panel.style.top = Math.round(top) + 'px';
   if (!wrap.__refloat) {
@@ -4373,13 +4750,183 @@ function upgradeSelect(sel) {
     Array.prototype.forEach.call(scope.querySelectorAll('input[type="date"]'), upgradeDate);
   }
 
+/* === range 值计算（clamp + 位数自适应）：主渲染器与紧凑行共用，避免逻辑漂移 === */
+function rangeValCalc(f, val) {
+  const rmin = f.min != null ? parseFloat(f.min) : 0;
+  const rmax = f.max != null ? parseFloat(f.max) : 1;
+  const rstep = f.step != null ? parseFloat(f.step) : 0.05;
+  const rdef = f.default != null ? parseFloat(f.default) : rmin;
+  const rvRaw = String(val || '');
+  // 空值 = 0/下限（遮罩关闭语义，不塞 default）；历史开关 '1'/'true'/'on' → 映射默认强度
+  let rv = (rvRaw === '' || rvRaw == null) ? rmin
+    : (rvRaw === '1' || rvRaw === 'true' || rvRaw === 'on') ? rdef
+    : parseFloat(rvRaw);
+  if (!Number.isFinite(rv)) rv = rdef;
+  rv = Math.min(rmax, Math.max(rmin, rv));
+  const dec = rstep >= 1 ? 0 : rstep >= 0.1 ? 1 : rstep >= 0.01 ? 2 : rstep >= 0.001 ? 3 : 4;
+  return { rmin, rmax, rstep, rdef, rv, dec };
+}
+
+/* 滑块填充段进度 0~1：把当前值映射到 [min,max]，交给 CSS 渐变定位「已填充段」边缘
+   （参考 reactbits.dev：填色从轨道左端一直铺到滑块圆心，而非原生 range 的无填充轨道）
+   所有 .form-range 生成点（紧凑行 / 通用行 / 动效参数行）都必须写 --fill，否则填充段不显示 */
+function fillPctOf(v, min, max) {
+  const lo = Number.isFinite(min) ? min : 0;
+  const hi = Number.isFinite(max) ? max : 1;
+  const x = Number.isFinite(v) ? v : lo;
+  return hi > lo ? Math.min(1, Math.max(0, (x - lo) / (hi - lo))) : 0;
+}
+function rangeFillPct(c) { return fillPctOf(c.rv, c.rmin, c.rmax); }
+
+/* === color 取色点初始色：hex 直用；rgba 取 rgb 部分（面板内保留 alpha） === */
+function colorDotHex(cv) {
+  const c = String(cv || '');
+  const m6 = /^#([0-9a-fA-F]{6})$/.exec(c.trim());
+  if (m6) return c.trim();
+  const mRgba = /^rgba?\(([^)]+)\)$/i.exec(c.trim());
+  if (mRgba) {
+    const parts = mRgba[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    if (parts.length >= 3 && parts.slice(0, 3).every((n) => !isNaN(n))) {
+      return '#' + parts.slice(0, 3).map((n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('');
+    }
+  }
+  /* hsl()/hsla()：色盘现在支持切到 HSL 格式（用户 2026-10-10），
+     不认的话面板切到 HSL 后色块会退回纯白。走一条临时 DOM 解析最省事。 */
+  const mHsl = /^hsla?\(([^)]+)\)$/i.exec(c.trim());
+  if (mHsl) {
+    const probe = document.createElement('span');
+    probe.style.color = c.trim();
+    document.body.appendChild(probe);
+    const rgbCss = getComputedStyle(probe).color || '';
+    probe.remove();
+    const p2 = rgbCss.match(/(\d+(?:\.\d+)?)/g);
+    if (p2 && p2.length >= 3) {
+      return '#' + p2.slice(0, 3).map((n) => Math.max(0, Math.min(255, Math.round(Number(n)))).toString(16).padStart(2, '0')).join('');
+    }
+  }
+  return '#ffffff';
+}
+
+/* === 紧凑属性行（reactbits 式）：label 左 · 控件中 · 数值右，一行一个属性 ===
+   支持 range（滑块）/ select（右对齐下拉）/ color（色点+HEX）/ text；复用
+   data-bind-key / data-bind-ftype / data-reset-key → 既有绑定与重置逻辑自动生效 */
+/* 刻度可用区裁剪：把 9 根刻度限制在「标签右缘 + 8px」与「数值/控件左缘 − 8px」之间。
+   背景：参考站的刻度层是 inset:0 横跨整轨（实测隐藏标签后 9 根全显现），它靠 13px 文字笔画
+   把落在字底的刻度「压住」来达到不重叠的观感；但中文标签窄（「字号」≈26px）盖不住 10% 处那根，
+   于是这里改为按实测宽度留出安全边距，中文下也不会与标题/数值重叠。
+   窄到放不下 9 根时按比例减少，避免刻度挤成一团。 */
+function layoutFgcTicks(root) {
+  (root || document).querySelectorAll('.fgc[data-fgc]').forEach((box) => {
+    const W = box.clientWidth;
+    if (!W) return;
+    const GAP = 8;                                   /* 文字与刻度的最小安全间距 */
+    const lbl = box.querySelector('.fgc-label');
+    const boxRect0 = box.getBoundingClientRect();
+    /* 下拉左边界：按标签实测右缘 + GAP 写入 --fgc-sel-left，
+       让 .sel wrapper 从标签右侧开始（写死 48px/84px 都会在中文长标签下截断下拉文字）。*/
+    const sel = box.querySelector('.sel');
+    if (sel && lbl) {
+      sel.style.setProperty('--fgc-sel-left',
+        Math.max(8, lbl.getBoundingClientRect().right - boxRect0.left + GAP).toFixed(1) + 'px');
+    }
+    /* 下拉面板宽度对齐 pill：.sel 已被收窄成「标签右→箭头左」，面板 width:100% 会比 pill 短一截，
+       这里把 pill 实测宽度写进 --fgc-pill-w，展开面板右对齐 + 同宽。 */
+    if (sel) sel.style.setProperty('--fgc-pill-w', W.toFixed(1) + 'px');
+    const ticks = box.querySelector('.fgc-ticks');
+    if (!ticks) return;
+    /* 右侧参照物：range 看数值，其余（select/color/text）看最右侧的控件 */
+    const right = box.querySelector('.form-range-val')
+      || box.querySelector('.field-reset')
+      || box.querySelector('.form-color-dot')
+      || box.querySelector('.fgc-caret')
+      || box.querySelector('.form-select')
+      || box.querySelector('.form-input');
+    const boxRect = box.getBoundingClientRect();
+    const a = lbl ? Math.max(0, lbl.getBoundingClientRect().right - boxRect.left + GAP) : 12;
+    const b = right ? Math.max(0, boxRect.right - right.getBoundingClientRect().left + GAP) : 12;
+    /* 可用宽度过窄（标签+数值几乎占满）时放弃裁剪，退回整轨均分，避免刻度全被挤掉 */
+    if (W - a - b < 36) {
+      ticks.style.removeProperty('--fgc-tick-a');
+      ticks.style.removeProperty('--fgc-tick-b');
+      return;
+    }
+    ticks.style.setProperty('--fgc-tick-a', a.toFixed(1) + 'px');
+    ticks.style.setProperty('--fgc-tick-b', b.toFixed(1) + 'px');
+  });
+}
+
+function renderCompactField(f, section, fieldUid) {
+  const val = section[f.key];
+  const hint = f.hint ? `<span class="field-hint" tabindex="0" title="" aria-label="${esc(f.hint)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span class="hint-bubble">${esc(f.hint)}</span></span>` : '';
+  const reset = (f.default !== undefined && !f.rebuildOnChange) ? `<button type="button" class="field-reset" data-reset-key="${esc(f.key)}" data-reset-default="${esc(f.default)}" title="重置为默认值（${esc(f.default)}）" aria-label="重置此项"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>` : '';
+  /* 行修饰类：has-reset 让位给重置按钮；has-ctl/has-dot 让位给下拉/色点 */
+  const cls = 'fgc' + (reset ? ' has-reset' : '');
+  /* 复刻参考站刻度层：9 根等分；起止边界由 layoutFgcTicks 按标签/数值实测宽度写入 --fgc-tick-a/b（避免中文短标签压住刻度） */
+  const TICKS = '<div class="fgc-ticks">' +
+    [10, 20, 30, 40, 50, 60, 70, 80, 90].map((p) => `<i class="fgc-tick" style="left:${p}%"></i>`).join('') +
+    '</div>';
+
+  if (f.type === 'range') {
+    const c = rangeValCalc(f, val);
+    const isDefault = Math.abs(c.rv - c.rdef) < (c.rstep / 2);
+    const pct = (rangeFillPct(c) * 100).toFixed(4);
+    return `<div class="${cls}" data-fgc>` +
+      `<div class="fgc-fill" style="width:${pct}%"></div>${TICKS}` +
+      `<div class="fgc-thumb" style="left:${pct}%"></div>` +
+      `<span class="fgc-label">${esc(f.label)}${hint}</span>` +
+      `<input class="form-range" data-bind-key="${esc(f.key)}" data-bind-ftype="range" type="range"` +
+      ` min="${esc(String(c.rmin))}" max="${esc(String(c.rmax))}" step="${esc(String(c.rstep))}" value="${c.rv}" id="${fieldUid}" aria-label="${esc(f.label)}">` +
+      `<span class="form-range-val${isDefault ? ' is-default' : ''}" title="默认 ${Number(c.rdef.toFixed(c.dec)).toString()}${f.unit || ''}">${Number(c.rv.toFixed(c.dec)).toString()}${f.unit || ''}</span>${reset}</div>`;
+  }
+  if (f.type === 'select') {
+    const curSel = String(val == null ? '' : val);
+    /* 当前值缺省（''）时按 default 显示，让下拉一打开就落在真实默认项上 */
+    const hasDefault = f.default !== undefined && f.default !== null;
+    const selVal = (curSel === '' && hasDefault) ? String(f.default) : curSel;
+    /* 默认值那一项在文案后加「（默认）」（用户 2026-10-10 定：「右（默认）」这种写法，
+       不额外插一个「默认」选项 —— 那样会出现两个「空」语义，且和下面的真实项重复）。
+       optionLabels 里若已手写「（默认）」则不重复追加。
+       有了这个标注项，下拉本身就是复位入口，故本分支不输出行内重置按钮。 */
+    const opts = (f.options || []).map((opt) => {
+      const base = (f.optionLabels && f.optionLabels[opt]) || opt;
+      const isDef = hasDefault && String(opt) === String(f.default);
+      const ol = (isDef && base.indexOf('（默认）') < 0) ? base + '（默认）' : base;
+      return `<option value="${esc(opt)}"${opt === selVal ? ' selected' : ''}>${esc(ol)}</option>`;
+    }).join('');
+    return `<div class="fgc has-ctl" data-fgc>` +
+      `<span class="fgc-label">${esc(f.label)}${hint}</span>` +
+      `<select class="form-select" data-bind-key="${esc(f.key)}" data-bind-ftype="select" data-rebuild-on-change="true" id="${fieldUid}">${opts}</select>` +
+      `<span class="fgc-caret" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></div>`;
+  }
+  if (f.type === 'color') {
+    const cv = String(val || '');
+    const dotV = colorDotHex(cv);
+    /* 紧凑行里**不显示文本输入框**（用户 2026-10-10：rgba(...) 之类放不下，
+       标签和值会挤在一起）。改为「标签 + 正方形色块」：点色块开色盘，
+       色值只在色盘里输入/切换格式。
+       仍保留一个 hidden input 作为取色面板的取值源（CP.txt 写回它 → 走既有
+       data-bind-key 绑定 + 脏标记 + 保存链路），只是不占视觉空间。 */
+    return `<div class="${cls} has-dot" data-fgc>` +
+      `<span class="fgc-label">${esc(f.label)}${hint}</span>` +
+      `<button type="button" class="form-color-dot" data-color-for="${esc(f.key)}" data-dot-cur="${esc(dotV)}" style="background:${esc(dotV)}" aria-label="${esc(f.label)}取色（色值在取色面板内输入）"></button>` +
+      `<input class="form-input" type="hidden" data-bind-key="${esc(f.key)}" data-bind-ftype="text" value="${esc(cv)}" id="${fieldUid}">${reset}</div>`;
+  }
+  // 默认（text 等）：label + 输入框
+  /* has-text：自由文本（副标题等）用 flex 布局并占满整行，避免长 placeholder 溢出压住标签
+     （CSS 见 .compact-grid .fgc.has-text —— grid-column:1/-1 会把它推到本组最后一行）*/
+  return `<div class="${cls} has-ctl has-text" data-fgc>` +
+    `<span class="fgc-label">${esc(f.label)}${hint}</span>` +
+    `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="text" type="text" placeholder="${esc(f.placeholder || '')}" value="${esc(val || '')}" id="${fieldUid}">${reset}</div>`;
+}
+
 function renderEditorForm(section) {
   stopMnLive();                       // 表单将重建：先停掉旧的内嵌预览引擎（防引用已销毁 DOM）
+  stopGlbLive();                      // 同上（卡片长廊）
   const container = $('#editorFormContainer');
   const rawFields = TYPE_FIELDS[section.type] || [];
-  // text-fill-banner：缺失滑块/下拉字段补默认（仅补 undefined），保证滑块有稳定初始位且与前台缺省一致；
+  // text-fill-banner / gallery-banner：缺失滑块/下拉字段补默认（仅补 undefined），保证滑块有稳定初始位且与前台缺省一致；
   // 不扩展到其他组件——其余 range 字段（遮罩等）缺值语义是 0/关闭，不能塞默认
-  if (section.type === 'text-fill-banner') {
+  if (section.type === 'text-fill-banner' || section.type === 'gallery-banner') {
     rawFields.forEach((f) => {
       if (f.default !== undefined && f.default !== null && section[f.key] === undefined) {
         section[f.key] = f.default;
@@ -4434,6 +4981,20 @@ function renderEditorForm(section) {
   } else {
     html += '<div class="form-grid">';
   }
+  // gallery-banner：页卡栏之后、各面板之前内嵌「实时预览」（与 motion-banner 的 mn-live 同位置）。
+  // 放在这里而不是塞进某个 .form-tab-panel，是为了**切换页卡时它始终可见**（面板才会被 display:none）。
+  if (section.type === 'gallery-banner') {
+    html += '<div class="mn-live" id="glbLive">' +
+      '<div class="mn-live-head"><span class="mn-live-dot"></span>' +
+        '<span class="mn-live-t">实时预览</span>' +
+        '<span class="mn-live-s">与前台同一份隧道几何 · 文字/底色/圆角/流速 改动即时生效</span></div>' +
+      '<div class="glb-live-stage" id="glbLiveStage">' +
+        '<div class="glb-live-view" id="glbLiveView"><div class="glb-live-deck" id="glbLiveDeck"></div>' +
+          '<div class="glb-live-copy" id="glbLiveCopy"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
   // mockup-banner：在表单顶部提供一个「可视化编辑器」入口，打开弹窗式拖拽调参（视角/动画/背景/标题遮挡）
   if (section.type === 'mockup-banner') {
     html += '<div class="form-group full" style="margin:0 0 14px"><div class="mbvis-launch" id="mbvisLaunchBox">' +
@@ -4465,8 +5026,62 @@ function renderEditorForm(section) {
       '<div class="mn-live-stage" id="mnLiveStage"><div class="mnl-deck" id="mnLiveDeck"></div></div>' +
     '</div>';
   }
-    fields.forEach((f) => {
+    fields.forEach((f, fi) => {
     if (hasTabs) openPanel(f.tab || tabs[0], tabs.indexOf(f.tab || tabs[0]));
+    // gallery-banner「文字」tab：主标题/副标题 text 字段不单独成行，改由下方 compact 分支注入到对应属性 frame 内
+    if (section.type === 'gallery-banner' && f.tab === '文字' && f.type === 'text') return;
+    /* 紧凑属性行（reactbits 式）：连续 compact 字段合并为一个自动多列网格，
+       一行一属性（label 左 · 控件中 · 数值右）；run 不跨页卡边界 */
+    if (f.compact) {
+      if (fi > 0 && fields[fi - 1].compact && fields[fi - 1].tab === f.tab) return; // 已并入前面的 run
+      let pills = '';
+      let j = fi;
+      const runKeys = [];                           /* 本组的字段 key：供外壳上的「重置」逐项复位 */
+      while (j < fields.length && fields[j].compact && fields[j].tab === f.tab) {
+        const cj = fields[j];
+        if (cj.showIf) {
+          const cv2 = String(section[cj.showIf.key] == null ? '' : section[cj.showIf.key]);
+          if (!cj.showIf.in.map(String).includes(cv2)) { j++; continue; }
+        }
+        pills += renderCompactField(cj, section, 'f_' + cj.key + '_' + section.id);
+        if (cj.default !== undefined && !cj.rebuildOnChange) runKeys.push(cj.key + '\u0001' + String(cj.default));
+        j++;
+      }
+      /* 外壳 = 参考站 .customize-frame（#fafafa + 1px #e7e7e9 + 圆角 14px + padding 4px）
+         + .customize-heading（标题 + 右侧重置）+ .preview-options（白底网格，padding 14px 12px / gap 8px） */
+      if (pills) {
+        let frameTitle = (tabs.length ? f.tab : '') + '属性';
+        let injectTextHTML = '';
+        if (section.type === 'gallery-banner' && f.tab === '文字') {
+          // 向上找同 tab 里最近的 text 字段（主标题 / 副标题），注入进本 frame 并把框名改为「文字主标题 / 文字副标题」
+          let ti = fi - 1;
+          while (ti >= 0 && fields[ti].tab === '文字') {
+            if (fields[ti].type === 'text') break;
+            ti--;
+          }
+          const tf = ti >= 0 ? fields[ti] : null;
+          if (tf) {
+            frameTitle = (tf.key === 'subtitle') ? '文字副标题' : '文字主标题';
+            const tval = section[tf.key];
+            const tuid = 'f_' + tf.key + '_' + section.id;
+            // 字段说明（如「主标题（选填，留空不显示）」）作为输入框占位提示写入，输入内容即消失；不另起 label
+            injectTextHTML = '<div class="form-group fgc-text-group">' +
+              `<input class="form-input" data-bind-key="${esc(tf.key)}" data-bind-ftype="text" type="text" value="${esc(tval || '')}" id="${tuid}" placeholder="${esc(tf.label)}">` +
+              '</div>';
+          }
+        }
+        html += '<div class="fgc-frame">' +
+          '<div class="fgc-frame-head">' +
+            `<h2 class="fgc-frame-title">${esc(frameTitle)}</h2>` +
+            (runKeys.length ? `<button type="button" class="fgc-frame-reset" data-fgc-group-reset="${esc(runKeys.join('|'))}" title="把这一组参数恢复默认值">` +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>重置</button>' : '') +
+          '</div>' +
+          injectTextHTML +
+          '<div class="compact-grid">' + pills + '</div>' +
+        '</div>';
+      }
+      return;
+    }
     /* showIf 条件显示：字段只在 {key: 值 in [..]} 满足时渲染（如动效参数跟着下拉走） */
     if (f.showIf) {
       const curV = String(section[f.showIf.key] == null ? '' : section[f.showIf.key]);
@@ -4500,16 +5115,7 @@ function renderEditorForm(section) {
         // 替代系统原生 picker。文本框仍是唯一取值源（允许任意 CSS 颜色，含 rgba——
         // 面板选色时保留原 alpha）；rgba 初值取 rgb 部分做面板初始色。
         const cv = String(val || '');
-        const m6 = /^#([0-9a-fA-F]{6})$/.exec(cv.trim());
-        const mRgba = /^rgba?\(([^)]+)\)$/i.exec(cv.trim());
-        let dotV = '#ffffff';
-        if (m6) dotV = cv.trim();
-        else if (mRgba) {
-          const parts = mRgba[1].split(/[,\s/]+/).filter(Boolean).map(Number);
-          if (parts.length >= 3 && parts.slice(0, 3).every((n) => !isNaN(n))) {
-            dotV = '#' + parts.slice(0, 3).map((n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('');
-          }
-        }
+        const dotV = colorDotHex(cv);
         html += `<div class="form-color-row">` +
           `<button type="button" class="form-color-dot" data-color-for="${esc(f.key)}" data-dot-cur="${esc(dotV)}" style="background:${esc(dotV)}" aria-label="${esc(f.label)}取色"></button>` +
           `<input class="form-input" data-bind-key="${esc(f.key)}" data-bind-ftype="text" type="text" placeholder="${esc(f.placeholder || '#ffffff')}" value="${esc(cv)}" id="${fieldUid}">` +
@@ -4558,24 +5164,14 @@ function renderEditorForm(section) {
       case 'range': {
         // 通用数值滑块：min/max/step 由字段定义，值自动 clamp；右侧数值显示位数随 step 自适应。
         // 兼容历史：布尔/开关旧值 '1'/'true'/'on' → 映射字段默认强度；空值 → 默认
-        const rmin = f.min != null ? parseFloat(f.min) : 0;
-        const rmax = f.max != null ? parseFloat(f.max) : 1;
-        const rstep = f.step != null ? parseFloat(f.step) : 0.05;
-        const rdef = f.default != null ? parseFloat(f.default) : rmin;
-        const rvRaw = String(val || '');
-        // 空值 = 0/下限（遮罩关闭语义，不塞 default）；历史开关 '1'/'true'/'on' → 映射默认强度
-        let rv = (rvRaw === '' || rvRaw == null) ? rmin
-          : (rvRaw === '1' || rvRaw === 'true' || rvRaw === 'on') ? rdef
-          : parseFloat(rvRaw);
-        if (!Number.isFinite(rv)) rv = rdef;
-        rv = Math.min(rmax, Math.max(rmin, rv));
-        const dec = rstep >= 1 ? 0 : rstep >= 0.1 ? 1 : rstep >= 0.01 ? 2 : rstep >= 0.001 ? 3 : 4;
-        const isDefault = Math.abs(rv - rdef) < (rstep / 2);
+        const c = rangeValCalc(f, val);
+        const isDefault = Math.abs(c.rv - c.rdef) < (c.rstep / 2);
         html += `<div class="form-range-row">
           <input class="form-range" data-bind-key="${esc(f.key)}" data-bind-ftype="range" type="range"
-            min="${esc(String(rmin))}" max="${esc(String(rmax))}" step="${esc(String(rstep))}"
-            value="${rv}" id="${fieldUid}">
-          <span class="form-range-val${isDefault ? ' is-default' : ''}" title="默认 ${Number(rdef.toFixed(dec)).toString()}">${Number(rv.toFixed(dec)).toString()}</span>
+            style="--fill:${rangeFillPct(c).toFixed(4)}"
+            min="${esc(String(c.rmin))}" max="${esc(String(c.rmax))}" step="${esc(String(c.rstep))}"
+            value="${c.rv}" id="${fieldUid}">
+          <span class="form-range-val${isDefault ? ' is-default' : ''}" title="默认 ${Number(c.rdef.toFixed(c.dec)).toString()}${f.unit || ''}">${Number(c.rv.toFixed(c.dec)).toString()}${f.unit || ''}</span>
         </div>`;
         break;
       }
@@ -4695,6 +5291,24 @@ function renderEditorForm(section) {
       setTimeout(() => renderEditorForm(section), 0);
     });
   }
+  // 属性组重置（外壳标题栏右侧）：只复位本组紧凑字段，粒度比「重置本页」细
+  container.querySelectorAll('[data-fgc-group-reset]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const sec = state.sections[selectedIndex];
+      if (!sec) return;
+      let n = 0;
+      String(btn.getAttribute('data-fgc-group-reset') || '').split('|').forEach((pair) => {
+        const i = pair.indexOf('\u0001');
+        if (i < 0) return;
+        sec[pair.slice(0, i)] = pair.slice(i + 1);
+        n++;
+      });
+      if (!n) { toast('这一组没有可重置的参数', 'error'); return; }
+      toast('已重置 ' + n + ' 项参数', 'success');
+      onSectionChanged();
+      setTimeout(() => renderEditorForm(section), 0);
+    });
+  });
   // 站内页下拉兜底刷新：PAGE_OPTIONS 可能晚于编辑器渲染完成，确保加载后用最新列表重填选项并保留选中值
   refreshPageSelects();
   ensurePageOptions().then(() => refreshPageSelects());
@@ -4712,6 +5326,16 @@ function renderEditorForm(section) {
         const st = Number.isFinite(parseFloat(inp.step)) ? parseFloat(inp.step) : 0.05;
         const v = Math.min(hi, Math.max(lo, parseFloat(inp.value) || lo));
         state.sections[selectedIndex][k] = String(v);
+        const pctv = fillPctOf(v, lo, hi);
+        // 旧式行（.form-range-row）用渐变 --fill；scrubber 紧凑行用填充段宽度 + 竖条位置
+        inp.style.setProperty('--fill', String(pctv));
+        const fgcBox = inp.parentElement && inp.parentElement.classList.contains('fgc') ? inp.parentElement : null;
+        if (fgcBox) {
+          const fillEl = fgcBox.querySelector('.fgc-fill');
+          const thumbEl = fgcBox.querySelector('.fgc-thumb');
+          if (fillEl) fillEl.style.width = (pctv * 100).toFixed(4) + '%';
+          if (thumbEl) thumbEl.style.left = (pctv * 100).toFixed(4) + '%';
+        }
         const span = inp.parentElement && inp.parentElement.querySelector('.form-range-val');
         if (span) {
           const dec = st >= 1 ? 0 : st >= 0.1 ? 1 : st >= 0.01 ? 2 : st >= 0.001 ? 3 : 4;
@@ -4762,15 +5386,20 @@ function renderEditorForm(section) {
     inp.addEventListener('change', handler);
   });
 
-  // 取色器（color 字段）：点色卡打开自定义弹出式取色面板（写回同 key 文本框 + 触发保存）；
-  // 文本框填合法 hex → 同步色卡底色。rgba 值由面板保留 alpha 写回。
+  // 取色器（color 字段）：点色块打开自定义弹出式取色面板（写回同 key 取值源 + 触发保存）。
+  // 紧凑行里取值源是 hidden input（视觉上只有色块），普通行是可见文本框 —— 两者同一套链路。
   container.querySelectorAll('[data-color-for]').forEach((dot) => {
     const txt = container.querySelector('[data-bind-key="' + dot.dataset.colorFor + '"]');
     if (!txt) return;
     dot.addEventListener('click', () => openColorPicker(dot, txt));
     txt.addEventListener('input', () => {
       const v = String(txt.value || '').trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(v)) { dot.dataset.dotCur = v; dot.style.background = v; }
+      /* 合法 hex / rgb() / rgba() / hsl() 都同步色块底色与气泡文案（气泡读 data-dot-cur）。
+         注意：现在气泡是紧凑行里**唯一**能看到色值的地方，面板关掉后仍要能查，所以必须同步。 */
+      if (/^#[0-9a-fA-F]{6}$/.test(v) || /^(rgb|rgba|hsl)a?\([^)]+\)$/i.test(v)) {
+        dot.dataset.dotCur = v;
+        dot.style.background = colorDotHex(v);
+      }
     });
   });
 
@@ -4783,6 +5412,34 @@ function renderEditorForm(section) {
       setTimeout(() => renderEditorForm(section), 0);
     });
   });
+
+  // scrubber 竖条激活态：复刻参考站 data-active（静止 opacity .32 + scale(.7) → 激活 .9 + scale(1)）
+  // 参考站规则实测：.scrubber-track[data-active="true"] .scrubber-thumb { opacity:.9; transform:scaleX(1) scaleY(1) }
+  container.querySelectorAll('.fgc > .form-range').forEach((inp) => {
+    const box = inp.parentElement;
+    if (!box || !box.classList.contains('fgc')) return;
+    const on = () => box.classList.add('is-active');
+    const off = () => box.classList.remove('is-active');
+    inp.addEventListener('pointerdown', on);
+    inp.addEventListener('pointerup', off);
+    inp.addEventListener('pointercancel', off);
+    inp.addEventListener('focus', on);
+    inp.addEventListener('blur', off);
+    inp.addEventListener('mouseenter', on);
+    inp.addEventListener('mouseleave', off);
+  });
+
+  // 刻度避让：参考站的 9 根刻度横跨整轨（实测隐藏标签后可见），靠笔画遮挡取得「不重叠」观感；
+  // 中文标签短会露馅，故按实测标签右缘 / 数值左缘裁出刻度可用区，写入 --fgc-tick-a / --fgc-tick-b
+  layoutFgcTicks(container);
+  if (!container.__fgcResizeBound) {
+    container.__fgcResizeBound = true;
+    let rid = 0;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(rid);
+      rid = requestAnimationFrame(() => layoutFgcTicks(container));
+    });
+  }
 
   // 色板 Palette：点击色块写值并高亮（当前值回显也在这里做，兼容外部改值）
   container.querySelectorAll('[data-bind-ftype="palette"]').forEach((box) => {
@@ -4851,6 +5508,10 @@ function renderEditorForm(section) {
   if (section.type === 'motion-banner') {
     requestAnimationFrame(() => startMnLive());
   }
+  // gallery-banner：同上，启动卡片长廊内嵌实时预览
+  if (section.type === 'gallery-banner') {
+    requestAnimationFrame(() => startGlbLive());
+  }
 }
 
 
@@ -4910,8 +5571,26 @@ function openColorPicker(anchorBtn, txtInput) {
   } else if (cpHexToRgb(raw)) hex = cpHexToRgb(raw) ? raw.trim() : '#ffffff';
   const rgb = cpHexToRgb(hex) || [255, 255, 255];
   const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+  /* hsl(...) 起始值：hex 解析失败但 hsl 能解时，用 hsl 推 rgb */
+  if (!cpHexToRgb(raw) && /^hsla?\(/i.test(raw)) {
+    const t = { state: { h: 0, s: 0, v: 0, a: alpha }, fmt: 'hex' };
+    const saveCP = CP;
+    CP = t;
+    const okp = cpParseValue(raw);
+    CP = saveCP;
+    if (okp) {
+      const r2 = cpHsvToRgb(t.state.h, t.state.s, t.state.v);
+      hex = cpRgbToHex(r2[0], r2[1], r2[2]);
+      alpha = t.state.a;
+    }
+  }
   CP.txt = txtInput; CP.dot = anchorBtn;
   CP.state.h = h; CP.state.s = s; CP.state.v = v; CP.state.a = alpha;
+  if (!CP.fmt) CP.fmt = 'hex';
+  const lbl = CP.pop.querySelector('[data-cp-fmtlabel]');
+  const nm = CP.pop.querySelector('[data-cp-fmtname]');
+  if (lbl) lbl.textContent = CP_FMT_LABEL[CP.fmt];
+  if (nm) nm.textContent = CP_FMT_LABEL[CP.fmt];
   /* 定位：anchor 下方，右侧溢出则靠右对齐 */
   const r = anchorBtn.getBoundingClientRect();
   const pop = CP.pop;
@@ -4924,6 +5603,63 @@ function openColorPicker(anchorBtn, txtInput) {
   pop.style.top = top + 'px';
   cpSync();
 }
+/* ===== 色值格式切换（用户 2026-10-10）=====
+   色盘里不再显示 R/G/B/A 四条滑块明细，改为在 HEX 输入框右侧放一个
+   格式切换按钮，在 HEX / RGB / RGBA / HSL 之间循环。 */
+const CP_FORMATS = ['hex', 'rgb', 'rgba', 'hsl'];
+const CP_FMT_LABEL = { hex: 'HEX', rgb: 'RGB', rgba: 'RGBA', hsl: 'HSL' };
+/* HSV(面板内部用的 s/v) → HSL(对外该显示的 s/l)。
+   注意：面板状态存的是 HSV，直接把 st.s/st.v 写成 hsl() 会偏色，
+   必须真做一次换算 —— 否则用户复制面板里的 hsl 粘到别处会变颜色。 */
+function cpHsvToHsl(h, s, v) {
+  const l = v * (1 - s / 2);
+  const sl = (l === 0 || l === 1) ? 0 : (v - l) / Math.min(l, 1 - l);
+  return [h, sl, l];
+}
+function cpFormatValue() {
+  const rgb = cpHsvToRgb(CP.state.h, CP.state.s, CP.state.v);
+  const r = Math.round(rgb[0]), g = Math.round(rgb[1]), b = Math.round(rgb[2]);
+  const a = (CP.state.a == null ? 1 : CP.state.a);
+  if (CP.fmt === 'rgb')  return 'rgb(' + r + ', ' + g + ', ' + b + ')';
+  if (CP.fmt === 'rgba') return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + (Math.round(a * 100) / 100) + ')';
+  if (CP.fmt === 'hsl') {
+    const hsl = cpHsvToHsl(CP.state.h, CP.state.s, CP.state.v);
+    return 'hsl(' + Math.round(hsl[0]) + ', ' + Math.round(hsl[1] * 100) + '%, ' + Math.round(hsl[2] * 100) + '%)';
+  }
+  return cpCurrentHex();
+}
+/* 解析用户手输的色值（任意格式），成功则写回 CP.state 并返回 true */
+function cpParseValue(raw) {
+  const v = String(raw || '').trim();
+  if (!v) return false;
+  let rgb = null, alpha = null;
+  let m = /^rgba?\(([^)]+)\)$/i.exec(v);
+  if (m) {
+    const p = m[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    if (p.length >= 3 && !p.slice(0, 3).some(isNaN)) {
+      rgb = [p[0], p[1], p[2]];
+      if (p[3] != null && !isNaN(p[3])) alpha = Math.max(0, Math.min(1, p[3]));
+    }
+  } else if ((m = /^hsla?\(([^)]+)\)$/i.exec(v))) {
+    const p = m[1].split(/[,\s/%]+/).filter(Boolean).map(Number);
+    if (p.length >= 3 && !p.slice(0, 3).some(isNaN)) {
+      /* HSL → HSV（与 cpHsvToHsl 互逆）：
+         v = l + s_l * min(l, 1-l)；s_v = 2 * (1 - l/v) */
+      const h0 = p[0], sl = p[1] / 100, l = p[2] / 100;
+      const v2 = l + sl * Math.min(l, 1 - l);
+      const s2 = v2 === 0 ? 0 : 2 * (1 - l / v2);
+      rgb = cpHsvToRgb(h0, s2, v2);
+      if (p[3] != null && !isNaN(p[3])) alpha = Math.max(0, Math.min(1, p[3]));
+    }
+  } else if (cpHexToRgb(v)) {
+    rgb = cpHexToRgb(v);
+  }
+  if (!rgb) return false;
+  const [h, s, vv] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
+  CP.state.h = h; CP.state.s = s; CP.state.v = vv;
+  if (alpha != null) CP.state.a = alpha;
+  return true;
+}
 function cpEnsureDOM() {
   const pop = document.createElement('div');
   pop.className = 'cp-pop';
@@ -4935,13 +5671,12 @@ function cpEnsureDOM() {
     '<div class="cp-area"><div class="cp-area-dot"></div></div>' +
     '<div class="cp-hue"><div class="cp-hue-dot"></div></div>' +
     '<div class="cp-swatches">' + swatches.map((c) => `<button type="button" class="cp-sw" data-cp-sw="${c}" style="background:${c}" title="${c}"></button>`).join('') + '</div>' +
-    '<div class="cp-rgb">' +
-      ['R', 'G', 'B'].map((ch, i) => `<div class="cp-rgb-row"><label>${ch}</label><input type="range" min="0" max="255" step="1" data-cp-ch="${i}"><b data-cp-b="${i}">0</b></div>`).join('') +
-      '<div class="cp-rgb-row"><label>A</label><input type="range" min="0" max="100" step="1" data-cp-alpha><b data-cp-ab>100%</b></div>' +
-    '</div>' +
-    '<div class="cp-hexrow"><label>HEX</label><input type="text" data-cp-hex maxlength="9" placeholder="#232323"></div>';
+    '<div class="cp-hexrow"><label data-cp-fmtlabel>HEX</label>' +
+      '<input type="text" data-cp-hex autocomplete="off" spellcheck="false">' +
+      '<button type="button" class="cp-fmt-btn" data-cp-fmtbtn title="切换色值格式（HEX / RGB / RGBA / HSL）">' +
+        '<span data-cp-fmtname>HEX</span><span class="cp-fmt-arrow">↻</span></button></div>';
   document.body.appendChild(pop);
-  CP = { pop: pop, state: { h: 0, s: 0, v: 0, a: 1 }, txt: null, dot: null };
+  CP = { pop: pop, state: { h: 0, s: 0, v: 0, a: 1 }, txt: null, dot: null, fmt: 'hex' };
   /* 色域拖拽 */
   const area = pop.querySelector('.cp-area');
   const areaDrag = (ev) => {
@@ -4980,51 +5715,64 @@ function cpEnsureDOM() {
     CP.state.h = h; CP.state.s = s; CP.state.v = v;
     cpSync(); cpCommit();
   }));
-  /* RGB 滑块 */
-  pop.querySelectorAll('[data-cp-ch]').forEach((inp) => inp.addEventListener('input', () => {
-    const rgb = cpHsvToRgb(CP.state.h, CP.state.s, CP.state.v);
-    rgb[+inp.dataset.cpCh] = +inp.value;
-    const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
-    CP.state.h = h; CP.state.s = s; CP.state.v = v;
-    cpSync(); cpCommit();
-  }));
-  /* A（透明度）滑块：0–100%，<100% 时写回 rgba(...) */
-  pop.querySelector('[data-cp-alpha]').addEventListener('input', (e) => {
-    CP.state.a = (+e.target.value) / 100;
-    cpSync(); cpCommit();
+  /* 色值输入框：任意格式都能解析；用 input 事件 → 边输入边预览。
+     解析失败时**不回滚**（否则用户打到一半的 "#3b8" 被抢走，根本打不完），
+     失败只是这一次不生效，等后续字符补齐即可。 */
+  const valInp = pop.querySelector('[data-cp-hex]');
+  valInp.addEventListener('input', () => {
+    if (cpParseValue(valInp.value)) { cpSync(); cpCommit(); }
   });
-  /* HEX 输入 */
-  const hexInp = pop.querySelector('[data-cp-hex]');
-  hexInp.addEventListener('change', () => {
-    const rgb = cpHexToRgb(hexInp.value);
-    if (!rgb) return;
-    const [h, s, v] = cpRgbToHsv(rgb[0], rgb[1], rgb[2]);
-    CP.state.h = h; CP.state.s = s; CP.state.v = v;
-    cpSync(); cpCommit();
+  valInp.addEventListener('blur', () => {
+    /* 失焦 = 把输入框交还控制权 → 强制按当前格式回填规范值。
+       用 force 参数绕开 cpSync 里的 activeElement 守卫（那条守卫是为了「边打字边同步时
+       别把用户正在敲的文本冲掉」，失焦时已经不需要保护了）。
+       不能靠 setTimeout 等一帧 —— headless/无窗口焦点场景下 blur 时序不可靠。 */
+    cpSync(true);
   });
-  /* 关闭：点外部 / Esc / 滚动 */
-  setTimeout(() => {
-    document.addEventListener('pointerdown', cpOutside);
-    document.addEventListener('keydown', cpEsc);
-  }, 0);
+  /* 格式切换按钮：HEX → RGB → RGBA → HSL → HEX */
+  pop.querySelector('[data-cp-fmtbtn]').addEventListener('click', () => {
+    const i = CP_FORMATS.indexOf(CP.fmt);
+    CP.fmt = CP_FORMATS[(i + 1) % CP_FORMATS.length];
+    pop.querySelector('[data-cp-fmtlabel]').textContent = CP_FMT_LABEL[CP.fmt];
+    pop.querySelector('[data-cp-fmtname]').textContent = CP_FMT_LABEL[CP.fmt];
+    cpSync();
+  });
+  /* 关闭：点外部 / Esc / 滚动
+     注意 —— 监听器只在 cpEnsureDOM 里注册一次，且**永不移除**。
+     早期版本在 cpClose 里 removeEventListener，导致「第一次关掉之后
+     再也关不掉」（监听器已摘除，没人重新注册）。这里改为：
+     cpOutside / cpEsc 开头都有 `if (CP.pop.hidden) return` 的幂等守卫，
+     常驻监听不会有副作用。 */
+  if (!cpEnsureDOM._bound) {
+    cpEnsureDOM._bound = true;
+    setTimeout(() => {
+      document.addEventListener('pointerdown', cpOutside);
+      document.addEventListener('keydown', cpEsc);
+    }, 0);
+  }
 }
 function cpOutside(e) {
   if (!CP || CP.pop.hidden) return;
-  if (CP.pop.contains(e.target) || (CP.dot && CP.dot.contains(e.target))) return;
+  if (CP.pop.contains(e.target)) return;
+  /* 点回色块本体 = toggle 关闭（此前这里写的是
+     `|| (CP.dot && CP.dot.contains(e.target))` 直接 return，
+     导致点色块无法收起弹窗）。 */
+  if (CP.dot && CP.dot.contains(e.target)) { cpClose(); return; }
   cpClose();
 }
 function cpEsc(e) { if (e.key === 'Escape' && CP && !CP.pop.hidden) cpClose(); }
 function cpClose() {
   if (!CP) return;
   CP.pop.hidden = true;
-  document.removeEventListener('pointerdown', cpOutside);
-  document.removeEventListener('keydown', cpEsc);
+  /* 不移除 document 级监听器 —— 见 cpEnsureDOM 里的说明。
+     幂等守卫在 cpOutside / cpEsc 开头。 */
 }
 function cpCurrentHex() {
   const rgb = cpHsvToRgb(CP.state.h, CP.state.s, CP.state.v);
   return cpRgbToHex(rgb[0], rgb[1], rgb[2]);
 }
-function cpSync() {
+/* force=true 时无视 activeElement 守卫强制回填输入框（失焦后调用） */
+function cpSync(force) {
   const pop = CP.pop, st = CP.state;
   const hex = cpCurrentHex();
   const rgb = cpHexToRgb(hex);
@@ -5038,13 +5786,9 @@ function cpSync() {
   pop.querySelector('.cp-hue-dot').style.left = (st.h / 359 * 100) + '%';
   pop.querySelector('.cp-hue-dot').style.background = 'hsl(' + Math.round(st.h) + ',100%,50%)';
   pop.querySelector('.cp-cur').style.background = 'rgba(' + rgb.join(',') + ',' + a + ')';
-  pop.querySelectorAll('[data-cp-ch]').forEach((inp) => { inp.value = Math.round(rgb[+inp.dataset.cpCh]); });
-  pop.querySelectorAll('[data-cp-b]').forEach((b) => { b.textContent = Math.round(rgb[+b.dataset.cpB]); });
-  const aInp = pop.querySelector('[data-cp-alpha]');
-  if (document.activeElement !== aInp) aInp.value = Math.round(a * 100);
-  pop.querySelector('[data-cp-ab]').textContent = Math.round(a * 100) + '%';
-  const hexInp = pop.querySelector('[data-cp-hex]');
-  if (document.activeElement !== hexInp) hexInp.value = hex;
+  /* 值输入框：按当前格式显示（用户 2026-10-10 要求的格式切换） */
+  const valInp = pop.querySelector('[data-cp-hex]');
+  if (force || document.activeElement !== valInp) valInp.value = cpFormatValue();
 }
 function cpCommit() {
   if (!CP || !CP.txt) return;
@@ -5055,7 +5799,9 @@ function cpCommit() {
   CP.txt.value = (a >= 0.999)
     ? hex
     : 'rgba(' + Math.round(rgb[0]) + ',' + Math.round(rgb[1]) + ',' + Math.round(rgb[2]) + ',' + (Math.round(a * 100) / 100) + ')';
-  CP.dot.dataset.dotCur = hex;
+  /* 色块 hover 气泡显示的是 data-dot-cur 的内容（CSS ::after content: attr(...)），
+     这里写实际落地的输入值 —— a<100% 时是 rgba(...) 而非 hex，气泡要跟输入框一致。 */
+  CP.dot.dataset.dotCur = CP.txt.value;
   CP.dot.style.background = CP.txt.value;
   CP.txt.dispatchEvent(new Event('input', { bubbles: true }));
 }
@@ -5084,8 +5830,8 @@ function renderCardSlotsField(f, list, section) {
         '<button type="button" class="cslot-step-btn" data-step="1"' + (count >= max ? ' disabled' : '') + '>+</button>' +
       '</span></div>' +
     '<div class="cslot-grid">' + slots + '</div>' +
-    '<input type="file" accept="image/*" class="cslot-file" hidden>' +
-    '<input type="file" accept="image/*" multiple class="cslot-batch" hidden>' +
+    '<input type="file" accept="image/*" class="cslot-file" style="position:fixed;left:0;top:0;width:1px;height:1px;opacity:0">' +
+    '<input type="file" accept="image/*" multiple class="cslot-batch" style="position:fixed;left:0;top:0;width:1px;height:1px;opacity:0">' +
     '<button type="button" class="cslot-batch-btn">⇪ 批量上传</button>' +
   '</div>';
 }
@@ -5108,7 +5854,9 @@ function bindCardSlotsField(f, section) {
       for (let i = 0; i < arr.length; i++) {
         if (atIdx == null && list.length >= max) break;   // 批量追加：达上限即停，不再上传（避免上传后被孤儿清理删掉）
         prog.update('正在上传图片 ' + (done + 1) + '/' + arr.length + '...');
-        const url = await uploadImage(arr[i], 'auto', section.type || '');
+        // 声明式压缩（2026-08-31 约定）：字段定义带 compress → 透传服务器（gallery-banner 等
+        // card-slots 字段在 server.py 类型映射里没有专属桶，缺了会静默落 2560 默认桶）
+        const url = await uploadImage(arr[i], 'auto', section.type || '', f.compress);
         if (atIdx != null && atIdx >= 0) {
           while (list.length <= atIdx) list.push({});
           list[atIdx] = { image: url };
@@ -5197,6 +5945,163 @@ function mbRadiusPx(s, eff, W, H) {
   else if (eff === 'ticker') nominal = d * MFX.clamp(MFX.num(s.tCardSize, 0.36), 0.1, 0.6);
   else nominal = d * MFX.clamp(MFX.num(s.cardSize, 0.2), 0.08, 0.5);
   return MFX.clamp(MFX.num(s.cornerRadius, 0.08), 0, 0.5) * nominal;
+}
+
+/* ===== 卡片长廊 实时预览引擎（glb-live）=========================================
+   前台隧道是 three.js 的（render.js glbBoot），后台不加载 THREE，所以这里按 motion-banner
+   的既有做法：只移植**几何数学**（常量与 zOf/sxOf/place 逐条对齐），用 DOM 卡片画出来。
+   未移植的部分（顶点弯曲 uBend、曝光/提亮 uniform、背景点阵）不影响版式与文字，
+   预览的目的是「调参即时看到结果」，不是像素级复刻。
+   ⚠ 改前台 render.js 的隧道常量时，这里的 CONST 必须同步改（下方有注释标了出处）。 */
+let GLB_LIVE = null;
+const GLB_VW = 1440, GLB_VH = 810;            /* 虚拟视口：cqi 基准，见 .glb-live-view 注释 */
+const GLB_C = {                               /* 常量全部对齐 render.js glbBoot */
+  CARD_W: 1.5, CARD_H: 1.0,
+  TURN: 52 * Math.PI / 180,
+  CROSS: 0.1, BASE_AMP: 1.12, BASE_POW: 0.8, CORR_G: 3.4,
+  MAX_PER_SIDE: 26, BASE_N: 13, FOV: 40
+};
+function stopGlbLive() {
+  if (!GLB_LIVE) return;
+  GLB_LIVE.stop = true;
+  if (GLB_LIVE.raf) cancelAnimationFrame(GLB_LIVE.raf);
+  if (GLB_LIVE.ro) { try { GLB_LIVE.ro.disconnect(); } catch (e) {} }
+  GLB_LIVE = null;
+}
+function glbLiveNum(v, d) { const n = parseFloat(v); return isNaN(n) ? d : n; }
+function glbLiveClamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+function startGlbLive() {
+  stopGlbLive();
+  const stage = document.getElementById('glbLiveStage');
+  const view = document.getElementById('glbLiveView');
+  const deck = document.getElementById('glbLiveDeck');
+  const copy = document.getElementById('glbLiveCopy');
+  if (!stage || !view || !deck || !copy) return;
+  const st = { stage, view, deck, copy, raf: 0, t0: 0, pool: [], stop: false, ro: null, geom: null, phCache: [] };
+  GLB_LIVE = st;
+
+  /* 缩放：虚拟视口 1440×810 等比塞进预览框（contain），保证 cqi 与前台同比例 */
+  const fit = () => {
+    const r = stage.getBoundingClientRect();
+    const w = Math.max(1, r.width), h = Math.max(1, r.height);
+    const k = Math.min(w / GLB_VW, h / GLB_VH);
+    view.style.transform = 'scale(' + k + ')';
+    view.style.left = ((w - GLB_VW * k) / 2).toFixed(2) + 'px';
+    view.style.top = ((h - GLB_VH * k) / 2).toFixed(2) + 'px';
+  };
+  /* 几何：与 render.js layout() 同式（tanV/tanH/zOf/halfWOf/corrK/sxOf/tMax） */
+  const layout = () => {
+    const tanV = Math.tan(GLB_C.FOV * Math.PI / 360);
+    const tanH = tanV * (GLB_VW / GLB_VH);
+    const zFar = GLB_C.CARD_H / (2 * tanV * 0.105);
+    const zNear = GLB_C.CARD_H / (2 * tanV * 0.38);
+    const zOf = (t) => t <= 1 ? zFar * Math.pow(zNear / zFar, t) : zNear * Math.pow(1 / GLB_C.CORR_G, t - 1);
+    const halfWOf = (t) => (GLB_C.CARD_W * 0.5) / (zOf(t) * tanH);
+    const corrK = 3 * halfWOf(1);
+    const sxOf = (t) => t <= 1 ? (GLB_C.BASE_AMP * Math.pow(glbLiveClamp01(t), GLB_C.BASE_POW) - GLB_C.CROSS)
+      : (GLB_C.BASE_AMP - GLB_C.CROSS) + corrK * (Math.pow(GLB_C.CORR_G, t - 1) - 1);
+    let tMax = 3;
+    for (let t = 1; t <= 3; t += 0.005) { if (sxOf(t) >= 1 + halfWOf(t) + 0.02) { tMax = t; break; } }
+    const n = Math.min(GLB_C.MAX_PER_SIDE, Math.round(GLB_C.BASE_N * tMax));
+    st.geom = { tanV, tanH, zFar, zNear, corrK, tMax, n, zOf, sxOf, halfWOf };
+  };
+
+  /* 无素材时的占位纹理（对齐 motion-banner 占位卡语言：虚线框 + 「素材 N」） */
+  const placeholder = (i) => {
+    if (st.phCache[i]) return st.phCache[i];
+    const cv = document.createElement('canvas'); cv.width = 600; cv.height = 400;
+    const g = cv.getContext('2d');
+    const grd = g.createLinearGradient(0, 0, 600, 400);
+    grd.addColorStop(0, '#27272c'); grd.addColorStop(1, '#1a1a1f');
+    g.fillStyle = grd; g.fillRect(0, 0, 600, 400);
+    g.strokeStyle = 'rgba(255,255,255,0.30)'; g.lineWidth = 3;
+    g.setLineDash([12, 9]); g.strokeRect(16, 16, 568, 368); g.setLineDash([]);
+    g.fillStyle = 'rgba(255,255,255,0.62)';
+    g.font = '500 34px "PingFang SC", "Microsoft YaHei", sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('素材 ' + (i + 1), 300, 200);
+    st.phCache[i] = cv.toDataURL();
+    return st.phCache[i];
+  };
+
+  const draw = (tSec) => {
+    const sec = mbS();
+    if (!sec || sec.type !== 'gallery-banner' || !st.geom) return;
+    const g = st.geom;
+    const imgs = (Array.isArray(sec.images) ? sec.images : []).map((x) => x && x.image).filter(Boolean);
+    const cycle = Math.min(120, Math.max(6, glbLiveNum(sec.speed, 26)));
+    const radius = glbLiveClamp01(glbLiveNum(sec.cornerRadius, 0.03));
+    /* 每帧 tau：两侧相位错半格（否则同步远离中心 → 大屏中心空洞），与前台一致 */
+    const total = g.n * 2;
+    while (st.pool.length < total) {
+      const d = document.createElement('div'); d.className = 'glb-live-card'; deck.appendChild(d); st.pool.push(d);
+    }
+    while (st.pool.length > total) { const last = st.pool.pop(); if (last.parentNode) last.parentNode.removeChild(last); }
+    for (let i = 0; i < total; i++) {
+      const side = (i % 2 === 0) ? -1 : 1;
+      const idx = Math.floor(i / 2);
+      const c = st.pool[i];
+      let tau = ((idx + (side > 0 ? 0.5 : 0)) / g.n + tSec / cycle) % 1;
+      tau = tau * g.tMax;                                  /* 相位 0..1 → 0..tMax（回卷前完全出屏） */
+      const z = g.zOf(tau);
+      const sx = side * g.sxOf(tau);
+      /* 世界→屏幕：x 半宽占比 = sx；高度占比 = CARD_H/(2·z·tanV) */
+      const hPx = GLB_VH * (GLB_C.CARD_H / (2 * z * g.tanV));
+      const wPx = GLB_VW * (GLB_C.CARD_W / (2 * z * g.tanH));
+      const k = Math.min(tau, 1);
+      c.style.width = wPx.toFixed(1) + 'px';
+      c.style.height = hPx.toFixed(1) + 'px';
+      c.style.left = (50 + sx * 50).toFixed(2) + '%';
+      c.style.top = '50%';
+      c.style.transform = 'translate(-50%,-50%) rotateY(' + (-side * GLB_C.TURN * Math.pow(k, 1.5) * 180 / Math.PI).toFixed(2) + 'deg)';
+      c.style.borderRadius = (radius * Math.min(wPx, hPx)).toFixed(1) + 'px';
+      c.style.zIndex = String(1000 - Math.round(tau * 100));       /* 近卡盖远卡 */
+      c.style.opacity = tau >= g.tMax ? '0' : String(glbLiveClamp01((g.tMax - tau) / 0.02));
+      const useReal = imgs.length > 0;
+      const src = useReal ? imgs[idx % imgs.length] : placeholder(idx % 8);
+      if (c._src !== src) { c.style.backgroundImage = 'url("' + src + '")'; c._src = src; }
+      const isPh = !useReal;
+      if (c._ph !== isPh) { c.classList.toggle('is-ph', isPh); c._ph = isPh; }
+      if (isPh) { const lb = '素材 ' + ((idx % 8) + 1); if (c.textContent !== lb) c.textContent = lb; }
+      else if (c.textContent) c.textContent = '';
+    }
+    /* 文字层：样式公式与 render.js renderGalleryBanner 完全一致 */
+    const alignSt = (v) => v === 'left' ? 'justify-content:flex-start;text-align:left'
+      : v === 'right' ? 'justify-content:flex-end;text-align:right' : '';
+    const tStyle = 'color:' + (sec.titleColor || '#f5f5f4') +
+      ';font-size:max(2rem,' + (glbLiveNum(sec.titleScale, 0.045) * 100).toFixed(2) + 'cqi)' +
+      ';font-weight:' + glbLiveNum(sec.titleWeight, 400) +
+      ';letter-spacing:' + glbLiveNum(sec.titleTracking, -0.02) + 'em' +
+      ';line-height:' + glbLiveNum(sec.titleLineHeight, 1.04);
+    const bStyle = 'color:' + (sec.subtitleColor || 'rgba(245,245,244,0.8)') +
+      ';font-size:' + glbLiveNum(sec.subSize, 16) + 'px' +
+      ';font-weight:' + glbLiveNum(sec.subWeight, 400) +
+      ';letter-spacing:' + glbLiveNum(sec.subTracking, 0) + 'em' +
+      ';line-height:' + glbLiveNum(sec.subLineHeight, 1.7);
+    const tHtml = sec.title
+      ? '<div class="glb-live-title-row"' + (alignSt('center') ? ' style="' + alignSt('center') + '"' : '') +
+        '><h2 class="glb-live-title" style="' + tStyle + '">' + esc(sec.title) + '</h2></div>' : '';
+    const sHtml = sec.subtitle
+      ? '<div class="glb-live-sub-row"' + (alignSt('center') ? ' style="' + alignSt('center') + '"' : '') +
+        '><p class="glb-live-sub" style="' + bStyle + '">' + esc(sec.subtitle) + '</p></div>' : '';
+    const next = tHtml + sHtml;
+    if (copy._html !== next) { copy.innerHTML = next; copy._html = next; }
+    view.style.background = sec.bgColor || '#0c0c0d';
+    /* contain 缩放后预览框会留边 —— 边色同步 bgColor，避免「蓝底画面配黑边」的割裂感 */
+    if (st.stage._bg !== sec.bgColor) { st.stage.style.background = sec.bgColor || '#0c0c0d'; st.stage._bg = sec.bgColor; }
+  };
+
+  fit(); layout();
+  st.ro = ('ResizeObserver' in window) ? new ResizeObserver(() => { fit(); }) : null;
+  if (st.ro) st.ro.observe(stage);
+  st.t0 = performance.now();
+  const tick = (now) => {
+    if (st.stop) return;
+    draw((now - st.t0) / 1000);
+    st.raf = requestAnimationFrame(tick);
+  };
+  st.raf = requestAnimationFrame(tick);
 }
 
 /* —— 内嵌实时预览引擎：rAF 常驻，每帧读 mbS()，参数改动即时反映 —— */
@@ -5727,6 +6632,15 @@ function onSectionChanged() {
   updateDirtyState();
   renderSidebar();
   renderSectionList();
+}
+
+/* ===== 板块显隐开关：隐藏后前端不渲染，但数据仍保留在 content.json，可重新启用 ===== */
+function toggleSectionHidden(i) {
+  const s = state.sections[i];
+  if (!s) return;
+  s.hidden = !s.hidden;
+  renderAll();        // 全量重建：卡片列表 + 编辑器 + 侧栏，反映隐藏态（不重置选区）
+  updateDirtyState();  // 标脏 + 亮起保存按钮（renderAll 本身不标脏）
 }
 
 /* ===== Image Field (single) with Direct URL input ===== */
@@ -7638,7 +8552,7 @@ function renderAnimParamRow(p, val, merged) {
     const num = (val !== undefined && val !== null && !isNaN(val)) ? Number(val) : (p.min !== undefined ? p.min : 0);
     controlHtml = `
       <label class="form-label">${esc(p.label)} <span class="ani-val">${formatParamValue(p, num)}</span>${hintHtml}${resetHtml}</label>
-      <input type="range" class="form-range" data-ani-p="${esc(p.key)}" data-ani-type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${num}">`;
+      <input type="range" class="form-range" data-ani-p="${esc(p.key)}" data-ani-type="range" style="--fill:${fillPctOf(num, parseFloat(p.min), parseFloat(p.max)).toFixed(4)}" min="${p.min}" max="${p.max}" step="${p.step}" value="${num}">`;
   } else if (p.type === 'color') {
     const hex = normalizeHex(val);
     controlHtml = `
@@ -7762,6 +8676,8 @@ function bindAnimParamControl(el, wrap, section) {
   if (type === 'range') {
     el.addEventListener('input', () => {
       if (valSpan) valSpan.textContent = formatParamValue({ type: 'range', step: parseFloat(el.step) }, parseFloat(el.value));
+      // 填充段跟随（.form-range 全局渐变规则依赖 --fill）
+      el.style.setProperty('--fill', String(fillPctOf(parseFloat(el.value), parseFloat(el.min), parseFloat(el.max))));
       row && row.classList.add('changed');
     });
     el.addEventListener('change', () => {
@@ -9089,6 +10005,7 @@ async function saveAll() {
 
 function renderAll() {
   stopMnLive();                       // 全量重渲染（切板块/视图）时停掉内嵌预览引擎
+  stopGlbLive();                      // 同上（卡片长廊）
   renderSidebar();
   renderSectionList();
   renderRightPanel();

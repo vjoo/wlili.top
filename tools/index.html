@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>W.-Studio Tools</title>
-<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="common.css?v=b6c1075a">
 <script src="nav.js?v=8f1285eb"></script>
 <style>
 /* ============================================
@@ -15,15 +15,38 @@
    Developer: WLi
    ============================================ */
 
-  /* ===== Page Hero 覆盖（h1 更大） ===== */
-  .page-hero {
-    padding: 50px 22px 30px;
+  /* ===== Dotmatrix 半调点阵背景（与首页共用 js/dotmatrix.js，单一来源） =====
+     本页是纯浅色产品线（common.css 无 data-theme），所以只留浅色一档底色。
+     ⛔ 背景是 fixed + z-index:0 的定位元素，会压住静态流内容 —— 下方必须把内容层抬到 z-index:1。 */
+  :root { --dm-base: #f7f8fa; }
+  .dotmatrix-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background: var(--dm-base);
   }
-  .page-hero h1 {
-    font-size: 56px;
-    letter-spacing: -0.02em;
-    margin-bottom: 12px;
-    text-wrap: balance;
+  .dotmatrix-bg canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  /* WebGL2 不可用时的回退（静态斜向光带，保证页面不空白） */
+  .dotmatrix-fallback {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(115deg, transparent 22%, rgba(255,255,255,0.9) 36%, transparent 52%),
+      linear-gradient(115deg, transparent 55%, rgba(200,205,212,0.28) 70%, transparent 86%),
+      #f7f8fa;
+  }
+  /* 内容层盖到背景之上（对应首页 .hero/.section 的 z-index:1） */
+  .page-hero, .section, .page-footer { position: relative; z-index: 1; }
+
+  /* ===== Page Hero 覆盖（只留一句副标题，h1 已删；无背景让点阵透出） ===== */
+  .page-hero {
+    padding: 38px 22px 26px;
   }
 
   /* ===== Section ===== */
@@ -143,13 +166,11 @@
 
   /* ===== Responsive ===== */
   @media (max-width: 1068px) {
-    .page-hero h1 { font-size: 48px; }
     .tool-grid { grid-template-columns: repeat(3, 1fr); }
   }
 
   @media (max-width: 734px) {
-    .page-hero { padding: 48px 16px 32px; }
-    .page-hero h1 { font-size: 36px; }
+    .page-hero { padding: 34px 16px 24px; }
     .page-hero p { font-size: 17px; }
     .section { padding: 20px 0 48px; }
     .section-inner { padding: 0 16px; }
@@ -164,7 +185,6 @@
   }
 
   @media (max-width: 480px) {
-    .page-hero h1 { font-size: 32px; }
     .tool-grid { gap: 10px; }
     .tool-card { padding: 12px; }
   }
@@ -172,9 +192,11 @@
 </head>
 <body>
 
+<!-- Dotmatrix 半调点阵背景：实现在 ../js/dotmatrix.js，与首页共用同一份 -->
+<div class="dotmatrix-bg" id="dotmatrix-bg" aria-hidden="true"></div>
+
 <!-- Page Hero -->
 <div class="page-hero">
-  <h1>Studio Tools</h1>
   <p>简洁高效的在线工具集，一键直达，即用即走</p>
 </div>
 
@@ -400,6 +422,15 @@
     setTimeout(function(){ tag.remove(); }, 200);
     localStorage.setItem('privacyNoticeDismissed', '1');
   });
+})();
+</script>
+
+<!-- Dotmatrix 半调点阵背景：实现在 ../js/dotmatrix.js（首页与工具页共用，改这个文件即两边同步） -->
+<script src="../js/dotmatrix.js?v=285bfffe"></script>
+<script>
+(function () {
+  var el = document.getElementById('dotmatrix-bg');
+  if (el && window.Dotmatrix && window.Dotmatrix.mount) window.Dotmatrix.mount(el);
 })();
 </script>
 </body>

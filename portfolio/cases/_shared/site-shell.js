@@ -628,6 +628,7 @@
     '.icon-wall-section', // 图标动画墙（GIF/APNG/Lottie 散落全屏）
     '.text-fill-banner-section', // 字图填充 Banner（2D transform，祖先 transform 不影响 background-clip）
     '.device-screen-section', // 设备屏幕嵌入（样机图+透视贴合媒体；2D matrix3d 平面映射，祖先 transform 不影响）
+    '.gallery-banner-section', // 卡片长廊Banner（WebGL 图片隧道；canvas 不受祖先 transform 影响，reveal 只作用于外层淡入）
     // 产品详情类组件（pd- 命名空间，结构对齐上面的 -section 约定）
     '.pd-intro-head-section',
     '.pd-split-head-section',

@@ -44,7 +44,8 @@
           "subtitle": "打通端到端跨境物流通道，联结全球贸易伙伴，打造全程可视、彼此信赖的一体化国际供应网络。"
         }
       ],
-      "textLayout": "center"
+      "textLayout": "center",
+      "hidden": false
     },
     {
       "id": "smsvi3k88fv46",
@@ -371,35 +372,5 @@
         }
       ]
     }
-  ],
-  "letsTalk": {
-    "title": "Let's talk",
-    "subtitleEn": "Have a project in mind? Let's create something meaningful together.",
-    "subtitleZh": "有项目想法？我们一起把它变成有价值的设计。",
-    "slogan": "合作咨询 / 约稿商单 / 作品集交流",
-    "tags": "Product Design ｜ Mobile & Touch ｜ B2B / B2C / To G",
-    "tagsZh": "面向产品、移动端、触控设备，覆盖消费、企业、政企多类型项目",
-    "qrCodes": [
-      {
-        "label": "微信好友",
-        "labelEn": "WeChat",
-        "url": ""
-      },
-      {
-        "label": "公众号",
-        "labelEn": "Official Account",
-        "url": ""
-      },
-      {
-        "label": "小红书",
-        "labelEn": "Xiaohongshu",
-        "url": ""
-      },
-      {
-        "label": "抖音号",
-        "labelEn": "Douyin",
-        "url": ""
-      }
-    ]
-  }
+  ]
 }

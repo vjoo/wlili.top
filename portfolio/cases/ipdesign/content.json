@@ -75,7 +75,8 @@
       "backFade": "0.25",
       "variation": "0.65",
       "overlayOpacity": "33",
-      "tDirs": "alternate"
+      "tDirs": "alternate",
+      "hidden": true
     },
     {
       "id": "smtaaitajwcwr",
@@ -95,20 +96,54 @@
       ],
       "products": [
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1787981569208.jpg",
-          "imageFocus": "50,50,1.0",
+          "image": "/portfolio/cases/ipdesign/uploads/1791964283451.jpg",
           "type": "",
           "name": "",
-          "desc": ""
+          "desc": "",
+          "imageW": 941,
+          "imageH": 1672,
+          "imageFocus": "97,93,1.6"
         },
         {
-          "image": "/portfolio/cases/ipdesign/uploads/1788189849227.jpg",
-          "imageFocus": "82,50,1",
+          "image": "/portfolio/cases/ipdesign/uploads/1791964418940.jpg",
           "type": "",
           "name": "",
-          "desc": ""
+          "desc": "",
+          "imageW": 1672,
+          "imageH": 940,
+          "imageFocus": "48,0,2.1"
         }
       ]
+    },
+    {
+      "id": "smv7t39yuqge6",
+      "type": "hero",
+      "videoUrl": "",
+      "videoType": "carousel",
+      "image": "",
+      "images": [
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1791966035706.jpg",
+          "imageW": 1672,
+          "imageH": 941
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1791966135070.jpg",
+          "imageW": 2560,
+          "imageH": 1438
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1791966080481.jpg",
+          "imageW": 1672,
+          "imageH": 941
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1791966443007.jpg",
+          "imageW": 2560,
+          "imageH": 1438
+        }
+      ],
+      "effect": "fade"
     },
     {
       "id": "smtcueog766k2",
@@ -436,6 +471,13 @@
           "tags": [],
           "imageW": 800,
           "imageH": 1067
+        },
+        {
+          "image": "/portfolio/cases/ipdesign/uploads/1791964228956.jpg",
+          "title": "",
+          "tags": [],
+          "imageW": 800,
+          "imageH": 1423
         }
       ]
     }

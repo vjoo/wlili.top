@@ -298,7 +298,8 @@ body {
 .page-hero {
   text-align: center;
   padding: 48px 24px 32px;
-  background: var(--bg-white);
+  /* 不铺背景：body 已是 --bg-white，这里再铺一层白会挡住接入点阵背景的页面（tools/index.html）。
+     其余工具页 body 同色，去掉后视觉零变化。 */
 }
 .page-hero h1 {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;

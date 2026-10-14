@@ -1284,6 +1284,16 @@ input[type="range"]::-moz-range-thumb {
 }
 .media-ops { display: flex; gap: 8px; flex-wrap: wrap; }
 input[type="file"] { display: none; }
+/* ⚠ #filePicker 不能 display:none：Windows+Chromium 下，选完文件的系统对话框关闭时
+   需把焦点还给触发它的那个 input；若它 display:none 则无处归还，浏览器窗口会丢失
+   前台焦点 → 表现为「上传完图片后窗口最小化 / 切到桌面」。故改为视口内 1px 透明、
+   真实可聚焦（仅靠 JS 的 picker.click() 触发，1px 在角落且 opacity:0 用户点不到）。 */
+#filePicker {
+  display: block;
+  position: fixed; left: 0; top: 0;
+  width: 1px; height: 1px;
+  opacity: 0;
+}
 
 /* ===== 列表型字段（repeater）：顶部导航 / 二维码 / 页脚链接 =====
    每一项是一个「小卡片」，内部复用同一套 field 渲染（data-fkey 相同），

@@ -1780,6 +1780,9 @@
       var file = e.target.files && e.target.files[0];
       var t = S.uploadTarget;
       if (!file || !t) return;
+      // 文件对话框刚关闭：强制把浏览器窗口拉回前台，避免 Windows+Chromium 下
+      // 焦点归还失败导致窗口被最小化 / 切到桌面（#filePicker 已改为视口内可聚焦，双保险）。
+      setTimeout(function(){ try { window.focus(); } catch (_) {} }, 0);
       var f = t.f;
       var ext = (file.name.split('.').pop() || '').toLowerCase();
       var isVideo = f.mediaKind === 'video';

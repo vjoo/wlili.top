@@ -1033,6 +1033,44 @@
       default: { deviceImage: '', mediaType: 'image', media: '', videoUrl: '', objectFit: 'cover',
       corners: [{ x: 12, y: 12 }, { x: 88, y: 12 }, { x: 88, y: 76 }, { x: 12, y: 76 }],
       heading: '设备屏幕展示', subheading: '将设计稿贴合嵌入设备屏幕，呈现真实的使用场景。', bgType: 'theme', bgColor: '#0c0d10' }
+    },
+    "gallery-banner": {
+      label: "卡片长廊Banner",
+      desc: "图片隧道首屏：双侧图片卡沿纵深漏斗向镜头流动（rbp-imageworks 风格），中央大标题+副标题；文字、图片、流速、圆角、底色全部可配置",
+      icon: "<rect x=\"2\" y=\"5\" width=\"4\" height=\"8\" rx=\"1\"/><rect x=\"10\" y=\"3\" width=\"4\" height=\"12\" rx=\"1\"/><rect x=\"18\" y=\"5\" width=\"4\" height=\"8\" rx=\"1\"/><path d=\"M4 18h16\"/>",
+      fields: [
+        { key: 'images', label: '长廊图片', type: 'card-slots', min: 8, max: 40, recommend: 20, tab: '素材',
+          compress: { mode: 'maxSide', side: 1200 },
+          hint: '支持批量上传，自动压缩到最长边 1200px；动效会循环使用这些图，建议横图（3:2 最贴合卡片框）' },
+        { key: 'title', label: '主标题（选填，留空不显示）', type: 'text', placeholder: '作品，在长廊里流动', tab: '文字' },
+        { key: 'titleScale', label: '字号', type: 'range', compact: true, min: 0.02, max: 0.12, step: 0.005, default: '0.045', tab: '文字',
+          hint: '字号 = 相框宽度 × 此比例（随屏幕自适应），下限 2rem' },
+        { key: 'titleWeight', label: '字重', type: 'range', compact: true, min: 300, max: 900, step: 100, default: '400', tab: '文字' },
+        { key: 'titleTracking', label: '字距', type: 'range', compact: true, unit: 'em', min: -0.08, max: 0.2, step: 0.005, default: '-0.02', tab: '文字' },
+        { key: 'titleLineHeight', label: '行高', type: 'range', compact: true, min: 0.9, max: 1.8, step: 0.02, default: '1.04', tab: '文字' },
+        { key: 'titleColor', label: '颜色', type: 'color', compact: true, default: '#ffffff', tab: '文字' },
+        { key: 'subtitle', label: '副标题（选填）', type: 'text', placeholder: '一组沿纵深漏斗滑向镜头的画面', tab: '文字' },
+        { key: 'subSize', label: '字号', type: 'range', compact: true, unit: 'px', min: 12, max: 26, step: 1, default: '16', tab: '文字' },
+        { key: 'subWeight', label: '字重', type: 'range', compact: true, min: 300, max: 700, step: 100, default: '400', tab: '文字' },
+        { key: 'subTracking', label: '字距', type: 'range', compact: true, unit: 'em', min: -0.05, max: 0.2, step: 0.005, default: '0', tab: '文字' },
+        { key: 'subLineHeight', label: '行高', type: 'range', compact: true, min: 1.2, max: 2.2, step: 0.05, default: '1.7', tab: '文字' },
+        { key: 'subtitleColor', label: '颜色', type: 'color', compact: true, default: 'rgba(255,255,255,0.78)', tab: '文字',
+          hint: '支持 rgba 半透明：点左侧色卡选色，或右侧直接填 rgba(...)' },
+        { key: 'speed', label: '流速（秒/循环）', type: 'range', min: 10, max: 60, step: 1, default: '26', tab: '动效',
+          hint: '一张卡从中心走到完全出屏所需秒数，越小越快；26 = 参考站体感' },
+        { key: 'cornerRadius', label: '卡片圆角', type: 'range', min: 0, max: 0.12, step: 0.005, default: '0.03', tab: '动效' },
+        { key: 'bgColor', label: '背景色', type: 'color', default: '#0c0c0d', tab: '背景',
+          hint: '隧道后面的底色；近黑最能衬托卡片流（参考站 #0c0c0d）' }
+      ],
+      default: {
+        images: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
+        title: '作品，在长廊里流动',
+        subtitle: '图片卡沿纵深漏斗向镜头滑来，循环不止 —— 上传一组图，让首屏动起来。',
+        titleColor: '#ffffff', subtitleColor: 'rgba(255,255,255,0.78)',
+        titleScale: '0.045', titleWeight: '400', titleTracking: '-0.02', titleLineHeight: '1.04',
+        subSize: '16', subWeight: '400', subTracking: '0', subLineHeight: '1.7',
+        speed: '26', cornerRadius: '0.03', bgColor: '#0c0c0d'
+      }
     }
   };
 

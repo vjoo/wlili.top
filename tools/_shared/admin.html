@@ -258,6 +258,46 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, 
 /* 全部提示词：表头全选列定宽居中；操作列改贴合内容（覆盖 .fx 默认 120px 定宽，让标题列多吃宽度） */
 .table-wrap table.fx.prompts-tbl th:first-child,.table-wrap table.fx.prompts-tbl td:first-child{width:44px;text-align:center;padding-left:8px;padding-right:8px;}
 .table-wrap table.fx.prompts-tbl th:last-child,.table-wrap table.fx.prompts-tbl td:last-child{width:auto;min-width:0;max-width:none;}
+/* 全部提示词 · 封面缩略图列（勾选框之后、标题之前；40×40 圆角）
+   ⚠ 坑（2026-10-09）：此前列表只有「配图 N 张」纯数字，扫读时看不出是哪条，观感很干。
+   这里补真实封面（images[coverIndex]），并把占位图标垫在 img 下层：
+   img 用 absolute inset:0 铺满，加载成功自然盖住占位；失败时 alt="" 不渲染破图，占位自动露出，
+   无需 onerror JS，也不会因 JS 失效而留白。 */
+.table-wrap table.fx.prompts-tbl th.thumb-col,.table-wrap table.fx.prompts-tbl td.thumb-col{width:60px;min-width:60px;max-width:60px;padding-left:4px;padding-right:4px;text-align:center;}
+.pl-thumb-cell{position:relative;width:40px;height:40px;margin:0 auto;border-radius:8px;overflow:hidden;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
+.pl-thumb-cell .ph-ic{color:var(--muted);font-size:14px;line-height:1;opacity:.7;}
+.pl-thumb-cell img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;cursor:zoom-in;}
+/* 提示词新建/编辑表单（.pf-*）：字段与前台 prompt-library.html 录入项一一对应
+   —— 标题 / 标签 / 提示词模板({{变量}}) / 变量默认值 / 效果图(封面) / 对外发布。 */
+.pf-hint{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5;}
+.pf-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.pf-chip{padding:4px 11px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--muted);font-size:12.5px;cursor:pointer;transition:.15s;user-select:none;}
+.pf-chip:hover{border-color:var(--accent);color:var(--accent);}
+.pf-chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+.pf-chip.on:hover{color:#fff;}
+.pf-vars{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.pf-var{display:flex;align-items:center;gap:8px;}
+.pf-var span{font-size:12px;color:var(--muted);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+.pf-var input{flex:1;min-width:0;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:12.5px;font-family:inherit;}
+.pf-var input:focus{outline:none;border-color:var(--accent);}
+.pf-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+.pf-img{position:relative;width:74px;height:74px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--panel);}
+.pf-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.pf-img .pf-cover{position:absolute;left:3px;bottom:3px;width:22px;height:22px;border-radius:6px;border:none;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;line-height:1;}
+.pf-img .pf-cover.on{background:#f5a623;color:#fff;}
+.pf-img .pf-del{position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:6px;border:none;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;}
+.pf-img .pf-del:hover{background:#e5484d;}
+.pf-img-empty{font-size:12px;color:var(--muted);}
+/* 对外发布开关（后台无全站 switch 组件，这里自备一个最小实现，主题色走 --accent） */
+.pf-pub{display:flex;align-items:center;gap:10px;}
+.pf-sw{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;}
+.pf-sw input{opacity:0;width:0;height:0;}
+.pf-sw i{position:absolute;inset:0;background:var(--border-color,var(--line));border-radius:22px;transition:.2s;cursor:pointer;}
+.pf-sw i:before{content:"";position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.pf-sw input:checked + i{background:var(--accent);}
+.pf-sw input:checked + i:before{transform:translateX(18px);}
+.pf-pub-txt{font-size:12.5px;color:var(--ink);}
+.pf-pub-txt small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px;}
 /* 打印参数预设：操作列固定容纳 4 个图标按钮（诊断/查看/编辑/删除）。
    ⚠ 历史坑（2026-10-06）：原来「分析诊断」和「查看诊断」是两个按钮 → 一行最多 5 个，
    而本列被 .fx 钉死 120px（只够 3 个）→ 内容溢出到 196px，表格出现横向滚动条。
@@ -601,6 +641,30 @@ tbody tr:hover{background:var(--panel);}
 .svc .n{flex:1;}
 .svc small{color:var(--muted);display:block;font-size:11.5px;margin-top:1px;}
 
+/* 提示词发布状态徽标（可点击切换：列表状态列 / 详情弹窗共用）——2026-10-11 */
+.pst-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 7px;border-radius:999px;
+  background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  font-size:12px;line-height:1.5;font-family:inherit;cursor:pointer;white-space:nowrap;
+  transition:border-color .15s,box-shadow .15s,background .15s;
+}
+.pst-badge:hover{border-color:var(--accent);box-shadow:0 0 0 3px rgba(132,204,22,.16);}
+.pst-badge:active{transform:scale(.97);}
+.pst-badge .dot{width:7px;height:7px;border-radius:50%;flex:none;}
+.pst-badge.is-draft{background:#fff7ed;border-color:#fed7aa;color:#b45309;}
+
+/* 发布设置 · 草稿清单行 */
+.pst-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);}
+.pst-row:last-child{border-bottom:none;}
+.pst-thumb{width:54px;height:54px;flex:none;border-radius:9px;overflow:hidden;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);}
+.pst-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.pst-main{flex:1;min-width:0;}
+.pst-title{display:block;font-size:13.5px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pst-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+.pst-date{margin-left:2px;}
+.pst-acts{display:flex;align-items:center;gap:8px;flex:none;}
+.pst-acts .btn{padding:7px 14px;font-size:12.5px;}
+
 /* 模块仪表盘：占比行 */
 .ratio-row{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13px;}
 .ratio-row .n{width:92px;flex:none;color:var(--ink);}
@@ -833,9 +897,25 @@ h3 .hint-i{margin-left:6px;}
 .fmodal .confirm-msg{text-align:center;padding:14px 0 8px;font-size:14px;}
 /* 提示词详情：配图缩略图网格 + 完整提示词正文块（2026-09-27） */
 .plv-imgs{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 4px}
-.plv-img{display:block;width:118px;height:118px;border-radius:12px;overflow:hidden;border:2px solid transparent;background:var(--panel)}
+/* ⚠ 用 <button> 而非 <a>：以前是 <a href="*.webp" target="_blank">，server.py 的 guess_type 对 .webp
+   可能落到 application/octet-stream → 浏览器把「查看」变成「下载」。改按钮 + 站内灯箱后不发导航请求。
+   （2026-10-09，用户反馈「详情页里的图片点击就直接下载了，我只是想查看」） */
+.plv-img{display:block;width:118px;height:118px;padding:0;border-radius:12px;overflow:hidden;border:2px solid transparent;background:var(--panel);cursor:zoom-in;appearance:none;-webkit-appearance:none;transition:border-color .14s;}
+.plv-img:hover{border-color:var(--line)}
 .plv-img img{width:100%;height:100%;object-fit:cover;display:block}
 .plv-img.on{border-color:var(--accent)}
+/* 配图灯箱 = 复用全局 .lightbox（z-index 9999，Esc / 点背景关闭）
+   这里只补「上一张 / 下一张 / 计数」三件可选项：单图时 [hidden] 不显示，
+   因此 pattern 模块的 openImagePreview（只喂 1 张）视觉与行为零变化。 */
+.lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;line-height:1;transition:background .2s;}
+.lightbox-nav:hover{background:rgba(255,255,255,.3);}
+.lightbox-nav[hidden]{display:none;}
+.lightbox-nav.prev{left:24px;}
+.lightbox-nav.next{right:24px;}
+.lightbox-cap{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:#fff;font-size:12.5px;letter-spacing:.02em;background:rgba(255,255,255,.12);padding:5px 14px;border-radius:999px;backdrop-filter:blur(4px);}
+.lightbox-cap[hidden]{display:none;}
+/* 多图翻页时给图片两侧让位，避免被 48px 按钮压住（每侧需 ≥ 72px = 按钮 48 + 间距 24） */
+.lightbox.has-gallery img{max-width:calc(92% - 128px);}
 .plv-text{white-space:pre-wrap;word-break:break-word;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:6px 0 2px;font-family:inherit;font-size:13px;line-height:1.75;max-height:320px;overflow:auto}
 .plv-vars{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 14px;margin:6px 0 2px}
 .plv-vars .ro-field{font-size:12.5px;padding:6px 0}
@@ -933,12 +1013,15 @@ input:focus:not([type=checkbox]):not([type=radio]),select:focus,textarea:focus{b
 .stat-card-sub{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5;}
 .sd-cards .ratio-row .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.sp-wrap .dash-recent-list{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}.sp-wrap .dash-recent-list .pattern-card{ display:flex; flex-direction:column;}.sp-wrap .dash-recent-list .pattern-thumb{ width:100%; aspect-ratio:1; flex-shrink:0;}.sp-wrap .dash-recent-list .pattern-info{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center;}.sp-wrap .dash-recent-list .pattern-card-actions{ top:4px; right:4px;}.sp-wrap .pattern-card{ background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; cursor:pointer; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1);}.sp-wrap .pattern-card:hover{ box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); border-color:var(--accent);}.sp-wrap .pattern-thumb{ width:100%; aspect-ratio:1; background:var(--bg-sidebar); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;}.sp-wrap .pattern-thumb img{ width:100%; height:100%; object-fit:cover;}.sp-wrap .pattern-thumb-placeholder{ width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#f0f0f3;}.sp-wrap .pattern-thumb-placeholder .ph-logo{ font-size:32px; font-weight:700; color:#2B3041; line-height:1; letter-spacing:-0.02em;}.sp-wrap .pattern-thumb-placeholder .ph-text{ font-size:11px; color:#999; font-weight:400;}.sp-wrap .pattern-thumb-badges{ position:absolute; top:6px; left:6px; display:flex; gap:4px; flex-wrap:wrap;}.sp-wrap .pattern-info{ padding:10px 12px;}.sp-wrap .pattern-name{ font-size:14px; font-weight:600; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}.sp-wrap .pattern-meta{ font-size:12px; color:var(--text-muted); display:flex; gap:6px; flex-wrap:wrap;}.sp-wrap .pattern-elements{ font-size:12px; color:var(--text-secondary); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}.sp-wrap /* Card hover actions — inspired by prompt-library */
 .pattern-card-actions{ position:absolute; top:6px; right:6px; display:flex; gap:5px; opacity:0; transform:translateY(-4px); transition:opacity 0.25s,transform 0.25s; z-index:2;}.sp-wrap .pattern-card:hover .pattern-card-actions{ opacity:1; transform:translateY(0);}.sp-wrap .pattern-card-action-btn{ width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.9); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:all 0.2s; backdrop-filter:blur(8px); box-shadow:0 2px 8px rgba(0,0,0,0.12);}.sp-wrap .pattern-card-action-btn:hover{ background:#fff; color:var(--accent); transform:scale(1.08);}.sp-wrap .pattern-card-action-btn.danger:hover{ color:var(--danger);}.sp-wrap .pattern-card-action-btn svg{ width:16px; height:16px;}.sp-wrap .gen-layout{ display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;}.sp-wrap .elements-stack{ display:flex; flex-direction:column; gap:20px;}.sp-wrap .gen-col-left{ display:flex; flex-direction:column;}.sp-wrap .gen-col-left > .gen-section:first-child{ flex:0 1 auto; display:flex; flex-direction:column; min-height:0;}.sp-wrap .gen-col-left > .gen-section:first-child > .gen-section-body{ overflow-y:auto; min-height:0; max-height:60vh;}.sp-wrap .gen-col-output{
-    position: sticky;
-    /* top: 70px; */
-    max-height: calc(100vh - 90px);
+    /* 2026-10-14 修复：原 position:sticky（top 被注释=从未生效的死代码）+ max-height:calc(100vh-90px)
+       高度帽，会把「提示词输出」卡按剩余高度硬压 → 长提示词被 .gen-section 的 overflow:hidden 裁掉
+       （用户实测：文字只显示一半）。去掉高度帽后右列随内容自然增长、由页面滚动接管。 */
     display: flex;
     flex-direction: column;}.sp-wrap .gen-col-output > .gen-section:last-child{ flex:1; display:flex; flex-direction:column; min-height:0;}.sp-wrap .gen-col-output > .gen-section:last-child > .gen-section-body{ flex:1; display:flex; flex-direction:column; min-height:0;}.sp-wrap .prompt-output-empty{ flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:13px; text-align:center;}.sp-wrap .gen-section{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-sm);}.sp-wrap .gen-section-header{ padding:20px 20px 0; box-sizing:border-box; border-bottom:none; font-size:15px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; transition:background 0.15s;}/* header hover 保持白色（灰底与页面底色混） */.sp-wrap .gen-section.collapsed .gen-section-header{ border-bottom:none; padding-bottom:20px;}.sp-wrap .gen-section.collapsed .gen-section-body{ display:none;}.sp-wrap .gen-section-toggle{ margin-left:auto; display:flex; align-items:center; transition:transform 0.2s ease; color:var(--text-muted);}.sp-wrap .gen-section.collapsed .gen-section-toggle{ transform:rotate(-90deg);}.sp-wrap .gen-section-body{ margin:14px 20px 20px; padding:14px; background:var(--panel); border:1px solid var(--line); border-radius:12px;}.sp-wrap .element-category{ margin-bottom:14px;}.sp-wrap .element-category-title{ font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;}.sp-wrap .element-chips{ display:flex; flex-wrap:wrap; gap:6px;}.sp-wrap .element-chip{ padding:5px 12px; border:1px solid var(--border-color); border-radius:20px; font-size:13px; cursor:pointer; transition:all 0.15s; background:var(--bg-white); color:var(--text-secondary); user-select:none;}.sp-wrap .element-chip:hover{ border-color:var(--accent); color:var(--accent);}.sp-wrap .element-chip.selected{ background:var(--accent); color:var(--fill-white); border-color:var(--accent);}.sp-wrap .element-chip-count{ font-size:12px; color:var(--text-muted); margin-left:4px;}.sp-wrap /* Smart Match */
-.btn-smart-match{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s cubic-bezier(0.22,0.61,0.36,1); border:none; color:var(--fill-white); background:var(--accent-grad); box-shadow:0 2px 8px rgba(101,163,13,0.3);}.sp-wrap .btn-smart-match:hover{ transform:translateY(-1px);}.sp-wrap .btn-smart-match:active{ transform:scale(0.98);}.sp-wrap .btn-smart-match svg{ flex-shrink:0;}.sp-wrap .btn-smart-match-icon{ display:inline-flex; align-items:center; gap:6px; height:auto; padding:7px 12px; border-radius:10px; cursor:pointer; transition:all .15s; border:1px solid var(--line); color:var(--ink); background:var(--card); font-weight:600; flex-shrink:0;}.sp-wrap .btn-smart-match-icon:hover{ border-color:var(--muted); background:var(--panel);}.sp-wrap .sp-wrap .btn-clear-select{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-color); background:var(--bg-white); color:var(--text-secondary);}.sp-wrap .btn-clear-select:hover{ border-color:var(--danger); color:var(--danger); background:var(--danger-bg);}.sp-wrap .btn-clear-select:active{ transform:scale(0.98);}.sp-wrap .smart-match-count{ font-size:12px; color:var(--text-muted); margin-left:auto;}.sp-wrap .theme-badge-bar{ display:flex; align-items:center; gap:8px; margin-bottom:12px; padding:8px 14px; background:var(--accent-light); border-radius:var(--radius-md); border:1px solid rgba(101,163,13,0.15);}.sp-wrap .theme-badge-bar-empty{ display:none;}.sp-wrap .theme-badge{ display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:13px; font-weight:600; color:var(--fill-white); background:var(--accent); white-space:nowrap;}.sp-wrap .theme-badge-desc{ font-size:13px; color:var(--text-secondary);}@keyframes smartMatchPulse{0%{ transform:scale(1);}50%{ transform:scale(1.03);}100%{ transform:scale(1);}}.sp-wrap .btn-smart-match.pulsing{ animation:smartMatchPulse 0.4s cubic-bezier(0.22,0.61,0.36,1);}@keyframes chipSelectIn{0%{ transform:scale(0.85); opacity:0.5;}100%{ transform:scale(1); opacity:1;}}.sp-wrap .element-chip.selected{ animation:chipSelectIn 0.25s cubic-bezier(0.22,0.61,0.36,1);}.sp-wrap /* Palette */
+.btn-smart-match{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s cubic-bezier(0.22,0.61,0.36,1); border:none; color:var(--fill-white); background:var(--accent-grad); box-shadow:0 2px 8px rgba(101,163,13,0.3);}.sp-wrap .btn-smart-match:hover{ transform:translateY(-1px);}.sp-wrap .btn-smart-match:active{ transform:scale(0.98);}.sp-wrap .btn-smart-match svg{ flex-shrink:0;}.sp-wrap .btn-smart-match-icon{ display:inline-flex; align-items:center; gap:6px; height:auto; padding:7px 12px; border-radius:10px; cursor:pointer; transition:all .15s; border:1px solid var(--line); color:var(--ink); background:var(--card); font-weight:600; flex-shrink:0;}.sp-wrap .btn-smart-match-icon:hover{ border-color:var(--muted); background:var(--panel);}/* ⚠ 2026-10-14 修复：此处曾写成 .sp-wrap .sp-wrap .btn-clear-select（双重前缀笔误），
+   整条基础样式永不命中 → 按钮裸奔（无 inline-flex/内边距/边框），在 .gen-tabs 里被压成
+   竖排小团，观感即「清空按钮丢失」。四方图 / 人物两个生成器共用此按钮。 */
+.sp-wrap .btn-clear-select{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; border:1px solid var(--border-color); background:var(--bg-white); color:var(--text-secondary); flex-shrink:0; white-space:nowrap;}.sp-wrap .btn-clear-select:hover{ border-color:var(--danger); color:var(--danger); background:var(--danger-bg);}.sp-wrap .btn-clear-select:active{ transform:scale(0.98);}.sp-wrap .smart-match-count{ font-size:12px; color:var(--text-muted); margin-left:auto;}.sp-wrap .theme-badge-bar{ display:flex; align-items:center; gap:8px; margin-bottom:12px; padding:8px 14px; background:var(--accent-light); border-radius:var(--radius-md); border:1px solid rgba(101,163,13,0.15);}.sp-wrap .theme-badge-bar-empty{ display:none;}.sp-wrap .theme-badge{ display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:13px; font-weight:600; color:var(--fill-white); background:var(--accent); white-space:nowrap;}.sp-wrap .theme-badge-desc{ font-size:13px; color:var(--text-secondary);}@keyframes smartMatchPulse{0%{ transform:scale(1);}50%{ transform:scale(1.03);}100%{ transform:scale(1);}}.sp-wrap .btn-smart-match.pulsing{ animation:smartMatchPulse 0.4s cubic-bezier(0.22,0.61,0.36,1);}@keyframes chipSelectIn{0%{ transform:scale(0.85); opacity:0.5;}100%{ transform:scale(1); opacity:1;}}.sp-wrap .element-chip.selected{ animation:chipSelectIn 0.25s cubic-bezier(0.22,0.61,0.36,1);}.sp-wrap /* Palette */
 .palette-list{ display:flex; flex-direction:column; gap:10px;}.sp-wrap .palette-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-height:400px; overflow-y:auto; padding:4px 6px 4px 0;}.sp-wrap .palette-card{ background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; cursor:pointer; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); position:relative;}.sp-wrap .palette-card:hover{ box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); border-color:var(--accent);}.sp-wrap .palette-card.selected{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-light);}.sp-wrap .palette-card-hero{ position:relative; padding:8px; margin:8px 8px 0; border:1px solid rgba(0,0,0,0.08); border-radius:8px;}.sp-wrap .palette-card-swatches{ display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:6px; aspect-ratio:3/2;}.sp-wrap .palette-card-swatch{ border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04);}.sp-wrap .palette-card-swatch-empty{ border-radius:var(--radius-sm); border:1px dashed rgba(0,0,0,0.08); background:transparent;}.sp-wrap .palette-card-swatch-more{ border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04); display:grid; gap:1px; padding:3px; overflow:hidden;}.sp-wrap .palette-card-swatch-more-cell{ border-radius:2px;}.sp-wrap .palette-card-info{ padding:8px 10px 10px;}.sp-wrap .palette-card-name{ font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:3px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;}.sp-wrap .palette-card-badge{ display:inline-flex; align-items:center; font-size:9px; padding:1px 5px; border-radius:4px; background:var(--bg-sidebar); color:var(--text-muted); font-weight:500; vertical-align:1px;}.sp-wrap .palette-card-desc{ font-size:11px; color:var(--text-muted); margin-bottom:6px; line-height:1.5;}.sp-wrap .palette-card-meta{ display:flex; gap:8px; align-items:center; font-size:10px; color:var(--text-muted); font-family:ui-monospace,'SF Mono',Consolas,Menlo,monospace;}.sp-wrap .palette-card-meta-item{ display:flex; align-items:center; gap:3px;}.sp-wrap .palette-card-meta-dot{ width:10px; height:10px; border-radius:2px; border:1px solid rgba(0,0,0,0.1); flex-shrink:0;}.sp-wrap /* Palette Swatch Card — inspired by Bambu Lab filament color cards */
 .psc-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px;}.sp-wrap .psc-card{ background:var(--bg-primary); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; cursor:pointer; transition:all 0.3s cubic-bezier(0.22,0.61,0.36,1); position:relative;}.sp-wrap .psc-card:hover{ box-shadow:0 12px 40px rgba(0,0,0,0.08); transform:translateY(-3px); border-color:var(--accent);}.sp-wrap .psc-hero{ position:relative; padding:12px; margin:12px 12px 0; border:1px solid rgba(0,0,0,0.08); border-radius:10px;}.sp-wrap .psc-swatches{ display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:8px; aspect-ratio:3/2;}.sp-wrap .psc-swatch{ border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04);}.sp-wrap .psc-swatch-empty{ border-radius:var(--radius-sm); border:1px dashed rgba(0,0,0,0.08); background:transparent;}.sp-wrap .psc-swatch-more{ border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 3px rgba(0,0,0,0.04); display:grid; gap:1px; padding:3px; overflow:hidden;}.sp-wrap .psc-swatch-more-cell{ border-radius:2px;}.sp-wrap /* Hover actions — top-right, .sp-wrap same pattern as dashboard cards */
 .psc-card-actions{ position:absolute; top:8px; right:8px; display:flex; gap:5px; z-index:2;}.sp-wrap .psc-action-btn{ width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.9); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:opacity 0.25s,background 0.2s,color 0.2s,transform 0.2s; backdrop-filter:blur(8px); box-shadow:0 2px 8px rgba(0,0,0,0.12); opacity:0;}.sp-wrap .psc-card:hover .psc-action-btn{ opacity:1;}.sp-wrap .psc-action-btn:hover{ background:#fff; color:var(--accent); transform:scale(1.08);}.sp-wrap .psc-action-btn.danger:hover{ color:var(--danger);}.sp-wrap .psc-action-btn.favorite-btn.active{ opacity:1;}.sp-wrap .psc-action-btn.favorite-btn.active svg{ fill:#ff4d4f; color:#ff4d4f;}.sp-wrap .psc-action-btn.favorite-btn:not(.active):hover svg{ color:#ff4d4f;}.sp-wrap .psc-badge-default{ display:inline-flex; align-items:center; font-size:10px; padding:1px 6px; border-radius:4px; background:var(--bg-sidebar); color:var(--text-muted); font-weight:500; margin-left:6px; vertical-align:1px;}.sp-wrap .psc-action-btn svg{ width:16px; height:16px;}.sp-wrap .psc-info{ padding:12px 14px 10px;}.sp-wrap .psc-name{ font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:4px;}.sp-wrap .psc-desc{ font-size:12px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;}.sp-wrap .psc-meta{ display:flex; gap:10px; align-items:center; font-size:11px; color:var(--text-muted); font-family:ui-monospace,'SF Mono',Consolas,Menlo,monospace;}.sp-wrap .psc-meta-item{ display:flex; align-items:center; gap:4px;}.sp-wrap .psc-meta-dot{ width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,0.1); flex-shrink:0;}.sp-wrap /* Prompt Output */
@@ -1176,7 +1259,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 <div class="toast" id="toast"></div>
 
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modal" onclick="event.stopPropagation()"></div></div>
-<div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightboxClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button><img id="lightboxImg" src="" alt=""></div>
+<div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightboxClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button><button type="button" class="lightbox-nav prev" id="lightboxPrev" hidden onclick="lbStep(-1)" title="上一张（←）">‹</button><button type="button" class="lightbox-nav next" id="lightboxNext" hidden onclick="lbStep(1)" title="下一张（→）">›</button><img id="lightboxImg" src="" alt=""><div class="lightbox-cap" id="lightboxCap" hidden></div></div>
 <script src="bambu-filament-schema.js?v=20261004k"></script>
 <script src="bambu-filament-migrate.js?v=20261004k"></script>
 <script>
@@ -1257,6 +1340,21 @@ const TOOLS = [
 
 /* mock 数据 */
 var PROMPTS = []; /* 运行时由 AD.pullPrompts() 从 /api/prompts 填充 */
+/* 提示词配图路径 → admin 可访问 URL
+   数据在 tools/prompt-library-data.json，配图存 tools/imgs/pl/（发布快照拷到 imgs/pl-web/）；
+   admin 位于 tools/_shared/，故统一补 "../" 前缀。与详情弹层 pView() 同一规则，别再各写一套。 */
+function plImgUrl(u){
+  if(!u) return '';
+  return '../' + String(u).replace(/^\.?\//, '');
+}
+/* 封面 = images[coverIndex]，越界/缺失回落到第 0 张（与 pattern 模块 getCoverImage 同口径） */
+function plCoverUrl(r){
+  var imgs = (r && r.images) || [];
+  if(!imgs.length) return '';
+  var i = +((r || {}).coverIndex) || 0;
+  if(i >= imgs.length) i = 0;
+  return plImgUrl(imgs[i]);
+}
 
 var PRAW = {"settings":{"bwPrice":0.1,"colorPrice":0.15,"bwInkCostPerPage":0.015,"colorInkCostPerPage":0.08,"salesPrices":{"bw":0.1,"color":0.15},"opCostEnabled":false},"paperStock":[{"id":"mr0cq9ht5oq2","brand":"晨光","spec":"A4","weight":70,"buyPrice":66,"packs":5,"sheetsPerPack":500,"totalSheets":2500,"usedSheets":500,"remainingSheets":2000,"buyDate":"2026-06-30","note":"","usedPacks":1,"remPercent":80,"status":"in-use","packsStatus":[true,false,false,false,false],"packType":"pack","packsData":[{"sheets":500,"weight":70},{"sheets":500,"weight":70},{"sheets":500,"weight":70},{"sheets":500,"weight":70},{"sheets":500,"weight":70}]}],"inkStock":[{"id":"mr2554wjjics","colorType":"set","model":"连盛","buyPrice":35,"isSet":true,"estimatedPages":39000,"usedPages":0,"remainingPages":39000,"setItems":[{"colorName":"青色","count":1,"capacity":75,"estimatedPages":8000},{"colorName":"黄色","count":1,"capacity":75,"estimatedPages":8000},{"colorName":"红色","count":1,"capacity":75,"estimatedPages":8000},{"colorName":"黑色","count":1,"capacity":130,"estimatedPages":15000}],"buyDate":"2026-07-01","note":"","status":"stock","remPercent":100},{"id":"mr376yz55szh","colorType":"set","model":"爱普生002","buyPrice":226,"isSet":true,"estimatedPages":25500,"usedPages":21930,"remainingPages":3570,"setItems":[{"colorName":"黑色","count":1,"capacity":127,"estimatedPages":7500},{"colorName":"青色","count":1,"capacity":70,"estimatedPages":6000},{"colorName":"红色","count":1,"capacity":70,"estimatedPages":6000},{"colorName":"黄色","count":1,"capacity":70,"estimatedPages":6000}],"buyDate":"2026-07-02","note":"","status":"in-use","remPercent":14}],"records":[{"id":"mr8t0ok0k6t4","date":"2026-07-06","type":"order","customer":"","pages":309,"duplex":"single","colorMode":"bw","paperId":"mr0cq9ht5oq2","inkId":"mr376yz55szh","unitPrice":0.1,"totalPrice":30.9,"revenue":30.9,"paperCost":8.1576,"inkCost":2.7385882352941175,"profit":20.00381176470588},{"id":"mr8t0ve6qlib","date":"2026-07-06","type":"order","customer":"","pages":45,"duplex":"single","colorMode":"bw","paperId":"mr0cq9ht5oq2","inkId":"mr376yz55szh","unitPrice":0.1,"totalPrice":4.5,"revenue":4.5,"paperCost":1.188,"inkCost":0.3988235294117647,"profit":2.9131764705882355},{"id":"mr93lps1m0f4","date":"2026-07-06","type":"order","customer":"","pages":65,"duplex":"single","colorMode":"bw","paperId":"mr0cq9ht5oq2","inkId":"mr376yz55szh","unitPrice":0.1,"totalPrice":6.5,"revenue":6.5,"paperCost":1.716,"inkCost":0.576078431372549,"profit":4.207921568627451},{"id":"mrbo72jenxhe","date":"2026-07-08","type":"order","customer":"","pages":10,"duplex":"single","colorMode":"bw","paperId":"mr0cq9ht5oq2","inkId":"mr376yz55szh","unitPrice":0.1,"totalPrice":1,"revenue":1,"paperCost":0.264,"inkCost":0.08862745098039215,"profit":0.6473725490196078},{"id":"mrdie4my84u8","date":"2026-07-09","type":"order","customer":"","pages":33,"duplex":"single","colorMode":"bw","paperId":"mr0cq9ht5oq2","inkId":"mr376yz55szh","unitPrice":0.1,"totalPrice":3.3,"revenue":3.3,"paperCost":0.8712,"inkCost":0.2924705882352941,"profit":2.136329411764706},{"id":"ms1gfyx6ior1","date":"2026-07-26","type":"order","customer":"","pages":76,"duplex":"single","colorMode":"bw","paperId":"mr0cq9ht5oq2","inkId":"mr376yz55szh","unitPrice":0.1,"totalPrice":7.6,"revenue":7.6,"paperCost":2.0064,"inkCost":0.6735686274509803,"profit":4.920031372549019}]};
 
@@ -2789,6 +2887,22 @@ function plFiltered(){
     return true;
   });
 }
+/* ★ 时间戳归一化（2026-10-11）：前台 prompt-library 写 Date.now() 数字，后台早期写 ISO 字符串。
+   两种混在一个数组时 `b.createdAt - a.createdAt` 会算出 NaN，比较器返回 NaN → 排序静默失效，
+   新记录就停在文件末尾（前台表现为"新建的排在最后"）。这里统一折算成数字再比。 */
+function plTs(v){
+  if(v == null || v === '') return 0;
+  if(typeof v === 'number') return v < 1e12 ? v * 1000 : v;
+  var s = String(v);
+  if(/^\d{9,}$/.test(s)){ var n = +s; return n < 1e12 ? n * 1000 : n; }
+  var t = Date.parse(s); return isNaN(t) ? 0 : t;
+}
+/* 全站列表统一「新的在前」：updatedAt 优先、缺失回落 createdAt，且不依赖文件物理顺序 */
+function plSorted(arr){
+  return (arr || []).slice().sort(function(a, b){
+    return (plTs(b.updatedAt) || plTs(b.createdAt)) - (plTs(a.updatedAt) || plTs(a.createdAt));
+  });
+}
 function plSet(k,v){ PL[k]=v; PL.page=1; renderMain(); if(k==='q'){ const el=document.getElementById('plSearch'); if(el){ el.focus(); const n=el.value.length; try{el.setSelectionRange(n,n);}catch(e){} } } }
 function plGo(n){ PL.page=n; renderMain(); }
 function plSize(v){ PL.size=+v||10; PL.page=1; renderMain(); }
@@ -2809,17 +2923,19 @@ function pager(total, page, size, goFn, sizeFn){
   </div>`;
 }
 function viewPromptList(){
-  const all=plFiltered();
+  /* 先筛选再统一按时间倒序（新建 / 新编辑的排最前，第 1 页即可见） */
+  const all=plSorted(plFiltered());
   const pages=Math.max(1,Math.ceil(all.length/PL.size));
   if(PL.page>pages) PL.page=pages;
   const rows=all.slice((PL.page-1)*PL.size, PL.page*PL.size);
   const tags=plTags();
   const body=rows.length?rows.map(p=>`<tr data-pid="${p.id}">
       <td><input type="checkbox" class="psRow" onchange="psSyncAll()"></td>
+      <td class="thumb-col"><div class="pl-thumb-cell"><span class="ph-ic">🖼</span>${p.cover?`<img src="${plEsc(p.cover)}" alt="" loading="lazy" title="封面图 · 共 ${p.imgs} 张" onclick="pView(this)">`:''}</div></td>
       <td><b class="pt-title" title="${p.title}">${p.title.length>22?p.title.slice(0,22)+'…':p.title}</b></td>
       <td>${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</td>
       <td>${p.imgs} 张</td>
-      <td>${p.published?dot('ok'):dot('wait')}</td>
+      <td>${PLST.badge(p.id)}</td>
       <td style="color:var(--muted);white-space:nowrap">${p.date}</td>
       <td class="act-cell">
         <button class="btn-icon" title="查看详情" onclick="pView(this)">${P_ACT.eye}</button>
@@ -2827,7 +2943,7 @@ function viewPromptList(){
         <button class="btn-icon del" title="删除" onclick="pDel(this)">${P_ACT.trash}</button>
       </td>
     </tr>`).join('')
-    :`<tr><td colspan="7" style="white-space:normal"><div class="fempty"><div class="big-ic">🔍</div><b>没有匹配的提示词</b>换个关键词，或点击上方「全部」清除标签筛选。</div></td></tr>`;
+    :`<tr><td colspan="8" style="white-space:normal"><div class="fempty"><div class="big-ic">🔍</div><b>没有匹配的提示词</b>换个关键词，或点击上方「全部」清除标签筛选。</div></td></tr>`;
   return `${greetHead('全部提示词','','<button class="add" title="新建提示词" onclick="PLNEW.open()">'+ADD_IC+'</button>')}
   <div class="grid"><div class="card c12">
     <div class="fbar" style="margin:0 0 12px">
@@ -2840,7 +2956,7 @@ function viewPromptList(){
     </div>
     <div class="table-wrap"><table class="fx prompts-tbl" id="promptTable"><thead><tr>
       <th class="cbx-col"><input type="checkbox" id="psAll" onchange="psToggleAll(this)" aria-label="全选"></th>
-      <th>标题</th><th>标签</th><th>配图</th><th>状态</th><th>更新时间</th><th>操作</th>
+      <th class="thumb-col">封面</th><th>标题</th><th>标签</th><th>配图</th><th>状态</th><th>更新时间</th><th>操作</th>
     </tr></thead>
     <tbody>${body}</tbody></table></div>
     <div style="margin-top:12px">${pager(all.length,PL.page,PL.size,'plGo','plSize')}</div>
@@ -3436,7 +3552,7 @@ const KNOW = {
         <div class="fgroup"><label>标签（用逗号分隔）</label><input type="text" id="k_tags" value="${it?(it.tags||[]).join(', '):''}" placeholder="例如：拉丝, PETG, 调参"></div>
         <div class="fgroup"><label>参考图片</label>
           <div onclick="document.getElementById('k_imageInput').click()" style="border:1px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:12.5px;cursor:pointer">点击上传图片（JPG/PNG · 最大 2MB）</div>
-          <input type="file" id="k_imageInput" accept="image/*" style="display:none" onchange="KNOW.onImg(this)">
+          <input type="file" id="k_imageInput" accept="image/*" style="position:fixed;left:0;top:0;width:1px;height:1px;opacity:0" onchange="KNOW.onImg(this)">
           <div id="k_prevWrap" style="margin-top:10px;${this.img?'':'display:none'}"><img id="k_prev" src="${this.img||''}" style="max-width:220px;max-height:220px;border-radius:10px;display:${this.img?'block':'none'}"><div><button type="button" class="mini-btn" style="margin-top:6px;color:#e5484d" onclick="KNOW.rmImg()">移除图片</button></div></div>
         </div>
       </div>
@@ -4213,7 +4329,7 @@ function optUploadBox(){
     + '<div style="font-size:14px;color:var(--ink)">点击选择，或拖入 .3mf / .stl 文件</div>'
     + '<div style="font-size:12px;margin-top:6px">所有分析在浏览器本地完成，文件不会上传到任何服务器</div>'
     + '</div>'
-    + '<input id="opt-file" type="file" accept=".3mf,.stl" style="display:none" onchange="optHandleFiles(this.files)">';
+    + '<input id="opt-file" type="file" accept=".3mf,.stl" style="position:fixed;left:0;top:0;width:1px;height:1px;opacity:0" onchange="optHandleFiles(this.files)">';
 }
 function optHelpCard(){
   return '<div class="plib-card"><div class="plib-head"><b>这是什么</b></div>'
@@ -5451,7 +5567,7 @@ const LPGP = {
     ink.usedPages+=pages; ink.remainingPages=Math.max(0,ink.estimatedPages-ink.usedPages);
     ink.remPercent=ink.estimatedPages>0?Math.round(ink.remainingPages/ink.estimatedPages*100):0;
     if(ink.remainingPages<=0) ink.status='empty';
-    PRAW.records.push(record); AD.save('printManager'); renderMain(); toast('记账成功 · 已同步落盘'); },
+    PRAW.records.unshift(record); AD.save('printManager'); /* 新建排最前 */ renderMain(); toast('记账成功 · 已同步落盘'); },
 
   editRecord(id){
     const r=PRAW.records.find(x=>x.id===id); if(!r)return;
@@ -5584,57 +5700,10 @@ function viewPrintLedger(){
 /* 默认值已内联进表单渲染（日期/单价/预估成本），无需 load 后 init */
 
 /* ================= 抽屉 / Toast / 主题 / 登录 ================= */
-function openDrawer(p){
-  window.__drawerItem = (typeof p === 'object') ? p : null;
-  var it = (typeof p === 'object') ? p : null;
-  $('#fmodalBox').innerHTML =
-    '<div class="fmodal-head"><div class="fmodal-title">编辑提示词</div><button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
-    '<div class="fmodal-body">' +
-      '<div class="fgroup"><label>标题</label><input id="fTitle" type="text"></div>' +
-      '<div class="fgroup"><label>标签</label><input id="fTags" type="text" placeholder="逗号分隔"></div>' +
-      '<div class="fgroup"><label>提示词内容</label><textarea id="fBody" rows="6"></textarea></div>' +
-      '<div class="fgroup"><label>状态</label><select id="fStatus" class="form-select"><option>已发布</option><option>草稿</option></select></div>' +
-      '<div class="fgroup"><label>备注</label><input id="fNote" type="text" placeholder="可选"></div>' +
-    '</div>' +
-    '<div class="fmodal-foot"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="saveDrawer()">保存修改</button></div>';
-  // 注入后按属性赋值（避免 innerHTML 转义问题；此时原生 select 已就绪，MutationObserver 会在异步升级时读取正确选中态）
-  var full = (it && it.id && typeof plFullRecord === 'function') ? plFullRecord(it.id) : null;
-  var src = full || it || {};
-  if($('#fTitle')) $('#fTitle').value = (it && it.title) || (typeof p === 'string' ? p : '') || src.title || '';
-  if($('#fTags'))  $('#fTags').value  = Array.isArray(src.tags) ? src.tags.join(', ') : (src.tags || '');
-  if($('#fBody'))  $('#fBody').value  = (src.template != null ? src.template : '');
-  if($('#fStatus')) $('#fStatus').value = (src.published) ? '已发布' : '草稿';
-  if($('#fNote'))  $('#fNote').value  = (src.note != null ? src.note : '');
-  $('#fmodalMask').classList.add('show');
-}
-function closeDrawer(){ closeModal(); }
-function saveDrawer(){
-  var it = window.__drawerItem;
-  var t = ($('#fTitle') ? $('#fTitle').value.trim() : '');
-  if(!it){ closeDrawer(); return; }
-  if(!t){ toast('请填写标题'); return; }
-  fetch('/api/prompts').then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){
-    var recs = ((d && d.records) || []).slice();
-    var i = recs.findIndex(function(x){ return x.id === it.id; });
-    if(i < 0){ toast('记录不存在或已删除'); return; }
-    var tagsVal = ($('#fTags') ? $('#fTags').value : '');
-    var bodyVal = ($('#fBody') ? $('#fBody').value : '');
-    var statusVal = ($('#fStatus') ? $('#fStatus').value : '');
-    var noteVal = ($('#fNote') ? $('#fNote').value : '');
-    var tagsArr = tagsVal.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
-    recs[i] = Object.assign({}, recs[i], {
-      title: t,
-      tags: tagsArr,
-      template: bodyVal,
-      published: statusVal === '已发布',
-      note: noteVal,
-      updatedAt: new Date().toISOString()
-    });
-    return fetch('/api/prompts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ records: recs }) })
-      .then(function(r){ if(!r.ok) throw 0; return AD.pullPrompts(); })
-      .then(function(){ closeDrawer(); renderMain(); toast('已保存 · 服务端已落盘'); });
-  }).catch(function(){ toast('保存失败 · 服务不可达'); });
-}
+/* ★ 2026-10-11：提示词编辑抽屉已与「新建」合并到同一套 PLFORM（见 tools/_shared/admin.html
+   `var PLFORM`），录入项与前台 prompt-library.html 一致。旧的 openDrawer/saveDrawer 实现
+   （标题/标签/正文/状态/备注）已删除 —— 它少录变量与效果图、还多写一个前台没有的 note 字段。
+   兼容入口 openDrawer / saveDrawer / closeDrawer 保留在 pEdit 附近，转调 PLFORM。 */
 let toastTimer;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2200); }
 /* 全站悬停气泡（data-tip 委托）：跟随鼠标、越界自动翻转 */
@@ -5775,6 +5844,7 @@ var AD = {
         PROMPTS.length = 0;
         recs.forEach(function(r){
           PROMPTS.push({ id:r.id, title:r.title || '(未命名)', tags:r.tags||[], imgs:(r.images||[]).length,
+            cover: plCoverUrl(r),
             date: fmtDate(r.updatedAt || r.createdAt), published:r.published !== false });
         });
         /* 提示词数据台 / 标签管理 / 发布设置与列表同源：PRDATA 一并喂真实数据（不再用内嵌快照） */
@@ -7173,7 +7243,7 @@ function viewSeamlessModule(){
             this._galleryId = null;
             // 关闭 lightbox（如果打开）
             var lb = document.getElementById('lightbox');
-            if (lb) lb.classList.remove('active');
+            if (lb) { lb.classList.remove('active'); lbReset(); }
             document.querySelectorAll('.nav-item').forEach(function(item) {
                 item.classList.toggle('active', item.dataset.module === module);
             });
@@ -7588,7 +7658,6 @@ return html;
                     html += '<div class="warning-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>存在相同组合的素材：'+escapeHtml(dup.name)+'，建议调整元素组合</div>';
                 }
                 html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出</div><div class="gen-section-body">';
-                html += '<div class="prompt-display-section">';
                 html += '<div class="prompt-display-header">';
                 html += '<span class="prompt-display-title">AI提示词</span>';
                 html += '<div class="prompt-display-actions">';
@@ -7599,17 +7668,11 @@ return html;
                 html += '<button class="btn-tool icon-only is-danger" title="清除" onclick="app.clearGenPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
                 html += '</div>';
                 html += '</div>';
-                html += '</div>';
                 html += '<div class="prompt-display-text" id="promptOutput">'+escapeHtml(prompt)+'</div>';
                 html += '<textarea class="form-textarea" id="promptOutputEdit" style="display:none;min-height:120px;font-size:15px;line-height:1.7;border-color:var(--border-light);" placeholder="编辑提示词...">'+escapeHtml(prompt)+'</textarea>';
                 html += '</div>';
                 html += '<div class="prompt-actions">';
                 html += '<button class="btn-primary" onclick="app.savePromptToLibrary()">入库素材</button>';
-                html += '<span style="flex:1"></span>';
-                Object.keys(PLATFORMS).forEach(function(k) {
-                    var pf = PLATFORMS[k];
-                    html += '<a class="platform-btn" href="'+pf.url+'" target="_blank" style="border-color:'+pf.color+';color:'+pf.color+'">'+pf.name+'</a>';
-                });
                 html += '</div></div></div>';
             } else {
                 html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出</div><div class="gen-section-body">';
@@ -7776,7 +7839,6 @@ return html;
             var prompt = this.buildCharacterPrompt();
             if (prompt) {
                 html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出</div><div class="gen-section-body">';
-                html += '<div class="prompt-display-section">';
                 html += '<div class="prompt-display-header">';
                 html += '<span class="prompt-display-title">AI提示词</span>';
                 html += '<div class="prompt-display-actions">';
@@ -7787,17 +7849,11 @@ return html;
                 html += '<button class="btn-tool icon-only is-danger" title="清除" onclick="app.clearCharPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
                 html += '</div>';
                 html += '</div>';
-                html += '</div>';
                 html += '<div class="prompt-display-text" id="promptOutput">'+escapeHtml(prompt)+'</div>';
                 html += '<textarea class="form-textarea" id="promptOutputEdit" style="display:none;min-height:120px;font-size:15px;line-height:1.7;border-color:var(--border-light);" placeholder="编辑提示词...">'+escapeHtml(prompt)+'</textarea>';
                 html += '</div>';
                 html += '<div class="prompt-actions">';
                 html += '<button class="btn-primary" onclick="app.saveCharToLibrary()">入库素材</button>';
-                html += '<span style="flex:1"></span>';
-                Object.keys(PLATFORMS).forEach(function(k) {
-                    var pf = PLATFORMS[k];
-                    html += '<a class="platform-btn" href="'+pf.url+'" target="_blank" style="border-color:'+pf.color+';color:'+pf.color+'">'+pf.name+'</a>';
-                });
                 html += '</div></div></div>';
             } else {
                 html += '<div class="gen-section" data-section="output"><div class="gen-section-header" style="cursor:default;">提示词输出</div><div class="gen-section-body">';
@@ -7992,7 +8048,7 @@ return html;
                 createdAt: new Date().toISOString()
             };
             var patterns = getPatterns();
-            patterns.push(pattern);
+            patterns.unshift(pattern); /* 新建排最前（全站列表统一规则） */
             saveData(STORAGE_KEYS.patterns, patterns);
             showToast('角色素材已入库：'+name);
             this.switchModule('charAssets');
@@ -8714,7 +8770,7 @@ return html;
                 createdAt: new Date().toISOString()
             };
             var patterns = getPatterns();
-            patterns.push(pattern);
+            patterns.unshift(pattern); /* 新建排最前（全站列表统一规则） */
             saveData(STORAGE_KEYS.patterns, patterns);
             showToast('素材已入库：'+name);
             this.switchModule('patternAssets');
@@ -9264,6 +9320,7 @@ return html;
             if (imgs.length === 0) return;
             var idx = (app._galleryId === id) ? (app._galleryIndex || 0) : getCoverIndex(p);
             if (idx >= imgs.length) idx = 0;
+            lbReset();   /* 清掉「全部提示词」画廊状态，否则本模块会误显示上一张/下一张按钮 */
             var lb = document.getElementById('lightbox');
             var lbImg = document.getElementById('lightboxImg');
             lbImg.src = imgs[idx];
@@ -9397,13 +9454,14 @@ return html;
             input.type = 'file';
             input.accept = 'image/*';
             input.multiple = true; // 支持多选
-            input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+            input.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;';
             input.onchange = function(e) {
                 var files = Array.from(e.target.files);
                 files.forEach(function(file) {
                     self.savePatternThumb(id, file);
                 });
-                if (input.parentNode) document.body.removeChild(input);
+                setTimeout(function(){ if (input.parentNode) document.body.removeChild(input); }, 0);
+                setTimeout(function(){ try { window.focus(); } catch (_) {} }, 0);
             };
             document.body.appendChild(input);
             input.click();
@@ -9535,7 +9593,7 @@ return html;
                 createdAt: new Date().toISOString()
             };
             var patterns = getPatterns();
-            patterns.push(pattern);
+            patterns.unshift(pattern); /* 新建排最前（全站列表统一规则） */
             saveData(STORAGE_KEYS.patterns, patterns);
             showToast('素材已添加');
             this.closeModal();
@@ -10317,10 +10375,11 @@ try{ initData(); }catch(e){}
     // Lightbox 关闭：点击关闭按钮
     document.getElementById('lightboxClose').addEventListener('click', function() {
         document.getElementById('lightbox').classList.remove('active');
+        lbReset();
     });
     // Lightbox 关闭：点击背景（非图片区域）
     document.getElementById('lightbox').addEventListener('click', function(e) {
-        if (e.target === this) this.classList.remove('active');
+        if (e.target === this) { this.classList.remove('active'); lbReset(); }
     });
 
     // 键盘导航：方向键切换画廊，Esc 关闭 Lightbox — 与 prompt-library.html 一致
@@ -10330,8 +10389,15 @@ try{ initData(); }catch(e){}
             var lb = document.getElementById('lightbox');
             if (lb.classList.contains('active')) {
                 lb.classList.remove('active');
+                lbReset();
                 return;
             }
+        }
+        // 提示词配图画廊（lbOpenGallery 填的 LBG）：方向键翻图，优先于 pattern 画廊
+        var lbp = document.getElementById('lightbox');
+        if (lbp && lbp.classList.contains('active') && LBG.urls.length > 1) {
+            if (e.key === 'ArrowLeft') { lbStep(-1); return; }
+            if (e.key === 'ArrowRight') { lbStep(1); return; }
         }
         // 方向键仅在详情页且不在输入框中时生效
         if (!app._galleryId) return;
@@ -10384,8 +10450,9 @@ function fdStat(ic,n,v,d /* 底色统一由 CSS .fd-ic 决定，第 5 参数已�
 }
 
 /* ---------- 通用：详情弹窗 / 删除确认（复用具名 fmodal） ---------- */
-function openDetail(title, html){
-  $('#fmodalBox').innerHTML = `<div class="fmodal-head"><div class="fmodal-title">${title}</div><button class="fmodal-x" onclick="closeModal()">✕</button></div><div class="fmodal-body">${html}</div><div class="fmodal-foot"><button class="btn" onclick="closeModal()">关闭</button></div>`;
+/* actions：可选的操作按钮 HTML，追加在「关闭」左侧（如提示词详情页的「设为已发布 / 设为草稿」） */
+function openDetail(title, html, actions){
+  $('#fmodalBox').innerHTML = `<div class="fmodal-head"><div class="fmodal-title">${title}</div><button class="fmodal-x" onclick="closeModal()">✕</button></div><div class="fmodal-body">${html}</div><div class="fmodal-foot">${actions || ''}<button class="btn" onclick="closeModal()">关闭</button></div>`;
   $('#fmodalMask').classList.add('show');
 }
 function confirmDel(title, name, cb){
@@ -10394,6 +10461,50 @@ function confirmDel(title, name, cb){
 }
 function closeModal(){ $('#fmodalMask').classList.remove('show'); }
 $('#fmodalMask').addEventListener('click', e=>{ if(e.target===$('#fmodalMask')) closeModal(); });
+
+/* ---------- 提示词配图：复用全局 #lightbox 查看（站内放大，不下载、不跳转） ----------
+   起因（2026-10-09 用户反馈「详情页里的图片点击就直接下载了，我只是想查看」）：
+   原先是 <a href="*.webp" target="_blank">，server.py 的 guess_type 对 .webp 可能落到
+   application/octet-stream → 浏览器把「查看」当「下载」。改成站内 lightbox 后不发导航请求，与响应头无关。
+   #lightbox 是后台既有全屏查看组件（pattern 模块在用），这里只给它补可选的翻页与计数：
+   单图时按钮 [hidden] 不显示 → pattern 模块（只喂 1 张）行为与视觉零变化。 */
+var PLV_SRC = [];               /* 当前详情记录的全部配图 URL（inline onclick 带不了引号数组，走全局） */
+var LBG = { urls: [], i: 0 };   /* lightbox 画廊状态：仅由 lbOpenGallery 填充 */
+function lbOpenGallery(urls, i){
+  var lb = document.getElementById('lightbox'); if(!lb) return;
+  LBG.urls = (urls || []).slice(); LBG.i = i || 0;
+  if(!LBG.urls.length) return;
+  lbPaint();
+  lb.classList.add('active');
+}
+function lbPaint(){
+  var lb = document.getElementById('lightbox');
+  var img = document.getElementById('lightboxImg'); if(!lb || !img) return;
+  var n = LBG.urls.length, multi = n > 1;
+  img.src = LBG.urls[LBG.i] || '';
+  var cap = document.getElementById('lightboxCap');
+  if(cap){ cap.hidden = !multi; cap.textContent = multi ? ('第 ' + (LBG.i + 1) + ' / ' + n + ' 张') : ''; }
+  var pv = document.getElementById('lightboxPrev'), nx = document.getElementById('lightboxNext');
+  if(pv) pv.hidden = !multi;
+  if(nx) nx.hidden = !multi;
+  lb.classList.toggle('has-gallery', multi);   /* 多图时给图片两侧让位（见 .lightbox.has-gallery img） */
+}
+function lbStep(d){
+  var n = LBG.urls.length; if(n < 2) return;
+  LBG.i = (LBG.i + d + n) % n;   /* 首尾循环 */
+  lbPaint();
+}
+/* 清空画廊态：关闭 lightbox / 切模块 / pattern 模块复用 lightbox 前都要调，否则会残留翻页按钮 */
+function lbReset(){
+  LBG.urls = []; LBG.i = 0;
+  var lb = document.getElementById('lightbox');
+  if(lb) lb.classList.remove('has-gallery');
+  var cap = document.getElementById('lightboxCap');
+  if(cap){ cap.hidden = true; cap.textContent = ''; }
+  var pv = document.getElementById('lightboxPrev'), nx = document.getElementById('lightboxNext');
+  if(pv) pv.hidden = true;
+  if(nx) nx.hidden = true;
+}
 
 /* ===================== 全部提示词：表头全选 + 行勾选联动 + 操作列（同耗材库：平铺图标按钮） ===================== */
 function psToggleAll(box){
@@ -10438,15 +10549,16 @@ function pView(btn){
   const r = plFullRecord(p.id) || {};
   const title = r.title || p.title || '(未命名)';
   const tags = (r.tags || p.tags || []);
-  const imgs = (r.images || []).map(function(u){ return String(u).replace(/^\.?\//, ''); });
+  const imgs = (r.images || []).map(plImgUrl);   /* 直接产出可访问 URL，路径规则单一来源 */
   const cover = +(r.coverIndex) || 0;
   const body = (typeof r.template === 'string') ? r.template : '';
   const varsObj = (r.variables && typeof r.variables === 'object' && !Array.isArray(r.variables)) ? r.variables : {};
   const varKeys = Object.keys(varsObj);
+  PLV_SRC = imgs;   /* 交给灯箱按索引取图（inline onclick 不能带引号数组，故走全局） */
   const imgHtml = imgs.length
     ? `<div class="plv-imgs">${imgs.map(function(u, i){
         const isCover = (i === cover);
-        return `<a class="plv-img${isCover ? ' on' : ''}" href="../${plEsc(u)}" target="_blank" rel="noopener" title="${isCover ? '封面图' : '第 ' + (i + 1) + ' 张'}"><img src="../${plEsc(u)}" alt=""></a>`;
+        return `<button type="button" class="plv-img${isCover ? ' on' : ''}" onclick="lbOpenGallery(PLV_SRC, ${i})" title="${isCover ? '封面图' : '第 ' + (i + 1) + ' 张'}（点击放大查看）"><img src="${plEsc(u)}" alt="" loading="lazy"></button>`;
       }).join('')}</div>`
     : `<div class="ro-field" style="color:var(--muted)">该记录没有配图</div>`;
   const varHtml = varKeys.length
@@ -10458,18 +10570,100 @@ function pView(btn){
   const html = `
     <div class="ro-field"><b>标题：</b>${plEsc(title)}</div>
     <div class="ro-field"><b>标签：</b>${tags.length ? tags.map(function(t){ return '<span class="tag">' + plEsc(t) + '</span>'; }).join(' ') : '-'}</div>
-    <div class="ro-field"><b>状态：</b>${(r.published !== false && p.published) ? '已发布' : '草稿'}　<b>创建：</b>${fmtDate(r.createdAt) || '-'}　<b>更新：</b>${fmtDate(r.updatedAt) || p.date || '-'}</div>
+    <div class="ro-field"><b>状态：</b>${PLST.badge(p.id)}<span style="color:var(--muted);font-size:12px;margin-left:8px">点击徽标即可切换「已发布 / 草稿」</span></div>
+    <div class="ro-field"><b>创建：</b>${fmtDate(r.createdAt) || '-'}　<b>更新：</b>${fmtDate(r.updatedAt) || p.date || '-'}</div>
     <div class="ro-field"><b>ID：</b><span style="font-family:ui-monospace,Consolas,monospace">${plEsc(p.id)}</span></div>
     <div style="margin:14px 0 6px;font-size:13.5px;font-weight:700">配图（${imgs.length} 张）</div>${imgHtml}
     <div style="margin:14px 0 6px;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:10px">完整提示词<button class="mini-btn" onclick="copyBlock('plvText')">复制</button></div>
     <pre class="plv-text" id="plvText">${body ? plEsc(body) : '（该记录没有提示词正文）'}</pre>
     <div style="margin:14px 0 6px;font-size:13.5px;font-weight:700">变量（${varKeys.length} 个）</div>${varHtml}
   `;
-  openDetail('提示词详情', html);
+  /* 弹窗底部操作区：显式给出状态切换按钮（用户反馈「详情页没有按钮改状态」）
+     pub 变化后需重绘弹窗，否则按钮文案会停在旧状态 */
+  const isPub = (r.published !== false && p.published !== false);
+  const acts = isPub
+    ? `<button class="btn" onclick="PLST.set('${plEsc(p.id)}',false);closeModal();">转为草稿（仅本机）</button>`
+    : `<button class="btn primary" onclick="PLST.set('${plEsc(p.id)}',true);closeModal();">发布上线</button>`;
+  openDetail('提示词详情', html, acts);
 }
 function pEdit(btn){
-  const p = pRow(btn); if(p) openDrawer(p);
+  const p = pRow(btn); if(!p) return;
+  /* ★ 必须传完整记录：PROMPTS 只是列表投影（没有 template / variables / images / coverIndex），
+     传投影会让编辑保存时把这些字段冲掉。统一走 PLFORM（与新建同一套录入项）。 */
+  const full = plFullRecord(p.id) || p;
+  PLFORM.open(full);
 }
+/* ===================== 提示词发布状态切换（2026-10-11） =====================
+   起因（用户反馈）：后台列表显示「待确认」、发布设置显示「1 条草稿」、前台显示「仅本机」，
+   但三处都只有「查看 / 编辑 / 删除」，没有一个按钮能把状态改过来 —— 标签是死的，语义也不统一。
+   这里做三件事：
+     ① 统一语义：published !== false = 已发布，published === false = 草稿（旧数据缺字段视为已发布）；
+     ② 统一入口：列表状态列点一下就能切、详情弹窗有显式按钮、发布设置页列出草稿并带按钮；
+     ③ 统一落盘：一律走 AD.pullPrompts() 重新拉取，避免本地 PRDATA 与服务端不同源。 */
+var PLST = {
+  isPub: function(r){ return !!(r && r.published !== false); },
+  label: function(r){ return PLST.isPub(r) ? '已发布' : '草稿'; },
+  /* 状态徽标：按钮样式，点击即切换（等价于前台「仅本机」标签的开关） */
+  badge: function(id){
+    var r = plFullRecord(id);
+    if(!r) return '';
+    var pub = PLST.isPub(r);
+    return '<button type="button" class="pst-badge ' + (pub ? 'is-pub' : 'is-draft') + '" data-pst="' + plEsc(id) + '"'
+      + ' title="' + (pub ? '当前「已发布」：随发布快照上线外网 · 点击改为「草稿」' : '当前「草稿」：仅本机可见，不会上线 · 点击改为「已发布」') + '"'
+      + ' onclick="PLST.toggle(this.dataset.pst, event)">'
+      + '<span class="dot" style="background:' + (pub ? '#22c55e' : '#f59e0b') + '"></span>' + (pub ? '已发布' : '草稿') + '</button>';
+  },
+  toggle: function(id, ev){
+    if(ev && ev.stopPropagation) ev.stopPropagation();
+    var r = plFullRecord(id); if(!r){ toast('未找到记录'); return; }
+    PLST.set(id, !PLST.isPub(r));
+  },
+  set: function(id, pub){
+    if(!id){ toast('未找到记录 ID'); return; }
+    var msg = pub ? '已发布 · 随「生成发布快照」上线外网' : '已设为草稿 · 仅本机可见，不会上线';
+    fetch('/api/prompts').then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){
+      var recs = ((d && d.records) || []).slice();
+      var i = recs.findIndex(function(x){ return x && x.id === id; });
+      if(i < 0){ toast('记录不存在或已删除'); return; }
+      recs[i] = Object.assign({}, recs[i], { published: !!pub, updatedAt: Date.now() });
+      return fetch('/api/prompts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ records: recs }) })
+        .then(function(r){ if(!r.ok) throw 0; return AD.pullPrompts(); })
+        .then(function(){ renderMain(); toast(msg); });
+    }).catch(function(){ toast('操作失败 · 服务不可达'); });
+  },
+  /* 批量：发布设置页的「全部发布 / 全部转草稿」 */
+  setIds: function(ids, pub){
+    ids = (ids || []).filter(Boolean);
+    if(!ids.length){ toast('没有需要处理的记录'); return; }
+    var msg = pub ? (ids.length + ' 条已发布') : (ids.length + ' 条已设为草稿');
+    fetch('/api/prompts').then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){
+      var recs = ((d && d.records) || []).slice();
+      var hit = 0, now = Date.now();
+      recs = recs.map(function(x){
+        if(x && ids.indexOf(x.id) !== -1){ hit++; return Object.assign({}, x, { published: !!pub, updatedAt: now }); }
+        return x;
+      });
+      if(!hit){ toast('记录不存在或已删除'); return; }
+      return fetch('/api/prompts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ records: recs }) })
+        .then(function(r){ if(!r.ok) throw 0; return AD.pullPrompts(); })
+        .then(function(){ renderMain(); toast(msg); });
+    }).catch(function(){ toast('操作失败 · 服务不可达'); });
+  },
+  /* 发布设置页：把「草稿」全部切成已发布 / 反过来 */
+  allDrafts: function(pub){
+    var ids = (((typeof PRDATA !== 'undefined' && PRDATA.records) || [])).filter(function(r){ return !PLST.isPub(r); }).map(function(r){ return r.id; });
+    PLST.setIds(ids, pub);
+  }
+};
+window.PLST = PLST;
+/* 旧抽屉入口保留：内部转调统一表单（历史 inline onclick 可能仍指向 openDrawer） */
+function openDrawer(p){
+  const id = (p && p.id) || null;
+  PLFORM.open(id ? (plFullRecord(id) || (typeof p === 'object' ? p : null)) : null);
+}
+function closeDrawer(){ closeModal(); }
+/* 旧保存入口保留：转调 PLFORM.save（避免任何残留 onclick 报 undefined） */
+function saveDrawer(){ if(window.PLFORM) PLFORM.save(); else closeModal(); }
 function pDel(btn){
   const p = pRow(btn); if(!p) return;
   confirmDel('删除提示词', p.title, 'PLDEL.do(\''+(p.id||'')+'\')');
@@ -10615,8 +10809,7 @@ function viewPromptDash(t){
   const top = tagAgg().slice(0, 12).map(([n,c])=>[n,c,s.count]); /* 高频标签只统计 Top 12 */
 /* 最近更新：PRDATA.records 是服务端原始记录（字段 images[] / updatedAt 数字时间戳），
    不是列表投影 PROMPTS（imgs/date），必须按原字段取值并显式排序 */
-const recent = (PRDATA.records || []).slice()
-  .sort((a, b) => (+b.updatedAt || 0) - (+a.updatedAt || 0)).slice(0, 6);
+const recent = plSorted(PRDATA.records || []).slice(0, 6);
   return `
   ${greetHead('提示词数据台','','<button class="add" title="新建提示词" onclick="PLNEW.open()">'+ADD_IC+'</button>')}
   <div class="grid">
@@ -10694,37 +10887,180 @@ const PLT = {
       .catch(function(){ toast('保存失败 · 服务不可达'); });
   }
 };
-/* 提示词新建：真实写入 /api/prompts */
-var PLNEW = {
-  open: function(){
-    $('#fmodalBox').innerHTML = `
-      <div class="fmodal-head"><div class="fmodal-title">新建提示词</div><button class="fmodal-x" onclick="closeModal()">✕</button></div>
-      <div class="fmodal-body">
-        <div class="fgroup"><label>标题</label><input type="text" id="pnTitle" placeholder="如 巨物美学·雪原古建"></div>
-        <div class="fgroup"><label>标签（逗号分隔）</label><input type="text" id="pnTags" placeholder="如 摄影,风景"></div>
-        <div class="fgroup"><label>提示词正文</label><textarea id="pnTpl" placeholder="粘贴提示词内容（可留空，稍后在原工具页补全）"></textarea></div>
-      </div>
-      <div class="fmodal-foot"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="PLNEW.save()">保存</button></div>`;
-    $('#fmodalMask').classList.add('show');
-    setTimeout(function(){ var el = document.getElementById('pnTitle'); if(el) el.focus(); }, 60);
+/* ===================== 提示词新建 / 编辑：与前台 prompt-library.html 录入项统一 =====================
+   ★ 2026-10-11：后台原先只有「标题 / 标签 / 正文」三项，前台是「标题 / 对外发布 / 标签 / 提示词模板
+     （{{变量}}）/ 变量默认值 / 效果图（封面）」六项，两边录入项不一致导致同一条记录在前后台字段残缺。
+     这里把后台新建与编辑收敛到同一套表单（字段名、类型与前台 savePrompt 写入的字段集逐项对齐）。
+   ★ 时间戳写 Date.now() 数字（前台同款）——早期后台写 ISO 字符串，前台 `b.createdAt - a.createdAt`
+     会算出 NaN，比较器返回 NaN 使排序静默失效，新记录停在数组末尾（表现为"新建的排在最后"）。
+   ★ 新建 unshift 到数组头：后台第 1 页、前台列表（按 createdAt 倒序）都能立刻看到。 */
+var PLFORM = {
+  editId: null, tags: [], imgs: [], cover: 0,
+  esc: function(s){ return FUTIL && FUTIL.esc ? FUTIL.esc(s) : String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); },
+  genId: function(){ return Date.now().toString(36) + Math.random().toString(36).substr(2, 6); }, /* 与前台 genId 同款 */
+  varsOf: function(tpl){
+    var out = [], seen = {}, re = /\{\{([^}]+)\}\}/g, m;
+    while((m = re.exec(tpl || '')) !== null){ var n = (m[1] || '').trim(); if(n && !seen[n]){ seen[n] = 1; out.push(n); } }
+    return out;
   },
+  open: function(rec){
+    var r = rec || null;
+    this.editId = r ? (r.id || null) : null;
+    this.tags = r ? ((r.tags || []).slice()) : [];
+    this.imgs = r ? ((r.images || []).slice()) : [];
+    this.cover = r ? (+r.coverIndex || 0) : 0;
+    var pub = r ? (r.published !== false) : true; /* 前台 goToEdit(null)：新建默认对外发布 */
+    var pool = tagAgg().map(function(x){ return x[0]; }).filter(function(t){ return t; }).slice(0, 30);
+    $('#fmodalBox').innerHTML = `
+      <div class="fmodal-head"><div class="fmodal-title">${this.editId ? '编辑提示词' : '新建提示词'}</div><button class="fmodal-x" onclick="closeModal()">✕</button></div>
+      <div class="fmodal-body">
+        <div class="fgroup"><label>标题 *</label><input type="text" id="pfTitle" placeholder="如 巨物美学·雪原古建" value="${this.esc(r ? r.title : '')}"></div>
+        <div class="fgroup"><label>标签（点击选择，与前台一致）</label>
+          <div class="pf-chips" id="pfTagSel"></div>
+          <div class="pf-chips" id="pfTagPool">${pool.map(t=>`<span class="pf-chip" data-t="${this.esc(t)}" onclick="PLFORM.toggleTag(this.dataset.t)">${this.esc(t)}</span>`).join('') || '<span class="pf-hint">还没有标签，可在下方自定义</span>'}</div>
+          <div class="row2"><input type="text" id="pfTagNew" placeholder="自定义标签，逗号分隔"><button class="btn" type="button" style="flex:0 0 auto" onclick="PLFORM.addTags()">添加</button></div>
+        </div>
+        <div class="fgroup"><label>提示词模板 *</label><textarea id="pfTpl" rows="7" placeholder="输入提示词，用 {{变量名}} 标记可替换的部分" oninput="PLFORM.syncVars()">${this.esc(r ? (r.template || '') : '')}</textarea>
+          <div class="pf-hint">用 {{变量名}} 标记可自定义部分，下方会自动生成「变量默认值」输入框（与前台一致）。</div>
+          <div class="pf-vars" id="pfVars"></div>
+        </div>
+        <div class="fgroup"><label>效果图（点击 ★ 设为封面）</label>
+          <div class="pf-imgs" id="pfImgs"></div>
+          <button class="btn" type="button" onclick="document.getElementById('pfFile').click()">上传图片</button>
+          <input type="file" id="pfFile" accept="image/jpeg,image/png,image/webp" multiple style="position:fixed;left:0;top:0;width:1px;height:1px;opacity:0" onchange="PLFORM.pick(this)">
+          <div class="pf-hint">上传后压缩存到 tools/imgs/pl/，发布快照时才拷进 pl-web。</div>
+        </div>
+        <div class="fgroup"><label>对外发布</label>
+          <div class="pf-pub">
+            <label class="pf-sw"><input type="checkbox" id="pfPub" ${pub ? 'checked' : ''}><i></i></label>
+            <span class="pf-pub-txt">${pub ? '已开启' : '仅本机'}<small>开启：随「生成发布快照」上线外网；关闭：仅本机可见（与前台一致）</small></span>
+          </div>
+        </div>
+      </div>
+      <div class="fmodal-foot"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="PLFORM.save()">保存</button></div>`;
+    $('#fmodalMask').classList.add('show');
+    this.renderTags(); this.renderImgs(); this.syncVars(r);
+    var self = this;
+    var pubEl = document.getElementById('pfPub');
+    if(pubEl) pubEl.addEventListener('change', function(){
+      var t = pubEl.parentNode.nextElementSibling;
+      if(t) t.innerHTML = (pubEl.checked ? '已开启' : '仅本机') + '<small>开启：随「生成发布快照」上线外网；关闭：仅本机可见（与前台一致）</small>';
+    });
+    setTimeout(function(){ var el = document.getElementById('pfTitle'); if(el) el.focus(); }, 60);
+  },
+  /* —— 标签 —— */
+  renderTags: function(){
+    var sel = document.getElementById('pfTagSel');
+    if(!sel) return;
+    sel.innerHTML = this.tags.length
+      ? this.tags.map(t=>`<span class="pf-chip on" data-t="${this.esc(t)}" onclick="PLFORM.toggleTag(this.dataset.t)" title="点击移除">${this.esc(t)} ×</span>`).join('')
+      : '<span class="pf-hint">未选择标签</span>';
+    var pool = document.getElementById('pfTagPool');
+    if(pool) Array.prototype.forEach.call(pool.querySelectorAll('.pf-chip'), function(c){
+      c.classList.toggle('on', this.tags.indexOf(c.dataset.t) !== -1);
+    }, this);
+  },
+  toggleTag: function(t){ if(!t) return; var i = this.tags.indexOf(t); if(i < 0) this.tags.push(t); else this.tags.splice(i, 1); this.renderTags(); },
+  addTags: function(){
+    var el = document.getElementById('pfTagNew'); if(!el) return;
+    String(el.value || '').split(/[,，]/).map(function(s){ return s.trim(); }).filter(Boolean).forEach(function(t){
+      if(this.tags.indexOf(t) < 0) this.tags.push(t);
+    }, this);
+    el.value = ''; this.renderTags();
+  },
+  /* —— 变量默认值（随模板实时同步，保留已填值） —— */
+  syncVars: function(rec){
+    var box = document.getElementById('pfVars'); if(!box) return;
+    var ta = document.getElementById('pfTpl');
+    var tpl = ta ? ta.value : (rec ? (rec.template || '') : '');
+    var old = {};
+    Array.prototype.forEach.call(box.querySelectorAll('.pf-var'), function(row){
+      var inp = row.querySelector('input'); if(row.getAttribute('data-var')) old[row.getAttribute('data-var')] = inp ? inp.value : '';
+    });
+    var src = (rec && rec.variables && typeof rec.variables === 'object' && !Array.isArray(rec.variables)) ? rec.variables : {};
+    box.innerHTML = this.varsOf(tpl).map(function(v){
+      var val = (v in old) ? old[v] : ((v in src) ? src[v] : '');
+      return `<div class="pf-var" data-var="${this.esc(v)}"><span title="${this.esc(v)}">${this.esc(v)}</span><input type="text" value="${this.esc(val == null ? '' : val)}" placeholder="默认值"></div>`;
+    }, this).join('');
+  },
+  /* —— 效果图（压缩后走 /api/pl/img，与前台同款流程） —— */
+  renderImgs: function(){
+    var box = document.getElementById('pfImgs'); if(!box) return;
+    if(!this.imgs.length){ box.innerHTML = '<span class="pf-img-empty">暂无效果图</span>'; return; }
+    box.innerHTML = this.imgs.map(function(u, i){
+      var on = (i === this.cover);
+      return `<div class="pf-img"><img src="${this.esc(plImgUrl(u))}" alt="">
+        <button class="pf-cover${on ? ' on' : ''}" type="button" title="设为封面" onclick="PLFORM.setCover(${i})">★</button>
+        <button class="pf-del" type="button" title="删除" onclick="PLFORM.delImg(${i})">✕</button></div>`;
+    }, this).join('');
+  },
+  setCover: function(i){ this.cover = i; this.renderImgs(); },
+  delImg: function(i){ this.imgs.splice(i, 1); if(this.cover >= this.imgs.length) this.cover = 0; this.renderImgs(); },
+  compress: function(src, cb){
+    var im = new Image();
+    im.onload = function(){
+      var w = im.naturalWidth, h = im.naturalHeight, MAX = 2048;
+      var keepAlpha = /^data:image\/(png|webp)/.test(src);
+      if(Math.max(w, h) > MAX){ var s = MAX / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s); }
+      var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      var cx = cv.getContext('2d');
+      if(keepAlpha) cx.clearRect(0, 0, w, h); else { cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, w, h); }
+      cx.drawImage(im, 0, 0, w, h);
+      try{ cb(cv.toDataURL(keepAlpha ? 'image/png' : 'image/jpeg', 0.85)); }catch(e){ cb(src); }
+    };
+    im.onerror = function(){ cb(src); };
+    im.src = src;
+  },
+  pick: function(inp){
+    var files = Array.prototype.slice.call(inp.files || []); inp.value = '';
+    if(!files.length) return;
+    files.forEach(function(f){
+      var rd = new FileReader();
+      rd.onload = function(){
+        PLFORM.compress(String(rd.result), function(out){
+          fetch('/api/pl/img', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ dataURL: out }) })
+            .then(function(r){ return r.json(); })
+            .then(function(d){ if(d && d.url){ PLFORM.imgs.push(d.url); PLFORM.renderImgs(); toast('图片已上传'); } else toast('上传失败：' + ((d && d.message) || '未知错误')); })
+            .catch(function(){ toast('上传失败 · 服务不可达'); });
+        });
+      };
+      rd.readAsDataURL(f);
+    });
+  },
+  /* —— 保存：字段集与前台 savePrompt 完全一致 —— */
   save: function(){
-    var t = ($('#pnTitle') ? $('#pnTitle').value.trim() : '');
-    if(!t){ toast('请填写标题'); return; }
-    var tags = ($('#pnTags') ? $('#pnTags').value : '').split(/[,，]/).map(function(s){ return s.trim(); }).filter(Boolean);
-    var tpl = ($('#pnTpl') ? $('#pnTpl').value.trim() : '');
-    var now = new Date().toISOString();
-    var rec = { id: 'p' + Date.now().toString(36), title: t, template: tpl, variables: [], images: [], coverIndex: 0,
-      tags: tags, createdAt: now, updatedAt: now, published: false };
+    var title = ($('#pfTitle') ? $('#pfTitle').value.trim() : '');
+    var tpl = ($('#pfTpl') ? $('#pfTpl').value.trim() : '');
+    if(!title){ toast('请填写标题'); return; }
+    if(!tpl){ toast('请填写提示词模板'); return; }
+    var vars = {};
+    Array.prototype.forEach.call(document.querySelectorAll('#pfVars .pf-var'), function(row){
+      var k = row.getAttribute('data-var'), inp = row.querySelector('input');
+      if(k) vars[k] = inp ? inp.value : '';
+    });
+    var pub = $('#pfPub') ? !!$('#pfPub').checked : true;
+    var now = Date.now(); /* ★ 数字时间戳（前台同款），别再写 toISOString */
+    var payload = { title: title, template: tpl, variables: vars, images: this.imgs.slice(),
+      coverIndex: +this.cover || 0, tags: this.tags.slice(), published: pub, updatedAt: now };
+    var editId = this.editId;
+    var btn = document.querySelector('#fmodalBox .btn.primary'); if(btn){ btn.disabled = true; btn.textContent = '保存中…'; }
     fetch('/api/prompts').then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){
       var recs = ((d && d.records) || []).slice();
-      recs.push(rec);
+      if(editId){
+        var i = recs.findIndex(function(x){ return x.id === editId; });
+        if(i < 0){ toast('记录不存在或已删除'); return; }
+        recs[i] = Object.assign({}, recs[i], payload);
+      } else {
+        recs.unshift(Object.assign({ id: PLFORM.genId(), createdAt: now }, payload)); /* ★ 新记录排数组头：后台第 1 页、前台列表都在最前 */
+      }
       return fetch('/api/prompts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ records: recs }) })
         .then(function(r){ if(!r.ok) throw 0; return AD.pullPrompts(); })
-        .then(function(){ closeModal(); renderMain(); toast('已新建 · 服务端已落盘'); });
-    }).catch(function(){ toast('新建失败 · 服务不可达'); });
+        .then(function(){ PL.page = 1; closeModal(); renderMain(); toast(editId ? '已保存 · 服务端已落盘' : '已新建 · 已排在最前'); });
+    }).catch(function(){ toast('保存失败 · 服务不可达'); });
   }
 };
+/* 新建入口保留原名（列表页 / 数据台头部的 ＋ 都调 PLNEW.open） */
+var PLNEW = { open: function(){ PLFORM.open(null); } };
 /* 发布设置：生成发布快照（/api/pl/publish）+ 预览外网 */
 var PLPUB = {
   snapshot: function(){
@@ -10741,17 +11077,51 @@ var PLPUB = {
 };
 function viewPromptPublish(){
   const s = PRDATA.stats;
+  const all = (typeof PRDATA !== 'undefined' && PRDATA.records) || [];
+  /* 草稿清单：published === false（旧数据缺字段视为已发布）
+     ★ 2026-10-11 用户反馈：这里原先只有「已发布 X 条 / 草稿 Y 条」两个数字，草稿既列不出来
+       也没有按钮能改状态，只能干看着。现在把草稿逐条列出，每条带「发布上线」按钮。 */
+  const drafts = plSorted(all.filter(function(r){ return r && r.published === false; }));
+  const draftRows = drafts.length ? drafts.map(function(r){
+    var cover = (r.images && r.images.length) ? plImgUrl(r.images[+r.coverIndex || 0] || r.images[0]) : '';
+    var tags = (r.tags || []).slice(0, 3);
+    return `<div class="pst-row" data-pid="${plEsc(r.id)}">
+      <div class="pst-thumb">${cover ? '<img src="' + plEsc(cover) + '" alt="" loading="lazy">' : '<span class="ph-ic">🖼</span>'}</div>
+      <div class="pst-main">
+        <b class="pst-title">${plEsc(r.title || '(未命名)')}</b>
+        <div class="pst-meta">${tags.map(function(t){ return '<span class="tag">' + plEsc(t) + '</span>'; }).join('')}<span class="pst-date">更新 ${fmtDate(r.updatedAt) || fmtDate(r.createdAt) || '-'}</span></div>
+      </div>
+      <div class="pst-acts">
+        <button class="btn primary" onclick="PLST.set('${plEsc(r.id)}',true)">发布上线</button>
+        <button class="btn" onclick="pViewById('${plEsc(r.id)}')">查看</button>
+      </div>
+    </div>`;
+  }).join('')
+    : `<div class="fempty"><div class="big-ic">✅</div><b>没有草稿</b>全部记录都是「已发布」，都会随发布快照上线。</div>`;
   return `${greetHead('发布设置','')}
   <div class="grid">
     <div class="card c6"><h3>发布状态</h3>
       <div class="svc"><span class="dot" style="background:#22c55e"></span><div class="n">已发布提示词<small>${s.published} 条对外可见</small></div><span class="delta up">开启</span></div>
       <div class="svc"><span class="dot" style="background:#f59e0b"></span><div class="n">草稿<small>${s.unpublished} 条仅本机</small></div><span class="delta down">${s.unpublished?('待发布'):'无'}</span></div>
+      <div class="sub" style="margin:12px 0 0">语义统一：<b>published !== false</b> 即「已发布」，会随发布快照上线外网；<b>published === false</b> 即「草稿」，仅本机可见。</div>
     </div>
     <div class="card c6"><h3>操作</h3>
-      <div class="sub" style="margin:0 0 12px">发布快照会过滤 published!==false 的记录，图片拷入 pl-web，写 tools/data/prompt-library.json。</div>
+      <div class="sub" style="margin:0 0 12px">发布快照会过滤 published===false 的记录，图片拷入 pl-web，写 tools/data/prompt-library.json。</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" onclick="PLPUB.snapshot()">⇩ 生成发布快照</button><button class="btn" onclick="PLPUB.preview()">↗ 预览外网</button></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn" ${drafts.length?'':'disabled'} onclick="PLST.allDrafts(true)">全部草稿转为已发布${drafts.length?('（'+drafts.length+' 条）'):''}</button>
+      </div>
+    </div>
+    <div class="card c12"><h3>草稿清单 <span class="api-badge" style="margin-left:0">${drafts.length} 条</span></h3>
+      <div class="sub" style="margin:0 0 12px">下面这些记录不会出现在外网快照里。点「发布上线」即可让它们随下次快照对外可见。</div>
+      ${draftRows}
     </div>
   </div>`;
+}
+/* 发布设置页用：按 id 打开详情弹窗（那里没有 tr 可回溯，构造一个最小代理交给 pView） */
+function pViewById(id){
+  var fake = { closest: function(){ return { dataset: { pid: id } }; } };
+  pView(fake);
 }
 
 /* ===================== 四方连图素材库 ===================== */
@@ -10845,8 +11215,8 @@ var BK = {
       category: $('#bkCat').value, desc: $('#bkDesc').value.trim(), icon: (old && old.icon) || '' };
     if(this.editId){
       var i = (BKDATA.bookmarks||[]).findIndex(function(x){ return x.id === BK.editId; });
-      if(i >= 0) BKDATA.bookmarks[i] = rec; else BKDATA.bookmarks.push(rec);
-    } else { BKDATA.bookmarks.push(rec); }
+      if(i >= 0) BKDATA.bookmarks[i] = rec; else BKDATA.bookmarks.unshift(rec); /* 编辑原地替换；新建排最前 */
+    } else { BKDATA.bookmarks.unshift(rec); /* 新建排最前（列表无分页，直接置顶） */ }
     this.editId = null;
     closeModal();
     return this.save();

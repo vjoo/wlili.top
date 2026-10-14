@@ -1654,6 +1654,38 @@
   background: rgba(255, 147, 0, 0.92);
   color: #fff;
 }
+
+/* ===== 详情页「对外发布」开关（2026-10-11） =====
+   起因（用户反馈）：前台卡片显示「仅本机」、详情页却没有任何按钮能改状态，
+   只有进编辑页才有开关。这里把开关提到详情页基本信息区，点一下即刻生效（无需进编辑）。 */
+.publish-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-family: inherit;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: border-color .16s, box-shadow .16s, background .16s, color .16s;
+}
+.publish-chip:hover { border-color: var(--ink-tertiary); }
+.publish-chip:active { transform: scale(.97); }
+.publish-chip .pc-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: #22c55e;
+}
+.publish-chip.is-draft {
+  border-color: rgba(255, 147, 0, 0.45);
+  background: rgba(255, 147, 0, 0.10);
+  color: #b45309;
+}
+.publish-chip.is-draft .pc-dot { background: #ff9300; }
+.publish-chip[disabled] { opacity: .55; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -2084,10 +2116,15 @@
   function pushToServer() {
     if (!serverAvailable) return Promise.resolve(false);
     return dbGetAll().then(function(list) {
+      /* 推送前按时间倒序（新建在前）：让服务端 prompt-library-data.json 的物理顺序
+         与后台列表、前台列表保持一致，避免文件里新记录沉底。 */
+      var ordered = (list || []).slice().sort(function(a, b) {
+        return tsNum(b.createdAt) - tsNum(a.createdAt);
+      });
       return fetch('/api/prompts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ records: list || [] })
+        body: JSON.stringify({ records: ordered })
       }).then(function(r) { return r.ok; }).catch(function() { return false; });
     });
   }
@@ -2821,6 +2858,18 @@
     setTimeout(updateCatScrollBtns, 0);
   }
 
+  /* 时间戳归一化：兼容 Date.now() 数字 / 秒级时间戳 / ISO 字符串三种写法。
+     后台早期用 new Date().toISOString() 写 createdAt，与本页的 Date.now() 混排时
+     `b.createdAt - a.createdAt` 会得到 NaN，排序因此静默失效。 */
+  function tsNum(v) {
+    if (v == null || v === '') return 0;
+    if (typeof v === 'number') return v < 1e12 ? v * 1000 : v;
+    var s = String(v);
+    if (/^\d{9,}$/.test(s)) { var n = +s; return n < 1e12 ? n * 1000 : n; }
+    var t = Date.parse(s);
+    return isNaN(t) ? 0 : t;
+  }
+
   function renderList() {
     var filtered = allPrompts.filter(function(p) {
       if (activeCategory !== 'all') {
@@ -2834,8 +2883,11 @@
       }
       return true;
     });
-    /* Sort by createdAt descending */
-    filtered.sort(function(a, b) { return b.createdAt - a.createdAt; });
+    /* Sort by createdAt descending（新建的排最前）
+       ★ 2026-10-11：createdAt 存在两种形态 —— 本页写的是 Date.now() 数字，后台早期写的是
+         ISO 字符串。两者直接相减得到 NaN，比较器返回 NaN 会被当成「相等」，
+         排序静默失效、新记录停在数组原位（也就是列表最后）。这里统一折算成数字再比。 */
+    filtered.sort(function(a, b) { return tsNum(b.createdAt) - tsNum(a.createdAt); });
 
     promptGrid.innerHTML = '';
     if (filtered.length === 0) {
@@ -2880,9 +2932,10 @@
             tagsHtml += '<span class="card-tag">' + escapeHtml(t) + '</span>';
           });
         }
-        /* 未发布记录：本机模式显示橙色「仅本机」徽标（快照会过滤，外网不可见） */
+        /* 未发布记录：本机模式显示橙色「仅本机」徽标（快照会过滤，外网不可见）
+           ★ 2026-10-11：本机模式下徽标可点击，直接切换对外发布状态（回退为默认展示态） */
         if (!IS_PUBLIC && p.published === false) {
-          tagsHtml += '<span class="card-tag card-tag-local">仅本机</span>';
+          tagsHtml += '<span class="card-tag card-tag-local" data-pub-toggle="' + escapeHtml(p.id) + '" title="当前「仅本机」：不会上线外网 · 点击改为对外发布" style="cursor:pointer">仅本机</span>';
         }
 
         card.innerHTML =
@@ -2916,6 +2969,13 @@
           e.stopPropagation();
           document.getElementById('editTitle').dataset.new = '0';
           goToEdit(p);
+        });
+
+        /* 「仅本机」徽标：点一下即切换为对外发布（不必进编辑页） */
+        var pubChip = card.querySelector('[data-pub-toggle]');
+        if (pubChip) pubChip.addEventListener('click', function(e) {
+          e.stopPropagation();
+          togglePublishById(p.id);
         });
 
         card.addEventListener('click', function() { goToDetail(p.id); });
@@ -2952,10 +3012,73 @@
     });
   }
 
+  /* ============================================
+     对外发布状态（详情页） —— 2026-10-11
+     起因（用户反馈）：卡片上写着「仅本机」、后台写着「待确认 / 草稿」，但前台详情页
+     一个能改状态的按钮都没有，只能绕进编辑页。这里在基本信息区放一个可点徽标，
+     点一下即时落库（IndexedDB + 防抖推送服务端），不必进编辑页。
+     语义与后台统一：published === false → 草稿（仅本机）；缺字段按旧数据规则视为已发布。
+     ============================================ */
+  function isPublished(p) { return !!(p && p.published !== false); }
+
+  function renderDetailPublish() {
+    var box = document.getElementById('detailPublishValue');
+    if (!box) return;
+    var p = currentPrompt;
+    /* 展示模式（外网 / ?preview=1）：纯只读，不渲染任何切换入口 */
+    if (IS_PUBLIC) {
+      box.innerHTML = '<span style="color:var(--ink-tertiary)">—</span>';
+      return;
+    }
+    var pub = isPublished(p);
+    box.innerHTML =
+      '<button type="button" class="publish-chip' + (pub ? '' : ' is-draft') + '" id="detailPublishBtn"' +
+      ' title="' + (pub ? '当前「已发布」：随「生成发布快照」上线外网 · 点击改为仅本机' : '当前「仅本机」：不会上线外网 · 点击改为对外发布') + '">' +
+        '<span class="pc-dot"></span>' + (pub ? '已发布' : '仅本机') +
+      '</button>';
+    var btn = document.getElementById('detailPublishBtn');
+    if (btn) btn.addEventListener('click', function() { togglePublish(); });
+  }
+
+  function togglePublish() {
+    var p = currentPrompt;
+    if (!p || !p.id) return;
+    var next = !isPublished(p);
+    var btn = document.getElementById('detailPublishBtn');
+    if (btn) btn.disabled = true;
+    togglePublishById(p.id, next).catch(function() {
+      if (btn) btn.disabled = false;
+    });
+  }
+
+  /* 按 id 切换对外发布：列表卡片徽标 / 详情页徽标共用同一套落库逻辑
+     next 省略时按当前状态取反 */
+  function togglePublishById(id, next) {
+    if (!id) return Promise.reject(new Error('缺少记录 ID'));
+    return dbGet(id).then(function(rec) {
+      if (!rec) throw new Error('记录不存在或已删除');
+      if (next === undefined) next = !isPublished(rec);
+      /* 必须整条回写：只 put {id, published} 会把 template / images 等字段抹掉 */
+      rec.published = next;
+      rec.updatedAt = Date.now();
+      return dbPut(rec).then(function() {
+        /* 详情页正看着这条 → 同步内存与基本信息区 */
+        if (currentPrompt && currentPrompt.id === id) {
+          currentPrompt = rec;
+          renderDetailPublish();
+        }
+        showToast(next ? '已设为对外发布（随下次发布快照上线）' : '已设为仅本机（不会上线外网）');
+        return loadAll().then(function() { renderList(); });
+      });
+    }).catch(function(err) {
+      showToast('切换失败：' + (err && err.message ? err.message : '未知错误'));
+      throw err;
+    });
+  }
+
   function renderDetail() {
     var p = currentPrompt;
     if (!p) return;
-
     /* Convert English variable names to Chinese for display */
     var converted = convertVarNames(p.template, p.variables);
     p.template = converted.template;
@@ -2970,10 +3093,12 @@
     var tagsStr = (p.tags && p.tags.length) ? p.tags.join(' · ') : '';
 
     var infoHtml = '<div class="info-item"><span class="info-label">创建日期</span><span class="info-value">' + dateStr + '</span></div>' +
-      '<div class="info-item"><span class="info-label">效果图</span><span class="info-value">' + imgCount + ' 张</span></div>';
+      '<div class="info-item"><span class="info-label">效果图</span><span class="info-value">' + imgCount + ' 张</span></div>' +
+      '<div class="info-item"><span class="info-label">对外发布</span><span class="info-value" id="detailPublishValue"></span></div>';
     if (varCount > 0) infoHtml += '<div class="info-item"><span class="info-label">变量数</span><span class="info-value">' + varCount + ' 个</span></div>';
     if (tagsStr) infoHtml += '<div class="info-item info-item-full"><span class="info-label">标签</span><span class="info-value">' + escapeHtml(tagsStr) + '</span></div>';
     document.getElementById('detailInfo').innerHTML = infoHtml;
+    renderDetailPublish();
 
     /* Prompt text */
     document.getElementById('detailPromptText').innerHTML = renderPromptText(p.template, p.variables);
@@ -4324,6 +4449,7 @@
       images: p.images ? p.images.slice() : [],
       coverIndex: p.coverIndex || 0,
       tags: p.tags ? p.tags.slice() : [],
+      published: p.published !== false, /* 与后台 PLFORM 保存字段一致：未显式关闭即对外发布 */
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
