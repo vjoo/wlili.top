@@ -215,7 +215,9 @@ const CONTRACTS = [
     severity: "P0",
     check() {
       const hasCal = /calibratedRecords/.test(schema);
-      const deepCopies = /JSON\.parse\(JSON\.stringify\([^)]*builtin[^)]*\)\)/.test(schema);
+      /* 2026-10-19：展开逻辑改为「按 src.base 选基线」后，深拷贝的目标不再是 S.builtin.petg
+         字面量而是 baseRec 变量 —— 正则必须同时认两种写法，否则这条 P0 契约会静默失效。 */
+      const deepCopies = /JSON\.parse\(JSON\.stringify\((?:S\.builtin\.\w+|baseRec)\)\)/.test(schema);
       return {
         pass: !hasCal || deepCopies,
         detail: hasCal ? (deepCopies ? "有深拷贝" : "⚠ 缺深拷贝") : "无特调记录（无需展开）",

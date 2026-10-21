@@ -4184,6 +4184,50 @@ function plibSlice(){
     sub: ER.length ? '以下为已验证并沉淀到知识库的实测结论。' : '等待首个有意义实测结论回填。',
     detail: erBody
   });
+  /* 卡⑥：打印经验库（Print DNA · 阶段 3，2026-10-18）
+     只读展示：数据来自 PRINT_DNA（localStorage 为主 + /api/prints 服务端兜底）。
+     与卡⑤互补：卡⑤ 按「规则 / 参数」维度记结论（某条规则在不在）；
+     本卡按「模型几何」维度记结果（形状类似的模型上次打得怎么样）——后者才是阶段 3 补的缺口。 */
+  var PD = (typeof window !== 'undefined' && window.PRINT_DNA) || null;
+  if (PD) {
+    var st = PD.stats();
+    var PDR = PD.list().slice().sort(function (a, b) {
+      return String(b.date || '').localeCompare(String(a.date || ''));
+    }).slice(0, 8);
+    var okN = (st.byOutcome && st.byOutcome.success) || 0;
+    var rate = st.total ? Math.round(okN / st.total * 100) : 0;
+    var dnaBody = plibStatStrip([
+      { n: st.total, label: '条打印记录' },
+      { n: st.distinct_models, label: '个不同模型指纹' },
+      { n: rate + '%', label: '成功率', tone: rate >= 70 ? 'ok' : (rate ? 'warn' : 'muted') }
+    ]);
+    dnaBody += PDR.length ? PDR.map(function (r) {
+      var fp = r.fingerprint || {};
+      return '<dl class="plib-kv">'
+        + plibKv('日期', plibEsc(r.date || '—'))
+        + plibKv('机型', plibEsc((r.machine || '—') + ' / ' + (r.nozzle_mm != null ? r.nozzle_mm + 'mm' : '—') + ' / ' + (r.material || '—')))
+        + plibKv('结果', plibEsc((r.outcome || '—') + (r.quality ? (' · 质量 ' + r.quality) : '')))
+        + plibKv('指纹', plibEsc(String(fp.geo_sig || '—').slice(0, 12)))
+        + (r.failure_mode ? plibKv('失败模式', plibEsc(r.failure_mode)) : '')
+        + (r.note ? plibKv('备注', plibEsc(r.note)) : '')
+        + '</dl>';
+    }).join('<hr class="plib-sep">')
+      : '<div class="plib-note">尚无打印记录。回填方式与卡⑤一致：与 AI 对话确认本次打印结果后，由 AI 调用 <code>PRINT_DNA.record({...})</code> 写入（作废 / 仅试验不记）。</div>';
+    dnaBody += '<div class="plib-note">三级匹配：精确文件 hash → 相似几何 → 同机型+同材质默认。'
+      + '样本不足时不给推荐（门槛：精确 1 条 / 相似 3 条 / 材质 5 条），防止拿 1~2 条记录当规律。</div>';
+    h += plibCard({
+      title: '打印经验库（Print DNA · 阶段 3）',
+      chips: plibChip(st.total + ' 条'),
+      sub: '以模型几何指纹为 key 的经验积累。指纹对三角剖分 / 顶点重排 / 平移 / 旋转稳定，只对「特征挪位置」敏感。',
+      detail: dnaBody
+    });
+  } else {
+    h += plibCard({
+      title: '打印经验库（Print DNA · 阶段 3）',
+      chips: plibChip('未加载'),
+      sub: '请确认底部脚本 print-dna.js 已加载。'
+    });
+  }
   return h;
 }
 /* —— 页签 5：诊断入口（原 tools/3d-management.html 的 diag 页签，2026-10-06 折叠进后台） ——
@@ -12267,6 +12311,8 @@ function upgradeUI(root) {
 <script src="mesh-health.js?v=20261008"></script>
 <script src="bambu-diagnose.js"></script>
 <script src="bambu-3mf-io.js?v=20261007h"></script>
+<!-- 打印经验反馈闭环（阶段 3 · 几何指纹 + 三级匹配，2026-10-18 自研） -->
+<script src="print-dna.js?v=20261018"></script>
 <style>
 /* 预设「分析诊断」按钮的 loading 转圈 */
 .diag-spin{ animation: diagspin .8s linear infinite; }

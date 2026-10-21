@@ -1277,6 +1277,43 @@
           "filament_bridge_speed": "25"
         },
         notes: "源自「叠放零件盒」官方默认参数打印的瑕疵诊断（3MF 几何反查）：① 蜂窝孔斜壁的朝下孔顶棚（45–60° 下向面约 6300 mm²）悬垂下塌被喷头刮成疤痕带；② 前沿翻边水平底面是一整幅约 13000 mm² 的大跨桥，无支撑 → 桥面波浪 + 缺口。两处均属悬垂/桥接缺陷，与温度无关。\n【调整】其他层温度 250→245（熔体更稠更挺；首层保持 245 保附着）；悬垂风扇 50→100%、悬垂/桥接强制冷却→100%（仅在这些段拉满，不伤普通墙面层间结合）；桥接速度 50→25。\n【配套】工艺侧同条预设 preset_petg_overhang_bridge 已设 thick_bridges=1 + bridge_speed=25（工艺与耗材丝双域同设定，任一域为权威都生效）；若料盘已单设桥速，以料盘值为准。\n【注意】⚠ 全局风扇勿拉满（PETG 层间结合优先）；250→240 若仍下塌可再降，但勿低于 235。出现长直墙层裂/翘曲，把悬垂/桥接风扇降回 50–80%。>100mm 整幅大跨桥最稳仍是加支撑，本预设能显著改善但非绝对平整。\n【合并说明】2026-10-08 由原「工艺库·精选预设库」并入。"
+      },
+
+    /* ===== 2026-10-19 新增：从本机 Bambu Studio 用户目录直接读取（非社区来源）=====
+       源文件：%APPDATA%\BambuStudio\user\<uid>\filament\
+         · "261013 Bambu PLA Basic Flow Rate.json"
+         · "三绿 Generic PETG @BBL X2D 0.4.json"
+       两条都是 from:"User" / version 2.8.0.6，字段为官方 6 段数组形态（第 0 段为直驱标准）。
+       录入原则照旧：官方基线 + 稀疏覆盖，只记真正改过的键。 */
+      "fil-261013-pla-basic-flow-rate": {
+        name: "Bambu PLA Basic · 261013 流量校准",
+        base: "pla",
+        provenance: "user-export",
+        evidence_level: "E4",
+        overrides: { "filament_flow_ratio": "1.08" },
+        notes: "【来源】本机 Bambu Studio 用户档「261013 Bambu PLA Basic Flow Rate」（from=User，version 2.8.0.6，inherits=Bambu PLA Basic @BBL X2D 0.4 nozzle）。\n【含义】唯一改动是 filament_flow_ratio → 1.08，即这卷 PLA 的挤出量比官方默认多约 8%（补偿丝径/挤出偏差）。Bambu PLA Basic 官方默认约 0.98。\n【范围】仅本卷丝、仅流量。温度 / 回抽 / 速度 / 风扇全部继承官方 Bambu PLA Basic @BBL X2D 0.4 nozzle。换卷必须重新校准，勿照搬（对比：三绿 PETG Basic 卷是 1.045，各卷独立）。\n【注意】本条基线与其它校准条目不同——它是 PLA 基线（base:\"pla\"），展开逻辑已支持按 base 选基线；其余旧条目无 base 字段，仍按 PETG 基线展开（向后兼容）。"
+      },
+      "fil-sanlv-petg-generic-x2d": {
+        name: "三绿 Generic PETG @BBL X2D 0.4",
+        provenance: "user-export",
+        evidence_level: "E3",
+        overrides: {
+          "nozzle_temperature": "245",
+          "nozzle_temperature_initial_layer": "240",
+          "filament_flow_ratio": "1.055",
+          "filament_max_volumetric_speed": "20.5",
+          "filament_retraction_length": "0.4",
+          "filament_wipe": "1",
+          "filament_wipe_distance": "1",
+          "filament_z_hop_types": "Spiral Lift",
+          "fan_max_speed": "100",
+          "fan_min_speed": "90",
+          "full_fan_speed_layer": "8",
+          "pre_start_fan_time": "2",
+          "slow_down_min_speed": "10",
+          "temperature_vitrification": "60"
+        },
+        notes: "【来源】本机 Bambu Studio 用户档「三绿 Generic PETG @BBL X2D 0.4」（from=User，version 2.8.0.6，inherits=Generic PETG @BBL X2D 0.4 nozzle）。这是用户当前在用的 PETG 档，不是社区值。\n【主要改动】喷嘴 245 / 首层 240；流量比 1.055；最大体积速度 20.5；回抽 0.4mm + 擦拭开（距离 1mm）+ Z 抬升改 Spiral Lift；风扇 90–100% 且第 8 层后满速、开印前预吹 2s；玻璃化温度 60℃。\n【证据等级为何是 E3 而不是 E4】这些值是用户长期在用的设置，但**没有做系统对照实测**（未逐项 A/B），故按「用户经验档」记 E3，低于只改单一流量的 261013 PLA（E4）。\n【vec6 说明】原档 slow_down_min_speed 为 6 段 [10,20,20,20,20,20]；本工具按既有约定只存第 0 段（直驱标准）10，导出时再补齐 6 段。\n【易混淆】与已有「三绿 PETG Basic · 我的流量校准(1.045)」「三绿 PETG White Basic(0.98)」是**不同丝 / 不同基线**（本条继承 Generic PETG，那两条继承 Bambu PETG Basic），三者并存、不可互换。\n【PETG 冷却提醒】风扇 100% 是偏激进的设定，若出现层间结合差 / 层裂，把 fan_max_speed 降到 50–80%（与 preset_petg_overhang_bridge 的提醒一致）。"
       }
     },
   };
@@ -1290,7 +1327,10 @@
     S.calibratedRecords = {};
     Object.keys(S.calibrated).forEach(function (id) {
       var src = S.calibrated[id];
-      var rec = JSON.parse(JSON.stringify(S.builtin.petg));
+      /* 基线选择：src.base === "pla" 时用 PLA 基线，否则沿用 PETG（旧条目无 base 字段，向后兼容）。
+         ⚠ 2026-10-19 加：261013 PLA 流量档若仍用 PETG 基线，会继承到 PETG 的温度/风扇，等于错料。 */
+      var baseRec = (src.base === "pla" && S.builtin.pla) ? S.builtin.pla : S.builtin.petg;
+      var rec = JSON.parse(JSON.stringify(baseRec));
       rec.id = id;
       rec.name = src.name;
       rec.builtin = false;

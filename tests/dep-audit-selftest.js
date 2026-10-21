@@ -136,7 +136,9 @@ const INJECTIONS = [
     id: "FILP-CALIBRATED-NOT-POLLUTE-BASE",
     mutate(f) {
       const before = f.schema;
-      f.schema = f.schema.replace(/JSON\.parse\(JSON\.stringify\((S\.builtin\.petg)\)\)/,
+      /* 2026-10-19：锚点随展开逻辑演进（深拷贝目标可能是 S.builtin.petg 或 baseRec），
+         两种写法都要能注入，否则注入会静默失败、这条 P0 契约变成空转。 */
+      f.schema = f.schema.replace(/JSON\.parse\(JSON\.stringify\((S\.builtin\.petg|baseRec)\)\)/,
         "Object.assign({}, $1)");
       if (f.schema === before) return null;
       return f;
