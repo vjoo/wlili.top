@@ -239,7 +239,11 @@
 
   function validateRecord(r) {
     if (!r || typeof r !== "object") throw new Error("PRINT_DNA.record：需要对象");
-    if (!r.fingerprint || !r.fingerprint.geo_sig) throw new Error("PRINT_DNA.record：缺少 fingerprint.geo_sig");
+    // 允许「无指纹」记录：手动导入/社区经验常常没有几何指纹，只要带 machine+material 标签，
+    // 就能参与 predict 的「material_default（同机型+同材质）」三级匹配；仅 exact/similar 两级不参与。
+    var hasFp = !!(r.fingerprint && r.fingerprint.geo_sig);
+    var hasTag = !!(r.machine && r.material);
+    if (!hasFp && !hasTag) throw new Error("PRINT_DNA.record：缺少 fingerprint.geo_sig（且缺 machine+material 标签）");
     if (OUTCOMES.indexOf(r.outcome) < 0) throw new Error("PRINT_DNA.record：outcome 非法（success/partial/failed）");
     if (r.quality && GRADES.indexOf(r.quality) < 0) throw new Error("PRINT_DNA.record：quality 非法（A~F）");
     if (!r.date) throw new Error("PRINT_DNA.record：缺少 date");

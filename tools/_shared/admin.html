@@ -411,6 +411,8 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, 
 .plib-chips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px;color:var(--ink);cursor:pointer;transition:.15s;}
 .plib-chips button:hover{border-color:var(--accent);color:var(--accent);}
 .plib-chips button.zero{opacity:.5;}
+.plib-chips button.on{border-color:var(--accent);background:var(--accent);color:#fff;}
+.plib-chips button.on:hover{border-color:var(--accent);color:#fff;}
 .plib-chips button .c{font-size:11px;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums;}
 .plib-list{margin:4px 0 0;padding-left:18px;font-size:12.5px;line-height:1.7;}
 .opt-drop{border:1px dashed var(--line);border-radius:14px;padding:34px 20px;text-align:center;color:var(--muted);cursor:pointer;background:var(--panel);transition:border-color .15s,background .15s;}
@@ -626,6 +628,25 @@ tbody tr:hover{background:var(--panel);}
 .pg-btn:disabled{opacity:.4;cursor:default;}
 .mini-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;}
 .mini-btn:hover{background:var(--panel);}
+/* ===== 流量计算器===== */
+.card.plib-host > .flow-wrap{grid-column:1/-1;display:flex;flex-direction:column;gap:12px;}
+.flow-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 12px;margin-top:0;}
+.flow-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0;}
+.flow-inp{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-size:13px;outline:none;width:100%;font-family:inherit;}
+.flow-inp:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-ring);}
+.flow-preview{margin-top:12px;padding:10px 12px;background:var(--accent-soft);border:1px dashed var(--accent);border-radius:10px;font-size:13px;color:var(--ink);}
+.flow-result{color:var(--accent-deep);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums;}
+/* 标题旁的圆形 ⓘ：公式 / 卡号说明收进 tooltip，hover 或键盘 focus 显示 */
+.flow-info{position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:8px;border:1px solid var(--line);border-radius:50%;background:var(--card);color:var(--muted);cursor:help;flex:none;vertical-align:middle;transform:translateY(-2px);}
+.flow-info:hover,.flow-info:focus{border-color:var(--accent);color:var(--accent-deep);outline:none;}
+.flow-info svg{width:13px;height:13px;}
+.flow-info-tip{display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:60;width:360px;max-width:78vw;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);box-shadow:0 8px 24px rgba(16,24,40,.16);font-size:12px;font-weight:400;line-height:1.65;letter-spacing:0;text-align:left;white-space:normal;color:var(--ink);}
+.flow-info-tip b{font-weight:600;}
+.flow-info:hover .flow-info-tip,.flow-info:focus .flow-info-tip{display:block;}
+#flow-submit[disabled]{opacity:.45;cursor:not-allowed;}
+@media (max-width:1200px){ .flow-grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
+@media (max-width:820px){ .flow-grid{grid-template-columns:1fr 1fr;} }
+@media (max-width:520px){ .flow-grid{grid-template-columns:1fr;} }
 
 /* 存储进度 */
 .progress{height:9px;border-radius:5px;background:var(--panel);border:1px solid var(--line);overflow:hidden;margin:14px 0 8px;}
@@ -3517,7 +3538,8 @@ function viewFilamentKnowledge(){
           <button class="btn-icon" title="编辑" onclick="KNOW.openForm('${item.id}')">${P_ACT.pencil}</button>
           <button class="btn-icon del" title="删除" onclick="KNOW.del('${item.id}')">${P_ACT.trash}</button>
         </td></tr>`;}).join('')}</tbody></table></div>`}
-  </div></div>`;
+  </div></div>
+  <div style="margin-top:16px">${plibFlow()}</div>`;
 }
 const KNOW = {
   f:{cred:'',tag:''},
@@ -3634,6 +3656,24 @@ const PLIB = { tab: (function(){
   var saved = plibLsGet('wli_plib_tab');
   return (saved && saved !== 'presets') ? saved : 'rules';
 })(), feat: '' };
+/* ===== 流量计算器状态与常量 =====
+   公式：最终流量 = 基准流量 × (1 + 卡片号数)；卡片号数是相对偏移（−.2 = −0.02 = −2%），不是绝对值。
+   数据：localStorage 为主 + /api/data 兜底（AD.apply / AD.save）——随「全量备份」一并导出 / 恢复。 */
+var FLOW_RECS = [];
+var FLOWF = { id:'', material:'PLA', base:0.98, brand:'', color:'', k:'', card:0, note:'' };
+/* 11 档（按完整两位小数显示；卡片实体可能印成 −.5，实为 −0.05） */
+var FLOW_CARDS = [
+  { v:-0.05, l:'−0.05' }, { v:-0.04, l:'−0.04' }, { v:-0.03, l:'−0.03' }, { v:-0.02, l:'−0.02' },
+  { v:-0.01, l:'−0.01' }, { v:0, l:'0' }, { v:0.01, l:'+0.01' }, { v:0.02, l:'+0.02' },
+  { v:0.03, l:'+0.03' }, { v:0.04, l:'+0.04' }, { v:0.05, l:'+0.05' }
+];
+var FLOW_BASE_DEFAULT = { PLA: 0.98, PETG: 0.95 };
+/* 基准流量可选项：0.98（PLA 默认）/ 0.95（PETG 默认）/ 1（便于计算） */
+var FLOW_BASE_OPTS = [
+  { v: 0.98, l: '0.98（PLA 默认）' },
+  { v: 0.95, l: '0.95（PETG 默认）' },
+  { v: 1,    l: '1.00（便于计算）' }
+];
 function plibEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function plibChip(t, c){
   c = c || 'var(--muted)';
@@ -4215,6 +4255,8 @@ function plibSlice(){
       : '<div class="plib-note">尚无打印记录。回填方式与卡⑤一致：与 AI 对话确认本次打印结果后，由 AI 调用 <code>PRINT_DNA.record({...})</code> 写入（作废 / 仅试验不记）。</div>';
     dnaBody += '<div class="plib-note">三级匹配：精确文件 hash → 相似几何 → 同机型+同材质默认。'
       + '样本不足时不给推荐（门槛：精确 1 条 / 相似 3 条 / 材质 5 条），防止拿 1~2 条记录当规律。</div>';
+    dnaBody += '<div style="margin-top:10px"><button class="btn btn-sm" onclick="plibExpImportToggle()">＋ 手动导入经验（社区 / 外部）</button></div>';
+    dnaBody += plibExpImportForm();
     h += plibCard({
       title: '打印经验库（Print DNA · 阶段 3）',
       chips: plibChip(st.total + ' 条'),
@@ -4229,6 +4271,77 @@ function plibSlice(){
     });
   }
   return h;
+}
+/* —— 手动导入经验（社区 / 外部）：无几何指纹也能录入，靠「机型+材料」标签参与材质级推荐 —— */
+function plibExpImportToggle(){
+  var el = document.getElementById('plib-exp-import');
+  if(el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+}
+function plibExpImportForm(){
+  var nozzles = ['0.2','0.4','0.6','0.8'];
+  return '<div id="plib-exp-import" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'
+    + '<b style="font-size:13px">手动导入经验（社区 / 外部）</b>'
+    + '<div class="plib-note" style="margin-top:4px">把从社区看到、或别人调好的成功参数录进来，带「机型 + 材料」标签。即使没有几何指纹，也会参与「同机型 + 同材料」的材质级推荐；有指纹则同时参与精确 / 相似匹配。</div>'
+    + '<div class="form-row" style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + '<div class="form-group"><label class="form-label">机型</label><input class="form-input" id="ei-machine" placeholder="如 Bambu Lab X2D"></div>'
+    + '<div class="form-group"><label class="form-label">材料</label><input class="form-input" id="ei-material" placeholder="如 PETG / PLA"></div>'
+    + '</div>'
+    + '<div class="form-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">'
+    + '<div class="form-group"><label class="form-label">喷嘴</label><select class="form-select" id="ei-nozzle"><option value="">—</option>' + nozzles.map(function(n){ return '<option value="'+n+'">'+n+' mm</option>'; }).join('') + '</select></div>'
+    + '<div class="form-group"><label class="form-label">结果</label><select class="form-select" id="ei-outcome"><option value="">请选择</option><option value="success">成功</option><option value="partial">部分成功</option><option value="failed">失败</option></select></div>'
+    + '<div class="form-group"><label class="form-label">质量（可选）</label><select class="form-select" id="ei-quality"><option value="">—</option>' + ['A','B','C','D','E','F'].map(function(g){ return '<option>'+g+'</option>'; }).join('') + '</select></div>'
+    + '</div>'
+    + '<div class="form-row" style="margin-top:10px"><div class="form-group"><label class="form-label">参数 / 设置（可选）</label><textarea class="form-textarea" id="ei-settings" placeholder="粘贴 JSON，如 {&quot;layer_height&quot;:0.2,&quot;wall_loops&quot;:3}；或逐行 key=value"></textarea></div></div>'
+    + '<div class="form-row" style="margin-top:10px"><div class="form-group"><label class="form-label">几何指纹（可选）</label><input class="form-input" id="ei-fp" placeholder="粘贴上传模型时生成的 geo_sig，或完整指纹 JSON"></div></div>'
+    + '<div class="form-row" style="margin-top:10px"><div class="form-group"><label class="form-label">备注（可选）</label><input class="form-input" id="ei-note" placeholder="来源 / 失败模式 / 特殊条件"></div></div>'
+    + '<div style="margin-top:12px"><button class="btn primary" onclick="plibExpImportSubmit()">存入经验库</button>'
+    + '<button class="btn" style="margin-left:8px" onclick="plibExpImportToggle()">取消</button></div>'
+    + '</div>';
+}
+function plibExpImportSubmit(){
+  var PD = (typeof window !== 'undefined' && window.PRINT_DNA) || null;
+  if(!PD){ toast('打印经验引擎未加载'); return; }
+  var g = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+  var machine = g('ei-machine').trim();
+  var material = g('ei-material').trim();
+  var nozzle = g('ei-nozzle');
+  var outcome = g('ei-outcome');
+  var quality = g('ei-quality');
+  var fpRaw = g('ei-fp').trim();
+  var settingsRaw = g('ei-settings').trim();
+  var note = g('ei-note').trim();
+  var hasFp = !!fpRaw;
+  if((!machine || !material) && !hasFp){ toast('机型 + 材料（或几何指纹）至少填一组'); return; }
+  if(!outcome){ toast('请选择打印结果'); return; }
+  var settings = {};
+  if(settingsRaw){
+    try{
+      if(settingsRaw.charAt(0) === '{') settings = JSON.parse(settingsRaw);
+      else settingsRaw.split(/\r?\n/).forEach(function(line){
+        var m = /^\s*([A-Za-z][\w.]*)\s*[:=]\s*(.+?)\s*$/.exec(line);
+        if(!m) return;
+        var n = Number(m[2]);
+        settings[m[1]] = (isFinite(n) && m[2].trim() !== '') ? n : m[2];
+      });
+    }catch(e){ toast('参数解析失败：' + ((e && e.message) || e)); return; }
+  }
+  var rec = { outcome: outcome, date: new Date().toISOString().slice(0,10), source: 'manual-import', settings: settings };
+  if(machine) rec.machine = machine;
+  if(material) rec.material = material;
+  var nn = Number(nozzle); if(nozzle && isFinite(nn)) rec.nozzle_mm = nn;
+  if(quality) rec.quality = quality;
+  if(note) rec.note = note;
+  if(fpRaw){
+    try{
+      if(fpRaw.charAt(0) === '{') rec.fingerprint = JSON.parse(fpRaw);
+      else rec.fingerprint = { geo_sig: fpRaw };
+    }catch(e){ toast('指纹格式不对（粘贴完整指纹 JSON，或纯 geo_sig 字符串）'); return; }
+  }
+  try{
+    PD.record(rec);
+    toast('已存入经验库');
+    renderMain();
+  }catch(e){ toast('存入失败：' + ((e && e.message) || e)); }
 }
 /* —— 页签 5：诊断入口（原 tools/3d-management.html 的 diag 页签，2026-10-06 折叠进后台） ——
    两块：① 按症状查规则（点症状 → 跳规则目录并按特征域筛选，症状清单直接取 FEATURE_CN，
@@ -4339,7 +4452,8 @@ function plibDiag(){
 // tab:'viz'(3D 可视化 · 问题定位，默认) | 'geom'(几何体检)；仅页卡位置持久化，分析结果不落盘
 var OPT = { buf:null, name:'', kind:null, project:null, diag:null, busy:false, suggestions:[],
             catChecked:{1:true,2:true,3:true,4:true,5:true}, supportScheme:'mixed', supportFilSlot:'',
-            tab:(plibLsGet('wli_opt_tab') || 'viz') };
+            tab:(plibLsGet('wli_opt_tab') || 'viz'), recommend:null,
+            expOutcome:'', expQuality:'', expNote:'' };
 // 几何层 finding.code → 可回写的参数建议（仅当该参数当前为 0/空时才默认勾选）
 var OPT_SUGGEST_MAP = {
   low_bottom_contact:  { key:'brim_width', value:'8', cn:'贴底不足 → 加裙边（Brim，8mm）', note:'首层附着不足，建议开启裙边；同时确认底板清洁与首层 Z 偏移' },
@@ -4353,6 +4467,7 @@ var OPT_SUGGEST_MAP = {
 function optReset(){
   OPT.buf=null; OPT.project=null; OPT.diag=null; OPT.suggestions=[]; OPT.kind=null; OPT.name='';
   OPT.catChecked={1:true,2:true,3:true,4:true,5:true}; OPT.supportScheme='mixed'; OPT.supportFilSlot='';
+  OPT.recommend=null; OPT.expOutcome=''; OPT.expQuality=''; OPT.expNote='';
   optClearSession();
   disposeOpt3D(); renderMain();   // 页卡位置 OPT.tab 保留，不清
 }
@@ -4391,6 +4506,7 @@ function optHandleFiles(files){
   var kind = lower.endsWith('.stl') ? 'stl' : (lower.endsWith('.3mf') ? '3mf' : null);
   if(!kind){ toast('仅支持 .3mf / .stl'); return; }
   OPT.name = f.name; OPT.kind = kind; OPT.project=null; OPT.diag=null; OPT.suggestions=[];
+  OPT.recommend=null; OPT.expOutcome=''; OPT.expQuality=''; OPT.expNote='';
   var reader = new FileReader();
   reader.onload = function(){ OPT.buf = reader.result; optAnalyze(); };
   reader.onerror = function(){ toast('读取文件失败'); };
@@ -4415,6 +4531,7 @@ function optAnalyze(){
     OPT.diag = diag;
     OPT.busy = false;
     OPT.suggestions = OPT.project ? optBuildSuggestions(diag, OPT.project) : [];
+    OPT.recommend = optFingerprintRecommend(diag);   /* 上传即算几何指纹 → 匹配经验库推荐参数 */
     optPersistSession();
     renderMain();
   }).catch(function(err){
@@ -4423,6 +4540,166 @@ function optAnalyze(){
     renderMain();
   });
 }
+/* 上传模型即算几何指纹 → 匹配打印经验库（Print DNA）→ 返回推荐参数。
+   指纹对旋转/平移/三角剖分稳定，只对「特征挪位置」敏感（见 print-dna.js）。
+   若为 .3mf，顺带提取机型/材料/喷嘴参与匹配，使「同机型+同材质」三级降级可用
+   （手动导入的「无指纹」社区经验，带 machine+material 标签也能命中）。 */
+function optFingerprintRecommend(diag){
+  var PD = (typeof window !== 'undefined' && window.PRINT_DNA) || null;
+  if(!PD) return { unavailable:true, note:'打印经验引擎（print-dna.js）未加载' };
+  if(!(diag && diag.mesh && diag.mesh.instances && diag.mesh.instances.length)) return null;
+  try{
+    var total = 0;
+    diag.mesh.instances.forEach(function(inst){ total += (inst.positions && inst.positions.length) || 0; });
+    if(total < 9) return { empty:true, note:'未解析出网格顶点，无法算指纹' };
+    var merged = new Float64Array(total);
+    var off = 0;
+    diag.mesh.instances.forEach(function(inst){
+      if(inst.positions && inst.positions.length){
+        merged.set(inst.positions, off);
+        off += inst.positions.length;
+      }
+    });
+    var fp = PD.fingerprint(merged);
+    /* 从 .3mf 配置提取机型/材料/喷嘴，一并参与匹配：
+       让「material_default（同机型+同材质）」三级降级可用——这样手动导入的「无指纹」社区经验
+       （带 machine+material 标签）也能被匹配到。 */
+    var q = { fingerprint: fp };
+    var cfg = (OPT.project && OPT.project.config) || null;
+    var machine = null, material = null, nozzle = null;
+    if (cfg) {
+      try {
+        machine = BAMBU_3MF_IO.configVal(cfg.printer_model);
+        material = BAMBU_3MF_IO.configVal(cfg.filament_type);
+        nozzle = BAMBU_3MF_IO.configVal(cfg.nozzle_diameter);
+      } catch (e) { /* config 字段缺失时静默降级为纯指纹匹配 */ }
+      if (machine) q.machine = machine;
+      if (material) q.material = material;
+      if (nozzle) q.nozzle_mm = nozzle;
+    }
+    var rec = PD.predict(q);
+    return { fingerprint: fp, recommend: rec, machine: machine, material: material, nozzle_mm: nozzle };
+  }catch(e){
+    return { error:true, note:(e && e.message) || String(e) };
+  }
+}
+
+/* 推荐卡：上传模型后展示「几何指纹 + 经验库推荐参数」+ 打印结果回填（存入经验库）。 */
+function optRecCard(){
+  var r = OPT.recommend;
+  if(!r) return '';
+  var h = '<div class="plib-card"><div class="plib-head"><b>打印经验推荐（Print DNA）</b></div>';
+  if(r.unavailable || r.error || r.empty){
+    h += '<div class="plib-note">' + plibEsc(r.note || '') + '</div>';
+  } else {
+    var rec = r.recommend || {}, fp = r.fingerprint || {};
+    if(fp.geo_sig) h += '<div class="plib-note" style="margin-top:4px">几何指纹 <code>' + plibEsc(String(fp.geo_sig).slice(0,12)) + '…</code></div>';
+    if(r.machine || r.material || r.nozzle_mm){
+      h += '<div class="plib-note">识别：' + plibEsc([r.machine, (r.nozzle_mm != null ? (r.nozzle_mm + ' mm 喷嘴') : ''), r.material].filter(Boolean).join(' / ') || '—') + '</div>';
+    }
+    if(rec.usable){
+      var srcCn = { exact:'同模型', similar:'相似几何', material_default:'同材料默认' }[rec.source] || rec.source;
+      h += '<div class="plib-note" style="color:var(--success)">✓ 命中「' + srcCn + '」 · 置信度 ' + Math.round((rec.confidence||0)*100) + '% · 基于 ' + (rec.based_on_prints||0) + ' 条记录</div>';
+      var keys = Object.keys(rec.recommended_settings || {});
+      if(keys.length){
+        h += '<dl class="plib-kv">' + plibKvFrom(rec.recommended_settings, (typeof OPT_KEY_CN !== 'undefined' ? OPT_KEY_CN : null)) + '</dl>';
+      }
+    } else {
+      h += '<div class="plib-note">' + plibEsc(rec.note || '尚无足够经验，暂不推荐') + '</div>';
+    }
+    h += optExpBackfill(fp);
+  }
+  h += '</div>';
+  return h;
+}
+
+/* 打印结果回填表单：打完模型后选「结果 + 质量 + 备注」→ 存入经验库（Print DNA）。
+   仅当解析出几何指纹时可存；无指纹记录改走「手动导入」入口（卡⑥）。 */
+function optExpBackfill(fp){
+  if(!fp.geo_sig){
+    return '<div class="plib-note" style="margin-top:10px">未解析出几何指纹，无法回填本次结果 —— 可到「3D 耗材管理 → 打印经验库」用「手动导入」录入（带机型/材料标签）。</div>';
+  }
+  var outs = [['success','✅ 成功'],['partial','🟡 部分成功'],['failed','❌ 失败']];
+  var h = '<div id="opt-exp-form" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">'
+    + '<b style="font-size:13px">打印完成后回填结果（存入经验库）</b>'
+    + '<div class="plib-note" style="margin-top:4px">选结果 + 质量，一键把「本次配置 → 结果」存成经验；下次遇到相似几何 / 同机型同材料会直接复用。</div>'
+    + '<div class="plib-chips" style="margin-top:8px">'
+    + outs.map(function(o){
+        var on = OPT.expOutcome === o[0];
+        return '<button data-exp-o="' + o[0] + '"' + (on ? ' class="on"' : '')
+          + ' onclick="optExpSetOutcome(\'' + o[0] + '\')">' + o[1] + '</button>';
+      }).join('')
+    + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
+    + '<select id="opt-exp-grade" style="flex:0 0 auto" onchange="OPT.expQuality=this.value">'
+    + '<option value="">质量（可选）</option>'
+    + ['A','B','C','D','E','F'].map(function(g){ return '<option' + (OPT.expQuality===g?' selected':'') + '>' + g + '</option>'; }).join('')
+    + '</select>'
+    + '<input id="opt-exp-note" type="text" placeholder="备注：失败模式 / 特殊条件（可选）" value="' + plibEsc(OPT.expNote||'') + '" oninput="OPT.expNote=this.value" style="flex:1;min-width:0">'
+    + '</div>'
+    + '<button class="btn primary" style="margin-top:10px" onclick="optSaveExperience()">存入经验库</button>'
+    + '</div>';
+  return h;
+}
+function optExpSetOutcome(o){
+  OPT.expOutcome = o;
+  var el = document.getElementById('opt-exp-form');
+  if(el){
+    el.querySelectorAll('[data-exp-o]').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-exp-o') === o);
+    });
+  }
+}
+function optNum(v){
+  if(v == null || v === '') return undefined;
+  var n = Number(v);
+  return isFinite(n) ? n : undefined;
+}
+/* 从 .3mf 配置抽取「可沉淀为经验的参数」：跳过标识类键（机型/喷嘴/材料/兼容/丝名），
+   其余 print+filament 键归一化（数值→number，字符串→string）后进 settings。 */
+function optExtractSettings(cfg){
+  var out = {};
+  if(!cfg) return out;
+  var skip = { printer_model:1, nozzle_diameter:1, filament_type:1, compatible_printers:1,
+               filament_settings_id:1, default_print_profile:1, different_settings_to_system:1 };
+  var IO = (typeof BAMBU_3MF_IO !== 'undefined') ? BAMBU_3MF_IO : null;
+  Object.keys(cfg).forEach(function(k){
+    if(skip[k]) return;
+    var v = IO ? IO.configVal(cfg[k]) : cfg[k];
+    if(v == null || v === '') return;
+    var n = (typeof v === 'string' && v !== '' && v.trim() !== '' && !isNaN(Number(v))) ? Number(v) : v;
+    out[k] = n;
+  });
+  return out;
+}
+function optSaveExperience(){
+  var r = OPT.recommend;
+  var PD = (typeof window !== 'undefined' && window.PRINT_DNA) || null;
+  if(!PD){ toast('打印经验引擎未加载'); return; }
+  if(!(r && r.fingerprint && r.fingerprint.geo_sig)){ toast('未解析出几何指纹，无法回填'); return; }
+  if(!OPT.expOutcome){ toast('请先选择打印结果（成功 / 部分成功 / 失败）'); return; }
+  var cfg = (OPT.project && OPT.project.config) || null;
+  var rec = {
+    fingerprint: r.fingerprint,
+    outcome: OPT.expOutcome,
+    date: new Date().toISOString().slice(0,10),
+    source: 'x2d-3mf-config',
+    settings: optExtractSettings(cfg)
+  };
+  if(r.machine) rec.machine = r.machine;
+  if(r.material) rec.material = r.material;
+  var nm = optNum(r.nozzle_mm); if(nm != null) rec.nozzle_mm = nm;
+  if(OPT.expQuality) rec.quality = OPT.expQuality;
+  if(OPT.expNote) rec.note = OPT.expNote;
+  try{
+    PD.record(rec);
+    toast('已存入经验库（' + String(r.fingerprint.geo_sig).slice(0,8) + '…）');
+    OPT.expOutcome=''; OPT.expQuality=''; OPT.expNote='';
+    OPT.recommend = optFingerprintRecommend(OPT.diag);   // 本次记录立即参与下一次推荐
+    renderMain();
+  }catch(e){ toast('存入失败：' + ((e && e.message) || e)); }
+}
+
 function optBuildSuggestions(diag, project){
   var out = [], seen = {};
   var config = (project && project.config) || null;
@@ -5059,6 +5336,247 @@ function mountGeomThumbs() {
   }, 0);
 }
 
+/* ===== 页签 6：流量计算器=====
+   背景：YOLO / Bambu 流量校准的卡片号数是「相对偏移量」，最终流量 = 基准 × (1 + 号数)。
+   本模块把换算 + 记录合并：耗材类型 → 基准（0.98 / 0.95 / 1）→ 品牌 / 颜色（取耗材管理）
+   → K 值（选填）→ 卡片号数 → 提交，按日期列出，可编辑 / 删除。
+   存储：AD.save('flow_calc')（localStorage + /api/data），随「全量备份」一起导出 / 恢复。 */
+function flowCalcResult(base, card){
+  return Math.round(Number(base) * (1 + Number(card)) * 10000) / 10000;
+}
+function flowRecResult(r){
+  var v = Number(r && r.result);
+  return isFinite(v) ? v : flowCalcResult(r && r.base, r && r.card);
+}
+function flowFmtCard(v){
+  v = Number(v) || 0;
+  return (v >= 0 ? '+ ' : '− ') + Math.abs(v).toFixed(2);
+}
+function flowFilaments(){
+  return (typeof FDATA !== 'undefined' && FDATA && Array.isArray(FDATA.filaments)) ? FDATA.filaments : [];
+}
+/* 材质过滤：type / name 里含 PLA / PETG 即算（如 PETG HF、PLA Basic、PLA Matte） */
+function flowMatchMaterial(f, material){
+  if(!material) return true;
+  var t = (String(f.type || '') + ' ' + String(f.name || '')).toUpperCase();
+  if(material === 'PLA') return t.indexOf('PLA') >= 0;
+  if(material === 'PETG') return t.indexOf('PETG') >= 0;
+  return true;
+}
+/* 品牌 / 颜色：直接取「耗材管理」（FDATA.filaments）里已有值，去重排序。
+   ⚠ 没有录入该材质品牌就不显示（2026-10-22 用户确认：这个逻辑更正确，不要常驻官方品牌）。 */
+function flowBrands(material){
+  var seen = {}, out = [];
+  flowFilaments().forEach(function(f){
+    if(!f || !flowMatchMaterial(f, material)) return;
+    var b = String(f.brand || '').trim();
+    if(b && !seen[b]){ seen[b] = 1; out.push(b); }
+  });
+  return out.sort();
+}
+function flowCollectColors(material, brand){
+  var seen = {}, out = [];
+  flowFilaments().forEach(function(f){
+    if(!f || !flowMatchMaterial(f, material)) return;
+    if(brand && String(f.brand || '') !== brand) return;
+    var add = function(n){ n = String(n || '').trim(); if(n && !seen[n]){ seen[n] = 1; out.push(n); } };
+    add(f.colorName);
+    if(f.isBundle && Array.isArray(f.bundleItems)) f.bundleItems.forEach(function(bi){ if(bi) add(bi.colorName); });
+  });
+  return out.sort();
+}
+/* 该品牌没录过 → 退到同材质全部颜色 → 再退到全部颜色（保证永远有得选） */
+function flowColors(material, brand){
+  var out = flowCollectColors(material, brand);
+  if(!out.length && brand) out = flowCollectColors(material, '');
+  if(!out.length) out = flowCollectColors('', '');
+  return out;
+}
+function plibFlow(){
+  return '<div class="flow-wrap">' + flowHead() + flowFormCard() + flowListCard() + '</div>';
+}
+/* 大标题：与「打印知识库」同一套 .greet / h1 样式；公式与卡号说明收进圆形 ⓘ（hover / focus 显示） */
+function flowHead(){
+  return '<div class="greet"><div><h1>流量计算器'
+    + '<span class="flow-info" tabindex="0" aria-label="公式与卡片说明">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+    + '<span class="flow-info-tip"><b>最终流量 = 基准流量 × (1 + 卡片号数)</b><br>卡片号数是相对偏移量（−.2 = −0.02 = −2%），不是绝对值 —— 用乘法，不是加法。<br><br>11 档：−0.05 / −0.04 / −0.03 / −0.02 / −0.01 / 0 / +0.01 / +0.02 / +0.03 / +0.04 / +0.05。卡片实体可能印成 −.5（少一个 0），对应 −0.05。</span>'
+    + '</span></h1></div></div>';
+}
+/* 「有没有填东西」：默认态（只有默认基准 + 0 卡号）算没填 —— 用来隐藏预览、置灰提交 */
+function flowFormFilled(){
+  var f = FLOWF;
+  if(f.id) return true;
+  if(f.brand || f.color || f.k) return true;
+  if(Number(f.card) !== 0) return true;
+  if(Number(f.base) !== (FLOW_BASE_DEFAULT[f.material] || 0.98)) return true;
+  return false;
+}
+function flowFormCard(){
+  var f = FLOWF, editing = !!f.id, filled = flowFormFilled();
+  var bases = FLOW_BASE_OPTS.slice();
+  /* 兼容历史记录里的自定义基准（不在三档里时补一项，避免下拉显示错值） */
+  if(!bases.some(function(o){ return Math.abs(o.v - Number(f.base)) < 1e-9; })){
+    bases.push({ v: Number(f.base), l: String(f.base) });
+  }
+  var brands = flowBrands(f.material), colors = flowColors(f.material, f.brand);
+  var h = '<div class="plib-card" id="flow-form-card">'
+    + '<div class="flow-grid">'
+    + '<label class="flow-field"><span>耗材类型</span><select class="flow-inp" id="flow-material" onchange="flowSetMaterial(this.value)">'
+    + ['PLA','PETG'].map(function(m){ return '<option value="'+m+'"'+(f.material===m?' selected':'')+'>'+m+'</option>'; }).join('')
+    + '</select></label>'
+    + '<label class="flow-field"><span>品牌（耗材管理）</span><select class="flow-inp" id="flow-brand" onchange="flowSetBrand(this.value)">'
+    + (brands.length
+        ? '<option value="">— 选择品牌 —</option>' + brands.map(function(b){ return '<option value="'+plibEsc(b)+'"'+(b===f.brand?' selected':'')+'>'+plibEsc(b)+'</option>'; }).join('')
+        : '<option value="">（耗材管理里暂无该材质的品牌）</option>')
+    + '</select></label>'
+    + '<label class="flow-field"><span>颜色（耗材管理）</span><select class="flow-inp" id="flow-color" onchange="flowSetColor(this.value)">'
+    + (colors.length
+        ? '<option value="">— 选择颜色 —</option>' + colors.map(function(c){ return '<option value="'+plibEsc(c)+'"'+(c===f.color?' selected':'')+'>'+plibEsc(c)+'</option>'; }).join('')
+        : '<option value="">（无匹配颜色）</option>')
+    + '</select></label>'
+    + '<label class="flow-field"><span>默认流量</span><select class="flow-inp" id="flow-base" onchange="flowSetBase(this.value)">'
+    + bases.map(function(o){ return '<option value="'+o.v+'"'+(Math.abs(o.v - Number(f.base)) < 1e-9 ? ' selected' : '')+'>'+plibEsc(o.l)+'</option>'; }).join('')
+    + '</select></label>'
+    + '<label class="flow-field"><span>测试号数</span><select class="flow-inp" id="flow-card" onchange="flowSetCard(this.value)">'
+    + FLOW_CARDS.map(function(c){ return '<option value="'+c.v+'"'+(Math.abs(f.card-c.v)<1e-9?' selected':'')+'>'+c.l+'</option>'; }).join('')
+    + '</select></label>'
+    + '<label class="flow-field"><span>K 值（选填）</span><input class="flow-inp" id="flow-k" value="'+plibEsc(f.k)+'" placeholder="如 0.02" oninput="flowSetK(this.value)"></label>'
+    + '</div>'
+    + '<div class="flow-preview" id="flow-preview"' + (filled ? '' : ' style="display:none"') + '>' + flowPreviewHtml() + '</div>'
+    + '<div style="margin-top:12px;display:flex;gap:8px">'
+    + '<button class="btn primary" id="flow-submit" onclick="flowSubmit()"' + (filled ? '' : ' disabled') + '>' + (editing ? '保存修改' : '提交记录') + '</button>'
+    + '<button class="btn" onclick="flowResetForm()">' + (editing ? '取消编辑' : '清空') + '</button></div>'
+    + '</div>';
+  return h;
+}
+function flowPreviewHtml(){
+  if(!flowFormFilled()) return '';
+  var base = Number(FLOWF.base) || 0, card = Number(FLOWF.card) || 0;
+  return '结果预览：<b>' + base.toFixed(2) + '</b> × (1 ' + flowFmtCard(card) + ') = <b class="flow-result">' + flowCalcResult(base, card).toFixed(4) + '</b>';
+}
+/* 统一刷新：预览内容 + 显示/隐藏 + 提交按钮置灰 */
+function flowRefreshState(){
+  var el = document.getElementById('flow-preview');
+  if(el){
+    var html = flowPreviewHtml();
+    el.innerHTML = html;
+    el.style.display = html ? '' : 'none';
+  }
+  var btn = document.getElementById('flow-submit');
+  if(btn) btn.disabled = !flowFormFilled();
+}
+function flowRefillBrand(){
+  var sel = document.getElementById('flow-brand'); if(!sel) return;
+  var brands = flowBrands(FLOWF.material);
+  sel.innerHTML = brands.length
+    ? '<option value="">— 选择品牌 —</option>' + brands.map(function(b){ return '<option value="'+plibEsc(b)+'"'+(b===FLOWF.brand?' selected':'')+'>'+plibEsc(b)+'</option>'; }).join('')
+    : '<option value="">（耗材管理里暂无该材质的品牌）</option>';
+}
+function flowRefillColor(){
+  var sel = document.getElementById('flow-color'); if(!sel) return;
+  var colors = flowColors(FLOWF.material, FLOWF.brand);
+  sel.innerHTML = colors.length
+    ? '<option value="">— 选择颜色 —</option>' + colors.map(function(c){ return '<option value="'+plibEsc(c)+'"'+(c===FLOWF.color?' selected':'')+'>'+plibEsc(c)+'</option>'; }).join('')
+    : '<option value="">（无匹配颜色）</option>';
+}
+function flowSetMaterial(m){
+  FLOWF.material = (m === 'PETG') ? 'PETG' : 'PLA';
+  FLOWF.base = FLOW_BASE_DEFAULT[FLOWF.material] || 0.98;
+  if(FLOWF.brand && flowBrands(FLOWF.material).indexOf(FLOWF.brand) < 0) FLOWF.brand = '';
+  if(FLOWF.color && flowColors(FLOWF.material, FLOWF.brand).indexOf(FLOWF.color) < 0) FLOWF.color = '';
+  var b = document.getElementById('flow-base'); if(b) b.value = String(FLOWF.base);
+  flowRefillBrand(); flowRefillColor(); flowRefreshState();
+}
+function flowSetBase(v){ var n = parseFloat(v); if(isFinite(n)) FLOWF.base = n; flowRefreshState(); }
+function flowSetBrand(v){
+  FLOWF.brand = v || '';
+  if(FLOWF.color && flowColors(FLOWF.material, FLOWF.brand).indexOf(FLOWF.color) < 0) FLOWF.color = '';
+  flowRefillColor(); flowRefreshState();
+}
+function flowSetColor(v){ FLOWF.color = v || ''; flowRefreshState(); }
+function flowSetCard(v){ var n = parseFloat(v); if(isFinite(n)) FLOWF.card = n; flowRefreshState(); }
+function flowSetK(v){ FLOWF.k = v || ''; flowRefreshState(); }
+function flowBlankForm(){ return { id:'', material:'PLA', base:0.98, brand:'', color:'', k:'', card:0 }; }
+function flowResetForm(){ FLOWF = flowBlankForm(); renderMain(); }
+function flowCancelEdit(){ flowResetForm(); }
+function flowSubmit(){
+  var f = FLOWF;
+  if(!flowFormFilled()){ toast('请先填写品牌 / 颜色等再提交'); return; }
+  var base = Number(f.base);
+  if(!isFinite(base) || base <= 0){ toast('请选择默认流量（基准）'); return; }
+  var card = Number(f.card);
+  if(!isFinite(card)){ toast('请选择测试号数'); return; }
+  var res = flowCalcResult(base, card);
+  var editing = !!f.id;
+  if(editing){
+    var rec = FLOW_RECS.filter(function(r){ return r.id === f.id; })[0];
+    if(rec){
+      rec.material = f.material; rec.brand = f.brand; rec.color = f.color;
+      rec.base = base; rec.k = f.k; rec.card = card; rec.result = res;
+      rec.updatedAt = Date.now();
+    }
+  } else {
+    FLOW_RECS.unshift({
+      id: 'FLOW_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6),
+      date: new Date().toISOString().slice(0,10),
+      createdAt: Date.now(),
+      material: f.material, brand: f.brand, color: f.color,
+      base: base, k: f.k, card: card, result: res
+    });
+  }
+  AD.save('flow_calc');
+  FLOWF = flowBlankForm();
+  renderMain();
+  toast((editing ? '已保存修改 · ' : '已记录 · ') + res.toFixed(4));
+}
+function flowEdit(id){
+  var r = FLOW_RECS.filter(function(x){ return x.id === id; })[0];
+  if(!r) return;
+  FLOWF = { id:r.id, material:r.material || 'PLA', base:(r.base != null ? Number(r.base) : 0.98),
+            brand:r.brand || '', color:r.color || '', k:r.k || '',
+            card:(r.card != null ? Number(r.card) : 0) };
+  renderMain();
+  var el = document.getElementById('flow-form-card');
+  if(el && el.scrollIntoView){ try{ el.scrollIntoView({ block:'start', behavior:'smooth' }); }catch(e){} }
+}
+function flowDelete(id){
+  var r = FLOW_RECS.filter(function(x){ return x.id === id; })[0];
+  if(!r) return;
+  if(!confirm('删除这条记录？\n' + (r.date || '') + ' · ' + (r.material || '') + (r.brand ? ' · ' + r.brand : '') + ' · 结果 ' + flowRecResult(r).toFixed(4))) return;
+  var i = FLOW_RECS.findIndex(function(x){ return x.id === id; });
+  if(i >= 0) FLOW_RECS.splice(i, 1);
+  AD.save('flow_calc');
+  renderMain();
+  toast('已删除');
+}
+function flowListCard(){
+  var h = '<div class="plib-card"><div class="plib-head"><b>记录列表</b>' + plibChip(FLOW_RECS.length + ' 条') + '</div>';
+  if(!FLOW_RECS.length){
+    return h + '<div class="fempty"><div class="big-ic">🧮</div><b>还没有记录</b>填好上面的表单提交一条，就会按日期出现在这里。</div></div>';
+  }
+  var rows = FLOW_RECS.slice().sort(function(a,b){ return (b.createdAt || 0) - (a.createdAt || 0); });
+  var P = (typeof P_ACT !== 'undefined') ? P_ACT : null;
+  h += '<div class="table-wrap"><table class="fx"><thead><tr>'
+    + '<th>日期</th><th>耗材</th><th>基准 × 卡号</th><th>最终流量</th><th>K 值</th><th>操作</th>'
+    + '</tr></thead><tbody>';
+  rows.forEach(function(r){
+    var meta = [r.material || '', r.brand || '', r.color || ''].filter(Boolean).join(' · ');
+    h += '<tr>'
+      + '<td>' + plibEsc(r.date || '—') + '</td>'
+      + '<td>' + plibEsc(meta || '—') + '</td>'
+      + '<td style="color:var(--muted)">' + Number(r.base || 0).toFixed(2) + ' × (1 ' + flowFmtCard(r.card) + ')</td>'
+      + '<td><b class="flow-result">' + flowRecResult(r).toFixed(4) + '</b></td>'
+      + '<td>' + plibEsc(r.k || '—') + '</td>'
+      + '<td class="act-cell">'
+      + '<button class="btn-icon" title="编辑" onclick="flowEdit(\'' + r.id + '\')">' + (P ? P.pencil : '编辑') + '</button>'
+      + '<button class="btn-icon del" title="删除" onclick="flowDelete(\'' + r.id + '\')">' + (P ? P.trash : '删除') + '</button>'
+      + '</td></tr>';
+  });
+  h += '</tbody></table></div></div>';
+  return h;
+}
+
 function plibOptimize(){
   if(typeof window !== 'undefined' && (!window.MESH_HEALTH || !window.BAMBU_DIAGNOSE)){
     return '<div class="opt-wrap"><div class="plib-card"><div class="fempty"><div class="big-ic">⚠️</div><b>诊断引擎未加载</b>请确认底部脚本 mesh-health.js 与 bambu-diagnose.js 已加载。</div></div></div>';
@@ -5076,6 +5594,8 @@ function plibOptimize(){
     h += '<div class="plib-card"><div class="plib-note">正在分析模型…</div></div></div>';
     return h;
   }
+  /* —— 打印经验推荐（上传即算指纹 → 匹配经验库）—— */
+  h += optRecCard();
   /* —— 页卡：① 3D 可视化 · 问题定位（默认）　② 几何体检 —— */
   h += '<div class="opt-tabs">'
     + '<button class="' + (OPT.tab==='viz'?'on':'') + '" onclick="optSetTab(\'viz\')">3D 可视化 · 问题定位</button>'
@@ -5833,7 +6353,8 @@ var AD = {
     bambu_filament_presets: function(){ return FILP; },
     bambu_presets:    function(){ return PSET; },
     bambu_knowledge:  function(){ return PKNOW; },
-    printManager:     function(){ return PRAW; }
+    printManager:     function(){ return PRAW; },
+    flow_calc:        function(){ return FLOW_RECS; }
   },
   save: function(key){
     var v = AD.MAP[key]();
@@ -5989,6 +6510,7 @@ var AD = {
       }
       AD.apply('bambu_knowledge', PKNOW,           function(v){ PKNOW.length = 0; (v||[]).forEach(function(x){ PKNOW.push(x); }); });
       AD.apply('printManager',    PRAW,            function(v){ if(v && typeof v === 'object') PRAW = v; });
+      AD.apply('flow_calc',       FLOW_RECS,       function(v){ FLOW_RECS.length = 0; (v||[]).forEach(function(x){ FLOW_RECS.push(x); }); });
       /* 启动自动诊断（2026-10-08）：diagnosis 是纯派生数据 —— 由预设当前参数 +
          关联耗材丝 + 诊断引擎内置规则算出，不随时间自然变化。每次启动全量重算，
          列表永远显示「当前规则/参数」下的最新结论，用户不再看到"未诊断"初始态，
@@ -11463,8 +11985,12 @@ body{overscroll-behavior-y:none;}                          /* 后台是应用壳
 @media (max-width:820px){
   /* iOS Safari 对 <16px 的输入类控件会自动放大整页（实测 .rbtn-mega-search input 13px） */
   input,select,textarea,.rbtn-mega-search input{font-size:16px;}
-  /* 触控目标 ≥30px：只放大命中区，不改视觉尺寸 */
+  /* 触控目标命中区扩展（2026-10-21）：把 <34px 的小点击目标外扩。
+     图标钮 flex 居中 → icon 视觉不变；胶囊加 padding；角落钮 min-size（父容器 overflow:hidden 时 ::before 会被裁，故不用伪元素） */
   .x-btn{min-width:30px;min-height:30px;}
+  .btn-icon,.btn-icon-sm,.tag-mini-acts .btn-icon{min-width:34px;min-height:34px;}
+  .pattern-card-action-btn,.psc-action-btn,.upload-item-cover,.upload-item-del{min-width:30px;min-height:30px;}
+  .pill,.mini-btn,.pf-chip,.plib-chips button{min-height:32px;}
 }
 </style>
 <script>
@@ -12312,7 +12838,7 @@ function upgradeUI(root) {
 <script src="bambu-diagnose.js"></script>
 <script src="bambu-3mf-io.js?v=20261007h"></script>
 <!-- 打印经验反馈闭环（阶段 3 · 几何指纹 + 三级匹配，2026-10-18 自研） -->
-<script src="print-dna.js?v=20261018"></script>
+<script src="print-dna.js?v=20261021"></script>
 <style>
 /* 预设「分析诊断」按钮的 loading 转圈 */
 .diag-spin{ animation: diagspin .8s linear infinite; }
