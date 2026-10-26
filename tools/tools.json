@@ -257,6 +257,17 @@
       "enabled": true
     },
     {
+      "id": "cube-tile-table",
+      "name": "魔方贴片字表",
+      "file": "cube-tile-table.html",
+      "category": "creative",
+      "icon": "grid",
+      "iconColor": "purple",
+      "description": "6 面 × 9 格逐格编辑魔方贴片字表，真实版式预览 + 3D 魔方效果，导出给 Blender 贴片插件生成模型",
+      "keywords": ["魔方", "贴片", "字表", "字库", "3D打印", "Blender", "插件", "cube", "tile", "table"],
+      "enabled": true
+    },
+    {
       "id": "composition-editor",
       "name": "构图编辑器",
       "file": "composition-editor.html",

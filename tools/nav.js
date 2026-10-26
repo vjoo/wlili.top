@@ -56,7 +56,8 @@
       tools: [
         { name: 'IP形象生成器', href: './ip-mascot.html' },
         { name: 'AI提示词库', href: './prompt-library.html' },
-        { name: '构图编辑器', href: './composition-editor.html' }
+        { name: '构图编辑器', href: './composition-editor.html' },
+        { name: '魔方贴片字表', href: './cube-tile-table.html' }
       ]
     },
     {

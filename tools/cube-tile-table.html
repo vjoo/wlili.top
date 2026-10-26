@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- Content Security Policy - WLi Tools -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="_shared/ui-select.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>魔方贴片字表编辑器 - WLi Tools</title>
+<style>
+/* ============================================================
+   魔方贴片 · 字表编辑器（wlili tools）
+   外壳/按钮/下拉一律复用 common.css + _shared/ui-select.css
+   本文件只写本工具专属样式，颜色间距用全站令牌
+   ============================================================ */
+
+/* ---------- 操作区 = 「第七个面」（2026-10-26） ----------
+   与 .grid9 完全同款：深灰面板 + 圆角 + 同阴影，宽高就是一个面。
+   定位推导：网格 4 列×fw + 3×16 居中 → 面1（第 2 列）右边缘恒 = 视口中线 − 8px。 */
+.tb-face{
+  /* top 85 = 导航48 + 区块内边距14 + 面头23 → 与「面1」的贴片框(.grid9)顶边齐平
+     left 50%+8 = 面1框右沿(中線−8)再留一个网格 gap(16) */
+  position:fixed; top:85px; left:calc(50% + 8px); z-index:60;
+  width:var(--fw); padding:5px; border-radius:14px;
+  background:#2B3041;
+  box-shadow:0 10px 26px -14px rgba(43,48,65,.45);
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:5px;
+}
+.tb-face .btn-outline, .tb-face .btn-filled{
+  position:relative; overflow:hidden;
+  aspect-ratio:1; padding:0; border:none; border-radius:9px;
+  background:#fffdf8; color:var(--ink); font-weight:600; font-size:12px;
+  font-family:inherit; line-height:1.25; text-align:center;
+  display:block; white-space:normal; transition:transform .12s, box-shadow .12s;
+}
+.tb-face .btn-outline:hover{
+  transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.25);
+}
+
+/* ---------- 展开魔方：上 1 / 中 4 / 下 1（尺寸按视口高自动收缩，保证一屏放下） ---------- */
+:root{--fw:min(232px, calc((100vh - 196px)/3));}   /* 面宽；.cube 与迷你贴片按钮共用 */
+.ctg-sec{padding:14px 0 10px;}
+.ctg-sec .section-inner{max-width:none; padding:0 24px;}   /* 中排 4 面并排，需要比默认 980 更宽 */
+.ctg-stage{display:flex; justify-content:center; padding:0;}
+.cube{
+  /* fw 定义在 :root（与迷你贴片按钮共用）；此处只管网格结构 */
+  display:grid;
+  grid-template-columns:repeat(4, var(--fw));
+  grid-auto-rows:min-content; gap:16px;
+}
+.face{grid-column:span 1;}
+.face.f1{grid-column:2; grid-row:1;}
+.face.f2{grid-column:1; grid-row:2;}
+.face.f3{grid-column:2; grid-row:2;}
+.face.f4{grid-column:3; grid-row:2;}
+.face.f5{grid-column:4; grid-row:2;}
+.face.f6{grid-column:2; grid-row:3;}
+
+.face-head{display:flex; align-items:center; gap:var(--space-2); padding:0 2px 5px;}
+.swatch{
+  width:15px; height:15px; border-radius:4px; cursor:pointer; flex:none;
+  border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.25); transition:transform .15s;
+}
+.swatch:hover{transform:scale(1.14);}
+.face-name{
+  border:none; background:transparent; font-weight:600; font-size:12.5px;
+  color:var(--ink); width:76px; border-bottom:1px dashed transparent;
+  font-family:inherit; padding:1px 2px;
+}
+.face-name:focus{border-bottom-color:var(--border); outline:none; background:var(--bg-white);}
+.face-count{margin-left:auto; font-size:10.5px; color:var(--ink-tertiary);}
+.grid9{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:5px;
+  background:#2B3041; padding:5px; border-radius:12px;
+  box-shadow:0 10px 26px -14px rgba(43,48,65,.45);
+}
+.cell{
+  aspect-ratio:1; background:transparent; border-radius:9px; cursor:pointer;
+  position:relative; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; overflow:hidden; user-select:none;
+  border:1.5px dashed transparent; transition:transform .12s, box-shadow .12s;
+}
+.cell:hover{transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.22);}
+.cell.empty{border-color:#4a5064;}
+.cell.empty .plus{color:#8d93a6; font-size:18px; font-weight:300;}
+/* 格子左上角的 1-9 序号已于 2026-10-26 按用户要求移除（不再渲染 .pos） */
+.tsvg{position:absolute; inset:0; width:100%; height:100%;}
+/* 类型标签：默认隐藏，鼠标移上才在右上角显示 */
+.cell .kd{
+  position:absolute; top:3px; right:4px; font-size:9px; padding:0 4px; z-index:2;
+  border-radius:5px; background:rgba(255,255,255,.94); color:#6b6459;
+  border:1px solid rgba(0,0,0,.08); letter-spacing:.3px; pointer-events:none;
+  opacity:0; transition:opacity .12s;
+}
+.cell:hover .kd{opacity:1;}
+
+/* 底部小字提示已于 2026-10-26 移除（原 .ctg-note） */
+
+/* ---------- 弹窗（全站风格兜底：本土三個弹窗自己一套类名，避免后台 missing-class 陷阱） ---------- */
+.ctg-mask{
+  position:fixed; inset:0; background:rgba(20,22,30,.44); z-index:1200;
+  display:none; align-items:center; justify-content:center; padding:24px;
+}
+.ctg-mask.show{display:flex;}
+.ctg-dlg{
+  background:var(--bg-white); border-radius:var(--radius-lg); width:640px; max-width:94vw;
+  padding:var(--space-6); box-shadow:0 24px 60px rgba(0,0,0,.3); max-height:92vh;
+  display:flex; flex-direction:column;
+}
+.ctg-dlg.wide{width:min(1040px, 94vw);}
+/* 全站 .btn-* 是 17px 的大按钮，弹窗里按小一号收敛（只压弹窗，不动顶栏） */
+.ctg-dlg .btn-outline, .ctg-dlg .btn-filled{
+  padding:6px 14px; font-size:14px; line-height:1.3; border-width:1px; gap:6px;
+}
+.ctg-dlg h3{
+  font-size:var(--fs-lg); font-weight:600; margin-bottom:var(--space-4);
+  display:flex; align-items:center; gap:var(--space-2); flex:none;
+}
+.ctg-dlg h3 .face-tag{font-size:var(--fs-sm); color:var(--ink-tertiary); font-weight:400;}
+/* 预览弹窗右上角刷新：重建 3D */
+.pv-reload{
+  margin-left:auto; flex:none; width:26px; height:26px; padding:0; border-radius:50%;
+  border:1px solid var(--border); background:var(--bg-white); color:var(--ink-secondary);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;
+}
+.pv-reload:hover{border-color:var(--ink); color:var(--ink);}
+.pv-reload svg{width:13px; height:13px;}
+.pv-seg{
+  display:flex; align-items:center; gap:1px; padding:2px;
+  border:1px solid var(--border); border-radius:999px; background:var(--bg);
+}
+.pv-seg label{
+  display:inline-flex; align-items:center; gap:4px; cursor:pointer;
+  padding:2px 9px; border-radius:999px; font-size:12px;
+  color:var(--ink-tertiary); white-space:nowrap;
+}
+.pv-seg input{display:none;}
+.pv-seg label svg{width:10px; height:10px; opacity:0;}
+.pv-seg label.on{background:var(--fill-black); color:#fff;}
+.pv-seg label.on svg{opacity:1;}
+.pv-seg .swatch{width:9px; height:9px; border-radius:50%; border:1px solid rgba(0,0,0,.18);}
+/* 灯光实时调节行（调好后把数值回填到 LIGHT_DEF） */
+.pv-light{gap:var(--space-3); flex-wrap:wrap; font-size:12px;}
+.pv-light label{display:inline-flex; align-items:center; gap:5px; white-space:nowrap;}
+.pv-light input[type=range]{
+  width:74px; height:14px; margin:0; accent-color:var(--ink); cursor:pointer;
+}
+.pv-light b{
+  display:inline-block; min-width:30px; font-weight:600; font-size:11px;
+  color:var(--ink); font-variant-numeric:tabular-nums;
+}
+.ctg-body{display:flex; gap:var(--space-6); overflow:auto;}
+.ctg-fields{flex:1; display:flex; flex-direction:column; gap:var(--space-3);}
+.ctg-fld label{display:block; font-size:var(--fs-sm); color:var(--ink-tertiary); margin-bottom:6px;}
+.ctg-fld input[type=text]{
+  width:100%; border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:9px 11px; font-size:var(--fs-md); font-family:inherit; background:var(--bg-white); color:var(--ink);
+}
+.ctg-fld input:focus{outline:none; border-color:var(--link);}
+.ctg-hint{
+  font-size:var(--fs-sm); color:var(--ink-tertiary); background:var(--bg);
+  border-radius:var(--radius-sm); padding:10px 12px; line-height:1.6;
+}
+.ctg-hint b{color:var(--ink);}
+.ctg-prev{width:150px; flex:none; display:flex; flex-direction:column; align-items:center; gap:var(--space-2);}
+.ctg-prev .mini{
+  position:relative; overflow:hidden; width:150px; height:150px;
+  border:1px solid var(--border-light); border-radius:var(--radius-md); background:var(--bg-white);
+}
+.ctg-prev .mini .tsvg{inset:0;}
+.ctg-cap{font-size:var(--fs-xs); color:var(--ink-tertiary);}
+.ctg-foot{
+  display:flex; gap:var(--space-2); margin-top:var(--space-5);
+  justify-content:flex-end; align-items:center; flex:none; flex-wrap:wrap;
+}
+.ctg-foot .left{margin-right:auto; display:flex; gap:var(--space-2);}
+
+/* ---------- 导出弹窗 ---------- */
+.ctg-dlg.exp{width:min(1040px, 94vw);}
+.ctg-tabs{display:flex; gap:6px; margin-bottom:var(--space-3); flex-wrap:wrap; flex:none;}
+.ctg-tab{
+  padding:6px 14px; border-radius:var(--radius-sm); cursor:pointer; font-size:var(--fs-sm);
+  border:1px solid var(--border); background:var(--bg-white); color:var(--ink-secondary);
+}
+.ctg-tab.on{background:var(--fill-black); color:#fff; border-color:var(--fill-black);}
+/* 导出内容区：弹窗多宽就多宽，纵向吃掉剩余高度（min-width:0 防 flex 子项被撑/塌） */
+.ctg-ta-wrap{flex:1 1 auto; min-height:0; display:flex;}
+.ctg-ta{
+  flex:1 1 auto; min-width:0; min-height:min(58vh, 520px);
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:12px 14px; font-family:ui-monospace,Consolas,"Courier New",monospace; font-size:var(--fs-xs);
+  line-height:1.55; background:var(--bg); color:var(--ink); resize:none;
+  white-space:pre; overflow:auto;
+}
+
+/* ---------- 3D 预览 ---------- */
+.pv-body{flex-direction:column; gap:var(--space-3);}
+.pv-host{
+  position:relative; width:100%; height:min(60vh, 460px); min-height:300px;
+  border:1px solid var(--border-light); border-radius:var(--radius-md);
+  background:radial-gradient(circle at 50% 40%, #ffffff 0%, #f0f0f4 70%, #e6e6ec 100%);
+  overflow:hidden; touch-action:none;
+}
+.pv-host canvas{display:block;}
+.pv-bar{display:flex; align-items:center; gap:var(--space-4); font-size:var(--fs-sm); color:var(--ink-tertiary); flex-wrap:wrap;}
+.pv-bar label{display:flex; align-items:center; gap:6px; cursor:pointer;}
+.pv-bar2{flex-wrap:wrap; gap:var(--space-2);}
+.pv-ctl{display:flex; align-items:center; gap:6px;}
+.pv-mini{font-size:12px;}
+.pv-faces{display:flex; gap:6px; flex-wrap:wrap;}
+.pv-face{
+  display:flex; align-items:center; gap:6px; padding:4px 10px; border-radius:var(--radius-pill);
+  border:1px solid var(--border); background:var(--bg-white); cursor:pointer; font-size:var(--fs-xs);
+  color:var(--ink-secondary); transition:all .15s;
+}
+.pv-face .dot{width:10px; height:10px; border-radius:50%;}
+.pv-face.on{border-color:var(--ink); color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink);}
+/* 反色态：色块加白环；黑底态：色块加黑环（配色模式区分） */
+.pv-face.inv .dot{box-shadow:0 0 0 2px #fff, 0 0 0 3px var(--ink);}
+.pv-face.blk .dot{box-shadow:0 0 0 2px #fff, 0 0 0 3px #14151a;}
+.pv-face.blk .sw{background:#14151a; color:#fff; border-radius:5px; padding:0 5px;}
+.pv-face .sw{
+  display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+  font-size:10px; color:var(--ink-tertiary); letter-spacing:0;
+}
+.pv-face.inv .sw{color:var(--ink); font-weight:600;}
+.pv-loading{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:var(--fs-sm); color:var(--ink-tertiary);
+}
+
+/* ---------- toast ---------- */
+#ctg_toast{
+  position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--fill-black); color:#fff; padding:9px 20px; border-radius:var(--radius-pill);
+  font-size:var(--fs-sm); opacity:0; pointer-events:none; transition:all .25s; z-index:1400;
+}
+#ctg_toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ================= 响应式（全站断点 1280/1024/768/480） ================= */
+@media (max-width:1080px){
+  :root{--fw:200px;}
+}
+@media (max-width:768px){
+  /* 移动端：竖排单列。注意 .face.fN 显式行列必须重置，否则会跑到不存在的列 */
+  .ctg-stage{padding:0 0 var(--space-4);}
+  .cube{--fw:min(320px, 88vw); grid-template-columns:1fr; gap:var(--space-5); justify-items:center;}
+  :root{--fw:min(320px, 88vw);}
+  .cube .face{grid-column:auto; grid-row:auto; width:100%; max-width:340px;}
+  /* 移动端放弃一屏（竖排必然超一屏），操作面回到页面顶部 */
+  .tb-face{
+    position:static; left:auto; top:auto;
+    width:calc(100% - 28px); margin:10px auto 0; max-width:340px;
+  }
+  .ctg-mask{padding:12px; align-items:flex-end;}
+  .ctg-dlg{max-height:94vh; padding:var(--space-4);}
+  .ctg-body{flex-direction:column; gap:var(--space-4);}
+  .ctg-prev{width:100%; flex-direction:row; gap:var(--space-3); align-items:center;}
+  .ctg-prev .mini{width:120px; height:120px; flex:none;}
+  .ctg-ta{min-height:min(46vh, 340px);}
+  .pv-host{height:min(52vh, 360px);}
+  .ctg-fld input[type=text]{font-size:16px;} /* iOS 聚焦不放大 */
+}
+@media (max-width:480px){
+  :root{--fw:min(300px, 92vw);}
+  .ctg-dlg h3{font-size:var(--fs-md);}
+}
+</style>
+</head>
+<body>
+
+<!-- 操作区：视觉上是「第七个面」（同款深灰面板 + 三枚白贴片），不计入 54 片统计。
+     位置固定在「面1」右侧。2026-10-26 -->
+<div class="tb-face">
+  <button class="btn-outline" id="btn_preview" data-l1="生成" data-l2="预览" aria-label="生成预览"></button>
+  <button class="btn-outline" id="btn_export" data-l1="导出" data-l2="字表" aria-label="导出字表"></button>
+  <button class="btn-outline" id="btn_reset"  data-l1="重置" data-l2="字表" aria-label="重置字表"></button>
+</div>
+
+<section class="section ctg-sec">
+  <div class="section-inner">
+    <div class="ctg-stage"><div class="cube" id="cube"></div></div>
+  </div>
+</section>
+
+<!-- 面色弹层 -->
+<div id="pop" style="position:absolute;z-index:1250;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.16);display:none;width:172px;">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;" id="pop_colors"></div>
+  <label style="font-size:12px;color:var(--ink-tertiary);display:block;margin-bottom:2px;">自定义颜色</label>
+  <input type="text" id="pop_hex" placeholder="#RRGGBB" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:12px;font-family:inherit;">
+</div>
+
+<!-- 编辑格子弹窗 -->
+<div class="ctg-mask" id="edit_mask">
+  <div class="ctg-dlg">
+    <h3><span id="ed_title">编辑格子</span><span class="face-tag" id="ed_face"></span></h3>
+    <div class="ctg-body">
+      <div class="ctg-fields">
+        <div class="ctg-fld">
+          <label>第一行（上 · 拼音/注音/标签）</label>
+          <input type="text" id="f_sub" placeholder="如 jiǎ / 六十 / 干支 / 子时，留空=单行">
+        </div>
+        <div class="ctg-fld">
+          <label>第二行（下 · 主体文字）</label>
+          <input type="text" id="f_main" placeholder="如 甲 / 甲子 / 1949 / 11至1">
+        </div>
+        <div class="ctg-fld">
+          <label>排版类型</label>
+          <select class="form-select" id="f_kind">
+            <option value="">自动检测（推荐）</option>
+            <option value="MAIN_SUB">单字 + 拼音（MAIN_SUB）</option>
+            <option value="TWO_LINE">两行（TWO_LINE）</option>
+            <option value="MIXED">中文 + 英数（MIXED）</option>
+            <option value="SINGLE">单行（SINGLE）</option>
+          </select>
+        </div>
+        <div class="ctg-hint" id="kind_hint"></div>
+      </div>
+      <div class="ctg-prev">
+        <div class="mini" id="mini"></div>
+        <div class="ctg-cap">贴片预览（正视 · 1:1）</div>
+      </div>
+    </div>
+    <div class="ctg-foot">
+      <div class="left">
+        <button class="btn-outline" id="ed_reset">重置本格</button>
+        <button class="btn-outline" id="ed_clear">清空此格</button>
+      </div>
+      <button class="btn-outline" id="ed_cancel">取消</button>
+      <button class="btn-filled" id="ed_save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导出弹窗 -->
+<div class="ctg-mask" id="exp_mask">
+  <div class="ctg-dlg wide exp">
+    <h3>导出字表</h3>
+    <div class="ctg-tabs">
+      <div class="ctg-tab on" data-t="md">知识库 md（推荐 · 含 JSON 块）</div>
+      <div class="ctg-tab" data-t="json">JSON（给 AI 读）</div>
+      <div class="ctg-tab" data-t="py">Python 片段（直接进构建脚本）</div>
+    </div>
+    <div class="ctg-ta-wrap"><textarea class="ctg-ta" id="exp_ta" readonly spellcheck="false"></textarea></div>
+    <div class="ctg-foot">
+      <div class="left"><button class="btn-outline" id="exp_download">下载文件</button></div>
+      <button class="btn-outline" id="exp_close">关闭</button>
+      <button class="btn-filled" id="exp_copy">复制到剪贴板</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3D 预览弹窗 -->
+<div class="ctg-mask" id="pv_mask">
+  <div class="ctg-dlg wide">
+    <h3>魔方预览<span class="face-tag" id="pv_cap">按住拖动旋转 · 滚轮缩放</span>
+      <button class="pv-reload" id="pv_reload" title="刷新预览" aria-label="刷新预览">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M20 12a8 8 0 1 1-2.34-5.66"/><polyline points="20 3 20 7 16 7"/>
+        </svg>
+      </button>
+    </h3>
+    <div class="ctg-body pv-body">
+      <div class="pv-host" id="pv_host">
+        <div class="pv-loading" id="pv_loading">正在加载 3D 环境…</div>
+      </div>
+      <div class="pv-bar">
+        <label><input type="checkbox" id="pv_spin"> 自动旋转</label>
+        <span class="pv-ctl">基础魔方</span>
+        <div class="pv-seg" id="pv_core">
+          <label data-v="black"><input type="radio" name="pv_core" value="black">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="4 12 9 17 20 6"/></svg>
+            <span class="swatch" style="background:#1b1d24"></span>黑色</label>
+          <label data-v="white"><input type="radio" name="pv_core" value="white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="4 12 9 17 20 6"/></svg>
+            <span class="swatch" style="background:#f2f1ec"></span>白色</label>
+        </div>
+        <button class="pv-face" id="pv_all_mode">统一：反</button>
+        <span id="pv_info"></span>
+      </div>
+      <div class="pv-bar pv-bar2">
+        <div class="pv-faces" id="pv_faces"></div>
+      </div>
+      <!-- 灯光调节行已按用户要求隐藏（2026-10-26）：参数固化在 LIGHT_DEF / LIGHT_DEF_JS -->
+    </div>
+    <div class="ctg-foot">
+      <button class="btn-filled" id="pv_close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="ctg_toast"></div>
+
+<script src="nav.js?v=6f98d37a"></script>
+<script src="_shared/ui-select.js"></script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+
+<!-- 3D 预览：惰性加载 three@0.170.0（与 tools/_shared/model-3d.js 同一版本，勿另加本地副本） -->
+<script type="module">
+let THREE = null, RBG = null, OrbitControls = null, RoomEnv = null, loading = false;
+async function ensure3D(){
+  if(THREE) return true;
+  if(loading){ // 并发保护
+    while(!THREE && loading){ await new Promise(r=>setTimeout(r,60)); }
+    return !!THREE;
+  }
+  loading = true;
+  try{
+    THREE = await import('three');
+    ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+    ({ RoundedBoxGeometry: RBG } = await import('three/addons/geometries/RoundedBoxGeometry.js'));
+    ({ RoomEnvironment: RoomEnv } = await import('three/addons/environments/RoomEnvironment.js'));
+    return true;
+  }catch(e){
+    console.warn('three 加载失败', e);
+    return false;
+  }finally{ loading = false; }
+}
+/* 实物尺寸（mm→cm 单位）：黑魔方芯格距 19（贴片 17 + 缝 2）；
+   贴片插销底座凸出 2.5（插销不做，保留底座厚度）；贴片本体 17×17×2.66。
+   三层结构：黑芯 → 白底座 → 贴片，还原实拍拼装观感。 */
+const PITCH = 1.9, HALF = PITCH * 1.5;       // 黑芯半宽 28.5mm
+const BASE_T = 0.17, TILE_T = 0.266;         // 底座露出厚 / 贴片厚
+const BG_GRAY = 0xe6e8ec;                    // 预览背景灰
+const BASE_W = 1.70, TILE_W = 1.68;          // 底座 17 / 贴片略缩出阶梯
+const CR = 0.11;                             // 平面圆角 1.1mm（插件 corner_r）
+/* 灯光默认值（界面上实时调好后把数值回填到这里） */
+const LIGHT_DEF = {key:2.95, fill:1.80, rim:0.95, hemi:1.05, amb:0.763, exp:0.50};   // 用户 2026-10-26 实调定稿
+function roundedRect(w, r){                  // 中心在原点的圆角矩形（xy 平面）
+  const s = new THREE.Shape(), x = -w/2, y = -w/2;
+  s.moveTo(x + r, y);
+  s.lineTo(x + w - r, y);  s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + w - r); s.quadraticCurveTo(x + w, y + w, x + w - r, y + w);
+  s.lineTo(x + r, y + w);  s.quadraticCurveTo(x, y + w, x, y + w - r);
+  s.lineTo(x, y + r);      s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+/* 板件：圆角矩形轮廓 + 大圆弧边（实物的侧棱是接近半个厚度的圆角过渡，不是直棱）；
+   几何体沿 +z 从 0 拉伸到 d，便于按面法线摆放。bt = 单侧圆角半径（cm）。 */
+function plateGeo(w, d, r, bt){
+  const g = new THREE.ExtrudeGeometry(roundedRect(w, r), {
+    depth: d - bt*2, bevelEnabled:true, bevelThickness:bt, bevelSize:bt*0.92,
+    bevelSegments:5, curveSegments:10
+  });
+  g.translate(0, 0, bt - d/2);   // 居中：z ∈ [-d/2, +d/2]
+  g.computeVertexNormals();
+  return g;
+}
+// 六面朝向：0 上 / 1 左 / 2 前 / 3 右 / 4 后 / 5 下（与页面十字展开顺序一致）
+// 每组 (n,u,v) 必须正交右手：u × v = n（makeBasis 用它定 plane 的姿态，错一个就整面转 90°/镜像）
+const DIRS = [
+  {n:[ 0, 1, 0], u:[ 1,0, 0], v:[0,0,-1]},   // 上 +Y
+  {n:[-1, 0, 0], u:[ 0,0, 1], v:[0, 1,0]},   // 左 -X
+  {n:[ 0, 0, 1], u:[ 1,0, 0], v:[0, 1,0]},   // 前 +Z
+  {n:[ 1, 0, 0], u:[ 0,0,-1], v:[0, 1,0]},   // 右 +X
+  {n:[ 0, 0,-1], u:[-1,0, 0], v:[0, 1,0]},   // 后 -Z
+  {n:[ 0,-1, 0], u:[ 1,0, 0], v:[0,0, 1]}    // 下 -Y
+];
+function svgToTexture(svgStr){
+  return new Promise(function(resolve){
+    const img = new Image();
+    img.onload = function(){
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 256;
+      const ctx = cv.getContext('2d');
+      ctx.drawImage(img, 0, 0, 256, 256);
+      const t = new THREE.CanvasTexture(cv);
+      t.anisotropy = 8;
+      t.colorSpace = THREE.SRGBColorSpace;
+      resolve(t);
+    };
+    img.onerror = function(){
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 256;
+      resolve(new THREE.CanvasTexture(cv));
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  });
+}
+window.__cube3d = {
+  /** faces: [{name, color:{hex}, tiles:[{sub,main,kind}]}]
+   *  opts: {core:'black'|'white', mode:[6]int} —— 仅展示用，不进导出数据
+   *  svgOf(sub,main,kind,hex)=>svg字符串 */
+  async build(host, faces, svgOf, opts){
+    const ok = await ensure3D();
+    if(!ok){ host.innerHTML = '<div class="pv-loading">3D 环境加载失败：请检查网络（three@0.170.0 走 unpkg CDN）。</div>'; return null; }
+    const o = opts || {};
+    const mode = o.mode || [0,0,0,0,0,0];
+    const coreCol = (o.core === 'white') ? 0xf0f0ec : 0x17181d;
+    host.innerHTML = '';
+    const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    // Neutral 色调映射：ACES 会把饱和色往灰压（字发灰的元凶），Neutral 保色彩
+    renderer.toneMapping = THREE.NeutralToneMapping || THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    // 灯光参数（可在界面上实时调，调好后把数值回填到 LIGHT_DEF）
+    const L = Object.assign({}, LIGHT_DEF, (o.light || {}));
+    function applyLight(x){
+      hemiL.intensity = x.hemi;
+      ambL.intensity  = x.amb;
+      key.intensity   = x.key;
+      fill.intensity  = x.fill;
+      rim.intensity   = x.rim;
+      renderer.toneMappingExposure = x.exp;
+    }
+    let w = host.clientWidth || 640, h = host.clientHeight || 420;
+    renderer.setSize(w, h, false);
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    host.appendChild(renderer.domElement);
+
+    const disposables = [];
+    const track = function(o){ disposables.push(o); return o; };
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(BG_GRAY);
+    scene.fog = new THREE.Fog(BG_GRAY, 26, 58);          // 网格远处淡出，不抢模型
+    const camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 1000);
+    camera.position.set(10.2, 10.8, 12.8);               // 默认镜头拉远（约 1.35×）
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.08;
+    controls.autoRotate = true;                          // 默认开自动旋转
+    controls.autoRotateSpeed = 0.5;                      // 慢一点
+    controls.minDistance = 8; controls.maxDistance = 52;
+    controls.target.set(0, -0.3, 0);
+
+    // 地面网格（1cm 一格，与贴片尺寸同量级）
+    const gridY = -(HALF + 1.35);
+    const grid = track(new THREE.GridHelper(16, 16, 0xb9bcc4, 0xd2d5db));
+    grid.position.y = gridY;
+    scene.add(grid);
+    // 地面：MeshBasic（不受光）保证和背景灰完全同色，只让网格线来交待地面
+    // 地面灰色底板已于 2026-10-26 移除（只剩网格线交代透视）
+
+    // 陶瓷质感：用室内环境贴图给高光/反射（比纯 directional 更像釉面）
+    if(RoomEnv && THREE.PMREMGenerator){
+      try{
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        const envT = track(pmrem.fromScene(new RoomEnv(), 0.04).texture);
+        scene.environment = envT;
+        if('environmentIntensity' in scene) scene.environmentIntensity = 0.55;
+        pmrem.dispose();
+      }catch(e){}
+    }
+
+    // 灯光挂在相机上：相机绕模型转 = 灯跟着视线走，转到哪一面都能照亮当前面。
+    // （此前灯是世界固定位置，转到背面就只剩环境光，看着发暗。）
+    const hemiL = new THREE.HemisphereLight(0xffffff, 0xbfc4cc, 0.55); scene.add(hemiL);
+    const ambL  = new THREE.AmbientLight(0xffffff, 0.4); scene.add(ambL);
+    const key  = new THREE.DirectionalLight(0xffffff, 1.05); key.position.set( 1.1,  1.5,  1.6);
+    const fill = new THREE.DirectionalLight(0xdCE6ff, 0.4);  fill.position.set(-1.4, -0.5,  1.2);
+    const rim  = new THREE.DirectionalLight(0xffffff, 0.3);  rim.position.set( 0.2,  0.9, -1.6);
+    camera.add(key, fill, rim); scene.add(camera);
+    applyLight(L);
+
+    // 第 1 层：魔方芯（圆角，缝隙处露出；黑/白由 opts.core 决定）
+    const body = new THREE.Mesh(
+      track(new RBG(HALF*2, HALF*2, HALF*2, 3, 0.14)),
+      track(new THREE.MeshStandardMaterial({color:coreCol, roughness:0.55, metalness:0.15}))
+    );
+    scene.add(body);
+
+    // 第 2 层：插销底座（17×17，插销不做，保留厚度）；第 3 层：贴片（17×17×2.66）
+    const baseGeo = track(plateGeo(BASE_W, BASE_T, CR, 0.05));   // 底座边圆角 0.5mm
+    const tileGeo = track(plateGeo(TILE_W, TILE_T, CR, 0.085));  // 贴片边圆角 0.85mm（实物圆弧棱）
+    const planeGeo = track(new THREE.PlaneGeometry(TILE_W*0.88, TILE_W*0.88));
+    // 陶瓷质感：釉面白 —— 低粗糙 + clearcoat 清漆层 + 环境反射
+    const mkCeramic = function(c, rough){
+      return track(new THREE.MeshPhysicalMaterial({
+        color:new THREE.Color(c), roughness:rough, metalness:0,
+        clearcoat:0.85, clearcoatRoughness:0.18, specularIntensity:1
+      }));
+    };
+    const baseMatW = mkCeramic(0xf9f8f3, 0.42);
+    const tileMatW = mkCeramic(0xfcfbf7, 0.32);
+    const baseMats = [], tileMats = [];
+    for(let f=0; f<6; f++){
+      const hex = (((faces[f]||{}).color)||{}).hex || '#dcdcdc';
+      // mode: 0=正常(白底+面色字) 1=反色(面色底+白字) 2=黑底(黑底座/贴片+面色字)
+      if(mode[f] === 1){
+        baseMats[f] = mkCeramic(hex, 0.40);
+        tileMats[f] = mkCeramic(hex, 0.32);        // 与底座同色（用户要求不分深浅）
+      }else if(mode[f] === 2){
+        baseMats[f] = mkCeramic(0x14151a, 0.38);
+        tileMats[f] = mkCeramic(0x171920, 0.30);
+      }else{
+        baseMats[f] = baseMatW; tileMats[f] = tileMatW;
+      }
+    }
+    const used = [];
+    for(let f=0; f<6; f++){
+      const face = faces[f] || {tiles:[]};
+      const d = DIRS[f];
+      const n = new THREE.Vector3(...d.n), u = new THREE.Vector3(...d.u), v = new THREE.Vector3(...d.v);
+      for(let i=0; i<9; i++){
+        const t = face.tiles[i] || {};
+        const col = i % 3, row = Math.floor(i / 3);
+        const m = new THREE.Matrix4().makeBasis(u, v, n);
+        // 底座：贴在黑芯面上，凸出 BASE_T
+        const base = new THREE.Mesh(baseGeo, baseMats[f]);
+        base.quaternion.setFromRotationMatrix(m);
+        base.position.copy(n).multiplyScalar(HALF + BASE_T/2)
+          .addScaledVector(u, (col-1) * PITCH)
+          .addScaledVector(v, -(row-1) * PITCH);
+        scene.add(base);
+        // 贴片：坐在底座上的圆角厚块
+        const fHex = ((face.color||{}).hex || '#333333');
+        const tex = await svgToTexture(svgOf(t.sub, t.main, resolved(t), mode[f] === 1 ? '#ffffff' : fHex, 512));
+        track(tex);
+        const mesh = new THREE.Mesh(tileGeo, tileMats[f]);
+        mesh.quaternion.setFromRotationMatrix(m);
+        mesh.position.copy(n).multiplyScalar(HALF + BASE_T + TILE_T/2)
+          .addScaledVector(u, (col-1) * PITCH)
+          .addScaledVector(v, -(row-1) * PITCH);
+        mesh.userData = {face:f, pos:i};
+        scene.add(mesh);
+        // 文字贴图：贴在贴片顶面。用不受光的 Basic + toneMapped:false，
+        // 让字保持 SVG 原色，不被灯光/色调映射洗淡（此前「蒙层白纱」的元凶）。
+        const decal = new THREE.Mesh(planeGeo, track(new THREE.MeshBasicMaterial({
+          map:tex, transparent:true, toneMapped:false
+        })));
+        decal.quaternion.copy(mesh.quaternion);
+        decal.position.copy(mesh.position).addScaledVector(n, TILE_T/2 + 0.003);
+        decal.userData = {face:f, pos:i};
+        scene.add(decal);
+        used.push(mesh, decal);
+      }
+    }
+    const focus = function(f){
+      const d = DIRS[f];
+      const n = new THREE.Vector3(...d.n);
+      camera.position.copy(n).multiplyScalar(18).add(new THREE.Vector3(1.8, 1.6, 2.0));
+      controls.target.set(0,0,0); controls.update();
+    };
+    let raf = 0, spin = false;
+    const loop = function(){ raf = requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); };
+    loop();
+    const ro = ('ResizeObserver' in window) ? new ResizeObserver(function(){
+      w = host.clientWidth || w; h = host.clientHeight || h;
+      renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+    }) : null;
+    if(ro) ro.observe(host);
+
+    return {
+      meshes: used,
+      setSpin: function(on){ spin = on; controls.autoRotate = !!on; },
+      focus: focus,
+      setLight: function(x){ Object.assign(L, x); applyLight(L); },   // 实时改，不重建
+      getLight: function(){ return Object.assign({}, L); },
+      dispose: function(){
+        cancelAnimationFrame(raf);
+        if(ro) ro.disconnect();
+        controls.dispose();
+        disposables.forEach(function(o){ if(o.dispose) o.dispose(); });
+        used.forEach(function(m){ if(m.material && m.material.dispose) m.material.dispose(); });
+        renderer.dispose();
+        if(renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
+    };
+  }
+};
+function resolved(t){ return t.kind || window.__detectKind(t.sub, t.main) || 'TWO_LINE'; }
+</script>
+
+<script>
+"use strict";
+/* ================= 常量（与 ctg_tile_generator 插件保持一致） ================= */
+// 插件 PAL_TEXT_DEFAULT 6 个默认文字色
+var PALETTE = [
+  {name:"文字_橙", hex:"#F27317", rgb:[0.950,0.450,0.090]},
+  {name:"文字_红", hex:"#D91F1F", rgb:[0.850,0.120,0.120]},
+  {name:"文字_蓝", hex:"#1A61CC", rgb:[0.100,0.380,0.800]},
+  {name:"文字_绿", hex:"#219E40", rgb:[0.130,0.620,0.250]},
+  {name:"文字_黑", hex:"#0F0F12", rgb:[0.060,0.060,0.070]},
+  {name:"文字_紫", hex:"#7340B3", rgb:[0.450,0.250,0.700]}
+];
+var KIND_LABEL = {MAIN_SUB:"单字+拼音", TWO_LINE:"两行", MIXED:"中文+英数", SINGLE:"单行"};
+var KIND_SHORT = {MAIN_SUB:"注音", TWO_LINE:"两行", MIXED:"中英", SINGLE:"单行"};
+
+/* ---- 真实排版规格（mm）：字号=插件字号，gap=现行 54 片实测行间净距 ----
+   实测依据（Blender 5.2 量 20261025魔方贴片全_加厚2.66.blend 凸字网格）：
+     鼠/shǔ  汉字墨迹 9.208 / 拼音 3.869，净距 1.554
+     六十/甲子 6.157 / 6.423，净距 1.254
+     子时/11至1 6.758 / 4.460，净距 1.674
+   注：六十比甲子矮/窄是「六、十」字形墨迹本身比「甲、子」小（对调实验验证与行位无关）。 */
+var TILE_MM = 17;
+var FACE_MM = 15.23;                 // 顶面凸台（板 17 内缩 0.885）
+var SPEC = {
+  MAIN_SUB:{l1:{size:8.0, cjk:false, italic:true, w:600}, l2:{size:12.0, cjk:true}, gap:1.52, margin:1.2},
+  TWO_LINE:{l1:{size:8.5, cjk:true},                      l2:{size:8.5, cjk:true}, gap:1.25, margin:1.2},
+  MIXED:   {l1:{size:9.0, cjk:true},                      l2:{size:6.8, cjk:true}, gap:1.67, margin:1.2},
+  SINGLE:  {l1:null,                                      l2:{size:8.0, cjk:true}, gap:0,   margin:2.0}
+};
+var FAM_CJK = '"DengXian","Microsoft YaHei"';
+var FAM_LAT = '"Segoe UI",sans-serif';
+function famOf(sp){ return sp.cjk ? FAM_CJK : FAM_LAT; }
+var _mctx = null;
+function inkOf(sp, text){
+  if(!text) return {asc:0, desc:0, w:0};
+  if(!_mctx){ _mctx = document.createElement("canvas").getContext("2d"); }
+  var fs = 100;
+  _mctx.font = (sp.italic ? "italic " : "") + (sp.w || 700) + " " + fs + "px " + famOf(sp);
+  var m = _mctx.measureText(text);
+  var ra = (m.actualBoundingBoxAscent  != null) ? m.actualBoundingBoxAscent  / fs : (sp.cjk ? 0.77 : 0.50);
+  var rd = (m.actualBoundingBoxDescent != null) ? m.actualBoundingBoxDescent / fs : (sp.cjk ? 0.05 : 0.20);
+  var rw = (m.actualBoundingBoxLeft != null)
+    ? (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) / fs : ((m.width||0)/fs);
+  return {asc: ra * sp.size, desc: rd * sp.size, w: rw * sp.size};
+}
+/* 生成贴片正视 SVG（viewBox 单位 = mm，17 = 板宽）
+   版式与插件一致：文字块居中，可用区 = 17 − 2×边距（两行类 1.2 / 单行 2.0），
+   装不下时整块等比缩小（对应插件 text_auto 的缩放逻辑）。 */
+function tileSVG(sub, main, kind, color, px, opts){
+  var sp = SPEC[kind] || SPEC.TWO_LINE;
+  var i1 = sp.l1 ? inkOf(sp.l1, sub) : null;
+  var i2 = inkOf(sp.l2, main);
+  var h1 = i1 ? i1.asc + i1.desc : 0;
+  var h2 = i2.asc + i2.desc;
+  var Wink = Math.max(i1 ? i1.w : 0, i2.w);
+  var H = (sub && i1) ? h1 + sp.gap + h2 : h2;
+  var avail = TILE_MM - 2 * sp.margin;
+  var k = Math.min(1, Wink > 0 ? avail / Wink : 1, H > 0 ? avail / H : 1);
+  if(opts && opts.fix) k = opts.fix / (sp.l2.size || 8.5);   // 强制字号（mm），跳过自适应缩放
+  var g = sp.gap * k;
+  h1 *= k; h2 *= k; H = (sub && i1) ? h1 + g + h2 : h2;
+  var top = (TILE_MM - H) / 2;
+  var y1 = top + (i1 ? i1.asc * k : 0);
+  var y2 = (sub && i1 ? top + h1 + g : top) + i2.asc * k;
+  var inset = (TILE_MM - FACE_MM) / 2;
+  var s = '<svg class="tsvg" viewBox="0 0 17 17" xmlns="http://www.w3.org/2000/svg"'
+        + (px ? ' width="'+px+'" height="'+px+'"' : '') + '>';
+  // opts.bare = 3D 贴图用：透明底，不画灰框和凸台（底色圆角由贴片模型自己提供）
+  if(!(opts && opts.bare)){
+    s += '<rect x="0" y="0" width="17" height="17" rx="1.1" fill="#ece8dd"/>';
+    s += '<rect x="' + inset + '" y="' + inset + '" width="' + FACE_MM + '" height="' + FACE_MM + '" rx="0.9" fill="#fffdf8"/>';
+  }
+  if(sub && sp.l1){
+    s += '<text x="8.5" y="' + y1.toFixed(3) + '" font-size="' + (sp.l1.size * k).toFixed(3) + '"'
+      +  ' font-family=\'' + famOf(sp.l1) + '\' font-weight="' + (sp.l1.w || 700) + '"'
+      +  (sp.l1.italic ? ' font-style="italic"' : '')
+      +  ' text-anchor="middle" fill="' + color + '">' + escHtml(sub) + '</text>';
+  }
+  if(main){
+    s += '<text x="8.5" y="' + y2.toFixed(3) + '" font-size="' + (sp.l2.size * k).toFixed(3) + '"'
+      +  ' font-family=\'' + famOf(sp.l2) + '\' font-weight="' + (sp.l2.w || 700) + '"'
+      +  ' text-anchor="middle" fill="' + color + '">' + escHtml(main) + '</text>';
+  }
+  return s + '</svg>';
+}
+var KIND_PRESET = {
+  MAIN_SUB: "插件 kind=MAIN_SUB · 汉字 12 / 拼音 8 / 行距 1.6（整套统一）· 自动缩放关 · 第一行拉丁字体",
+  TWO_LINE: "插件 kind=TWO_LINE · 两行各 8.5 / 行距 1.0 · 自动缩放关 · 两行共用中文字体",
+  MIXED:    "插件 kind=TWO_LINE + 参数覆盖 · 第一行(中文) 9.0 / 第二行(英数) 6.8 / 行距 1.20 · 自动缩放开",
+  SINGLE:   "插件 kind=SINGLE · 只有第二行 · 字号 8"
+};
+// 默认 54 片定稿字表（_build_final_2510.py DATA，2026-10-25 跑通版）
+var DEFAULT_DATA = [
+  /* 面1 */ ["甲","jiǎ"],["乙","yǐ"],["丙","bǐng"],["子","zǐ"],["丑","chǒu"],["寅","yín"],["鼠","shǔ"],["牛","niú"],["虎","hǔ"],
+  /* 面2 */ ["庚","gēng"],["辛","xīn"],["壬","rén"],["午","wǔ"],["未","wèi"],["申","shēn"],["马","mǎ"],["羊","yáng"],["猴","hóu"],
+  /* 面3 */ ["丁","dīng"],["戊","wù"],["己","jǐ"],["卯","mǎo"],["辰","chén"],["巳","sì"],["兔","tù"],["龙","lóng"],["蛇","shé"],
+  /* 面4 */ ["癸","guǐ"],["甲子","六十"],["1949","己丑"],["酉","yǒu"],["戌","xū"],["亥","hài"],["鸡","jī"],["狗","gǒu"],["猪","zhū"],
+  /* 面5 */ ["纪年","干支"],["纪月","地支"],["纪时","地支"],["冬月","子月"],["腊月","丑月"],["正月","寅月"],["11至1","子时"],["1至3","丑时"],["3至5","寅时"],
+  /* 面6 */ ["壹","yī"],["贰","èr"],["叁","sān"],["肆","sì"],["伍","wǔ"],["陆","liù"],["柒","qī"],["捌","bā"],["玖","jiǔ"]
+];
+var DEFAULT_KINDS = [
+  "MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB",
+  "MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB",
+  "MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB",
+  "MAIN_SUB","TWO_LINE","TWO_LINE","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB",
+  "TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","MIXED","MIXED","MIXED",
+  "MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB"
+];
+
+/* ================= 状态（sessionStorage：刷新不丢，关页清空） ================= */
+var SS_KEY = "ctg_cube_table_v1";
+var state = null;
+function nowStr(){
+  var d = new Date(), p = function(x){ return (x<10?"0":"") + x; };
+  return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate())
+       + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function fileStamp(){
+  var d = new Date(), p = function(x){ return (x<10?"0":"") + x; };
+  return "" + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate());
+}
+function defaultFaces(){
+  var faces = [];
+  for(var f=0; f<6; f++){
+    var tiles = [];
+    for(var i=0; i<9; i++){
+      var d = DEFAULT_DATA[f*9+i];
+      tiles.push({main:d[0], sub:d[1], kind:DEFAULT_KINDS[f*9+i]});
+    }
+    faces.push({name:"面"+(f+1), color:{name:PALETTE[f].name, hex:PALETTE[f].hex, rgb:PALETTE[f].rgb}, tiles:tiles});
+  }
+  return faces;
+}
+function loadState(){
+  try{
+    var raw = sessionStorage.getItem(SS_KEY);
+    if(raw){ var s = JSON.parse(raw); if(s && s.faces && s.faces.length===6) return s; }
+  }catch(e){}
+  return {faces:defaultFaces()};
+}
+function saveState(){
+  try{ sessionStorage.setItem(SS_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ================= kind 自动检测 ================= */
+function hasLatin(s){ return /[A-Za-z0-9]/.test(s||""); }
+function hasCJK(s){ return /[\u3400-\u4dbf\u4e00-\u9fff]/.test(s||""); }
+function detectKind(sub, main){
+  if(!sub && !main) return null;
+  if(!main && sub) return "SINGLE";
+  if(!sub && main) return "SINGLE";
+  if(hasLatin(main) && hasCJK(main)) return "MIXED";
+  if(hasLatin(sub) && !hasLatin(main) && hasCJK(main) && Array.from(main).length===1) return "MAIN_SUB";
+  if(hasLatin(sub) && hasLatin(main) && !hasCJK(main)) return "MAIN_SUB";
+  return "TWO_LINE";
+}
+window.__detectKind = detectKind;      // module 脚本要用
+function resolvedKind(t){ return t.kind || detectKind(t.sub, t.main); }
+function isEmptyTile(t){ return !t.main && !t.sub; }
+function countFilled(faces){
+  var n = 0;
+  faces.forEach(function(f){ f.tiles.forEach(function(t){ if(!isEmptyTile(t)) n++; }); });
+  return n;
+}
+
+/* ================= 渲染 ================= */
+var cubeEl = document.getElementById("cube");
+function escHtml(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function escAttr(s){ return escHtml(s); }
+function render(){
+  cubeEl.innerHTML = "";
+  for(var f=0; f<6; f++){
+    var face = state.faces[f];
+    var fd = document.createElement("div");
+    fd.className = "face f"+(f+1);
+    var filled = face.tiles.filter(function(t){return !isEmptyTile(t);}).length;
+    var h = '<div class="face-head">'
+      + '<div class="swatch" data-face="'+f+'" title="点击换面色" style="background:'+face.color.hex+'"></div>'
+      + '<input class="face-name" data-face="'+f+'" value="'+escAttr(face.name)+'" title="面名称">'
+      + '<span class="face-count">'+filled+'/9</span>'
+      + '</div><div class="grid9">';
+    for(var i=0; i<9; i++){
+      var t = face.tiles[i];
+      if(isEmptyTile(t)){
+        h += '<div class="cell empty" data-face="'+f+'" data-pos="'+i+'">'
+           + '<span class="plus">＋</span></div>';
+      }else{
+        var k = resolvedKind(t);
+        h += '<div class="cell" data-face="'+f+'" data-pos="'+i+'" title="'+escAttr(KIND_LABEL[k]||"")+'">'
+           + tileSVG(t.sub, t.main, k, face.color.hex)
+           + '<span class="kd">'+escHtml(KIND_SHORT[k]||"")+'</span></div>';
+      }
+    }
+    h += '</div>';
+    fd.innerHTML = h;
+    cubeEl.appendChild(fd);
+  }
+  saveState();
+}
+/* 统计行已于 2026-10-26 按用户要求移除（原 st_filled / st_kinds） */
+
+/* ================= 编辑弹窗 ================= */
+var editing = {face:-1, pos:-1};
+var editSnap = null;                       // 打开时的快照，「重置本格」用
+var editMask = document.getElementById("edit_mask");
+var fSub = document.getElementById("f_sub"), fMain = document.getElementById("f_main"), fKind = document.getElementById("f_kind");
+function openEditor(f, i){
+  editing = {face:f, pos:i};
+  var t = state.faces[f].tiles[i];
+  editSnap = {sub:t.sub||"", main:t.main||"", kind:t.kind||null};
+  fSub.value = editSnap.sub; fMain.value = editSnap.main; fKind.value = editSnap.kind;
+  document.getElementById("ed_title").textContent = "编辑格子 · 第 "+(i+1)+" 格";
+  document.getElementById("ed_face").textContent = state.faces[f].name;
+  refreshEditorPreview();
+  editMask.classList.add("show");
+  setTimeout(function(){ fMain.focus(); }, 60);
+}
+function refreshEditorPreview(){
+  var sub = fSub.value.trim(), main = fMain.value.trim();
+  var k = fKind.value ? fKind.value : detectKind(sub, main);
+  var face = state.faces[editing.face];
+  var color = face ? face.color.hex : "#333";
+  document.getElementById("mini").innerHTML = tileSVG(sub, main, k || "TWO_LINE", color);
+  var hint = document.getElementById("kind_hint");
+  if(!sub && !main){
+    hint.innerHTML = "空格子：保存后此格为空。";
+  }else{
+    hint.innerHTML = "当前类型：<b>"+escHtml(KIND_LABEL[k]||k||"—")+"</b><br>"+(KIND_PRESET[k]||"");
+  }
+}
+fSub.addEventListener("input", refreshEditorPreview);
+fMain.addEventListener("input", refreshEditorPreview);
+fKind.addEventListener("change", refreshEditorPreview);
+document.getElementById("ed_save").addEventListener("click", function(){
+  var t = state.faces[editing.face].tiles[editing.pos];
+  t.sub = fSub.value.trim(); t.main = fMain.value.trim(); t.kind = fKind.value || null;
+  editMask.classList.remove("show");
+  render(); toast("已保存");
+});
+document.getElementById("ed_cancel").addEventListener("click", function(){ editMask.classList.remove("show"); });
+/* 重置本格 = 回到打开弹窗时的样子（用户选乱了可以退回重来） */
+document.getElementById("ed_reset").addEventListener("click", function(){
+  fSub.value = editSnap.sub; fMain.value = editSnap.main; fKind.value = editSnap.kind;
+  refreshEditorPreview(); toast("已恢复到打开时的内容");
+});
+document.getElementById("ed_clear").addEventListener("click", function(){
+  fSub.value=""; fMain.value=""; fKind.value=""; refreshEditorPreview(); toast("已清空，点保存生效");
+});
+
+/* ================= 面色弹层 ================= */
+var pop = document.getElementById("pop");
+var popFace = -1;
+function buildPopColors(){
+  var box = document.getElementById("pop_colors");
+  box.innerHTML = "";
+  PALETTE.forEach(function(p){
+    var d = document.createElement("div");
+    d.style.cssText = "width:26px;height:26px;border-radius:6px;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.22);background:"+p.hex;
+    d.title = p.name;
+    d.addEventListener("click", function(){
+      state.faces[popFace].color = {name:p.name, hex:p.hex, rgb:p.rgb};
+      hidePop(); render();
+    });
+    box.appendChild(d);
+  });
+}
+function hexToRgb(hex){
+  var m = /^#?([0-9a-fA-F]{6})$/.exec((hex||"").trim());
+  if(!m) return null;
+  var v = parseInt(m[1],16);
+  return [((v>>16)&255)/255, ((v>>8)&255)/255, (v&255)/255];
+}
+document.getElementById("pop_hex").addEventListener("change", function(){
+  var rgb = hexToRgb(this.value);
+  if(!rgb){ toast("颜色格式不对，要 #RRGGBB"); return; }
+  state.faces[popFace].color = {name:"自定义", hex:this.value.trim(), rgb:rgb};
+  hidePop(); render();
+});
+function showPop(f, anchor){
+  popFace = f;
+  document.getElementById("pop_hex").value = state.faces[f].color.hex;
+  var r = anchor.getBoundingClientRect();
+  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth-190)) + "px";
+  pop.style.top  = (r.bottom + 8 + window.scrollY) + "px";
+  pop.style.display = "block";
+}
+function hidePop(){ pop.style.display = "none"; }
+document.addEventListener("click", function(e){
+  if(pop.style.display === "block" && !pop.contains(e.target) && !e.target.classList.contains("swatch")) hidePop();
+});
+buildPopColors();
+
+/* ================= 网格事件（委托） ================= */
+cubeEl.addEventListener("click", function(e){
+  var sw = e.target.closest(".swatch");
+  if(sw){ showPop(+sw.dataset.face, sw); return; }
+  if(e.target.closest(".face-name")) return;
+  var cell = e.target.closest(".cell");
+  if(cell){ openEditor(+cell.dataset.face, +cell.dataset.pos); }
+});
+cubeEl.addEventListener("change", function(e){
+  var nm = e.target.closest(".face-name");
+  if(nm){
+    state.faces[+nm.dataset.face].name = nm.value.trim() || ("面"+(+nm.dataset.face+1));
+    saveState();
+  }
+});
+
+/* ================= 导出 ================= */
+var expMask = document.getElementById("exp_mask");
+function buildJSONObj(){
+  var faces = state.faces.map(function(face, fi){
+    return {
+      index: fi+1, name: face.name,
+      color: {name:face.color.name, hex:face.color.hex,
+              rgb:face.color.rgb ? face.color.rgb.map(function(x){return Math.round(x*1000)/1000;}) : null},
+      tiles: face.tiles.map(function(t, ti){
+        return {pos: ti+1, text_sub: t.sub||"", text_main: t.main||"", kind: resolvedKind(t)};
+      })
+    };
+  });
+  return {
+    meta: {
+      tool: "魔方贴片字表编辑器（wlili.top/tools/cube-tile-table.html）",
+      exported: new Date().toLocaleString("zh-CN"),
+      plugin: "ctg_tile_generator v1.27（Blender 5.2 插件）",
+      standard: {
+        底板: "17×17×2.66 mm，圆角 1.1，顶面凸字 0.6 mm",
+        顶面凸台: "15.23×15.23 mm；文字可用区 = 板 − 2×边距（两行类 1.2 / 单行 2.0），超限整块等比缩",
+        孔: "四角 φ2.45 × 深 1.8，孔心距 ±5.5",
+        销: "φ2.03，直径配合间隙 0.42",
+        中文: "DengXian Bold（C:\\WINDOWS\\Fonts\\Dengb.ttf）",
+        拼音: "Segoe UI Semibold Italic（seguisbi.ttf）",
+        底座色: "文字_白 #EDEDE8"
+      },
+      kind_map: {
+        MAIN_SUB: "单字+拼音：插件 kind='MAIN_SUB'，第二行汉字 12 / 第一行拼音 8 / 行距 1.6，text_auto=False",
+        TWO_LINE: "两行：插件 kind='TWO_LINE'，两行各 8.5 / 行距 1.0，text_auto=False",
+        MIXED: "中文+英数：插件 kind='TWO_LINE' + 覆盖 第一行 9.0 / 第二行 6.8 / 行距 1.20，text_auto=True",
+        SINGLE: "单行：插件 kind='SINGLE'，只有第二行，字号 8"
+      },
+      usage: "faces 顺序即 6 个面（0上/1左/2前/3右/4后/5下）；tiles 按 pos 1-9 行优先排 3×3。text_sub=第一行(上)、text_main=第二行(下)。"
+    },
+    faces: faces
+  };
+}
+function buildJSON(){ return JSON.stringify(buildJSONObj(), null, 2); }
+function mdCell(s){ return (s||"").replace(/\|/g,"\\|").replace(/\r?\n/g," "); }
+function buildMD(){
+  var L = [], n = countFilled(state.faces), kinds = {};
+  state.faces.forEach(function(f){
+    f.tiles.forEach(function(t){
+      if(isEmptyTile(t)) return;
+      var k = resolvedKind(t); kinds[k] = (kinds[k]||0) + 1;
+    });
+  });
+  var kindTxt = Object.keys(kinds).map(function(k){
+    return (KIND_LABEL[k]||k) + " " + kinds[k];
+  }).join(" · ") || "（全空）";
+
+  L.push("# 魔方贴片字表");
+  L.push("");
+  L.push("> 类型：数据字典（字表快照，豁免六块骨架，保留来源 + 日期）");
+  L.push("> 来源：wlili.top/tools/cube-tile-table.html 导出 · " + nowStr());
+  L.push("> 状态：已填 **" + n + "** / 54 · " + kindTxt);
+  L.push("");
+  L.push("## 结论（先读这一段）");
+  L.push("");
+  L.push("- 本文件是一整套魔方文案的完整字表快照：6 面 × 9 格 = 54 片，当前已填 **" + n + "** 片。");
+  L.push("- **重建 / 改字一律以本文为准**：不要再解析 blend / 3mf 去找字表（那里只有烘焙后的网格，字已改不了）。");
+  L.push("- 每片两行：`text_sub` = 第一行（上）、`text_main` = 第二行（下）；kind 取值与插件枚举对应关系见下节。");
+  L.push("- 文末《机器可读 JSON》是全量数据：AI 可直接据此生成 Blender 构建脚本。");
+  L.push("");
+  L.push("## 规格（导出时固化，源自插件 v1.27 STANDARD）");
+  L.push("");
+  L.push("| 项 | 取值 |");
+  L.push("|---|---|");
+  L.push("| 底板 | 17 × 17 × **2.66** mm，圆角 1.1 |");
+  L.push("| 顶面凸台 | 15.23 × 15.23 mm |");
+  L.push("| 凸字 | 高 0.6 mm；可用区 = 板 − 2×边距（两行类 1.2 / 单行 2.0），超限整块等比缩 |");
+  L.push("| 孔 | 四角 φ2.45 × 深 1.8，孔心距 ±5.5 |");
+  L.push("| 销 | φ2.03，直径配合间隙 0.42 |");
+  L.push("| 中文 | DengXian Bold（`C:\\WINDOWS\\Fonts\\Dengb.ttf`） |");
+  L.push("| 拼音 / 拉丁 | Segoe UI Semibold Italic（`seguisbi.ttf`） |");
+  L.push("| 底座色 | 文字_白 `#EDEDE8` |");
+  L.push("");
+  L.push("## kind 与字号映射");
+  L.push("");
+  L.push("| 导出 kind | 插件取值 | 参数 |");
+  L.push("|---|---|---|");
+  L.push("| MAIN_SUB | `kind='MAIN_SUB'` | 第一行拼音 8 / 第二行汉字 12 / 行距 1.20 / text_auto=False |");
+  L.push("| TWO_LINE | `kind='TWO_LINE'` | 两行各 8.5 / 行距 1.0 / text_auto=False |");
+  L.push("| MIXED | `kind='TWO_LINE'` + 参数覆盖 | 第一行中文 9.0 / 第二行英数 6.8 / 行距 1.20 / text_auto=True |");
+  L.push("| SINGLE | `kind='SINGLE'` | 只有第二行，字号 8 |");
+  L.push("");
+  L.push("## 面与配色");
+  L.push("");
+  L.push("| 面 | 名称 | 文字色材料 | HEX | 线性 RGB |");
+  L.push("|---|---|---|---|---|");
+  state.faces.forEach(function(f, i){
+    var rgb = f.color.rgb || hexToRgb(f.color.hex) || [0,0,0];
+    L.push("| " + (i+1) + " | " + mdCell(f.name) + " | " + mdCell(f.color.name) + " | `" +
+      f.color.hex + "` | " + rgb.map(function(x){ return x.toFixed(3); }).join(", ") + " |");
+  });
+  L.push("");
+  L.push("## 字表（按面 · 第一行在上 / 第二行在下）");
+  state.faces.forEach(function(f, fi){
+    L.push("");
+    L.push("### 面" + (fi+1) + " " + mdCell(f.name) + "（" + mdCell(f.color.name) + " " + f.color.hex + "）");
+    L.push("");
+    L.push("| # | 第一行（text_sub） | 第二行（text_main） | kind |");
+    L.push("|---|---|---|---|");
+    f.tiles.forEach(function(t, ti){
+      L.push("| " + (ti+1) + " | " + (mdCell(t.sub) || "—") + " | " + (mdCell(t.main) || "—") +
+             " | " + resolvedKind(t) + " |");
+    });
+  });
+  L.push("");
+  L.push("## 机器可读 JSON");
+  L.push("");
+  L.push("> 全量数据 = 上面所有表格 + 元信息；AI 读这一段即可生成 Blender 构建脚本。");
+  L.push("");
+  L.push("```json");
+  L.push(buildJSON());
+  L.push("```");
+  L.push("");
+  return L.join("\n");
+}
+function pyStr(s){ return '"' + (s||"").replace(/\\/g,"\\\\").replace(/"/g,'\\"') + '"'; }
+function buildPY(){
+  var lines = [];
+  lines.push("# -*- coding: utf-8 -*-");
+  lines.push("# 魔方贴片字表 · 由 wlili.top/tools/cube-tile-table.html 导出 · " + nowStr());
+  lines.push("# 用法：整体替换 _build_final_2510.py 顶部的 DATA 与 FACES 配色段，再跑构建脚本。");
+  lines.push("# 元组: (第二行 text_main, 第一行 text_sub, 面号 1-6, kind)");
+  lines.push("# kind: MAIN_SUB=单字+拼音(12/8/1.6) · TWO_LINE=两行(8.5/8.5/1.0) ·");
+  lines.push("#       MIXED=中文+英数(TWO_LINE+9.0/6.8/1.20/自动开) · SINGLE=单行(8)");
+  lines.push("DATA = [");
+  var n = 0;
+  state.faces.forEach(function(face, fi){
+    lines.push("    # ---- " + face.name + "（" + face.color.name + " " + face.color.hex + "）----");
+    face.tiles.forEach(function(t, ti){
+      if(isEmptyTile(t)) return;
+      lines.push("    (" + pyStr(t.main) + ", " + pyStr(t.sub) + ", " + (fi+1) + ", '" + resolvedKind(t) + "'),");
+      n++;
+    });
+  });
+  lines.push("]");
+  lines.push("assert len(DATA) == " + n + ', "字表应是 ' + n + ' 片，当前 %d" % len(DATA)');
+  lines.push("");
+  lines.push("# 面配色（名字, 线性 RGB 0-1）——对应插件调色板 6 默认文字色");
+  lines.push("FACE_COLORS = {");
+  state.faces.forEach(function(face, fi){
+    var rgb = face.color.rgb ? face.color.rgb : hexToRgb(face.color.hex) || [0,0,0];
+    lines.push("    " + (fi+1) + ": (" + pyStr(face.color.name) + ", (" +
+      rgb.map(function(x){ return x.toFixed(3); }).join(", ") + ")),");
+  });
+  lines.push("}");
+  return lines.join("\n");
+}
+var expTa = document.getElementById("exp_ta");
+var expTab = "md";
+function refreshExp(){
+  expTa.value = expTab==="md" ? buildMD() : expTab==="json" ? buildJSON() : buildPY();
+}
+document.getElementById("btn_export").addEventListener("click", function(){ refreshExp(); expMask.classList.add("show"); });
+document.getElementById("exp_close").addEventListener("click", function(){ expMask.classList.remove("show"); });
+expMask.addEventListener("click", function(e){ if(e.target===expMask) expMask.classList.remove("show"); });
+Array.prototype.forEach.call(document.querySelectorAll(".ctg-tab"), function(tb){
+  tb.addEventListener("click", function(){
+    Array.prototype.forEach.call(document.querySelectorAll(".ctg-tab"), function(x){ x.classList.remove("on"); });
+    tb.classList.add("on"); expTab = tb.dataset.t; refreshExp();
+  });
+});
+document.getElementById("exp_copy").addEventListener("click", function(){
+  expTa.select();
+  var ok = false;
+  try{ ok = document.execCommand("copy"); }catch(e){}
+  if(!ok && navigator.clipboard){ navigator.clipboard.writeText(expTa.value); ok = true; }
+  toast(ok ? "已复制到剪贴板" : "复制失败，请手动全选复制");
+});
+document.getElementById("exp_download").addEventListener("click", function(){
+  var f, mime;
+  if(expTab==="md"){ f = "魔方贴片字表_" + fileStamp() + ".md"; mime = "text/markdown;charset=utf-8"; }
+  else if(expTab==="json"){ f = "魔方贴片字表_" + fileStamp() + ".json"; mime = "application/json;charset=utf-8"; }
+  else { f = "魔方贴片_DATA_" + fileStamp() + ".py"; mime = "text/plain;charset=utf-8"; }
+  var blob = new Blob([expTa.value], {type:mime});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = f; a.click();
+  URL.revokeObjectURL(a.href);
+  toast("已下载 " + f);
+});
+
+/* ================= 重置 ================= */
+document.getElementById("btn_reset").addEventListener("click", function(){
+  if(!confirm("确定把全部 54 格重置为默认字表？当前填写会丢失。")) return;
+  state = {faces:defaultFaces()}; saveState(); render(); toast("已重置为默认字表");
+});
+
+/* ================= 3D 预览 ================= */
+var pvMask = document.getElementById("pv_mask");
+var pvHandle = null;
+/* 预览展示选项（仅观感，不进导出数据）：core 黑/白 + 每面配色模式
+   mode: 0=正常（白底座/白贴片 + 面色字）· 1=反色（面色底座/贴片 + 白字）· 2=黑底（黑底座/黑贴片 + 面色字）
+   灯光已固化在 module 的 LIGHT_DEF（2026-10-26 用户实调定稿），此处不再管理 */
+var MODE_LABEL = ["正", "反", "黑"];
+var pvOpts = (function(){
+  try{ var s = JSON.parse(sessionStorage.getItem("ctg_tile_pv_v1") || "null"); }catch(e){ s = null; }
+  var bad = !s || !s.mode || s.mode.length !== 6 || (s.core !== "black" && s.core !== "white");
+  if(bad) s = {core:"black", mode:[0,0,0,0,0,0]};
+  else s.mode = s.mode.map(function(m){ return (m === 1 || m === 2) ? m : 0; });
+  delete s.light; delete s.inv;
+  return s;
+})();
+function savePv(){ try{ sessionStorage.setItem("ctg_tile_pv_v1", JSON.stringify(pvOpts)); }catch(e){} }
+/* 灯光调节 UI 已移除（2026-10-26）：参数固化在 module 的 LIGHT_DEF，不再走 sessionStorage */
+
+function doBuild3D(){
+  var host = document.getElementById("pv_host");
+  if(pvHandle){ try{ pvHandle.dispose(); }catch(e){} pvHandle = null; }
+  if(!window.__cube3d) return Promise.reject(new Error("3D 模块未就绪"));
+  host.innerHTML = '<div class="pv-loading" id="pv_loading">正在生成 54 片贴图…</div>';
+  return window.__cube3d.build(host, state.faces, function(sub, main, kind, hex, px){
+    return tileSVG(sub, main, kind, hex, px, {bare:true});
+  }, pvOpts).then(function(h){
+    pvHandle = h;
+    var info = document.getElementById("pv_info");
+    if(info) info.textContent = "已填 " + countFilled(state.faces) + " / 54 片";
+    document.getElementById("pv_spin").checked = true;   // 默认开旋转
+    h.setSpin(true);
+  });
+}
+function rebuild3D(){
+  doBuild3D().catch(function(e){ toast("重建失败：" + e.message); });
+}
+function syncCoreUI(){
+  var box = document.getElementById("pv_core");
+  if(!box) return;
+  [].forEach.call(box.querySelectorAll("label"), function(lb){
+    var v = lb.getAttribute("data-v"), on = (v === pvOpts.core);
+    lb.classList.toggle("on", on);
+    var r = lb.querySelector("input"); if(r) r.checked = on;
+  });
+}
+document.getElementById("btn_preview").addEventListener("click", function(){
+  pvMask.classList.add("show");
+  syncCoreUI();
+  buildPrevChips();
+  var tries = 0;
+  (function tryBuild(){
+    tries++;
+    if(!window.__cube3d){
+      // module 脚本是 defer 执行的；最多等 4s，仍没有就明确报错（three 走 unpkg CDN）
+      if(tries > 40){
+        document.getElementById("pv_host").innerHTML =
+          '<div class="pv-loading">3D 模块未就绪：three@0.170.0 走 unpkg CDN，请检查网络后重新点「生成预览」。</div>';
+        return;
+      }
+      setTimeout(tryBuild, 100); return;
+    }
+    doBuild3D().catch(function(err){
+      document.getElementById("pv_host").innerHTML =
+        '<div class="pv-loading">预览失败：' + escHtml(err.message) + '</div>';
+    });
+  })();
+});
+function closePreview(){
+  pvMask.classList.remove("show");
+  if(pvHandle){ try{ pvHandle.dispose(); }catch(e){} pvHandle = null; }
+  var host = document.getElementById("pv_host");
+  host.innerHTML = '<div class="pv-loading" id="pv_loading">正在加载 3D 环境…</div>';
+}
+document.getElementById("pv_close").addEventListener("click", closePreview);
+pvMask.addEventListener("click", function(e){ if(e.target===pvMask) closePreview(); });
+document.getElementById("pv_spin").addEventListener("change", function(){
+  if(pvHandle) pvHandle.setSpin(this.checked);
+});
+document.getElementById("pv_core").addEventListener("change", function(){
+  var sel = this.querySelector("input:checked");
+  if(!sel) return;
+  pvOpts.core = sel.value; savePv(); syncCoreUI();
+  rebuild3D();
+});
+/* 右上角刷新：按当前字表与选项整棵重建 */
+document.getElementById("pv_reload").addEventListener("click", function(){
+  rebuild3D();
+  toast("已刷新预览");
+});
+/* 「统一配色」：点一次把六面统一推进到下一个模式 正常→反色→黑底→正常，
+   按钮文字显示「将要变成」的模式，避免误点 */
+var pvAllBtn = document.getElementById("pv_all_mode");
+function refreshAllBtn(){
+  var cur = pvOpts.mode[0], next = (cur + 1) % 3;
+  var unified = pvOpts.mode.every(function(m){ return m === cur; });
+  pvAllBtn.textContent = "统一：" + MODE_LABEL[next] + (unified ? "" : "（现为混合）");
+}
+pvAllBtn.addEventListener("click", function(){
+  var next = (pvOpts.mode[0] + 1) % 3;
+  pvOpts.mode = pvOpts.mode.map(function(){ return next; });
+  savePv(); buildPrevChips();
+  rebuild3D();
+});
+function buildPrevChips(){
+  var box = document.getElementById("pv_faces");
+  box.innerHTML = "";
+  ["上","左","前","右","后","下"].forEach(function(lb, i){
+    var f = state.faces[i];
+    var m = pvOpts.mode[i] || 0;
+    var b = document.createElement("div");
+    b.className = "pv-face" + (m ? (m === 2 ? " blk" : " inv") : "");
+    b.innerHTML = '<span class="dot" style="background:'+f.color.hex+'"></span>'
+                + '<span class="nm">' + (i+1) + "·" + escHtml(lb) + '</span>'
+                + '<span class="sw">' + MODE_LABEL[m] + '</span>';
+    b.querySelector(".dot").addEventListener("click", function(ev){
+      ev.stopPropagation();
+      pvOpts.mode[i] = (m + 1) % 3;                 // 正 → 反 → 黑 → 正
+      savePv(); buildPrevChips();
+      doBuild3D().catch(function(e){ toast("重建失败：" + e.message); });
+    });
+    b.addEventListener("click", function(){ if(pvHandle) pvHandle.focus(i); });
+    box.appendChild(b);
+  });
+  refreshAllBtn();
+}
+
+/* ================= toast / 快捷键 ================= */
+var toastTimer = null;
+function toast(msg){
+  var t = document.getElementById("ctg_toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 1800);
+}
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    editMask.classList.remove("show");
+    expMask.classList.remove("show");
+    if(pvMask.classList.contains("show")) closePreview();
+    hidePop();
+  }
+});
+
+/* ================= 启动 ================= */
+/* 操作面：三枚按钮用「真贴片渲染」画内容 —— 字号/比例与模型里的
+   两行片（干支纪年那类）完全一致，而不是随便给个 px 字号 */
+(function paintToolFace(){
+  [].forEach.call(document.querySelectorAll(".tb-face .btn-outline"), function(b){
+    if(b.__painted) return;
+    b.innerHTML = tileSVG(b.getAttribute("data-l1"), b.getAttribute("data-l2"), "TWO_LINE", "#22222a", 0, {fix:7.385});
+    b.__painted = true;
+  });
+})();
+state = loadState();
+render();
+</script>
+</body>
+</html>
