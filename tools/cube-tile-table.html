@@ -37,6 +37,37 @@
 .tb-face .btn-outline:hover{
   transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.25);
 }
+/* 尺寸预设一行：跨三列，白底细长条，和上面三枚贴片同材质。
+   下拉用全站组件（select.form-select → .sel）；这里让「整条 = 触发器」，
+   这样弹层宽度自动等于整条宽度（和上面那排按钮同宽），不用 inline 模式 */
+.tb-face .tb-size{
+  grid-column:1 / -1; display:block;
+  height:26px; padding:0; border-radius:8px;
+  background:#fffdf8; color:var(--ink); font-size:11px;
+}
+.tb-face .tb-size .sel{display:block; width:100%;}
+.tb-face .tb-size .sel-trigger,
+.tb-face .tb-size .sel-trigger.compact{
+  width:100%; min-height:24px; padding:0 22px 0 8px; border:none; background:transparent;
+  font-size:11px; line-height:24px; justify-content:space-between; text-align:left;
+}
+.tb-face .tb-size .sel-trigger::before{content:"尺寸"; opacity:.55;}
+.tb-face .tb-size .sel-label{flex:1; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tb-face .tb-size .sel-trigger:hover,
+.tb-face .tb-size .sel-trigger:focus,
+.tb-face .tb-size .sel-trigger:focus-visible,
+.tb-face .tb-size .sel.is-open .sel-trigger{border:none; box-shadow:none;}
+.tb-face .tb-size .sel-chevron{right:8px; width:12px; height:12px;}
+/* 导入字表：与尺寸条同宽的细长按钮（白底同材质，hover 提亮） */
+.tb-face .tb-import{
+  grid-column:1 / -1; display:flex; align-items:center; justify-content:center; gap:6px;
+  height:24px; padding:0 8px; border:none; border-radius:8px;
+  background:#fffdf8; color:var(--ink); font-family:inherit; font-size:11px;
+  cursor:pointer; transition:background .12s;
+}
+.tb-face .tb-import svg{width:12px; height:12px; opacity:.6;}
+.tb-face .tb-import:hover{background:#fff;}
+.tb-face .tb-import:active{transform:translateY(1px);}
 
 /* ---------- 展开魔方：上 1 / 中 4 / 下 1（尺寸按视口高自动收缩，保证一屏放下） ---------- */
 :root{--fw:min(232px, calc((100vh - 196px)/3));}   /* 面宽；.cube 与迷你贴片按钮共用 */
@@ -94,8 +125,6 @@
   opacity:0; transition:opacity .12s;
 }
 .cell:hover .kd{opacity:1;}
-
-/* 底部小字提示已于 2026-10-26 移除（原 .ctg-note） */
 
 /* ---------- 弹窗（全站风格兜底：本土三個弹窗自己一套类名，避免后台 missing-class 陷阱） ---------- */
 .ctg-mask{
@@ -245,7 +274,15 @@
 @media (max-width:768px){
   /* 移动端：竖排单列。注意 .face.fN 显式行列必须重置，否则会跑到不存在的列 */
   .ctg-stage{padding:0 0 var(--space-4);}
-  .cube{--fw:min(320px, 88vw); grid-template-columns:1fr; gap:var(--space-5); justify-items:center;}
+  /* 宽度对齐顶部操作面：面板 = calc(100% − 28px)（左右各 14px），
+     这里把区块内边距也收成 14px，并让 .cube 撑满 —— 否则 .cube 会按内容宽度收缩，
+     面块比上面的面板窄一截（2026-10-27 用户截图）。 */
+  .ctg-sec .section-inner{padding:0 14px;}
+  .cube{
+    --fw:min(320px, 88vw);
+    width:100%; max-width:340px; margin:0 auto;
+    grid-template-columns:1fr; gap:var(--space-5); justify-items:stretch;
+  }
   :root{--fw:min(320px, 88vw);}
   .cube .face{grid-column:auto; grid-row:auto; width:100%; max-width:340px;}
   /* 移动端放弃一屏（竖排必然超一屏），操作面回到页面顶部 */
@@ -276,6 +313,18 @@
   <button class="btn-outline" id="btn_preview" data-l1="生成" data-l2="预览" aria-label="生成预览"></button>
   <button class="btn-outline" id="btn_export" data-l1="导出" data-l2="字表" aria-label="导出字表"></button>
   <button class="btn-outline" id="btn_reset"  data-l1="重置" data-l2="字表" aria-label="重置字表"></button>
+  <label class="tb-size" title="尺寸预设：决定预览与导出里的贴片 / 底座尺寸（与 Blender 插件 v1.28 预设一致）">
+    <select id="size_sel" class="form-select" data-sel-compact aria-label="贴片尺寸预设">
+      <option value="P17">17 × 17</option>
+      <option value="P15">15 × 15</option>
+      <option value="M15">15（底座 17）</option>
+    </select>
+  </label>
+  <button class="tb-import" id="btn_import" type="button" title="导入之前导出的 .md 或 .json 字表（自动识别尺寸预设）">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+    导入字表
+  </button>
+  <input type="file" id="import_file" accept=".md,.markdown,.json,text/markdown,application/json" hidden>
 </div>
 
 <section class="section ctg-sec">
@@ -343,8 +392,10 @@
       <div class="ctg-tab" data-t="py">Python 片段（直接进构建脚本）</div>
     </div>
     <div class="ctg-ta-wrap"><textarea class="ctg-ta" id="exp_ta" readonly spellcheck="false"></textarea></div>
-    <div class="ctg-foot">
-      <div class="left"><button class="btn-outline" id="exp_download">下载文件</button></div>
+    <div class="ctg-foot exp-foot">
+      <div class="left">
+        <button class="btn-outline" id="exp_download">下载文件</button>
+      </div>
       <button class="btn-outline" id="exp_close">关闭</button>
       <button class="btn-filled" id="exp_copy">复制到剪贴板</button>
     </div>
@@ -429,10 +480,9 @@ async function ensure3D(){
    贴片插销底座凸出 2.5（插销不做，保留底座厚度）；贴片本体 17×17×2.66。
    三层结构：黑芯 → 白底座 → 贴片，还原实拍拼装观感。 */
 const PITCH = 1.9, HALF = PITCH * 1.5;       // 黑芯半宽 28.5mm
-const BASE_T = 0.17, TILE_T = 0.266;         // 底座露出厚 / 贴片厚
+const BASE_T = 0.17, TILE_T = 0.266;         // 底座露出厚 / 贴片厚（不随尺寸预设变）
 const BG_GRAY = 0xe6e8ec;                    // 预览背景灰
-const BASE_W = 1.70, TILE_W = 1.68;          // 底座 17 / 贴片略缩出阶梯
-const CR = 0.11;                             // 平面圆角 1.1mm（插件 corner_r）
+const CR = 0.11;                             // 底座平面圆角 1.1mm（贴片圆角按预设另算）
 /* 灯光默认值（界面上实时调好后把数值回填到这里） */
 const LIGHT_DEF = {key:2.95, fill:1.80, rim:0.95, hemi:1.05, amb:0.763, exp:0.50};   // 用户 2026-10-26 实调定稿
 function roundedRect(w, r){                  // 中心在原点的圆角矩形（xy 平面）
@@ -569,9 +619,13 @@ window.__cube3d = {
     );
     scene.add(body);
 
-    // 第 2 层：插销底座（17×17，插销不做，保留厚度）；第 3 层：贴片（17×17×2.66）
+    // 第 2 层：插销底座（默认 17×17，插销不做，保留厚度）；第 3 层：贴片（随尺寸预设）
+    // 尺寸预设由经典脚本写入 window.__ctgSize（cm）：tile 贴片 / base 销板 / cr 贴片圆角。
+    // 厚度 BASE_T、TILE_T 与孔位不随预设变（与插件规则一致）。
+    const SZ = Object.assign({tile: 1.68, base: 1.70, cr: 0.11}, window.__ctgSize || {});
+    const BASE_W = SZ.base, TILE_W = SZ.tile, CR_T = SZ.cr;
     const baseGeo = track(plateGeo(BASE_W, BASE_T, CR, 0.05));   // 底座边圆角 0.5mm
-    const tileGeo = track(plateGeo(TILE_W, TILE_T, CR, 0.085));  // 贴片边圆角 0.85mm（实物圆弧棱）
+    const tileGeo = track(plateGeo(TILE_W, TILE_T, CR_T, 0.085 * (TILE_W / 1.68)));  // 贴片圆角/倒角随预设缩
     const planeGeo = track(new THREE.PlaneGeometry(TILE_W*0.88, TILE_W*0.88));
     // 陶瓷质感：釉面白 —— 低粗糙 + clearcoat 清漆层 + 环境反射
     const mkCeramic = function(c, rough){
@@ -694,12 +748,54 @@ var KIND_SHORT = {MAIN_SUB:"注音", TWO_LINE:"两行", MIXED:"中英", SINGLE:"
    注：六十比甲子矮/窄是「六、十」字形墨迹本身比「甲、子」小（对调实验验证与行位无关）。 */
 var TILE_MM = 17;
 var FACE_MM = 15.23;                 // 顶面凸台（板 17 内缩 0.885）
-var SPEC = {
+/* ---- 尺寸预设（与 Blender 插件 v1.28 的 preset 一一对应）----
+   tile = 贴片边长 · base = 底座（销板）边长 · cr = 贴片圆角 · holeDx = 孔心距
+   ⛔ 孔心距边恒定 3.0mm：dx = tile/2 − 3.0（17→5.5、15→4.5），不是按比例乘 */
+var SIZE_PRESETS = {
+  P17:{label:"底座 17 + 贴片 17", tile:17, base:17, cr:1.1,  holeDx:5.5},
+  P15:{label:"底座 15 + 贴片 15", tile:15, base:15, cr:0.97, holeDx:4.5},
+  M15:{label:"底座 17 + 贴片 15", tile:15, base:17, cr:0.97, holeDx:4.5}
+};
+var SIZE_KEY = "P17";
+var CR_MM = 1.1;                     // 贴片圆角（随预设）
+var HOLE_DX = 5.5;                   // 孔心距（随预设）
+/* 17 基准排版：字号 = 插件字号，gap = 17 套实测行间净距。换尺寸时整组 × tile/17 */
+var BASE_SPEC = {
   MAIN_SUB:{l1:{size:8.0, cjk:false, italic:true, w:600}, l2:{size:12.0, cjk:true}, gap:1.52, margin:1.2},
   TWO_LINE:{l1:{size:8.5, cjk:true},                      l2:{size:8.5, cjk:true}, gap:1.25, margin:1.2},
   MIXED:   {l1:{size:9.0, cjk:true},                      l2:{size:6.8, cjk:true}, gap:1.67, margin:1.2},
   SINGLE:  {l1:null,                                      l2:{size:8.0, cjk:true}, gap:0,   margin:2.0}
 };
+/* 插件里的「行距参数」（整套统一值，≠ 上面实测的墨迹净距），导出文本用 */
+var PLUGIN_GAP = {MAIN_SUB:1.6, TWO_LINE:1.0, MIXED:1.2, SINGLE:0};
+var SPEC = {};
+function sizeOf(){ return SIZE_PRESETS[SIZE_KEY] || SIZE_PRESETS.P17; }
+function sizeScale(){ return sizeOf().tile / 17; }
+function applySize(key){
+  var p = SIZE_PRESETS[key] ? SIZE_PRESETS[key] : SIZE_PRESETS.P17;
+  SIZE_KEY = SIZE_PRESETS[key] ? key : "P17";
+  var s = p.tile / 17;
+  TILE_MM = p.tile;
+  FACE_MM = +(p.tile - 1.77).toFixed(2);
+  CR_MM = p.cr;
+  HOLE_DX = p.holeDx;
+  SPEC = {};
+  Object.keys(BASE_SPEC).forEach(function(k){
+    var b = BASE_SPEC[k];
+    SPEC[k] = {
+      /* 字号按 0.1mm 取整（与插件「数字=模型」的精度一致） */
+      l1: b.l1 ? {size:+(b.l1.size*s).toFixed(1), cjk:b.l1.cjk, italic:b.l1.italic, w:b.l1.w} : null,
+      l2: {size:+(b.l2.size*s).toFixed(1), cjk:b.l2.cjk},
+      gap: +(b.gap*s).toFixed(2),
+      /* 两行类的内部边距在插件里有 1.2 硬下限（不随尺寸缩），单行才按比例 */
+      margin: (k === "SINGLE") ? +(b.margin*s).toFixed(2) : Math.max(1.2, +(b.margin*s).toFixed(2))
+    };
+  });
+  /* 3D 预览读它（单位 cm）；厚度不随尺寸变 */
+  window.__ctgSize = {tile: p.tile/10, base: p.base/10, cr: p.cr/10};
+  rebuildKindPreset();
+  return p;
+}
 var FAM_CJK = '"DengXian","Microsoft YaHei"';
 var FAM_LAT = '"Segoe UI",sans-serif';
 function famOf(sp){ return sp.cjk ? FAM_CJK : FAM_LAT; }
@@ -736,32 +832,44 @@ function tileSVG(sub, main, kind, color, px, opts){
   var y1 = top + (i1 ? i1.asc * k : 0);
   var y2 = (sub && i1 ? top + h1 + g : top) + i2.asc * k;
   var inset = (TILE_MM - FACE_MM) / 2;
-  var s = '<svg class="tsvg" viewBox="0 0 17 17" xmlns="http://www.w3.org/2000/svg"'
+  var cx = TILE_MM / 2;
+  var s = '<svg class="tsvg" viewBox="0 0 ' + TILE_MM + ' ' + TILE_MM + '" xmlns="http://www.w3.org/2000/svg"'
         + (px ? ' width="'+px+'" height="'+px+'"' : '') + '>';
   // opts.bare = 3D 贴图用：透明底，不画灰框和凸台（底色圆角由贴片模型自己提供）
   if(!(opts && opts.bare)){
-    s += '<rect x="0" y="0" width="17" height="17" rx="1.1" fill="#ece8dd"/>';
-    s += '<rect x="' + inset + '" y="' + inset + '" width="' + FACE_MM + '" height="' + FACE_MM + '" rx="0.9" fill="#fffdf8"/>';
+    s += '<rect x="0" y="0" width="' + TILE_MM + '" height="' + TILE_MM + '" rx="' + CR_MM + '" fill="#ece8dd"/>';
+    s += '<rect x="' + inset.toFixed(2) + '" y="' + inset.toFixed(2) + '" width="' + FACE_MM + '" height="' + FACE_MM + '" rx="' + (CR_MM*0.82).toFixed(2) + '" fill="#fffdf8"/>';
   }
   if(sub && sp.l1){
-    s += '<text x="8.5" y="' + y1.toFixed(3) + '" font-size="' + (sp.l1.size * k).toFixed(3) + '"'
+    s += '<text x="' + cx + '" y="' + y1.toFixed(3) + '" font-size="' + (sp.l1.size * k).toFixed(3) + '"'
       +  ' font-family=\'' + famOf(sp.l1) + '\' font-weight="' + (sp.l1.w || 700) + '"'
       +  (sp.l1.italic ? ' font-style="italic"' : '')
       +  ' text-anchor="middle" fill="' + color + '">' + escHtml(sub) + '</text>';
   }
   if(main){
-    s += '<text x="8.5" y="' + y2.toFixed(3) + '" font-size="' + (sp.l2.size * k).toFixed(3) + '"'
+    s += '<text x="' + cx + '" y="' + y2.toFixed(3) + '" font-size="' + (sp.l2.size * k).toFixed(3) + '"'
       +  ' font-family=\'' + famOf(sp.l2) + '\' font-weight="' + (sp.l2.w || 700) + '"'
       +  ' text-anchor="middle" fill="' + color + '">' + escHtml(main) + '</text>';
   }
   return s + '</svg>';
 }
-var KIND_PRESET = {
-  MAIN_SUB: "插件 kind=MAIN_SUB · 汉字 12 / 拼音 8 / 行距 1.6（整套统一）· 自动缩放关 · 第一行拉丁字体",
-  TWO_LINE: "插件 kind=TWO_LINE · 两行各 8.5 / 行距 1.0 · 自动缩放关 · 两行共用中文字体",
-  MIXED:    "插件 kind=TWO_LINE + 参数覆盖 · 第一行(中文) 9.0 / 第二行(英数) 6.8 / 行距 1.20 · 自动缩放开",
-  SINGLE:   "插件 kind=SINGLE · 只有第二行 · 字号 8"
-};
+var KIND_PRESET = {};
+/* 字号统一按 0.1mm 显示（6 → 6.0），导出文本里不要出现「英数 6」这种半截数 */
+function fmt1(v){ var n = Math.round((+v || 0) * 10) / 10; return n.toFixed(1); }
+function rebuildKindPreset(){
+  /* 启动早期可能还没 applySize（SPEC 为空），直接跳过，等 applySize 再来刷 */
+  if(!SPEC || !SPEC.MAIN_SUB) return;
+  var s = sizeScale();
+  KIND_PRESET = {
+    MAIN_SUB: "插件 kind=MAIN_SUB · 汉字 " + fmt1(SPEC.MAIN_SUB.l2.size) + " / 拼音 " + fmt1(SPEC.MAIN_SUB.l1.size)
+              + " / 行距 " + (PLUGIN_GAP.MAIN_SUB*s).toFixed(2) + "（整套统一）· 自动缩放关 · 第一行拉丁字体",
+    TWO_LINE: "插件 kind=TWO_LINE · 两行各 " + fmt1(SPEC.TWO_LINE.l2.size)
+              + " / 行距 " + (PLUGIN_GAP.TWO_LINE*s).toFixed(2) + " · 自动缩放关 · 两行共用中文字体",
+    MIXED:    "插件 kind=TWO_LINE + 参数覆盖 · 第一行(中文) " + fmt1(SPEC.MIXED.l1.size) + " / 第二行(英数) "
+              + fmt1(SPEC.MIXED.l2.size) + " / 行距 " + (PLUGIN_GAP.MIXED*s).toFixed(2) + " · 自动缩放开",
+    SINGLE:   "插件 kind=SINGLE · 只有第二行 · 字号 " + fmt1(SPEC.SINGLE.l2.size)
+  };
+}
 // 默认 54 片定稿字表（_build_final_2510.py DATA，2026-10-25 跑通版）
 var DEFAULT_DATA = [
   /* 面1 */ ["甲","jiǎ"],["乙","yǐ"],["丙","bǐng"],["子","zǐ"],["丑","chǒu"],["寅","yín"],["鼠","shǔ"],["牛","niú"],["虎","hǔ"],
@@ -996,21 +1104,23 @@ function buildJSONObj(){
     meta: {
       tool: "魔方贴片字表编辑器（wlili.top/tools/cube-tile-table.html）",
       exported: new Date().toLocaleString("zh-CN"),
-      plugin: "ctg_tile_generator v1.27（Blender 5.2 插件）",
+      plugin: "ctg_tile_generator v1.28（Blender 5.2 插件）",
       standard: {
-        底板: "17×17×2.66 mm，圆角 1.1，顶面凸字 0.6 mm",
-        顶面凸台: "15.23×15.23 mm；文字可用区 = 板 − 2×边距（两行类 1.2 / 单行 2.0），超限整块等比缩",
-        孔: "四角 φ2.45 × 深 1.8，孔心距 ±5.5",
+        尺寸预设: sizeOf().label,
+        贴片: TILE_MM + "×" + TILE_MM + "×2.66 mm，圆角 " + CR_MM + "，顶面凸字 0.6 mm",
+        底座销板: sizeOf().base + "×" + sizeOf().base + "×1.4 mm（销 φ2.03×1.65，销位跟贴片孔位）",
+        顶面凸台: FACE_MM + "×" + FACE_MM + " mm；文字可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "），超限整块等比缩",
+        孔: "四角 φ2.45 × 深 1.8，孔心距 ±" + HOLE_DX,
         销: "φ2.03，直径配合间隙 0.42",
         中文: "DengXian Bold（C:\\WINDOWS\\Fonts\\Dengb.ttf）",
         拼音: "Segoe UI Semibold Italic（seguisbi.ttf）",
         底座色: "文字_白 #EDEDE8"
       },
       kind_map: {
-        MAIN_SUB: "单字+拼音：插件 kind='MAIN_SUB'，第二行汉字 12 / 第一行拼音 8 / 行距 1.6，text_auto=False",
-        TWO_LINE: "两行：插件 kind='TWO_LINE'，两行各 8.5 / 行距 1.0，text_auto=False",
-        MIXED: "中文+英数：插件 kind='TWO_LINE' + 覆盖 第一行 9.0 / 第二行 6.8 / 行距 1.20，text_auto=True",
-        SINGLE: "单行：插件 kind='SINGLE'，只有第二行，字号 8"
+        MAIN_SUB: "单字+拼音：" + KIND_PRESET.MAIN_SUB,
+        TWO_LINE: "两行：" + KIND_PRESET.TWO_LINE,
+        MIXED: "中文+英数：" + KIND_PRESET.MIXED,
+        SINGLE: "单行：" + KIND_PRESET.SINGLE
       },
       usage: "faces 顺序即 6 个面（0上/1左/2前/3右/4后/5下）；tiles 按 pos 1-9 行优先排 3×3。text_sub=第一行(上)、text_main=第二行(下)。"
     },
@@ -1044,15 +1154,17 @@ function buildMD(){
   L.push("- 每片两行：`text_sub` = 第一行（上）、`text_main` = 第二行（下）；kind 取值与插件枚举对应关系见下节。");
   L.push("- 文末《机器可读 JSON》是全量数据：AI 可直接据此生成 Blender 构建脚本。");
   L.push("");
-  L.push("## 规格（导出时固化，源自插件 v1.27 STANDARD）");
+  L.push("## 规格（导出时固化，源自插件 v1.28 尺寸预设）");
   L.push("");
   L.push("| 项 | 取值 |");
   L.push("|---|---|");
-  L.push("| 底板 | 17 × 17 × **2.66** mm，圆角 1.1 |");
-  L.push("| 顶面凸台 | 15.23 × 15.23 mm |");
-  L.push("| 凸字 | 高 0.6 mm；可用区 = 板 − 2×边距（两行类 1.2 / 单行 2.0），超限整块等比缩 |");
-  L.push("| 孔 | 四角 φ2.45 × 深 1.8，孔心距 ±5.5 |");
-  L.push("| 销 | φ2.03，直径配合间隙 0.42 |");
+  L.push("| 尺寸预设 | " + sizeOf().label + " |");
+  L.push("| 贴片 | " + TILE_MM + " × " + TILE_MM + " × **2.66** mm，圆角 " + CR_MM + " |");
+  L.push("| 底座销板 | " + sizeOf().base + " × " + sizeOf().base + " × 1.4 mm（销位跟贴片孔位） |");
+  L.push("| 顶面凸台 | " + FACE_MM + " × " + FACE_MM + " mm |");
+  L.push("| 凸字 | 高 0.6 mm；可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "），超限整块等比缩 |");
+  L.push("| 孔 | 四角 φ2.45 × 深 1.8，孔心距 ±" + HOLE_DX + " |");
+  L.push("| 销 | φ2.03 × 1.65，直径配合间隙 0.42 |");
   L.push("| 中文 | DengXian Bold（`C:\\WINDOWS\\Fonts\\Dengb.ttf`） |");
   L.push("| 拼音 / 拉丁 | Segoe UI Semibold Italic（`seguisbi.ttf`） |");
   L.push("| 底座色 | 文字_白 `#EDEDE8` |");
@@ -1061,10 +1173,10 @@ function buildMD(){
   L.push("");
   L.push("| 导出 kind | 插件取值 | 参数 |");
   L.push("|---|---|---|");
-  L.push("| MAIN_SUB | `kind='MAIN_SUB'` | 第一行拼音 8 / 第二行汉字 12 / 行距 1.20 / text_auto=False |");
-  L.push("| TWO_LINE | `kind='TWO_LINE'` | 两行各 8.5 / 行距 1.0 / text_auto=False |");
-  L.push("| MIXED | `kind='TWO_LINE'` + 参数覆盖 | 第一行中文 9.0 / 第二行英数 6.8 / 行距 1.20 / text_auto=True |");
-  L.push("| SINGLE | `kind='SINGLE'` | 只有第二行，字号 8 |");
+  L.push("| MAIN_SUB | `kind='MAIN_SUB'` | 第一行拼音 " + fmt1(SPEC.MAIN_SUB.l1.size) + " / 第二行汉字 " + fmt1(SPEC.MAIN_SUB.l2.size) + " / 行距 " + (PLUGIN_GAP.MAIN_SUB*sizeScale()).toFixed(2) + " / text_auto=False |");
+  L.push("| TWO_LINE | `kind='TWO_LINE'` | 两行各 " + fmt1(SPEC.TWO_LINE.l2.size) + " / 行距 " + (PLUGIN_GAP.TWO_LINE*sizeScale()).toFixed(2) + " / text_auto=False |");
+  L.push("| MIXED | `kind='TWO_LINE'` + 参数覆盖 | 第一行中文 " + fmt1(SPEC.MIXED.l1.size) + " / 第二行英数 " + fmt1(SPEC.MIXED.l2.size) + " / 行距 " + (PLUGIN_GAP.MIXED*sizeScale()).toFixed(2) + " / text_auto=True |");
+  L.push("| SINGLE | `kind='SINGLE'` | 只有第二行，字号 " + fmt1(SPEC.SINGLE.l2.size) + " |");
   L.push("");
   L.push("## 面与配色");
   L.push("");
@@ -1164,10 +1276,71 @@ document.getElementById("exp_download").addEventListener("click", function(){
   toast("已下载 " + f);
 });
 
+/* ================= 导入字表（.md / .json） =================
+   导出格式的 .md 里带一段 ```json，直接抽出来用；.json 直接读。
+   尺寸预设从 meta.standard 里认（新格式有「尺寸预设」，旧格式靠「贴片/底板」里的 17/15）。 */
+function parseTableFile(text){
+  var data = null;
+  try{ data = JSON.parse(text); }catch(e){}
+  if(!data || !data.faces){
+    var m = text.match(/```json\s*([\s\S]*?)```/i);
+    if(m){ try{ data = JSON.parse(m[1]); }catch(e){ data = null; } }
+  }
+  if(!data || !data.faces) throw new Error("没找到 JSON（支持工具导出的 .md 或 .json）");
+  if(!Array.isArray(data.faces) || data.faces.length !== 6) throw new Error("faces 必须是 6 个面");
+  var faces = data.faces.map(function(f, i){
+    var src = (f.tiles || []).slice().sort(function(a, b){ return (a.pos || 0) - (b.pos || 0); }).slice(0, 9);
+    var tiles = [];
+    for(var k = 0; k < 9; k++){
+      var t = src[k] || {};
+      var sub = (t.text_sub != null) ? String(t.text_sub) : "";
+      var main = (t.text_main != null) ? String(t.text_main) : "";
+      tiles.push({sub: sub, main: main, kind: (t.kind || detectKind(sub, main) || "MAIN_SUB")});
+    }
+    var c = f.color || {}, pal = PALETTE[i] || PALETTE[0];
+    return {name: f.name || ("面" + (i + 1)),
+            color: {name: c.name || pal.name, hex: c.hex || pal.hex, rgb: c.rgb || pal.rgb},
+            tiles: tiles};
+  });
+  var std = (data.meta && data.meta.standard) || {};
+  var txt = [std["尺寸预设"], std["贴片"], std["底板"], std["底座销板"]].join(" ");
+  var key = "P17";
+  if(/贴片\s*15|15\s*×\s*15/.test(txt)) key = /底座\s*17/.test(txt) ? "M15" : "P15";
+  return {faces: faces, size: key};
+}
+function doImport(text, fname){
+  var r = parseTableFile(text);
+  state = {faces: r.faces, size: r.size};
+  var sel = document.getElementById("size_sel");
+  if(sel){
+    sel.value = r.size;
+    sel.dispatchEvent(new Event("change"));   // 走组件自己的同步：回显 + applySize + render
+  }else{
+    applySize(r.size); render(); paintToolFace();
+  }
+  saveState();
+  render(); paintToolFace();
+  toast("已导入" + (fname ? " " + fname : "") + " · " + countFilled(state.faces) + " / 54 片 · " + sizeOf().label);
+}
+document.getElementById("btn_import").addEventListener("click", function(){
+  document.getElementById("import_file").click();
+});
+document.getElementById("import_file").addEventListener("change", function(e){
+  var f = e.target.files && e.target.files[0];
+  if(!f) return;
+  var rd = new FileReader();
+  rd.onload = function(){
+    try{ doImport(String(rd.result), f.name); }
+    catch(err){ toast("导入失败：" + err.message); }
+  };
+  rd.readAsText(f, "utf-8");
+  e.target.value = "";
+});
+
 /* ================= 重置 ================= */
 document.getElementById("btn_reset").addEventListener("click", function(){
   if(!confirm("确定把全部 54 格重置为默认字表？当前填写会丢失。")) return;
-  state = {faces:defaultFaces()}; saveState(); render(); toast("已重置为默认字表");
+  state = {faces:defaultFaces(), size:SIZE_KEY}; saveState(); render(); toast("已重置为默认字表");
 });
 
 /* ================= 3D 预览 ================= */
@@ -1315,15 +1488,25 @@ document.addEventListener("keydown", function(e){
 
 /* ================= 启动 ================= */
 /* 操作面：三枚按钮用「真贴片渲染」画内容 —— 字号/比例与模型里的
-   两行片（干支纪年那类）完全一致，而不是随便给个 px 字号 */
-(function paintToolFace(){
+   两行片（干支纪年那类）完全一致，而不是随便给个 px 字号。
+   换尺寸预设时要重画（字号跟着 TILE_MM/17 走） */
+function paintToolFace(){
+  var fix = +(7.385 * sizeScale()).toFixed(3);
   [].forEach.call(document.querySelectorAll(".tb-face .btn-outline"), function(b){
-    if(b.__painted) return;
-    b.innerHTML = tileSVG(b.getAttribute("data-l1"), b.getAttribute("data-l2"), "TWO_LINE", "#22222a", 0, {fix:7.385});
-    b.__painted = true;
+    b.innerHTML = tileSVG(b.getAttribute("data-l1"), b.getAttribute("data-l2"), "TWO_LINE", "#22222a", 0, {fix:fix});
   });
-})();
+}
 state = loadState();
+applySize(state.size || "P17");
+document.getElementById("size_sel").value = SIZE_KEY;
+document.getElementById("size_sel").addEventListener("change", function(){
+  var p = applySize(this.value);
+  state.size = SIZE_KEY; saveState();
+  render();
+  paintToolFace();
+  toast("尺寸预设：" + p.label);
+});
+paintToolFace();
 render();
 </script>
 </body>
