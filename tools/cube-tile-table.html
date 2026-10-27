@@ -15,14 +15,70 @@
    本文件只写本工具专属样式，颜色间距用全站令牌
    ============================================================ */
 
-/* ---------- 操作区 = 「第七个面」（2026-10-26） ----------
-   与 .grid9 完全同款：深灰面板 + 圆角 + 同阴影，宽高就是一个面。
-   定位推导：网格 4 列×fw + 3×16 居中 → 面1（第 2 列）右边缘恒 = 视口中线 − 8px。 */
+/* ---------- 操作区 = 网格里的「第七格」+ 挂在面板外面的面头（2026-10-27） ----------
+   外层 .tb-wrap 是 .cube 网格的第 3 列第 1 行 —— 面1 右边、面4 上面，
+   参与行高计算，永远不会叠到别人身上（原来是 position:fixed 靠像素偏移硬贴，会压面4）。
+   内层 .tb-face 与 .grid9 完全同款：深灰面板 + 圆角 + 同阴影 + 三列白贴片。
+   ⛔ 面头（重置 / 尺寸）必须在 .tb-face **外面**：它对标的是「面1 · 9/9」那一行，
+      在深灰框之上的浅色区域。塞回面板里就变成"黑框里的白胶囊"，用户已否两次。 */
+.tb-wrap{
+  grid-column:3; grid-row:1; align-self:start;
+  display:flex; flex-direction:column; min-width:0;
+  /* 首帧防闪：三枚白贴片的内容、以及尺寸下拉，都是脚本画/升级的。
+     先藏起来，render() 跑完（节点已在正确格子）再挂 .is-ready 显形 ——
+     否则刷新瞬间会看到「深灰框 + 三个空白格子」一闪而过（2026-10-27 用户反馈）。 */
+  visibility:hidden;
+}
+.tb-wrap.is-ready{visibility:visible;}
+/* 面头：与 .face-head 逐项同规格 —— 同样的 gap(8) / 左右 2px / 下 5px；
+   高度锁 23px（内容行 18 + 下内边距 5），下面面板顶边才会 = .grid9 顶边 */
+.tb-head{
+  display:flex; align-items:center; gap:var(--space-2);
+  height:23px; box-sizing:border-box; padding:0 2px 5px;
+}
+/* 重置 = 15px 的「色块」（同 .swatch 尺寸 / 白边 / 描边）里放旋转图标 + 面名同款文字 */
+.tb-reset{
+  display:flex; align-items:center; gap:8px;
+  border:none; background:none; padding:0; cursor:pointer;
+  font-family:inherit; font-size:12.5px; font-weight:600; color:var(--ink);
+  line-height:1;
+}
+.tb-sq{
+  width:15px; height:15px; flex:none;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:4px; background:#2B3041; color:#fff;
+  border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.25);
+  transition:transform .15s;
+}
+.tb-sq svg{width:9px; height:9px;}
+.tb-reset:hover .tb-sq{transform:scale(1.14);}
+.tb-reset:active .tb-sq{transform:scale(1.04);}
+/* 尺寸 = 占「9/9」那个位置：裸文字、无底无框，hover 才浮一点灰底 */
+.tb-size{
+  /* flex:0 0 auto —— 不许被压缩：压缩后 .sel 会溢出胶囊，出现"文字跑出输入框"的错觉 */
+  margin-left:auto; flex:0 0 auto; display:flex; align-items:center; min-width:0;
+  font-size:10.5px; color:var(--ink-tertiary);
+}
+.tb-size .sel{display:block;}
+.tb-size .sel-trigger,
+.tb-size .sel-trigger.compact{
+  min-height:0; height:18px; min-width:0; padding:0 14px 0 4px;
+  border:none; border-radius:5px; background:transparent; box-shadow:none;
+  color:var(--ink-tertiary); font-size:10.5px; line-height:18px;
+  justify-content:flex-end;
+}
+.tb-size .sel-trigger::before{content:"尺寸"; opacity:.75; font-weight:400; margin-right:5px;}
+.tb-size .sel-label{font-weight:600; color:var(--ink-secondary);}
+.tb-size .sel-trigger:hover,
+.tb-size .sel-trigger:focus,
+.tb-size .sel-trigger:focus-visible,
+.tb-size .sel.is-open .sel-trigger{
+  background:rgba(43,48,65,.06); color:var(--ink); border:none; box-shadow:none;
+}
+.tb-size .sel-chevron{right:1px; width:11px; height:11px; color:currentColor; opacity:.55;}
+
 .tb-face{
-  /* top 85 = 导航48 + 区块内边距14 + 面头23 → 与「面1」的贴片框(.grid9)顶边齐平
-     left 50%+8 = 面1框右沿(中線−8)再留一个网格 gap(16) */
-  position:fixed; top:85px; left:calc(50% + 8px); z-index:60;
-  width:var(--fw); padding:5px; border-radius:14px;
+  width:auto; padding:5px; border-radius:14px;
   background:#2B3041;
   box-shadow:0 10px 26px -14px rgba(43,48,65,.45);
   display:grid; grid-template-columns:repeat(3, 1fr); gap:5px;
@@ -37,37 +93,6 @@
 .tb-face .btn-outline:hover{
   transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.25);
 }
-/* 尺寸预设一行：跨三列，白底细长条，和上面三枚贴片同材质。
-   下拉用全站组件（select.form-select → .sel）；这里让「整条 = 触发器」，
-   这样弹层宽度自动等于整条宽度（和上面那排按钮同宽），不用 inline 模式 */
-.tb-face .tb-size{
-  grid-column:1 / -1; display:block;
-  height:26px; padding:0; border-radius:8px;
-  background:#fffdf8; color:var(--ink); font-size:11px;
-}
-.tb-face .tb-size .sel{display:block; width:100%;}
-.tb-face .tb-size .sel-trigger,
-.tb-face .tb-size .sel-trigger.compact{
-  width:100%; min-height:24px; padding:0 22px 0 8px; border:none; background:transparent;
-  font-size:11px; line-height:24px; justify-content:space-between; text-align:left;
-}
-.tb-face .tb-size .sel-trigger::before{content:"尺寸"; opacity:.55;}
-.tb-face .tb-size .sel-label{flex:1; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.tb-face .tb-size .sel-trigger:hover,
-.tb-face .tb-size .sel-trigger:focus,
-.tb-face .tb-size .sel-trigger:focus-visible,
-.tb-face .tb-size .sel.is-open .sel-trigger{border:none; box-shadow:none;}
-.tb-face .tb-size .sel-chevron{right:8px; width:12px; height:12px;}
-/* 导入字表：与尺寸条同宽的细长按钮（白底同材质，hover 提亮） */
-.tb-face .tb-import{
-  grid-column:1 / -1; display:flex; align-items:center; justify-content:center; gap:6px;
-  height:24px; padding:0 8px; border:none; border-radius:8px;
-  background:#fffdf8; color:var(--ink); font-family:inherit; font-size:11px;
-  cursor:pointer; transition:background .12s;
-}
-.tb-face .tb-import svg{width:12px; height:12px; opacity:.6;}
-.tb-face .tb-import:hover{background:#fff;}
-.tb-face .tb-import:active{transform:translateY(1px);}
 
 /* ---------- 展开魔方：上 1 / 中 4 / 下 1（尺寸按视口高自动收缩，保证一屏放下） ---------- */
 :root{--fw:min(232px, calc((100vh - 196px)/3));}   /* 面宽；.cube 与迷你贴片按钮共用 */
@@ -147,14 +172,18 @@
   display:flex; align-items:center; gap:var(--space-2); flex:none;
 }
 .ctg-dlg h3 .face-tag{font-size:var(--fs-sm); color:var(--ink-tertiary); font-weight:400;}
-/* 预览弹窗右上角刷新：重建 3D */
-.pv-reload{
-  margin-left:auto; flex:none; width:26px; height:26px; padding:0; border-radius:50%;
-  border:1px solid var(--border); background:var(--bg-white); color:var(--ink-secondary);
+/* 预览弹窗右上角：关闭（2026-10-27 与「刷新」互换位置 —— 关闭跑到弹窗底部不顺手）。
+   刷新挪到底部 footer，做成带图标的描边按钮。 */
+.pv-x{
+  margin-left:auto; flex:none; width:28px; height:28px; padding:0; border-radius:50%;
+  border:none; background:transparent; color:var(--ink-tertiary);
   cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;
+  transition:background .12s, color .12s, transform .12s;
 }
-.pv-reload:hover{border-color:var(--ink); color:var(--ink);}
-.pv-reload svg{width:13px; height:13px;}
+.pv-x:hover{background:rgba(43,48,65,.07); color:var(--ink);}
+.pv-x:active{transform:scale(.94);}
+.pv-x svg{width:15px; height:15px;}
+#pv_reload svg{width:14px; height:14px; flex:none;}
 .pv-seg{
   display:flex; align-items:center; gap:1px; padding:2px;
   border:1px solid var(--border); border-radius:999px; background:var(--bg);
@@ -285,10 +314,10 @@
   }
   :root{--fw:min(320px, 88vw);}
   .cube .face{grid-column:auto; grid-row:auto; width:100%; max-width:340px;}
-  /* 移动端放弃一屏（竖排必然超一屏），操作面回到页面顶部 */
-  .tb-face{
-    position:static; left:auto; top:auto;
-    width:calc(100% - 28px); margin:10px auto 0; max-width:340px;
+  /* 移动端放弃一屏（竖排必然超一屏），操作区回到页面顶部（网格里的第一项） */
+  .tb-wrap{
+    grid-column:auto; grid-row:auto; order:-1;
+    width:100%; max-width:340px; margin:0;
   }
   .ctg-mask{padding:12px; align-items:flex-end;}
   .ctg-dlg{max-height:94vh; padding:var(--space-4);}
@@ -307,29 +336,36 @@
 </head>
 <body>
 
-<!-- 操作区：视觉上是「第七个面」（同款深灰面板 + 三枚白贴片），不计入 54 片统计。
-     位置固定在「面1」右侧。2026-10-26 -->
-<div class="tb-face">
-  <button class="btn-outline" id="btn_preview" data-l1="生成" data-l2="预览" aria-label="生成预览"></button>
-  <button class="btn-outline" id="btn_export" data-l1="导出" data-l2="字表" aria-label="导出字表"></button>
-  <button class="btn-outline" id="btn_reset"  data-l1="重置" data-l2="字表" aria-label="重置字表"></button>
-  <label class="tb-size" title="尺寸预设：决定预览与导出里的贴片 / 底座尺寸（与 Blender 插件 v1.28 预设一致）">
-    <select id="size_sel" class="form-select" data-sel-compact aria-label="贴片尺寸预设">
-      <option value="P17">17 × 17</option>
-      <option value="P15">15 × 15</option>
-      <option value="M15">15（底座 17）</option>
-    </select>
-  </label>
-  <button class="tb-import" id="btn_import" type="button" title="导入之前导出的 .md 或 .json 字表（自动识别尺寸预设）">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-    导入字表
-  </button>
-  <input type="file" id="import_file" accept=".md,.markdown,.json,text/markdown,application/json" hidden>
-</div>
-
 <section class="section ctg-sec">
   <div class="section-inner">
-    <div class="ctg-stage"><div class="cube" id="cube"></div></div>
+    <div class="ctg-stage"><div class="cube" id="cube">
+      <!-- 操作区：「面头一行 + 第七格深灰面板」，整体是网格第 3 列第 1 行。
+           ⛔ 必须直接写在 #cube 里，不能摆到 body 顶部：
+             放 body 里它会先当普通块级元素出现在页首，等 JS 跑完 render() 才搬进网格，
+             于是每次刷新都闪一下「深灰框 + 三个白格子」再跳位（2026-10-27 用户反馈）。
+             配合 .tb-wrap{visibility:hidden} + render() 里加 .is-ready，首帧不再露白格。 -->
+      <div class="tb-wrap">
+        <div class="tb-head">
+          <button class="tb-reset" id="btn_reset" type="button" title="把全部 54 格重置为默认字表">
+            <span class="tb-sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></span>
+            <span>重置</span>
+          </button>
+          <label class="tb-size" title="尺寸预设：决定预览与导出里的贴片 / 底座尺寸（与 Blender 插件 v1.28 预设一致）">
+            <select id="size_sel" class="form-select" data-sel-inline data-sel-compact aria-label="贴片尺寸预设">
+              <option value="P17">17 × 17</option>
+              <option value="P15">15 × 15</option>
+              <option value="M15">15（底座 17）</option>
+            </select>
+          </label>
+        </div>
+        <div class="tb-face">
+          <button class="btn-outline" id="btn_preview" data-l1="生成" data-l2="预览" aria-label="生成预览"></button>
+          <button class="btn-outline" id="btn_export" data-l1="导出" data-l2="字表" aria-label="导出字表"></button>
+          <button class="btn-outline" id="btn_import" data-l1="导入" data-l2="字表" aria-label="导入字表"></button>
+          <input type="file" id="import_file" accept=".md,.markdown,.json,text/markdown,application/json" hidden>
+        </div>
+      </div>
+    </div></div>
   </div>
 </section>
 
@@ -406,9 +442,9 @@
 <div class="ctg-mask" id="pv_mask">
   <div class="ctg-dlg wide">
     <h3>魔方预览<span class="face-tag" id="pv_cap">按住拖动旋转 · 滚轮缩放</span>
-      <button class="pv-reload" id="pv_reload" title="刷新预览" aria-label="刷新预览">
+      <button class="pv-x" id="pv_close" title="关闭预览" aria-label="关闭预览">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-          <path d="M20 12a8 8 0 1 1-2.34-5.66"/><polyline points="20 3 20 7 16 7"/>
+          <path d="M6 6 18 18"/><path d="M18 6 6 18"/>
         </svg>
       </button>
     </h3>
@@ -436,7 +472,12 @@
       <!-- 灯光调节行已按用户要求隐藏（2026-10-26）：参数固化在 LIGHT_DEF / LIGHT_DEF_JS -->
     </div>
     <div class="ctg-foot">
-      <button class="btn-filled" id="pv_close">关闭</button>
+      <button class="btn-outline" id="pv_reload" title="重建 3D 预览（换过尺寸或重新填字后点这里）">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M20 12a8 8 0 1 1-2.34-5.66"/><polyline points="20 3 20 7 16 7"/>
+        </svg>
+        刷新预览
+      </button>
     </div>
   </div>
 </div>
@@ -949,6 +990,9 @@ var cubeEl = document.getElementById("cube");
 function escHtml(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function escAttr(s){ return escHtml(s); }
 function render(){
+  // 操作区是网格里的第 3 列第 1 行（不是浮动块）：清空前先把它摘出来，
+  // 画完再塞回网格，否则 innerHTML="" 会把它一起删掉。整块搬的是 .tb-wrap（含面头）
+  var tb = document.querySelector(".tb-wrap");
   cubeEl.innerHTML = "";
   for(var f=0; f<6; f++){
     var face = state.faces[f];
@@ -975,6 +1019,10 @@ function render(){
     h += '</div>';
     fd.innerHTML = h;
     cubeEl.appendChild(fd);
+  }
+  if(tb){
+    cubeEl.appendChild(tb);        // 放回第 3 列第 1 行（面1 右、面4 上）
+    tb.classList.add("is-ready");  // 首帧防闪：内容都就位了才显形（见 .tb-wrap 的 visibility）
   }
   saveState();
 }
