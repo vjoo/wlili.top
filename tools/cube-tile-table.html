@@ -1035,6 +1035,18 @@ var LATIN_DESCENT_RATIO = 0.150;   // 拼音降部 / 字号（插件 LATIN_DESCE
    opts.auto === false 时**不缩**（插件 text_auto=False）：按设定字号原样排。 */
 function tileSVG(sub, main, kind, color, px, opts){
   var sp = SPEC[kind] || SPEC.TWO_LINE;
+  /* ⭐ 2026-10-30 单格字号覆盖（字表 tile.size，17 基准）：
+     给「中文 + 长数字」（22-24 这类 5 字符）用。⛔ 不能靠 text_auto —— 插件的自适应
+     对「汉字+数字」走 flex='main' 分支，**只缩第二行**，结果上大下小（实测 7.50/5.80）。
+     这里两行同字号、等比缩，行盒比例与中线锚定规则原样不动（字形照旧可以上下穿出）。 */
+  if(opts && opts.size > 0){
+    /* ⛔ size 是 **17 基准**（与插件 _preset_text 同源），必须按当前贴片比例换算，
+       直接当字号用会大 13%（T15 下 6.5 应为 5.74）。 */
+    var _sz = opts.size * (TILE_MM / 17);
+    sp = {gap: sp.gap, margin: sp.margin,
+          l1: sp.l1 ? {size: _sz, cjk: sp.l1.cjk, italic: sp.l1.italic, w: sp.l1.w} : null,
+          l2: {size: _sz, cjk: sp.l2.cjk, w: sp.l2.w}};
+  }
   var i1 = sp.l1 ? inkOf(sp.l1, sub) : null;
   var i2 = inkOf(sp.l2, main);
   var two = !!(sub && main && i1);                          // 两行都有内容
@@ -1251,7 +1263,7 @@ function render(){
         var k = resolvedKind(t);
         var tAuto = autoOf(t, k);
         h += '<div class="cell" data-face="'+f+'" data-pos="'+i+'" title="'+escAttr((KIND_LABEL[k]||"")+" · 自动缩放"+(tAuto?"开":"关"))+'">'
-           + tileSVG(t.sub, t.main, k, face.color.hex, 0, {auto:tAuto})
+           + tileSVG(t.sub, t.main, k, face.color.hex, 0, {auto:tAuto, size:t.size})
            + '<span class="kd">'+escHtml(KIND_SHORT[k]||"")+'</span></div>';
       }
     }
@@ -1410,9 +1422,11 @@ function buildJSONObj(){
       color: {name:face.color.name, hex:face.color.hex,
               rgb:face.color.rgb ? face.color.rgb.map(function(x){return Math.round(x*1000)/1000;}) : null},
       tiles: face.tiles.map(function(t, ti){
-        return {pos: ti+1, text_sub: t.sub||"", text_main: t.main||"",
-                kind: resolvedKind(t),
-                text_auto: autoOf(t)};        // 插件参数原名：True=装不下缩到边距内 / False=按原字号溢出
+        var _o = {pos: ti+1, text_sub: t.sub||"", text_main: t.main||"",
+                  kind: resolvedKind(t),
+                  text_auto: autoOf(t)};      // 插件参数原名：True=装不下缩到边距内 / False=按原字号溢出
+        if(t.size > 0) _o.size = t.size;       // 单格字号覆盖（17 基准），只有显式设过的格才写
+        return _o;
       })
     };
   });
@@ -1637,7 +1651,9 @@ function parseTableFile(text){
       var main = (t.text_main != null) ? String(t.text_main) : "";
       tiles.push({sub: sub, main: main, kind: (t.kind || detectKind(sub, main) || "MAIN_SUB"),
                   /* text_auto 缺省时给 undefined：交给 autoOf 按 kind 默认推断（老文件没有这个字段） */
-                  auto: (typeof t.text_auto === "boolean") ? t.text_auto : undefined});
+                  auto: (typeof t.text_auto === "boolean") ? t.text_auto : undefined,
+                  /* ⭐ 单格字号覆盖（17 基准）：给「中文 + 长数字」这种两行都得缩小的格用 */
+                  size: (typeof t.size === "number" && t.size > 0) ? t.size : undefined});
     }
     var c = f.color || {}, pal = PALETTE[i] || PALETTE[0];
     return {name: f.name || ("面" + (i + 1)),
