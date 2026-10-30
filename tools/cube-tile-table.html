@@ -911,13 +911,14 @@ var HOLE_DX = 5.5;                   // 孔心距（随预设）
    上行 8.5、下行 6.4、行距 1.0（17 基准）→ T15 下 7.5 / 5.6 / 0.88。
    ⛔ 下行不能给 8.5：5 字符区间「22-24」在 8.5 下宽 18.5mm，可用宽只有 12.6 → 必溢出。
    ⛔ 字体按行固定（插件里「上行 = font_latin，下行 = font_cjk」）：
-      CN_NUM 两行都中文 → 两行 cjk:true；NUM_EN 上行数字(拉丁) cjk:false、下行英文 cjk:true。
+      CN_NUM 两行都中文 → 两行 cjk:true；NUM_EN 两行也都 DengXian（2026-10-30 用户定：
+      数字默认字体用 DengXian Bold，原先是 Segoe UI，数字偏窄偏细）→ 也两行 cjk:true。
    MIXED 是旧名字，统一按 CN_NUM 渲染（同样的字号，避免旧字表看起来不一样）。 */
 var BASE_SPEC = {
   MAIN_SUB:{l1:{size:8.0, cjk:false, italic:true, w:600}, l2:{size:12.0, cjk:true}, gap:1.6, margin:1.2},
   TWO_LINE:{l1:{size:8.5, cjk:true},                      l2:{size:8.5, cjk:true}, gap:1.0, margin:1.2},
   CN_NUM:  {l1:{size:8.5, cjk:true},                      l2:{size:6.4, cjk:true}, gap:1.0, margin:1.2},
-  NUM_EN:  {l1:{size:8.5, cjk:false},                     l2:{size:6.4, cjk:true}, gap:1.0, margin:1.2},
+  NUM_EN:  {l1:{size:8.5, cjk:true},                      l2:{size:6.4, cjk:true}, gap:1.0, margin:1.2},
   MIXED:   {l1:{size:8.5, cjk:true},                      l2:{size:6.4, cjk:true}, gap:1.0, margin:1.2},
   SINGLE:  {l1:null,                                      l2:{size:8.0, cjk:true}, gap:0,   margin:2.0}
 };
@@ -1159,7 +1160,7 @@ function rebuildKindPreset(){
               + " · 自动缩放默认关 · 两行共用中文字体",
     NUM_EN:   "插件 kind=NUM_EN · 第一行(数字) " + fmt1(SPEC.NUM_EN.l1.size) + " / 第二行(英文) "
               + fmt1(SPEC.NUM_EN.l2.size) + " / 行距 " + (PLUGIN_GAP.NUM_EN*s).toFixed(2)
-              + " · 自动缩放默认关 · 第一行拉丁字体"
+              + " · 自动缩放默认关 · 两行共用中文字体（数字也用 DengXian）"
   };
 }
 // 默认 54 片定稿字表（_build_final_2510.py DATA，2026-10-25 跑通版）
