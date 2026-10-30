@@ -281,9 +281,15 @@
 .ctg-dlg.exp{width:min(1040px, 94vw);}
 .ctg-tabs{display:flex; gap:6px; margin-bottom:var(--space-3); flex-wrap:wrap; flex:none;}
 .ctg-tab{
+  display:flex; align-items:center; gap:7px;
   padding:6px 14px; border-radius:var(--radius-sm); cursor:pointer; font-size:var(--fs-sm);
   border:1px solid var(--border); background:var(--bg-white); color:var(--ink-secondary);
 }
+/* 导出标签上的「给谁用」标记：Blender 三叶 / AI 星芒 / 代码括号，颜色固定品牌色，
+   选中时黑底上也认得出（文字 em 变半透明白）。 */
+.ctg-tab .tab-logo{width:16px; height:16px; flex:0 0 auto; display:block;}
+.ctg-tab em{font-style:normal; color:var(--ink-tertiary); font-size:var(--fs-xs); margin-left:2px;}
+.ctg-tab.on em{color:rgba(255,255,255,.70);}
 .ctg-tab.on{background:var(--fill-black); color:#fff; border-color:var(--fill-black);}
 /* 导出内容区：弹窗多宽就多宽，纵向吃掉剩余高度（min-width:0 防 flex 子项被撑/塌） */
 .ctg-ta-wrap{flex:1 1 auto; min-height:0; display:flex;}
@@ -482,9 +488,30 @@
   <div class="ctg-dlg wide exp">
     <h3>导出字表</h3>
     <div class="ctg-tabs">
-      <div class="ctg-tab on" data-t="md">知识库 md（推荐 · 含 JSON 块）</div>
-      <div class="ctg-tab" data-t="json">JSON（给 AI 读）</div>
-      <div class="ctg-tab" data-t="py">Python 片段（直接进构建脚本）</div>
+      <div class="ctg-tab on" data-t="md" title="md：Blender 插件「导入字表生成」直接读（内含 JSON 块，也给人看规格）">
+        <svg class="tab-logo" viewBox="0 0 24 24" aria-hidden="true">
+          <g fill="#EA7600">
+            <path d="M12 11.6c-2.3-1.7-2.6-5.3 0-8.4 2.6 3.1 2.3 6.7 0 8.4z"/>
+            <path d="M12 11.6c-2.3-1.7-2.6-5.3 0-8.4 2.6 3.1 2.3 6.7 0 8.4z" transform="rotate(120 12 12)"/>
+            <path d="M12 11.6c-2.3-1.7-2.6-5.3 0-8.4 2.6 3.1 2.3 6.7 0 8.4z" transform="rotate(240 12 12)"/>
+            <circle cx="12" cy="12" r="2.1"/>
+          </g>
+        </svg>
+        <span>Blender 插件<em>· md</em></span>
+      </div>
+      <div class="ctg-tab" data-t="json" title="json：给 AI 模型 / 其他程序读">
+        <svg class="tab-logo" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#7C5CFF" d="M12 2.2 14.1 9.9 21.8 12 14.1 14.1 12 21.8 9.9 14.1 2.2 12 9.9 9.9z"/>
+        </svg>
+        <span>AI 模型<em>· json</em></span>
+      </div>
+      <div class="ctg-tab" data-t="py" title="py：给 AI 或构建脚本直接用的 DATA 片段">
+        <svg class="tab-logo" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="none" stroke="#2F9E8F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                d="M8.6 7.2 4 12l4.6 4.8M15.4 7.2 20 12l-4.6 4.8"/>
+        </svg>
+        <span>AI 脚本<em>· py</em></span>
+      </div>
     </div>
     <div class="ctg-ta-wrap"><textarea class="ctg-ta" id="exp_ta" readonly spellcheck="false"></textarea></div>
     <div class="ctg-foot exp-foot">
