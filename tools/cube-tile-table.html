@@ -444,9 +444,10 @@
           <select class="form-select" id="f_kind">
             <option value="">自动检测（推荐）</option>
             <option value="MAIN_SUB">单字 + 拼音（MAIN_SUB）</option>
-            <option value="TWO_LINE">两行（TWO_LINE）</option>
-            <option value="MIXED">中文 + 英数（MIXED）</option>
+            <option value="TWO_LINE">两行 · 等大（TWO_LINE）</option>
             <option value="SINGLE">单行（SINGLE）</option>
+            <option value="CN_NUM">中文 + 数字（CN_NUM）</option>
+            <option value="NUM_EN">数字 + 英文（NUM_EN）</option>
           </select>
         </div>
         <!-- 自动缩放 = 插件 text_auto（per-object）· 2026-10-30 由只读说明改成开关 -->
@@ -837,8 +838,15 @@ var PALETTE = [
   {name:"文字_黑", hex:"#0F0F12", rgb:[0.060,0.060,0.070]},
   {name:"文字_紫", hex:"#7340B3", rgb:[0.450,0.250,0.700]}
 ];
-var KIND_LABEL = {MAIN_SUB:"单字+拼音", TWO_LINE:"两行", MIXED:"中文+英数", SINGLE:"单行"};
-var KIND_SHORT = {MAIN_SUB:"注音", TWO_LINE:"两行", MIXED:"中英", SINGLE:"单行"};
+var KIND_LABEL = {MAIN_SUB:"单字+拼音", TWO_LINE:"两行", SINGLE:"单行",
+                  CN_NUM:"中文+数字", NUM_EN:"数字+英文", MIXED:"中文+数字（旧 MIXED）"};
+var KIND_SHORT = {MAIN_SUB:"注音", TWO_LINE:"两行", SINGLE:"单行",
+                  CN_NUM:"中数", NUM_EN:"数英", MIXED:"中数"};
+/* 面板「排版类型」下拉的正式五项（顺序 = 2026-10-30 用户指定）。
+   ⛔ MIXED 不在表里：它是 10-30 前字表里的旧名字，读取时由 normKind() 归一成 CN_NUM，
+      否则打开旧格子时下拉会因为「没有这个 option」而退回「自动检测」，看起来像不能选中。 */
+var KIND_OPTIONS = ["MAIN_SUB","TWO_LINE","SINGLE","CN_NUM","NUM_EN"];
+function normKind(k){ return k === "MIXED" ? "CN_NUM" : (k || null); }
 
 /* ---- 真实排版规格（mm）：字号=插件字号，gap=现行 54 片实测行间净距 ----
    实测依据（Blender 5.2 量 20261025魔方贴片全_加厚2.66.blend 凸字网格）：
@@ -898,14 +906,23 @@ var HOLE_DX = 5.5;                   // 孔心距（随预设）
    TWO_LINE = TWO_LINE_GAP 1.0；MIXED 1.2（构建脚本硬编码 1.06 = 1.2×15/17）。
    10-30 前这里写的是 1.52/1.25/1.67（墨迹净距），与插件不同源，
    叠加"拿墨迹当行盒"双重错位 → T15 下块高算成 21.7mm（板才 15），字全溢出。 */
+/* ⭐ 2026-10-30 新增两种「上下不等号」排版（与插件 v1.29.9 的 CN_NUM / NUM_EN 同源）：
+   CN_NUM = 中文 + 数字（立夏 / 5-7）· NUM_EN = 数字 + 英文（8 / Aug.）
+   上行 8.5、下行 6.4、行距 1.0（17 基准）→ T15 下 7.5 / 5.6 / 0.88。
+   ⛔ 下行不能给 8.5：5 字符区间「22-24」在 8.5 下宽 18.5mm，可用宽只有 12.6 → 必溢出。
+   ⛔ 字体按行固定（插件里「上行 = font_latin，下行 = font_cjk」）：
+      CN_NUM 两行都中文 → 两行 cjk:true；NUM_EN 上行数字(拉丁) cjk:false、下行英文 cjk:true。
+   MIXED 是旧名字，统一按 CN_NUM 渲染（同样的字号，避免旧字表看起来不一样）。 */
 var BASE_SPEC = {
   MAIN_SUB:{l1:{size:8.0, cjk:false, italic:true, w:600}, l2:{size:12.0, cjk:true}, gap:1.6, margin:1.2},
   TWO_LINE:{l1:{size:8.5, cjk:true},                      l2:{size:8.5, cjk:true}, gap:1.0, margin:1.2},
-  MIXED:   {l1:{size:9.0, cjk:true},                      l2:{size:6.8, cjk:true}, gap:1.2, margin:1.2},
+  CN_NUM:  {l1:{size:8.5, cjk:true},                      l2:{size:6.4, cjk:true}, gap:1.0, margin:1.2},
+  NUM_EN:  {l1:{size:8.5, cjk:false},                     l2:{size:6.4, cjk:true}, gap:1.0, margin:1.2},
+  MIXED:   {l1:{size:8.5, cjk:true},                      l2:{size:6.4, cjk:true}, gap:1.0, margin:1.2},
   SINGLE:  {l1:null,                                      l2:{size:8.0, cjk:true}, gap:0,   margin:2.0}
 };
 /* 插件里的「行距参数」（整套统一值，≠ 上面实测的墨迹净距），导出文本用 */
-var PLUGIN_GAP = {MAIN_SUB:1.6, TWO_LINE:1.0, MIXED:1.2, SINGLE:0};
+var PLUGIN_GAP = {MAIN_SUB:1.6, TWO_LINE:1.0, CN_NUM:1.0, NUM_EN:1.0, MIXED:1.0, SINGLE:0};
 var SPEC = {};
 function sizeOf(){ return SIZE_PRESETS[SIZE_KEY] || SIZE_PRESETS.P17; }
 function sizeScale(){ return sizeOf().tile / 17; }
@@ -1136,9 +1153,13 @@ function rebuildKindPreset(){
               + " / 行距 " + (PLUGIN_GAP.MAIN_SUB*s).toFixed(2) + "（整套统一）· 自动缩放默认关 · 第一行拉丁字体",
     TWO_LINE: "插件 kind=TWO_LINE · 两行各 " + fmt1(SPEC.TWO_LINE.l2.size)
               + " / 行距 " + (PLUGIN_GAP.TWO_LINE*s).toFixed(2) + " · 自动缩放默认关 · 两行共用中文字体",
-    MIXED:    "插件 kind=TWO_LINE + 参数覆盖 · 第一行(中文) " + fmt1(SPEC.MIXED.l1.size) + " / 第二行(英数) "
-              + fmt1(SPEC.MIXED.l2.size) + " / 行距 " + (PLUGIN_GAP.MIXED*s).toFixed(2) + " · 自动缩放默认开",
-    SINGLE:   "插件 kind=SINGLE · 只有第二行 · 字号 " + fmt1(SPEC.SINGLE.l2.size) + " · 自动缩放默认关"
+    SINGLE:   "插件 kind=SINGLE · 只有第二行 · 字号 " + fmt1(SPEC.SINGLE.l2.size) + " · 自动缩放默认关",
+    CN_NUM:   "插件 kind=CN_NUM · 第一行(中文) " + fmt1(SPEC.CN_NUM.l1.size) + " / 第二行(数字) "
+              + fmt1(SPEC.CN_NUM.l2.size) + " / 行距 " + (PLUGIN_GAP.CN_NUM*s).toFixed(2)
+              + " · 自动缩放默认关 · 两行共用中文字体",
+    NUM_EN:   "插件 kind=NUM_EN · 第一行(数字) " + fmt1(SPEC.NUM_EN.l1.size) + " / 第二行(英文) "
+              + fmt1(SPEC.NUM_EN.l2.size) + " / 行距 " + (PLUGIN_GAP.NUM_EN*s).toFixed(2)
+              + " · 自动缩放默认关 · 第一行拉丁字体"
   };
 }
 // 默认 54 片定稿字表（_build_final_2510.py DATA，2026-10-25 跑通版）
@@ -1155,7 +1176,7 @@ var DEFAULT_KINDS = [
   "MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB",
   "MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB",
   "MAIN_SUB","TWO_LINE","TWO_LINE","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB",
-  "TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","MIXED","MIXED","MIXED",
+  "TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","TWO_LINE","CN_NUM","CN_NUM","CN_NUM",
   "MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB","MAIN_SUB"
 ];
 
@@ -1197,22 +1218,34 @@ function saveState(){
 /* ================= kind 自动检测 ================= */
 function hasLatin(s){ return /[A-Za-z0-9]/.test(s||""); }
 function hasCJK(s){ return /[\u3400-\u4dbf\u4e00-\u9fff]/.test(s||""); }
+/* 纯数字/区间（5-7、22-24、7~9、8.5）—— 「中文 + 数字」排版的判据 */
+var RE_NUM_ONLY = /^[\d\s\-–—~～.·/]+$/;
+function isNumOnly(s){ return !!s && RE_NUM_ONLY.test(s); }
 function detectKind(sub, main){
   if(!sub && !main) return null;
   if(!main && sub) return "SINGLE";
   if(!sub && main) return "SINGLE";
-  if(hasLatin(main) && hasCJK(main)) return "MIXED";
+  /* ⭐ v1.29.9 两种不等号排版（顺序在 MIXED / MAIN_SUB 之前，否则会被抢走）：
+     中文 + 数字区间（立夏 / 5-7）· 数字 + 英文（8 / Aug.） */
+  if(hasCJK(sub) && !hasCJK(main) && isNumOnly(main)) return "CN_NUM";
+  if(!hasCJK(sub) && isNumOnly(sub) && /[A-Za-z]/.test(main||"") && !hasCJK(main)) return "NUM_EN";
+  /* 老「中文+英数」形态（中文与英数混在同一行）→ 归到 CN_NUM（同一套字号） */
+  if(hasLatin(main) && hasCJK(main)) return "CN_NUM";
   if(hasLatin(sub) && !hasLatin(main) && hasCJK(main) && Array.from(main).length===1) return "MAIN_SUB";
   if(hasLatin(sub) && hasLatin(main) && !hasCJK(main)) return "MAIN_SUB";
   return "TWO_LINE";
 }
 window.__detectKind = detectKind;      // module 脚本要用
-function resolvedKind(t){ return t.kind || detectKind(t.sub, t.main); }
+/* ⛔ 归一化必须在这里做：MIXED 已不在下拉选项里，直接拿旧值去 fKind.value 会「选不中」 */
+function resolvedKind(t){ return normKind(t.kind || detectKind(t.sub, t.main)); }
 /* ---- 自动缩放 = 插件 text_auto（per-object 布尔，2026-10-30 做成可开关）----
    ⛔ 默认值必须**按 kind**给，不能全局一个值：插件「套用预设」写的是
       MAIN_SUB / TWO_LINE / SINGLE = False，只有「中文 + 英数」预设写 True。
    tile.auto === true/false = 用户在这个格子里显式定过；undefined / 缺字段 = 跟随 kind 默认。 */
-var AUTO_BY_KIND = {MAIN_SUB:false, TWO_LINE:false, MIXED:true, SINGLE:false};
+/* ⛔ v1.29.9 起 CN_NUM / NUM_EN 默认 **关**：字号已经按内容长度定好（上行 8.5 / 下行 6.4），
+   再开自适应只会「只缩第二行」，把刚定好的比例又打散（就是上大下小的老毛病）。
+   MIXED 现在等同 CN_NUM，也不再默认开。 */
+var AUTO_BY_KIND = {MAIN_SUB:false, TWO_LINE:false, SINGLE:false, CN_NUM:false, NUM_EN:false, MIXED:false};
 function autoDefaultOf(k){ return !!AUTO_BY_KIND[k]; }   // 未知 / 空 kind → false（与插件默认一致）
 function autoOf(t, k){
   k = k || (t ? resolvedKind(t) : "");
@@ -1297,7 +1330,9 @@ function editorKind(){ return fKind.value ? fKind.value : detectKind(fSub.value.
 function openEditor(f, i){
   editing = {face:f, pos:i};
   var t = state.faces[f].tiles[i];
-  editSnap = {sub:t.sub||"", main:t.main||"", kind:t.kind||null, auto:autoOf(t)};
+  /* ⛔ kind 先归一化再放进下拉：旧字表的 "MIXED" 在下拉里已无对应 option，
+     直接赋值会让 select 落到空值（看起来「选不中」）。归一成 CN_NUM 后能正常高亮。 */
+  editSnap = {sub:t.sub||"", main:t.main||"", kind:normKind(t.kind), auto:autoOf(t)};
   fSub.value = editSnap.sub; fMain.value = editSnap.main; fKind.value = editSnap.kind;
   fAuto.checked = editSnap.auto;
   document.getElementById("ed_title").textContent = "编辑格子 · 第 "+(i+1)+" 格";
@@ -1445,7 +1480,7 @@ function buildJSONObj(){
         顶面凸台: FACE_MM + "×" + FACE_MM + " mm；文字可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "）",
         自动缩放: "按片设置（插件 text_auto，布尔）：关 " + st.off + " 片 / 开 " + st.on + " 片。"
                 + "关 = 按设定字号原样排，超出可用区就溢出（压边 / 超出凸台）；开 = 装不下整块等比缩到边距内。"
-                + "默认值：MAIN_SUB / 两行 / 单行 = False，中文+英数 = True；本表以每片的 text_auto 字段为准。",
+                + "默认值：五种排版（MAIN_SUB / 两行 / 单行 / 中文+数字 / 数字+英文）全部 False；本表以每片的 text_auto 字段为准。",
         孔: "四角 φ" + holeDOf().toFixed(2) + " × 深 1.8，孔心距 ±" + HOLE_DX,
         销: "φ" + pinDOf().toFixed(2) + "，直径配合间隙 " + clearOf().toFixed(2),
         中文: "DengXian Bold（C:\\WINDOWS\\Fonts\\Dengb.ttf）",
@@ -1455,8 +1490,9 @@ function buildJSONObj(){
       kind_map: {
         MAIN_SUB: "单字+拼音：" + KIND_PRESET.MAIN_SUB,
         TWO_LINE: "两行：" + KIND_PRESET.TWO_LINE,
-        MIXED: "中文+英数：" + KIND_PRESET.MIXED,
-        SINGLE: "单行：" + KIND_PRESET.SINGLE
+        SINGLE: "单行：" + KIND_PRESET.SINGLE,
+        CN_NUM: "中文+数字：" + KIND_PRESET.CN_NUM,
+        NUM_EN: "数字+英文：" + KIND_PRESET.NUM_EN
       },
       usage: "faces 顺序即 6 个面（0上/1左/2前/3右/4后/5下）；tiles 按 pos 1-9 行优先排 3×3。text_sub=第一行(上)、text_main=第二行(下)、text_auto=该片的自动缩放（与插件同名布尔属性，构建时 p.text_auto = t['text_auto'] 即生效）。"
     },
@@ -1514,8 +1550,9 @@ function buildMD(){
   L.push("|---|---|---|");
   L.push("| MAIN_SUB | `kind='MAIN_SUB'` | 第一行拼音 " + fmt1(SPEC.MAIN_SUB.l1.size) + " / 第二行汉字 " + fmt1(SPEC.MAIN_SUB.l2.size) + " / 行距 " + (PLUGIN_GAP.MAIN_SUB*sizeScale()).toFixed(2) + " / text_auto 默认 False |");
   L.push("| TWO_LINE | `kind='TWO_LINE'` | 两行各 " + fmt1(SPEC.TWO_LINE.l2.size) + " / 行距 " + (PLUGIN_GAP.TWO_LINE*sizeScale()).toFixed(2) + " / text_auto 默认 False |");
-  L.push("| MIXED | `kind='TWO_LINE'` + 参数覆盖 | 第一行中文 " + fmt1(SPEC.MIXED.l1.size) + " / 第二行英数 " + fmt1(SPEC.MIXED.l2.size) + " / 行距 " + (PLUGIN_GAP.MIXED*sizeScale()).toFixed(2) + " / text_auto 默认 True |");
   L.push("| SINGLE | `kind='SINGLE'` | 只有第二行，字号 " + fmt1(SPEC.SINGLE.l2.size) + " / text_auto 默认 False |");
+  L.push("| CN_NUM | `kind='CN_NUM'` | 第一行中文 " + fmt1(SPEC.CN_NUM.l1.size) + " / 第二行数字 " + fmt1(SPEC.CN_NUM.l2.size) + " / 行距 " + (PLUGIN_GAP.CN_NUM*sizeScale()).toFixed(2) + " / text_auto 默认 False |");
+  L.push("| NUM_EN | `kind='NUM_EN'` | 第一行数字 " + fmt1(SPEC.NUM_EN.l1.size) + " / 第二行英文 " + fmt1(SPEC.NUM_EN.l2.size) + " / 行距 " + (PLUGIN_GAP.NUM_EN*sizeScale()).toFixed(2) + " / text_auto 默认 False |");
   L.push("");
   L.push("> `text_auto` 是**逐片**的，上表只是各类的默认值：下面的字表与 JSON 里每片都带自己的 `text_auto`，构建时按片覆盖（`p.text_auto = t['text_auto']`），不要一律套默认。");
   L.push("");
@@ -1560,8 +1597,8 @@ function buildPY(){
   lines.push("# 魔方贴片字表 · 由 wlili.top/tools/cube-tile-table.html 导出 · " + nowStr());
   lines.push("# 用法：整体替换 _build_final_2510.py 顶部的 DATA 与 FACES 配色段，再跑构建脚本。");
   lines.push("# 元组: (第二行 text_main, 第一行 text_sub, 面号 1-6, kind, text_auto)");
-  lines.push("# kind: MAIN_SUB=单字+拼音(12/8/1.6) · TWO_LINE=两行(8.5/8.5/1.0) ·");
-  lines.push("#       MIXED=中文+英数(TWO_LINE+9.0/6.8/1.20) · SINGLE=单行(8)");
+  lines.push("# kind: MAIN_SUB=单字+拼音(12/8/1.6) · TWO_LINE=两行(8.5/8.5/1.0) · SINGLE=单行(8)");
+  lines.push("#       CN_NUM=中文+数字(8.5/6.4/1.0) · NUM_EN=数字+英文(8.5/6.4/1.0)；旧 MIXED 等同 CN_NUM");
   lines.push("# text_auto: 插件 p.text_auto —— True=装不下缩到边距内 / False=按原字号溢出；逐片给出，别一律套默认");
   lines.push("DATA = [");
   var n = 0;
