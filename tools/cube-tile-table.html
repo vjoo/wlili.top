@@ -393,14 +393,14 @@
             <span class="tb-sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></span>
             <span>重置</span>
           </button>
-          <label class="tb-size" title="尺寸预设：决定预览与导出里的贴片 / 底座尺寸（与 Blender 插件 v1.29.7 预设一致）">
+          <label class="tb-size" title="尺寸预设：决定预览与导出里的贴片 / 底座尺寸（与 Blender 插件 v1.29.8 预设一致）">
             <select id="size_sel" class="form-select" data-sel-inline data-sel-compact aria-label="贴片尺寸预设">
               <option value="P17">T17*D17</option>
               <option value="P15">T15*D15</option>
               <option value="M15" selected>T15*D17</option>
             </select>
           </label>
-          <label class="tb-size tb-hotend" title="热端档：只影响销径与配合间隙（0.4 = φ2.03/0.42，0.2 = φ2.37/0.08），孔径与尺寸不变">
+          <label class="tb-size tb-hotend" title="热端档：决定孔径 + 销径 + 配合间隙（0.4：孔 2.45 / 销 2.03 / 间隙 0.42；0.2：T15 孔 2.25 / 销 2.10 / 间隙 0.15，T17 孔 2.28 / 销 2.14 / 间隙 0.14）">
             <select id="hotend_sel" class="form-select" data-sel-inline data-sel-compact aria-label="热端档">
               <option value="H04">0.4 热端</option>
               <option value="H02" selected>0.2 热端</option>
@@ -848,7 +848,7 @@ var KIND_SHORT = {MAIN_SUB:"注音", TWO_LINE:"两行", MIXED:"中英", SINGLE:"
    注：六十比甲子矮/窄是「六、十」字形墨迹本身比「甲、子」小（对调实验验证与行位无关）。 */
 var TILE_MM = 17;
 var FACE_MM = 15.23;                 // 顶面凸台（板 17 内缩 0.885）
-/* ---- 尺寸预设（与 Blender 插件 v1.29.7 的 PRESET_GEO / PRESET_SHORT 一一对应）----
+/* ---- 尺寸预设（与 Blender 插件 v1.29.8 的 PRESET_GEO / PRESET_SHORT 一一对应）----
    tile = 贴片边长 · base = 底座（销板）边长 · cr = 贴片圆角 · holeDx = 孔心距
    ⛔ 孔心距边恒定 3.0mm：dx = tile/2 − 3.0（17→5.5、15→4.5），不是按比例乘 */
 var SIZE_PRESETS = {
@@ -856,15 +856,28 @@ var SIZE_PRESETS = {
   P15:{label:"T15*D15", tile:15, base:15, cr:0.97, holeDx:4.5},
   M15:{label:"T15*D17", tile:15, base:17, cr:0.97, holeDx:4.5}
 };
-/* ---- 热端档（与 Blender 插件 v1.29.7 的 HOTEND_FIT 一一对应）----
-   ⛔ 热端**只换公差族**：销径 / 销长 / 总间隙 / 轴向余量。
-      孔径 φ2.45、孔深 1.8、孔位、贴片尺寸、圆角、字号 一律与热端无关 —— 别跟着改。
-   数据来源：0.4 档 10-25 实测定稿；0.2 档 10-28 销梯实测（φ2.37 合适）。
-   ⛔ 两档差 5 倍（0.42 vs 0.08），导出的规格说明必须写明是哪一档，否则 AI 会照 0.4 做。 */
+/* ---- 热端档（与 Blender 插件 v1.29.8 的 HOTEND_FIT / HOLE_D_BY_HOTEND 一一对应）----
+   ⛔ 2026-10-30 起：**孔径也随「热端 × 贴片尺寸」变** —— 原来「孔径 φ2.45 与热端无关」
+      这个前提已被实测推翻：0.2 喷嘴的孔缩比 0.4 小得多，同一名义孔径打出来差 0.2 以上。
+        0.4 档：T15 / T17 都是 孔 2.45 + 间隙 0.42（销 2.03）
+        0.2 档：T15 孔 2.25 + 间隙 0.15（销 2.10）· T17 孔 2.28 + 间隙 0.14（销 2.14）
+   ⛔ 销径**不要手写**：一律由 pinDOf() = 孔径 − 间隙 派生，两处写死必然漂。
+   ⛔ 改这里必须同步插件 `HOLE_D_BY_HOTEND` / `PIN_CLEAR_BY_HOTEND` 与两个 `_build_*.py`。 */
 var HOTEND_PRESETS = {
-  H04:{label:"0.4 热端", pinD:2.03, pinLen:1.65, clear:0.42, lenClear:0.15},
-  H02:{label:"0.2 热端", pinD:2.37, pinLen:1.70, clear:0.08, lenClear:0.10}
+  H04:{label:"0.4 热端", pinLen:1.65, lenClear:0.15,
+       holeD:{15:2.45, 17:2.45}, clearByTile:{15:0.42, 17:0.42}},
+  H02:{label:"0.2 热端", pinLen:1.70, lenClear:0.10,
+       holeD:{15:2.25, 17:2.28}, clearByTile:{15:0.15, 17:0.14}}
 };
+function holeDOf(){
+  var h = hotendOf();
+  return (h.holeD && h.holeD[sizeOf().tile]) || 2.45;
+}
+function clearOf(){
+  var h = hotendOf();
+  return (h.clearByTile && h.clearByTile[sizeOf().tile]) || h.clearByTile[15] || 0.42;
+}
+function pinDOf(){ return +(holeDOf() - clearOf()).toFixed(3); }
 /* 默认档 = 0.2 热端（2026-10-30 用户定：H2 · T15×D17 是当前主力规格） */
 var HOTEND_DEFAULT = "H02";
 var HOTEND_KEY = HOTEND_DEFAULT;
@@ -1367,20 +1380,20 @@ function buildJSONObj(){
     meta: {
       tool: "魔方贴片字表编辑器（wlili.top/tools/cube-tile-table.html）",
       exported: new Date().toLocaleString("zh-CN"),
-      plugin: "ctg_tile_generator v1.29.7（Blender 5.2 插件）",
+      plugin: "ctg_tile_generator v1.29.8（Blender 5.2 插件）",
       hotend: HOTEND_KEY,
       file_tag: exportTag(),      // 与导出文件名同源：T15D17_H02（`*` 落盘非法，这里也去掉）
       standard: {
         热端: hotendOf().label,
         尺寸预设: sizeOf().label,
         贴片: TILE_MM + "×" + TILE_MM + "×2.66 mm，圆角 " + CR_MM + "，顶面凸字 0.6 mm",
-        底座销板: sizeOf().base + "×" + sizeOf().base + "×1.4 mm（销 φ" + hotendOf().pinD.toFixed(2) + "×" + hotendOf().pinLen.toFixed(2) + "，销位跟贴片孔位）",
+        底座销板: sizeOf().base + "×" + sizeOf().base + "×1.4 mm（销 φ" + pinDOf().toFixed(2) + "×" + hotendOf().pinLen.toFixed(2) + "，销位跟贴片孔位）",
         顶面凸台: FACE_MM + "×" + FACE_MM + " mm；文字可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "）",
         自动缩放: "按片设置（插件 text_auto，布尔）：关 " + st.off + " 片 / 开 " + st.on + " 片。"
                 + "关 = 按设定字号原样排，超出可用区就溢出（压边 / 超出凸台）；开 = 装不下整块等比缩到边距内。"
                 + "默认值：MAIN_SUB / 两行 / 单行 = False，中文+英数 = True；本表以每片的 text_auto 字段为准。",
-        孔: "四角 φ2.45 × 深 1.8，孔心距 ±" + HOLE_DX + "（孔径与孔深不随热端变）",
-        销: "φ" + hotendOf().pinD.toFixed(2) + "，直径配合间隙 " + hotendOf().clear.toFixed(2),
+        孔: "四角 φ" + holeDOf().toFixed(2) + " × 深 1.8，孔心距 ±" + HOLE_DX,
+        销: "φ" + pinDOf().toFixed(2) + "，直径配合间隙 " + clearOf().toFixed(2),
         中文: "DengXian Bold（C:\\WINDOWS\\Fonts\\Dengb.ttf）",
         拼音: "Segoe UI Semibold Italic（seguisbi.ttf）",
         底座色: "文字_白 #EDEDE8"
@@ -1415,7 +1428,7 @@ function buildMD(){
   L.push("> 类型：数据字典（字表快照，豁免六块骨架，保留来源 + 日期）");
   L.push("> 来源：wlili.top/tools/cube-tile-table.html 导出 · " + nowStr());
   L.push("> 状态：已填 **" + n + "** / 54 · " + kindTxt);
-  L.push("> 规格：**" + sizeOf().label + " · " + hotendOf().label + "**（销 φ" + hotendOf().pinD.toFixed(2) + " · 间隙 " + hotendOf().clear.toFixed(2) + " · 孔径 φ2.45 不随热端变）");
+  L.push("> 规格：**" + sizeOf().label + " · " + hotendOf().label + "**（孔 φ" + holeDOf().toFixed(2) + " · 销 φ" + pinDOf().toFixed(2) + " · 间隙 " + clearOf().toFixed(2) + "）");
   L.push("");
   L.push("## 结论（先读这一段）");
   L.push("");
@@ -1424,19 +1437,19 @@ function buildMD(){
   L.push("- 每片两行：`text_sub` = 第一行（上）、`text_main` = 第二行（下）；kind 取值与插件枚举对应关系见下节。");
   L.push("- 文末《机器可读 JSON》是全量数据：AI 可直接据此生成 Blender 构建脚本。");
   L.push("");
-  L.push("## 规格（导出时固化，源自插件 v1.29.7）");
+  L.push("## 规格（导出时固化，源自插件 v1.29.8）");
   L.push("");
   L.push("| 项 | 取值 |");
   L.push("|---|---|");
-  L.push("| 热端 | **" + hotendOf().label + "**（只影响销径与公差；孔径 / 孔深 / 尺寸 / 字号与热端无关） |");
+  L.push("| 热端 | **" + hotendOf().label + "**（决定孔径 + 销径 + 间隙：0.4 全套 2.45 / 2.03 / 0.42；0.2 的 T15 是 2.25 / 2.10 / 0.15、T17 是 2.28 / 2.14 / 0.14） |");
   L.push("| 尺寸预设 | " + sizeOf().label + " |");
   L.push("| 贴片 | " + TILE_MM + " × " + TILE_MM + " × **2.66** mm，圆角 " + CR_MM + " |");
   L.push("| 底座销板 | " + sizeOf().base + " × " + sizeOf().base + " × 1.4 mm（销位跟贴片孔位） |");
   L.push("| 顶面凸台 | " + FACE_MM + " × " + FACE_MM + " mm |");
   L.push("| 凸字 | 高 0.6 mm；可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "） |");
   L.push("| 自动缩放 | **按片**（插件 `text_auto`）：关 **" + st.off + "** 片 / 开 **" + st.on + "** 片。关 = 按设定字号原样排、装不下就溢出；开 = 装不下整块等比缩到边距内。默认 MAIN_SUB / 两行 / 单行 = `False`，中文+英数 = `True` |");
-  L.push("| 孔 | 四角 φ2.45 × 深 1.8，孔心距 ±" + HOLE_DX + " |");
-  L.push("| 销 | φ" + hotendOf().pinD.toFixed(2) + " × " + hotendOf().pinLen.toFixed(2) + "，直径配合间隙 " + hotendOf().clear.toFixed(2) + "，轴向余量 " + hotendOf().lenClear.toFixed(2) + " |");
+  L.push("| 孔 | 四角 φ" + holeDOf().toFixed(2) + " × 深 1.8，孔心距 ±" + HOLE_DX + " |");
+  L.push("| 销 | φ" + pinDOf().toFixed(2) + " × " + hotendOf().pinLen.toFixed(2) + "，直径配合间隙 " + clearOf().toFixed(2) + "，轴向余量 " + hotendOf().lenClear.toFixed(2) + " |");
   L.push("| 中文 | DengXian Bold（`C:\\WINDOWS\\Fonts\\Dengb.ttf`） |");
   L.push("| 拼音 / 拉丁 | Segoe UI Semibold Italic（`seguisbi.ttf`） |");
   L.push("| 底座色 | 文字_白 `#EDEDE8` |");
@@ -1820,7 +1833,7 @@ document.getElementById("size_sel").addEventListener("change", function(){
 document.getElementById("hotend_sel").addEventListener("change", function(){
   var h = applyHotend(this.value);
   state.hotend = HOTEND_KEY; saveState();
-  toast("热端：" + h.label + " · 销 φ" + h.pinD.toFixed(2) + " · 间隙 " + h.clear.toFixed(2));
+  toast("热端：" + h.label + " · 孔 φ" + holeDOf().toFixed(2) + " · 销 φ" + pinDOf().toFixed(2) + " · 间隙 " + clearOf().toFixed(2));
 });
 paintToolFace();
 render();
