@@ -1102,9 +1102,9 @@ function tileSVG(sub, main, kind, color, px, opts){
       +  (_sx2 !== 1 ? ' transform="translate(' + cx + ',0) scale(' + _sx2.toFixed(4) + ',1) translate(-' + cx + ',0)"' : '')
       +  ' text-anchor="middle" fill="' + color + '">' + escHtml(main) + '</text>';
   }
-  /* ⭐ 2026-10-30 溢出预警：自动关着（k=1）且内容宽度超过可用宽 → 画一圈红色虚线框 + 角标。
-     以前这种情况要等用户导进 Blender 才发现（面4「22-24」那批就是），现在页面上直接可见。 */
-  if(!(opts && opts.bare) && Wink > avail + 0.01){
+  /* ⭐ 2026-10-30 溢出预警：**自动缩放关着**且内容宽度超过可用宽 → 红虚线框 + 角标。
+     ⛔ auto=true 的格子会整块等比缩，不会溢出，不能标红（否则一开自动缩放红框还在，误导）。 */
+  if(!(opts && opts.bare) && !(opts && opts.auto) && Wink > avail + 0.01){
     s += '<rect x="0.35" y="0.35" width="' + (TILE_MM - 0.7) + '" height="' + (TILE_MM - 0.7)
        + '" rx="' + CR_MM + '" fill="none" stroke="#E5484D" stroke-width="0.32" stroke-dasharray="1.1 0.7"/>';
     s += '<text x="' + (TILE_MM - 1.1) + '" y="1.9" font-size="1.6" fill="#E5484D" text-anchor="end"'
