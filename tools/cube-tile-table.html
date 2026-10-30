@@ -1132,14 +1132,8 @@ function tileSVG(sub, main, kind, color, px, opts){
       +  (_sx2 !== 1 ? ' transform="translate(' + cx + ',0) scale(' + _sx2.toFixed(4) + ',1) translate(-' + cx + ',0)"' : '')
       +  ' text-anchor="middle" fill="' + color + '">' + escHtml(main) + '</text>';
   }
-  /* ⭐ 2026-10-30 溢出预警：**自动缩放关着**且内容宽度超过可用宽 → 红虚线框 + 角标。
-     ⛔ auto=true 的格子会整块等比缩，不会溢出，不能标红（否则一开自动缩放红框还在，误导）。 */
-  if(!(opts && opts.bare) && !(opts && opts.auto) && Wink > avail + 0.01){
-    s += '<rect x="0.35" y="0.35" width="' + (TILE_MM - 0.7) + '" height="' + (TILE_MM - 0.7)
-       + '" rx="' + CR_MM + '" fill="none" stroke="#E5484D" stroke-width="0.32" stroke-dasharray="1.1 0.7"/>';
-    s += '<text x="' + (TILE_MM - 1.1) + '" y="1.9" font-size="1.6" fill="#E5484D" text-anchor="end"'
-       + ' font-family="sans-serif">!</text>';
-  }
+  /* 2026-10-30 移除「溢出红框预警」：字号已按 kind 定好（CN_NUM/NUM_EN 下行 5.6 装得下 5 字符区间），
+     实测 54 格 0 溢出，预警只会制造噪音；真要看是否溢出，导入插件生成后量网格即可。 */
   return s + '</svg>';
 }
 var KIND_PRESET = {};
@@ -1538,7 +1532,7 @@ function buildMD(){
   L.push("| 底座销板 | " + sizeOf().base + " × " + sizeOf().base + " × 1.4 mm（销位跟贴片孔位） |");
   L.push("| 顶面凸台 | " + FACE_MM + " × " + FACE_MM + " mm |");
   L.push("| 凸字 | 高 0.6 mm；可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "） |");
-  L.push("| 自动缩放 | **按片**（插件 `text_auto`）：关 **" + st.off + "** 片 / 开 **" + st.on + "** 片。关 = 按设定字号原样排、装不下就溢出；开 = 装不下整块等比缩到边距内。默认 MAIN_SUB / 两行 / 单行 = `False`，中文+英数 = `True` |");
+  L.push("| 自动缩放 | **按片**（插件 `text_auto`）：关 **" + st.off + "** 片 / 开 **" + st.on + "** 片。关 = 按设定字号原样排、装不下就溢出；开 = 装不下整块等比缩到边距内。默认**五类全部 `False`**（MAIN_SUB / 两行 / 单行 / 中文+数字 / 数字+英文） |");
   L.push("| 孔 | 四角 φ" + holeDOf().toFixed(2) + " × 深 1.8，孔心距 ±" + HOLE_DX + " |");
   L.push("| 销 | φ" + pinDOf().toFixed(2) + " × " + hotendOf().pinLen.toFixed(2) + "，直径配合间隙 " + clearOf().toFixed(2) + "，轴向余量 " + hotendOf().lenClear.toFixed(2) + " |");
   L.push("| 中文 | DengXian Bold（`C:\\WINDOWS\\Fonts\\Dengb.ttf`） |");
