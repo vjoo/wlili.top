@@ -1043,7 +1043,10 @@ function tileSVG(sub, main, kind, color, px, opts){
      导出的 text_size 用的是 SPEC 原值，不受这里影响。 */
   var cal1 = (opts && opts.fix) ? 1 : (hasCJK(sub)  ? RENDER_CAL.cjkFix : RENDER_CAL.latFix);
   var cal2 = (opts && opts.fix) ? 1 : (hasCJK(main) ? RENDER_CAL.cjkFix : RENDER_CAL.latFix);
-  var fs1 = sp.l1.size * k * cal1;
+  /* ⛔ 单行（SINGLE）的 sp.l1 是 null —— 这里必须判空，否则 fs1 求值抛
+     "Cannot read properties of null (reading 'size')"，render() 在画到该面时中断：
+     表现为「导入后面板少一面、点重置也回不来」（2026-10-30 实测，面6 全 SINGLE 必崩）。 */
+  var fs1 = sp.l1 ? sp.l1.size * k * cal1 : 0;
   var fs2 = sp.l2.size * k * cal2;
   var y1 = hasCJK(sub) ? (top + h1 / 2 + RENDER_CAL.cjkMid * fs1)
                        : (top + h1);
