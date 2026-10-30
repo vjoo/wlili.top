@@ -960,6 +960,9 @@ function inkOf(sp, text){
    自动缩放一关字就全溢出板外 —— 而 Blender 里同一套字号块高只有 12.26（实测墨迹 12.72）。
    字形的升部/降部自然溢出盒外，这是**插件的真实形态**，页面必须复现。 */
 var CJK_BOX_RATIO   = 0.770;   // 汉字行盒 / 字号（插件 CJK_INK_RATIO）
+var CJK_INK_W       = 0.795;   // 汉字**墨迹宽** / 字号 —— Blender 实测：7.5 号「霜降」宽 11.92mm
+                               //   （= 1.589em / 2 字）。浏览器同字号画出来是 0.975em/字，宽 22%
+                               //   → 只靠 font-size 校准会顾此失彼（高对了宽仍偏），宽度单独用 scaleX 压。
 var LATIN_BOX_RATIO = 0.475;   // 拼音行盒 / 字号（插件 LATIN_ASCENT_RATIO，基线以上含声调）
 var FIT_SAFE_PAD    = 0.35;    // 插件自适应判据余量：h_nom + 0.35 ≤ 可用高
 /* ⛔ 汉字基线**不能**用 canvas 墨迹 (asc−desc)/2 推：
@@ -975,7 +978,7 @@ function hasCJK(s){ return !!s && /[\u3400-\u9fff]/.test(s); }
       拿像素扫真实墨迹高度，反推该环境下要把 font-size 缩多少才能等于插件标称盒。
       目标 = 插件标称：汉字 0.770，拼音 0.475+降部 0.150 = 0.625。
       扫不出来（异常字体/无 canvas）就 fix=1，退化成不补偿，不会更糟。 */
-var RENDER_CAL = {cjkFix:1, latFix:1, cjkMid:0.2525};
+var RENDER_CAL = {cjkFix:1, latFix:1, cjkMid:0.2525, cjkSX:1};
 function _pixMetrics(body, cssFont, fs){
   try{
     var N = Math.ceil(fs * 3);
@@ -1007,6 +1010,18 @@ function calibrateRender(){
   if(ml && ml.h > 0.05){
     RENDER_CAL.latFix = clamp((LATIN_BOX_RATIO + LATIN_DESCENT_RATIO) / ml.h);
   }
+  /* ⭐ 2026-10-30 宽度校准（新增）：字体高度对得上不代表宽度对得上 ——
+     同一串「霜降」Blender 是 0.795 em/字，浏览器是 0.975 em/字（宽 22.7%）。
+     宽度决定「装不装得下」，必须单独校：用 scaleX 压，不动 font-size（高度已由 cjkFix 管）。 */
+  try{
+    var cw = document.createElement("canvas").getContext("2d");
+    cw.font = "700 100px " + FAM_CJK;
+    var mw = cw.measureText("霜降");
+    var wpc = (mw.actualBoundingBoxLeft + mw.actualBoundingBoxRight) / 100 / 2;   // em / 字
+    /* ⛔ 分母要乘 cjkFix：实际画出来的字号已经是 size×cjkFix，宽度基准跟着变。
+       少了这一步会压过头（实测 0.815 得到宽 10.76，Blender 是 11.92，差 −9.7%）。 */
+    if(wpc > 0.1) RENDER_CAL.cjkSX = clamp(CJK_INK_W / (wpc * (RENDER_CAL.cjkFix || 1)));
+  }catch(e){}
 }
 var LATIN_DESCENT_RATIO = 0.150;   // 拼音降部 / 字号（插件 LATIN_DESCENT_RATIO）
 
@@ -1023,12 +1038,22 @@ function tileSVG(sub, main, kind, color, px, opts){
   var i1 = sp.l1 ? inkOf(sp.l1, sub) : null;
   var i2 = inkOf(sp.l2, main);
   var two = !!(sub && main && i1);                          // 两行都有内容
-  var b1 = i1 ? (hasCJK(sub) ? CJK_BOX_RATIO : LATIN_BOX_RATIO) : 0;
-  var b2 = hasCJK(main) ? CJK_BOX_RATIO : LATIN_BOX_RATIO;
+  /* ⛔⛔ 2026-10-30：行盒 / 基线 / 渲染校准的判定口径，从「内容里有没有汉字」改成
+     「**该行设置的字体**」（sp.l1.cjk / sp.l2.cjk）。插件是按字体选行盒的（中文字体 → CJK 0.770），
+     不看字符类型。网页原来把 "23-24" 当拉丁行：行盒 0.475 + 渲染字号 ×0.641 + 基线贴盒底
+     → 比 Blender 小 20%（同一片 Blender 实测宽 16.35，网页只画 13.13，看着「刚好」实则已溢出）。 */
+  var b1 = i1 ? (sp.l1.cjk ? CJK_BOX_RATIO : LATIN_BOX_RATIO) : 0;
+  var b2 = sp.l2.cjk ? CJK_BOX_RATIO : LATIN_BOX_RATIO;
   var h1n = i1 ? sp.l1.size * b1 : 0;                       // 标称行盒（未缩）
   var h2n = sp.l2.size * b2;
   var Hn = h2n + (two ? h1n + sp.gap : 0);
-  var Wink = Math.max(i1 ? i1.w : 0, i2.w);
+  /* ⛔ Wink 必须换算成**实际渲染宽度**：inkOf 给的是 size×em（未含两项校准），
+     实际画出来是 size×cjkFix（字号）×cjkSX（水平压缩）。漏掉 cjkFix 会大 12%，
+     把所有两行格都误判成溢出（实测红框标满 54 格）。 */
+  var _cw2 = (RENDER_CAL.cjkFix || 1) * (RENDER_CAL.cjkSX || 1);
+  var _sxw1 = (sp.l1 && sp.l1.cjk) ? _cw2 : 1;
+  var _sxw2 = sp.l2.cjk ? _cw2 : 1;
+  var Wink = Math.max(i1 ? i1.w * _sxw1 : 0, i2.w * _sxw2);
   var avail = TILE_MM - 2 * sp.margin;
   var k = Math.min(1, Wink > 0 ? avail / Wink : 1, Hn > 0 ? avail / (Hn + FIT_SAFE_PAD) : 1);
   if(opts && opts.auto === false) k = 1;                     // 自动缩放关：字号不缩（超限就溢出）
@@ -1041,18 +1066,18 @@ function tileSVG(sub, main, kind, color, px, opts){
   /* ⛔ 画出来的 font-size ≠ 插件字号：要乘环境校准 fix，否则浏览器把字画大 21%(汉字)/58%(拼音)。
      行盒 h1/h2 仍按插件字号算（布局与 Blender 一致），只有**渲染字号**缩放。
      导出的 text_size 用的是 SPEC 原值，不受这里影响。 */
-  var cal1 = (opts && opts.fix) ? 1 : (hasCJK(sub)  ? RENDER_CAL.cjkFix : RENDER_CAL.latFix);
-  var cal2 = (opts && opts.fix) ? 1 : (hasCJK(main) ? RENDER_CAL.cjkFix : RENDER_CAL.latFix);
+  var cal1 = (opts && opts.fix) ? 1 : ((sp.l1 && sp.l1.cjk) ? RENDER_CAL.cjkFix : RENDER_CAL.latFix);
+  var cal2 = (opts && opts.fix) ? 1 : (sp.l2.cjk ? RENDER_CAL.cjkFix : RENDER_CAL.latFix);
   /* ⛔ 单行（SINGLE）的 sp.l1 是 null —— 这里必须判空，否则 fs1 求值抛
      "Cannot read properties of null (reading 'size')"，render() 在画到该面时中断：
      表现为「导入后面板少一面、点重置也回不来」（2026-10-30 实测，面6 全 SINGLE 必崩）。 */
   var fs1 = sp.l1 ? sp.l1.size * k * cal1 : 0;
   var fs2 = sp.l2.size * k * cal2;
-  var y1 = hasCJK(sub) ? (top + h1 / 2 + RENDER_CAL.cjkMid * fs1)
-                       : (top + h1);
+  var y1 = (sp.l1 && sp.l1.cjk) ? (top + h1 / 2 + RENDER_CAL.cjkMid * fs1)
+                                 : (top + h1);
   var box2Top = top + (two ? h1 + g : 0);
-  var y2 = hasCJK(main) ? (box2Top + h2 / 2 + RENDER_CAL.cjkMid * fs2)
-                        : (box2Top + h2);
+  var y2 = sp.l2.cjk ? (box2Top + h2 / 2 + RENDER_CAL.cjkMid * fs2)
+                     : (box2Top + h2);
   var inset = (TILE_MM - FACE_MM) / 2;
   var cx = TILE_MM / 2;
   var s = '<svg class="tsvg" viewBox="0 0 ' + TILE_MM + ' ' + TILE_MM + '" xmlns="http://www.w3.org/2000/svg"'
@@ -1063,15 +1088,27 @@ function tileSVG(sub, main, kind, color, px, opts){
     s += '<rect x="' + inset.toFixed(2) + '" y="' + inset.toFixed(2) + '" width="' + FACE_MM + '" height="' + FACE_MM + '" rx="' + (CR_MM*0.82).toFixed(2) + '" fill="#fffdf8"/>';
   }
   if(sub && sp.l1){
+    var _sx1 = sp.l1.cjk ? RENDER_CAL.cjkSX : 1;
     s += '<text x="' + cx + '" y="' + y1.toFixed(3) + '" font-size="' + fs1.toFixed(3) + '"'
       +  ' font-family=\'' + famOf(sp.l1) + '\' font-weight="' + (sp.l1.w || 700) + '"'
       +  (sp.l1.italic ? ' font-style="italic"' : '')
+      +  (_sx1 !== 1 ? ' transform="translate(' + cx + ',0) scale(' + _sx1.toFixed(4) + ',1) translate(-' + cx + ',0)"' : '')
       +  ' text-anchor="middle" fill="' + color + '">' + escHtml(sub) + '</text>';
   }
   if(main){
+    var _sx2 = sp.l2.cjk ? RENDER_CAL.cjkSX : 1;
     s += '<text x="' + cx + '" y="' + y2.toFixed(3) + '" font-size="' + fs2.toFixed(3) + '"'
       +  ' font-family=\'' + famOf(sp.l2) + '\' font-weight="' + (sp.l2.w || 700) + '"'
+      +  (_sx2 !== 1 ? ' transform="translate(' + cx + ',0) scale(' + _sx2.toFixed(4) + ',1) translate(-' + cx + ',0)"' : '')
       +  ' text-anchor="middle" fill="' + color + '">' + escHtml(main) + '</text>';
+  }
+  /* ⭐ 2026-10-30 溢出预警：自动关着（k=1）且内容宽度超过可用宽 → 画一圈红色虚线框 + 角标。
+     以前这种情况要等用户导进 Blender 才发现（面4「22-24」那批就是），现在页面上直接可见。 */
+  if(!(opts && opts.bare) && Wink > avail + 0.01){
+    s += '<rect x="0.35" y="0.35" width="' + (TILE_MM - 0.7) + '" height="' + (TILE_MM - 0.7)
+       + '" rx="' + CR_MM + '" fill="none" stroke="#E5484D" stroke-width="0.32" stroke-dasharray="1.1 0.7"/>';
+    s += '<text x="' + (TILE_MM - 1.1) + '" y="1.9" font-size="1.6" fill="#E5484D" text-anchor="end"'
+       + ' font-family="sans-serif">!</text>';
   }
   return s + '</svg>';
 }
