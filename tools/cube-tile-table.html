@@ -290,6 +290,23 @@
 .ctg-tab .tab-logo{width:16px; height:16px; flex:0 0 auto; display:block;}
 .ctg-tab em{font-style:normal; color:var(--ink-tertiary); font-size:var(--fs-xs); margin-left:2px;}
 .ctg-tab.on em{color:rgba(255,255,255,.70);}
+/* 导出文件名（v1.30.1）：前缀可改，扩展名跟着标签走、单独显示在右边 */
+.exp-name{display:flex; align-items:center; gap:8px; flex:none; margin-bottom:var(--space-3);}
+.exp-name .lbl{font-size:var(--fs-sm); color:var(--ink-secondary); flex:0 0 auto;}
+.exp-name input{
+  flex:1 1 auto; min-width:0; height:30px; padding:0 10px;
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  background:var(--bg-white); color:var(--ink); font-size:var(--fs-sm); font-family:inherit;
+}
+.exp-name input:focus{outline:none; border-color:var(--fill-black);}
+.exp-name input::placeholder{color:var(--ink-tertiary);}
+.exp-name .ext{font-size:var(--fs-sm); color:var(--ink-tertiary); flex:0 0 auto; min-width:38px;}
+.exp-name button{
+  flex:0 0 auto; height:30px; padding:0 10px; border-radius:var(--radius-sm);
+  border:1px solid var(--border); background:var(--bg-white); color:var(--ink-secondary);
+  font-size:var(--fs-xs); font-family:inherit; cursor:pointer;
+}
+.exp-name button:hover{color:var(--ink); background:var(--bg);}
 .ctg-tab.on{background:var(--fill-black); color:#fff; border-color:var(--fill-black);}
 /* 导出内容区：弹窗多宽就多宽，纵向吃掉剩余高度（min-width:0 防 flex 子项被撑/塌） */
 .ctg-ta-wrap{flex:1 1 auto; min-height:0; display:flex;}
@@ -399,7 +416,7 @@
             <span class="tb-sq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></span>
             <span>重置</span>
           </button>
-          <label class="tb-size" title="尺寸预设：决定预览与导出里的贴片 / 底座尺寸（与 Blender 插件 v1.29.8 预设一致）">
+          <label class="tb-size" title="尺寸预设：决定预览与导出里的贴片 / 底座尺寸（与 Blender 插件预设一致）">
             <select id="size_sel" class="form-select" data-sel-inline data-sel-compact aria-label="贴片尺寸预设">
               <option value="P17">T17*D17</option>
               <option value="P15">T15*D15</option>
@@ -512,6 +529,13 @@
         </svg>
         <span>AI 脚本<em>· py</em></span>
       </div>
+    </div>
+    <div class="exp-name">
+      <span class="lbl">文件名</span>
+      <input id="exp_name" type="text" spellcheck="false" autocomplete="off"
+             placeholder="留空 = 自动命名">
+      <span class="ext" id="exp_ext">.md</span>
+      <button id="exp_name_def" title="恢复自动命名（尺寸+热端+日期）">自动</button>
     </div>
     <div class="ctg-ta-wrap"><textarea class="ctg-ta" id="exp_ta" readonly spellcheck="false"></textarea></div>
     <div class="ctg-foot exp-foot">
@@ -883,7 +907,11 @@ function normKind(k){ return k === "MIXED" ? "CN_NUM" : (k || null); }
    注：六十比甲子矮/窄是「六、十」字形墨迹本身比「甲、子」小（对调实验验证与行位无关）。 */
 var TILE_MM = 17;
 var FACE_MM = 15.23;                 // 顶面凸台（板 17 内缩 0.885）
-/* ---- 尺寸预设（与 Blender 插件 v1.29.8 的 PRESET_GEO / PRESET_SHORT 一一对应）----
+/* 插件版本：导出文本里要写「源自插件 vX」，以前每升一版都要手改两处字符串、漏了就写错。
+   现在只改这一行（插件那边 `VERSION` 是同一份事实来源）。 */
+var PLUGIN_VER = "v1.29.11";
+
+/* ---- 尺寸预设（与 Blender 插件 PRESET_GEO / PRESET_SHORT 一一对应）----
    tile = 贴片边长 · base = 底座（销板）边长 · cr = 贴片圆角 · holeDx = 孔心距
    ⛔ 孔心距边恒定 3.0mm：dx = tile/2 − 3.0（17→5.5、15→4.5），不是按比例乘 */
 var SIZE_PRESETS = {
@@ -1491,7 +1519,7 @@ function buildJSONObj(){
     meta: {
       tool: "魔方贴片字表编辑器（wlili.top/tools/cube-tile-table.html）",
       exported: new Date().toLocaleString("zh-CN"),
-      plugin: "ctg_tile_generator v1.29.8（Blender 5.2 插件）",
+      plugin: "ctg_tile_generator " + PLUGIN_VER + "（Blender 5.2 插件）",
       hotend: HOTEND_KEY,
       file_tag: exportTag(),      // 与导出文件名同源：T15D17_H02（`*` 落盘非法，这里也去掉）
       standard: {
@@ -1549,7 +1577,7 @@ function buildMD(){
   L.push("- 每片两行：`text_sub` = 第一行（上）、`text_main` = 第二行（下）；kind 取值与插件枚举对应关系见下节。");
   L.push("- 文末《机器可读 JSON》是全量数据：AI 可直接据此生成 Blender 构建脚本。");
   L.push("");
-  L.push("## 规格（导出时固化，源自插件 v1.29.8）");
+  L.push("## 规格（导出时固化，源自插件 " + PLUGIN_VER + "）");
   L.push("");
   L.push("| 项 | 取值 |");
   L.push("|---|---|");
@@ -1647,10 +1675,35 @@ function buildPY(){
 }
 var expTa = document.getElementById("exp_ta");
 var expTab = "md";
+/* 导出文件名：前缀可由用户改，扩展名恒定跟标签走（.md/.json/.py），不放进输入框免得写错 */
+var expNameAuto = true;      // true = 跟随「尺寸_热端_日期」自动命名；用户改过一个字就变 false
+function expExtOf(kind){ return kind === "md" ? ".md" : (kind === "json" ? ".json" : ".py"); }
+function expDefBase(kind){ return exportFileName(kind).replace(/\.[A-Za-z0-9]+$/, ""); }
+function expFileName(kind){
+  var v = (document.getElementById("exp_name").value || "").trim();
+  if(!v) return exportFileName(kind);
+  v = v.replace(/[\\/:*?"<>|]/g, "_");        // Windows 非法字符
+  v = v.replace(/\.[A-Za-z0-9]{1,6}$/, "");     // 用户自己打了扩展名就去掉，统一按标签补
+  return v + expExtOf(kind);
+}
+function syncExpName(){
+  var ext = expExtOf(expTab);
+  document.getElementById("exp_ext").textContent = ext;
+  if(expNameAuto) document.getElementById("exp_name").value = expDefBase(expTab);
+}
 function refreshExp(){
   expTa.value = expTab==="md" ? buildMD() : expTab==="json" ? buildJSON() : buildPY();
+  syncExpName();
 }
-document.getElementById("btn_export").addEventListener("click", function(){ refreshExp(); expMask.classList.add("show"); });
+document.getElementById("btn_export").addEventListener("click", function(){
+  expNameAuto = true;          // 每次打开都回到自动名，避免上次的旧名字误导
+  refreshExp();
+  expMask.classList.add("show");
+});
+document.getElementById("exp_name").addEventListener("input", function(){ expNameAuto = false; });
+document.getElementById("exp_name_def").addEventListener("click", function(){
+  expNameAuto = true; syncExpName();
+});
 document.getElementById("exp_close").addEventListener("click", function(){ expMask.classList.remove("show"); });
 expMask.addEventListener("click", function(e){ if(e.target===expMask) expMask.classList.remove("show"); });
 Array.prototype.forEach.call(document.querySelectorAll(".ctg-tab"), function(tb){
@@ -1678,10 +1731,10 @@ function exportFileName(kind){
   return base + exportTag() + "_" + fileStamp() + ext;
 }
 document.getElementById("exp_download").addEventListener("click", function(){
-  var f, mime;
-  if(expTab==="md"){ f = exportFileName("md"); mime = "text/markdown;charset=utf-8"; }
-  else if(expTab==="json"){ f = exportFileName("json"); mime = "application/json;charset=utf-8"; }
-  else { f = exportFileName("py"); mime = "text/plain;charset=utf-8"; }
+  var f = expFileName(expTab), mime;
+  if(expTab==="md"){ mime = "text/markdown;charset=utf-8"; }
+  else if(expTab==="json"){ mime = "application/json;charset=utf-8"; }
+  else { mime = "text/plain;charset=utf-8"; }
   var blob = new Blob([expTa.value], {type:mime});
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = f; a.click();
