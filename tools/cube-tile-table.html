@@ -224,6 +224,31 @@
   border-radius:var(--radius-sm); padding:10px 12px; line-height:1.6;
 }
 .ctg-hint b{color:var(--ink);}
+/* ---------- 自动缩放开关（2026-10-30） ----------
+   对应插件 text_auto（per-object 布尔）：关 = 按设定字号原样排，装不下就溢出；
+   开 = 装不下整块等比缩到边距内。默认值跟随 kind（MAIN_SUB/两行/单行=关、中文+英数=开）。
+   开关是「标签 + 轨道 + 文字」三件套，input 隐藏但保留键盘可达（focus-visible 有描边）。 */
+/* ⛔ 选择器必须带 .ctg-fld 前缀：上面 `.ctg-fld label{display:block}`（0,1,1）
+   会把单类 `.ctg-sw`（0,1,0）的 display:flex 压掉 → 轨道塌成一点、文字挤成一行。 */
+.ctg-fld label.ctg-sw{display:flex; align-items:center; gap:9px; margin-bottom:0; cursor:pointer; user-select:none;}
+.ctg-sw input{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;}
+.ctg-sw .tk{
+  width:38px; height:22px; border-radius:11px; background:var(--border);
+  position:relative; flex:none; transition:background .16s ease;
+}
+.ctg-sw .tk::after{
+  content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.28); transition:transform .16s ease;
+}
+.ctg-sw input:checked + .tk{background:var(--link);}
+.ctg-sw input:checked + .tk::after{transform:translateX(16px);}
+.ctg-sw input:focus-visible + .tk{outline:2px solid var(--link); outline-offset:2px;}
+.ctg-sw .tx{font-size:var(--fs-sm); color:var(--ink-secondary); font-weight:600; min-width:2.2em;}
+.ctg-sw .tx.off{color:var(--ink-tertiary); font-weight:400;}
+.ctg-sw .tx .dft{font-weight:400; color:var(--ink-tertiary);}
+@media (prefers-reduced-motion: reduce){
+  .ctg-sw .tk, .ctg-sw .tk::after{transition:none;}
+}
 .ctg-prev{width:150px; flex:none; display:flex; flex-direction:column; align-items:center; gap:var(--space-2);}
 .ctg-prev .mini{
   position:relative; overflow:hidden; width:150px; height:150px;
@@ -408,6 +433,15 @@
             <option value="MIXED">中文 + 英数（MIXED）</option>
             <option value="SINGLE">单行（SINGLE）</option>
           </select>
+        </div>
+        <!-- 自动缩放 = 插件 text_auto（per-object）· 2026-10-30 由只读说明改成开关 -->
+        <div class="ctg-fld">
+          <label>自动缩放（装不下时缩字到边距内）</label>
+          <label class="ctg-sw">
+            <input type="checkbox" id="f_auto">
+            <span class="tk"></span>
+            <span class="tx" id="f_auto_tx">关</span>
+          </label>
         </div>
         <div class="ctg-hint" id="kind_hint"></div>
       </div>
@@ -718,7 +752,8 @@ window.__cube3d = {
         scene.add(base);
         // 贴片：坐在底座上的圆角厚块
         const fHex = ((face.color||{}).hex || '#333333');
-        const tex = await svgToTexture(svgOf(t.sub, t.main, resolved(t), mode[f] === 1 ? '#ffffff' : fHex, 512));
+        /* 第 6 个参数 = 自动缩放（插件 text_auto），由宿主的 autoOf() 算；3D 贴图与九宫格同源 */
+        const tex = await svgToTexture(svgOf(t.sub, t.main, resolved(t), mode[f] === 1 ? '#ffffff' : fHex, 512, autoOf(t, resolved(t))));
         track(tex);
         const mesh = new THREE.Mesh(tileGeo, tileMats[f]);
         mesh.quaternion.setFromRotationMatrix(m);
@@ -883,7 +918,8 @@ function inkOf(sp, text){
 }
 /* 生成贴片正视 SVG（viewBox 单位 = mm，17 = 板宽）
    版式与插件一致：文字块居中，可用区 = 17 − 2×边距（两行类 1.2 / 单行 2.0），
-   装不下时整块等比缩小（对应插件 text_auto 的缩放逻辑）。 */
+   装不下时整块等比缩小（对应插件 text_auto=True 的缩放逻辑）。
+   opts.auto === false 时**不缩**（插件 text_auto=False）：按设定字号原样排，超出可用区就溢出/压边。 */
 function tileSVG(sub, main, kind, color, px, opts){
   var sp = SPEC[kind] || SPEC.TWO_LINE;
   var i1 = sp.l1 ? inkOf(sp.l1, sub) : null;
@@ -894,6 +930,7 @@ function tileSVG(sub, main, kind, color, px, opts){
   var H = (sub && i1) ? h1 + sp.gap + h2 : h2;
   var avail = TILE_MM - 2 * sp.margin;
   var k = Math.min(1, Wink > 0 ? avail / Wink : 1, H > 0 ? avail / H : 1);
+  if(opts && opts.auto === false) k = 1;                     // 自动缩放关：字号不缩（超限就溢出）
   if(opts && opts.fix) k = opts.fix / (sp.l2.size || 8.5);   // 强制字号（mm），跳过自适应缩放
   var g = sp.gap * k;
   h1 *= k; h2 *= k; H = (sub && i1) ? h1 + g + h2 : h2;
@@ -931,12 +968,12 @@ function rebuildKindPreset(){
   var s = sizeScale();
   KIND_PRESET = {
     MAIN_SUB: "插件 kind=MAIN_SUB · 汉字 " + fmt1(SPEC.MAIN_SUB.l2.size) + " / 拼音 " + fmt1(SPEC.MAIN_SUB.l1.size)
-              + " / 行距 " + (PLUGIN_GAP.MAIN_SUB*s).toFixed(2) + "（整套统一）· 自动缩放关 · 第一行拉丁字体",
+              + " / 行距 " + (PLUGIN_GAP.MAIN_SUB*s).toFixed(2) + "（整套统一）· 自动缩放默认关 · 第一行拉丁字体",
     TWO_LINE: "插件 kind=TWO_LINE · 两行各 " + fmt1(SPEC.TWO_LINE.l2.size)
-              + " / 行距 " + (PLUGIN_GAP.TWO_LINE*s).toFixed(2) + " · 自动缩放关 · 两行共用中文字体",
+              + " / 行距 " + (PLUGIN_GAP.TWO_LINE*s).toFixed(2) + " · 自动缩放默认关 · 两行共用中文字体",
     MIXED:    "插件 kind=TWO_LINE + 参数覆盖 · 第一行(中文) " + fmt1(SPEC.MIXED.l1.size) + " / 第二行(英数) "
-              + fmt1(SPEC.MIXED.l2.size) + " / 行距 " + (PLUGIN_GAP.MIXED*s).toFixed(2) + " · 自动缩放开",
-    SINGLE:   "插件 kind=SINGLE · 只有第二行 · 字号 " + fmt1(SPEC.SINGLE.l2.size)
+              + fmt1(SPEC.MIXED.l2.size) + " / 行距 " + (PLUGIN_GAP.MIXED*s).toFixed(2) + " · 自动缩放默认开",
+    SINGLE:   "插件 kind=SINGLE · 只有第二行 · 字号 " + fmt1(SPEC.SINGLE.l2.size) + " · 自动缩放默认关"
   };
 }
 // 默认 54 片定稿字表（_build_final_2510.py DATA，2026-10-25 跑通版）
@@ -1006,11 +1043,31 @@ function detectKind(sub, main){
 }
 window.__detectKind = detectKind;      // module 脚本要用
 function resolvedKind(t){ return t.kind || detectKind(t.sub, t.main); }
+/* ---- 自动缩放 = 插件 text_auto（per-object 布尔，2026-10-30 做成可开关）----
+   ⛔ 默认值必须**按 kind**给，不能全局一个值：插件「套用预设」写的是
+      MAIN_SUB / TWO_LINE / SINGLE = False，只有「中文 + 英数」预设写 True。
+   tile.auto === true/false = 用户在这个格子里显式定过；undefined / 缺字段 = 跟随 kind 默认。 */
+var AUTO_BY_KIND = {MAIN_SUB:false, TWO_LINE:false, MIXED:true, SINGLE:false};
+function autoDefaultOf(k){ return !!AUTO_BY_KIND[k]; }   // 未知 / 空 kind → false（与插件默认一致）
+function autoOf(t, k){
+  k = k || (t ? resolvedKind(t) : "");
+  if(t && typeof t.auto === "boolean") return t.auto;
+  return !!AUTO_BY_KIND[k];
+}
 function isEmptyTile(t){ return !t.main && !t.sub; }
 function countFilled(faces){
   var n = 0;
   faces.forEach(function(f){ f.tiles.forEach(function(t){ if(!isEmptyTile(t)) n++; }); });
   return n;
+}
+/* 自动缩放的开/关片数（导出规格里写清楚，AI 才不会一律按 0.4 时代的默认证糊过去） */
+function autoStats(){
+  var on = 0, off = 0;
+  state.faces.forEach(function(f){ f.tiles.forEach(function(t){
+    if(isEmptyTile(t)) return;
+    if(autoOf(t)) on++; else off++;
+  }); });
+  return {on:on, off:off};
 }
 
 /* ================= 渲染 ================= */
@@ -1039,8 +1096,9 @@ function render(){
            + '<span class="plus">＋</span></div>';
       }else{
         var k = resolvedKind(t);
-        h += '<div class="cell" data-face="'+f+'" data-pos="'+i+'" title="'+escAttr(KIND_LABEL[k]||"")+'">'
-           + tileSVG(t.sub, t.main, k, face.color.hex)
+        var tAuto = autoOf(t, k);
+        h += '<div class="cell" data-face="'+f+'" data-pos="'+i+'" title="'+escAttr((KIND_LABEL[k]||"")+" · 自动缩放"+(tAuto?"开":"关"))+'">'
+           + tileSVG(t.sub, t.main, k, face.color.hex, 0, {auto:tAuto})
            + '<span class="kd">'+escHtml(KIND_SHORT[k]||"")+'</span></div>';
       }
     }
@@ -1061,11 +1119,22 @@ var editing = {face:-1, pos:-1};
 var editSnap = null;                       // 打开时的快照，「重置本格」用
 var editMask = document.getElementById("edit_mask");
 var fSub = document.getElementById("f_sub"), fMain = document.getElementById("f_main"), fKind = document.getElementById("f_kind");
+var fAuto = document.getElementById("f_auto"), fAutoTx = document.getElementById("f_auto_tx");
+/* 开关文字：开/关 + 「默认」标记（当前值是否等于该 kind 的默认值） */
+function syncAutoUI(k){
+  var on = fAuto.checked, dft = autoDefaultOf(k);
+  fAutoTx.innerHTML = (on ? "开" : "关") + (on === dft ? ' <span class="dft">默认</span>' : "");
+  fAutoTx.classList.toggle("off", !on);
+  fAuto.title = on ? "装不下时整块缩到边距内（插件 text_auto = True）"
+                   : "按设定字号原样排，超出可用区会溢出（插件 text_auto = False）";
+}
+function editorKind(){ return fKind.value ? fKind.value : detectKind(fSub.value.trim(), fMain.value.trim()); }
 function openEditor(f, i){
   editing = {face:f, pos:i};
   var t = state.faces[f].tiles[i];
-  editSnap = {sub:t.sub||"", main:t.main||"", kind:t.kind||null};
+  editSnap = {sub:t.sub||"", main:t.main||"", kind:t.kind||null, auto:autoOf(t)};
   fSub.value = editSnap.sub; fMain.value = editSnap.main; fKind.value = editSnap.kind;
+  fAuto.checked = editSnap.auto;
   document.getElementById("ed_title").textContent = "编辑格子 · 第 "+(i+1)+" 格";
   document.getElementById("ed_face").textContent = state.faces[f].name;
   refreshEditorPreview();
@@ -1074,34 +1143,49 @@ function openEditor(f, i){
 }
 function refreshEditorPreview(){
   var sub = fSub.value.trim(), main = fMain.value.trim();
-  var k = fKind.value ? fKind.value : detectKind(sub, main);
+  var k = editorKind();
   var face = state.faces[editing.face];
   var color = face ? face.color.hex : "#333";
-  document.getElementById("mini").innerHTML = tileSVG(sub, main, k || "TWO_LINE", color);
+  var auto = fAuto.checked;
+  document.getElementById("mini").innerHTML = tileSVG(sub, main, k || "TWO_LINE", color, 0, {auto:auto});
+  syncAutoUI(k);
   var hint = document.getElementById("kind_hint");
   if(!sub && !main){
     hint.innerHTML = "空格子：保存后此格为空。";
-  }else{
-    hint.innerHTML = "当前类型：<b>"+escHtml(KIND_LABEL[k]||k||"—")+"</b><br>"+(KIND_PRESET[k]||"");
+    return;
   }
+  /* 不在这里判「是否溢出」：页面用 canvas 墨迹高度估算，比 Blender 的标称行盒系统性偏大
+     （同批 54 片实测有 42 片会被误判），给个数字反而是误导。关掉时只看预览就知道字顶到哪。 */
+  hint.innerHTML = "当前类型：<b>"+escHtml(KIND_LABEL[k]||k||"—")+"</b><br>"+(KIND_PRESET[k]||"")
+    + "<br>自动缩放 <b>"+(auto ? "开" : "关")+"</b>"
+    + (auto ? "：装不下整块缩到边距内" : "：按设定字号排（不缩，可能顶满甚至超出贴片边界）");
 }
 fSub.addEventListener("input", refreshEditorPreview);
 fMain.addEventListener("input", refreshEditorPreview);
-fKind.addEventListener("change", refreshEditorPreview);
+fKind.addEventListener("change", function(){
+  /* 切排版类型 = 插件「套用预设」：text_auto 回到该类型的默认值 */
+  fAuto.checked = autoDefaultOf(editorKind());
+  refreshEditorPreview();
+});
+fAuto.addEventListener("change", refreshEditorPreview);
 document.getElementById("ed_save").addEventListener("click", function(){
   var t = state.faces[editing.face].tiles[editing.pos];
   t.sub = fSub.value.trim(); t.main = fMain.value.trim(); t.kind = fKind.value || null;
+  /* 等于该 kind 的默认值就不写字段（跟着 kind 走），只有偏离默认才落盘 —— 避免换类型后残留旧值 */
+  if(fAuto.checked === autoDefaultOf(resolvedKind(t))) delete t.auto; else t.auto = fAuto.checked;
   editMask.classList.remove("show");
-  render(); toast("已保存");
+  render(); toast("已保存 · 自动缩放" + (fAuto.checked ? "开" : "关"));
 });
 document.getElementById("ed_cancel").addEventListener("click", function(){ editMask.classList.remove("show"); });
 /* 重置本格 = 回到打开弹窗时的样子（用户选乱了可以退回重来） */
 document.getElementById("ed_reset").addEventListener("click", function(){
   fSub.value = editSnap.sub; fMain.value = editSnap.main; fKind.value = editSnap.kind;
+  fAuto.checked = editSnap.auto;
   refreshEditorPreview(); toast("已恢复到打开时的内容");
 });
 document.getElementById("ed_clear").addEventListener("click", function(){
-  fSub.value=""; fMain.value=""; fKind.value=""; refreshEditorPreview(); toast("已清空，点保存生效");
+  fSub.value=""; fMain.value=""; fKind.value=""; fAuto.checked = autoDefaultOf(null);
+  refreshEditorPreview(); toast("已清空，点保存生效");
 });
 
 /* ================= 面色弹层 ================= */
@@ -1166,13 +1250,16 @@ cubeEl.addEventListener("change", function(e){
 /* ================= 导出 ================= */
 var expMask = document.getElementById("exp_mask");
 function buildJSONObj(){
+  var st = autoStats();
   var faces = state.faces.map(function(face, fi){
     return {
       index: fi+1, name: face.name,
       color: {name:face.color.name, hex:face.color.hex,
               rgb:face.color.rgb ? face.color.rgb.map(function(x){return Math.round(x*1000)/1000;}) : null},
       tiles: face.tiles.map(function(t, ti){
-        return {pos: ti+1, text_sub: t.sub||"", text_main: t.main||"", kind: resolvedKind(t)};
+        return {pos: ti+1, text_sub: t.sub||"", text_main: t.main||"",
+                kind: resolvedKind(t),
+                text_auto: autoOf(t)};        // 插件参数原名：True=装不下缩到边距内 / False=按原字号溢出
       })
     };
   });
@@ -1188,7 +1275,10 @@ function buildJSONObj(){
         尺寸预设: sizeOf().label,
         贴片: TILE_MM + "×" + TILE_MM + "×2.66 mm，圆角 " + CR_MM + "，顶面凸字 0.6 mm",
         底座销板: sizeOf().base + "×" + sizeOf().base + "×1.4 mm（销 φ" + hotendOf().pinD.toFixed(2) + "×" + hotendOf().pinLen.toFixed(2) + "，销位跟贴片孔位）",
-        顶面凸台: FACE_MM + "×" + FACE_MM + " mm；文字可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "），超限整块等比缩",
+        顶面凸台: FACE_MM + "×" + FACE_MM + " mm；文字可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "）",
+        自动缩放: "按片设置（插件 text_auto，布尔）：关 " + st.off + " 片 / 开 " + st.on + " 片。"
+                + "关 = 按设定字号原样排，超出可用区就溢出（压边 / 超出凸台）；开 = 装不下整块等比缩到边距内。"
+                + "默认值：MAIN_SUB / 两行 / 单行 = False，中文+英数 = True；本表以每片的 text_auto 字段为准。",
         孔: "四角 φ2.45 × 深 1.8，孔心距 ±" + HOLE_DX + "（孔径与孔深不随热端变）",
         销: "φ" + hotendOf().pinD.toFixed(2) + "，直径配合间隙 " + hotendOf().clear.toFixed(2),
         中文: "DengXian Bold（C:\\WINDOWS\\Fonts\\Dengb.ttf）",
@@ -1201,7 +1291,7 @@ function buildJSONObj(){
         MIXED: "中文+英数：" + KIND_PRESET.MIXED,
         SINGLE: "单行：" + KIND_PRESET.SINGLE
       },
-      usage: "faces 顺序即 6 个面（0上/1左/2前/3右/4后/5下）；tiles 按 pos 1-9 行优先排 3×3。text_sub=第一行(上)、text_main=第二行(下)。"
+      usage: "faces 顺序即 6 个面（0上/1左/2前/3右/4后/5下）；tiles 按 pos 1-9 行优先排 3×3。text_sub=第一行(上)、text_main=第二行(下)、text_auto=该片的自动缩放（与插件同名布尔属性，构建时 p.text_auto = t['text_auto'] 即生效）。"
     },
     faces: faces
   };
@@ -1209,7 +1299,7 @@ function buildJSONObj(){
 function buildJSON(){ return JSON.stringify(buildJSONObj(), null, 2); }
 function mdCell(s){ return (s||"").replace(/\|/g,"\\|").replace(/\r?\n/g," "); }
 function buildMD(){
-  var L = [], n = countFilled(state.faces), kinds = {};
+  var L = [], n = countFilled(state.faces), kinds = {}, st = autoStats();
   state.faces.forEach(function(f){
     f.tiles.forEach(function(t){
       if(isEmptyTile(t)) return;
@@ -1243,7 +1333,8 @@ function buildMD(){
   L.push("| 贴片 | " + TILE_MM + " × " + TILE_MM + " × **2.66** mm，圆角 " + CR_MM + " |");
   L.push("| 底座销板 | " + sizeOf().base + " × " + sizeOf().base + " × 1.4 mm（销位跟贴片孔位） |");
   L.push("| 顶面凸台 | " + FACE_MM + " × " + FACE_MM + " mm |");
-  L.push("| 凸字 | 高 0.6 mm；可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "），超限整块等比缩 |");
+  L.push("| 凸字 | 高 0.6 mm；可用区 = 板 − 2×边距（两行类 1.2 / 单行 " + SPEC.SINGLE.margin + "） |");
+  L.push("| 自动缩放 | **按片**（插件 `text_auto`）：关 **" + st.off + "** 片 / 开 **" + st.on + "** 片。关 = 按设定字号原样排、装不下就溢出；开 = 装不下整块等比缩到边距内。默认 MAIN_SUB / 两行 / 单行 = `False`，中文+英数 = `True` |");
   L.push("| 孔 | 四角 φ2.45 × 深 1.8，孔心距 ±" + HOLE_DX + " |");
   L.push("| 销 | φ" + hotendOf().pinD.toFixed(2) + " × " + hotendOf().pinLen.toFixed(2) + "，直径配合间隙 " + hotendOf().clear.toFixed(2) + "，轴向余量 " + hotendOf().lenClear.toFixed(2) + " |");
   L.push("| 中文 | DengXian Bold（`C:\\WINDOWS\\Fonts\\Dengb.ttf`） |");
@@ -1254,10 +1345,12 @@ function buildMD(){
   L.push("");
   L.push("| 导出 kind | 插件取值 | 参数 |");
   L.push("|---|---|---|");
-  L.push("| MAIN_SUB | `kind='MAIN_SUB'` | 第一行拼音 " + fmt1(SPEC.MAIN_SUB.l1.size) + " / 第二行汉字 " + fmt1(SPEC.MAIN_SUB.l2.size) + " / 行距 " + (PLUGIN_GAP.MAIN_SUB*sizeScale()).toFixed(2) + " / text_auto=False |");
-  L.push("| TWO_LINE | `kind='TWO_LINE'` | 两行各 " + fmt1(SPEC.TWO_LINE.l2.size) + " / 行距 " + (PLUGIN_GAP.TWO_LINE*sizeScale()).toFixed(2) + " / text_auto=False |");
-  L.push("| MIXED | `kind='TWO_LINE'` + 参数覆盖 | 第一行中文 " + fmt1(SPEC.MIXED.l1.size) + " / 第二行英数 " + fmt1(SPEC.MIXED.l2.size) + " / 行距 " + (PLUGIN_GAP.MIXED*sizeScale()).toFixed(2) + " / text_auto=True |");
-  L.push("| SINGLE | `kind='SINGLE'` | 只有第二行，字号 " + fmt1(SPEC.SINGLE.l2.size) + " |");
+  L.push("| MAIN_SUB | `kind='MAIN_SUB'` | 第一行拼音 " + fmt1(SPEC.MAIN_SUB.l1.size) + " / 第二行汉字 " + fmt1(SPEC.MAIN_SUB.l2.size) + " / 行距 " + (PLUGIN_GAP.MAIN_SUB*sizeScale()).toFixed(2) + " / text_auto 默认 False |");
+  L.push("| TWO_LINE | `kind='TWO_LINE'` | 两行各 " + fmt1(SPEC.TWO_LINE.l2.size) + " / 行距 " + (PLUGIN_GAP.TWO_LINE*sizeScale()).toFixed(2) + " / text_auto 默认 False |");
+  L.push("| MIXED | `kind='TWO_LINE'` + 参数覆盖 | 第一行中文 " + fmt1(SPEC.MIXED.l1.size) + " / 第二行英数 " + fmt1(SPEC.MIXED.l2.size) + " / 行距 " + (PLUGIN_GAP.MIXED*sizeScale()).toFixed(2) + " / text_auto 默认 True |");
+  L.push("| SINGLE | `kind='SINGLE'` | 只有第二行，字号 " + fmt1(SPEC.SINGLE.l2.size) + " / text_auto 默认 False |");
+  L.push("");
+  L.push("> `text_auto` 是**逐片**的，上表只是各类的默认值：下面的字表与 JSON 里每片都带自己的 `text_auto`，构建时按片覆盖（`p.text_auto = t['text_auto']`），不要一律套默认。");
   L.push("");
   L.push("## 面与配色");
   L.push("");
@@ -1274,11 +1367,12 @@ function buildMD(){
     L.push("");
     L.push("### 面" + (fi+1) + " " + mdCell(f.name) + "（" + mdCell(f.color.name) + " " + f.color.hex + "）");
     L.push("");
-    L.push("| # | 第一行（text_sub） | 第二行（text_main） | kind |");
-    L.push("|---|---|---|---|");
+    L.push("| # | 第一行（text_sub） | 第二行（text_main） | kind | 自动缩放（text_auto） |");
+    L.push("|---|---|---|---|---|");
     f.tiles.forEach(function(t, ti){
       L.push("| " + (ti+1) + " | " + (mdCell(t.sub) || "—") + " | " + (mdCell(t.main) || "—") +
-             " | " + resolvedKind(t) + " |");
+             " | " + (isEmptyTile(t) ? "—" : resolvedKind(t)) +
+             " | " + (isEmptyTile(t) ? "—" : (autoOf(t) ? "开 `True`" : "关 `False`")) + " |");
     });
   });
   L.push("");
@@ -1298,16 +1392,17 @@ function buildPY(){
   lines.push("# -*- coding: utf-8 -*-");
   lines.push("# 魔方贴片字表 · 由 wlili.top/tools/cube-tile-table.html 导出 · " + nowStr());
   lines.push("# 用法：整体替换 _build_final_2510.py 顶部的 DATA 与 FACES 配色段，再跑构建脚本。");
-  lines.push("# 元组: (第二行 text_main, 第一行 text_sub, 面号 1-6, kind)");
+  lines.push("# 元组: (第二行 text_main, 第一行 text_sub, 面号 1-6, kind, text_auto)");
   lines.push("# kind: MAIN_SUB=单字+拼音(12/8/1.6) · TWO_LINE=两行(8.5/8.5/1.0) ·");
-  lines.push("#       MIXED=中文+英数(TWO_LINE+9.0/6.8/1.20/自动开) · SINGLE=单行(8)");
+  lines.push("#       MIXED=中文+英数(TWO_LINE+9.0/6.8/1.20) · SINGLE=单行(8)");
+  lines.push("# text_auto: 插件 p.text_auto —— True=装不下缩到边距内 / False=按原字号溢出；逐片给出，别一律套默认");
   lines.push("DATA = [");
   var n = 0;
   state.faces.forEach(function(face, fi){
     lines.push("    # ---- " + face.name + "（" + face.color.name + " " + face.color.hex + "）----");
     face.tiles.forEach(function(t, ti){
       if(isEmptyTile(t)) return;
-      lines.push("    (" + pyStr(t.main) + ", " + pyStr(t.sub) + ", " + (fi+1) + ", '" + resolvedKind(t) + "'),");
+      lines.push("    (" + pyStr(t.main) + ", " + pyStr(t.sub) + ", " + (fi+1) + ", '" + resolvedKind(t) + "', " + (autoOf(t) ? "True" : "False") + "),");
       n++;
     });
   });
@@ -1387,7 +1482,9 @@ function parseTableFile(text){
       var t = src[k] || {};
       var sub = (t.text_sub != null) ? String(t.text_sub) : "";
       var main = (t.text_main != null) ? String(t.text_main) : "";
-      tiles.push({sub: sub, main: main, kind: (t.kind || detectKind(sub, main) || "MAIN_SUB")});
+      tiles.push({sub: sub, main: main, kind: (t.kind || detectKind(sub, main) || "MAIN_SUB"),
+                  /* text_auto 缺省时给 undefined：交给 autoOf 按 kind 默认推断（老文件没有这个字段） */
+                  auto: (typeof t.text_auto === "boolean") ? t.text_auto : undefined});
     }
     var c = f.color || {}, pal = PALETTE[i] || PALETTE[0];
     return {name: f.name || ("面" + (i + 1)),
@@ -1478,8 +1575,8 @@ function doBuild3D(){
   if(pvHandle){ try{ pvHandle.dispose(); }catch(e){} pvHandle = null; }
   if(!window.__cube3d) return Promise.reject(new Error("3D 模块未就绪"));
   host.innerHTML = '<div class="pv-loading" id="pv_loading">正在生成 54 片贴图…</div>';
-  return window.__cube3d.build(host, state.faces, function(sub, main, kind, hex, px){
-    return tileSVG(sub, main, kind, hex, px, {bare:true});
+  return window.__cube3d.build(host, state.faces, function(sub, main, kind, hex, px, auto){
+    return tileSVG(sub, main, kind, hex, px, {bare:true, auto:auto});
   }, pvOpts).then(function(h){
     pvHandle = h;
     var info = document.getElementById("pv_info");
