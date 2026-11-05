@@ -257,6 +257,28 @@
       "enabled": true
     },
     {
+      "id": "pose-gallery",
+      "name": "动作库",
+      "file": "pose-gallery.html",
+      "category": "creative",
+      "icon": "face",
+      "iconColor": "purple",
+      "description": "本地动作参考库：288 组姿势 × 5 视角共 1439 张，多角度切换、灯箱浏览，自动生成可复制的动作提示词",
+      "keywords": [
+        "动作",
+        "姿势",
+        "pose",
+        "参考",
+        "人体",
+        "提示词",
+        "绘画",
+        "3D",
+        "gallery"
+      ],
+      "enabled": true,
+      "localOnly": true
+    },
+    {
       "id": "cube-tile-table",
       "name": "魔方贴片字表",
       "file": "cube-tile-table.html",

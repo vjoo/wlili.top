@@ -65,3 +65,12 @@ _tmp_*
 # Bambu 参数抽取工作目录（含第三方源码 Tab.cpp 等）与本地验证页，禁止入库
 .wb_extract/
 tools/_shared/_bp_*_test.html
+
+# 动作库（tools/pose-gallery.html）的图片素材：共 2878 张 / 667MB。
+# 图片著作权归原作者（非 MIT 覆盖范围），且含成人向分类 —— 只留本地，永不入库、永不上线。
+# 线上该工具为 localOnly（导航隐藏），页面与数据 218KB 入库，图片缺失时走占位图。
+# ⚠️ 用 `/*` 而非 `/`：目录级忽略会让 git 不进入该目录，目录内的 `!` 例外一律失效。
+tools/pose-gallery/img/*
+tools/pose-gallery/thumbs/*
+# 深度图与线稿是同一批版权素材的另一种渲染（README 素材节），同样只留本地不入库
+tools/pose-gallery/depth/*

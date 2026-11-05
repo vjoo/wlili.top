@@ -56,6 +56,9 @@
       tools: [
         { name: 'IP形象生成器', href: './ip-mascot.html' },
         { name: 'AI提示词库', href: './prompt-library.html' },
+        /* localOnly：与 tools.json 的 localOnly 对齐，线上导航自动隐藏。
+           本文件是硬编码数组，过滤逻辑见下方 mega menu 的 !t.localOnly || IS_LOCAL。 */
+        { name: '动作库', href: './pose-gallery.html', localOnly: true },
         { name: '构图编辑器', href: './composition-editor.html' },
         { name: '魔方贴片字表', href: './cube-tile-table.html' }
       ]
