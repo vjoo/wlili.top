@@ -6895,7 +6895,7 @@ Object.assign(FAPP,{
         <div class="fgroup"><label>购买渠道</label>
           <select id="f_purchaseChannel" class="form-select">
             <option value="" ${!d.purchaseChannel?'selected':''}>请选择</option>
-            ${['京东','拼哆哆','天猫','淘宝','1688','闲鱼'].map(c=>`<option value="${c}" ${d.purchaseChannel===c?'selected':''}>${c}</option>`).join('')}
+            ${['京东','拼哆哆','天猫','淘宝','抖音','1688','闲鱼'].map(c=>`<option value="${c}" ${d.purchaseChannel===c?'selected':''}>${c}</option>`).join('')}
           </select></div>
         <div class="fgroup full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
           <input type="checkbox" id="f_isBundle" ${d.isBundle?'checked':''} onchange="FAPP.onBundleChange(this.checked)"><span>这是套装（多盘耗材捆绑购买）</span></label></div>
