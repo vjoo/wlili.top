@@ -1984,67 +1984,248 @@
   };
 
   var impState = null;
+  /* 两个上传槽：工艺 + 耗材丝。文件原文都留在内存里，改元信息/重解析都不用重读文件。
+     ⚠ 2026-10-28：原实现只有一个 file input，而一条预设本来就同时装「工艺 bpValues + 耗材丝 filId」，
+       导致用户没法把 Studio 导出的两个 json 合成一条记录；且导入只认自家 patch 格式。
+       现在：两个槽各自可传 Studio 原生预设 → 合并；原生字段按 PROC_META / FIL_META 剔元信息。 */
+  var impFiles = { proc: null, fil: null };
+  /* Studio 原生预设文件里的「文件元信息」，不是参数，必须剔掉（否则全落到「未导入」噪音里） */
+  var PROC_META = {
+    from: 1, inherits: 1, name: 1, version: 1, print_settings_id: 1, setting_id: 1,
+    is_custom_defined: 1, type: 1, instantiation: 1, filament_id: 1,
+    print_extruder_id: 1, print_extruder_variant: 1,
+    format: 1, params: 1, applicability: 1, source: 1, caveats: 1, nozzle: 1, machine: 1
+  };
+  var FIL_META = {
+    from: 1, inherits: 1, name: 1, version: 1, filament_settings_id: 1, filament_id: 1,
+    setting_id: 1, is_custom_defined: 1, type: 1, instantiation: 1,
+    filament_extruder_variant: 1,
+    format: 1, filament: 1, overrides: 1, applicability: 1, source: 1, caveats: 1
+  };
+  function impIsFilamentJSON(o) {
+    if (!o || typeof o !== "object" || Array.isArray(o)) return false;
+    return !!(o.filament_settings_id || o.filament_type || o.filament_flow_ratio || o.filament_vendor);
+  }
+  function impIsPatchJSON(o) {
+    return !!(o && typeof o === "object" && !Array.isArray(o) && (o.params || o.format));
+  }
+  /* 从文件里嗅机型 / 材料：Studio 的 name / inherits 里带「@BBL X2D」「Generic PETG…」 */
+  function impSniff(text, re) {
+    var m = String(text || "").match(re);
+    return m ? m[1] : "";
+  }
   PAPP.importDialog = function () {
     if (!PATCH) { toast("导入模块未加载"); return; }
     impState = null;
+    impFiles = { proc: null, fil: null };
     var opts = PSET.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + "</option>"; }).join("");
+    var today = (function () {
+      var d = new Date();
+      var mm = ("0" + (d.getMonth() + 1)).slice(-2), dd = ("0" + d.getDate()).slice(-2);
+      return d.getFullYear() + "-" + mm + "-" + dd;
+    })();
     document.getElementById("fmodalBox").innerHTML =
       '<div class="fmodal-head"><div class="fmodal-title">导入预设</div>' +
       '<button class="fmodal-x" onclick="closeModal()">✕</button></div>' +
       '<div class="fmodal-body">' +
-      '<div class="fgroup"><label>粘贴 patch JSON（或选择 .json 文件）</label>' +
-      '<textarea id="bpImpText" rows="8" placeholder=\'{"format":"wlili-preset-patch/1","name":"…","params":{"support_top_z_distance":"0"}}\'></textarea>' +
-      '<input type="file" id="bpImpFile" accept=".json,application/json" style="margin-top:8px;font-size:12px"></div>' +
+      '<div class="bp-imp-note" style="margin-bottom:10px">两个文件会<b>合并成一条预设</b>：工艺参数写进「工艺」页签，耗材丝参数自动<b>新建一条耗材丝档</b>并关联。两个都可单独使用。</div>' +
+      '<div class="fgroup"><label>① 工艺参数 · Bambu Studio 工艺预设 .json</label>' +
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+      '<input type="file" id="bpImpFileProc" accept=".json,application/json" style="font-size:12px;max-width:100%">' +
+      '<span id="bpImpProcName" style="font-size:12px;color:var(--muted)">未选择</span></div></div>' +
+      '<div class="fgroup"><label>② 耗材丝参数 · Bambu Studio 耗材丝预设 .json</label>' +
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+      '<input type="file" id="bpImpFileFil" accept=".json,application/json" style="font-size:12px;max-width:100%">' +
+      '<span id="bpImpFilName" style="font-size:12px;color:var(--muted)">未选择</span></div></div>' +
+      '<div class="fgroup"><label>或粘贴 patch JSON（仅作工艺参数，老用法）</label>' +
+      '<textarea id="bpImpText" rows="3" placeholder=\'{"format":"wlili-preset-patch/1","name":"…","params":{"support_top_z_distance":"0"}}\'></textarea></div>' +
+      '<div class="fgroup"><label>预设信息（导入后写进这条记录）</label>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">' +
+      '<div><label style="font-size:12px">名称</label><input id="bpImpName" class="form-text" type="text" style="width:100%" placeholder="默认取文件名"></div>' +
+      '<div><label style="font-size:12px">机型</label><input id="bpImpMachine" class="form-text" list="bpImpMachList" type="text" style="width:100%" placeholder="X2D">' +
+      '<datalist id="bpImpMachList"><option value="X2D"></option><option value="P1S"></option><option value="X1C"></option><option value="A1"></option><option value="H2D"></option></datalist></div>' +
+      '<div><label style="font-size:12px">耗材类型</label><input id="bpImpFilType" class="form-text" list="bpImpFilList" type="text" style="width:100%" placeholder="PETG">' +
+      '<datalist id="bpImpFilList"><option value="PLA"></option><option value="PETG"></option><option value="ABS"></option><option value="TPU"></option><option value="PETG + PLA"></option></datalist></div>' +
+      '<div><label style="font-size:12px">预设类型</label><input id="bpImpSubType" class="form-text" type="text" style="width:100%" placeholder="如：质量·悬垂 / 0.4 喷嘴基线"></div>' +
+      '<div><label style="font-size:12px">创建日期</label><input id="bpImpDate" class="form-text" type="date" style="width:100%" value="' + today + '"></div>' +
+      '<div><label style="font-size:12px">备注</label><input id="bpImpNotes" class="form-text" type="text" style="width:100%" placeholder="可留空"></div>' +
+      '</div></div>' +
       '<div id="bpImpPrev"></div>' +
       "</div>" +
       '<div class="fmodal-foot">' +
       '<select id="bpImpTarget" class="form-select" style="width:auto;max-width:220px"><option value="">新建预设</option>' + opts + "</select>" +
       '<button class="btn" onclick="closeModal()">取消</button>' +
-      '<button class="btn primary" id="bpImpParse">解析</button>' +
+      '<button class="btn primary" id="bpImpParse">解析预览</button>' +
       '<button class="btn primary" id="bpImpGo" style="display:none">导入</button>' +
       "</div>";
-    document.getElementById("fmodalBox").style.width = "min(760px,95vw)";
+    document.getElementById("fmodalBox").style.width = "min(820px,95vw)";
     document.getElementById("fmodalMask").classList.add("show");
     var box = document.getElementById("fmodalBox");
     box.querySelector("#bpImpParse").addEventListener("click", function () { impParse(); });
-    box.querySelector("#bpImpFile").addEventListener("change", function (e) {
-      var f = e.target.files && e.target.files[0];
-      if (!f) return;
-      var fr = new FileReader();
-      fr.onload = function () {
-        var ta = document.getElementById("bpImpText");
-        if (ta) ta.value = String(fr.result || "");
-        impParse();
-      };
-      fr.readAsText(f);
+    box.querySelector("#bpImpFileProc").addEventListener("change", function (e) {
+      impLoadFile("proc", e.target.files && e.target.files[0]);
+    });
+    box.querySelector("#bpImpFileFil").addEventListener("change", function (e) {
+      impLoadFile("fil", e.target.files && e.target.files[0]);
     });
     box.querySelector("#bpImpGo").addEventListener("click", function () { impCommit(); });
+    /* 手改元信息 → 标记为「非自动填」并刷新预览卡片头（不重解析，勾选不丢） */
+    ["bpImpName", "bpImpMachine", "bpImpFilType", "bpImpSubType", "bpImpDate", "bpImpNotes"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", function () {
+        el.removeAttribute("data-auto");
+        PAPP.impMetaChanged();
+      });
+    });
   };
+  /* 读一个文件进槽位；类型不符自动换槽（用户常把两个文件点反） */
+  function impLoadFile(slot, file) {
+    if (!file) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      var raw;
+      try { raw = JSON.parse(String(fr.result || "{}")); }
+      catch (e) { toast("「" + file.name + "」不是合法 JSON：" + (e && e.message)); return; }
+      var isFil = impIsFilamentJSON(raw), isPatch = impIsPatchJSON(raw);
+      var want = slot;
+      if (slot === "proc" && isFil && !isPatch) want = "fil";
+      if (slot === "fil" && !isFil && isPatch) want = "proc";
+      if (want !== slot) toast("识别为" + (want === "fil" ? "耗材丝" : "工艺") + "预设，已自动放到对应槽位");
+      impFiles[want] = { name: file.name, json: raw };
+      var lab = document.getElementById(want === "proc" ? "bpImpProcName" : "bpImpFilName");
+      if (lab) lab.textContent = file.name;
+      /* 清掉另一个槽里同名的残留（用户换文件时） */
+      var other = want === "proc" ? "fil" : "proc";
+      if (impFiles[other] && impFiles[other].name === file.name) {
+        impFiles[other] = null;
+        var ol = document.getElementById(other === "proc" ? "bpImpProcName" : "bpImpFilName");
+        if (ol) ol.textContent = "未选择";
+      }
+      impFillMeta();
+      impParse();
+    };
+    fr.readAsText(file);
+  }
+  /* 元信息自动填充：只填「还空着」或「上一次自动填的」，不覆盖手输 */
+  function impFillMeta() {
+    var proc = impFiles.proc && impFiles.proc.json;
+    var fil = impFiles.fil && impFiles.fil.json;
+    var src = proc || fil || {};
+    function setIf(id, val) {
+      var el = document.getElementById(id);
+      if (!el || !val) return;
+      if (el.value && el.getAttribute("data-auto") !== "1") return;
+      el.value = val;
+      el.setAttribute("data-auto", "1");
+    }
+    var pname = String((proc && proc.name) || (fil && fil.name) || "").trim();
+    setIf("bpImpName", pname);
+    var mach = impSniff(pname + " " + String((proc && proc.inherits) || ""), /@BBL\s+([A-Za-z0-9]+)/);
+    if (mach) setIf("bpImpMachine", mach.toUpperCase());
+    var ftype = String((fil && fil.filament_type) || "").trim();
+    if (!ftype) {
+      var probe = String((fil && (fil.inherits || fil.name)) || "") + " " + String((fil && fil.filament_settings_id) || "");
+      ftype = impSniff(probe, /(PLA|PETG|ABS|ASA|TPU|PC|PA|PVA)/i);
+    }
+    if (ftype) setIf("bpImpFilType", ftype.toUpperCase());
+    void src;
+  }
+  function impReadMeta() {
+    function v(id) { var el = document.getElementById(id); return el ? String(el.value || "").trim() : ""; }
+    return {
+      name: v("bpImpName"), machine: v("bpImpMachine"), filamentType: v("bpImpFilType"),
+      subType: v("bpImpSubType"), date: v("bpImpDate"), notes: v("bpImpNotes")
+    };
+  }
+  /* 把两个槽拼成一个 patch 对象（PATCH.normalize 只认这个入口） */
+  function impBuildPatch() {
+    var proc = impFiles.proc && impFiles.proc.json;
+    var fil = impFiles.fil && impFiles.fil.json;
+    var meta = impReadMeta();
+    var out = { format: "wlili-preset-patch/1" };
+    if (proc) {
+      if (proc.params && typeof proc.params === "object" && !Array.isArray(proc.params)) {
+        out.params = proc.params;                        /* 已经是 patch 格式，原样用 */
+      } else if (Array.isArray(proc)) {
+        out = proc[0] || out;                            /* patch 数组：取第一条 */
+      } else {
+        var pv = {}, k;
+        for (k in proc) if (!PROC_META[k]) pv[k] = proc[k];
+        out.params = pv;
+        if (!meta.name && proc.name) out.name = proc.name;
+        if (proc.notes) out.notes = proc.notes;
+      }
+    }
+    if (!proc) {
+      /* 没传工艺文件时，退回粘贴框 */
+      var ta = document.getElementById("bpImpText");
+      var txt = ta ? String(ta.value || "").trim() : "";
+      if (txt) {
+        try {
+          var pasted = JSON.parse(txt);
+          if (Array.isArray(pasted)) pasted = pasted[0] || {};
+          if (pasted.params && typeof pasted.params === "object") out.params = pasted.params;
+          else {
+            var pv2 = {}, k2;
+            for (k2 in pasted) if (!PROC_META[k2]) pv2[k2] = pasted[k2];
+            out.params = pv2;
+          }
+          if (pasted.name && !out.name) out.name = pasted.name;
+          if (pasted.notes && !out.notes) out.notes = pasted.notes;
+        } catch (e) { toast("粘贴内容不是合法 JSON"); }
+      }
+    }
+    if (fil) {
+      if (fil.filament && typeof fil.filament === "object") {
+        out.filament = fil.filament;                     /* patch 结构 */
+      } else {
+        var fv = {}, kf;
+        for (kf in fil) if (!FIL_META[kf]) fv[kf] = fil[kf];
+        out.filament = { type: meta.filamentType || "", overrides: fv };
+      }
+      if (!out.filament.type && meta.filamentType) out.filament.type = meta.filamentType;
+    }
+    out.name = meta.name || out.name || "";
+    out.notes = meta.notes || out.notes || "";
+    out.applicability = {
+      machine: meta.machine, nozzle: impSniff(String((proc && proc.name) || ""), /(\d\.\d)\s*nozzle/i),
+      filament: meta.filamentType
+    };
+    return out;
+  }
+
 
   function impParse() {
-    var ta = document.getElementById("bpImpText");
-    var raw;
-    try { raw = JSON.parse((ta && ta.value) || "{}"); }
-    catch (e) { toast("JSON 解析失败：" + (e && e.message)); return; }
+    var raw = impBuildPatch();
+    if (!raw.params || !Object.keys(raw.params).length) {
+      if (!raw.filament) { toast("还没有可解析的内容：先选工艺/耗材丝文件，或粘贴 patch JSON"); return; }
+    }
     var res = PATCH.normalize(raw);
     if (res.errors.length) toast(res.errors[0]);
     if (!res.presets.length) { toast("没有可导入的内容"); return; }
-    impState = { res: res, checked: {}, checkedFil: {} };
+    impState = { res: res, checked: {}, checkedFil: {}, meta: impReadMeta() };
     res.presets.forEach(function (p, pi) {
       impState.checked[pi] = {};
       p.items.forEach(function (it, ii) { impState.checked[pi][ii] = (it.status !== "warn"); });
       impState.checkedFil[pi] = {};
       (p.filItems || []).forEach(function (it, ii) { impState.checkedFil[pi][ii] = (it.status !== "warn"); });
     });
-    document.getElementById("bpImpPrev").innerHTML = res.presets.map(impPresetHTML).join("");
-    document.getElementById("bpImpPrev").querySelectorAll("[data-imp-item]").forEach(function (el) {
+    impRenderPrev();
+  }
+  /* 预览重画 + 重新绑勾选监听（改元信息时走这里，不重建 impState，勾选状态不丢） */
+  function impRenderPrev() {
+    var box = document.getElementById("bpImpPrev");
+    if (!box || !impState) return;
+    box.innerHTML = impState.res.presets.map(impPresetHTML).join("");
+    box.querySelectorAll("[data-imp-item]").forEach(function (el) {
       el.addEventListener("change", function () {
         var pi = +el.getAttribute("data-p"), ii = +el.getAttribute("data-i");
         impState.checked[pi][ii] = el.checked;
         impRefreshCount();
       });
     });
-    document.getElementById("bpImpPrev").querySelectorAll("[data-imp-fil]").forEach(function (el) {
+    box.querySelectorAll("[data-imp-fil]").forEach(function (el) {
       el.addEventListener("change", function () {
         var pi = +el.getAttribute("data-p"), ii = +el.getAttribute("data-i");
         impState.checkedFil[pi][ii] = el.checked;
@@ -2064,9 +2245,22 @@
     var go = document.getElementById("bpImpGo");
     if (go) go.textContent = "导入（工艺 " + n + " 项" + (nf ? " · 耗材丝 " + nf + " 项" : "") + "）";
   }
+  /* 勾选状态以 impState 为准（重画预览时不丢用户的手动勾选） */
+  function impChk(kind, pi, ii, dflt) {
+    var st = (kind === "fil" ? (impState && impState.checkedFil) : (impState && impState.checked)) || {};
+    var v = (st[pi] && st[pi][ii] != null) ? st[pi][ii] : dflt;
+    return v ? " checked" : "";
+  }
   function impPresetHTML(p, pi) {
+    var M = (impState && impState.meta) || {};
+    var metaLine = [M.name || p.name || "（未命名）",
+      M.machine ? ("机型 " + M.machine) : "",
+      M.filamentType ? ("耗材 " + M.filamentType) : "",
+      M.subType ? ("类型 " + M.subType) : "",
+      M.date ? ("日期 " + M.date) : ""].filter(Boolean).join(" · ");
     var head = '<div class="bp-imp-card">' +
-      '<div class="bp-imp-name">' + esc(p.name || ("未命名 " + (pi + 1))) + "</div>" +
+      '<div class="bp-imp-name">' + esc(metaLine) + "</div>" +
+      (M.notes ? '<div class="bp-imp-src">备注：' + esc(M.notes) + "</div>" : "") +
       (p.source.url ? '<div class="bp-imp-src">来源：<a href="' + esc(p.source.url) + '" target="_blank" rel="noopener">' + esc(p.source.title || p.source.url) + "</a>" + (p.source.fetchedAt ? " · " + esc(p.source.fetchedAt) : "") + "</div>" : "") +
       (p.machine || p.nozzle || (p.filament && p.filament.length) ? '<div class="bp-imp-src">适用：' + esc([p.machine, p.nozzle ? (p.nozzle + " 喷嘴") : "", (Array.isArray(p.filament) ? p.filament.join("/") : p.filament)].filter(Boolean).join(" · ")) + "</div>" : "") +
       (p.notes ? '<div class="bp-imp-note">' + esc(p.notes) + "</div>" : "") +
@@ -2075,7 +2269,7 @@
       var tag = it.status === "ok" ? "" : (it.status === "fixed" ? '<span class="bp-tag fixed">已修正</span>' : '<span class="bp-tag warn">存疑</span>');
       var from = it.from ? '<span class="bp-imp-from">' + esc(it.from) + ' → </span>' : "";
       return '<label class="bp-imp-row' + (it.status === "warn" ? " warn" : "") + '">' +
-        '<input type="checkbox" data-imp-item data-p="' + pi + '" data-i="' + ii + '"' + (it.status !== "warn" ? " checked" : "") + ">" +
+        '<input type="checkbox" data-imp-item data-p="' + pi + '" data-i="' + ii + '"' + impChk("item", pi, ii, it.status !== "warn") + ">" +
         from + "<b>" + esc(it.label) + "</b>" +
         '<span class="bp-imp-val">' + esc(it.disp || it.value) + "</span>" + tag +
         (it.note ? '<span class="bp-imp-why">' + esc(it.note) + "</span>" : "") +
@@ -2089,25 +2283,36 @@
       var filRows = (p.filItems || []).map(function (it, ii) {
         var tag = it.status === "ok" ? "" : (it.status === "fixed" ? '<span class="bp-tag fixed">已修正</span>' : '<span class="bp-tag warn">存疑</span>');
         return '<label class="bp-imp-row' + (it.status === "warn" ? " warn" : "") + '">' +
-          '<input type="checkbox" data-imp-fil data-p="' + pi + '" data-i="' + ii + '"' + (it.status !== "warn" ? " checked" : "") + ">" +
+          '<input type="checkbox" data-imp-fil data-p="' + pi + '" data-i="' + ii + '"' + impChk("fil", pi, ii, it.status !== "warn") + ">" +
           "<b>" + esc(it.label) + '</b><span class="bp-tag fil">' + esc(it.group) + "</span>" +
           '<span class="bp-imp-val">' + esc(it.disp || it.value) + "</span>" + tag +
           (it.note ? '<span class="bp-imp-why">' + esc(it.note) + "</span>" : "") + "</label>";
       }).join("");
       var filIgn = (p.filIgnored && p.filIgnored.length) ? '<div class="bp-imp-ign"><b>耗材丝未导入 ' + p.filIgnored.length + " 项</b>" +
         p.filIgnored.map(function (x) { return '<div>· ' + esc(x.from) + "：" + esc(x.reason) + "</div>"; }).join("") + "</div>" : "";
+      var filTarget = impFilTargetName();
+      var filBase = impFilBaseName(p);
       filSec = '<div class="bp-imp-sec"><div class="bp-imp-sec-h">耗材丝参数' +
-        (p.filType ? "（AI 建议材料：" + esc(p.filType) + "）" : "") + " · " + (p.filItems || []).length + " 项，写回关联的耗材丝预设</div>" +
+        (p.filType ? "（材料：" + esc(p.filType) + "）" : "") + " · " + (p.filItems || []).length + " 项" +
+        " → " + (filTarget.reuse ? "写回同名耗材丝档「" : "新建耗材丝档「") + esc(filTarget.name) + "」</div>" +
+        (filBase ? '<div class="bp-imp-ign" style="margin-top:4px">文件里没写的项取基准「' + esc(filBase) + '」（可在耗材丝页签再改）</div>' : "") +
         (filRows || '<div class="bp-imp-ign">没有可识别的耗材丝参数</div>') + filIgn + "</div>";
     }
     return head + (rows || empty) + ign + filSec + "</div>";
   }
+  /* 打开弹窗后，一旦改了元信息就重画预览卡片头（不重建 impState，勾选不丢） */
+  PAPP.impMetaChanged = function () {
+    if (!impState) return;
+    impState.meta = impReadMeta();
+    impRenderPrev();
+  };
   function impCommit() {
     if (!impState) return;
     var def = defaultsObj();
     var targetId = (document.getElementById("bpImpTarget") || {}).value || "";
     var target = targetId ? PSET.find(function (p) { return p.id === targetId; }) : null;
-    var added = 0, merged = 0, filTouched = null;
+    var meta = impReadMeta();
+    var added = 0, merged = 0, filTouched = null, filCreated = false;
     // 导入前自动备份（万一导入错了可以恢复）
     try { localStorage.setItem("bambu_presets_bak", JSON.stringify(PSET)); } catch (e) { }
     impState.res.presets.forEach(function (p, pi) {
@@ -2115,58 +2320,107 @@
       Object.keys(def).forEach(function (k) { vals[k] = def[k]; });
       var n = 0;
       p.items.forEach(function (it, ii) { if (impState.checked[pi][ii]) { vals[it.key] = it.value; n++; } });
-      /* 耗材丝：勾选项写回关联的耗材丝记录（共享记录，与编辑页同一套机制） */
+      /* 耗材丝：默认「新建一条独立档」；同名档已存在则写回它（同一条标准重导不会翻倍） */
       var filRec = null, nf = 0;
       (p.filItems || []).forEach(function (it, ii) {
         if (impState.checkedFil[pi] && impState.checkedFil[pi][ii]) nf++;
       });
       if (nf) {
-        filRec = pickFilRecordForImport(p, target);
+        var hit = impFilRecord(p);
+        filRec = hit.rec;
         if (filRec) {
           p.filItems.forEach(function (it, ii) {
             if (impState.checkedFil[pi][ii]) filSet(filRec, it.key, it.value);
           });
+          if (!hit.exists) { filList().push(filRec); filCreated = true; }
           filTouched = filRec;
         }
       }
       if (!n && !nf) return;
-      var base = target || { id: pgenId("preset"), name: p.name || ("导入预设 " + (pi + 1)), createdDate: new Date().toISOString() };
+      var createdIso = impDateIso(meta.date);
+      var base = target || { id: pgenId("preset"), createdDate: createdIso };
       var preset = {
         id: base.id,
-        name: (target ? target.name : (p.name || base.name)),
-        createdDate: base.createdDate || new Date().toISOString(),
-        notes: (target ? target.notes : "") || p.notes || "",
-        machine: p.machine || base.machine || "",
-        filamentType: (Array.isArray(p.filament) ? p.filament.join("/") : p.filament) || base.filamentType || "",
-        subType: base.subType || "",
+        name: (target ? target.name : "") || meta.name || p.name || ("导入预设 " + (pi + 1)),
+        createdDate: (target && target.createdDate) || base.createdDate || createdIso,
+        notes: (target ? target.notes : "") || meta.notes || p.notes || "",
+        machine: meta.machine || p.machine || base.machine || "",
+        filamentType: meta.filamentType || (Array.isArray(p.filament) ? p.filament.join("/") : p.filament) || base.filamentType || "",
+        subType: (target ? target.subType : "") || meta.subType || base.subType || "",
         filId: filRec ? filRec.id : (base.filId || (filList()[0] || {}).id || ""),
         bpValues: vals,
-        importMeta: { title: p.source.title, url: p.source.url, fetchedAt: p.source.fetchedAt, nozzle: p.nozzle, caveats: p.caveats, raw: p.items.filter(function (it, ii) { return impState.checked[pi][ii]; }) }
+        importMeta: {
+          title: p.source.title, url: p.source.url, fetchedAt: p.source.fetchedAt,
+          nozzle: p.nozzle, caveats: p.caveats,
+          files: { proc: (impFiles.proc && impFiles.proc.name) || "", fil: (impFiles.fil && impFiles.fil.name) || "" },
+          raw: p.items.filter(function (it, ii) { return impState.checked[pi][ii]; })
+        }
       };
       preset.processParams = Object.keys(vals).filter(function (k) { return squash(vals[k]) !== squash(def[k]); })
         .map(function (k) { return { name: (key2label(k) || k), value: vals[k] }; });
       var idx = PSET.findIndex(function (x) { return x.id === preset.id; });
       if (idx === -1) { PSET.push(preset); added++; } else { PSET[idx] = preset; merged++; }
+      impDiagnose(preset);
       // 多条导入时后续各自新建，不全部并进同一条
       target = null;
     });
-    if (filTouched) AD.save("bambu_filament_presets");
+    if (filCreated || filTouched) AD.save("bambu_filament_presets");
     AD.save("bambu_presets");
     closeModal();
     renderMain();
     toast("已导入 " + added + " 条" + (merged ? " · 合并 " + merged + " 条" : "") +
-      (filTouched ? " · 耗材丝已更新 " + filTouched.name : "") + "（已自动备份）");
+      (filTouched ? (" · 耗材丝" + (filCreated ? "新建" : "更新") + "「" + filTouched.name + "」") : "") +
+      "（已自动备份）");
   }
 
-  /* 导入时的耗材丝落点：优先沿用目标预设已关联的；否则按 AI 建议的材料选内置基准 */
-  function pickFilRecordForImport(p, target) {
-    var t = target || impState.target;
-    if (t && t.filId) { var ex = filById(t.filId); if (ex) return ex; }
-    var want = String(p.filType || (Array.isArray(p.filament) ? p.filament[0] : p.filament) || "").toUpperCase();
-    var isPetg = want.indexOf("PETG") >= 0;
-    var hit = null;
-    filList().forEach(function (r) { if (r && r.builtin && (r.typeKey === "petg") === isPetg && !hit) hit = r; });
-    return hit || filList()[0] || null;
+  /* 导入后就地跑一次诊断，否则列表「诊断」列显示「—」直到下次启动全量重算。
+     材料判定复用 admin.html 的 pappMaterial（优先 filamentType，其次关联耗材丝的 typeKey）。 */
+  function impDiagnose(preset) {
+    try {
+      if (typeof BAMBU_DIAGNOSE === "undefined" || !BAMBU_DIAGNOSE.diagnosePreset) return;
+      var mat = "UNKNOWN";
+      if (typeof pappMaterial === "function") mat = pappMaterial(preset);
+      preset.diagnosis = BAMBU_DIAGNOSE.diagnosePreset(preset, {
+        name: preset.name, material: mat, linkedFilament: preset.filId || null
+      }, { presets: PSET, filamentPresets: filList() });
+    } catch (e) { }
+  }
+  /* 耗材丝落点名与落点记录：
+     名字优先取耗材丝文件里的 name（Studio 导出时就是你起的预设名），其次用「材料 · 机型 0.4」兜底。
+     同名档已存在 → 写回它；否则新建一条（values 由 filMigrate 按官方基准补全 135 项）。 */
+  function impFilTargetName() {
+    var fil = impFiles.fil && impFiles.fil.json;
+    var meta = (impState && impState.meta) || impReadMeta();
+    var raw = String((fil && (fil.name || (fil.filament && fil.filament.name))) || "").trim();
+    var nm = raw;
+    if (!nm) nm = (meta.filamentType || "PETG") + " · " + (meta.machine || "X2D") + " 0.4";
+    if (!nm) nm = (meta.name || "导入") + " · 耗材丝";
+    var reuse = filList().some(function (r) { return r && r.name === nm; });
+    return { name: nm, reuse: reuse };
+  }
+  /* 新建耗材丝档时，文件没覆盖的项从哪来：filMigrate 按 typeKey 取内置基准，这里把它的名字说出来 */
+  function impFilBaseName(p) {
+    var tk = String((p && p.filType) || "").toLowerCase();
+    var bk = (FSCHEMA && FSCHEMA.builtin) || {};
+    return (bk[tk] && bk[tk].name) || "";
+  }
+  function impFilRecord(p) {
+    var t = impFilTargetName();
+    var typeKey = String(p.filType || "").toLowerCase();
+    if (!/^(pla|petg|abs|tpu)$/.test(typeKey)) {
+      typeKey = (impSniff(String(p.filType || "") + " " + t.name, /(PLA|PETG|ABS|TPU)/i) || "PETG").toLowerCase();
+    }
+    var exist = filList().filter(function (r) { return r && r.name === t.name; })[0];
+    if (exist) return { rec: exist, exists: true };
+    var rec = { id: pgenId("fil"), name: t.name, typeKey: typeKey, builtin: false, values: {} };
+    try { if (typeof filMigrate === "function") rec = filMigrate(rec); } catch (e) { }
+    return { rec: rec, exists: false };
+  }
+  /* 表单里的日期（YYYY-MM-DD）→ ISO；取中午避免时区把日期翻到前一天 */
+  function impDateIso(d) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "").trim());
+    if (!m) return new Date().toISOString();
+    return new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0).toISOString();
   }
 
 })();

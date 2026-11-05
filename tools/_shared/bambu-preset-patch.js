@@ -437,7 +437,11 @@
       return { v: v.join(", "), notes: ["数组 → 多喷头向量"] };
     }
     var s = norm(v);
+    /* 百分比：Studio 原生文件写的是 "70%"，stripUnit 会去掉 %。
+       去掉后导出会写成 "70"（与 Studio 自己的格式不符），所以这里保留输入的 % 形态。 */
+    var hadPct = (p.unit === "%" && /%\s*$/.test(s));
     if (p.type !== "enum" && p.type !== "enumopen") s = stripUnit(s, p.unit);
+    if (hadPct && s.indexOf("%") < 0) s = s + "%";
 
     // 枚举：value → 中文名 → 英文名 → 归一化模糊
     if ((p.type === "enum" || p.type === "enumopen") && (p.enum || []).length) {
@@ -541,7 +545,20 @@
       if (!r) { ignored.push({ from: k, value: raw, reason: "无法匹配到耗材丝参数（已废弃或写法过旧）" }); return; }
       if (r.ro) { ignored.push({ from: k, value: raw, reason: r.label + " 是材料固有属性，不可改" }); return; }
       var v = norm(raw);
-      var status = "ok";
+      /* ⚠ 官方耗材丝预设里 vec6 字段（如 filament_flow_ratio）是 6 段数组：
+         ["0.988","nil","nil","nil","nil","nil"]。本工具只存第 0 段「直接驱动:标准」，
+         导出时再补齐 6 段 —— 不拆开会把整串 "0.988,nil,…" 塞进单值字段，编辑器与导出全错。 */
+      var vecNote = "";
+      if (r.vec6) {
+        var seg = null;
+        if (Array.isArray(raw)) seg = raw.length ? raw[0] : "";
+        else if (String(raw).indexOf(",") >= 0) seg = String(raw).split(",")[0];
+        if (seg != null) {
+          v = norm(seg);
+          vecNote = "6 段向量 → 取第 0 段（直接驱动:标准）";
+        }
+      }
+      var status = vecNote ? "fixed" : "ok";
       if (r.type === "bool") {
         var b = toBool(raw);
         if (b == null) { items.push(mkFilItem(r, norm(raw), "warn", "布尔值写法不规范", "")); values[r.key] = norm(raw); return; }
@@ -557,7 +574,7 @@
         ignored.push({ from: k, value: raw, reason: "值为空" });
         return;
       }
-      items.push(mkFilItem(r, v, status, "", r.unit));
+      items.push(mkFilItem(r, v, status, vecNote, r.unit));
       values[r.key] = v;
     });
     var f = (o && o.filament) || {};
