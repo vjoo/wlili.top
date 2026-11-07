@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- Content Security Policy - WLi Tools -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
+<link rel="stylesheet" href="common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>轮盘组装预览 - WLi Tools</title>
+<style>
+/* ============================================================
+   轮盘组装预览（wlili tools）
+   外壳复用 common.css 的 page-hero / section / 令牌
+   3D 用 three@0.170.0 importmap（与 cube-tile-table 同版本，勿另存本地副本）
+   ============================================================ */
+.wheel-sec .section-inner{max-width:1040px;}
+
+/* 参数控制区（4 个参数，各带重置按钮） */
+.wheel-ctl{
+  display:flex; flex-wrap:wrap; gap:var(--space-4); align-items:flex-end;
+  padding:var(--space-3) 0 var(--space-2);
+}
+.wheel-field{display:flex; flex-direction:column; gap:6px; min-width:160px; flex:1 1 160px;}
+.wheel-field label{
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:var(--fs-sm); color:var(--ink-secondary); font-weight:600;
+}
+.wheel-field label b{color:var(--ink); font-variant-numeric:tabular-nums;}
+.wheel-field input[type=range]{width:100%; accent-color:#e0833a;}
+.wf-right{display:inline-flex; align-items:center; gap:7px;}
+.wf-reset{
+  width:19px; height:19px; padding:0; line-height:1;
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--border-light); border-radius:5px;
+  background:#fff; color:var(--ink-tertiary); font-size:13px; cursor:pointer;
+  transition:color .15s, border-color .15s, background .15s;
+}
+.wf-reset:hover{color:#e0833a; border-color:#e0833a; background:#fff7f0;}
+
+/* 隐藏的原生控件：仅作图标按钮的代理，保留既有 JS 绑定不改 */
+.wheel-hidden{display:none !important;}
+
+/* 3D 预览容器 */
+.wheel-host-wrap{position:relative;}
+.wheel-host{
+  position:relative; width:100%; height:min(62vh, 540px); min-height:360px;
+  border:1px solid var(--border-light); border-radius:var(--radius-md);
+  background:radial-gradient(circle at 50% 40%, #ffffff 0%, #f0f0f4 70%, #e6e6ec 100%);
+  overflow:hidden; touch-action:none;
+}
+.wheel-host canvas{display:block;}
+.wheel-loading{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:var(--fs-sm); color:var(--ink-tertiary);
+}
+
+/* 右侧竖排图标工具条 */
+.wheel-tools{
+  position:absolute; right:12px; top:12px; z-index:6;
+  display:flex; flex-direction:column; gap:8px;
+}
+.wtool{
+  width:38px; height:38px; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--border-light); border-radius:10px;
+  background:rgba(255,255,255,.92); color:var(--ink-secondary);
+  cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.07);
+  transition:color .15s, border-color .15s, background .15s;
+}
+.wtool:hover{color:#e0833a; border-color:#e0833a; background:#fff;}
+.wtool.is-on{color:#fff; background:#e0833a; border-color:#e0833a;}
+.wtool svg{width:19px; height:19px; display:block; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+.wtool .ic-poly{display:none;}
+.wtool.is-on .ic-circle{display:none;}
+.wtool.is-on .ic-poly{display:block;}
+
+/* 图例浮层（第 5 个图标按钮点开） */
+.wheel-legend-pop{
+  position:absolute; right:48px; top:0; width:228px;
+  display:none; flex-direction:column; gap:7px;
+  background:rgba(255,255,255,.97); padding:10px 12px;
+  border:1px solid var(--border-light); border-radius:10px;
+  box-shadow:0 4px 16px rgba(0,0,0,.11);
+  font-size:12px; color:var(--ink-secondary);
+}
+.wheel-legend-pop.open{display:flex;}
+.wheel-legend-pop .it{display:flex; align-items:center; gap:7px;}
+.wheel-legend-pop .dot{width:11px; height:11px; border-radius:3px; flex:none; box-shadow:0 0 0 1px rgba(0,0,0,.12);}
+
+/* 派生读数 */
+.wheel-derived{
+  display:flex; flex-wrap:wrap; gap:var(--space-4);
+  padding:var(--space-2) 0 var(--space-4); font-size:var(--fs-sm); color:var(--ink-tertiary);
+}
+.wheel-derived b{color:var(--ink-secondary); font-variant-numeric:tabular-nums;}
+
+@media (max-width:768px){
+  .wheel-host{height:min(52vh, 380px);}
+  .wheel-field{min-width:140px;}
+  .wheel-legend-pop{width:190px; right:46px;}
+}
+</style>
+</head>
+<body>
+
+<section class="section wheel-sec">
+  <div class="section-inner">
+
+    <div class="wheel-ctl">
+      <div class="wheel-field">
+        <label><span>轮盘面数</span><span class="wf-right"><b id="v_n">10</b><button class="wf-reset" type="button" data-for="p_n" title="重置轮盘面数" aria-label="重置轮盘面数">↺</button></span></label>
+        <input type="range" id="p_n" min="3" max="24" step="1" value="10">
+      </div>
+      <div class="wheel-field">
+        <label><span>轮盘外径</span><span class="wf-right"><b id="v_dia">55.7 mm</b><button class="wf-reset" type="button" data-for="p_dia" title="重置轮盘外径" aria-label="重置轮盘外径">↺</button></span></label>
+        <input type="range" id="p_dia" min="35" max="90" step="0.1" value="55.7">
+      </div>
+      <div class="wheel-field">
+        <label><span>轮盘面宽</span><span class="wf-right"><b id="v_t">12.0 mm</b><button class="wf-reset" type="button" data-for="p_t" title="重置轮盘面宽" aria-label="重置轮盘面宽">↺</button></span></label>
+        <input type="range" id="p_t" min="6" max="40" step="0.5" value="12">
+      </div>
+      <div class="wheel-field">
+        <label><span>轮盘数量</span><span class="wf-right"><b id="v_cnt">5</b><button class="wf-reset" type="button" data-for="p_cnt" title="重置轮盘数量" aria-label="重置轮盘数量">↺</button></span></label>
+        <input type="range" id="p_cnt" min="1" max="8" step="1" value="5">
+      </div>
+    </div>
+
+    <!-- 隐藏的原生控件：右侧图标按钮代理触发它们，既有事件绑定原样复用 -->
+    <div class="wheel-hidden" aria-hidden="true" hidden>
+      <select id="p_cap">
+        <option value="CIRCLE">圆形</option>
+        <option value="POLY">多边形（同步轮盘面数）</option>
+      </select>
+      <input type="checkbox" id="p_spin">
+      <button type="button" id="btn_explode">拆解</button>
+      <button type="button" id="btn_reset_view">重置视角</button>
+      <span id="v_cap"></span>
+    </div>
+
+    <div class="wheel-derived">
+      <span>面高 <b id="d_faceh">—</b></span>
+      <span>对边距 <b id="d_af">—</b></span>
+      <span>装配总长 <b id="d_len">—</b></span>
+    </div>
+
+    <div class="wheel-host-wrap">
+      <div class="wheel-host" id="wheel_host">
+        <div class="wheel-loading" id="wheel_loading">正在加载 3D 环境…</div>
+      </div>
+      <div class="wheel-tools" id="wheel_tools">
+        <button class="wtool" id="t_cap" type="button" title="盖端外形：圆形（点击切换多边形）" aria-label="切换盖端外形">
+          <svg class="ic-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
+          <svg class="ic-poly" viewBox="0 0 24 24"><path d="M12 3 L20 7.5 L20 16.5 L12 21 L4 16.5 L4 7.5 Z"/></svg>
+        </button>
+        <button class="wtool" id="t_spin" type="button" title="自动旋转：关（点击开启）" aria-label="切换自动旋转">
+          <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><polyline points="20 3 20 8 15 8"/></svg>
+        </button>
+        <button class="wtool" id="t_reset" type="button" title="重置视角" aria-label="重置视角">
+          <svg viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="wtool" id="t_explode" type="button" title="拆解（点击展开）" aria-label="切换拆解">
+          <svg viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 12l10 5 10-5"/><path d="M2 17l10 5 10-5"/></svg>
+        </button>
+        <button class="wtool" id="t_legend" type="button" title="颜色图例（4 种零件）" aria-label="显示颜色图例">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="6" rx="1"/><rect x="3" y="14" width="6" height="6" rx="1"/><path d="M13 7h8M13 17h8"/></svg>
+        </button>
+        <div class="wheel-legend-pop" id="legend_pop">
+          <span class="it"><span class="dot" style="background:#e0833a"></span>轮盘（一体：外环+5辐条+套筒）</span>
+          <span class="it"><span class="dot" style="background:#64748b"></span>圆轴 Ø18</span>
+          <span class="it"><span class="dot" style="background:#3fa07a"></span>公盖（法兰+销头）</span>
+          <span class="it"><span class="dot" style="background:#5b6bc4"></span>母盖（法兰+轴身）</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script src="nav.js?v=6f98d37a"></script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+/* 轮盘组装预览 —— 惰性加载 three@0.170.0（与 cube-tile-table 同版本） */
+let THREE = null, OrbitControls = null, RoomEnv = null, loading = false;
+async function ensure3D(){
+  if(THREE) return true;
+  if(loading){ while(!THREE && loading){ await new Promise(r=>setTimeout(r,60)); } return !!THREE; }
+  loading = true;
+  try{
+    THREE = await import('three');
+    ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+    ({ RoomEnvironment: RoomEnv } = await import('three/addons/environments/RoomEnvironment.js'));
+    return true;
+  }catch(e){ console.warn('three 加载失败', e); return false; }
+}
+
+/* ---- 简化几何（单位 cm = mm / 10）----
+   四件：圆轴 Ø18 / 轮盘 正N边形 / 公盖(法兰+销头) / 母盖(法兰+自带Ø18轴身)
+   装配沿模型 Y（页面 rotation.z=-π/2 后 = 水平 X，母盖左、公盖右）。
+   落座账本（wheel_generator.py generate 内 assert）：总长 = 2×FT + N×面宽。
+   N=1：母盖(自带轴身穿轮盘) + 轮盘 + 公盖，无独立圆轴；N≥2 追加 N-1 段圆轴各穿 1 轮盘。 */
+// 冻结基线（照抄 wheel_generator.py v0.4.5：FitCore 全部冻结，改轮盘不碰这些）
+const FT       = 0.25;   // 法兰厚 2.5mm
+const PIN      = 0.40;   // 销长 4mm（插销，冻结）
+const L_RAMP   = 0.07;   // 导入锥 0.7mm
+const AXLE_R   = 0.90;   // 圆轴 Ø18
+const PIN_R    = 0.64;   // 销头 Ø12.8（SG_R = B/2 - delta = 6.40）
+const SOCK_R   = 0.708;  // 母孔/插销座 Ø14.16（R + C_bore = 7.08）
+const BORE_R   = 0.92;   // 轮盘中心孔 Ø18.4
+const SLEEVE_R = 1.05;   // 套筒 Ø21
+const RV       = 0.15;   // 端盖中心通孔 Ø3
+const SPOKES   = 5;      // 辐条数
+const SPOKE_W  = 1.0;    // 辐条宽 10mm
+const WALL     = 0.15;   // 轮盘外环壁厚 1.5mm
+const RECESS   = 0.28;   // 外环内壁凹槽 2.8mm
+const SKIRT_R  = 1.14;   // 轮盘套筒裙边 Ø22.8（只在靠法兰一侧，build_disc 的 skirt_r）
+const SKIRT_H  = 0.12;   // 裙边高 1.2mm（skirt_h）
+const DISC_GAP = 0.08;   // 相邻轮盘间预留缝隙 0.8mm：轮盘厚 = 面宽 - GAP，轴段仍长 T，总长账本不变
+
+const MAT = {
+  axle:  0x64748b,  // 圆轴（灰蓝）
+  disc:  0xe0833a,  // 轮盘（橙）
+  capM:  0x3fa07a,  // 公盖（绿）
+  capF:  0x5b6bc4,  // 母盖（蓝）
+};
+
+function polygonShape(R, N){
+  const s = new THREE.Shape();
+  for(let i=0;i<N;i++){
+    const a = (i/N)*Math.PI*2;
+    const x = R*Math.cos(a), y = R*Math.sin(a);
+    if(i===0) s.moveTo(x,y); else s.lineTo(x,y);
+  }
+  s.closePath();
+  return s;
+}
+
+/* ⛔ 统一挤出：XY 平面 shape 沿 Y 挤出并真正居中于 y∈[-d/2,d/2]。
+   rotateX(π/2) 把 +Z 映射成 -Y；若先旋转再 translate(0,-d/2,0)，几何中心会落在 -d
+   （曾导致轮盘偏 -T、法兰偏 -FT，各件偏移量不同 → 合拢时母盖与轮盘重叠、公盖远离）。
+   正确顺序：先在 Z 上居中，再旋转。 */
+function extrudeY(shape, depth, curveSegments){
+  const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled:false, curveSegments });
+  g.translate(0, 0, -depth/2);
+  g.rotateX(Math.PI/2);
+  g.computeVertexNormals();
+  return g;
+}
+
+/* 环形（套筒 / 裙边）：外半径 rOut、内半径 rIn、厚 depth，居中于 y=0。 */
+function ringGeo(rIn, rOut, depth){
+  const s = new THREE.Shape();
+  s.absarc(0, 0, rOut, 0, Math.PI*2, false);
+  const h = new THREE.Path();
+  h.absarc(0, 0, rIn, 0, Math.PI*2, true);
+  s.holes.push(h);
+  return extrudeY(s, depth, 48);
+}
+
+/* 轮盘主体：正 N 边形外环 + 5 辐条 + 中心套筒 + 中心孔，ONE-PIECE（ExtrudeGeometry 带孔）。
+   严格照抄 build_disc：外环 (R_out→R_in_low) + 5 辐条间隙镂空 + 中心孔 (r_bore)，
+   套筒 (r_bore→r_sleeve) 是保留实体（辐条把套筒与外环连成一体，必须一体不可分件）。 */
+function discGeo(R_out, T, N){
+  const R_in = R_out - WALL/Math.cos(Math.PI/N);
+  const R_in_low = R_in - RECESS;
+  const shape = polygonShape(R_out, N);
+  // 中心孔：穿圆轴 Ø18.4
+  const bore = new THREE.Path();
+  bore.absarc(0,0, BORE_R, 0, Math.PI*2, true);
+  shape.holes.push(bore);
+  // 5 个辐条间隙（镂空扇形：套筒→外环内壁，沿辐条边缘直线切开）
+  const spokeHalf = SPOKE_W/2;
+  const segA = 2*Math.PI/SPOKES;
+  for(let k=0;k<SPOKES;k++){
+    const base = k*segA;
+    const aIn  = Math.asin(Math.min(0.999, spokeHalf/SLEEVE_R));
+    const aOut = Math.asin(Math.min(0.999, spokeHalf/R_in_low));
+    const a0i = base + aIn, a1i = base + segA - aIn;
+    const a0o = base + aOut, a1o = base + segA - aOut;
+    const hole = new THREE.Path();
+    hole.moveTo(SLEEVE_R*Math.cos(a0i), SLEEVE_R*Math.sin(a0i));
+    hole.absarc(0,0, SLEEVE_R, a0i, a1i, false);
+    hole.lineTo(R_in_low*Math.cos(a1o), R_in_low*Math.sin(a1o));
+    hole.absarc(0,0, R_in_low, a1o, a0o, true);
+    hole.lineTo(SLEEVE_R*Math.cos(a0i), SLEEVE_R*Math.sin(a0i));
+    shape.holes.push(hole);
+  }
+  return extrudeY(shape, T, Math.max(64, N*6));   // y∈[-T/2,T/2]，中心套筒 r∈[BORE_R,SLEEVE_R] 为实体
+}
+
+/* 圆轴 / 母盖轴身：Ø18 管（中心孔 = 插销座 Ø14.16），轴向沿 Y，居中于 y=0。 */
+function tubeGeo(len){
+  const s = new THREE.Shape();
+  s.absarc(0,0, AXLE_R, 0, Math.PI*2, false);
+  const h = new THREE.Path();
+  h.absarc(0,0, SOCK_R, 0, Math.PI*2, true);
+  s.holes.push(h);
+  return extrudeY(s, len, 48);
+}
+
+/* 端盖法兰：圆形(CIRCLE) 或 正 N 边形(POLY)，中心通孔 Ø3，厚 FT，居中于 y=0。
+   ⛔ 法兰外侧（背面）必须是平的：vb.blend 层表 x=0.08 处 r=[1.5,27.26]，只有 Ø3 孔，无凸台。 */
+function flangeGeo(RO, N, capShape){
+  const s = new THREE.Shape();
+  if(capShape === 'POLY'){
+    for(let i=0;i<N;i++){ const a=i/N*Math.PI*2; const x=RO*Math.cos(a), y=RO*Math.sin(a); i===0?s.moveTo(x,y):s.lineTo(x,y); }
+    s.closePath();
+  } else {
+    s.absarc(0,0, RO, 0, Math.PI*2, false);
+  }
+  const h = new THREE.Path();
+  h.absarc(0,0, RV, 0, Math.PI*2, true);
+  s.holes.push(h);
+  return extrudeY(s, FT, Math.max(64, N*6));
+}
+
+// 拆解时各逻辑部件沿 Y 的偏移索引（合拢=0）
+const PARTS = {};
+
+/* 构造整套模型 —— 严格照抄 wheel_generator.py 的「落座账本」(generate 内 assert)：
+   装配总长 = FT + N·H_seg + FT（H_seg = 轮盘面宽），N=1 时 2.5+12+2.5 = 17mm。
+   - 母盖 EndCapF：法兰(2.5) + **自带 Ø18 轴身长 H_seg(12)** + 顶端母孔；背面平，只有 Ø3 孔。
+     轴身穿第 1 个轮盘 —— 母盖本身就是第 1 根轴，不需要额外圆轴。
+   - 圆轴段 Axle：仅在 N≥2 时出现，共 N-1 段；每段销头(Ø12.8×4，插上一段母孔) + Ø18 管身(H_seg)，
+     管身穿 1 个轮盘。销头是插入上一段母孔里的，不额外占长度。
+   - 轮盘 Disc：正 N 边形外环 + 5 辐条 + 中心套筒 Ø21（靠法兰侧带 Ø22.8 裙边）+ Ø18.4 孔，一体。
+     ⛔ 轮盘是独立零件，不带着圆轴；圆轴属于轴段组，拆解后轮盘中心只剩橙色套筒环。
+   - 公盖 EndCapM：销头(Ø12.8×4) + 法兰(2.5)，**在 z=4 处直接相连、零间隙**（vb.blend 层表 16.23→16.24）。
+   沿模型 +Y（页面 rotation.z=-π/2 后 = 世界 +X / 右）：母盖(左) → 轮盘1 → [圆轴段+轮盘]×(N-1) → 公盖(右)。 */
+function buildModel(params, three){
+  const group = new three.Group();
+  const N = params.N, dia = params.dia/10, T = params.T/10;
+  const cnt = Math.max(1, Math.round(params.discCount||5));   // 轮盘数量 N
+  const RO = dia/2;                                            // 法兰外接半径 = 轮盘外接半径
+  const capShape = params.capShape || 'CIRCLE';
+  const std = (c,rough)=> new three.MeshStandardMaterial({ color:c, roughness:rough, metalness:0.12 });
+
+  const Tdisc         = Math.max(0.2, T - DISC_GAP);          // 轮盘实厚（留缝；轴段长度与总长账本不变）
+  const discGeoShared = discGeo(RO, Tdisc, N);
+  const skirtGeo      = ringGeo(BORE_R, SKIRT_R, SKIRT_H);    // 轮盘靠法兰侧的套筒裙边
+  const tubeSegGeo    = tubeGeo(T);                            // Ø18 轴身（长 = 轮盘面宽）
+  const flangeGeoM    = flangeGeo(RO, N, capShape);
+  const pinGeo        = new three.CylinderGeometry(PIN_R, PIN_R, PIN, 32);  // 居中于 y=0
+
+  const matAxle = std(MAT.axle, 0.40);
+  const matCapM = std(MAT.capM, 0.50);
+  const matCapF = std(MAT.capF, 0.50);
+
+  // 一个完整轮盘（外环+辐条+中心套筒 已在 discGeo 内一体，裙边同色贴 -Y 端面）
+  // ⚠ 每盘一份独立材质 + 唯一 discIndex：多轮盘时才能「点哪个转哪个」并单独 hover 高亮。
+  function oneDisc(k){
+    const g = new three.Group();
+    const mat = std(MAT.disc, 0.48);            // 独立材质，hover 高亮不串到别的盘
+    const body = new three.Mesh(discGeoShared, mat);
+    const skirt = new three.Mesh(skirtGeo, mat);
+    skirt.position.y = -Tdisc/2 + SKIRT_H/2;  // 裙边贴轮盘 -Y 端面（靠母盖法兰侧）
+    body.userData.discIndex = k; skirt.userData.discIndex = k;   // 射线命中后向上找到所属轮盘
+    g.userData.discIndex = k; g.userData.discMat = mat;
+    g.add(body, skirt);
+    return g;
+  }
+
+  // 拆解顺序沿 +Y：母盖 → 轮盘1 → 圆轴段2 → 轮盘2 → … → 公盖
+  const order = [];
+
+  // ---- 母盖：法兰 y[0,FT] + 自带轴身 y[FT,FT+T]，一体；法兰背面(y=0)是平盘 ----
+  const female = new three.Group();
+  const fFlange = new three.Mesh(flangeGeoM, matCapF);  fFlange.position.y = FT/2;
+  const fBody   = new three.Mesh(tubeSegGeo, matCapF);  fBody.position.y   = FT + T/2;
+  female.add(fFlange, fBody);
+  female.userData.baseY = 0;
+  group.add(female); order.push(female);
+
+  // ---- 轮盘 1：套在母盖轴身上，y[FT,FT+T] ----
+  const d1 = oneDisc(1);
+  d1.userData.baseY = FT + T/2;
+  group.add(d1); order.push(d1);
+
+  // ---- 圆轴段 2..N + 各自轮盘：销头插上一段母孔，管身穿轮盘 ----
+  for(let k=2;k<=cnt;k++){
+    const y0 = FT + (k-1)*T;                    // 本段管身起点
+    const seg = new three.Group();
+    const pin  = new three.Mesh(pinGeo, matAxle);     pin.position.y  = y0 - PIN/2;   // 销头 y[y0-PIN,y0]
+    const body = new three.Mesh(tubeSegGeo, matAxle); body.position.y = y0 + T/2;     // 管身 y[y0,y0+T]
+    seg.add(pin, body);
+    seg.userData.baseY = 0;
+    group.add(seg); order.push(seg);
+
+    const dk = oneDisc(k);
+    dk.userData.baseY = y0 + T/2;
+    group.add(dk); order.push(dk);
+  }
+
+  // ---- 公盖：销头 y[yEnd-PIN,yEnd] 插最后一段母孔 + 法兰 y[yEnd,yEnd+FT]，两者零间隙相连 ----
+  const male = new three.Group();
+  const yEnd = FT + cnt*T;
+  const mPin    = new three.Mesh(pinGeo, matCapM);     mPin.position.y    = yEnd - PIN/2;
+  const mFlange = new three.Mesh(flangeGeoM, matCapM); mFlange.position.y = yEnd + FT/2;
+  male.add(mPin, mFlange);
+  male.userData.baseY = 0;
+  group.add(male); order.push(male);
+
+  order.forEach(p=>{ p.position.y = p.userData.baseY; });
+  PARTS.order = order;
+  return group;
+}
+
+/* 派生读数 */
+function derived(params){
+  const R = params.dia/2;                 // mm
+  const N = params.N;
+  const cnt = Math.max(1, Math.round(params.discCount||5));
+  const faceH = 2*R*Math.sin(Math.PI/N);  // 面高 mm
+  const af = 2*R*Math.cos(Math.PI/N);     // 对边距 mm
+  const len = cnt*params.T + 5;           // 装配总长 mm（2×法兰 2.5 + 轮盘数×面宽）
+  return { faceH, af, len };
+}
+
+window.__wheel3d = {
+  async build(host, getParams){
+    const ok = await ensure3D();
+    const loadingEl = document.getElementById('wheel_loading');
+    if(!ok){ host.innerHTML = '<div class="wheel-loading">3D 环境加载失败：请检查网络（three@0.170.0 走 unpkg CDN）。</div>'; return null; }
+    host.innerHTML = '';
+    const three = THREE;
+
+    const renderer = new three.WebGLRenderer({ antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    renderer.toneMapping = three.NeutralToneMapping || three.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    let w = host.clientWidth||640, h = host.clientHeight||420;
+    renderer.setSize(w, h, false);
+    renderer.domElement.style.width='100%'; renderer.domElement.style.height='100%';
+    host.appendChild(renderer.domElement);
+
+    const disposables = [];
+    const track = o => (disposables.push(o), o);
+
+    const scene = new three.Scene();
+    scene.background = new three.Color(0xe6e8ec);
+    scene.fog = new three.Fog(0xe6e8ec, 18, 42);
+    const camera = new three.PerspectiveCamera(42, w/h, 0.1, 100);
+    camera.position.set(6.5, 4.8, 8.5);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.08;
+    controls.autoRotate = false; controls.autoRotateSpeed = 0.6;   // 默认不自动旋转；由「自动旋转」复选框开启
+    controls.minDistance = 3; controls.maxDistance = 30;
+    controls.target.set(0, 0, 0);
+
+    // 地面网格
+    const grid = track(new three.GridHelper(16, 16, 0xb9bcc4, 0xd2d5db));
+    grid.position.y = -2.4;
+    scene.add(grid);
+
+    // 环境反射（陶瓷/塑料光泽）
+    if(RoomEnv && three.PMREMGenerator){
+      try{
+        const pmrem = new three.PMREMGenerator(renderer);
+        const envT = track(pmrem.fromScene(new RoomEnv(), 0.04).texture);
+        scene.environment = envT;
+        if('environmentIntensity' in scene) scene.environmentIntensity = 0.5;
+        pmrem.dispose();
+      }catch(e){}
+    }
+
+    // 灯光挂在相机上（跟视线走）
+    const hemi = new three.HemisphereLight(0xffffff, 0xbfc4cc, 0.6); scene.add(hemi);
+    const amb = new three.AmbientLight(0xffffff, 0.45); scene.add(amb);
+    const key = new three.DirectionalLight(0xffffff, 1.05); key.position.set(1.1,1.5,1.6);
+    const fill = new three.DirectionalLight(0xdce6ff, 0.4); fill.position.set(-1.4,-0.5,1.2);
+    const rim = new three.DirectionalLight(0xffffff, 0.35); rim.position.set(0.2,0.9,-1.6);
+    camera.add(key, fill, rim); scene.add(camera);
+
+    // 模型容器：拆解只改各 part 的 y 偏移
+    let model = null;
+    let turnTarget = null, hovered = null, lastX = 0, lastHover = 0;   // 单盘独立旋转 / hover 状态
+    function rebuild(){
+      turnTarget = null; hovered = null;   // 重建前清掉对旧盘材质的引用
+      if(model){ model.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); scene.remove(model); }
+      const p = getParams();
+      model = buildModel(p, three);
+      model.rotation.z = -Math.PI / 2;  // 轴水平横放：Y(竖直) → X(水平)；母盖在 -Y 端→世界 -X(左)，公盖在 +Y 端→世界 +X(右)，与 vb.blend 一致
+      scene.add(model);
+      applyOffsets();
+      fitView();
+    }
+    // 拆解偏移目标（合拢=0）：沿装配轴把各逻辑件拉开，露出每处「销头插入插销座」
+  let exploded = false;
+  const explodeGap = 2.6;   // cm，固定拆解间距（此处在 build() 作用域，不能用 buildModel 内的局部 T）
+  function applyOffsets(){
+    const order = (PARTS.order)||[];
+    order.forEach((p,i)=>{ if(p) p.position.y = p.userData.baseY + (exploded ? i*explodeGap : 0); });
+  }
+    function fitView(){
+      const box = new three.Box3().setFromObject(model);
+      if(box.isEmpty()) return;
+      const size = new three.Vector3(); box.getSize(size);
+      const center = new three.Vector3(); box.getCenter(center);
+      const maxd = Math.max(size.x, size.y, size.z)||1;
+      const dist = maxd * 2.0;
+      camera.position.set(center.x + dist*0.6, center.y + dist*0.5, center.z + dist*0.75);
+      camera.near = Math.max(maxd/200, 0.01); camera.far = maxd*100; camera.updateProjectionMatrix();
+      controls.target.copy(center); controls.update();
+      grid.position.set(center.x, box.min.y - 0.05, center.z);   // ⚠ XZ 也要跟着模型中心，否则网格偏在一侧、看起来像模型没居中
+    }
+
+    rebuild();
+
+    /* 每个轮盘可单独点击拖动旋转（绕装配轴），互不带动；轮盘自己不会自动转。
+       界定方式：Raycaster 命中列表按前后排序，只取 hits[0]（屏幕上最前面的可见表面），
+       由该 mesh 向上找到带 discIndex 的轮盘 Group → 就是「点到的那一盘」，精确不模糊。
+       只认最近命中：辐条镂空 / 盘间缝隙射到后面的零件时，不误判成转轮盘。
+       拖动其余区域 = OrbitControls 正常旋转视角；capture 阶段先禁用 controls 避免视角跟着跳。 */
+    const ray = new three.Raycaster();
+    const ndc = new three.Vector2();
+    const dom = renderer.domElement;
+    function discUnder(ev){
+      if(!model) return null;
+      const r = dom.getBoundingClientRect();
+      ndc.set(((ev.clientX - r.left)/r.width)*2 - 1, -((ev.clientY - r.top)/r.height)*2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const hits = ray.intersectObject(model, true);
+      if(!hits.length) return null;
+      let o = hits[0].object;
+      while(o){
+        if(o.userData && o.userData.discIndex != null && o.userData.discMat) return o;
+        o = o.parent;
+      }
+      return null;
+    }
+    function setHover(g){
+      if(hovered === g) return;
+      if(hovered && hovered.userData.discMat) hovered.userData.discMat.emissive.setHex(0x000000);
+      hovered = g;
+      if(g) g.userData.discMat.emissive.setHex(0x3a1800);   // 轻微暖光，标出当前选中的那一盘
+      dom.style.cursor = g ? 'grab' : '';
+    }
+    dom.addEventListener('pointerdown', function(ev){
+      const g = discUnder(ev);
+      if(!g) return;
+      turnTarget = g; lastX = ev.clientX;
+      controls.enabled = false;
+      dom.style.cursor = 'grabbing';
+      try{ dom.setPointerCapture(ev.pointerId); }catch(e){}
+    }, true);
+    dom.addEventListener('pointermove', function(ev){
+      if(turnTarget){
+        const dx = ev.clientX - lastX; lastX = ev.clientX;
+        turnTarget.rotateY(dx * 0.012);     // 只转这一盘（局部 Y = 装配轴）
+      }else if(ev.timeStamp - lastHover > 90){
+        lastHover = ev.timeStamp;
+        setHover(discUnder(ev));
+      }
+    }, true);
+    function endTurn(ev){
+      if(!turnTarget) return;
+      turnTarget = null; controls.enabled = true; dom.style.cursor = hovered ? 'grab' : '';
+      try{ dom.releasePointerCapture(ev.pointerId); }catch(e){}
+    }
+    dom.addEventListener('pointerup', endTurn, true);
+    dom.addEventListener('pointercancel', endTurn, true);
+
+    let raf = 0;
+    const loop = ()=>{ raf = requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); };
+    loop();
+    const ro = ('ResizeObserver' in window) ? new ResizeObserver(()=>{
+      w = host.clientWidth||w; h = host.clientHeight||h;
+      renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+    }) : null;
+    if(ro) ro.observe(host);
+
+    return {
+      setParams(p){ rebuild(); },
+      setExploded(on){ exploded = !!on; applyOffsets(); fitView(); },
+      setSpin(on){ controls.autoRotate = !!on; },
+      resetView(){ fitView(); },
+      dispose(){
+        if(raf) cancelAnimationFrame(raf);
+        if(ro) ro.disconnect();
+        controls.dispose();
+        if(model) model.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); });
+        disposables.forEach(d=>{ try{ d.dispose(); }catch(e){} });
+        renderer.dispose();
+        if(renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+        host.innerHTML='';
+      }
+    };
+  }
+};
+</script>
+
+<script>
+/* ---- 页面控制（classic 脚本，轮询 __wheel3d 就绪） ---- */
+(function(){
+  function params(){
+    return {
+      N: +document.getElementById('p_n').value,
+      dia: +document.getElementById('p_dia').value,
+      T: +document.getElementById('p_t').value,
+      discCount: +document.getElementById('p_cnt').value,
+      capShape: document.getElementById('p_cap').value,
+    };
+  }
+  function fmt(v, d){ return (+v).toFixed(d); }
+  function refreshDerived(){
+    const p = params();
+    const cnt = Math.max(1, Math.round(p.discCount||5));
+    const d = window.__wheelDerived = (function(){ const R=p.dia/2, N=p.N;
+      return { faceH:2*R*Math.sin(Math.PI/N), af:2*R*Math.cos(Math.PI/N), len:cnt*p.T+5 }; })();
+    document.getElementById('v_n').textContent = p.N;
+    document.getElementById('v_dia').textContent = fmt(p.dia,1) + ' mm';
+    document.getElementById('v_t').textContent = fmt(p.T,1) + ' mm';
+    document.getElementById('v_cnt').textContent = cnt;
+    document.getElementById('v_cap').textContent = (document.getElementById('p_cap').value === 'POLY') ? '多边形' : '圆形';
+    document.getElementById('d_faceh').textContent = fmt(d.faceH,2) + ' mm';
+    document.getElementById('d_af').textContent = fmt(d.af,2) + ' mm';
+    document.getElementById('d_len').textContent = fmt(d.len,1) + ' mm';
+  }
+
+  let api = null, ready = false;
+  function ensureApi(cb){
+    if(api){ cb(api); return; }
+    let waited = 0;
+    const t = setInterval(function(){
+      waited += 100;
+      if(window.__wheel3d){ clearInterval(t); ready = true; cb(window.__wheel3d); }
+      else if(waited >= 4000){ clearInterval(t);
+        document.getElementById('wheel_loading').textContent = '3D 模块未就绪：three@0.170.0 走 unpkg CDN，请检查网络。';
+      }
+    }, 100);
+  }
+
+  function boot(){
+    // URL 参数预设（调试/分享用）：?cnt=2 预设轮盘数量
+    const q = new URLSearchParams(location.search);
+    if(q.has('cnt')) document.getElementById('p_cnt').value = Math.min(8, Math.max(1, Math.round(+q.get('cnt')||1)));
+    const host = document.getElementById('wheel_host');
+
+    /* 原生控件（隐藏，仅作图标按钮代理）的绑定提前到 boot 阶段，
+       不依赖 3D 就绪；各 handler 内部都有 if(api) 判空。 */
+    ['p_n','p_dia','p_t','p_cnt','p_cap'].forEach(function(id){
+      document.getElementById(id).addEventListener('input', function(){
+        refreshDerived();
+        if(api) api.setParams(params());
+      });
+    });
+    document.getElementById('p_spin').addEventListener('change', function(e){
+      if(api) api.setSpin(e.target.checked);
+    });
+    var exploded = false;
+    document.getElementById('btn_explode').addEventListener('click', function(){
+      exploded = !exploded;
+      if(api) api.setExploded(exploded);
+      this.textContent = exploded ? '合拢' : '拆解';
+    });
+    document.getElementById('btn_reset_view').addEventListener('click', function(){
+      if(api) api.resetView();
+    });
+
+    /* 右侧竖排 5 个图标按钮：代理触发隐藏控件，复用既有逻辑 */
+    const capSel = document.getElementById('p_cap');
+    const spinCk = document.getElementById('p_spin');
+    const exBtn  = document.getElementById('btn_explode');
+    const rvBtn  = document.getElementById('btn_reset_view');
+    const tCap   = document.getElementById('t_cap');
+    const tSpin  = document.getElementById('t_spin');
+    const tEx    = document.getElementById('t_explode');
+    const tLegend= document.getElementById('t_legend');
+    const pop    = document.getElementById('legend_pop');
+
+    tCap.addEventListener('click', function(){
+      capSel.value = (capSel.value === 'CIRCLE') ? 'POLY' : 'CIRCLE';
+      capSel.dispatchEvent(new Event('input', {bubbles:true}));
+      const poly = capSel.value === 'POLY';
+      tCap.classList.toggle('is-on', poly);
+      tCap.title = poly ? '盖端外形：多边形（点击切回圆形）' : '盖端外形：圆形（点击切换多边形）';
+    });
+    tSpin.addEventListener('click', function(){
+      spinCk.checked = !spinCk.checked;
+      spinCk.dispatchEvent(new Event('change', {bubbles:true}));
+      tSpin.classList.toggle('is-on', spinCk.checked);
+      tSpin.title = spinCk.checked ? '自动旋转：开（点击关闭）' : '自动旋转：关（点击开启）';
+    });
+    document.getElementById('t_reset').addEventListener('click', function(){ rvBtn.click(); });
+    tEx.addEventListener('click', function(){
+      exBtn.click();
+      const on = tEx.classList.toggle('is-on');
+      tEx.title = on ? '合拢（点击复原）' : '拆解（点击展开）';
+    });
+    tLegend.addEventListener('click', function(){
+      const open = pop.classList.toggle('open');
+      tLegend.classList.toggle('is-on', open);
+    });
+    document.addEventListener('pointerdown', function(e){
+      if(pop.classList.contains('open') && !pop.contains(e.target) && !tLegend.contains(e.target)){
+        pop.classList.remove('open'); tLegend.classList.remove('is-on');
+      }
+    });
+
+    /* 顶部 4 个参数，各带一个重置按钮 */
+    const defaults = {p_n:10, p_dia:55.7, p_t:12, p_cnt:5};
+    document.querySelectorAll('.wf-reset').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        const key = btn.getAttribute('data-for');
+        const el = document.getElementById(key);
+        if(!el || defaults[key] === undefined) return;
+        el.value = defaults[key];
+        el.dispatchEvent(new Event('input', {bubbles:true}));
+      });
+    });
+
+    ensureApi(function(w3){
+      w3.build(host, params).then(function(a){
+        api = a;
+        refreshDerived();
+      });
+    });
+  }
+
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', boot); }
+  else{ boot(); }
+})();
+</script>
+</body>
+</html>

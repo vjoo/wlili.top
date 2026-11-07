@@ -290,6 +290,17 @@
       "enabled": true
     },
     {
+      "id": "wheel-assembly",
+      "name": "轮盘组装预览",
+      "file": "wheel-assembly.html",
+      "category": "creative",
+      "icon": "settings",
+      "iconColor": "orange",
+      "description": "手轮四件（圆轴/轮盘/公盖/母盖）装配效果 3D 预览，可调面数/外径/面宽实时联动、一键拆解看装配",
+      "keywords": ["轮盘", "手轮", "圆轴", "公盖", "母盖", "装配", "3D打印", "Blender", "wheel", "assembly"],
+      "enabled": true
+    },
+    {
       "id": "composition-editor",
       "name": "构图编辑器",
       "file": "composition-editor.html",

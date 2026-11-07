@@ -60,7 +60,8 @@
            本文件是硬编码数组，过滤逻辑见下方 mega menu 的 !t.localOnly || IS_LOCAL。 */
         { name: '动作库', href: './pose-gallery.html', localOnly: true },
         { name: '构图编辑器', href: './composition-editor.html' },
-        { name: '魔方贴片字表', href: './cube-tile-table.html' }
+        { name: '魔方贴片字表', href: './cube-tile-table.html' },
+        { name: '轮盘组装预览', href: './wheel-assembly.html' }
       ]
     },
     {
