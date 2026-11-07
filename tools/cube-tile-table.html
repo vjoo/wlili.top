@@ -573,7 +573,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="4 12 9 17 20 6"/></svg>
             <span class="swatch" style="background:#f2f1ec"></span>白色</label>
         </div>
-        <button class="pv-face" id="pv_all_mode">统一：反</button>
+        <button class="pv-face" id="pv_all_mode">统一：正</button>
         <span id="pv_info"></span>
       </div>
       <div class="pv-bar pv-bar2">
@@ -695,7 +695,7 @@ window.__cube3d = {
     const ok = await ensure3D();
     if(!ok){ host.innerHTML = '<div class="pv-loading">3D 环境加载失败：请检查网络（three@0.170.0 走 unpkg CDN）。</div>'; return null; }
     const o = opts || {};
-    const mode = o.mode || [0,0,0,0,0,0];
+    const mode = o.mode || [3,3,3,3,3,3];   // 默认黑座彩片（2026-11-07 用户定：预览默认用整套材质搭配）
     const coreCol = (o.core === 'white') ? 0xf0f0ec : 0x17181d;
     host.innerHTML = '';
     const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
@@ -1842,12 +1842,14 @@ var pvHandle = null;
 /* 预览展示选项（仅观感，不进导出数据）：core 黑/白 + 每面配色模式
    mode: 0=正常（白底座/白贴片 + 面色字）· 1=反色（面色底座/贴片 + 白字）· 2=黑底（黑底座/黑贴片 + 面色字）
          3=黑座彩片（黑底座 + 面色贴片 + 白字，2026-11-05 用户要求新增）
+   默认 = 3（黑座彩片，2026-11-07 用户定：预览默认用整套材质搭配）；
+   用户改过会存 sessionStorage（ctg_tile_pv_v1），存过就以用户的选择为准
    灯光已固化在 module 的 LIGHT_DEF（2026-10-26 用户实调定稿），此处不再管理 */
 var MODE_LABEL = ["正", "反", "黑", "黑座"];
 var pvOpts = (function(){
   try{ var s = JSON.parse(sessionStorage.getItem("ctg_tile_pv_v1") || "null"); }catch(e){ s = null; }
   var bad = !s || !s.mode || s.mode.length !== 6 || (s.core !== "black" && s.core !== "white");
-  if(bad) s = {core:"black", mode:[0,0,0,0,0,0]};
+  if(bad) s = {core:"black", mode:[3,3,3,3,3,3]};   // 默认黑座彩片（2026-11-07 用户定）
   else s.mode = s.mode.map(function(m){ return (m === 1 || m === 2 || m === 3) ? m : 0; });
   delete s.light; delete s.inv;
   return s;
