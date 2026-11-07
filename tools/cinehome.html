@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- Content Security Policy - WLi Tools（本页所有外网资源都经 8080 代理，故只放行同源） -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; media-src 'self' blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self';">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wlili影院</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<style>
+/* ============================================
+   CineHome · 本地影院（深色影院风，独立于 common.css）
+   © 2025 WLi
+   ============================================ */
+  :root{
+    --bg:#0b0d10;
+    --bg-soft:#12151a;
+    --card:#171b21;
+    --card-hover:#1e232b;
+    --line:#252b34;
+    --text:#e8ecf1;
+    --muted:#8b95a3;
+    --accent:#e8b45a;
+    --accent-soft:rgba(232,180,90,.12);
+    --danger:#e05a5a;
+    --ok:#4caf7d;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(1200px 600px at 20% -10%, #1a2029 0%, var(--bg) 55%) fixed;
+    color:var(--text);
+    font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100%;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#2b323c;border-radius:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;gap:18px;
+    padding:16px 34px;
+    background:rgba(11,13,16,.82);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .back{
+    display:inline-flex;align-items:center;gap:6px;flex:none;
+    color:var(--muted);text-decoration:none;font-size:12.5px;
+    padding:7px 11px;border:1px solid var(--line);border-radius:9px;
+    transition:.18s;white-space:nowrap;
+  }
+  .back:hover{color:var(--text);border-color:#3a424f;background:var(--card)}
+  .logo{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;letter-spacing:.4px;white-space:nowrap}
+  .logo .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+  .logo span{color:var(--accent)}
+  .searchbox{
+    flex:1;max-width:560px;position:relative;
+  }
+  .searchbox input{
+    width:100%;padding:11px 44px 11px 16px;
+    background:var(--card);border:1px solid var(--line);
+    border-radius:11px;color:var(--text);font-size:14px;outline:none;
+    transition:border-color .18s,background .18s;
+  }
+  .searchbox input:focus{border-color:#3c4453;background:#1a1f26}
+  .searchbox input::placeholder{color:#5f6875}
+  .searchbox button{
+    position:absolute;right:5px;top:5px;bottom:5px;width:38px;
+    background:var(--accent-soft);border:0;border-radius:8px;color:var(--accent);
+    cursor:pointer;font-size:15px;transition:background .18s;
+  }
+  .searchbox button:hover{background:rgba(232,180,90,.22)}
+  .hbtns{margin-left:auto;display:flex;gap:8px}
+  .ghost-btn{
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    padding:8px 14px;border-radius:9px;font-size:13px;cursor:pointer;transition:.18s;
+  }
+  .ghost-btn:hover{color:var(--text);border-color:#3a424f;background:var(--card)}
+
+  /* ---------- layout ---------- */
+  main{padding:26px 34px 80px;max-width:1500px;margin:0 auto}
+  .statusbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;min-height:26px}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:5px 11px;border-radius:999px;font-size:12px;
+    background:var(--card);border:1px solid var(--line);color:var(--muted);
+  }
+  .chip .led{width:7px;height:7px;border-radius:50%;background:#4a515c}
+  .chip.ok .led{background:var(--ok);box-shadow:0 0 8px rgba(76,175,125,.7)}
+  .chip.bad .led{background:var(--danger)}
+  .chip b{color:var(--text);font-weight:600}
+
+  .hint{color:var(--muted);font-size:13px;line-height:1.9}
+  .hint kbd{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px}
+
+  .section-title{display:flex;align-items:center;gap:10px;margin:26px 0 16px;font-size:15px;font-weight:600}
+  .chips{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+  .chip{background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12.5px;
+        padding:5px 15px;border-radius:999px;cursor:pointer;transition:.15s;font-family:inherit}
+  .chip:hover{color:var(--text);border-color:#3a4250}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#14100a;font-weight:600}
+  .section-title::before{content:"";width:3px;height:15px;border-radius:2px;background:var(--accent)}
+
+  /* ---------- grid ---------- */
+  .grid{
+    display:grid;gap:18px;
+    grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
+  }
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;cursor:pointer;position:relative;
+    transition:transform .22s cubic-bezier(.2,.8,.3,1),border-color .22s,box-shadow .22s;
+  }
+  .card:hover{transform:translateY(-5px);border-color:#3a4453;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+  .poster{aspect-ratio:2/3;background:#0e1116 center/cover no-repeat;position:relative}
+  .poster::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.65))}
+  .poster .ph{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#39404b;font-size:26px;
+  }
+  .badge-src{
+    position:absolute;top:9px;right:9px;z-index:2;
+    background:rgba(0,0,0,.62);backdrop-filter:blur(6px);
+    color:var(--accent);font-size:11px;padding:3px 8px;border-radius:7px;font-weight:600;
+    border:1px solid rgba(232,180,90,.28);
+  }
+  .card-body{padding:11px 12px 13px}
+  .card-title{
+    font-size:13.5px;font-weight:600;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .card-meta{margin-top:5px;font-size:11.5px;color:var(--muted);display:flex;gap:7px;flex-wrap:wrap}
+  .card-meta .rm{color:var(--accent);opacity:.9}
+
+  /* ---------- drawer ---------- */
+  .mask{
+    position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);
+    opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;
+  }
+  .mask.show{opacity:1;pointer-events:auto}
+  .drawer{
+    position:fixed;top:0;right:0;bottom:0;width:min(560px,92vw);
+    background:var(--bg-soft);border-left:1px solid var(--line);
+    transform:translateX(102%);transition:transform .3s cubic-bezier(.2,.8,.3,1);
+    z-index:61;overflow-y:auto;
+  }
+  .drawer.show{transform:none}
+  .drawer-head{position:relative;height:210px;overflow:hidden}
+  .drawer-head .bg{position:absolute;inset:0;background-position:center;background-size:cover;filter:blur(26px) brightness(.42);transform:scale(1.15)}
+  .drawer-head .inner{position:relative;display:flex;gap:16px;padding:22px 26px 18px;align-items:flex-end;height:100%}
+  .drawer-head .p{width:96px;aspect-ratio:2/3;border-radius:10px;background:#0e1116 center/cover no-repeat;border:1px solid rgba(255,255,255,.1);flex:none}
+  .drawer-head h2{font-size:20px;line-height:1.3}
+  .drawer-head .sub{margin-top:6px;font-size:12.5px;color:var(--muted)}
+  .drawer-body{padding:20px 26px 40px}
+  .desc{font-size:13px;line-height:1.85;color:#b3bcc9;margin:14px 0 22px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{
+    padding:7px 13px;border-radius:9px;font-size:12.5px;cursor:pointer;
+    background:var(--card);border:1px solid var(--line);color:var(--muted);transition:.18s;
+  }
+  .tab:hover{color:var(--text)}
+  .tab.active{background:var(--accent-soft);border-color:rgba(232,180,90,.45);color:var(--accent)}
+  .eps{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:9px}
+  .ep{
+    padding:9px 6px;text-align:center;font-size:12.5px;
+    background:var(--card);border:1px solid var(--line);border-radius:9px;
+    cursor:pointer;color:#c3cbd6;transition:.16s;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .ep:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .close-x{
+    position:absolute;top:14px;right:16px;z-index:3;width:32px;height:32px;
+    border-radius:50%;background:rgba(0,0,0,.5);border:1px solid var(--line);
+    color:#aeb7c3;font-size:16px;cursor:pointer;line-height:1;
+  }
+  .close-x:hover{color:#fff}
+
+  /* ---------- player ---------- */
+  .player-layer{
+    position:fixed;inset:0;background:#000;z-index:90;
+    display:none;flex-direction:column;
+  }
+  .player-layer.show{display:flex}
+  .player-top{
+    display:flex;align-items:center;gap:14px;padding:12px 18px;
+    background:linear-gradient(180deg,rgba(0,0,0,.9),transparent);
+    position:absolute;top:0;left:0;right:0;z-index:5;
+  }
+  .player-top .t{font-size:14px;color:#cfd6e0}
+  .player-top .sp{color:#66707e;font-size:12.5px}
+  .player-top .x{
+    margin-left:auto;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);
+    color:#dde3ea;width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:15px;
+  }
+  .player-top .x:hover{background:rgba(255,255,255,.17)}
+  video{width:100%;height:100%;background:#000;outline:none}
+  .loading{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;color:#8d97a5;font-size:13px;pointer-events:none;
+  }
+  .spinner{
+    width:38px;height:38px;border-radius:50%;
+    border:3px solid rgba(232,180,90,.18);border-top-color:var(--accent);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- modal ---------- */
+  .modal{
+    position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.7);backdrop-filter:blur(4px);padding:24px;
+  }
+  .modal.show{display:flex}
+  .modal-card{
+    width:min(680px,100%);max-height:82vh;overflow:auto;
+    background:var(--bg-soft);border:1px solid var(--line);border-radius:16px;padding:26px;
+  }
+  .modal-card h3{font-size:16px;margin-bottom:6px}
+  .modal-card .tip{font-size:12.5px;color:var(--muted);line-height:1.8;margin-bottom:16px}
+  .modal-card code{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11.5px}
+  .src-row{display:flex;gap:10px;margin-bottom:10px;align-items:center}
+  .src-row input{
+    background:var(--card);border:1px solid var(--line);border-radius:8px;
+    color:var(--text);padding:9px 11px;font-size:12.5px;outline:none;width:100%;
+  }
+  .src-row input:focus{border-color:#3c4453}
+  .src-row .nm{max-width:130px}
+  .src-row .del{
+    background:transparent;border:1px solid var(--line);color:var(--danger);
+    border-radius:8px;padding:8px 11px;cursor:pointer;font-size:12px;flex:none;
+  }
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+  .btn-primary{
+    background:var(--accent);color:#141414;border:0;padding:10px 20px;
+    border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;
+  }
+  .btn-primary:hover{filter:brightness(1.08)}
+  .empty{
+    text-align:center;padding:70px 20px;color:#5d6673;font-size:13.5px;line-height:2;
+  }
+  .empty .big{font-size:34px;display:block;margin-bottom:12px;opacity:.4}
+  @media (max-width:720px){
+    header{padding:12px 16px;gap:10px}
+    .back span{display:none}
+    .hbtns .ghost-btn span{display:none}
+    main{padding:18px 16px 60px}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="./index.html" title="返回工具集">←<span> 工具集</span></a>
+  <div class="logo" id="logoHome" title="回到首页" style="cursor:pointer"><span class="dot"></span>Wlili<span>影院</span></div>
+  <div class="searchbox">
+    <input id="q" type="text" placeholder="搜索影片、剧集、综艺…（回车）" autocomplete="off">
+    <button id="go" title="搜索">→</button>
+  </div>
+  <div class="hbtns">
+    <button class="ghost-btn" id="btnSources" title="片源管理">⚙ <span>源</span></button>
+  </div>
+</header>
+
+<main>
+  <div class="statusbar" id="statusbar"></div>
+  <div id="content">
+    <div class="empty">
+      <span class="big">🎬</span>
+      输入片名开始搜索<br>
+      <span style="font-size:12.5px">多源并行 · 点击卡片选集 · 浏览器直接播放 · 全部经本机 8080 代理</span>
+    </div>
+  </div>
+</main>
+
+<div class="mask" id="mask"></div>
+
+<aside class="drawer" id="drawer">
+  <button class="close-x" id="drawerClose">✕</button>
+  <div class="drawer-head">
+    <div class="bg" id="dHeadBg"></div>
+    <div class="inner">
+      <div class="p" id="dPoster"></div>
+      <div>
+        <h2 id="dTitle">—</h2>
+        <div class="sub" id="dSub"></div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-body">
+    <div class="desc" id="dDesc"></div>
+    <div class="section-title">播放源</div>
+    <div class="tabs" id="dTabs"></div>
+    <div class="eps" id="dEps"></div>
+  </div>
+</aside>
+
+<div class="player-layer" id="playerLayer">
+  <div class="player-top">
+    <div class="t" id="pTitle">—</div>
+    <div class="sp" id="pSub"></div>
+    <button class="x" id="pClose">✕</button>
+  </div>
+  <video id="video" controls playsinline></video>
+  <div class="loading" id="pLoading"><div class="spinner"></div><div id="pLoadingText">正在取流…</div></div>
+</div>
+
+<div class="modal" id="srcModal">
+  <div class="modal-card">
+    <h3>片源管理</h3>
+    <div class="tip">
+      填入 MacCMS V10 标准采集接口，例如 <code>http://cj.xxx.com/api.php/provide/vod/</code><br>
+      保存后写入 <code>tools/data/cine-sources.json</code>，参与搜索与聚合；源越多、可切换的线路越多。
+    </div>
+    <div id="srcList"></div>
+    <div class="modal-actions">
+      <button class="ghost-btn" id="srcAdd">+ 添加</button>
+      <button class="ghost-btn" id="srcCancel">取消</button>
+      <button class="btn-primary" id="srcSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/cine';
+const $ = s => document.querySelector(s);
+const state = { sources: [], results: [], homeItems: [], homeErrors: [], current: null, hls: null, view: '' };
+
+/* ---------- 工具 ---------- */
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  let d = {};
+  try{ d = await r.json(); }catch(e){}
+  if(!r.ok) throw new Error((d && (d.error || d.message)) || ('HTTP ' + r.status + '（服务未重启或接口不存在）'));
+  if(d && d.status === 'error') throw new Error(d.message || '操作失败');
+  return d;
+}
+function esc(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* 资源站简介/标题里常见 &nbsp; 等 HTML 实体，textContent 会原样显示，先解码 */
+function decodeEntities(s){
+  return String(s||'').replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#39;/g, c => (
+    {'&nbsp;':' ','&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&#39;':'\''}[c]));
+}
+function normalizeName(n){
+  return String(n||'').replace(/[\s·:：\-—（）()\[\]【】]/g,'').toLowerCase();
+}
+/* 海报必须走本服务代理：CSP img-src 只允许 self，且部分图源有防盗链 */
+function imgSrc(u){
+  return u ? (API + '/img?url=' + encodeURIComponent(u)) : '';
+}
+
+/* 从 vod_play_url 数集数，用于「同名多源时优先取集数最多的源」 */
+function epCount(it){
+  const pu = (it && it.playUrl) || '';
+  return (pu.split('$$$')[0] || '').split('#').filter(s => s.includes('$')).length;
+}
+
+/* ---------- 源状态 ---------- */
+async function loadStatus(){
+  const bar = $('#statusbar');
+  bar.innerHTML = '<span class="chip"><span class="led"></span>正在检测片源…</span>';
+  try{
+    const { results } = await api(API + '/ping');
+    bar.innerHTML = (results||[]).map(r => {
+      const s = state.sources.find(x=>x.id===r.id) || {};
+      return `<span class="chip ${r.ok?'ok':'bad'}" title="${r.ok?'可用':'异常'}">
+        <span class="led"></span>${esc(s.name||r.id)}
+        ${r.ok ? `<b>${r.ms}ms</b>` : '<span>不可用</span>'}
+      </span>`;
+    }).join('');
+  }catch(e){
+    bar.innerHTML = '<span class="chip bad"><span class="led"></span>检测失败</span>';
+  }
+}
+
+/* ---------- 搜索 ---------- */
+/* ---------- 首页：各源最新入库 ---------- */
+function cleanItem(it){
+  ['name','remarks','area','type','content'].forEach(k => { if(it[k]) it[k] = decodeEntities(it[k]); });
+  return it;
+}
+function aggregate(items){
+  const groups = new Map();
+  items.forEach(it => {
+    const k = normalizeName(it.name);
+    if(!k) return;
+    if(!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(it);
+  });
+  // 同名多源：集数最多的排最前（详情页会以此为首选线路，避免卡片备注显示旧集数）
+  groups.forEach(g => g.sort((a,b) => epCount(b) - epCount(a)));
+  return groups;
+}
+
+let homeChip = 'all';
+/* 无限滚动状态：homePage=已加载页码；exhausted=各源都翻到头了 */
+let homeState = { page: 0, loading: false, exhausted: false };
+function itemKey(it){ return it.source + ':' + it.id; }
+
+function collectLatest(results, flat, errs){
+  let fresh = 0;
+  const seen = new Set(state.homeItems.concat(flat).map(itemKey));
+  (results||[]).forEach(r => {
+    if(r.error) errs.push(`${r.source.name}: ${r.error}`);
+    (r.items||[]).forEach(raw => {
+      const it = cleanItem(raw);
+      const k = itemKey(it);
+      if(seen.has(k)) return;   // 跨页/跨源去重
+      seen.add(k);
+      flat.push(it);
+      fresh++;
+    });
+  });
+  return fresh;
+}
+
+async function showHome(){
+  state.view = 'home';
+  homeChip = 'all';
+  homeState = { page: 1, loading: false, exhausted: false };
+  const content = $('#content');
+  content.innerHTML = `<div class="empty"><div class="spinner" style="margin:0 auto 18px"></div>正在拉取各源最新片单…</div>`;
+  try{
+    const { results } = await api(API + '/latest?pg=1');
+    const flat = [], errs = [];
+    collectLatest(results, flat, errs);
+    state.homeItems = flat;
+    state.homeErrors = errs;
+    renderHome();
+  }catch(e){
+    content.innerHTML = `<div class="empty">首页加载失败：${esc(e.message)}</div>`;
+  }
+}
+
+/* 滚动到底自动翻页 */
+async function loadMoreHome(){
+  if(homeState.loading || homeState.exhausted || !state.view || state.view !== 'home') return;
+  homeState.loading = true;
+  const foot = $('#homeFoot');
+  if(foot) foot.innerHTML = '<div class="spinner" style="margin:0 auto 18px"></div>';
+  try{
+    const next = homeState.page + 1;
+    const { results } = await api(API + '/latest?pg=' + next);
+    const flat = [], errs = [];
+    const fresh = collectLatest(results, flat, errs);
+    state.homeItems = state.homeItems.concat(flat);
+    if(errs.length) state.homeErrors = (state.homeErrors||[]).concat(errs);
+    homeState.page = next;
+    if(!fresh || next >= 12) homeState.exhausted = true;   // 没有新数据或翻满 12 页就停
+    renderHome();
+  }catch(e){
+    if($('#homeFoot')) $('#homeFoot').innerHTML = `<span style="color:#8b95a3">加载更多失败：${esc(e.message)}</span>`;
+  }
+  homeState.loading = false;
+}
+
+const CHIPS = [
+  ['all','全部'], ['剧','电视剧'], ['电影','电影'], ['动漫','动漫'], ['综艺','综艺'],
+];
+function chipMatch(it, chip){
+  if(chip === 'all') return true;
+  const t = it.type || '';
+  if(chip === '电影') return /电影|片/.test(t) && !/动漫|综艺/.test(t);
+  return t.includes(chip);
+}
+function renderHome(){
+  const content = $('#content');
+  // 保留滚动位置（追加数据后整体重排会跳动）
+  const keepScroll = window.scrollY;
+  const groups = aggregate(state.homeItems.filter(it => chipMatch(it, homeChip)));
+  // 按源站更新时间倒序，最新更新的排最前
+  const cards = [...groups.values()]
+    .sort((a,b) => String(b[0].time||'').localeCompare(String(a[0].time||'')))
+    .map(g => cardHtml(g[0], [...new Set(g.map(x=>x.sourceName))]))
+    .join('');
+  const errs = state.homeErrors || [];
+  content.innerHTML = `
+    <div class="section-title">最新片单 · ${groups.size} 部
+      <span style="color:#5d6673;font-weight:400;font-size:12.5px">/ ${state.homeItems.length} 条来源线路，按更新时间排序</span>
+    </div>
+    <div class="chips">${CHIPS.map(([k,label]) =>
+      `<button class="chip${k===homeChip?' on':''}" data-chip="${k}">${label}</button>`).join('')}</div>
+    ${cards ? `<div class="grid">${cards}</div>`
+            : `<div class="empty"><span class="big">🎬</span>该分类暂无内容</div>`}
+    <div id="homeFoot" style="text-align:center;margin-top:26px">
+      ${homeState.exhausted && state.homeItems.length
+        ? '<span style="color:#5d6673;font-size:12.5px">— 已经到底了，试试搜索或切换分类 —</span>' : ''}
+    </div>
+    ${errs.length ? `<div class="hint" style="margin-top:22px;color:#6b7480">部分源异常：${esc(errs.join(' / '))}</div>` : ''}
+  `;
+  content.querySelectorAll('.card').forEach(el =>
+    el.addEventListener('click', () => openDetail(el.dataset.k)));
+  content.querySelectorAll('.chip').forEach(el =>
+    el.addEventListener('click', () => { homeChip = el.dataset.chip; renderHome(); }));
+  window.__groups = groups;
+  if(keepScroll) window.scrollTo(0, keepScroll);
+}
+
+async function doSearch(){
+  const wd = $('#q').value.trim();
+  if(!wd) return;
+  state.view = 'search';
+  const content = $('#content');
+  content.innerHTML = `<div class="empty"><div class="spinner" style="margin:0 auto 18px"></div>正在多源并行搜索「${esc(wd)}」…</div>`;
+  try{
+    const { results } = await api(API + '/search?wd=' + encodeURIComponent(wd));
+    const flat = [];
+    const errs = [];
+    (results||[]).forEach(r => {
+      if(r.error) errs.push(`${r.source.name}: ${r.error}`);
+      (r.items||[]).forEach(it => flat.push(cleanItem(it)));
+    });
+    state.results = flat;
+    renderResults(flat, wd, errs);
+  }catch(e){
+    content.innerHTML = `<div class="empty">搜索失败：${esc(e.message)}</div>`;
+  }
+}
+
+function renderResults(items, wd, errs){
+  const content = $('#content');
+  if(!items.length){
+    content.innerHTML = `<div class="empty"><span class="big">🔍</span>没有找到「${esc(wd)}」<br>
+      <span style="font-size:12px">${errs.length? '部分源异常：'+esc(errs.join(' / ')) : '换个关键词试试'}</span></div>`;
+    return;
+  }
+  // 按片名聚合
+  const groups = aggregate(items);
+  const cards = [...groups.values()]
+    .sort((a,b) => epCount(b) - epCount(a))
+    .map(g => cardHtml(g[0], [...new Set(g.map(x=>x.sourceName))]))
+    .join('');
+
+  content.innerHTML = `
+    <div class="section-title">「${esc(wd)}」· ${groups.size} 部 <span style="color:#5d6673;font-weight:400;font-size:12.5px">/ ${items.length} 条来源线路</span></div>
+    <div class="grid" id="grid">${cards}</div>
+    ${errs.length ? `<div class="hint" style="margin-top:22px;color:#6b7480">部分源异常：${esc(errs.join(' / '))}</div>` : ''}
+  `;
+  content.querySelectorAll('.card').forEach(el => {
+    el.addEventListener('click', () => openDetail(el.dataset.k));
+  });
+  // 存分组，供详情使用
+  window.__groups = groups;
+}
+
+function cardHtml(it, srcs){
+  const k = normalizeName(it.name);
+  const pic = it.pic ? `style="background-image:url('${esc(imgSrc(it.pic))}')"` : '';
+  return `<div class="card" data-k="${esc(k)}">
+    <div class="poster" ${pic}>
+      ${!it.pic ? '<div class="ph">🎞</div>' : ''}
+      <div class="badge-src">${srcs.length > 1 ? srcs.length + ' 源' : esc(srcs[0]||'')}</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">${esc(it.name)}</div>
+      <div class="card-meta">
+        ${it.remarks ? `<span class="rm">${esc(it.remarks)}</span>` : ''}
+        ${epCount(it) ? `<span>${epCount(it)}集</span>` : ''}
+        ${it.year ? `<span>${esc(it.year)}</span>` : ''}
+        ${it.type ? `<span>${esc(it.type)}</span>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- 详情 ---------- */
+async function openDetail(key){
+  const group = (window.__groups && window.__groups.get(key)) || [];
+  if(!group.length) return;
+  const base = group[0];
+  const bg = base.pic ? `url('${imgSrc(base.pic)}')` : 'none';
+  $('#dHeadBg').style.backgroundImage = bg;
+  $('#dPoster').style.backgroundImage = bg;
+  $('#dPoster').innerHTML = base.pic ? '' : '<div style="display:flex;height:100%;align-items:center;justify-content:center;color:#39404b">🎞</div>';
+  $('#dTitle').textContent = base.name;
+  $('#dSub').textContent = [base.year, base.area, base.type, base.remarks].filter(Boolean).join(' · ');
+  $('#dDesc').textContent = base.content || '暂无简介';
+  $('#dTabs').innerHTML = '';
+  $('#dEps').innerHTML = '<span style="color:#5d6673;font-size:12.5px">加载中…</span>';
+  $('#drawer').classList.add('show');
+  $('#mask').classList.add('show');
+
+  // 并行拉每个源的详情（拿完整剧集）
+  const details = await Promise.all(group.map(async it => {
+    try{
+      const d = await api(`${API}/detail?source=${encodeURIComponent(it.source)}&id=${encodeURIComponent(it.id)}`);
+      return { it, eps: d.episodes || [] };
+    }catch(e){ return { it, eps: [] }; }
+  }));
+  const valid = details.filter(d => d.eps.length);
+  if(!valid.length){
+    $('#dEps').innerHTML = '<span style="color:#8b95a3;font-size:12.5px">该片暂无可播线路</span>';
+    return;
+  }
+  state.current = { group, valid, active: 0 };
+  renderTabs();
+  renderEps();
+}
+
+function renderTabs(){
+  const c = state.current;
+  $('#dTabs').innerHTML = c.valid.map((d,i) =>
+    `<div class="tab ${i===c.active?'active':''}" data-i="${i}">${esc(d.it.sourceName)} · ${d.eps.length}集</div>`
+  ).join('');
+  $('#dTabs').querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => { state.current.active = +t.dataset.i; renderTabs(); renderEps(); });
+  });
+}
+
+function renderEps(){
+  const c = state.current;
+  const d = c.valid[c.active];
+  $('#dEps').innerHTML = d.eps.map((e,i) =>
+    `<div class="ep" data-i="${i}" title="${esc(e.name)}">${esc(e.name)}</div>`
+  ).join('');
+  $('#dEps').querySelectorAll('.ep').forEach(el => {
+    el.addEventListener('click', () => playEpisode(d, +el.dataset.i));
+  });
+}
+
+/* ---------- 播放 ---------- */
+async function playEpisode(d, idx){
+  const ep = d.eps[idx];
+  $('#playerLayer').classList.add('show');
+  $('#pTitle').textContent = d.it.name;
+  $('#pSub').textContent = `${d.it.sourceName} · ${ep.name}`;
+  $('#pLoading').style.display = 'flex';
+  $('#pLoadingText').textContent = '正在取流…';
+  const video = $('#video');
+  if(state.hls){ state.hls.destroy(); state.hls = null; }
+  video.removeAttribute('src');
+  video.load();
+
+  try{
+    let m3u8 = ep.url;
+    if(ep.url.includes('/share/') || !/\.m3u8/i.test(ep.url)){
+      const r = await api(API + '/resolve?url=' + encodeURIComponent(ep.url));
+      m3u8 = r.m3u8;
+    }
+    $('#pLoadingText').textContent = '正在加载播放列表…';
+    attachAndPlay(API + '/playlist?url=' + encodeURIComponent(m3u8));
+  }catch(e){
+    $('#pLoadingText').textContent = '取流失败：' + e.message;
+  }
+}
+
+function attachAndPlay(url){
+  const video = $('#video');
+  if(window.Hls && Hls.isSupported()){
+    const hls = new Hls({
+      maxBufferLength: 30,
+      maxMaxBufferLength: 60,
+      backBufferLength: 30,
+      manifestLoadingTimeOut: 15000,
+      fragLoadingTimeOut: 25000,
+      fragLoadingMaxRetry: 6
+    });
+    state.hls = hls;
+    hls.loadSource(url);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      $('#pLoading').style.display = 'none';
+      video.play().catch(()=>{});
+    });
+    hls.on(Hls.Events.FRAG_LOADED, () => { $('#pLoading').style.display = 'none'; });
+    hls.on(Hls.Events.ERROR, (evt, data) => {
+      if(data && data.fatal){
+        $('#pLoadingText').textContent = '播放出错：' + (data.details || '未知');
+        $('#pLoading').style.display = 'flex';
+      }
+    });
+  }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+    video.src = url;
+    video.addEventListener('loadedmetadata', () => { $('#pLoading').style.display='none'; video.play(); });
+  }else{
+    $('#pLoadingText').textContent = '当前浏览器不支持 HLS 播放';
+  }
+}
+
+function closePlayer(){
+  $('#playerLayer').classList.remove('show');
+  const v = $('#video');
+  v.pause();
+  if(state.hls){ state.hls.destroy(); state.hls = null; }
+  v.removeAttribute('src'); v.load();
+}
+
+/* ---------- 源管理 ---------- */
+function openSourceModal(){
+  const list = $('#srcList');
+  const srcs = state.sources.map(s => ({...s}));
+  const draw = () => {
+    list.innerHTML = srcs.map((s,i) => `
+      <div class="src-row">
+        <input class="nm" data-i="${i}" data-f="name" value="${esc(s.name)}" placeholder="名称">
+        <input data-i="${i}" data-f="api" value="${esc(s.api)}" placeholder="http://…/api.php/provide/vod/">
+        <button class="del" data-i="${i}">删</button>
+      </div>`).join('');
+    list.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', e => {
+        const i = +e.target.dataset.i, f = e.target.dataset.f;
+        srcs[i][f] = e.target.value.trim();
+      });
+    });
+    list.querySelectorAll('.del').forEach(b => {
+      b.addEventListener('click', e => { srcs.splice(+e.target.dataset.i,1); draw(); });
+    });
+  };
+  draw();
+  $('#srcAdd').onclick = () => { srcs.push({id:'s'+Date.now(),name:'新源',api:'',enabled:true}); draw(); };
+  $('#srcCancel').onclick = () => $('#srcModal').classList.remove('show');
+  $('#srcSave').onclick = async () => {
+    const clean = srcs.filter(s => s.api && s.name).map(s => ({...s, enabled:true}));
+    try{
+      const r = await api(API + '/sources', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ sources: clean })
+      });
+      state.sources = r.sources || clean;
+      $('#srcModal').classList.remove('show');
+      loadStatus();
+    }catch(e){
+      alert('保存失败：' + e.message);
+    }
+  };
+  $('#srcModal').classList.add('show');
+}
+
+/* ---------- 事件绑定 ---------- */
+$('#go').onclick = doSearch;
+$('#q').addEventListener('keydown', e => { if(e.key === 'Enter') doSearch(); });
+$('#logoHome').onclick = showHome;
+/* 无限滚动：接近底部自动翻页（节流 800ms） */
+let _scrollLock = 0;
+window.addEventListener('scroll', () => {
+  if(state.view !== 'home' || homeState.loading || homeState.exhausted) return;
+  const now = Date.now();
+  if(now - _scrollLock < 800) return;
+  if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 500){
+    _scrollLock = now;
+    loadMoreHome();
+  }
+});
+$('#mask').onclick = () => { $('#drawer').classList.remove('show'); $('#mask').classList.remove('show'); };
+$('#drawerClose').onclick = () => { $('#drawer').classList.remove('show'); $('#mask').classList.remove('show'); };
+$('#pClose').onclick = closePlayer;
+$('#btnSources').onclick = openSourceModal;
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if($('#playerLayer').classList.contains('show')) closePlayer();
+    else { $('#drawer').classList.remove('show'); $('#mask').classList.remove('show'); }
+  }
+});
+
+/* ---------- 启动 ---------- */
+(async function init(){
+  try{
+    const { sources } = await api(API + '/sources');
+    state.sources = sources || [];
+  }catch(e){ state.sources = []; }
+  loadStatus();
+  // 支持 ?wd=片名 直接搜索；否则进首页最新片单
+  const wd = new URLSearchParams(location.search).get('wd');
+  if(wd){ $('#q').value = wd; doSearch(); }
+  else { showHome(); }
+})();
+</script>
+</body>
+</html>

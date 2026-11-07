@@ -81,6 +81,7 @@
     {
       label: '网络工具',
       tools: [
+        { name: '本地影院', href: './cinehome.html', localOnly: true },
         { name: '片源测速', href: './source-probe.html' },
         { name: '免费代理订阅', href: './proxy-sub.html' }
       ]
