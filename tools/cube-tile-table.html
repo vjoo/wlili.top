@@ -789,29 +789,34 @@ window.__cube3d = {
     const tileMatW = mkCeramic(0xfcfbf7, 0.32);
     /* 近黑面色「提亮成深灰」（2026-11-07 用户要求）：面 5 的数据色是「文字_黑」#0F0F12，
        和黑芯 #17181d / 黑底座 #14151a 几乎同色，3D 里贴片轮廓会糊成一片。
-       只改预览里的贴片材质色，不动导出/九宫格的数据色（打印耗材仍是黑）。 */
-    const LIFT_DARK = 0x3c4048;                    // 深灰：比黑底座亮一档，能看出贴片边界
-    const liftDarkHex = function(hex){
+       底座同步配套：贴片提亮后底座若仍纯黑，贴片看着像浮在黑芯上；
+       故近黑面的底座也抬到 LIFT_DARK_BASE（比贴片暗一档，保住「底座/贴片」两层层次）。
+       只改预览里的材质色，不动导出/九宫格的数据色（打印耗材仍是黑）。 */
+    const LIFT_DARK = 0x3c4048;                    // 贴片深灰：比黑芯亮一档，能看出边界
+    const LIFT_DARK_BASE = 0x2a2d33;               // 配套底座灰：比贴片再暗一档
+    const isNearBlack = function(hex){
       const h = String(hex || '').replace('#','');
-      if(h.length !== 6) return hex;
+      if(h.length !== 6) return false;
       const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
-      if(isNaN(r) || isNaN(g) || isNaN(b)) return hex;
-      return (Math.max(r,g,b) < 0x30) ? LIFT_DARK : hex;   // 三通道全暗 = 近黑，判定提亮
+      if(isNaN(r) || isNaN(g) || isNaN(b)) return false;
+      return Math.max(r,g,b) < 0x30;               // 三通道全暗 = 近黑
     };
     const baseMats = [], tileMats = [];
     for(let f=0; f<6; f++){
       const hex = (((faces[f]||{}).color)||{}).hex || '#dcdcdc';
-      const tileHex = liftDarkHex(hex);   // 贴片色：近黑 → 深灰
+      const nearBlack = isNearBlack(hex);
+      const tileHex = nearBlack ? LIFT_DARK : hex;              // 贴片色：近黑 → 深灰
+      const darkBaseHex = nearBlack ? LIFT_DARK_BASE : 0x14151a; // 黑座模式的底座：近黑面用配套灰
       // mode: 0=正常(白底+面色字) 1=反色(面色底+白字) 2=黑底(黑底座/贴片+面色字) 3=黑座彩片(黑底座+面色贴片+白字)
       if(mode[f] === 1){
-        baseMats[f] = mkCeramic(hex, 0.40);
-        tileMats[f] = mkCeramic(tileHex, 0.32);    // 与底座同色（用户要求不分深浅）
+        baseMats[f] = mkCeramic(nearBlack ? LIFT_DARK_BASE : hex, 0.40);   // 近黑面底座同步提亮，与贴片成一套
+        tileMats[f] = mkCeramic(tileHex, 0.32);    // 与底座同色系（近黑面靠明度差分层）
       }else if(mode[f] === 2){
-        baseMats[f] = mkCeramic(0x14151a, 0.38);
+        baseMats[f] = mkCeramic(0x14151a, 0.38);   // 黑底模式整面纯黑是用户原意，不参与提亮
         tileMats[f] = mkCeramic(0x171920, 0.30);
       }else if(mode[f] === 3){
-        baseMats[f] = mkCeramic(0x14151a, 0.38);   // 底座黑（与黑底模式同色，2026-11-05 用户要求：彩片时底座可黑）
-        tileMats[f] = mkCeramic(tileHex, 0.32);    // 贴片保持面色（近黑提亮成深灰）
+        baseMats[f] = mkCeramic(darkBaseHex, 0.38); // 底座黑（2026-11-05 用户要求：彩片时底座可黑）；近黑面用配套灰
+        tileMats[f] = mkCeramic(tileHex, 0.32);     // 贴片保持面色（近黑提亮成深灰）
       }else{
         baseMats[f] = baseMatW; tileMats[f] = tileMatW;
       }
