@@ -787,19 +787,31 @@ window.__cube3d = {
     };
     const baseMatW = mkCeramic(0xf9f8f3, 0.42);
     const tileMatW = mkCeramic(0xfcfbf7, 0.32);
+    /* 近黑面色「提亮成深灰」（2026-11-07 用户要求）：面 5 的数据色是「文字_黑」#0F0F12，
+       和黑芯 #17181d / 黑底座 #14151a 几乎同色，3D 里贴片轮廓会糊成一片。
+       只改预览里的贴片材质色，不动导出/九宫格的数据色（打印耗材仍是黑）。 */
+    const LIFT_DARK = 0x3c4048;                    // 深灰：比黑底座亮一档，能看出贴片边界
+    const liftDarkHex = function(hex){
+      const h = String(hex || '').replace('#','');
+      if(h.length !== 6) return hex;
+      const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
+      if(isNaN(r) || isNaN(g) || isNaN(b)) return hex;
+      return (Math.max(r,g,b) < 0x30) ? LIFT_DARK : hex;   // 三通道全暗 = 近黑，判定提亮
+    };
     const baseMats = [], tileMats = [];
     for(let f=0; f<6; f++){
       const hex = (((faces[f]||{}).color)||{}).hex || '#dcdcdc';
+      const tileHex = liftDarkHex(hex);   // 贴片色：近黑 → 深灰
       // mode: 0=正常(白底+面色字) 1=反色(面色底+白字) 2=黑底(黑底座/贴片+面色字) 3=黑座彩片(黑底座+面色贴片+白字)
       if(mode[f] === 1){
         baseMats[f] = mkCeramic(hex, 0.40);
-        tileMats[f] = mkCeramic(hex, 0.32);        // 与底座同色（用户要求不分深浅）
+        tileMats[f] = mkCeramic(tileHex, 0.32);    // 与底座同色（用户要求不分深浅）
       }else if(mode[f] === 2){
         baseMats[f] = mkCeramic(0x14151a, 0.38);
         tileMats[f] = mkCeramic(0x171920, 0.30);
       }else if(mode[f] === 3){
         baseMats[f] = mkCeramic(0x14151a, 0.38);   // 底座黑（与黑底模式同色，2026-11-05 用户要求：彩片时底座可黑）
-        tileMats[f] = mkCeramic(hex, 0.32);        // 贴片保持面色
+        tileMats[f] = mkCeramic(tileHex, 0.32);    // 贴片保持面色（近黑提亮成深灰）
       }else{
         baseMats[f] = baseMatW; tileMats[f] = tileMatW;
       }
