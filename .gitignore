@@ -78,3 +78,6 @@ tools/pose-gallery/depth/*
 # 自签证书（server.py --https 用，进仓库等于公开私钥）
 certs/
 server.py.bak*
+
+# 本地备份（改长期资产前的 .bak）
+*.bak*

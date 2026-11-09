@@ -177,36 +177,6 @@ body {
   overflow: hidden;
 }
 
-/* 搜索框 */
-.nav-mega-search {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border-light);
-  position: relative;
-}
-.nav-mega-search input {
-  width: 100%;
-  border: none;
-  background: var(--bg);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px 8px 32px;
-  font-size: 13px;
-  color: var(--ink);
-  outline: none;
-  box-sizing: border-box;
-}
-.nav-mega-search input::placeholder { color: var(--ink-quaternary); }
-.nav-mega-search input:focus {
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-}
-.nav-mega-search-icon {
-  position: absolute;
-  left: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.4;
-  pointer-events: none;
-}
-
 /* 分类网格 */
 .nav-mega-grid {
   padding: 8px 12px;
@@ -245,14 +215,6 @@ body {
 .nav-mega-cat.hidden,
 .nav-mega-col.hidden { display: none; }
 .nav-mega-item.hidden { display: none; }
-.nav-mega-empty {
-  padding: 20px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--ink-tertiary);
-  display: none;
-}
-.nav-mega-empty.show { display: block; }
 
 /* ===== Nav Privacy Notice ===== */
 .nav-privacy-notice {
@@ -629,20 +591,6 @@ body {
     border-left: none;
     border-right: none;
     border-bottom: none;
-  }
-  .nav-mega-search {
-    position: sticky;
-    top: 0;
-    background: var(--bg-white);
-    z-index: 1;
-    padding: 12px 16px;
-  }
-  .nav-mega-search input {
-    font-size: 15px;
-    padding: 8px 12px 8px 32px;
-  }
-  .nav-mega-search-icon {
-    left: 24px;
   }
   .nav-mega-grid {
     grid-template-columns: repeat(2, 1fr);
