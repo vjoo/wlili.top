@@ -7,6 +7,12 @@
 <link rel="stylesheet" href="_shared/ui-select.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- ⛔ 只支持浅色（2026-11-09）：安卓 Chrome / 各家 Chromium 内核浏览器的「夜间模式」
+     默认会对页面做自动反色（Auto Dark）。实测反色只作用于 SVG <text> 的 fill，
+     不作用于 <rect> 底板 —— 面5（文字_黑 #0F0F12）变成「白底白字」直接消失，
+     彩色面因为反色后仍有对比才没被发现。声明 color-scheme:light 后浏览器整页跳过反色。
+     字表编辑器必须显示真实耗材配色，不允许被反色扭曲。 -->
+<meta name="color-scheme" content="light">
 <title>魔方贴片字表编辑器 - WLi Tools</title>
 <style>
 /* ============================================================
@@ -14,6 +20,11 @@
    外壳/按钮/下拉一律复用 common.css + _shared/ui-select.css
    本文件只写本工具专属样式，颜色间距用全站令牌
    ============================================================ */
+
+/* ⛔ 本页只支持浅色（与 head 里的 <meta name="color-scheme"> 同一件事）：
+   不写这句，安卓 Chromium 的自动深色会把 SVG 文字反色、底板不反，黑字面直接白底白字。
+   见 head 注释（2026-11-09 安卓实测）。 */
+:root{ color-scheme: light; }
 
 /* ---------- 操作区 = 网格里的「第七格」+ 挂在面板外面的面头（2026-10-27） ----------
    外层 .tb-wrap 是 .cube 网格的第 3 列第 1 行 —— 面1 右边、面4 上面，
@@ -129,6 +140,16 @@
 }
 .face-name:focus{border-bottom-color:var(--border); outline:none; background:var(--bg-white);}
 .face-count{margin-left:auto; font-size:10.5px; color:var(--ink-tertiary);}
+/* 面头拖柄（2026-11-09）：按住 ⠿ 可整面拖动换位（插入顺延，逻辑见 render() 下方） */
+.drag-h{
+  flex:none; width:15px; cursor:grab; user-select:none; text-align:center;
+  color:var(--ink-secondary); font-size:13px; line-height:16px; letter-spacing:-1px;
+  border-radius:4px; transition:background .12s, color .12s;
+}
+.drag-h:hover{ background:rgba(43,48,65,.08); color:var(--ink); }
+.drag-h:active{ cursor:grabbing; }
+.face.dragging{ opacity:.4; }
+.face.drop-target{ outline:2px dashed #65a30d; outline-offset:3px; border-radius:14px; }
 .grid9{
   display:grid; grid-template-columns:repeat(3,1fr); gap:5px;
   background:#2B3041; padding:5px; border-radius:12px;
@@ -1353,6 +1374,7 @@ function render(){
     fd.className = "face f"+(f+1);
     var filled = face.tiles.filter(function(t){return !isEmptyTile(t);}).length;
     var h = '<div class="face-head">'
+      + '<span class="drag-h" draggable="true" data-face="'+f+'" title="按住拖到另一面：两面互换 9 格字表（面名与面色留在原位）">⠿</span>'
       + '<div class="swatch" data-face="'+f+'" title="点击换面色" style="background:'+face.color.hex+'"></div>'
       + '<input class="face-name" data-face="'+f+'" value="'+escAttr(face.name)+'" title="面名称">'
       + '<span class="face-count">'+filled+'/9</span>'
@@ -1381,6 +1403,72 @@ function render(){
   saveState();
 }
 /* 统计行已于 2026-10-26 按用户要求移除（原 st_filled / st_kinds） */
+
+/* ================= 面内容互换（9 格字表，2026-11-09 二次定稿）=================
+   面头左侧 ⠿ 拖柄拖动：拖到另一面上松手 = 两个面的「9 格字表」互换。
+   面序位置（面1…面6 的网格位置）、面名、面底色（耗材色）全部留在原位 ——
+   用户口径：「面1 和面5 的位置不能变，是把里面的内容换了位置」。
+   ⛔ 历史：首版做的是「插入顺延」（splice(g,0,splice(f,1)[0])，面5→面1 会把
+   面2~面4 全挤走一格），用户实测后否掉 → 已作废，勿改回整面搬数组。
+   3D 预览与导出都按 state.faces 现读，互换后无需额外同步；
+   sessionStorage 由 render() 里的 saveState() 落盘，刷新不丢。
+   ⛔ 只有拖柄 draggable=true：面名 input、换色 swatch、格子都不能发起拖动。 */
+function swapFaceTiles(f, g){
+  if(f === g || !(f >= 0 && f < 6) || !(g >= 0 && g < 6)) return false;
+  var t = state.faces[f].tiles;
+  state.faces[f].tiles = state.faces[g].tiles;
+  state.faces[g].tiles = t;
+  render();
+  return true;
+}
+window.__swapFaceTiles = swapFaceTiles;   // CDP 验证用（与 __detectKind 同例）
+var dragFace = -1;
+function faceIdxOf(el){
+  var m = (el.className || "").match(/(?:^|\s)f([1-6])(?:\s|$)/);
+  return m ? (+m[1]) - 1 : -1;
+}
+function cleanupDrag(){
+  dragFace = -1;
+  var all = cubeEl.querySelectorAll(".face");
+  for(var i = 0; i < all.length; i++) all[i].classList.remove("dragging", "drop-target");
+}
+cubeEl.addEventListener("dragstart", function(e){
+  var h = e.target && e.target.closest ? e.target.closest(".drag-h") : null;
+  if(!h){ e.preventDefault(); return; }  // 非拖柄发起 → 取消，不影响格子/输入框
+  dragFace = (+h.getAttribute("data-face")) || 0;
+  e.dataTransfer.effectAllowed = "move";
+  try{ e.dataTransfer.setData("text/plain", String(dragFace)); }catch(err){}
+  var fd = cubeEl.querySelector(".face.f" + (dragFace + 1));
+  if(fd) fd.classList.add("dragging");
+});
+cubeEl.addEventListener("dragover", function(e){
+  if(dragFace < 0) return;
+  var fd = e.target && e.target.closest ? e.target.closest(".face") : null;
+  if(!fd) return;
+  e.preventDefault();                    // 允许在此面上 drop
+  if(e.dataTransfer) e.dataTransfer.dropEffect = "move";
+  if(faceIdxOf(fd) === dragFace) return;
+  var all = cubeEl.querySelectorAll(".face");
+  for(var i = 0; i < all.length; i++) all[i].classList.remove("drop-target");
+  fd.classList.add("drop-target");
+});
+cubeEl.addEventListener("drop", function(e){
+  if(dragFace < 0) return;
+  e.preventDefault();
+  var fd = e.target && e.target.closest ? e.target.closest(".face") : null;
+  var g = fd ? faceIdxOf(fd) : -1;
+  var swapped = (g >= 0 && g !== dragFace) ? swapFaceTiles(dragFace, g) : false;
+  cleanupDrag();
+  if(swapped) toast("已互换 9 格字表：面" + (dragFace + 1) + " ↔ 面" + (g + 1) + "（面名与面色留在原位）");
+});
+cubeEl.addEventListener("dragend", cleanupDrag);
+cubeEl.addEventListener("dragleave", function(e){
+  var fd = e.target && e.target.closest ? e.target.closest(".face") : null;
+  if(fd && faceIdxOf(fd) !== dragFace) fd.classList.remove("drop-target");
+});
+/* 拖到展开图外松手：浏览器默认会拿 text/plain 去导航，全局拦掉 */
+document.addEventListener("dragover", function(e){ if(dragFace >= 0) e.preventDefault(); });
+document.addEventListener("drop", function(e){ if(dragFace >= 0) e.preventDefault(); });
 
 /* ================= 编辑弹窗 ================= */
 var editing = {face:-1, pos:-1};
@@ -1781,7 +1869,11 @@ function parseTableFile(text){
       var t = src[k] || {};
       var sub = (t.text_sub != null) ? String(t.text_sub) : "";
       var main = (t.text_main != null) ? String(t.text_main) : "";
-      tiles.push({sub: sub, main: main, kind: (t.kind || detectKind(sub, main) || "MAIN_SUB"),
+      /* ⛔ 空格子保持 kind=undefined：导出时空格子的 kind 写的是 null，
+         原样兜底成 "MAIN_SUB" 会让「导出→导入」一次就改掉数据（2026-11-09 冒烟发现）。 */
+      var empty = !sub && !main;
+      tiles.push({sub: sub, main: main,
+                  kind: empty ? undefined : (t.kind || detectKind(sub, main) || "MAIN_SUB"),
                   /* text_auto 缺省时给 undefined：交给 autoOf 按 kind 默认推断（老文件没有这个字段） */
                   auto: (typeof t.text_auto === "boolean") ? t.text_auto : undefined,
                   /* ⭐ 单格字号覆盖（17 基准）：给「中文 + 长数字」这种两行都得缩小的格用 */
