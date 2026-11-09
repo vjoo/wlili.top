@@ -4,7 +4,8 @@
  * 会自动在 <body> 开头插入导航栏
  * 样式优先使用 common.css，同时内嵌 fallback 确保无 common.css 时也能正常显示
  *
- * v2: 分类网格 Mega Menu（桌面3列 + 移动端全屏面板 + 搜索）
+ * v2: 分类网格 Mega Menu（桌面3列 + 移动端全屏面板）
+ * v3 (2026-11-09): 去掉菜单里的搜索条（PC / 移动端都不要），Mega Menu 只剩分类网格
  */
 (function() {
 
@@ -132,11 +133,6 @@
     '.nav-dropdown-arrow{transition:transform 0.2s}\n' +
     /* Mega Menu 面板 */
     '.nav-mega-menu{display:none;position:absolute!important;top:100%!important;right:0;margin-top:0;background:var(--bg-white,#ffffff)!important;border:1px solid var(--border-light,#e8e8ed);border-radius:12px;padding:0;width:520px;box-shadow:0 8px 30px rgba(0,0,0,0.12);z-index:1001;overflow:hidden}\n' +
-    /* 搜索框 */
-    '.nav-mega-search{padding:8px 12px;border-bottom:1px solid var(--border-light,#e8e8ed);position:relative}\n' +
-    '.nav-mega-search input{width:100%;border:none;background:var(--bg,#f5f5f7);border-radius:8px;padding:8px 12px 8px 32px;font-size:13px;color:var(--ink,#2B3041);outline:none;box-sizing:border-box}\n' +
-    '.nav-mega-search input::placeholder{color:var(--ink-quaternary,#86868b)}\n' +
-    '.nav-mega-search-icon{position:absolute;left:24px;top:50%;transform:translateY(-50%);opacity:0.4;pointer-events:none}\n' +
     /* 分类网格 */
     '.nav-mega-grid{padding:8px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px 0}\n' +
     '.nav-mega-col{padding:4px 8px;border-right:1px solid var(--border-light,#e8e8ed)}\n' +
@@ -147,14 +143,9 @@
     '.nav-mega-item.active{color:var(--link,#6366f1)!important;font-weight:500!important}\n' +
     '.nav-mega-cat.hidden,.nav-mega-col.hidden{display:none}\n' +
     '.nav-mega-item.hidden{display:none}\n' +
-    '.nav-mega-empty{padding:20px;text-align:center;font-size:13px;color:var(--ink-tertiary,#6e6e73);display:none}\n' +
-    '.nav-mega-empty.show{display:block}\n' +
     /* 移动端全屏面板 */
     '.nav-mega-overlay{display:none;position:fixed;top:48px;left:0;right:0;bottom:0;background:var(--bg-white,#ffffff);z-index:999;overflow-y:auto;-webkit-overflow-scrolling:touch}\n' +
     '.nav-mega-overlay.show{display:block}\n' +
-    '.nav-mega-overlay .nav-mega-search{position:sticky;top:0;background:var(--bg-white,#ffffff);z-index:1;padding:12px 16px}\n' +
-    '.nav-mega-overlay .nav-mega-search input{font-size:15px;padding:8px 12px 8px 32px}\n' +
-    '.nav-mega-overlay .nav-mega-search-icon{left:24px}\n' +
     '.nav-mega-overlay .nav-mega-grid{grid-template-columns:repeat(2,1fr);padding:8px 12px}\n' +
     '.nav-mega-overlay .nav-mega-col{border-right:1px solid var(--border-light,#e8e8ed)}\n' +
     '.nav-mega-overlay .nav-mega-col:nth-child(2n){border-right:none}\n' +
@@ -197,9 +188,6 @@
         '</button>'
       : '';
 
-    // 搜索框 SVG
-    var searchIcon = '<svg class="nav-mega-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>';
-
     return '<nav class="global-nav">' +
   '<div class="global-nav-content">' +
     '<div class="nav-brand-group">' +
@@ -220,14 +208,9 @@
           '<svg class="nav-dropdown-arrow" id="navDropdownArrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</span>' +
         '<div class="nav-mega-menu" id="navMegaMenu">' +
-          '<div class="nav-mega-search">' +
-            searchIcon +
-            '<input type="text" id="navMegaSearch" placeholder="搜索工具..." autocomplete="off">' +
-          '</div>' +
           '<div class="nav-mega-grid" id="navMegaGrid">' +
             megaHTML +
           '</div>' +
-          '<div class="nav-mega-empty" id="navMegaEmpty">未找到匹配的工具</div>' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -273,9 +256,6 @@
     var trigger = document.getElementById('navDropdownTrigger');
     var menu = document.getElementById('navMegaMenu');
     var arrow = document.getElementById('navDropdownArrow');
-    var searchInput = document.getElementById('navMegaSearch');
-    var grid = document.getElementById('navMegaGrid');
-    var emptyMsg = document.getElementById('navMegaEmpty');
 
     if (!wrap || !menu) return;
 
@@ -284,17 +264,11 @@
     function showMenu() {
       menu.style.display = 'block';
       if (arrow) arrow.style.transform = 'rotate(180deg)';
-      if (searchInput) {
-        setTimeout(function() { searchInput.focus(); }, 50);
-      }
     }
 
     function hideMenu() {
       menu.style.display = 'none';
       if (arrow) arrow.style.transform = 'rotate(0deg)';
-      // 清空搜索
-      if (searchInput) searchInput.value = '';
-      filterTools('');
     }
 
     // 桌面端：hover 显示
@@ -334,53 +308,6 @@
         hideMenu();
       }
     });
-
-    // 搜索过滤
-    function filterTools(query) {
-      query = (query || '').toLowerCase().trim();
-      var cols = grid.querySelectorAll('.nav-mega-col');
-      var totalVisible = 0;
-
-      cols.forEach(function(col) {
-        var items = col.querySelectorAll('.nav-mega-item');
-        var visibleInCol = 0;
-        items.forEach(function(item) {
-          var name = item.getAttribute('data-name') || '';
-          if (!query || name.indexOf(query) !== -1) {
-            item.classList.remove('hidden');
-            visibleInCol++;
-            totalVisible++;
-          } else {
-            item.classList.add('hidden');
-          }
-        });
-        // 隐藏空分类
-        if (visibleInCol === 0) {
-          col.classList.add('hidden');
-        } else {
-          col.classList.remove('hidden');
-        }
-      });
-
-      // 显示/隐藏空状态
-      if (emptyMsg) {
-        if (totalVisible === 0) {
-          emptyMsg.classList.add('show');
-        } else {
-          emptyMsg.classList.remove('show');
-        }
-      }
-    }
-
-    if (searchInput) {
-      searchInput.addEventListener('input', function() {
-        filterTools(this.value);
-      });
-      // 阻止搜索框点击冒泡导致菜单关闭
-      searchInput.addEventListener('click', function(e) {
-        e.stopPropagation();
-      });
-    }
 
     // 窗口尺寸变化时重新判断交互模式
     window.addEventListener('resize', function() {
