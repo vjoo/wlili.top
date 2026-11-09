@@ -337,9 +337,27 @@ body.dev .ctg-tab.dev-tab{display:flex;}
   margin:8px 0 var(--space-3); flex:none;}
 .exp-hint b{color:var(--ink-secondary); font-weight:600;}
 .exp-hint.on{display:block;}
-/* 密文是一整行 base64：只有加密包这一档允许任意位置断行（.ctg-ta 默认 white-space:pre 不折行，
-   md/json 靠它保持表格对齐，不能全局改） */
-.ctg-ta.wrap{white-space:pre-wrap; word-break:break-all;}
+/* 加密包摘要卡（v3）：页面只展示「已生成 + 规格/体积」，密文一律不进 DOM。
+   卡片撑一块高度，避免弹窗塌成一条、也顺手把「这只是个文件」表达清楚。 */
+.exp-pack{
+  display:none; flex:1 1 auto; min-height:min(34vh, 300px);
+  align-items:center; justify-content:center; gap:var(--space-4);
+  border:1px solid var(--border-light); border-radius:var(--radius-md);
+  background:linear-gradient(180deg, #fbfcff 0%, #f5f7fb 100%);
+  padding:var(--space-5);
+}
+.exp-pack.on{display:flex;}
+.exp-pack .pk-ic{
+  flex:none; width:52px; height:52px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:#e8effc; color:#2f6be0;
+}
+.exp-pack .pk-ic svg{width:26px; height:26px; display:block;}
+.exp-pack .pk-body{min-width:0;}
+.exp-pack .pk-t{font-size:var(--fs-md); font-weight:600; color:var(--ink); line-height:1.4;}
+.exp-pack .pk-s{margin-top:4px; font-size:var(--fs-xs); color:var(--ink-tertiary); line-height:1.6;}
+.exp-pack.err .pk-ic{background:#fdeaea; color:#c0392b;}
+.exp-pack.err .pk-t{color:#c0392b;}
 .ctg-tab.on{background:var(--fill-black); color:#fff; border-color:var(--fill-black);}
 /* 导出内容区：弹窗多宽就多宽，纵向吃掉剩余高度（min-width:0 防 flex 子项被撑/塌） */
 .ctg-ta-wrap{flex:1 1 auto; min-height:0; display:flex;}
@@ -538,7 +556,7 @@ body.dev .ctg-tab.dev-tab{display:flex;}
   <div class="ctg-dlg wide exp">
     <h3>导出字表</h3>
     <div class="ctg-tabs">
-      <div class="ctg-tab on" data-t="ctgz" title="加密包 .ctgz：发给客户填写、回来导入建模。只有本工具 + 授权码能打开，改一个字都会校验失败">
+      <div class="ctg-tab on" data-t="ctgz" title="加密包 .ctgz：发给客户填写、回来导入建模。文件已加密，用记事本打开是乱码，改一个字符校验就会失败">
         <svg class="tab-logo" viewBox="0 0 24 24" aria-hidden="true">
           <g fill="none" stroke="#2B3041" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="10.5" width="16" height="10" rx="2.4"/>
@@ -580,8 +598,24 @@ body.dev .ctg-tab.dev-tab{display:flex;}
       <span class="ext" id="exp_ext">.md</span>
       <button id="exp_name_def" title="恢复自动命名（尺寸+热端+日期）">自动</button>
     </div>
-    <div class="ctg-ta-wrap"><textarea class="ctg-ta" id="exp_ta" readonly spellcheck="false"></textarea></div>
-    <div class="exp-hint" id="exp_hint">把下载到的 <b>.ctgz</b> 文件原样发回给卖家即可（微信传文件 / 邮件附件都行）；不用打开、也不要手改里面的内容 —— 改一个字符就会校验失败。</div>
+    <!-- 加密包只露摘要，密文不进 DOM 文本（客户不需要、也不该看到那串 base64） -->
+    <div class="exp-pack" id="exp_pack">
+      <div class="pk-ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="10.5" width="16" height="10" rx="2.4"/>
+            <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>
+          </g>
+          <circle cx="12" cy="15.4" r="1.5" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="pk-body">
+        <div class="pk-t" id="exp_pack_t">正在生成加密包…</div>
+        <div class="pk-s" id="exp_pack_s"></div>
+      </div>
+    </div>
+    <div class="ctg-ta-wrap" id="exp_ta_wrap"><textarea class="ctg-ta" id="exp_ta" readonly spellcheck="false"></textarea></div>
+    <div class="exp-hint" id="exp_hint">点「下载文件」保存 <b>.ctgz</b>，原样发回给卖家即可（微信传文件 / 邮件附件都行）。文件已加密，不用打开、也改不了内容。</div>
     <div class="ctg-foot exp-foot">
       <div class="left">
         <button class="btn-outline" id="exp_download">下载文件</button>
@@ -973,7 +1007,7 @@ var TILE_MM = 17;
 var FACE_MM = 15.23;                 // 顶面凸台（板 17 内缩 0.885）
 /* 插件版本：导出文本里要写「源自插件 vX」，以前每升一版都要手改两处字符串、漏了就写错。
    现在只改这一行（插件那边 `VERSION` 是同一份事实来源）。 */
-var PLUGIN_VER = "v1.29.20";
+var PLUGIN_VER = "v1.29.21";
 
 /* ---- 尺寸预设（与 Blender 插件 PRESET_GEO / PRESET_SHORT 一一对应）----
    tile = 贴片边长 · base = 底座（销板）边长 · cr = 贴片圆角 · holeDx = 孔心距
@@ -1629,26 +1663,38 @@ cubeEl.addEventListener("change", function(e){
 });
 
 /* ================= 导出 ================= */
-/* ================= 加密容器 .ctgz（2026-11-09）=================
+/* ================= 加密容器 .ctgz（2026-11-09 v3：公钥加密，只有插件能解）=================
    背景：字表要发给客户自定义填写、再传回来建模打印；明文 .md/.json 谁拿到都能读，
-   改两个格子就变成另一套字表。所以导出装进加密容器：
-     · 密钥**不写死在页面里** —— 从链接参数 `?k=xxxx` 取「授权码」，PBKDF2-SHA256(150k) 派生；
-     · 派生两把子钥：kEnc（HMAC-SHA256 计数器流加密）、kMac（encrypt-then-MAC 校验）；
-     · 改一个字节、或换一把码，都会在 MAC 处失败 —— 不会静默解出脏数据当成品打印。
-   容器是纯 ASCII 文本（微信/邮件原样传输不怕编码）：
-     CTGTILE/1
-     iter=150000
-     salt=<b64 16B>
+   改两个格子就变成另一套字表。
+   ⛔ 页面是**公开链接**（不做一客户一码），所以页面上**绝不放能解密的材料**：
+     · 页面只有 RSA-2048 **公钥** —— 只能加密；
+     · **私钥只存在于 ctg_tile_generator.py（卖家的插件）里** —— 也就是说，把本页源码
+       整份抄走，也解不开任何一个 .ctgz；只有插件能把文件还原成字表并建模。
+   信封加密流程：
+     1) 每次导出随机生成 32B 内容密钥 K；
+     2) 正文：明文 XOR keystream（每 32B 一块 = HMAC-SHA256(kEnc, nonce16 + 大端4B计数器)），
+        kEnc = HMAC-SHA256(K,"ctg3-enc")；
+     3) K 用 RSA-OAEP(SHA-256) 公钥加密 → ek（256B），文件里只有 ek；
+     4) 校验：HMAC-SHA256(kMac, "CTGTILE/3" + id + ek + nonce + 密文)，kMac = HMAC-SHA256(K,"ctg3-mac")；
+     5) K 在导出者本机 localStorage 留一份（按 id 索引），所以「同一台设备再导入」照样能用；
+        换设备、或文件落到别人手里 —— 没有私钥就解不开。
+   容器是纯 ASCII 文本（微信/邮件原样传输不怕编码），页面上**从不显示密文**：
+     CTGTILE/3
+     id=<b64 8B>       包标识（仅用于本机找回 K）
+     ek=<b64 256B>     RSA 加密后的 K
      nonce=<b64 16B>
      data=<b64 密文>
      tag=<b64 32B>
-   ⛔⛔ 算法必须与 Blender 侧 `ctg_tile_generator.py` 的 `_ctg_decrypt()` **字节级一致**：
-      迭代次数、子钥标签串（ctg1-enc / ctg1-mac）、AAD 拼接（"CTGTILE/1|150000" + salt + nonce + ct）、
-      keystream 分块（nonce 16B + 大端 4B 计数器，每块 32B）—— 改任何一处都要同步改另一边，否则解不开。
-   ⚠ 页面源码公开、算法本身不保密；保密的是授权码（不在源码里）。客户把带码链接转发出去 = 泄码。 */
-var CTG_MAGIC = "CTGTILE/1";
-var CTG_ITER  = 150000;
-var CTG_KEY_LS = "ctgz_key_v1";      // 客户在本机记住授权码，书签丢了参数也能用
+   ⛔⛔ 必须与 ctg_tile_generator.py 的 _ctg_decrypt() **字节级一致**：
+      AAD 拼接顺序、子钥标签串（ctg3-enc / ctg3-mac）、keystream 分块长度、
+      OAEP 参数（SHA-256 + MGF1-SHA-256 + 空 label）。
+   ⚠ 安全边界：私钥只在你手里 —— 插件源码别外发；客户拿到的永远是密文。 */
+var CTG_MAGIC = "CTGTILE/3";
+var CTG_MAGIC_V2 = "CTGTILE/2";      // 中间试作版，只用于报一句准确的错
+var CTG_MAGIC_V1 = "CTGTILE/1";      // 授权码时代，只用于报错
+/* 公钥（RSA-2048 / e=65537）。私钥不在这里，也不要往这里放。 */
+var CTG_PUB_JWK = {kty:"RSA", n:"zWhObge-fgimBD_4O4HsWqO3hng5bm_RFJfvxStgJrf8hDYHnIveMvgOdmONMWcS7KTbQnXA2Buvf4YBD2Zg2HIPwfq332HqxrY6fWlMQHo_pdA-zMKvI-NAhVfFo0pOchzVmDKDJ6uaObx18qalj9dNRG34iKzL78ktyo7eQYrJ7Yqp1We6fKnCJh2V_C2kFi-0ZGiFfBuZLY948KNfvmQ0KE3MPVsFXdy3LdX4qoOALCYYwQ4SmgBukPaLWuvni5nboSgMb7RdEk9GraYE5IZa5Ngieqw3lW7hyCF_o9hizUVpyD-thGw2d26S1gQzRfchiwiZ27ezVutEjuuQSw", e:"AQAB", alg:"RSA-OAEP-256", ext:true};
+var CTG_LS_PREFIX = "ctgz_k_";       // 本机记住「这个包的内容密钥」，只对本机导出的包有效
 function ctgB64Enc(u8){
   var s = "", C = 0x8000;
   for(var i = 0; i < u8.length; i += C) s += String.fromCharCode.apply(null, u8.subarray(i, i + C));
@@ -1667,31 +1713,40 @@ function ctgCat(){
   for(i = 0; i < arguments.length; i++){ out.set(arguments[i], off); off += arguments[i].length; }
   return out;
 }
-/* ---- 授权码：链接参数优先，其次本机记住的 ---- */
-function authKeyFromUrl(){
-  var s = String(location.search || "") + "&" + String(location.hash || "").replace(/^#/, "");
-  var m = /[?&#]k=([^&]+)/.exec(s);
-  return m ? decodeURIComponent(m[1]).replace(/\+/g, " ").trim() : "";
+/* ---- 公钥（只能加密）与本机内容密钥缓存 ---- */
+var ctgPubCache = null;
+async function ctgPubKey(){
+  if(ctgPubCache) return ctgPubCache;
+  ctgPubCache = await crypto.subtle.importKey("jwk", CTG_PUB_JWK, {name:"RSA-OAEP", hash:"SHA-256"},
+                                             false, ["encrypt"]);
+  return ctgPubCache;
 }
-function authKey(){
-  var k = authKeyFromUrl();
-  if(k){
-    try{ if(localStorage.getItem(CTG_KEY_LS) !== k) localStorage.setItem(CTG_KEY_LS, k); }catch(e){}
-    return k;
-  }
-  try{ return String(localStorage.getItem(CTG_KEY_LS) || "").trim(); }catch(e){ return ""; }
+async function ctgKeysFor(raw32){
+  return { enc: await ctgSubkey(raw32, "ctg3-enc"), mac: await ctgSubkey(raw32, "ctg3-mac") };
+}
+/* 本机留一份 K（只在导出这台设备上），使「同机再导入」可行；文件本身不含 K 明文 */
+function ctgRememberKey(idStr, K){
+  try{
+    localStorage.setItem(CTG_LS_PREFIX + idStr, ctgB64Enc(K));
+    var keys = [], i;
+    for(i = 0; i < localStorage.length; i++){
+      var k = localStorage.key(i);
+      if(k && k.indexOf(CTG_LS_PREFIX) === 0) keys.push(k);
+    }
+    while(keys.length > 20){ try{ localStorage.removeItem(keys.shift()); }catch(e){} }
+  }catch(e){}
+}
+function ctgRecallKey(idStr){
+  try{
+    var v = localStorage.getItem(CTG_LS_PREFIX + idStr);
+    return v ? ctgB64Dec(v) : null;
+  }catch(e){ return null; }
 }
 /* ---- 派生 ---- */
 async function ctgSubkey(raw32, label){
   var base = await crypto.subtle.importKey("raw", raw32, {name:"HMAC", hash:"SHA-256"}, false, ["sign"]);
   var sig  = await crypto.subtle.sign("HMAC", base, new TextEncoder().encode(label));
   return crypto.subtle.importKey("raw", new Uint8Array(sig), {name:"HMAC", hash:"SHA-256"}, false, ["sign"]);
-}
-async function ctgDerive(pass, salt, iter){
-  var base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveBits"]);
-  var bits = await crypto.subtle.deriveBits({name:"PBKDF2", salt:salt, iterations:iter, hash:"SHA-256"}, base, 256);
-  var kb = new Uint8Array(bits);
-  return { enc: await ctgSubkey(kb, "ctg1-enc"), mac: await ctgSubkey(kb, "ctg1-mac") };
 }
 async function ctgHmac(key, bytes){
   return new Uint8Array(await crypto.subtle.sign("HMAC", key, bytes));
@@ -1714,45 +1769,58 @@ function ctgNeedCrypto(){
     throw new Error("当前浏览器不支持网页加密（crypto.subtle 不可用），请换 Chrome / Edge / Safari 新版本");
   }
 }
-async function ctgEncrypt(plain, pass){
+async function ctgEncrypt(plain){
   ctgNeedCrypto();
-  if(!pass) throw new Error("缺少授权码：请用卖家给你的专属链接打开本页（链接里带 ?k=…）");
-  var salt  = crypto.getRandomValues(new Uint8Array(16));
+  var id    = crypto.getRandomValues(new Uint8Array(8));
+  var K     = crypto.getRandomValues(new Uint8Array(32));
   var nonce = crypto.getRandomValues(new Uint8Array(16));
   var pt = new TextEncoder().encode(plain);
-  var k  = await ctgDerive(pass, salt, CTG_ITER);
+  var k  = await ctgKeysFor(K);
   var ks = await ctgStream(k.enc, nonce, pt.length);
   var ct = new Uint8Array(pt.length);
   for(var i = 0; i < pt.length; i++) ct[i] = pt[i] ^ ks[i];
-  var aad = new TextEncoder().encode(CTG_MAGIC + "|" + CTG_ITER);
-  var tag = await ctgHmac(k.mac, ctgCat(aad, salt, nonce, ct));
-  return [CTG_MAGIC, "iter=" + CTG_ITER, "salt=" + ctgB64Enc(salt), "nonce=" + ctgB64Enc(nonce),
+  /* K 用公钥包起来 —— 只有插件里的私钥能拆开 */
+  var ek = new Uint8Array(await crypto.subtle.encrypt({name:"RSA-OAEP"}, await ctgPubKey(), K));
+  var aad = new TextEncoder().encode(CTG_MAGIC);
+  var tag = await ctgHmac(k.mac, ctgCat(aad, id, ek, nonce, ct));
+  ctgRememberKey(ctgB64Enc(id), K);
+  return [CTG_MAGIC, "id=" + ctgB64Enc(id), "ek=" + ctgB64Enc(ek), "nonce=" + ctgB64Enc(nonce),
           "data=" + ctgB64Enc(ct), "tag=" + ctgB64Enc(tag)].join("\n") + "\n";
 }
 function ctgIsPacked(text){ return /^\s*CTGTILE\//.test(String(text || "")); }
 function ctgFields(text){
   var out = {}, lines = String(text).replace(/\r/g, "").split("\n");
-  if(lines[0].trim() !== CTG_MAGIC) throw new Error("不是本工具的加密字表（首行标识不对）");
+  var head = (lines[0] || "").trim();
+  if(head === CTG_MAGIC_V1 || head === CTG_MAGIC_V2){
+    throw new Error("这是旧版加密字表（" + head + "），请让卖家重新发一份新版导出的 .ctgz");
+  }
+  if(head !== CTG_MAGIC) throw new Error("不是本工具的加密字表（首行标识不对）");
   for(var i = 1; i < lines.length; i++){
     var p = lines[i].indexOf("=");
     if(p > 0) out[lines[i].slice(0, p).trim()] = lines[i].slice(p + 1).trim();
   }
   return out;
 }
-async function ctgDecrypt(text, pass){
+async function ctgDecrypt(text){
   ctgNeedCrypto();
   var f = ctgFields(text);
-  var iter = parseInt(f.iter, 10) || 0;
-  if(!(iter >= 1000 && iter <= 2000000)) throw new Error("加密字表参数异常（iter=" + f.iter + "）");
-  var salt = ctgB64Dec(f.salt), nonce = ctgB64Dec(f.nonce), ct = ctgB64Dec(f.data), tag = ctgB64Dec(f.tag);
-  if(salt.length !== 16 || nonce.length !== 16 || tag.length !== 32) throw new Error("加密字表已损坏（字段长度不对）");
-  if(!pass) throw new Error("这是加密字表（.ctgz）：请用卖家给你的专属链接打开本页，或在插件里填授权码");
-  var k = await ctgDerive(pass, salt, iter);
-  var aad = new TextEncoder().encode(CTG_MAGIC + "|" + iter);
-  var want = await ctgHmac(k.mac, ctgCat(aad, salt, nonce, ct));
+  var id = ctgB64Dec(f.id), ek = ctgB64Dec(f.ek), nonce = ctgB64Dec(f.nonce),
+      ct = ctgB64Dec(f.data), tag = ctgB64Dec(f.tag);
+  if(!id.length || ek.length !== 256 || nonce.length !== 16 || tag.length !== 32){
+    throw new Error("加密字表已损坏（字段长度不对）");
+  }
+  /* 网页没有私钥：只有本机导出过的包，才在 localStorage 里留着自己那份 K */
+  var K = ctgRecallKey(f.id);
+  if(!K || K.length !== 32){
+    throw new Error("这个加密包只有卖家的 Blender 插件能打开（本页不含解密密钥）。"
+                  + "要继续编辑，请在本页重新填写 —— 本机填过的内容会自动保留");
+  }
+  var k = await ctgKeysFor(K);
+  var aad = new TextEncoder().encode(CTG_MAGIC);
+  var want = await ctgHmac(k.mac, ctgCat(aad, id, ek, nonce, ct));
   var diff = 0;
   for(var i = 0; i < 32; i++) diff |= (want[i] ^ tag[i]);
-  if(diff !== 0) throw new Error("授权码不对，或文件被改过（校验失败）");
+  if(diff !== 0) throw new Error("文件已损坏或被改过（校验失败），请让客户重新导出一份");
   var ks = await ctgStream(k.enc, nonce, ct.length);
   var pt = new Uint8Array(ct.length);
   for(var j = 0; j < ct.length; j++) pt[j] = ct[j] ^ ks[j];
@@ -1956,32 +2024,52 @@ function syncExpName(){
   if(expNameAuto) document.getElementById("exp_name").value = expDefBase(expTab);
 }
 function expPlainText(kind){ return kind === "md" ? buildMD() : kind === "json" ? buildJSON() : buildPY(); }
+/* 加密包正文只在内存里流转（下载时直接写 Blob），**不写进任何可见节点** */
+var expPackText = "";
+var pkBox = document.getElementById("exp_pack");
+var pkT   = document.getElementById("exp_pack_t");
+var pkS   = document.getElementById("exp_pack_s");
+function expPackSummary(pack){
+  var kb = (new Blob([pack]).size / 1024).toFixed(1);
+  return "6 面 · " + countFilled(state.faces) + " / 54 格 · "
+       + String(sizeOf().label).replace("*", "×") + " / " + hotendOf().label + " · " + kb + " KB";
+}
+function setExpTab(t){
+  expTab = t;
+  Array.prototype.forEach.call(document.querySelectorAll(".ctg-tab"), function(x){
+    x.classList.toggle("on", x.dataset.t === t);
+  });
+  refreshExp();
+}
 async function refreshExp(){
   syncExpName();
-  var hint = document.getElementById("exp_hint");
-  if(hint) hint.classList.toggle("on", expTab === "ctgz");
-  expTa.classList.toggle("wrap", expTab === "ctgz");   // 只有密文那档折行，见 .ctg-ta.wrap
-  if(expTab !== "ctgz"){
+  var isPack = expTab === "ctgz";
+  document.getElementById("exp_ta_wrap").style.display = isPack ? "none" : "flex";
+  pkBox.classList.toggle("on", isPack);
+  document.getElementById("exp_hint").classList.toggle("on", isPack);
+  document.getElementById("exp_copy").style.display = isPack ? "none" : "";
+  if(!isPack){
     expTa.readOnly = true;
     expTa.value = expPlainText(expTab);
     return;
   }
   var seq = ++expSeq;
-  expTa.readOnly = true;
-  var pass = authKey();
-  if(!pass){
-    expTa.value = "（这个链接里没有授权码，导不出加密包）\n\n· 请让卖家把带 ?k=… 的专属链接重新发你一份；\n· 若你之前在这台设备上导出过，浏览器会记住授权码，直接刷新本页即可。";
-    return;
-  }
-  expTa.value = "正在加密…";
+  expPackText = "";
+  pkBox.classList.remove("err");
+  pkT.textContent = "正在生成加密包…";
+  pkS.textContent = "";
   try{
-    /* 明文载荷 = json 导出对象（插件/页面都认这个结构）；压缩掉缩进，文件更小 */
-    var pack = await ctgEncrypt(JSON.stringify(buildJSONObj()), pass);
+    /* 明文载荷 = json 导出对象（插件/页面都认这个结构） */
+    var pack = await ctgEncrypt(JSON.stringify(buildJSONObj()));
     if(seq !== expSeq) return;
-    expTa.value = pack;
+    expPackText = pack;
+    pkT.textContent = "加密包已生成";
+    pkS.textContent = expPackSummary(pack);
   }catch(e){
     if(seq !== expSeq) return;
-    expTa.value = "加密失败：" + (e && e.message ? e.message : e) + "\n\n（换新版 Chrome / Edge / Safari 再试）";
+    pkBox.classList.add("err");
+    pkT.textContent = "加密包生成失败";
+    pkS.textContent = (e && e.message ? e.message : String(e)) + "　（建议换新版 Chrome / Edge / Safari）";
   }
 }
 /* 调试模式：明文导出（md/json/py）平时藏起来，只给内部排查用。
@@ -1996,7 +2084,7 @@ if(devModeOn()) document.body.classList.add("dev");
     if(document.body.classList.contains("dev")) return;
     if(++n >= 5){
       document.body.classList.add("dev");
-      if(expTab === "ctgz"){ expTab = "md"; refreshExp(); }
+      if(expTab === "ctgz") setExpTab("md");
       toast("调试模式：已显示明文导出（md / json / py）");
     }
   });
@@ -2013,12 +2101,10 @@ document.getElementById("exp_name_def").addEventListener("click", function(){
 document.getElementById("exp_close").addEventListener("click", function(){ expMask.classList.remove("show"); });
 expMask.addEventListener("click", function(e){ if(e.target===expMask) expMask.classList.remove("show"); });
 Array.prototype.forEach.call(document.querySelectorAll(".ctg-tab"), function(tb){
-  tb.addEventListener("click", function(){
-    Array.prototype.forEach.call(document.querySelectorAll(".ctg-tab"), function(x){ x.classList.remove("on"); });
-    tb.classList.add("on"); expTab = tb.dataset.t; refreshExp();
-  });
+  tb.addEventListener("click", function(){ setExpTab(tb.dataset.t); });
 });
 document.getElementById("exp_copy").addEventListener("click", function(){
+  /* 只在明文档出现（加密包那档按钮已隐藏）：密文不外显也不该往剪贴板塞 */
   expTa.select();
   var ok = false;
   try{ ok = document.execCommand("copy"); }catch(e){}
@@ -2037,12 +2123,13 @@ function exportFileName(kind){
   return base + exportTag() + "_" + fileStamp() + ext;
 }
 document.getElementById("exp_download").addEventListener("click", function(){
-  if(expTab === "ctgz" && !/^\s*CTGTILE\//.test(expTa.value)){ toast("加密包还没生成好，先看框里的提示"); return; }
+  var text = expTab === "ctgz" ? expPackText : expTa.value;
+  if(expTab === "ctgz" && !/^\s*CTGTILE\//.test(text)){ toast("加密包还没生成好，稍等一下再点"); return; }
   var f = expFileName(expTab), mime;
   if(expTab==="md"){ mime = "text/markdown;charset=utf-8"; }
   else if(expTab==="json"){ mime = "application/json;charset=utf-8"; }
   else { mime = "text/plain;charset=utf-8"; }
-  var blob = new Blob([expTa.value], {type:mime});
+  var blob = new Blob([text], {type:mime});
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = f; a.click();
   URL.revokeObjectURL(a.href);
@@ -2105,7 +2192,7 @@ function parseTableFile(text){
 async function doImport(text, fname){
   /* 加密包（.ctgz）先解密再走同一套解析；明文 md/json 原样放行（旧文件、内部排查用） */
   if(ctgIsPacked(text)){
-    text = await ctgDecrypt(text, authKey());
+    text = await ctgDecrypt(text);
   }
   var r = parseTableFile(text);
   state = {faces: r.faces, size: r.size, hotend: r.hotend};
