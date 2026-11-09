@@ -301,6 +301,17 @@
       "enabled": true
     },
     {
+      "id": "wheel-tile-table",
+      "name": "手轮贴片字表",
+      "file": "wheel-tile-table.html",
+      "category": "creative",
+      "icon": "grid",
+      "iconColor": "orange",
+      "description": "按轮盘面数 × 轮盘数量生成竖排字表，一列一轮盘、行内按面序填字；导出 md/json 给 WHG 插件，预览按钮弹窗看 3D 装配",
+      "keywords": ["手轮", "轮盘", "贴片", "字表", "字库", "3D打印", "Blender", "插件", "wheel", "tile", "table"],
+      "enabled": true
+    },
+    {
       "id": "composition-editor",
       "name": "构图编辑器",
       "file": "composition-editor.html",

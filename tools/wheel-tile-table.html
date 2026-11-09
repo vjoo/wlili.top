@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self';">
+<link rel="stylesheet" href="common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>手轮贴片字表 - WLi Tools</title>
+<style>
+/* ============================================================
+   手轮贴片字表（wlili tools）
+   视觉骨架照 cube-tile-table.html（3D 魔方字表）：
+   深灰底板 #2B3041 + 象牙白芯片 #fffdf8 + 虚线空槽 #4a5064。
+   ⛔ 与魔方不同：这里是「M 列轮盘 × N 行面序」，一列 = 一套 N 字字表。
+   ============================================================ */
+.whl-sec{padding:14px 0 10px; --inset-line:#dfe3ea;}  /* 统一白框浅灰描边（照 3D 魔方预览卡）*/
+.whl-sec .section-inner{max-width:none; padding:0 24px;}
+
+/* 顶部：只留读数 + 共 X 片（参数输入已移到右侧竖排按钮组） */
+.whl-bar{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:var(--space-3);
+  padding:0 0 var(--space-2);
+}
+.whl-count{font-size:var(--fs-sm); color:var(--ink-tertiary); white-space:nowrap;}
+.whl-count b{color:var(--ink); font-variant-numeric:tabular-nums;}
+/* ⛔ 规格串（Ø55.7275 / 面宽 12.0 / 贴片 11.0×15.8 / 字高 6.6 · 占片宽 60%）不在前端显示（用户 2026-11-08 定）；
+   尺寸仍由 tileSpec() 照常算出并驱动格子布局，只是这行文案隐藏，要恢复删掉 display:none 即可 */
+.whl-specbar{
+  display:none;
+  font-size:var(--fs-sm); color:var(--ink-tertiary); white-space:normal; line-height:1.5; text-align:center;
+  padding:0 2px 10px; font-variant-numeric:tabular-nums;
+}
+.whl-specbar b{color:var(--ink-secondary);}
+
+/* 字表：M 列横排，每列竖排 N 行（面序）。
+   --tw/--th/--fs 由 JS 按真实贴片尺寸联动写入：格子 = 一片贴片的等比缩略，
+   字按插件默认字号 18 mm（超贴片时按内边距自动缩放）的真实占比居中，
+   才能预览「字贴上去占多大」。
+   整块水平居中；每列的格子区是固定高度视窗，装不下时由右侧 ▲/▼ 按面序逐格平移。 */
+.whl-stage{
+  display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start; gap:16px; width:100%;
+}
+.whl-grid{ min-width:0;
+  display:flex; gap:16px; align-items:flex-start;
+  overflow-x:auto; overflow-y:hidden; padding:2px 2px 0;
+  max-width:100%;
+  /* ⛔ 别在这里写 --tw/--th 默认值：局部变量会压掉从 #stage 继承的
+     插件派生值，导致格子与右侧按钮尺寸不同源。只留 --cells-h。 */
+  --cells-h:300px;}
+.whl-col{flex:0 0 auto; display:flex; align-items:stretch; gap:6px;
+  width:calc(var(--tw) + 40px);}   /* 主区（片）+ 右侧独立翻页列；序号改为 hover 框内显示，不再占左侧列宽 */
+.whl-col-main{flex:0 0 auto; min-width:0; width:var(--tw);}
+/* 列头照魔方 .face-head：色块 + 面名 + 已填/总数 */
+.whl-col-head{display:flex; align-items:center; gap:6px; padding:0 2px 5px; width:100%; flex-wrap:wrap;}
+.whl-swatch{
+  width:12px; height:12px; border-radius:4px; flex:none;
+  border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.25);
+}
+.whl-col-head b{font-size:11px; font-weight:600; color:var(--ink); white-space:nowrap;}
+/* 色槽 UI 已隐藏（用户 2026-11-08 定稿）：列头只留「小方块 + 面n」，
+   后台 state.wcols[j] 仍保留 {bg,fg} 两种材质（底色默认 #fffdf8 白、字色默认=小方块色）。
+   下列 .whl-cslot / 取色弹层样式保留备用，不参与渲染。 */
+.whl-cslot{
+  display:inline-flex; align-items:center; gap:3px; padding:1px 5px 1px 2px;
+  border:1.5px solid var(--inset-line); border-radius:8px; background:#fffdf8;
+  cursor:pointer; font-style:normal; line-height:1;
+  transition:border-color .12s, box-shadow .12s;
+}
+.whl-cslot:hover{border-color:var(--link); box-shadow:0 0 0 2px rgba(224,131,58,.18);}
+.whl-cslot .whl-csw{
+  width:14px; height:14px; border-radius:4px; flex:none;
+  border:1.5px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.22);
+}
+.whl-cslot i{font-style:normal; font-size:9.5px; font-weight:700; color:var(--ink-secondary);}
+/* 取色弹层 */
+.whl-pop{
+  position:fixed; z-index:1300; min-width:176px; padding:10px;
+  background:var(--bg-white); border:1.5px solid var(--inset-line); border-radius:12px;
+  box-shadow:0 16px 40px -12px rgba(20,22,30,.45); display:none;
+}
+.whl-pop.show{display:block;}
+.whl-pop .pp-h{font-size:11px; color:var(--ink-tertiary); margin-bottom:7px;
+  display:flex; justify-content:space-between; align-items:center;}
+.whl-pop .pp-close{border:none; background:transparent; color:var(--ink-tertiary);
+  cursor:pointer; font-size:15px; line-height:1; padding:0 2px;}
+.whl-pop .pp-close:hover{color:var(--ink);}
+.whl-pop .pp-sw{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;}
+.whl-pop .pp-sw button{
+  width:26px; height:26px; border-radius:7px; border:2px solid #fff; cursor:pointer; padding:0;
+  box-shadow:0 0 0 1px rgba(0,0,0,.18); position:relative;
+}
+.whl-pop .pp-sw button.on{box-shadow:0 0 0 2px var(--link);}
+.whl-pop .pp-custom{display:flex; align-items:center; gap:7px;
+  border-top:1px dashed var(--inset-line); padding-top:8px;}
+.whl-pop .pp-custom input[type=color]{width:30px; height:26px; border:1px solid var(--inset-line);
+  border-radius:6px; padding:0; background:none; cursor:pointer;}
+.whl-pop .pp-add{border:1.5px solid var(--inset-line); background:#fffdf8; color:var(--ink);
+  border-radius:7px; padding:4px 10px; font-size:12px; cursor:pointer;}
+.whl-pop .pp-add:hover{background:var(--link); color:#fff;}
+.whl-pop .pp-err{color:#d91f1f; font-size:11px; margin-top:6px; min-height:14px;}
+.whl-fcount{display:block; font-size:9px; color:var(--ink-tertiary);
+  font-variant-numeric:tabular-nums; white-space:nowrap; text-align:left; padding:4px 2px 0;}
+.whl-cells{
+  width:var(--tw); height:var(--cells-h); overflow:hidden; box-sizing:border-box;
+  background:#3a4356; padding:6px; border-radius:12px;
+  box-shadow:0 10px 26px -14px rgba(43,48,65,.45);
+}
+/* 格子 = 照 3D 魔方 .cell：空 = 虚线槽 #4a5064（透出深底板）；有字 = 纯象牙白芯片 #fffdf8，无内描边 */
+.whl-track{
+  display:flex; flex-direction:column; gap:6px;
+  transform:translateY(0);   /* ⛔ 不加 transition：逐格翻页要即时到位，连点不追赶 */
+}
+.whl-row{display:flex; align-items:center; gap:6px;}
+.whl-cell{
+  position:relative;                              /* 序号角标定位基准 */
+  flex:0 0 auto; box-sizing:border-box; width:100%; height:var(--th); padding:0;
+  border:1.5px dashed #4a5064; border-radius:9px;   /* 空槽（照 .cell.empty） */
+  background:transparent; color:var(--ink);          /* 透出 #2B3041 底板 */
+  font-family:inherit; font-size:var(--fs); font-weight:700; line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  text-align:center; cursor:pointer; user-select:none; outline:none; overflow:hidden;
+  transition:transform .12s, box-shadow .12s, border-color .12s;
+}
+.whl-cell:hover{transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(0,0,0,.22);}
+.whl-cell.sel{box-shadow:0 0 0 2px rgba(224,131,58,.55);}
+/* 有字 = 贴了片：照 3D 魔方 .cell —— 象牙白芯片 #fffdf8 + 深墨字；
+   深底与白芯片之间加一条浅灰绿「粗描边」（照参考图：深底↔白芯片的粗边），
+   格子四周的「深色边框」由 .whl-cells 深底 + 格子间 gap 形成（与魔方 .grid9 一致）*/
+.whl-cell.filled{
+  border:5px solid #d9e3dc; background:#fffdf8; color:var(--ink);
+}
+.whl-cell.filled:hover{
+  box-shadow:0 4px 10px rgba(0,0,0,.22);
+}
+.whl-cell .ch{display:block; max-width:100%; overflow:hidden;}
+/* 序号角标：默认隐藏，鼠标移上才浮现。宽 = 格子内容宽 2/3，居中覆盖，字号随格子等比 */
+.whl-ano{
+  position:absolute; left:50%; top:50%; z-index:2;
+  transform:translate(-50%,-50%);
+  width:66.6%; box-sizing:border-box;
+  padding:.18em 0; border-radius:9px; text-align:center;
+  font-size:calc(var(--tw) * .155); line-height:1.25;
+  background:rgba(255,255,255,.95); color:#6b6459;
+  border:1px solid rgba(0,0,0,.10);
+  box-shadow:0 2px 8px rgba(43,48,65,.18);
+  letter-spacing:.5px; font-variant-numeric:tabular-nums; pointer-events:none;
+  opacity:0; transition:opacity .12s;
+}
+.whl-cell:hover .whl-ano{opacity:1;}
+
+/* 右侧竖排分组：三组（重置+热端 / 操作 / 数量）照魔方 .tb-face 深底卡片 */
+.whl-side{
+  flex:0 0 auto;
+  display:flex; flex-direction:column; gap:10px; align-items:stretch;
+}
+.whl-grp{
+  display:flex; flex-direction:column; gap:6px;
+  padding:8px; border-radius:14px; background:#3a4356; width:98px;
+  box-shadow:0 10px 26px -14px rgba(43,48,65,.45);
+}
+.whl-grp-h{font-size:10px; color:#aab0c4; text-align:center;
+  padding:0 0 2px; letter-spacing:.5px;}
+/* 功能方块按钮：象牙白芯片；尺寸独立于填字白框，做得更大、文字更满更大（单行） */
+.whl-sq{
+  position:relative; overflow:hidden;
+  width:100%; min-height:52px;
+  padding:6px 4px; border:1.5px solid var(--inset-line); border-radius:10px;
+  background:#fffdf8; color:var(--ink); font-weight:600; font-size:15px;
+  font-family:inherit; line-height:1.25; text-align:center; white-space:nowrap;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:transform .12s, box-shadow .12s;
+}
+.whl-sq span{display:block; width:100%;}
+.whl-sq:hover{transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.25);}
+.whl-sq:active{transform:scale(.98);}
+/* 热端两档切换：照魔方 .whl-hot，但在组内占满宽 */
+.whl-hot{display:inline-flex; border:1px solid #3a4156; border-radius:8px;
+  overflow:hidden; width:100%;}
+.whl-hot button{
+  flex:1 1 0; border:none; background:#fffdf8; color:var(--ink-secondary);
+  padding:7px 4px; font-size:12px; font-family:inherit; cursor:pointer;
+  border-right:1px solid #3a4156;
+}
+.whl-hot button:last-child{border-right:none;}
+.whl-hot button.on{background:#e0833a; color:#fff;}
+/* 数量按钮：点击开数量弹窗 */
+.whl-cnt{width:100%; border:1.5px solid var(--inset-line); border-radius:9px; background:#fffdf8;
+  color:var(--ink); font-weight:600; padding:8px 6px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  transition:transform .12s, box-shadow .12s;}
+.whl-cnt:hover{transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.25);}
+.whl-cnt b{font-size:20px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1;}
+.whl-cnt span{font-size:10px; color:var(--ink-tertiary);}
+
+/* 每列右侧的独立翻页：▲/▼ 各列一套，点一下滚动一格；中间不放文字 */
+.whl-col-pg{
+  flex:0 0 auto; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; gap:8px; width:34px;
+}
+.whl-pg-btn{
+  width:34px; height:34px; border-radius:9px; border:1.5px solid var(--inset-line);
+  background:#fffdf8; color:var(--ink-secondary); cursor:pointer;
+  font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .12s, color .12s;
+}
+.whl-pg-btn:hover:not(:disabled){background:#e0833a; color:#fff;}
+.whl-pg-btn:disabled{opacity:.35; cursor:default;}
+
+/* 弹窗（自绘一套类名，避免后台 missing-class 陷阱） */
+.whl-mask{
+  position:fixed; inset:0; background:rgba(20,22,30,.44); z-index:1200;
+  display:none; align-items:center; justify-content:center; padding:24px;
+}
+.whl-mask.show{display:flex;}
+.whl-dlg{
+  background:var(--bg-white); border-radius:var(--radius-lg); width:640px; max-width:94vw;
+  padding:var(--space-6); box-shadow:0 24px 60px rgba(0,0,0,.3); max-height:92vh;
+  display:flex; flex-direction:column;
+}
+.whl-dlg.wide{width:min(1040px,94vw);}
+.whl-dlg .btn-outline, .whl-dlg .btn-filled{
+  padding:6px 14px; font-size:14px; line-height:1.3; border-width:1px; gap:6px;
+}
+.whl-dlg h3{font-size:var(--fs-lg); font-weight:600; margin-bottom:var(--space-4);
+  display:flex; align-items:center; gap:var(--space-2); flex:none;}
+.face-tag{font-size:12px; font-weight:600; color:var(--ink-tertiary);
+  background:var(--bg); padding:2px 8px; border-radius:999px;}
+.whl-x{margin-left:auto; flex:none; width:28px; height:28px; padding:0; border-radius:50%;
+  border:none; background:transparent; color:var(--ink-tertiary); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; line-height:1;}
+.whl-x:hover{background:rgba(0,0,0,.06); color:var(--ink);}
+.whl-x svg{width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2.2;
+  stroke-linecap:round;}
+
+/* 编辑格子弹窗 */
+.whl-ed-body{display:flex; gap:var(--space-5); flex:1 1 auto; min-height:0;}
+.whl-ed-left{flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:var(--space-3);}
+.whl-fld2{display:flex; flex-direction:column; gap:5px;}
+.whl-fld2 > label{font-size:var(--fs-sm); color:var(--ink-secondary); font-weight:600;}
+.whl-fld2 input[type=text], .whl-fld2 input[type=number], .whl-fld2 select{
+  border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 9px;
+  font-family:inherit; font-size:14px; color:var(--ink); background:var(--bg-white); width:100%;
+}
+.whl-fld2 input:focus, .whl-fld2 select:focus{outline:none; border-color:var(--link);}
+.whl-ed-note{font-size:var(--fs-xs); color:var(--ink-tertiary); line-height:1.5;}
+/* 自动缩放开关（照魔方 .ctg-sw） */
+.whl-sw{display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none;}
+.whl-sw input{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;}
+.whl-sw .tk{width:38px; height:22px; border-radius:11px; background:var(--border);
+  position:relative; flex:none; transition:background .16s ease;}
+.whl-sw .tk::after{content:""; position:absolute; top:2px; left:2px; width:18px; height:18px;
+  border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.28); transition:transform .16s ease;}
+.whl-sw input:checked + .tk{background:var(--link);}
+.whl-sw input:checked + .tk::after{transform:translateX(16px);}
+.whl-sw input:focus-visible + .tk{outline:2px solid var(--link); outline-offset:2px;}
+.whl-sw .tx{font-size:var(--fs-sm); color:var(--ink-secondary); font-weight:600; min-width:2.2em;}
+.whl-sw .tx.off{color:var(--ink-tertiary); font-weight:400;}
+.whl-sw .tx .dft{font-weight:400; color:var(--ink-tertiary);}
+/* 贴片预览卡（照魔方 .ctg-prev） */
+.whl-ed-right{flex:0 0 auto; width:180px; display:flex; flex-direction:column;
+  align-items:center; gap:var(--space-2);}
+.whl-cap{font-size:var(--fs-xs); color:var(--ink-tertiary);}
+.whl-prev{position:relative; overflow:hidden; width:180px; height:180px;
+  border:1px solid var(--border-light); border-radius:var(--radius-md);
+  background:#2B3041; display:flex; align-items:center; justify-content:center;}
+.whl-prev .ch{color:#fffdf8; font-weight:700; line-height:1; max-width:90%; text-align:center;
+  overflow:hidden;}
+
+.whl-exp-row{display:flex; align-items:center; gap:8px; margin-bottom:var(--space-2); flex:none;
+  font-size:var(--fs-sm); color:var(--ink-secondary);}
+.whl-exp-row select, .whl-exp-row input[type=text]{
+  border:1px solid var(--border); border-radius:var(--radius-sm); padding:5px 8px;
+  font-family:inherit; font-size:var(--fs-sm); color:var(--ink); background:var(--bg-white);
+}
+.whl-exp-row input[type=text]{flex:1 1 auto; min-width:0;}
+.whl-exp-row input[type=number]{width:72px; padding:5px 8px; border:1px solid var(--border);
+  border-radius:var(--radius-sm); font-family:inherit; font-size:var(--fs-sm);
+  font-variant-numeric:tabular-nums;}
+.whl-exp-row .ext{color:var(--ink-tertiary); font-variant-numeric:tabular-nums;}
+.whl-ta{
+  flex:1 1 auto; min-height:270px; width:100%; resize:vertical;
+  border:1px solid var(--border-light); border-radius:var(--radius-md);
+  padding:10px 12px; font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:12.5px; line-height:1.55; color:var(--ink); background:var(--bg);
+}
+.whl-foot{display:flex; align-items:center; gap:8px; padding-top:var(--space-4); flex:none;}
+.whl-foot .sp{flex:1 1 auto;}
+.whl-foot .left{display:flex; gap:8px;}
+.whl-hint{font-size:var(--fs-sm); color:var(--ink-tertiary); padding-top:6px; flex:none;}
+
+/* 预览弹窗：iframe 载入现有 wheel-assembly.html?embed=1 */
+.whl-pv-frame{
+  width:100%; height:min(72vh,620px); min-height:380px;
+  border:1px solid var(--border-light); border-radius:var(--radius-md);
+  background:var(--bg); display:block;
+}
+.whl-pv-note{font-size:var(--fs-sm); color:var(--ink-tertiary); padding-top:8px; flex:none;}
+
+@media (max-width:768px){
+  .whl-sec .section-inner{padding:0 12px;}
+  .whl-col{width:142px;}
+  .whl-pv-frame{height:min(66vh,480px);}
+}
+</style>
+</head>
+<body>
+
+<section class="section whl-sec">
+  <div class="section-inner">
+    <div class="whl-bar">
+      <span class="whl-count" id="count">共 <b>50</b> 片</span>
+    </div>
+
+    <!-- 贴片等比读数单独一行：不挤参数条，也让「字占片多少」一眼可见 -->
+    <div class="whl-specbar" id="spec"></div>
+    <div class="whl-stage" id="stage">
+      <div class="whl-grid" id="grid"></div>
+      <div class="whl-side">
+        <!-- A 组：重置 + 热端（照魔方排版，置于生成预览上方） -->
+        <div class="whl-grp">
+          <div class="whl-grp-h">重置 / 热端</div>
+          <button class="whl-sq" id="btn_reset" type="button" data-act="reset" title="重置字表"><span>重置字表</span></button>
+          <div class="whl-hot" id="hotend" role="group" aria-label="贴片热端（喷嘴）">
+            <button type="button" data-h="H02" class="on" title="0.2 喷嘴：孔 φ2.25 / 销 φ2.10 / 间隙 0.15">0.2</button>
+            <button type="button" data-h="H04" title="0.4 喷嘴：孔 φ2.30 / 销 φ2.10 / 间隙 0.20">0.4</button>
+          </div>
+        </div>
+        <!-- B 组：操作（生成预览这组按钮） -->
+        <div class="whl-grp">
+          <div class="whl-grp-h">操作</div>
+          <button class="whl-sq" id="btn_preview" type="button" title="3D 预览"><span>生成预览</span></button>
+          <button class="whl-sq" id="btn_export" type="button" title="导出字表"><span>导出字表</span></button>
+          <button class="whl-sq" id="btn_import" type="button" title="导入字表"><span>导入字表</span></button>
+        </div>
+        <!-- C 组：数量（点击开弹窗编辑） -->
+        <div class="whl-grp">
+          <div class="whl-grp-h">数量</div>
+          <button class="whl-cnt" id="btn_n" type="button" title="设置轮盘面数"><b>10</b><span>轮盘面数</span></button>
+          <button class="whl-cnt" id="btn_m" type="button" title="设置轮盘数量"><b>5</b><span>轮盘数量</span></button>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="import_file" accept=".md,.markdown,.json,text/markdown,application/json" hidden>
+  </div>
+</section>
+
+<!-- 导出弹窗 -->
+<div class="whl-mask" id="exp_mask">
+  <div class="whl-dlg">
+    <h3>导出字表
+      <button class="whl-x" id="exp_close_x" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="M6 6 18 18"/><path d="M18 6 6 18"/></svg>
+      </button>
+    </h3>
+    <div class="whl-tabs" id="exp_tabs">
+      <button class="whl-tab on" type="button" data-t="md">Blender 插件 · md</button>
+      <button class="whl-tab" type="button" data-t="json">整套数据 · json</button>
+    </div>
+    <div class="whl-exp-row" id="exp_pick_row">
+      <span>导出哪个轮盘</span>
+      <select id="exp_pick"></select>
+      <span class="ext" id="exp_ext">.md</span>
+    </div>
+    <div class="whl-exp-row">
+      <span>文件名</span>
+      <input type="text" id="exp_name" spellcheck="false" autocomplete="off" placeholder="留空 = 自动命名">
+      <button class="btn-outline" id="exp_name_def" type="button">自动</button>
+    </div>
+    <textarea class="whl-ta" id="exp_ta" readonly spellcheck="false"></textarea>
+    <div class="whl-hint" id="exp_hint"></div>
+    <div class="whl-foot">
+      <button class="btn-outline" id="exp_download" type="button">下载文件</button>
+      <span class="sp"></span>
+      <button class="btn-outline" id="exp_close" type="button">关闭</button>
+      <button class="btn-filled" id="exp_copy" type="button">复制到剪贴板</button>
+    </div>
+  </div>
+</div>
+
+<!-- 数量设置弹窗 -->
+<div class="whl-mask" id="cnt_mask">
+  <div class="whl-dlg" style="width:min(420px,94vw)">
+    <h3>设置数量
+      <button class="whl-x" id="cnt_close_x" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="M6 6 18 18"/><path d="M18 6 6 18"/></svg>
+      </button>
+    </h3>
+    <div class="whl-exp-row"><span>轮盘面数 (N)</span><input type="number" id="cnt_n" min="3" max="24" step="1"></div>
+    <div class="whl-exp-row"><span>轮盘数量 (M)</span><input type="number" id="cnt_m" min="1" max="8" step="1"></div>
+    <div class="whl-hint">面数 = 每个轮盘的贴片数（N 行面序）；轮盘数量 = 列数（一套 N 字 × M 轮盘）。</div>
+    <div class="whl-foot">
+      <span class="sp"></span>
+      <button class="btn-outline" id="cnt_cancel" type="button">取消</button>
+      <button class="btn-filled" id="cnt_apply" type="button">应用</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑格子弹窗 -->
+<div class="whl-mask" id="ed_mask">
+  <div class="whl-dlg">
+    <h3><span id="ed_title">编辑格子</span><span class="face-tag" id="ed_face"></span></h3>
+    <div class="whl-ed-body">
+      <div class="whl-ed-left">
+        <div class="whl-fld2"><label>文字（单字）</label><input type="text" id="ed_ch" maxlength="1" placeholder="单字" autocomplete="off" spellcheck="false"></div>
+        <div class="whl-fld2"><label>排版类型</label>
+          <select id="ed_kind">
+            <option value="SINGLE" selected>单字</option>
+          </select>
+        </div>
+        <div class="whl-fld2"><label>字号 (mm)</label><input type="number" id="ed_size" min="1" max="30" step="0.1"></div>
+        <div class="whl-fld2"><label>字体</label>
+          <select id="ed_font">
+            <option value="def">默认（等线）</option>
+            <option value="deng">等线</option>
+            <option value="hei">黑体</option>
+            <option value="kai">楷体</option>
+            <option value="mono">等宽</option>
+          </select>
+        </div>
+        <label class="whl-sw"><input type="checkbox" id="ed_auto"><span class="tk"></span><span class="tx" id="ed_auto_tx">开 <span class="dft">默认</span></span></label>
+        <div class="whl-ed-note">字号默认 18 mm（插件同口径）；自动缩放 = 装不下时把字等比缩到贴片边距内（默认开）；关 = 按设定字号原样排（可能顶满甚至超出边界）。</div>
+      </div>
+      <div class="whl-ed-right">
+        <div class="whl-cap">贴片预览（正视 · 1:1）</div>
+        <div class="whl-prev" id="ed_prev"><span class="ch" id="ed_prev_ch"></span></div>
+      </div>
+    </div>
+    <div class="whl-foot">
+      <div class="left">
+        <button class="btn-outline" id="ed_reset_cell" type="button">重置本格</button>
+        <button class="btn-outline" id="ed_clear" type="button">清空此格</button>
+      </div>
+      <span class="sp"></span>
+      <button class="btn-outline" id="ed_cancel" type="button">取消</button>
+      <button class="btn-filled" id="ed_save" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 预览弹窗 -->
+<div class="whl-mask" id="pv_mask">
+  <div class="whl-dlg wide">
+    <h3>轮盘 3D 预览
+      <button class="whl-x" id="pv_close_x" title="关闭预览" aria-label="关闭预览">
+        <svg viewBox="0 0 24 24"><path d="M6 6 18 18"/><path d="M18 6 6 18"/></svg>
+      </button>
+    </h3>
+    <iframe class="whl-pv-frame" id="pv_frame" src="about:blank" title="轮盘 3D 装配预览"></iframe>
+    <div class="whl-pv-note">预览按当前「面数 / 轮盘数量」生成；右侧图标可切换盖端外形、自动旋转、拆解、图例。</div>
+  </div>
+</div>
+
+<!-- 取色弹层（每轮盘 字色/底色 两个色槽） -->
+<div class="whl-pop" id="whl_pop">
+  <div class="pp-h"><span id="pp_title">取色</span><button class="pp-close" id="pp_close" title="关闭" aria-label="关闭">×</button></div>
+  <div class="pp-sw" id="pp_sw"></div>
+  <div class="pp-custom">
+    <input type="color" id="pp_color" value="#1a61cc" aria-label="自定义颜色">
+    <button class="pp-add" id="pp_add" type="button">添加新色</button>
+  </div>
+  <div class="pp-err" id="pp_err"></div>
+</div>
+
+<script src="nav.js?v=6f98d37a"></script>
+<script>
+/* ============================================================
+   手轮贴片字表 · 数据 / 渲染 / 导出 / 导入 / 预览 / 单格编辑
+   - state.cols[m][n] = 单字；一列 = 一个轮盘的一套 N 字字表
+   - state.style[m][n] = null | {size(mm), font, auto, kind}：单格样式覆盖
+   - md 只放「当前轮盘」的 N 行表格（字），⛔ 不能放 M 组；
+     整套数据（含 style）放 ```json 块，供本页导入回读。
+   ============================================================ */
+(function(){
+  var KEY = 'whl_wheel_table_v1';
+  var DEF = {n:10, m:5, hotend:'H02'};
+  var state = null;
+
+  /* ⛔ 轮盘外径 / 面宽是 Blender 插件（WHG）的参数，不在本页设置。
+     这里只固定「插件默认值」用于算格子等比，让字占面比例有个依据：
+       DISC_DIA = 2·BASE_R = 55.7275（wheel_generator.py DEFAULTS.disc_dia）
+       BASE_T   = 12.00              （DEFAULTS.disc_w）
+     插件里改了外径/面宽，本页格子比例不会跟着变 —— 以插件实物为准。 */
+  var PLUGIN = {dia:55.7275, t:12.0};
+
+  function clamp(v, lo, hi, d){ v = Math.round(+v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; }
+
+  /* 贴片真实尺寸（mm）—— 严格照抄 wheel_generator.py 的 TILE / make_params：
+       W = dia·sin(π/N)         周向弦长（轮盘一个面的「高」）
+       tileCir = W − 2×0.70     周向贴片高（退棱，不越过棱线）
+       tileAx  = T − 2×0.50     轴向贴片宽（避开象脚/端面）
+       字号    = 18 mm（插件 TILE.text_size，用户 2026-11-08 定稿）
+                 ⛔ 18 对默认贴片必然超出，靠「自动缩放到边距内」压回（插件同语义，只缩不放）；
+                 旧的 0.60×tileAx（=6.6mm）口径已作废。
+     格子 / 字都按同一 k 缩放，所以「字占片的比例」与实物一致。 */
+  var PX_PER_MM = 6.2;
+  var FONT_MM = 18.0;          // 默认字号（mm）= 插件 TILE.text_size
+  var TEXT_MARGIN_MM = 0.8;    // 自动缩放内边距（mm）= 插件 WHL_TileText.margin 默认
+  var GLYPH_W_EM = 0.62;       // 【兜底】量不出墨迹盒时的字宽 em 估算（canvas 不可用才走）
+  var CELL_PAD = 12;           // .whl-cells 左右 padding 6+6：吃掉格子的可视宽
+  var CELL_BORDER = 5;         // .whl-cell.filled 边框 5+5：⚠ 格子是 border-box，内框 = 外框 − 10
+  // 格子内框补偿：--tw/--th 给的是「外框」，内框正好 = 贴片 mm×k → 预览恢复与实物等比。
+  // ⛔ 2026-11-08 实测：不补偿时内框只有 46.2×88.1px，而字号按 58.3×88.2 在算 → 字必然溢出。
+  // 列头色块沿用 3D 魔方 PALETTE 顺序；轮盘数最多 8，循环取色
+  var PALETTE = ['#f27317','#d91f1f','#1a61cc','#219e40','#0f0f12','#7340b3'];
+  var LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  /* 默认字表：面1=数字(从 0 起)、面5=数学符号（+ − × ÷ = 循环，减号用 U+2212）、其余=英文字母
+     用户 2026-11-08 定：面1 是 0 1 2 …（不是从 1 起）；10 格时面5 排成 + − × ÷ = + − × ÷ = */
+  var SYMBOLS = ['+','\u2212','\u00D7','\u00F7','='];
+  var SYM_FACE = 4;                       // 面5（下标 4）
+  function defaultChar(j, i){
+    if(j === 0) return String(i);        // ⛔ 面1 从 0 起（用户 2026-11-08 纠正：不是 1–10，是 0–9）
+    if(j === SYM_FACE) return SYMBOLS[i % SYMBOLS.length];
+    return LETTERS.charAt(i % 26);
+  }
+  var FONTS = {
+    def:'inherit',
+    deng:'"DengXian","Microsoft YaHei",sans-serif',
+    hei:'"Microsoft YaHei","PingFang SC",sans-serif',
+    kai:'"KaiTi","STKaiti",serif',
+    mono:'ui-monospace,Consolas,monospace'
+  };
+  function filledOf(j){
+    var c = state.cols[j] || [], n = 0;
+    for(var i=0;i<c.length;i++) if(String(c[i] || '').length) n++;
+    return n;
+  }
+  function tileSpec(){
+    var W = PLUGIN.dia * Math.sin(Math.PI / state.n);
+    var cir = Math.max(0.4, W - 1.40);
+    var ax  = Math.max(0.4, PLUGIN.t - 1.00);
+    // 极端参数保护：N 小+外径大时片高会到 400px → 上限 240px 等比缩小；
+    // N 大+外径小时片高只剩 16px（不好点）→ 下限 32px 等比放大。
+    // 两者都是整体缩放，宽/高/字同比变化 → 片比例不失真。
+    var k = Math.max(32 / cir, Math.min(PX_PER_MM, 240 / cir));
+    var w = ax * k, h = cir * k;
+    // 格子外框（含 .whl-cells padding 与格子边框）→ CSS 内框 = w / h，与实物等比
+    var cellW = w + CELL_PAD + 2 * CELL_BORDER;
+    var cellH = h + 2 * CELL_BORDER;
+    var mg = TEXT_MARGIN_MM * k;                                 // 内边距(px)
+    var availW = Math.max(4, w - 2 * mg), availH = Math.max(4, h - 2 * mg);  // 墨迹可用区(px)
+    // 默认字号 18mm 对默认贴片必然超出 → 按插件 auto 同语义压到「贴片 − 2×内边距」。
+    // capMm 是 em 口径的预压（与插件 size 语义一致）；真正的一刀是 cellFont 里的墨迹实测。
+    var capY = Math.max(0.5, cir - 2 * TEXT_MARGIN_MM);          // 字身高可用（mm）
+    var capX = Math.max(0.5, ax  - 2 * TEXT_MARGIN_MM);          // 读向可用（mm）
+    var capMm = Math.min(capY, capX / GLYPH_W_EM);               // 可用字号上限（mm）
+    var mm = Math.min(FONT_MM, capMm);                           // 实际生效字号（mm）
+    var guard = Math.min(availH, availW / GLYPH_W_EM);           // 极端参数下的绝对护栏（px）
+    var fs = Math.min(mm * k, guard);
+    return {W:W, cir:cir, ax:ax, font:FONT_MM, k:k,
+            w:w, h:h, cellW:cellW, cellH:cellH, mg:mg, availW:availW, availH:availH,
+            fs:fs, mm:mm, capMm:capMm,
+            capPx:Math.min(capMm * k, guard),
+            ratioW:ax/cir, autoShrunk:(mm < FONT_MM - 1e-6)};
+  }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function defaultState(){
+    var s = {n:DEF.n, m:DEF.m, hotend:DEF.hotend, cols:[], style:[], palette:PALETTE.slice(), wcols:[]};
+    for(var j=0;j<s.m;j++){
+      var col=[], scol=[];
+      for(var i=0;i<s.n;i++){
+        col.push(defaultChar(j, i));  // 面1=数字、面5=数学符号、其余=英文字母
+        scol.push(null);
+      }
+      s.cols.push(col); s.style.push(scol);
+      s.wcols.push({bg:'#fffdf8', fg:PALETTE[j % PALETTE.length]});  // 每轮盘：底色(象牙白) + 字色(轮盘色)
+    }
+    return s;
+  }
+  /* 确保 state.palette / state.wcols 存在且长度 = m；wcols 缺省 底色=象牙白、字色=轮盘色；色值统一转小写避免重复判定漏判 */
+  function ensureColors(s){
+    if(!Array.isArray(s.palette) || !s.palette.length) s.palette = PALETTE.slice();
+    s.palette = s.palette.map(function(h){ return normHex(h) || String(h).toLowerCase(); });
+    var wc = Array.isArray(s.wcols) ? s.wcols : [];
+    var out = [];
+    for(var j=0;j<s.m;j++){
+      var e = wc[j] || {};
+      out.push({
+        bg: normHex(e.bg) || '#fffdf8',
+        fg: normHex(e.fg) || s.palette[j % s.palette.length]
+      });
+    }
+    s.wcols = out;
+  }
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(KEY) || sessionStorage.getItem(KEY);
+      if(!raw) return defaultState();
+      var s = JSON.parse(raw);
+      if(!s || !Array.isArray(s.cols) || !s.cols.length) return defaultState();
+      s.n = clamp(s.n,3,24,DEF.n); s.m = clamp(s.m,1,8,DEF.m);
+      // 旧版本存档里可能还有 dia/t：⛔ 直接丢弃，尺寸一律以插件默认常量为准
+      delete s.dia; delete s.t;
+      if(s.hotend !== 'H04') s.hotend = 'H02';
+      // 补齐/裁到 n×m，⛔ 不静默保留脏数据
+      var cols=[], style=[];
+      for(var j=0;j<s.m;j++){
+        var src = Array.isArray(s.cols[j]) ? s.cols[j] : [], col=[], scol=[];
+        var ssrc = Array.isArray(s.style) && Array.isArray(s.style[j]) ? s.style[j] : [];
+        for(var i=0;i<s.n;i++){
+          col.push(String(src[i] == null ? '' : src[i]).slice(0,1));
+          scol.push(ssrc[i] != null ? ssrc[i] : null);
+        }
+        cols.push(col); style.push(scol);
+      }
+      s.cols = cols; s.style = style;
+      ensureColors(s);
+      return s;
+    }catch(e){ return defaultState(); }
+  }
+  function saveState(){
+    try{
+      var raw = JSON.stringify(state);
+      localStorage.setItem(KEY, raw); sessionStorage.setItem(KEY, raw);
+    }catch(e){}
+  }
+  function resize(n, m){
+    var cols=[], style=[];
+    for(var j=0;j<m;j++){
+      var src = state.cols[j] || [], ssrc = (state.style && state.style[j]) || [], col=[], scol=[];
+      for(var i=0;i<n;i++){
+        col.push(src[i] != null ? String(src[i]).slice(0,1) : defaultChar(j, i));
+        scol.push(ssrc[i] != null ? ssrc[i] : null);
+      }
+      cols.push(col); style.push(scol);
+    }
+    state.n=n; state.m=m; state.cols=cols; state.style=style;
+    ensureColors(state);                 // 补齐每轮盘底色/字色（保留已有、补新列默认）
+    colStart = [];                       // 参数变了各列回面 0
+    saveState(); render();
+  }
+
+  /* ---------- 字形墨迹实测（2026-11-08） ----------
+     CSS 的 font-size 是 em 盒不是字高，÷ × = − 等符号墨迹与数字差异很大
+     （100px 实测：0→62×75、A→71×71、÷→61×59），em 估算必溢出。
+     这里用 canvas measureText 量「真实墨迹盒」，照插件 auto 同一语义：
+     只缩不放，压进「格子内框 − 2×内边距」，并给出墨迹居中所需的平移量。 */
+  var _ink = {cache:{}, cv:null, fam:null};
+  function bodyFam(){
+    if(_ink.fam === null){
+      try{ _ink.fam = getComputedStyle(document.body).fontFamily || 'sans-serif'; }
+      catch(e){ _ink.fam = 'sans-serif'; }
+    }
+    return _ink.fam;
+  }
+  function inkBox(ch, fam){
+    if(!ch) return null;
+    fam = fam || bodyFam();
+    var key = fam + '|' + ch;
+    if(_ink.cache[key] !== undefined) return _ink.cache[key];
+    var out = null;
+    try{
+      var cv = _ink.cv || (_ink.cv = document.createElement('canvas'));
+      var ctx = cv.getContext('2d');
+      ctx.font = '700 100px ' + fam;
+      var m = ctx.measureText(ch);
+      var w = m.actualBoundingBoxRight + m.actualBoundingBoxLeft;
+      var h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+      if(w > 0 && h > 0){
+        var fa = m.fontBoundingBoxAscent || 80, fd = m.fontBoundingBoxDescent || 20;
+        out = {w:w, h:h,
+               dx:(m.width - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft)) / 2,   // 水平居中修正
+               dy:((fd - fa) - (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent)) / 2}; // 垂直居中修正
+      }
+    }catch(e){ out = null; }
+    _ink.cache[key] = out;
+    return out;
+  }
+  function inkShift(ink, px){
+    return (ink && (ink.dx || ink.dy))
+      ? 'transform:translate(' + (ink.dx * px / 100).toFixed(2) + 'px,' + (ink.dy * px / 100).toFixed(2) + 'px);' : '';
+  }
+
+  /* 某格的显示字号(px)与字体：style 覆盖优先；auto（默认开，= 插件 auto 只缩不放）
+     时按墨迹实测压回「内框 − 2×内边距」。ts.mm 本身就是 18mm 压好的默认值。 */
+  function cellFont(c, i, ts){
+    ts = ts || tileSpec();
+    var sizeMm = ts.mm, fam = '', st = state.style[c] && state.style[c][i];
+    if(st){
+      if(st.size) sizeMm = st.size;
+      fam = FONTS[st.font] || '';
+    }
+    var px = sizeMm * ts.k;
+    var auto = !st || !!st.auto;                 // 默认开（与插件 WHL_TileText.auto 默认一致）
+    var ink = auto ? inkBox(state.cols[c][i] || '', fam) : null;
+    if(ink){
+      px = Math.min(px, 100 * ts.availW / ink.w, 100 * ts.availH / ink.h);
+    }else if(auto && px > ts.capPx){
+      px = ts.capPx;                             // 兜底：量不出墨迹退回 em 估算
+    }
+    return {px:px, fam:fam, ink:ink};
+  }
+
+  function render(){
+    var ts = tileSpec();
+    /* --tw/--th/--fs 写在 #stage：格子与右侧功能按钮同源，按钮尺寸自动 = 白框 */
+    var stageEl = document.getElementById('stage');
+    stageEl.style.setProperty('--tw', ts.cellW.toFixed(1) + 'px');
+    stageEl.style.setProperty('--th', ts.cellH.toFixed(1) + 'px');
+    stageEl.style.setProperty('--fs', ts.fs.toFixed(1) + 'px');
+    document.getElementById('spec').innerHTML =
+      '按插件默认 <b>Ø' + PLUGIN.dia + ' / 面宽 ' + PLUGIN.t.toFixed(1) +
+      '</b> 等比 · 贴片 <b>' + ts.ax.toFixed(1) + ' × ' + ts.cir.toFixed(1) + '</b> mm（宽:高 ' +
+      (ts.ratioW*100).toFixed(0) + ':100） · 默认字号 <b>' + ts.font.toFixed(1) + '</b> mm' +
+      (ts.autoShrunk
+        ? ' · 超贴片，自动缩放后 <b>' + ts.mm.toFixed(1) + '</b> mm'
+        : ' · 未超贴片');
+    var html = '';
+    var swPal = (Array.isArray(state.palette) && state.palette.length) ? state.palette : PALETTE;  // 列头小方块取色兜底
+    for(var j=0;j<state.m;j++){
+      var wc = state.wcols[j] || {bg:'#fffdf8', fg:PALETTE[j % PALETTE.length]};
+      var rows = '';
+      for(var i=0;i<state.n;i++){
+        var ch = state.cols[j][i] || '';
+        var f = cellFont(j, i, ts);
+        var stAttr = 'font-size:' + f.px.toFixed(1) + 'px;' + (f.fam ? 'font-family:' + f.fam + ';' : '');
+        if(ch) stAttr += 'background:' + wc.bg + ';color:' + wc.fg + ';';  // 逐轮盘底色/字色
+        rows += '<div class="whl-row">'
+              +   '<div class="whl-cell' + (ch ? ' filled' : '') + '" data-c="' + j + '" data-i="' + i + '"'
+              +   ' style="' + stAttr + '" title="轮盘 ' + (j+1) + ' 面 ' + i + '">'
+              +   '<span class="whl-ano">' + i + '</span>'
+              +   '<span class="ch" style="' + inkShift(f.ink, f.px) + '">' + esc(ch) + '</span></div>'
+              + '</div>';
+      }
+      html += '<div class="whl-col" data-c="' + j + '">'
+            +   '<div class="whl-col-main">'
+            +     '<div class="whl-col-head">'
+            +       '<span class="whl-swatch" style="background:' + swPal[j % swPal.length] + '"></span>'
+            +       '<b>面' + (j+1) + '</b>'
+            +     '</div>'
+            +     '<div class="whl-cells"><div class="whl-track" data-c="' + j + '">' + rows + '</div></div>'
+            +     '<span class="whl-fcount">' + filledOf(j) + '/' + state.n + '</span>'
+            +   '</div>'
+            +   '<div class="whl-col-pg">'
+            +     '<button class="whl-pg-btn" data-c="' + j + '" data-d="-1" type="button" title="上移一格" aria-label="上移一格">▲</button>'
+            +     '<button class="whl-pg-btn" data-c="' + j + '" data-d="1" type="button" title="下移一格" aria-label="下移一格">▼</button>'
+            +   '</div>'
+            + '</div>';
+    }
+    document.getElementById('grid').innerHTML = html;
+    document.getElementById('count').innerHTML = '共 <b>' + (state.n * state.m) + '</b> 片';
+    document.querySelectorAll('#hotend button').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-h') === state.hotend);
+    });
+    // 数量按钮读数
+    document.querySelector('#btn_n b').textContent = state.n;
+    document.querySelector('#btn_m b').textContent = state.m;
+    // 导出弹窗的轮盘下拉
+    var sel = document.getElementById('exp_pick'), opts = '';
+    for(var k=0;k<state.m;k++) opts += '<option value="' + k + '">轮盘 ' + (k+1) + '</option>';
+    var keep = Math.min(+sel.value || 0, state.m-1);
+    sel.innerHTML = opts; sel.value = keep;
+    layout();
+  }
+
+  /* ---------- 一屏内显示 / 每列独立逐格翻页 ----------
+     ⛔ 每列各有一个 colStart[j]，右侧 ▲/▼ 只翻自己那一列（用户 2026-11-08 定稿）；
+     视窗高度仍全体共用（同一套 --cells-h），可下行数 vis 全列一致。
+     视窗高度按当前窗口可用高度动态算，改窗口 / 改参数都会重排。 */
+  var colStart = [];              // 每列的起始面序
+  var ROWGAP = 6;                 // 与 .whl-track gap 一致
+  var FIXED = 62;                 // 列头 ~24 + 底部留白 ~18 + 余量
+
+  function visibleRows(step){
+    var stage = document.getElementById('stage');
+    var top = stage ? stage.getBoundingClientRect().top : 150;
+    var avail = window.innerHeight - top - FIXED;
+    if(avail < step) avail = step;
+    var n = Math.floor((avail + ROWGAP) / step);
+    return Math.max(1, Math.min(state.n, n));
+  }
+  var lastVis = 1;                 // 最近一次算出的可见行数，供翻页时复用
+  function fitHeight(h, vis){
+    var grid = document.getElementById('grid');
+    grid.style.setProperty('--cells-h', (vis*h + (vis-1)*ROWGAP + 12).toFixed(1) + 'px');
+  }
+  function trackOff(c, step){
+    var t = document.querySelector('.whl-track[data-c="' + c + '"]');
+    if(t) t.style.transform = 'translateY(' + (-(colStart[c]||0) * step).toFixed(1) + 'px)';
+  }
+  function pgBtns(c){
+    var col = document.querySelector('.whl-col[data-c="' + c + '"]');
+    return col ? col.querySelectorAll('.whl-pg-btn') : [];
+  }
+  function refreshPg(maxStart){
+    for(var j=0;j<state.m;j++){
+      var s = colStart[j] || 0;
+      var b = pgBtns(j);
+      if(b.length >= 2){
+        b[0].disabled = (s <= 0);
+        b[1].disabled = (s >= maxStart);
+      }
+    }
+  }
+  function layout(){
+    var grid = document.getElementById('grid');
+    var cs = getComputedStyle(grid);
+    var h = parseFloat(cs.getPropertyValue('--th')) || 82;
+    var step = h + ROWGAP;
+    var vis = visibleRows(step);
+    /* ⛔ 别只靠估算：导航高度、字体、section padding 都会吃掉空间。
+       按真实 scrollHeight 逐行收敛，直到整页不超过一屏（最多 N 次）。 */
+    fitHeight(h, vis);
+    for(var guard=0; guard<state.n; guard++){
+      if(document.documentElement.scrollHeight <= window.innerHeight + 2) break;
+      if(vis <= 1) break;
+      vis--; fitHeight(h, vis);
+    }
+    lastVis = vis;
+    var maxStart = Math.max(0, state.n - vis);
+    if(colStart.length !== state.m){
+      colStart = []; for(var k=0;k<state.m;k++) colStart.push(0);
+    }
+    for(var j=0;j<state.m;j++){
+      colStart[j] = Math.min(colStart[j]||0, maxStart);
+      trackOff(j, step);
+    }
+    refreshPg(maxStart);
+  }
+  function pageBy(c, d){
+    var maxStart = Math.max(0, state.n - lastVis);
+    var next = Math.max(0, Math.min(maxStart, (colStart[c]||0) + d));
+    if(next === colStart[c]) return;
+    colStart[c] = next;
+    var grid = document.getElementById('grid');
+    var h = parseFloat(getComputedStyle(grid).getPropertyValue('--th')) || 82;
+    trackOff(c, h + ROWGAP);
+    refreshPg(maxStart);
+  }
+
+  /* ---------- 单格编辑弹窗 ---------- */
+  var edC = 0, edI = 0;
+  function openEditor(c, i){
+    edC = c; edI = i;
+    var ch = state.cols[c][i] || '';
+    var st = (state.style[c] && state.style[c][i]) || {size:null, font:'def', auto:true, kind:'SINGLE'};
+    var ts = tileSpec();
+    document.getElementById('ed_title').textContent = '编辑格子 · 第 ' + (i+1) + ' 格';
+    document.getElementById('ed_face').textContent = '面' + (c+1);
+    document.getElementById('ed_ch').value = ch;
+    document.getElementById('ed_kind').value = st.kind || 'SINGLE';
+    document.getElementById('ed_size').value = (st.size != null ? st.size : ts.font).toFixed(1);
+    document.getElementById('ed_font').value = st.font || 'def';
+    document.getElementById('ed_auto').checked = !!st.auto;
+    updateAutoTx(); updatePrev();
+    document.getElementById('ed_mask').classList.add('show');
+    setTimeout(function(){ document.getElementById('ed_ch').focus(); }, 30);
+  }
+  function closeEditor(){ document.getElementById('ed_mask').classList.remove('show'); }
+  function updateAutoTx(){
+    var on = document.getElementById('ed_auto').checked;
+    var tx = document.getElementById('ed_auto_tx');
+    tx.innerHTML = on ? '开 <span class="dft">默认</span>' : '关';
+    tx.classList.toggle('off', !on);
+  }
+  function updatePrev(){
+    var ts = tileSpec();
+    var sizeMm = parseFloat(document.getElementById('ed_size').value) || ts.font;
+    var auto = document.getElementById('ed_auto').checked;
+    var fam = FONTS[document.getElementById('ed_font').value] || '';
+    var chVal = document.getElementById('ed_ch').value || '';
+    var px = sizeMm * ts.k, dx = 0, dy = 0;
+    if(auto){
+      var ink = inkBox(chVal, fam);
+      if(ink){
+        var aw = Math.max(4, ts.w - 2 * ts.mg - 2), ah = Math.max(4, ts.h - 2 * ts.mg - 2);
+        px = Math.min(px, 100 * aw / ink.w, 100 * ah / ink.h);
+        dx = ink.dx * px / 100; dy = ink.dy * px / 100;
+      }else if(px > ts.capPx){
+        px = ts.capPx;                             // 兜底：em 估算
+      }
+    }
+    var prev = document.getElementById('ed_prev');
+    prev.style.width = ts.w.toFixed(0) + 'px'; prev.style.height = ts.h.toFixed(0) + 'px';
+    var chEl = document.getElementById('ed_prev_ch');
+    chEl.textContent = chVal;
+    chEl.style.fontSize = px.toFixed(1) + 'px';
+    chEl.style.fontFamily = fam;
+    chEl.style.transform = (dx || dy) ? ('translate(' + dx.toFixed(2) + 'px,' + dy.toFixed(2) + 'px)') : '';
+  }
+  function saveEditor(){
+    var ch = document.getElementById('ed_ch').value.slice(0,1);
+    var size = parseFloat(document.getElementById('ed_size').value);
+    var font = document.getElementById('ed_font').value;
+    var auto = document.getElementById('ed_auto').checked;
+    var kind = document.getElementById('ed_kind').value;
+    var ts = tileSpec();
+    state.cols[edC][edI] = ch;
+    // 仅当与全局默认不同才存（size 默认 = ts.font）
+    var isDef = (Math.abs((isFinite(size) ? size : ts.font) - ts.font) < 0.05)
+             && (font === 'def') && auto && (kind === 'SINGLE');
+    if(isDef) state.style[edC][edI] = null;
+    else state.style[edC][edI] = {size:isFinite(size)?size:ts.font, font:font, auto:auto, kind:kind};
+    saveState();
+    var cell = document.querySelector('.whl-cell[data-c="' + edC + '"][data-i="' + edI + '"]');
+    if(cell){
+      cell.querySelector('.ch').textContent = ch;
+      cell.classList.toggle('filled', !!ch);
+      var f = cellFont(edC, edI, ts);
+      cell.style.fontSize = f.px.toFixed(1) + 'px';
+      cell.style.fontFamily = f.fam;
+      var sp = cell.querySelector('.ch');
+      if(sp) sp.style.transform = f.ink ? ('translate(' + (f.ink.dx*f.px/100).toFixed(2) + 'px,' + (f.ink.dy*f.px/100).toFixed(2) + 'px)') : '';
+    }
+    var colEl = cell && cell.closest ? cell.closest('.whl-col') : null;
+    var fc = colEl && colEl.querySelector('.whl-fcount');
+    if(fc) fc.textContent = filledOf(edC) + '/' + state.n;
+    closeEditor();
+  }
+  function resetCellStyle(){
+    // 重置本格样式到全局默认（保留文字）
+    state.style[edC][edI] = null;
+    var ts = tileSpec();
+    document.getElementById('ed_size').value = ts.font.toFixed(1);
+    document.getElementById('ed_font').value = 'def';
+    document.getElementById('ed_auto').checked = false;
+    document.getElementById('ed_kind').value = 'SINGLE';
+    updateAutoTx(); updatePrev();
+  }
+  function clearCell(){
+    // 清空此格（文字 + 样式）
+    state.cols[edC][edI] = '';
+    state.style[edC][edI] = null;
+    document.getElementById('ed_ch').value = '';
+    updatePrev();
+  }
+
+  /* ---------- 数量设置弹窗 ---------- */
+  function openCount(){
+    document.getElementById('cnt_n').value = state.n;
+    document.getElementById('cnt_m').value = state.m;
+    document.getElementById('cnt_mask').classList.add('show');
+    setTimeout(function(){ document.getElementById('cnt_n').focus(); }, 30);
+  }
+  function closeCount(){ document.getElementById('cnt_mask').classList.remove('show'); }
+  function applyCount(){
+    var n = clamp(document.getElementById('cnt_n').value, 3, 24, state.n);
+    var m = clamp(document.getElementById('cnt_m').value, 1, 8, state.m);
+    closeCount();
+    if(n === state.n && m === state.m) return;
+    resize(n, m);
+  }
+
+  /* ---------- 导出 ---------- */
+  function stamp(){
+    var d = new Date(), p = function(x){ return (x<10?'0':'')+x; };
+    return d.getFullYear() + p(d.getMonth()+1) + p(d.getDate());
+  }
+  function jsonObj(){
+    return {
+      type:'wheel-tile-table', version:3,
+      n:state.n, m:state.m, hotend:state.hotend,
+      cols:state.cols.map(function(c){ return c.slice(); }),
+      style:state.style.map(function(c){ return c.slice(); }),
+      palette:state.palette.slice(),
+      wcols:state.wcols.map(function(w){ return {bg:w.bg, fg:w.fg}; }),
+      note:'一列 = 一个轮盘的一套 N 字字表；md 表格只导出选中轮盘。⛔ 轮盘外径/面宽由 Blender 插件设置，本表不含尺寸参数'
+    };
+  }
+  function autoName(ext){
+    return '手轮贴片字表_N' + state.n + '_M' + state.m + '_' + state.hotend + '_' + stamp() + ext;
+  }
+  function buildMD(pick){
+    var L = [];
+    L.push('# 手轮贴片字表 · 轮盘 ' + (pick+1));
+    L.push('');
+    L.push('> 来源：wlili.top 手轮贴片字表');
+    L.push('> 面数 N=' + state.n + ' · 轮盘数 M=' + state.m + ' · 热端 ' + state.hotend + ' · 生成 ' + stamp());
+    L.push('> ⚠ 轮盘外径 / 面宽由 Blender 插件设置，本表不含尺寸参数，也不驱动插件。');
+    L.push('> ⚠ 本表只含「轮盘 ' + (pick+1) + '」的 ' + state.n + ' 行，行数必须 = 轮盘面数（WHG 插件不静默补齐/截断）。');
+    L.push('');
+    L.push('## 字表（面序 → 字）');
+    L.push('');
+    L.push('| 面序 | 字 |');
+    L.push('|---|---|');
+    for(var i=0;i<state.n;i++){
+      var ch = (state.cols[pick][i] || '').replace(/\|/g, '\\|');
+      L.push('| ' + i + ' | ' + ch + ' |');
+    }
+    L.push('');
+    L.push('## 机器可读（整套 ' + state.m + ' 个轮盘）');
+    L.push('');
+    L.push('```json');
+    L.push(JSON.stringify(jsonObj(), null, 2));
+    L.push('```');
+    L.push('');
+    return L.join('\n');
+  }
+  function buildJSON(){ return JSON.stringify(jsonObj(), null, 2); }
+
+  var expTab = 'md';
+  function refreshExp(){
+    var pick = clamp(document.getElementById('exp_pick').value, 0, state.m-1, 0);
+    var isMD = expTab === 'md';
+    document.getElementById('exp_pick_row').style.display = isMD ? 'flex' : 'none';
+    document.getElementById('exp_ext').textContent = isMD ? '.md' : '.json';
+    document.getElementById('exp_ta').value = isMD ? buildMD(pick) : buildJSON();
+    document.getElementById('exp_hint').textContent = isMD
+      ? 'md 表格 = ' + state.n + ' 行，可直接在 WHG 插件点「导入字表生成」；```json 块存全套数据（含单格样式），本页导入时可回读。'
+      : 'json 含全部 ' + state.m + ' 个轮盘 × ' + state.n + ' 个面（含单格样式），供本页导入或后续插件整套生成用。';
+    var name = document.getElementById('exp_name');
+    if(!name.dataset.dirty || !name.value) name.value = autoName(isMD ? '.md' : '.json');
+    var ext = isMD ? '.md' : '.json';
+    if(name.value.slice(-ext.length) !== ext) name.value = name.value.replace(/\.(md|json)$/,'') + ext;
+  }
+  function openExp(){
+    document.getElementById('exp_name').dataset.dirty = '';
+    document.getElementById('exp_name').value = autoName(expTab === 'md' ? '.md' : '.json');
+    refreshExp();
+    document.getElementById('exp_mask').classList.add('show');
+  }
+  function closeExp(){ document.getElementById('exp_mask').classList.remove('show'); }
+
+  /* ---------- 导入 ---------- */
+  function parseImport(text){
+    var m = text.match(/```json\s*([\s\S]*?)```/);
+    if(m){
+      var o = JSON.parse(m[1]);
+      if(o && o.type === 'wheel-tile-table' && Array.isArray(o.cols) && o.cols.length){
+        var n = clamp(o.n,3,24,DEF.n), mm = clamp(o.m,1,8,DEF.m), cols=[], style=[];
+        for(var j=0;j<mm;j++){
+          var src = Array.isArray(o.cols[j]) ? o.cols[j] : [], col=[];
+          var ssrc = (o.style && Array.isArray(o.style[j])) ? o.style[j] : [], scol=[];
+          for(var i=0;i<n;i++){
+            col.push(String(src[i] == null ? '' : src[i]).slice(0,1));
+            scol.push(ssrc[i] != null ? ssrc[i] : null);
+          }
+          cols.push(col); style.push(scol);
+        }
+        var imp = {n:n, m:mm, hotend:(o.hotend === 'H04' ? 'H04' : 'H02'), cols:cols, style:style, whole:true};
+        if(Array.isArray(o.palette) && o.palette.length) imp.palette = o.palette.slice();
+        if(Array.isArray(o.wcols)) imp.wcols = o.wcols;
+        ensureColors(imp);
+        return imp;
+      }
+    }
+    if(/^\s*\{/.test(text)){
+      try{ return parseImport('```json\n' + text + '\n```'); }catch(e){}
+    }
+    var rows = [], lines = text.split(/\r?\n/);
+    for(var k=0;k<lines.length;k++){
+      var s = lines[k].trim();
+      if(s.charAt(0) !== '|') continue;
+      var cells = s.slice(1, -1).split('|').map(function(x){ return x.trim(); });
+      if(cells.length < 2 || !/^\d+$/.test(cells[0])) continue;
+      rows.push({i:+cells[0], ch:cells[1].replace(/\\\|/g,'|').slice(0,1)});
+    }
+    if(!rows.length) throw new Error('字表里没找到「| 面序 | 字 |」表格行');
+    if(rows.length !== state.n)
+      throw new Error('字表 ' + rows.length + ' 行 != 当前轮盘面数 ' + state.n + '（不静默补齐/截断）');
+    rows.sort(function(a,b){ return a.i - b.i; });
+    var col = rows.map(function(r){ return r.ch; });
+    return {col:col, whole:false};
+  }
+
+  /* ---------- 预览 ---------- */
+  function openPv(){
+    var g = encodeURIComponent(JSON.stringify(state.cols));
+    var url = './wheel-assembly.html?embed=1&n=' + state.n + '&cnt=' + state.m + '&g=' + g;
+    document.getElementById('pv_frame').src = url;
+    document.getElementById('pv_mask').classList.add('show');
+  }
+  function closePv(){
+    document.getElementById('pv_mask').classList.remove('show');
+    document.getElementById('pv_frame').src = 'about:blank';  // 释放 3D / WebGL
+  }
+
+  /* ---------- 取色弹层（每轮盘 字色/底色 两个色槽；调色板全局防重复） ---------- */
+  var pop = null, popC = 0, popSlot = 'fg';
+  function normHex(v){
+    if(typeof v !== 'string') return '';
+    v = v.trim();
+    if(v.charAt(0) !== '#') v = '#' + v;
+    if(/^#[0-9a-fA-F]{3}$/.test(v)) v = '#' + v[1]+v[1] + v[2]+v[2] + v[3]+v[3];
+    return /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : '';
+  }
+  function buildPopSw(){
+    var box = document.getElementById('pp_sw'); box.innerHTML = '';
+    var cur = state.wcols[popC][popSlot];
+    state.palette.forEach(function(hex){
+      var b = document.createElement('button');
+      b.type = 'button'; b.style.background = hex; b.title = hex;
+      b.setAttribute('data-hex', hex);
+      if(hex === cur) b.classList.add('on');
+      b.addEventListener('click', function(){ pickColor(hex); });
+      box.appendChild(b);
+    });
+  }
+  function openColorPop(c, slot, anchor){
+    pop = document.getElementById('whl_pop'); popC = c; popSlot = slot;
+    var wc = state.wcols[c];
+    document.getElementById('pp_title').textContent = '轮盘 ' + (c+1) + (slot === 'fg' ? ' · 字色' : ' · 底色');
+    document.getElementById('pp_err').textContent = '';
+    document.getElementById('pp_color').value = normHex(wc[slot]) || '#1a61cc';
+    buildPopSw();
+    pop.classList.add('show');
+    var r = anchor.getBoundingClientRect();
+    var pw = pop.offsetWidth, ph = pop.offsetHeight;
+    var left = r.left, top = r.bottom + 6;
+    if(left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+    if(top + ph > window.innerHeight - 8) top = r.top - ph - 6;
+    pop.style.left = Math.max(8, left) + 'px';
+    pop.style.top = Math.max(8, top) + 'px';
+  }
+  function closeColorPop(){ if(pop) pop.classList.remove('show'); }
+  function pickColor(hex){
+    state.wcols[popC][popSlot] = hex; saveState(); render(); closeColorPop();
+  }
+  function addColor(){
+    var hex = normHex(document.getElementById('pp_color').value);
+    var err = document.getElementById('pp_err');
+    if(!hex){ err.textContent = '颜色格式无效'; return; }
+    if(state.palette.indexOf(hex) >= 0){ err.textContent = '该颜色已存在，不能重复添加'; return; }
+    state.palette.push(hex); saveState(); buildPopSw();
+    pickColor(hex);   // 加到调色板并立即应用到当前槽
+  }
+
+  /* ---------- 绑定 ---------- */
+  function boot(){
+    state = loadState();
+    render();
+
+    // 每列独立翻页 + 单格编辑：事件委托（data-c / data-i）
+    document.getElementById('grid').addEventListener('click', function(e){
+      var cs = e.target.closest ? e.target.closest('.whl-cslot') : null;
+      if(cs){ openColorPop(+cs.dataset.c, cs.dataset.slot, cs); return; }
+      var cell = e.target.closest ? e.target.closest('.whl-cell') : null;
+      if(cell){ openEditor(+cell.dataset.c, +cell.dataset.i); return; }
+      var b = e.target.closest ? e.target.closest('.whl-pg-btn') : null;
+      if(b) pageBy(+b.getAttribute('data-c'), +b.getAttribute('data-d'));
+    });
+    document.getElementById('grid').addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){
+        var cell = e.target.closest ? e.target.closest('.whl-cell') : null;
+        if(cell){ e.preventDefault(); openEditor(+cell.dataset.c, +cell.dataset.i); }
+      }
+    });
+    var rzTimer = 0;
+    window.addEventListener('resize', function(){
+      clearTimeout(rzTimer); rzTimer = setTimeout(layout, 80);
+    });
+    document.getElementById('hotend').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-h]'); if(!b) return;
+      state.hotend = b.getAttribute('data-h'); saveState(); render();
+    });
+    document.getElementById('btn_reset').addEventListener('click', function(){
+      if(!confirm('把全部 ' + (state.n*state.m) + ' 格重置为默认字表？')) return;
+      state = defaultState(); saveState(); render();
+    });
+    document.getElementById('btn_preview').addEventListener('click', openPv);
+    document.getElementById('btn_export').addEventListener('click', openExp);
+    document.getElementById('btn_import').addEventListener('click', function(){
+      document.getElementById('import_file').click();
+    });
+    document.getElementById('btn_n').addEventListener('click', openCount);
+    document.getElementById('btn_m').addEventListener('click', openCount);
+    document.getElementById('import_file').addEventListener('change', function(e){
+      var f = e.target.files && e.target.files[0]; if(!f) return;
+      var rd = new FileReader();
+      rd.onload = function(){
+        try{
+          var r = parseImport(String(rd.result));
+          if(r.whole){
+            state = {n:r.n, m:r.m, hotend:r.hotend, cols:r.cols, style:r.style,
+                     palette:r.palette, wcols:r.wcols};
+          }else{
+            var pick = clamp(document.getElementById('exp_pick').value, 0, state.m-1, 0);
+            state.cols[pick] = r.col;
+          }
+          saveState(); render();
+          alert('导入成功' + (r.whole ? '（整套 ' + state.m + ' 个轮盘）' : '（当前轮盘）'));
+        }catch(err){ alert('导入失败：' + err.message); }
+        e.target.value = '';
+      };
+      rd.readAsText(f, 'utf-8');
+    });
+
+    document.getElementById('exp_tabs').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-t]'); if(!b) return;
+      expTab = b.getAttribute('data-t');
+      document.querySelectorAll('#exp_tabs .whl-tab').forEach(function(x){
+        x.classList.toggle('on', x === b);
+      });
+      document.getElementById('exp_name').value = autoName(expTab === 'md' ? '.md' : '.json');
+      refreshExp();
+    });
+    document.getElementById('exp_pick').addEventListener('change', refreshExp);
+    document.getElementById('exp_name').addEventListener('input', function(){ this.dataset.dirty = '1'; });
+    document.getElementById('exp_name_def').addEventListener('click', function(){
+      var n = document.getElementById('exp_name');
+      n.value = autoName(expTab === 'md' ? '.md' : '.json'); n.dataset.dirty = '';
+      refreshExp();
+    });
+    document.getElementById('exp_copy').addEventListener('click', function(){
+      var ta = document.getElementById('exp_ta');
+      ta.select(); document.execCommand('copy');
+      this.textContent = '已复制'; var self = this;
+      setTimeout(function(){ self.textContent = '复制到剪贴板'; }, 1200);
+    });
+    document.getElementById('exp_download').addEventListener('click', function(){
+      var name = document.getElementById('exp_name').value || autoName(expTab === 'md' ? '.md' : '.json');
+      var blob = new Blob([document.getElementById('exp_ta').value],
+        {type: expTab === 'md' ? 'text/markdown' : 'application/json'});
+      var a = document.createElement('a'), u = URL.createObjectURL(blob);
+      a.href = u; a.download = name; document.body.appendChild(a); a.click();
+      document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
+    });
+    document.getElementById('exp_close').addEventListener('click', closeExp);
+    document.getElementById('exp_close_x').addEventListener('click', closeExp);
+
+    // 数量弹窗
+    document.getElementById('cnt_apply').addEventListener('click', applyCount);
+    document.getElementById('cnt_cancel').addEventListener('click', closeCount);
+    document.getElementById('cnt_close_x').addEventListener('click', closeCount);
+
+    // 编辑格子弹窗
+    document.getElementById('ed_ch').addEventListener('input', updatePrev);
+    document.getElementById('ed_size').addEventListener('input', updatePrev);
+    document.getElementById('ed_font').addEventListener('change', updatePrev);
+    document.getElementById('ed_auto').addEventListener('change', function(){ updateAutoTx(); updatePrev(); });
+    document.getElementById('ed_reset_cell').addEventListener('click', resetCellStyle);
+    document.getElementById('ed_clear').addEventListener('click', clearCell);
+    document.getElementById('ed_save').addEventListener('click', saveEditor);
+    document.getElementById('ed_cancel').addEventListener('click', closeEditor);
+
+    // 取色弹层：关闭 / 新增颜色（调色板全局防重复）
+    document.getElementById('pp_close').addEventListener('click', closeColorPop);
+    document.getElementById('pp_add').addEventListener('click', addColor);
+    document.addEventListener('click', function(e){
+      if(!pop || !pop.classList.contains('show')) return;
+      if(pop.contains(e.target)) return;
+      if(e.target.closest && e.target.closest('.whl-cslot')) return;
+      closeColorPop();
+    });
+
+    document.getElementById('pv_close_x').addEventListener('click', closePv);
+    document.querySelectorAll('.whl-mask').forEach(function(mask){
+      mask.addEventListener('click', function(e){
+        if(e.target === mask){
+          if(mask.id === 'exp_mask') closeExp();
+          else if(mask.id === 'cnt_mask') closeCount();
+          else if(mask.id === 'ed_mask') closeEditor();
+          else closePv();
+        }
+      });
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){
+        if(pop && pop.classList.contains('show')) closeColorPop();
+        if(document.getElementById('pv_mask').classList.contains('show')) closePv();
+        if(document.getElementById('exp_mask').classList.contains('show')) closeExp();
+        if(document.getElementById('cnt_mask').classList.contains('show')) closeCount();
+        if(document.getElementById('ed_mask').classList.contains('show')) closeEditor();
+      }
+    });
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <!-- Content Security Policy - WLi Tools -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-ancestors 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-src 'self'; frame-ancestors 'self'; base-uri 'self';">
 <link rel="stylesheet" href="common.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -99,6 +99,28 @@
   .wheel-field{min-width:140px;}
   .wheel-legend-pop{width:190px; right:46px;}
 }
+
+/* embed=1：被「手轮贴片字表」以同源 iframe 嵌入预览弹窗时，
+   只留 3D 视窗 + 右侧 5 个图标工具条；参数移到字表页，⛔ 不重复显示。 */
+body.embed .wheel-ctl,
+body.embed .wheel-derived,
+body.embed .wheel-hidden,
+body.embed .global-nav{display:none !important;}  /* 兜底：即便 nav.js 被别处加载也不显示导航 */
+body.embed .wheel-sec{padding:0;}
+body.embed .wheel-sec .section-inner{max-width:none; padding:0;}
+/* 导航去掉后，wheel-host 保留 calc(100vh - 56px)（改 100vh 会让相机取景失败率升高），
+   余下 56px 由容器铺同色渐变，避免出现一条突兀的白色空带。
+   只改容器背景，不动 host 的 clientHeight → 取景逻辑零变化。 */
+body.embed .wheel-host-wrap{
+  height:100vh;
+  background:#e6e8ec;             /* = 视窗外圈底色，纯色才能与 host 底边无缝衔接 */
+}
+body.embed .wheel-host{
+  /*      ⛔ 别用 height:100%（或改成 100vh）：高度在 iframe 里与 build() 取到的
+     clientHeight 不一致时，相机取景会把模型推出画面（实测 canvas 存在但全白）。
+     保持与独立页 height:min(62vh,540px) 同一套解析路径的 calc(100vh - 56px)。 */
+  height:calc(100vh - 56px); min-height:420px; border:none; border-radius:0;
+}
 </style>
 </head>
 <body>
@@ -176,7 +198,15 @@
   </div>
 </section>
 
-<script src="nav.js?v=6f98d37a"></script>
+<script>
+/* embed=1（字表页预览弹窗的同源 iframe）只放 3D 视窗，⛔ 不加载 WLi 站点导航：
+   nav.js 会在 DOMContentLoaded 往 body 开头插入 .global-nav，占 48px 且带全站链接，
+   在预览弹窗里纯属干扰。用 document.write 保持同步加载语义（nav.js 依赖 DOMContentLoaded），
+   独立打开本页时照常加载导航，行为零变化。 */
+if (new URLSearchParams(location.search).get('embed') !== '1') {
+  document.write('<script src="nav.js?v=6f98d37a"><\/script>');
+}
+</script>
 
 <script type="importmap">
 {
@@ -325,6 +355,80 @@ function flangeGeo(RO, N, capShape){
 // 拆解时各逻辑部件沿 Y 的偏移索引（合拢=0）
 const PARTS = {};
 
+/* ---------------- 贴片文字（字表页 → 3D 预览） ----------------
+   字表页把 cols[M][N] 用 ?g= JSON 传进来；独立打开时回落到同源 localStorage。
+   贴片是「带字的平面」，贴在正 N 边形每个面的外侧：
+   - 面 i 的外法向 n=(cosθ,0,sinθ)，θ=(2i+1)π/N（polygonShape 顶点在 0,2π/N…）；
+   - 贴片局部 X = 切向、局部 Y = 装配轴 Y、法向 = n；
+   - 尺寸按规格联动：宽 = 弦长 W − 0.14cm(退棱 0.7mm×2)，高 = 轮盘厚 − 0.10cm(轴向留边 0.5mm×2)。
+   ⛔ 贴片必须挂进对应轮盘的 Group，单盘拖动旋转时字要跟着那一盘转。 */
+const GLYPH_TEX = new Map();     // 按「字符 + 片比例」缓存，跨 rebuild 复用
+let _GLYPH_RATIO = -1;           // 片宽/片高；比例变了必须清缓存，否则沿用旧尺寸会拉伸字
+const TILE_FONT_MM = 18.0;      // 默认字号（mm）= wheel_generator.py TILE.text_size（用户 2026-11-08 定稿）
+const TILE_TEXT_MARGIN = 0.8;   // 自动缩放内边距（mm）= WHL_TileText.margin 默认
+const TILE_AX_MM = 11.0;        // 轴向片宽（mm，默认 T−2×0.5）：只用来把字号的 mm 折算成 crop 像素
+const TILE_GLYPH_W_EM = 0.62;   // 数字/字母字宽经验值（em），判「读向是否超片」
+function glyphTex(three, ch, ratio){
+  const r = Math.max(0.15, Math.min(3.0, ratio || 0.70));
+  if(Math.abs(r - _GLYPH_RATIO) > 1e-4){
+    GLYPH_TEX.forEach(t => { try{ t.dispose(); }catch(e){} });
+    GLYPH_TEX.clear(); _GLYPH_RATIO = r;
+  }
+  const H = 256;
+  const W = Math.max(48, Math.round(H * r));   // canvas 宽高比 = 贴片真实宽高比，字才不被拉伸
+  const glyph = String(ch == null ? '' : ch);
+  const key = W + '|' + glyph;                 // 宽度放前面：字本身是「|」也不会被切错
+  if(GLYPH_TEX.has(key)) return GLYPH_TEX.get(key);
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;                 // 竖版：宽=轴向片宽、高=周向片高
+  const g = cv.getContext('2d');
+  g.fillStyle = '#ffffff';                     // 贴片白底（与字表页格子同口径）
+  g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(55,62,80,.32)'; g.lineWidth = 5;
+  g.strokeRect(2.5, 2.5, W-5, H-5);
+  g.fillStyle = '#262b3b';
+  // 字号 = 插件默认 18 mm（超贴片按内边距自动缩放，与字表页 / build_tile 同口径）：
+  // canvas 高 H ↔ 周向片高 cir(mm)、宽 W ↔ 轴向片宽 ax(mm)，故 px = mm / cir × H。
+  const cirMM = TILE_AX_MM / r;                                  // 周向片高（mm）= ax / (ax/cir)
+  const capY  = Math.max(0.5, cirMM - 2 * TILE_TEXT_MARGIN);      // 字身高可用
+  const capX  = Math.max(0.5, TILE_AX_MM - 2 * TILE_TEXT_MARGIN); // 读向可用
+  const fsMM  = Math.min(TILE_FONT_MM, capY, capX / TILE_GLYPH_W_EM);
+  g.font = 'bold ' + Math.round(fsMM / cirMM * H) + 'px "DengXian","等线","Microsoft YaHei",sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(glyph, W/2, H/2 + 3);
+  const t = new three.CanvasTexture(cv);
+  if(three.SRGBColorSpace) t.colorSpace = three.SRGBColorSpace;
+  t.anisotropy = 4;
+  GLYPH_TEX.set(key, t);
+  return t;
+}
+
+function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tileGeo, tileRatio){
+  const aOut = RO*Math.cos(Math.PI/N);
+  const off  = aOut + 0.018;                     // 外凸 0.18mm，避免与外环面 Z-fighting
+  for(let i=0;i<N;i++){
+    const ch = chars[i];
+    if(ch == null || ch === '') continue;       // 空格子不画贴片
+    const th = (2*i+1)*Math.PI/N;
+    const n  = new three.Vector3(Math.cos(th), 0, Math.sin(th));
+    /* 字基线沿装配轴 Y（页面 rotation.z=-π/2 后水平），字的上方向沿切向；
+       xA×yA=n 保证右手系、字不镜像。⛔ 早前把基线放在切向上，装配轴转成水平后
+       字整体躺倒 90°（实测截图），故改为轴向读。 */
+    const xA = new three.Vector3(0, 1, 0);
+    const yA = new three.Vector3(-Math.sin(th), 0, Math.cos(th));
+    const m4 = new three.Matrix4().makeBasis(xA, yA, n);
+    const mat = new three.MeshStandardMaterial({
+      map: glyphTex(three, ch, tileRatio), roughness:0.72, metalness:0.0, side:three.DoubleSide
+    });
+    const mesh = new three.Mesh(tileGeo, mat);
+    mesh.position.copy(n.clone().multiplyScalar(off));
+    mesh.quaternion.setFromRotationMatrix(m4);
+    mesh.userData.discIndex = k;                // 命中贴片也能找到所属轮盘
+    mesh.userData.isTile = true; mesh.userData.faceIndex = i; mesh.userData.glyph = String(ch);
+    group.add(mesh);
+  }
+}
+
 /* 构造整套模型 —— 严格照抄 wheel_generator.py 的「落座账本」(generate 内 assert)：
    装配总长 = FT + N·H_seg + FT（H_seg = 轮盘面宽），N=1 时 2.5+12+2.5 = 17mm。
    - 母盖 EndCapF：法兰(2.5) + **自带 Ø18 轴身长 H_seg(12)** + 顶端母孔；背面平，只有 Ø3 孔。
@@ -350,6 +454,15 @@ function buildModel(params, three){
   const flangeGeoM    = flangeGeo(RO, N, capShape);
   const pinGeo        = new three.CylinderGeometry(PIN_R, PIN_R, PIN, 32);  // 居中于 y=0
 
+  // 字表贴片：宽 = 弦长 − 退棱 0.14cm，高 = 轮盘实厚 − 轴向留边 0.10cm
+  const glyphs        = (params.glyphs && params.glyphs.length === cnt) ? params.glyphs : null;
+  const W             = 2*RO*Math.sin(Math.PI/N);
+  const tileAx        = Math.max(0.2, Tdisc - 0.10);   // 轴向贴片宽（cm）
+  const tileCir       = Math.max(0.2, W - 0.14);       // 周向贴片高（cm）
+  const tileRatio     = tileAx / tileCir;              // 供 canvas 按真实比例绘制，字不拉伸
+  const tileGeo       = glyphs ? new three.PlaneGeometry(tileAx, tileCir) : null;
+  // ↑ width 沿局部 X(=装配轴)、height 沿局部 Y(=周向)：与 canvas 同向
+
   const matAxle = std(MAT.axle, 0.40);
   const matCapM = std(MAT.capM, 0.50);
   const matCapF = std(MAT.capF, 0.50);
@@ -365,6 +478,7 @@ function buildModel(params, three){
     body.userData.discIndex = k; skirt.userData.discIndex = k;   // 射线命中后向上找到所属轮盘
     g.userData.discIndex = k; g.userData.discMat = mat;
     g.add(body, skirt);
+    if(glyphs && glyphs[k-1]) addTilePlanes(three, g, k, glyphs[k-1], N, RO, Tdisc, tileGeo, tileRatio);
     return g;
   }
 
@@ -578,6 +692,17 @@ window.__wheel3d = {
     if(ro) ro.observe(host);
 
     return {
+      // 只读诊断：验证贴片确实挂在对应轮盘上（面序 / 字 / 数量）
+      debugTiles(){
+        const out = [];
+        if(model) model.traverse(o=>{
+          if(o.userData && o.userData.isTile)
+            out.push({disc:o.userData.discIndex, face:o.userData.faceIndex,
+                      glyph:o.userData.glyph,
+                      parent:o.parent && o.parent.userData ? o.parent.userData.discIndex : null});
+        });
+        return out;
+      },
       setParams(p){ rebuild(); },
       setExploded(on){ exploded = !!on; applyOffsets(); fitView(); },
       setSpin(on){ controls.autoRotate = !!on; },
@@ -600,13 +725,33 @@ window.__wheel3d = {
 <script>
 /* ---- 页面控制（classic 脚本，轮询 __wheel3d 就绪） ---- */
 (function(){
+  /* 字表页通过 ?g= 传整套 cols[M][N]；独立打开时回落到同源 localStorage。
+     ⛔ 严格校验轮盘数 M 与每列长度 = 面数 N，不匹配就不画（不静默补齐/截断）。 */
+  function readGlyphs(N, M){
+    var q = new URLSearchParams(location.search), cols = null, raw = q.get('g');
+    if(raw){ try{ cols = JSON.parse(raw); }catch(e){ cols = null; } }
+    if(!cols){
+      try{
+        var s = JSON.parse(localStorage.getItem('whl_wheel_table_v1') || 'null');
+        if(s && +s.n === N && +s.m === M) cols = s.cols;
+      }catch(e){}
+    }
+    if(!Array.isArray(cols) || cols.length !== M) return null;
+    for(var j=0;j<M;j++){
+      if(!Array.isArray(cols[j]) || cols[j].length !== N) return null;
+    }
+    return cols;
+  }
   function params(){
+    var N = +document.getElementById('p_n').value;
+    var M = Math.max(1, Math.round(+document.getElementById('p_cnt').value || 5));
     return {
-      N: +document.getElementById('p_n').value,
+      N: N,
       dia: +document.getElementById('p_dia').value,
       T: +document.getElementById('p_t').value,
-      discCount: +document.getElementById('p_cnt').value,
+      discCount: M,
       capShape: document.getElementById('p_cap').value,
+      glyphs: readGlyphs(N, M),
     };
   }
   function fmt(v, d){ return (+v).toFixed(d); }
@@ -639,9 +784,18 @@ window.__wheel3d = {
   }
 
   function boot(){
-    // URL 参数预设（调试/分享用）：?cnt=2 预设轮盘数量
+    /* URL 参数预设：
+       ?cnt=N 轮盘数量 · ?n=N 面数 · ?dia= 外径(mm) · ?t= 面宽(mm)
+       （字表页预览弹窗按当前字表把这 4 个一起传，保证预览与字表页同尺寸）
+       ?embed=1 同源 iframe 嵌入模式：隐藏参数区，只留 3D + 图标工具条 */
     const q = new URLSearchParams(location.search);
-    if(q.has('cnt')) document.getElementById('p_cnt').value = Math.min(8, Math.max(1, Math.round(+q.get('cnt')||1)));
+    if(q.has('cnt')) document.getElementById('p_cnt').value = Math.min(8, Math.max(1, Math.round(+q.get('cnt')||5)));
+    if(q.has('n')) document.getElementById('p_n').value = Math.min(24, Math.max(3, Math.round(+q.get('n')||10)));
+    if(q.has('dia')){ const v=+q.get('dia'); if(isFinite(v)&&v>0)
+      document.getElementById('p_dia').value = Math.min(90, Math.max(35, v)); }
+    if(q.has('t')){ const v=+q.get('t'); if(isFinite(v)&&v>0)
+      document.getElementById('p_t').value = Math.min(40, Math.max(6, v)); }
+    if(q.get('embed') === '1') document.body.classList.add('embed');
     const host = document.getElementById('wheel_host');
 
     /* 原生控件（隐藏，仅作图标按钮代理）的绑定提前到 boot 阶段，
@@ -720,6 +874,7 @@ window.__wheel3d = {
     ensureApi(function(w3){
       w3.build(host, params).then(function(a){
         api = a;
+        window.__wheelApi = a;          // 只读诊断接口（同源验证页可读 debugTiles）
         refreshDerived();
       });
     });
