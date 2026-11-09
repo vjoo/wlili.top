@@ -290,7 +290,7 @@
         <span class="tool-tag">创意生成</span>
       </a>
 
-      <a class="tool-card" href="./wheel-tile-table.html" data-cat="creative" data-name="手轮贴片字表">
+      <a class="tool-card" href="./wheel-tile-table.html" data-cat="creative" data-name="手轮贴片字表" data-secure="1">
         <div class="tool-icon orange">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/><path d="M3 8h7M3 13h7M3 18h7M14 8h7M14 13h7M14 18h7"/></svg>
         </div>
@@ -465,9 +465,10 @@
 })();
 </script>
 
-<!-- 魔方贴片字表的「加密导出」要 Web Crypto：局域网 IP + http 下浏览器不给 crypto.subtle，
-     点进去再报错不如在入口就把地址换成 https:8443。判定与端口复用 nav.js 的 window.WLiSecureHref，
-     不在这里另写一套（条件不满足时函数原样返回，href 不动）。 -->
+<!-- 带「加密导出」的字表工具（魔方贴片字表 / 手轮贴片字表，2026-11-09 补齐手轮）要 Web Crypto：
+     局域网 IP + http 下浏览器不给 crypto.subtle，点进去再报错不如在入口就把地址换成 https:8443。
+     判定与端口复用 nav.js 的 window.WLiSecureHref，不在这里另写一套（条件不满足时函数原样返回，href 不动）。
+     ⛔ 轮盘组装预览只是 3D 展示、不导加密包，别给它加 data-secure，白吃一次自签证书警告。 -->
 <script>
 (function () {
   if (!window.WLiSecureHref) return;
