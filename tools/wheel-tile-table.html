@@ -361,16 +361,43 @@ body.dev .whl-tab.dev-tab{display:flex;}
 
 /* 预览弹窗：iframe 载入现有 wheel-assembly.html?embed=1 */
 .whl-pv-frame{
-  width:100%; height:min(72vh,620px); min-height:380px;
+  /* 与 3D 魔方预览 .pv-host 同高（min(60vh,460px)）→ 两边视窗宽高比一致。
+     ⛔ 只改 iframe 自身高度；iframe 内 embed 的 wheel-host 仍用 calc(100vh - 56px)，
+        改 100%/100vh 会让相机取景失败（实测 canvas 全白，见 wheel-assembly.html 注释）。 */
+  width:100%; height:min(60vh,460px); min-height:300px;
   border:1px solid var(--border-light); border-radius:var(--radius-md);
   background:var(--bg); display:block;
 }
-.whl-pv-note{font-size:var(--fs-sm); color:var(--ink-tertiary); padding-top:8px; flex:none;}
+/* 材质控件排（照 3D 魔方 .pv-bar / .pv-face）：机身切换 + 逐轮盘 chip + 统一 */
+.whl-pv-bar{display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px;
+  padding-top:10px; flex:none; font-size:var(--fs-sm); color:var(--ink-tertiary);}
+.whl-pv-lb{font-size:12px; color:var(--ink-tertiary); flex:none;}
+.whl-pv-seg{display:inline-flex; border:1px solid var(--border); border-radius:999px;
+  overflow:hidden; flex:none;}
+.whl-pv-seg button{border:none; background:var(--bg-white); color:var(--ink-secondary);
+  font-size:12px; padding:5px 12px; min-height:30px; cursor:pointer;}
+.whl-pv-seg button + button{border-left:1px solid var(--border);}
+.whl-pv-seg button.on{background:var(--ink); color:#fff; font-weight:600;}
+.whl-pv-chips{display:flex; flex-wrap:wrap; gap:6px; flex:1 1 auto;}
+.whl-pv-chip{display:inline-flex; align-items:center; gap:5px; padding:4px 9px;
+  border:1px solid var(--border); border-radius:999px; background:var(--bg-white);
+  color:var(--ink-secondary); font-size:var(--fs-xs); min-height:30px; cursor:pointer;}
+.whl-pv-chip .dot{width:10px; height:10px; border-radius:50%; flex:none;
+  box-shadow:0 0 0 1px rgba(0,0,0,.12);}
+.whl-pv-chip .md{font-size:10px; color:var(--ink-tertiary);}
+.whl-pv-chip.inv{box-shadow:inset 0 0 0 1px var(--ink);}
+.whl-pv-chip.inv .md{color:var(--ink); font-weight:600;}
+.whl-pv-all{border:1px solid var(--border); border-radius:999px; background:var(--bg-white);
+  color:var(--ink-secondary); font-size:12px; padding:5px 12px; min-height:30px;
+  cursor:pointer; flex:none;}
+.whl-pv-raise{font-size:11px; color:var(--ink-tertiary); flex:none;
+  background:var(--bg); padding:3px 8px; border-radius:999px; font-variant-numeric:tabular-nums;}
 
 @media (max-width:768px){
   .whl-sec .section-inner{padding:0 12px;}
   .whl-col{width:142px;}
-  .whl-pv-frame{height:min(66vh,480px);}
+  .whl-pv-frame{height:min(60vh,460px);}   /* 移动端同样对齐魔方，不再单独放大 */
+  .whl-pv-chip, .whl-pv-seg button, .whl-pv-all{min-height:40px;}  /* 触屏 44px 基线 */
   /* 触控 44px 基线（同魔方 2026-11-09 定稿）：热端两档 28px、翻页箭头 34px 在手机上点不准。
      列宽 142px 里本来就留了余量，箭头放大到 44 不会挤到贴片。 */
   .whl-hot button{min-height:44px; font-size:13.5px;}
@@ -550,7 +577,17 @@ body.dev .whl-tab.dev-tab{display:flex;}
       </button>
     </h3>
     <iframe class="whl-pv-frame" id="pv_frame" src="about:blank" title="轮盘 3D 装配预览"></iframe>
-    <div class="whl-pv-note">预览按当前「面数 / 轮盘数量」生成；右侧图标可切换盖端外形、自动旋转、拆解、图例。</div>
+    <div class="whl-pv-bar">
+      <span class="whl-pv-lb">机身</span>
+      <div class="whl-pv-seg" id="pv_body">
+        <button type="button" data-v="black" class="on">全黑</button>
+        <button type="button" data-v="color">彩色零件</button>
+      </div>
+      <span class="whl-pv-lb">贴片</span>
+      <div class="whl-pv-chips" id="pv_chips"></div>
+      <button class="whl-pv-all" id="pv_all" type="button">统一：彩片白字</button>
+      <span class="whl-pv-raise">字凸起 0.60 mm</span>
+    </div>
   </div>
 </div>
 
@@ -577,7 +614,8 @@ body.dev .whl-tab.dev-tab{display:flex;}
    ============================================================ */
 (function(){
   var KEY = 'whl_wheel_table_v1';
-  var STATE_VER = 3;              // v3（2026-11-09 17:31）：默认字表改 4 数字面 + 面3 十符号
+  var STATE_VER = 4;              // v4（2026-11-09 18:55）：面5 默认字色 近黑 #0f0f12 → 深灰 #3c4048
+                                   // v3（17:31）：默认字表改 4 数字面 + 面3 十符号
                                   // v2（16:40）：热端默认改 0.4，与插件 TILE_HOTEND_DEFAULT 对齐
   var DEF = {n:10, m:5, hotend:'H04'};
   var state = null;
@@ -608,7 +646,9 @@ body.dev .whl-tab.dev-tab{display:flex;}
   // 格子内框补偿：--tw/--th 给的是「外框」，内框正好 = 贴片 mm×k → 预览恢复与实物等比。
   // ⛔ 2026-11-08 实测：不补偿时内框只有 46.2×88.1px，而字号按 58.3×88.2 在算 → 字必然溢出。
   // 列头色块沿用 3D 魔方 PALETTE 顺序；轮盘数最多 8，循环取色
-  var PALETTE = ['#f27317','#d91f1f','#1a61cc','#219e40','#0f0f12','#7340b3'];
+  /* 面5 默认深灰 #3c4048（2026-11-09 18:55 用户定）：原 #0f0f12 近黑在白贴片上太死，
+     且与魔方预览已定的「近黑提亮深灰」LIFT_DARK 同色，两处观感统一。 */
+  var PALETTE = ['#f27317','#d91f1f','#1a61cc','#219e40','#3c4048','#7340b3'];
   /* 默认字表（2026-11-09 17:31 用户定稿）：
        面1 = 0-9 数字、面2 = 0-9 数字、面4 = 0-9 数字、面5 = 0-9 数字
        面3 = 10 个数学符号：+ − × ÷ ≈ > < ≥ ≤ =
@@ -733,6 +773,18 @@ body.dev .whl-tab.dev-tab{display:flex;}
         }
         // style（单格字号/字体覆盖）保持原样：用户可能只调过样式没改字
         // ⛔ 编辑过字表的老存档一律原样保留，绝不覆盖用户内容
+      }
+      if(v < 4){
+        /* v3→v4：面5 默认字色 近黑 #0f0f12 → 深灰 #3c4048。
+           ⛔ 只替换「正好是旧默认黑」的那一个色值，用户自己调过的其它色一律不动；
+              palette 与 wcols 两处都要换，否则取色弹层里还会留着旧黑块。 */
+        var OLD_BLACK = '#0f0f12', DARK_GRAY = '#3c4048';
+        if(Array.isArray(s.palette)) s.palette = s.palette.map(function(h){
+          return String(h == null ? '' : h).toLowerCase() === OLD_BLACK ? DARK_GRAY : h;
+        });
+        if(Array.isArray(s.wcols)) s.wcols.forEach(function(w){
+          if(w && String(w.fg == null ? '' : w.fg).toLowerCase() === OLD_BLACK) w.fg = DARK_GRAY;
+        });
       }
       s.ver = STATE_VER;
       if(s.hotend !== 'H04' && s.hotend !== 'H02') s.hotend = DEF.hotend;
@@ -1622,10 +1674,63 @@ body.dev .whl-tab.dev-tab{display:flex;}
     return parseMD(text);
   }
 
-  /* ---------- 预览 ---------- */
+  /* ---------- 3D 预览 · 材质选项（仅观感，不进导出数据） ----------
+     body  : 'black' 全黑机身（除贴片白，其余黑；2026-11-09 用户定默认）
+             'color' 彩色零件（橙盘 / 灰蓝轴 / 绿公盖 / 蓝母盖，历史默认）
+     modes[j]: 0=白片彩字（默认，字色取 wcols[j].fg） / 1=彩片白字（片色取 wcols[j].fg）
+     用户改过存 sessionStorage，下次以用户选择为准；控件在弹窗底部，同源直调 iframe 内 3D 接口。 */
+  var PV_KEY = 'whl_tile_pv_v1';
+  var pvOpts = (function(){
+    try{
+      var s = JSON.parse(sessionStorage.getItem(PV_KEY) || 'null');
+      if(s && (s.body === 'black' || s.body === 'color') && Array.isArray(s.modes)) return s;
+    }catch(e){}
+    return {body:'black', modes:[]};
+  })();
+  function pvSave(){ try{ sessionStorage.setItem(PV_KEY, JSON.stringify(pvOpts)); }catch(e){} }
+  function pvMode(j){ return pvOpts.modes[j] === 1 ? 1 : 0; }
+  function pvSnapshot(){
+    var modes = [];
+    for(var j=0;j<state.m;j++) modes.push(pvMode(j));
+    return {body:pvOpts.body, modes:modes,
+            colors:state.wcols.map(function(w){ return w.fg; }),
+            bgs:state.wcols.map(function(w){ return w.bg; })};
+  }
+  function syncPvUI(){
+    [].forEach.call(document.querySelectorAll('#pv_body button'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-v') === pvOpts.body);
+    });
+    var box = document.getElementById('pv_chips'); box.innerHTML = '';
+    for(var j=0;j<state.m;j++){
+      var m = pvMode(j), wc = state.wcols[j] || {};
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'whl-pv-chip' + (m ? ' inv' : '');
+      b.setAttribute('data-j', j);
+      b.innerHTML = '<span class="dot" style="background:' + (wc.fg || '#3c4048') + '"></span>'
+                  + '<span>' + (j+1) + '</span><span class="md">' + (m ? '彩片' : '白片') + '</span>';
+      b.title = '轮盘 ' + (j+1) + '：' + (m ? '彩片白字' : '白片彩字') + '（点击切换）';
+      box.appendChild(b);
+    }
+    var allWhite = true;
+    for(var k=0;k<state.m;k++) if(pvMode(k) !== 0){ allWhite = false; break; }
+    document.getElementById('pv_all').textContent = '统一：' + (allWhite ? '彩片白字' : '白片彩字');
+  }
+  /* iframe 的 3D 接口是异步就绪的：没拿到就短轮询等（最多 5s），不丢用户这次点击 */
+  function pushPv(tries){
+    var ok = false;
+    try{
+      var w = document.getElementById('pv_frame').contentWindow;
+      if(w && w.__wheelApi && w.__wheelApi.setPv){ w.__wheelApi.setPv(pvSnapshot()); ok = true; }
+    }catch(e){}
+    if(!ok && (tries || 0) < 50) setTimeout(function(){ pushPv((tries || 0) + 1); }, 100);
+  }
   function openPv(){
-    var g = encodeURIComponent(JSON.stringify(state.cols));
-    var url = './wheel-assembly.html?embed=1&n=' + state.n + '&cnt=' + state.m + '&g=' + g;
+    var g  = encodeURIComponent(JSON.stringify(state.cols));
+    var pv = encodeURIComponent(JSON.stringify(pvSnapshot()));
+    /* pv= 里带逐轮盘字色 colors[]（g= 只送字），否则 3D 里拿不到「彩片/彩字」的配色 */
+    var url = './wheel-assembly.html?embed=1&n=' + state.n + '&cnt=' + state.m
+            + '&g=' + g + '&pv=' + pv;
+    syncPvUI();
     document.getElementById('pv_frame').src = url;
     document.getElementById('pv_mask').classList.add('show');
   }
@@ -1808,6 +1913,23 @@ body.dev .whl-tab.dev-tab{display:flex;}
       closeColorPop();
     });
 
+    // 预览材质控件：机身二选一 / 逐轮盘 chip 循环 / 统一按钮（照 3D 魔方 pv_core + pv_faces）
+    document.getElementById('pv_body').addEventListener('click', function(e){
+      var b = e.target.closest && e.target.closest('button[data-v]'); if(!b) return;
+      pvOpts.body = b.getAttribute('data-v'); pvSave(); syncPvUI(); pushPv(0);
+    });
+    document.getElementById('pv_chips').addEventListener('click', function(e){
+      var b = e.target.closest && e.target.closest('.whl-pv-chip'); if(!b) return;
+      var j = +b.getAttribute('data-j');
+      if(!(j >= 0 && j < state.m)) return;
+      pvOpts.modes[j] = pvMode(j) ? 0 : 1; pvSave(); syncPvUI(); pushPv(0);
+    });
+    document.getElementById('pv_all').addEventListener('click', function(){
+      var next = 1;
+      for(var k=0;k<state.m;k++) if(pvMode(k) !== 0){ next = 0; break; }
+      for(var j=0;j<state.m;j++) pvOpts.modes[j] = next;
+      pvSave(); syncPvUI(); pushPv(0);
+    });
     document.getElementById('pv_close_x').addEventListener('click', closePv);
     document.querySelectorAll('.whl-mask').forEach(function(mask){
       mask.addEventListener('click', function(e){

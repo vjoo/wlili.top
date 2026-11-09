@@ -261,6 +261,18 @@ const MAT = {
   capM:  0x3fa07a,  // 公盖（绿）
   capF:  0x5b6bc4,  // 母盖（蓝）
 };
+/* 全黑机身（2026-11-09 用户定默认）：除贴片白，其余零件全黑。
+   ⛔ 四种零件保留细微明度差，否则黑成一片看不出装配结构（同魔方 LIFT_DARK 分层思路）。 */
+const MAT_BLACK = {
+  axle:  0x14151a,
+  disc:  0x1b1d24,
+  capM:  0x20232b,
+  capF:  0x171920,
+};
+/* 贴片厚 / 字凸起：与 wheel_generator.py 的 TILE 常量一一对应（单位 cm）。
+   text_raise 0.60 mm 是 v0.9.25（18:29 用户要求与 3D 魔方 CTG text_out=0.6 统一）。 */
+const TILE_T     = 0.12;   // 1.2 mm = TILE.tile_t
+const TEXT_RAISE = 0.060;  // 0.60 mm = TILE.text_raise
 
 function polygonShape(R, N){
   const s = new THREE.Shape();
@@ -368,44 +380,64 @@ const TILE_FONT_MM = 18.0;      // 默认字号（mm）= wheel_generator.py TILE
 const TILE_TEXT_MARGIN = 0.8;   // 自动缩放内边距（mm）= WHL_TileText.margin 默认
 const TILE_AX_MM = 11.0;        // 轴向片宽（mm，默认 T−2×0.5）：只用来把字号的 mm 折算成 crop 像素
 const TILE_GLYPH_W_EM = 0.62;   // 数字/字母字宽经验值（em），判「读向是否超片」
-function glyphTex(three, ch, ratio){
+/* 字贴图：拆成「透明底彩字 map」+「黑底白字 bump」两张。
+   旧版是把白底 + 深墨字画在一张平面贴图上（贴片没有厚度、字也不凸）；
+   现在贴片底色交给有厚度的 BoxGeometry，字层单独抬起 TEXT_RAISE 并用 bumpMap 做浮雕法线。 */
+function glyphTex(three, ch, ratio, fgHex){
   const r = Math.max(0.15, Math.min(3.0, ratio || 0.70));
   if(Math.abs(r - _GLYPH_RATIO) > 1e-4){
-    GLYPH_TEX.forEach(t => { try{ t.dispose(); }catch(e){} });
+    GLYPH_TEX.forEach(pair => { try{ pair.map.dispose(); pair.bump.dispose(); }catch(e){} });
     GLYPH_TEX.clear(); _GLYPH_RATIO = r;
   }
   const H = 256;
   const W = Math.max(48, Math.round(H * r));   // canvas 宽高比 = 贴片真实宽高比，字才不被拉伸
   const glyph = String(ch == null ? '' : ch);
-  const key = W + '|' + glyph;                 // 宽度放前面：字本身是「|」也不会被切错
+  const fg = /^#[0-9a-fA-F]{6}$/.test(fgHex || '') ? fgHex : '#262b3b';
+  const key = W + '|' + glyph + '|' + fg;      // 宽度放前面：字本身是「|」也不会被切错
   if(GLYPH_TEX.has(key)) return GLYPH_TEX.get(key);
-  const cv = document.createElement('canvas');
-  cv.width = W; cv.height = H;                 // 竖版：宽=轴向片宽、高=周向片高
-  const g = cv.getContext('2d');
-  g.fillStyle = '#ffffff';                     // 贴片白底（与字表页格子同口径）
-  g.fillRect(0, 0, W, H);
-  g.strokeStyle = 'rgba(55,62,80,.32)'; g.lineWidth = 5;
-  g.strokeRect(2.5, 2.5, W-5, H-5);
-  g.fillStyle = '#262b3b';
   // 字号 = 插件默认 18 mm（超贴片按内边距自动缩放，与字表页 / build_tile 同口径）：
   // canvas 高 H ↔ 周向片高 cir(mm)、宽 W ↔ 轴向片宽 ax(mm)，故 px = mm / cir × H。
-  const cirMM = TILE_AX_MM / r;                                  // 周向片高（mm）= ax / (ax/cir)
-  const capY  = Math.max(0.5, cirMM - 2 * TILE_TEXT_MARGIN);      // 字身高可用
-  const capX  = Math.max(0.5, TILE_AX_MM - 2 * TILE_TEXT_MARGIN); // 读向可用
+  const cirMM = TILE_AX_MM / r;
+  const capY  = Math.max(0.5, cirMM - 2 * TILE_TEXT_MARGIN);
+  const capX  = Math.max(0.5, TILE_AX_MM - 2 * TILE_TEXT_MARGIN);
   const fsMM  = Math.min(TILE_FONT_MM, capY, capX / TILE_GLYPH_W_EM);
-  g.font = 'bold ' + Math.round(fsMM / cirMM * H) + 'px "DengXian","等线","Microsoft YaHei",sans-serif';
+  const font  = 'bold ' + Math.round(fsMM / cirMM * H) + 'px "DengXian","等线","Microsoft YaHei",sans-serif';
+
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d');
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = fg; g.font = font;
   g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(glyph, W/2, H/2 + 3);
-  const t = new three.CanvasTexture(cv);
-  if(three.SRGBColorSpace) t.colorSpace = three.SRGBColorSpace;
-  t.anisotropy = 4;
-  GLYPH_TEX.set(key, t);
-  return t;
+
+  const bv = document.createElement('canvas'); bv.width = W; bv.height = H;
+  const b = bv.getContext('2d');
+  b.fillStyle = '#000000'; b.fillRect(0, 0, W, H);
+  b.fillStyle = '#ffffff'; b.font = font;
+  b.textAlign = 'center'; b.textBaseline = 'middle';
+  b.fillText(glyph, W/2, H/2 + 3);
+
+  const map = new three.CanvasTexture(cv);
+  if(three.SRGBColorSpace) map.colorSpace = three.SRGBColorSpace;
+  map.anisotropy = 4;
+  const bump = new three.CanvasTexture(bv);
+  bump.anisotropy = 4;
+  const pair = {map, bump};
+  GLYPH_TEX.set(key, pair);
+  return pair;
 }
 
-function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tileGeo, tileRatio){
+function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tilePlaneGeo, tilePlateGeo,
+                       tileRatio, pv, colorHex, bgHex){
   const aOut = RO*Math.cos(Math.PI/N);
   const off  = aOut + 0.018;                     // 外凸 0.18mm，避免与外环面 Z-fighting
+  const mode = (pv.modes && pv.modes[k-1] === 1) ? 1 : 0;   // 0=白片彩字 / 1=彩片白字
+  const plateCol = mode === 1 ? colorHex : (bgHex || '#fffdf8');
+  const textCol  = mode === 1 ? '#ffffff' : colorHex;
+  const plateMat = new three.MeshPhysicalMaterial({
+    color:new three.Color(plateCol), roughness:0.34, metalness:0,
+    clearcoat:0.6, clearcoatRoughness:0.2
+  });
   for(let i=0;i<N;i++){
     const ch = chars[i];
     if(ch == null || ch === '') continue;       // 空格子不画贴片
@@ -417,15 +449,51 @@ function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tileGeo, tileRatio)
     const xA = new three.Vector3(0, 1, 0);
     const yA = new three.Vector3(-Math.sin(th), 0, Math.cos(th));
     const m4 = new three.Matrix4().makeBasis(xA, yA, n);
-    const mat = new three.MeshStandardMaterial({
-      map: glyphTex(three, ch, tileRatio), roughness:0.72, metalness:0.0, side:three.DoubleSide
-    });
-    const mesh = new three.Mesh(tileGeo, mat);
-    mesh.position.copy(n.clone().multiplyScalar(off));
-    mesh.quaternion.setFromRotationMatrix(m4);
-    mesh.userData.discIndex = k;                // 命中贴片也能找到所属轮盘
-    mesh.userData.isTile = true; mesh.userData.faceIndex = i; mesh.userData.glyph = String(ch);
-    group.add(mesh);
+    const q  = new three.Quaternion().setFromRotationMatrix(m4);
+    const tex = glyphTex(three, ch, tileRatio, textCol);
+
+    // ① 贴片板：有厚度 TILE_T（插件 tile_t 1.2mm），底色按模式白 / 轮盘色
+    const plate = new three.Mesh(tilePlateGeo, plateMat);
+    plate.position.copy(n.clone().multiplyScalar(off + TILE_T/2));
+    plate.quaternion.copy(q);
+    plate.userData = {discIndex:k, isTile:true, faceIndex:i, glyph:String(ch), mode:mode};
+    group.add(plate);
+
+    // ② 投影：贴在板面上、沿光照方向微偏移的半透明黑字。
+    //    0.60mm 的实体抬高在这个尺度下正面几乎看不出，投影才是「字浮起来」最有效的视觉线索。
+    const sh = new three.Mesh(tilePlaneGeo, new three.MeshBasicMaterial({
+      map:tex.map, color:0x000000, transparent:true, opacity:0.5,
+      depthWrite:false, side:three.DoubleSide, toneMapped:false
+    }));
+    /* 0.050cm = 0.5mm 偏移 ≈ 0.60mm 凸起 × tan(40° 主光)，物理上自洽且肉眼能看出 */
+    sh.position.copy(n.clone().multiplyScalar(off + TILE_T + 0.004))
+      .addScaledVector(xA, 0.050).addScaledVector(yA, -0.050);
+    sh.quaternion.copy(q);
+    sh.userData = {discIndex:k, isGlyphShadow:true, faceIndex:i};
+    group.add(sh);
+
+    // ③ 凸字侧壁：同字形贴图压暗，落在半高，斜视角能看出字有厚度
+    const side = new three.Mesh(tilePlaneGeo, new three.MeshStandardMaterial({
+      map:tex.map, color:0x2b2b2b, transparent:true, alphaTest:0.03,
+      roughness:0.8, metalness:0, side:three.DoubleSide, depthWrite:false
+    }));
+    side.position.copy(n.clone().multiplyScalar(off + TILE_T + TEXT_RAISE*0.45));
+    side.quaternion.copy(q);
+    side.userData = {discIndex:k, isGlyphSide:true, faceIndex:i};
+    group.add(side);
+
+    // ④ 凸字顶面：字层抬起 TEXT_RAISE=0.060cm（插件 text_raise 0.60mm），
+    //    bumpMap 让字形有浮雕法线明暗；toneMapped:false 保住字色不被色调映射洗淡。
+    const word = new three.Mesh(tilePlaneGeo, new three.MeshStandardMaterial({
+      map:tex.map, bumpMap:tex.bump, bumpScale:0.075,
+      transparent:true, alphaTest:0.03, roughness:0.5, metalness:0,
+      side:three.DoubleSide, depthWrite:false, toneMapped:false
+    }));
+    word.position.copy(n.clone().multiplyScalar(off + TILE_T + TEXT_RAISE));
+    word.quaternion.copy(q);
+    word.userData = {discIndex:k, isGlyph:true, faceIndex:i, glyph:String(ch),
+                     fg:textCol, raise:TILE_T + TEXT_RAISE};
+    group.add(word);
   }
 }
 
@@ -460,25 +528,33 @@ function buildModel(params, three){
   const tileAx        = Math.max(0.2, Tdisc - 0.10);   // 轴向贴片宽（cm）
   const tileCir       = Math.max(0.2, W - 0.14);       // 周向贴片高（cm）
   const tileRatio     = tileAx / tileCir;              // 供 canvas 按真实比例绘制，字不拉伸
-  const tileGeo       = glyphs ? new three.PlaneGeometry(tileAx, tileCir) : null;
-  // ↑ width 沿局部 X(=装配轴)、height 沿局部 Y(=周向)：与 canvas 同向
+  const tilePlaneGeo  = glyphs ? new three.PlaneGeometry(tileAx, tileCir) : null;        // 字层（平面）
+  const tilePlateGeo  = glyphs ? new three.BoxGeometry(tileAx, tileCir, TILE_T) : null; // 贴片板（有厚度）
+  // ↑ width 沿局部 X(=装配轴)、height 沿局部 Y(=周向)、depth 沿局部 Z(=盘面法向)：与 canvas 同向
 
-  const matAxle = std(MAT.axle, 0.40);
-  const matCapM = std(MAT.capM, 0.50);
-  const matCapF = std(MAT.capF, 0.50);
+  /* 材质选项由字表页预览弹窗（同源 iframe 父页）传入；独立打开时用全黑默认。
+     ⛔ 全黑机身只换零件色，贴片白/彩由 modes 决定，不受 body 影响。 */
+  const pv = params.pv || {body:'black', modes:[], colors:[], bgs:[]};
+  const pm = (pv.body === 'color') ? MAT : MAT_BLACK;
+  const matAxle = std(pm.axle, 0.40);
+  const matCapM = std(pm.capM, 0.50);
+  const matCapF = std(pm.capF, 0.50);
 
   // 一个完整轮盘（外环+辐条+中心套筒 已在 discGeo 内一体，裙边同色贴 -Y 端面）
   // ⚠ 每盘一份独立材质 + 唯一 discIndex：多轮盘时才能「点哪个转哪个」并单独 hover 高亮。
   function oneDisc(k){
     const g = new three.Group();
-    const mat = std(MAT.disc, 0.48);            // 独立材质，hover 高亮不串到别的盘
+    const mat = std(pm.disc, 0.48);             // 独立材质，hover 高亮不串到别的盘
     const body = new three.Mesh(discGeoShared, mat);
     const skirt = new three.Mesh(skirtGeo, mat);
     skirt.position.y = -Tdisc/2 + SKIRT_H/2;  // 裙边贴轮盘 -Y 端面（靠母盖法兰侧）
     body.userData.discIndex = k; skirt.userData.discIndex = k;   // 射线命中后向上找到所属轮盘
     g.userData.discIndex = k; g.userData.discMat = mat;
     g.add(body, skirt);
-    if(glyphs && glyphs[k-1]) addTilePlanes(three, g, k, glyphs[k-1], N, RO, Tdisc, tileGeo, tileRatio);
+    if(glyphs && glyphs[k-1]) addTilePlanes(three, g, k, glyphs[k-1], N, RO, Tdisc,
+      tilePlaneGeo, tilePlateGeo, tileRatio, pv,
+      (pv.colors && pv.colors[k-1]) || '#262b3b',
+      (pv.bgs && pv.bgs[k-1]) || '#fffdf8');
     return g;
   }
 
@@ -536,6 +612,15 @@ function derived(params){
   const af = 2*R*Math.cos(Math.PI/N);     // 对边距 mm
   const len = cnt*params.T + 5;           // 装配总长 mm（2×法兰 2.5 + 轮盘数×面宽）
   return { faceH, af, len };
+}
+
+/* 图例色块跟着机身材质走：全黑机身时仍显示橙/蓝/绿会误导 */
+function syncLegend(pv){
+  const cs = (pv && pv.body === 'color')
+    ? ['#e0833a','#64748b','#3fa07a','#5b6bc4']
+    : ['#1b1d24','#14151a','#20232b','#171920'];
+  const dots = document.querySelectorAll('#legend_pop .dot');
+  for(let i=0;i<dots.length && i<cs.length;i++) dots[i].style.background = cs[i];
 }
 
 window.__wheel3d = {
@@ -627,6 +712,7 @@ window.__wheel3d = {
     }
 
     rebuild();
+    syncLegend(getParams().pv);
 
     /* 每个轮盘可单独点击拖动旋转（绕装配轴），互不带动；轮盘自己不会自动转。
        界定方式：Raycaster 命中列表按前后排序，只取 hits[0]（屏幕上最前面的可见表面），
@@ -703,7 +789,55 @@ window.__wheel3d = {
         });
         return out;
       },
+      /* 只读诊断：材质/凸起/零件配色，供同源 CDP 验证页断言 */
+      debugPv(){
+        const st = window.__wheelPv || {};
+        const out = {body:st.body, modes:(st.modes||[]).slice(),
+                     tileT:TILE_T, raise:TEXT_RAISE, plates:[], words:0, sides:0, shadows:0, parts:[],
+                     samplePlate:null, sampleWord:null, bumpCount:0, wordFgs:[]};
+        const seen = {};
+        if(model) model.traverse(o=>{
+          const u = o.userData || {};
+          if(u.isGlyph){
+            out.words++;
+            if(out.sampleWord == null) out.sampleWord = +o.position.length().toFixed(4);
+            if(o.material && o.material.bumpMap) out.bumpCount++;
+            if(u.fg && out.wordFgs.indexOf(u.fg) < 0) out.wordFgs.push(u.fg);
+          }
+          else if(u.isGlyphSide) out.sides++;
+          else if(u.isGlyphShadow) out.shadows++;
+          else if(u.isTile && o.material && o.material.color){
+            out.plates.push({disc:u.discIndex, mode:u.mode, hex:'#'+o.material.color.getHexString()});
+            if(out.samplePlate == null) out.samplePlate = +o.position.length().toFixed(4);
+          }
+          else if(o.material && o.material.color){
+            const h = '#'+o.material.color.getHexString();
+            if(!seen[h]){ seen[h]=1; out.parts.push(h); }
+          }
+        });
+        return out;
+      },
       setParams(p){ rebuild(); },
+      /* 父页（字表预览弹窗）点机身/chip/统一时调：更新 window.__wheelPv 后整棵重建。
+         ⛔ 独立打开时 window.__wheelPv 由 classic 脚本按 pv= 初始化，二者同一数据源。 */
+      setPv(o){
+        if(!o) return;
+        const M = Math.max(1, Math.round(+document.getElementById('p_cnt').value || 5));
+        const modes = (Array.isArray(o.modes) ? o.modes : []).slice(0, M)
+                        .map(m => (m === 1 ? 1 : 0));
+        while(modes.length < M) modes.push(0);
+        window.__wheelPv = {
+          body  : (o.body === 'color') ? 'color' : 'black',
+          modes : modes,
+          colors: (Array.isArray(o.colors) ? o.colors : []).slice(0, M),
+          bgs   : (Array.isArray(o.bgs) ? o.bgs : []).slice(0, M)
+        };
+        /* 切材质不该把用户转好的视角打回初始位：rebuild 内会 fitView，先存后还原 */
+        const cp = camera.position.clone(), ct = controls.target.clone();
+        rebuild();
+        camera.position.copy(cp); controls.target.copy(ct); controls.update();
+        syncLegend(window.__wheelPv);
+      },
       setExploded(on){ exploded = !!on; applyOffsets(); fitView(); },
       setSpin(on){ controls.autoRotate = !!on; },
       resetView(){ fitView(); },
@@ -742,6 +876,28 @@ window.__wheel3d = {
     }
     return cols;
   }
+  function validHex(v){ return (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) ? v : ''; }
+  /* 预览材质选项：字表页通过 ?pv= 把 {body, modes, colors, bgs} 送进来；
+     独立打开（没有 pv=）时按「全黑机身 + 白片彩字」默认，颜色回落到字表页 PALETTE 顺序。
+     ⛔ window.__wheelPv 是唯一数据源：父页 setPv / 本页 rebuild 都读它。 */
+  function initPv(){
+    var q = new URLSearchParams(location.search), o = null;
+    try{ o = JSON.parse(q.get('pv') || 'null'); }catch(e){ o = null; }
+    var M = Math.max(1, Math.round(+document.getElementById('p_cnt').value || 5));
+    var DEF = ['#f27317','#d91f1f','#1a61cc','#219e40','#3c4048','#7340b3'];
+    var modes = [], colors = [], bgs = [];
+    for(var j=0;j<M;j++){
+      modes.push(o && Array.isArray(o.modes) && o.modes[j] === 1 ? 1 : 0);
+      colors.push(validHex(o && Array.isArray(o.colors) ? o.colors[j] : null) || DEF[j % DEF.length]);
+      bgs.push(validHex(o && Array.isArray(o.bgs) ? o.bgs[j] : null) || '#fffdf8');
+    }
+    /* 独立打开（工具页）保持彩色零件：橙/绿/蓝/灰本就是用来分辨 4 种装配零件的；
+       仅字表页 embed 预览默认全黑（用户 18:55 定的默认观感）。有 pv= 一律听父页。 */
+    var isEmbed = q.get('embed') === '1';
+    var body = (o && (o.body === 'color' || o.body === 'black')) ? o.body
+             : (isEmbed ? 'black' : 'color');
+    window.__wheelPv = { body: body, modes: modes, colors: colors, bgs: bgs };
+  }
   function params(){
     var N = +document.getElementById('p_n').value;
     var M = Math.max(1, Math.round(+document.getElementById('p_cnt').value || 5));
@@ -752,6 +908,7 @@ window.__wheel3d = {
       discCount: M,
       capShape: document.getElementById('p_cap').value,
       glyphs: readGlyphs(N, M),
+      pv: window.__wheelPv || null,
     };
   }
   function fmt(v, d){ return (+v).toFixed(d); }
@@ -796,6 +953,7 @@ window.__wheel3d = {
     if(q.has('t')){ const v=+q.get('t'); if(isFinite(v)&&v>0)
       document.getElementById('p_t').value = Math.min(40, Math.max(6, v)); }
     if(q.get('embed') === '1') document.body.classList.add('embed');
+    initPv();                                  // ⛔ 必须在 build() 之前：params() 会读 window.__wheelPv
     const host = document.getElementById('wheel_host');
 
     /* 原生控件（隐藏，仅作图标按钮代理）的绑定提前到 boot 阶段，
