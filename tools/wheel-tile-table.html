@@ -57,6 +57,23 @@
   border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.25);
 }
 .whl-col-head b{font-size:11px; font-weight:600; color:var(--ink); white-space:nowrap;}
+/* 列内容互换拖柄（照 3D 魔方 .drag-h，2026-11-09）：⛔ 只有它能发起拖动 */
+.whl-drag-h{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:14px; height:18px; flex:none; font-size:12px; line-height:1;
+  color:var(--ink-secondary,#8a90a0); cursor:grab; user-select:none; border-radius:4px;
+}
+.whl-drag-h:hover{background:rgba(43,48,65,.08); color:var(--ink,#2b3041);}
+.whl-drag-h:active{cursor:grabbing;}
+.whl-col.dragging{opacity:.4;}
+.whl-col.drop-target{outline:2px dashed #65a30d; outline-offset:3px; border-radius:14px;}
+/* 轻提示（与魔方 #ctg_toast 同规格） */
+#whl_toast{
+  position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--fill-black,#2b3041); color:#fff; padding:9px 20px; border-radius:999px;
+  font-size:var(--fs-sm,13px); opacity:0; pointer-events:none; transition:all .25s; z-index:1400;
+}
+#whl_toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 /* 色槽 UI 已隐藏（用户 2026-11-08 定稿）：列头只留「小方块 + 面n」，
    后台 state.wcols[j] 仍保留 {bg,fg} 两种材质（底色默认 #fffdf8 白、字色默认=小方块色）。
    下列 .whl-cslot / 取色弹层样式保留备用，不参与渲染。 */
@@ -806,6 +823,7 @@ body.dev .whl-tab.dev-tab{display:flex;}
       html += '<div class="whl-col" data-c="' + j + '">'
             +   '<div class="whl-col-main">'
             +     '<div class="whl-col-head">'
+            +       '<span class="whl-drag-h" draggable="true" data-c="' + j + '" title="按住拖到另一列：两列互换整套字表（轮盘位置与配色留在原位）">⠿</span>'
             +       '<span class="whl-swatch" style="background:' + swPal[j % swPal.length] + '"></span>'
             +       '<b>面' + (j+1) + '</b>'
             +     '</div>'
@@ -828,6 +846,90 @@ body.dev .whl-tab.dev-tab{display:flex;}
     document.querySelector('#btn_m b').textContent = state.m;
     layout();
   }
+
+  /* ================= 列内容互换（照 3D 魔方 swapFaceTiles，2026-11-09）=================
+     列头最左 ⠿ 拖柄拖到另一列松手 = 两列的「整套 N 格字表」互换。
+     ⛔ 语义 = 两两互换，不是插入顺延（魔方首版顺延被用户当场否掉，勿重蹈）。
+     ⛔ 留在原位：列位置（data-c / 列头「面N」）、逐轮盘配色 wcols[j]、各列翻页位置 colStart[j]。
+     ⛔ 跟着字走：cols[j]（N 个字）+ style[j]（单格样式与字一一对应，不一起换会错位）。
+     导出（.ctgz / md / json）与 3D 预览都现读 state → 互换后无需额外同步；
+     saveState() 落 localStorage/sessionStorage，刷新不丢。 */
+  function swapColumnTiles(f, g){
+    if(f === g || !(f >= 0 && f < state.m) || !(g >= 0 && g < state.m)) return false;
+    var t = state.cols[f]; state.cols[f] = state.cols[g]; state.cols[g] = t;
+    var s = state.style[f]; state.style[f] = state.style[g]; state.style[g] = s;
+    saveState(); render();
+    return true;
+  }
+  window.__swapColumnTiles = swapColumnTiles;   // CDP 验证用（与魔方 __swapFaceTiles 同例）
+
+  var toastTimer = null;
+  function whlToast(msg){
+    var t = document.getElementById('whl_toast');
+    if(!t) return;
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+
+  /* ---------- 拖放：只认列头拖柄，其余元素一律取消 ---------- */
+  var dragCol = -1;
+  function colIdxOf(el){
+    var c = el && el.closest ? el.closest('.whl-col') : null;
+    if(!c) return -1;
+    var v = +c.getAttribute('data-c');
+    return isFinite(v) && v >= 0 && v < state.m ? v : -1;
+  }
+  function cleanupColDrag(){
+    dragCol = -1;
+    var all = document.querySelectorAll('#grid .whl-col');
+    for(var i=0;i<all.length;i++) all[i].classList.remove('dragging','drop-target');
+  }
+  function bindColDrag(grid){
+    grid.addEventListener('dragstart', function(e){
+      var h = e.target && e.target.closest ? e.target.closest('.whl-drag-h') : null;
+      if(!h){ e.preventDefault(); return; }   // 格子 / 翻页按钮 / 列头色块都不能发起拖动
+      dragCol = +h.getAttribute('data-c');
+      if(e.dataTransfer){
+        e.dataTransfer.effectAllowed = 'move';
+        try{ e.dataTransfer.setData('text/plain', String(dragCol)); }catch(err){}
+      }
+      var src = grid.querySelector('.whl-col[data-c="' + dragCol + '"]');
+      if(src) src.classList.add('dragging');
+    });
+    grid.addEventListener('dragover', function(e){
+      if(dragCol < 0) return;
+      var g = colIdxOf(e.target);
+      if(g < 0) return;
+      e.preventDefault();                     // 允许在此列 drop
+      if(e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      if(g === dragCol) return;
+      var all = grid.querySelectorAll('.whl-col');
+      for(var i=0;i<all.length;i++) all[i].classList.remove('drop-target');
+      var dst = grid.querySelector('.whl-col[data-c="' + g + '"]');
+      if(dst) dst.classList.add('drop-target');
+    });
+    grid.addEventListener('drop', function(e){
+      if(dragCol < 0) return;
+      e.preventDefault();
+      var f = dragCol, g = colIdxOf(e.target);
+      cleanupColDrag();
+      if(g >= 0 && g !== f && swapColumnTiles(f, g)){
+        whlToast('已互换整套字表：面' + (f+1) + ' ↔ 面' + (g+1) + '（轮盘位置与配色留在原位）');
+      }
+    });
+    grid.addEventListener('dragend', cleanupColDrag);
+    grid.addEventListener('dragleave', function(e){
+      var g = colIdxOf(e.target);
+      if(g >= 0 && g !== dragCol){
+        var el = grid.querySelector('.whl-col[data-c="' + g + '"]');
+        if(el) el.classList.remove('drop-target');
+      }
+    });
+  }
+  /* 拖到网格外松手：浏览器默认会拿 text/plain 去导航，全局拦掉（同魔方） */
+  document.addEventListener('dragover', function(e){ if(dragCol >= 0) e.preventDefault(); });
+  document.addEventListener('drop', function(e){ if(dragCol >= 0) e.preventDefault(); });
 
   /* ---------- 一屏内显示 / 每列独立逐格翻页 ----------
      ⛔ 每列各有一个 colStart[j]，右侧 ▲/▼ 只翻自己那一列（用户 2026-11-08 定稿）；
@@ -1489,7 +1591,9 @@ body.dev .whl-tab.dev-tab{display:flex;}
     render();
 
     // 每列独立翻页 + 单格编辑：事件委托（data-c / data-i）
-    document.getElementById('grid').addEventListener('click', function(e){
+    var gridEl = document.getElementById('grid');
+    bindColDrag(gridEl);                    // 列内容拖放（拖柄 dragstart / 整列 drop）
+    gridEl.addEventListener('click', function(e){
       var cs = e.target.closest ? e.target.closest('.whl-cslot') : null;
       if(cs){ openColorPop(+cs.dataset.c, cs.dataset.slot, cs); return; }
       var cell = e.target.closest ? e.target.closest('.whl-cell') : null;
@@ -1631,5 +1735,6 @@ body.dev .whl-tab.dev-tab{display:flex;}
   else boot();
 })();
 </script>
+<div id="whl_toast"></div>
 </body>
 </html>
