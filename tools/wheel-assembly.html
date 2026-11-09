@@ -273,6 +273,9 @@ const MAT_BLACK = {
    text_raise 0.60 mm 是 v0.9.25（18:29 用户要求与 3D 魔方 CTG text_out=0.6 统一）。 */
 const TILE_T     = 0.12;   // 1.2 mm = TILE.tile_t
 const TEXT_RAISE = 0.060;  // 0.60 mm = TILE.text_raise
+/* 第三态「黑底白字」贴片色（2026-11-09 用户要求）：比全黑机身轮盘面 #1b1d24 暗一档，
+   靠明度差 + 更高 clearcoat 在黑机身上仍能看出逐片边界；白字 + 浅色侧壁保住凸起立体感。 */
+const TILE_BLACK = '#0f1116';
 
 function polygonShape(R, N){
   const s = new THREE.Shape();
@@ -431,12 +434,13 @@ function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tilePlaneGeo, tileP
                        tileRatio, pv, colorHex, bgHex){
   const aOut = RO*Math.cos(Math.PI/N);
   const off  = aOut + 0.018;                     // 外凸 0.18mm，避免与外环面 Z-fighting
-  const mode = (pv.modes && pv.modes[k-1] === 1) ? 1 : 0;   // 0=白片彩字 / 1=彩片白字
-  const plateCol = mode === 1 ? colorHex : (bgHex || '#fffdf8');
-  const textCol  = mode === 1 ? '#ffffff' : colorHex;
+  const mv = pv.modes ? +pv.modes[k-1] : 0;
+  const mode = (mv === 1 || mv === 2) ? mv : 0;   // 0=白片彩字 / 1=彩片白字 / 2=黑底白字
+  const plateCol = mode === 1 ? colorHex : mode === 2 ? TILE_BLACK : (bgHex || '#fffdf8');
+  const textCol  = mode === 0 ? colorHex : '#ffffff';
   const plateMat = new three.MeshPhysicalMaterial({
-    color:new three.Color(plateCol), roughness:0.34, metalness:0,
-    clearcoat:0.6, clearcoatRoughness:0.2
+    color:new three.Color(plateCol), roughness:mode === 2 ? 0.26 : 0.34, metalness:0,
+    clearcoat:mode === 2 ? 0.9 : 0.6, clearcoatRoughness:0.2
   });
   for(let i=0;i<N;i++){
     const ch = chars[i];
@@ -472,9 +476,10 @@ function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tilePlaneGeo, tileP
     sh.userData = {discIndex:k, isGlyphShadow:true, faceIndex:i};
     group.add(sh);
 
-    // ③ 凸字侧壁：同字形贴图压暗，落在半高，斜视角能看出字有厚度
+    // ③ 凸字侧壁：同字形贴图压暗，落在半高，斜视角能看出字有厚度。
+    //    黑底白字时侧壁提亮成近白，否则深色侧壁在黑片上完全消失、0.60mm 凸起看不出来。
     const side = new three.Mesh(tilePlaneGeo, new three.MeshStandardMaterial({
-      map:tex.map, color:0x2b2b2b, transparent:true, alphaTest:0.03,
+      map:tex.map, color:mode === 2 ? 0xe9edf4 : 0x2b2b2b, transparent:true, alphaTest:0.03,
       roughness:0.8, metalness:0, side:three.DoubleSide, depthWrite:false
     }));
     side.position.copy(n.clone().multiplyScalar(off + TILE_T + TEXT_RAISE*0.45));
@@ -533,7 +538,7 @@ function buildModel(params, three){
   // ↑ width 沿局部 X(=装配轴)、height 沿局部 Y(=周向)、depth 沿局部 Z(=盘面法向)：与 canvas 同向
 
   /* 材质选项由字表页预览弹窗（同源 iframe 父页）传入；独立打开时用全黑默认。
-     ⛔ 全黑机身只换零件色，贴片白/彩由 modes 决定，不受 body 影响。 */
+     ⛔ 全黑机身只换零件色；贴片三态（白片彩字 / 彩片白字 / 黑底白字）由 modes 决定，不受 body 影响。 */
   const pv = params.pv || {body:'black', modes:[], colors:[], bgs:[]};
   const pm = (pv.body === 'color') ? MAT : MAT_BLACK;
   const matAxle = std(pm.axle, 0.40);
@@ -798,7 +803,7 @@ window.__wheel3d = {
         const st = window.__wheelPv || {};
         const out = {body:st.body, modes:(st.modes||[]).slice(),
                      tileT:TILE_T, raise:TEXT_RAISE, plates:[], words:0, sides:0, shadows:0, parts:[],
-                     samplePlate:null, sampleWord:null, bumpCount:0, wordFgs:[]};
+                     samplePlate:null, sampleWord:null, bumpCount:0, wordFgs:[], sideHexes:[]};
         const seen = {};
         if(model) model.traverse(o=>{
           const u = o.userData || {};
@@ -808,7 +813,13 @@ window.__wheel3d = {
             if(o.material && o.material.bumpMap) out.bumpCount++;
             if(u.fg && out.wordFgs.indexOf(u.fg) < 0) out.wordFgs.push(u.fg);
           }
-          else if(u.isGlyphSide) out.sides++;
+          else if(u.isGlyphSide){
+            out.sides++;
+            if(o.material && o.material.color){
+              const sh = '#'+o.material.color.getHexString();
+              if(out.sideHexes.indexOf(sh) < 0) out.sideHexes.push(sh);
+            }
+          }
           else if(u.isGlyphShadow) out.shadows++;
           else if(u.isTile && o.material && o.material.color){
             out.plates.push({disc:u.discIndex, mode:u.mode, hex:'#'+o.material.color.getHexString()});
@@ -828,7 +839,7 @@ window.__wheel3d = {
         if(!o) return;
         const M = Math.max(1, Math.round(+document.getElementById('p_cnt').value || 5));
         const modes = (Array.isArray(o.modes) ? o.modes : []).slice(0, M)
-                        .map(m => (m === 1 ? 1 : 0));
+                        .map(m => { const v = +m; return (v === 1 || v === 2) ? v : 0; });
         while(modes.length < M) modes.push(0);
         window.__wheelPv = {
           body  : (o.body === 'color') ? 'color' : 'black',
@@ -882,6 +893,7 @@ window.__wheel3d = {
   }
   function validHex(v){ return (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) ? v : ''; }
   /* 预览材质选项：字表页通过 ?pv= 把 {body, modes, colors, bgs} 送进来；
+     modes 三态 0=白片彩字 / 1=彩片白字 / 2=黑底白字（旧值 1 保持兼容，其余一律回落到 0）。
      独立打开（没有 pv=）时按「全黑机身 + 白片彩字」默认，颜色回落到字表页 PALETTE 顺序。
      ⛔ window.__wheelPv 是唯一数据源：父页 setPv / 本页 rebuild 都读它。 */
   function initPv(){
@@ -891,7 +903,8 @@ window.__wheel3d = {
     var DEF = ['#f27317','#d91f1f','#1a61cc','#219e40','#3c4048','#7340b3'];
     var modes = [], colors = [], bgs = [];
     for(var j=0;j<M;j++){
-      modes.push(o && Array.isArray(o.modes) && o.modes[j] === 1 ? 1 : 0);
+      var mv = o && Array.isArray(o.modes) ? +o.modes[j] : 0;
+      modes.push((mv === 1 || mv === 2) ? mv : 0);
       colors.push(validHex(o && Array.isArray(o.colors) ? o.colors[j] : null) || DEF[j % DEF.length]);
       bgs.push(validHex(o && Array.isArray(o.bgs) ? o.bgs[j] : null) || '#fffdf8');
     }

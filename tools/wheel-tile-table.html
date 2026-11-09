@@ -387,6 +387,10 @@ body.dev .whl-tab.dev-tab{display:flex;}
 .whl-pv-chip .md{font-size:10px; color:var(--ink-tertiary);}
 .whl-pv-chip.inv{box-shadow:inset 0 0 0 1px var(--ink);}
 .whl-pv-chip.inv .md{color:var(--ink); font-weight:600;}
+/* 第三态「黑底白字」：chip 本身也用黑底，圆点做成白环 + 黑芯，与 3D 里的黑片白字一致 */
+.whl-pv-chip.dark{background:#0f1116; border-color:#0f1116; color:#fff;}
+.whl-pv-chip.dark .md{color:#e9edf4; font-weight:600;}
+.whl-pv-chip.dark .dot{box-shadow:inset 0 0 0 3px #fff;}
 .whl-pv-all{border:1px solid var(--border); border-radius:999px; background:var(--bg-white);
   color:var(--ink-secondary); font-size:12px; padding:5px 12px; min-height:30px;
   cursor:pointer; flex:none;}
@@ -1678,17 +1682,30 @@ body.dev .whl-tab.dev-tab{display:flex;}
      body  : 'black' 全黑机身（除贴片白，其余黑；2026-11-09 用户定默认）
              'color' 彩色零件（橙盘 / 灰蓝轴 / 绿公盖 / 蓝母盖，历史默认）
      modes[j]: 0=白片彩字（默认，字色取 wcols[j].fg） / 1=彩片白字（片色取 wcols[j].fg）
-     用户改过存 sessionStorage，下次以用户选择为准；控件在弹窗底部，同源直调 iframe 内 3D 接口。 */
+               2=黑底白字（黑片 + 纯白字，2026-11-09 用户要求新增，与轮盘字色无关）
+     用户改过存 sessionStorage，下次以用户选择为准；控件在弹窗底部，同源直调 iframe 内 3D 接口。
+     ⛔ 三态循环顺序固定 0→1→2→0：「统一」按此推进并显示「将要变成」的模式，混合时先回到 0。 */
   var PV_KEY = 'whl_tile_pv_v1';
   var pvOpts = (function(){
     try{
       var s = JSON.parse(sessionStorage.getItem(PV_KEY) || 'null');
-      if(s && (s.body === 'black' || s.body === 'color') && Array.isArray(s.modes)) return s;
+      if(s && (s.body === 'black' || s.body === 'color') && Array.isArray(s.modes)){
+        s.modes = s.modes.map(function(m){ var v = +m; return (v === 1 || v === 2) ? v : 0; });
+        return s;
+      }
     }catch(e){}
     return {body:'black', modes:[]};
   })();
+  var PV_MODE = ['白片彩字','彩片白字','黑底白字'];
+  var PV_SHORT = ['白片','彩片','黑底'];
   function pvSave(){ try{ sessionStorage.setItem(PV_KEY, JSON.stringify(pvOpts)); }catch(e){} }
-  function pvMode(j){ return pvOpts.modes[j] === 1 ? 1 : 0; }
+  function pvMode(j){ var v = +pvOpts.modes[j]; return (v === 1 || v === 2) ? v : 0; }
+  /* 「统一」推进到下一态：全同 → (当前+1)%3，混合 → 先统一回 0；按钮文字显示「将要变成」 */
+  function pvNextAll(){
+    var first = pvMode(0), same = true;
+    for(var j=1;j<state.m;j++) if(pvMode(j) !== first){ same = false; break; }
+    return same ? (first + 1) % 3 : 0;
+  }
   function pvSnapshot(){
     var modes = [];
     for(var j=0;j<state.m;j++) modes.push(pvMode(j));
@@ -1704,16 +1721,16 @@ body.dev .whl-tab.dev-tab{display:flex;}
     for(var j=0;j<state.m;j++){
       var m = pvMode(j), wc = state.wcols[j] || {};
       var b = document.createElement('button');
-      b.type = 'button'; b.className = 'whl-pv-chip' + (m ? ' inv' : '');
+      b.type = 'button'; b.className = 'whl-pv-chip' + (m === 1 ? ' inv' : m === 2 ? ' dark' : '');
       b.setAttribute('data-j', j);
-      b.innerHTML = '<span class="dot" style="background:' + (wc.fg || '#3c4048') + '"></span>'
-                  + '<span>' + (j+1) + '</span><span class="md">' + (m ? '彩片' : '白片') + '</span>';
-      b.title = '轮盘 ' + (j+1) + '：' + (m ? '彩片白字' : '白片彩字') + '（点击切换）';
+      /* 黑底白字不用轮盘字色，圆点换成「黑芯 + 白环」示意，别再显示误导性的红/蓝/绿 */
+      var dotCol = m === 2 ? '#0f1116' : (wc.fg || '#3c4048');
+      b.innerHTML = '<span class="dot" style="background:' + dotCol + '"></span>'
+                  + '<span>' + (j+1) + '</span><span class="md">' + PV_SHORT[m] + '</span>';
+      b.title = '轮盘 ' + (j+1) + '：' + PV_MODE[m] + '（点击依次切换 白片 → 彩片 → 黑底）';
       box.appendChild(b);
     }
-    var allWhite = true;
-    for(var k=0;k<state.m;k++) if(pvMode(k) !== 0){ allWhite = false; break; }
-    document.getElementById('pv_all').textContent = '统一：' + (allWhite ? '彩片白字' : '白片彩字');
+    document.getElementById('pv_all').textContent = '统一：' + PV_MODE[pvNextAll()];
   }
   /* iframe 的 3D 接口是异步就绪的：没拿到就短轮询等（最多 5s），不丢用户这次点击 */
   function pushPv(tries){
@@ -1922,11 +1939,10 @@ body.dev .whl-tab.dev-tab{display:flex;}
       var b = e.target.closest && e.target.closest('.whl-pv-chip'); if(!b) return;
       var j = +b.getAttribute('data-j');
       if(!(j >= 0 && j < state.m)) return;
-      pvOpts.modes[j] = pvMode(j) ? 0 : 1; pvSave(); syncPvUI(); pushPv(0);
+      pvOpts.modes[j] = (pvMode(j) + 1) % 3; pvSave(); syncPvUI(); pushPv(0);
     });
     document.getElementById('pv_all').addEventListener('click', function(){
-      var next = 1;
-      for(var k=0;k<state.m;k++) if(pvMode(k) !== 0){ next = 0; break; }
+      var next = pvNextAll();
       for(var j=0;j<state.m;j++) pvOpts.modes[j] = next;
       pvSave(); syncPvUI(); pushPv(0);
     });
