@@ -83,7 +83,7 @@
         { name: '动作库', href: './pose-gallery.html', localOnly: true },
         { name: '构图编辑器', href: './composition-editor.html' },
         { name: '魔方贴片字表', href: './cube-tile-table.html', secure: true },
-        { name: '手轮贴片字表', href: './wheel-tile-table.html' },
+        { name: '手轮贴片字表', href: './wheel-tile-table.html', secure: true },
         { name: '轮盘组装预览', href: './wheel-assembly.html' }
       ]
     },
