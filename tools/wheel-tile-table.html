@@ -67,6 +67,12 @@
 .whl-drag-h:active{cursor:grabbing;}
 .whl-col.dragging{opacity:.4;}
 .whl-col.drop-target{outline:2px dashed #65a30d; outline-offset:3px; border-radius:14px;}
+/* 点选式互换（触屏兜底）：点一下源列、再点目标列。选中后其余列头变绿＝可点目标 */
+#grid.picking .whl-col-head{background:rgba(101,163,13,.10); border-radius:8px;}
+#grid.picking .whl-drag-h{color:#2f6d0a; background:rgba(101,163,13,.16);}
+.whl-col.pick-src{outline:2px dashed #65a30d; outline-offset:3px; border-radius:14px;}
+.whl-col.pick-src .whl-col-head{background:rgba(101,163,13,.22);}
+.whl-drag-tip{display:none; font-size:var(--fs-sm,13px); color:var(--ink-tertiary);}
 /* 轻提示（与魔方 #ctg_toast 同规格） */
 #whl_toast{
   position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -370,6 +376,14 @@ body.dev .whl-tab.dev-tab{display:flex;}
   .whl-hot button{min-height:44px; font-size:13.5px;}
   .whl-col-pg{width:44px;}
   .whl-pg-btn{width:44px; height:44px; font-size:15px;}
+  /* 2026-11-09 17:31 用户定「要换行的」：手机上 5 列不再横向滑动，改成 2-3 行排列。
+     ⛔ 配套：JS layout() 在窄屏跳过「一屏收敛」——换行成多行后强求一屏会把可见行压到 1 格。 */
+  /* ⛔ 必须写简写 overflow:visible —— 只写 overflow-x:visible 而 overflow-y 仍是 hidden 时，
+        CSS 规范会把 visible 计算回 auto（横滚条仍在）。 */
+  .whl-grid{flex-wrap:wrap; overflow:visible; justify-content:center; width:100%;}
+  /* 触屏点选互换：整条列头 44px 高当点击热区（色块/面名只作展示，无其它点击功能） */
+  .whl-col-head{min-height:44px; cursor:pointer; flex-wrap:nowrap;}
+  .whl-drag-tip{display:inline;}
 }
 </style>
 </head>
@@ -379,6 +393,7 @@ body.dev .whl-tab.dev-tab{display:flex;}
   <div class="section-inner">
     <div class="whl-bar">
       <span class="whl-count" id="count">共 <b>50</b> 片</span>
+      <span class="whl-drag-tip">点两下列头 ⠿ 即可互换两列字表（触屏也能用）</span>
     </div>
 
     <!-- 贴片等比读数单独一行：不挤参数条，也让「字占片多少」一眼可见 -->
@@ -562,7 +577,8 @@ body.dev .whl-tab.dev-tab{display:flex;}
    ============================================================ */
 (function(){
   var KEY = 'whl_wheel_table_v1';
-  var STATE_VER = 2;              // v2（2026-11-09）：热端默认改 0.4，与插件 TILE_HOTEND_DEFAULT 对齐
+  var STATE_VER = 3;              // v3（2026-11-09 17:31）：默认字表改 4 数字面 + 面3 十符号
+                                  // v2（16:40）：热端默认改 0.4，与插件 TILE_HOTEND_DEFAULT 对齐
   var DEF = {n:10, m:5, hotend:'H04'};
   var state = null;
 
@@ -593,15 +609,38 @@ body.dev .whl-tab.dev-tab{display:flex;}
   // ⛔ 2026-11-08 实测：不补偿时内框只有 46.2×88.1px，而字号按 58.3×88.2 在算 → 字必然溢出。
   // 列头色块沿用 3D 魔方 PALETTE 顺序；轮盘数最多 8，循环取色
   var PALETTE = ['#f27317','#d91f1f','#1a61cc','#219e40','#0f0f12','#7340b3'];
-  var LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  /* 默认字表：面1=数字(从 0 起)、面5=数学符号（+ − × ÷ = 循环，减号用 U+2212）、其余=英文字母
-     用户 2026-11-08 定：面1 是 0 1 2 …（不是从 1 起）；10 格时面5 排成 + − × ÷ = + − × ÷ = */
-  var SYMBOLS = ['+','\u2212','\u00D7','\u00F7','='];
-  var SYM_FACE = 4;                       // 面5（下标 4）
+  /* 默认字表（2026-11-09 17:31 用户定稿）：
+       面1 = 0-9 数字、面2 = 0-9 数字、面4 = 0-9 数字、面5 = 0-9 数字
+       面3 = 10 个数学符号：+ − × ÷ ≈ > < ≥ ≤ =
+     ⛔ 历史 · 已作废：11-08 版是「面1 数字 / 面2-4 英文字母 / 面5 五符号循环」，
+        用户改口径为「4 个数字面 + 1 个符号面」，且符号面移到面3。
+     字符口径：减号用 U+2212(−) 不用 ASCII 短横（与 + 等宽、笔画够粗）；
+       > < 用半角 U+003E/003C，不用全角 ＞＜（全角会和 ≈ ≥ ≤ 明显不齐）。
+       n>10 时数字面自然到 10、11…；符号面按 10 个循环（默认 n=10 正好一轮）。 */
+  var SYMBOLS = ['+','\u2212','\u00D7','\u00F7','\u2248','>','<','\u2265','\u2264','='];
+  var SYM_FACE = 2;                       // 面3（下标 2）
   function defaultChar(j, i){
-    if(j === 0) return String(i);        // ⛔ 面1 从 0 起（用户 2026-11-08 纠正：不是 1–10，是 0–9）
     if(j === SYM_FACE) return SYMBOLS[i % SYMBOLS.length];
-    return LETTERS.charAt(i % 26);
+    return String(i);                    // ⛔ 从 0 起（用户 2026-11-08 纠正：不是 1–10，是 0–9）
+  }
+  /* 旧版默认字表指纹：仅用于判断老存档是否「一字未改」，好安全升级到新默认。
+     ⛔ 绝不无脑覆盖用户编辑过的字表。 */
+  function legacyDefaultChar(j, i){
+    var oldSym = ['+','\u2212','\u00D7','\u00F7','='];
+    if(j === 0) return String(i);
+    if(j === 4) return oldSym[i % 5];
+    return String.fromCharCode(65 + (i % 26));
+  }
+  function isLegacyDefault(s){
+    if(!s || !Array.isArray(s.cols)) return false;
+    for(var j=0;j<s.m;j++){
+      var c = s.cols[j];
+      if(!Array.isArray(c)) return false;
+      for(var i=0;i<s.n;i++){
+        if(String(c[i] == null ? '' : c[i]).slice(0,1) !== legacyDefaultChar(j, i)) return false;
+      }
+    }
+    return true;
   }
   var FONTS = {
     def:'inherit',
@@ -647,11 +686,11 @@ body.dev .whl-tab.dev-tab{display:flex;}
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
   function defaultState(){
-    var s = {n:DEF.n, m:DEF.m, hotend:DEF.hotend, cols:[], style:[], palette:PALETTE.slice(), wcols:[]};
+    var s = {ver:STATE_VER, n:DEF.n, m:DEF.m, hotend:DEF.hotend, cols:[], style:[], palette:PALETTE.slice(), wcols:[]};
     for(var j=0;j<s.m;j++){
       var col=[], scol=[];
       for(var i=0;i<s.n;i++){
-        col.push(defaultChar(j, i));  // 面1=数字、面5=数学符号、其余=英文字母
+        col.push(defaultChar(j, i));  // 面1/2/4/5=0-9 数字、面3=十个数学符号
         scol.push(null);
       }
       s.cols.push(col); s.style.push(scol);
@@ -683,11 +722,19 @@ body.dev .whl-tab.dev-tab{display:flex;}
       s.n = clamp(s.n,3,24,DEF.n); s.m = clamp(s.m,1,8,DEF.m);
       // 旧版本存档里可能还有 dia/t：⛔ 直接丢弃，尺寸一律以插件默认常量为准
       delete s.dia; delete s.t;
-      // 热端默认 0.4（与插件一致）；旧存档（无 ver）一次性迁移到新默认，之后手动选 0.2 会保留
-      if(s.ver !== STATE_VER){
-        s.hotend = DEF.hotend; s.ver = STATE_VER;
-        try{ var mig = JSON.stringify(s); localStorage.setItem(KEY, mig); sessionStorage.setItem(KEY, mig); }catch(e){}
+      // 分段迁移：⛔ 不能一看到 ver 不同就重设热端 —— 那会把 ver2 里用户手动选的 0.2 冲回 0.4。
+      var v = (typeof s.ver === 'number' && s.ver >= 1) ? s.ver : 1;
+      if(v < 2) s.hotend = DEF.hotend;                 // v1→v2：热端默认 0.4
+      if(v < 3 && isLegacyDefault(s)){                 // v2→v3：只升级「一字未改」的旧默认字表
+        for(var mj=0;mj<s.m;mj++){
+          var mc=[];
+          for(var mi=0;mi<s.n;mi++) mc.push(defaultChar(mj, mi));
+          s.cols[mj] = mc;
+        }
+        // style（单格字号/字体覆盖）保持原样：用户可能只调过样式没改字
+        // ⛔ 编辑过字表的老存档一律原样保留，绝不覆盖用户内容
       }
+      s.ver = STATE_VER;
       if(s.hotend !== 'H04' && s.hotend !== 'H02') s.hotend = DEF.hotend;
       // 补齐/裁到 n×m，⛔ 不静默保留脏数据
       var cols=[], style=[];
@@ -702,6 +749,9 @@ body.dev .whl-tab.dev-tab{display:flex;}
       }
       s.cols = cols; s.style = style;
       ensureColors(s);
+      if(v !== STATE_VER){                             // 迁移结果落在补齐之后，避免写回脏数据
+        try{ var mig = JSON.stringify(s); localStorage.setItem(KEY, mig); sessionStorage.setItem(KEY, mig); }catch(e){}
+      }
       return s;
     }catch(e){ return defaultState(); }
   }
@@ -790,6 +840,7 @@ body.dev .whl-tab.dev-tab{display:flex;}
   }
 
   function render(){
+    if(pickCol >= 0) clearPick();      // DOM 重建前清掉选中态（互换 / 重置 / 导入都走这里）
     var ts = tileSpec();
     /* --tw/--th/--fs 写在 #stage：格子与右侧功能按钮同源，按钮尺寸自动 = 白框 */
     var stageEl = document.getElementById('stage');
@@ -823,7 +874,7 @@ body.dev .whl-tab.dev-tab{display:flex;}
       html += '<div class="whl-col" data-c="' + j + '">'
             +   '<div class="whl-col-main">'
             +     '<div class="whl-col-head">'
-            +       '<span class="whl-drag-h" draggable="true" data-c="' + j + '" title="按住拖到另一列：两列互换整套字表（轮盘位置与配色留在原位）">⠿</span>'
+            +       '<span class="whl-drag-h" draggable="true" data-c="' + j + '" title="桌面：拖到另一列；手机：点一下再点目标列头 —— 两列互换整套字表（轮盘位置与配色留在原位）">⠿</span>'
             +       '<span class="whl-swatch" style="background:' + swPal[j % swPal.length] + '"></span>'
             +       '<b>面' + (j+1) + '</b>'
             +     '</div>'
@@ -874,6 +925,15 @@ body.dev .whl-tab.dev-tab{display:flex;}
 
   /* ---------- 拖放：只认列头拖柄，其余元素一律取消 ---------- */
   var dragCol = -1;
+  var pickCol = -1;                  // 点选式互换的源列（触屏兜底，不依赖 HTML5 drag）
+  var suppressClickUntil = 0;       // 刚完成一次拖放 → 别把同一手势又当成点选
+  function clearPick(){
+    pickCol = -1;
+    var g = document.getElementById('grid');
+    if(g) g.classList.remove('picking');
+    var all = document.querySelectorAll('#grid .whl-col');
+    for(var i=0;i<all.length;i++) all[i].classList.remove('pick-src');
+  }
   function colIdxOf(el){
     var c = el && el.closest ? el.closest('.whl-col') : null;
     if(!c) return -1;
@@ -889,6 +949,7 @@ body.dev .whl-tab.dev-tab{display:flex;}
     grid.addEventListener('dragstart', function(e){
       var h = e.target && e.target.closest ? e.target.closest('.whl-drag-h') : null;
       if(!h){ e.preventDefault(); return; }   // 格子 / 翻页按钮 / 列头色块都不能发起拖动
+      suppressClickUntil = Date.now() + 800; // 拖放手势结束后抑制一次 click，避免误进点选模式
       dragCol = +h.getAttribute('data-c');
       if(e.dataTransfer){
         e.dataTransfer.effectAllowed = 'move';
@@ -926,7 +987,38 @@ body.dev .whl-tab.dev-tab{display:flex;}
         if(el) el.classList.remove('drop-target');
       }
     });
+
+    /* ---------- 点选式互换（2026-11-09 17:31 用户「要能互换的」）----------
+       HTML5 drag 在触屏上根本不触发 → 点一下源列，再点目标列即互换；再点自己 / Esc 取消。
+       ⛔ 桌面只认 ⠿ 拖柄（避免点色块、面名误触）；手机整条列头都是 44px 热区。
+       ⛔ 语义与拖放完全一致：cols + style 走，列位置 / 配色 / 翻页位留原位。 */
+    grid.addEventListener('click', function(e){
+      if(Date.now() < suppressClickUntil) return;
+      var t = e.target;
+      if(!t || !t.closest) return;
+      var isHandle = !!t.closest('.whl-drag-h');
+      var isHead   = !!t.closest('.whl-col-head');
+      if(!isHandle && !(window.innerWidth <= 768 && isHead)) return;
+      var colEl = t.closest('.whl-col');
+      var c = colEl ? +colEl.getAttribute('data-c') : -1;
+      if(!(c >= 0 && c < state.m)) return;
+      if(pickCol < 0){
+        pickCol = c;
+        grid.classList.add('picking');
+        if(colEl) colEl.classList.add('pick-src');
+        whlToast('已选中面' + (c+1) + '：再点另一列的 ⠿ / 列头完成互换（点自己取消）');
+      }else if(pickCol === c){
+        clearPick(); whlToast('已取消互换');
+      }else{
+        var f = pickCol; clearPick();
+        if(swapColumnTiles(f, c))
+          whlToast('已互换整套字表：面' + (f+1) + ' ↔ 面' + (c+1) + '（轮盘位置与配色留在原位）');
+      }
+    });
   }
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && pickCol >= 0){ clearPick(); whlToast('已取消互换'); }
+  });
   /* 拖到网格外松手：浏览器默认会拿 text/plain 去导航，全局拦掉（同魔方） */
   document.addEventListener('dragover', function(e){ if(dragCol >= 0) e.preventDefault(); });
   document.addEventListener('drop', function(e){ if(dragCol >= 0) e.preventDefault(); });
@@ -976,13 +1068,20 @@ body.dev .whl-tab.dev-tab{display:flex;}
     var h = parseFloat(cs.getPropertyValue('--th')) || 82;
     var step = h + ROWGAP;
     var vis = visibleRows(step);
-    /* ⛔ 别只靠估算：导航高度、字体、section padding 都会吃掉空间。
-       按真实 scrollHeight 逐行收敛，直到整页不超过一屏（最多 N 次）。 */
+    var narrow = window.innerWidth <= 768;
+    /* ⛔ 宽屏才做「一屏收敛」：手机上 5 列已换行成 2-3 行，再强求整页不滚动
+       会把可见行一路压到 1 格（每列只剩一格，字表没法看）。窄屏改为自然纵向滚动，
+       每列给 5 格上限，▲/▼ 逐格翻页照常可用。 */
+    if(narrow) vis = Math.min(vis, 5);
     fitHeight(h, vis);
-    for(var guard=0; guard<state.n; guard++){
-      if(document.documentElement.scrollHeight <= window.innerHeight + 2) break;
-      if(vis <= 1) break;
-      vis--; fitHeight(h, vis);
+    if(!narrow){
+      /* 别只靠估算：导航高度、字体、section padding 都会吃掉空间。
+         按真实 scrollHeight 逐行收敛，直到整页不超过一屏（最多 N 次）。 */
+      for(var guard=0; guard<state.n; guard++){
+        if(document.documentElement.scrollHeight <= window.innerHeight + 2) break;
+        if(vis <= 1) break;
+        vis--; fitHeight(h, vis);
+      }
     }
     lastVis = vis;
     var maxStart = Math.max(0, state.n - vis);
