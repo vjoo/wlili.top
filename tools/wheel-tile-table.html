@@ -375,8 +375,8 @@ body.dev .whl-tab.dev-tab{display:flex;}
           <div class="whl-grp-body">
             <button class="whl-sq" id="btn_reset" type="button" data-act="reset" title="重置字表"><span>重置字表</span></button>
             <div class="whl-hot" id="hotend" role="group" aria-label="贴片热端（喷嘴）">
-              <button type="button" data-h="H02" class="on" title="0.2 喷嘴：孔 φ2.25 / 销 φ2.10 / 间隙 0.15">0.2</button>
-              <button type="button" data-h="H04" title="0.4 喷嘴：孔 φ2.30 / 销 φ2.10 / 间隙 0.20">0.4</button>
+              <button type="button" data-h="H02" title="0.2 喷嘴：孔 φ2.25 / 销 φ2.10 / 间隙 0.15">0.2</button>
+              <button type="button" data-h="H04" class="on" title="0.4 喷嘴：孔 φ2.30 / 销 φ2.10 / 间隙 0.20">0.4</button>
             </div>
           </div>
         </div>
@@ -545,7 +545,8 @@ body.dev .whl-tab.dev-tab{display:flex;}
    ============================================================ */
 (function(){
   var KEY = 'whl_wheel_table_v1';
-  var DEF = {n:10, m:5, hotend:'H02'};
+  var STATE_VER = 2;              // v2（2026-11-09）：热端默认改 0.4，与插件 TILE_HOTEND_DEFAULT 对齐
+  var DEF = {n:10, m:5, hotend:'H04'};
   var state = null;
 
   /* ⛔ 轮盘外径 / 面宽是 Blender 插件（WHG）的参数，不在本页设置。
@@ -665,7 +666,12 @@ body.dev .whl-tab.dev-tab{display:flex;}
       s.n = clamp(s.n,3,24,DEF.n); s.m = clamp(s.m,1,8,DEF.m);
       // 旧版本存档里可能还有 dia/t：⛔ 直接丢弃，尺寸一律以插件默认常量为准
       delete s.dia; delete s.t;
-      if(s.hotend !== 'H04') s.hotend = 'H02';
+      // 热端默认 0.4（与插件一致）；旧存档（无 ver）一次性迁移到新默认，之后手动选 0.2 会保留
+      if(s.ver !== STATE_VER){
+        s.hotend = DEF.hotend; s.ver = STATE_VER;
+        try{ var mig = JSON.stringify(s); localStorage.setItem(KEY, mig); sessionStorage.setItem(KEY, mig); }catch(e){}
+      }
+      if(s.hotend !== 'H04' && s.hotend !== 'H02') s.hotend = DEF.hotend;
       // 补齐/裁到 n×m，⛔ 不静默保留脏数据
       var cols=[], style=[];
       for(var j=0;j<s.m;j++){
@@ -684,6 +690,7 @@ body.dev .whl-tab.dev-tab{display:flex;}
   }
   function saveState(){
     try{
+      state.ver = STATE_VER;
       var raw = JSON.stringify(state);
       localStorage.setItem(KEY, raw); sessionStorage.setItem(KEY, raw);
     }catch(e){}
@@ -1506,7 +1513,10 @@ body.dev .whl-tab.dev-tab{display:flex;}
     });
     document.getElementById('btn_reset').addEventListener('click', function(){
       if(!confirm('把全部 ' + (state.n*state.m) + ' 格重置为默认字表？')) return;
-      state = defaultState(); saveState(); render();
+      /* ⛔ 「重置字表」只清字，不动热端档：0.2 喷嘴用户点一下重置就被换成 0.4 的孔径，
+         等于悄悄配错孔（与魔方页一致：reset 保留当前热端）。 */
+      var keepHot = state.hotend;
+      state = defaultState(); state.hotend = keepHot; saveState(); render();
     });
     document.getElementById('btn_preview').addEventListener('click', openPv);
     document.getElementById('btn_export').addEventListener('click', openExp);

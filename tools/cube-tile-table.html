@@ -498,8 +498,8 @@ body.dev .ctg-tab.dev-tab{display:flex;}
           </label>
           <label class="tb-size tb-hotend" title="热端档：决定孔径 + 销径 + 配合间隙（0.4：孔 2.45 / 销 2.03 / 间隙 0.42；0.2：T15 孔 2.25 / 销 2.10 / 间隙 0.15，T17 孔 2.28 / 销 2.14 / 间隙 0.14）">
             <select id="hotend_sel" class="form-select" data-sel-inline data-sel-compact aria-label="热端档">
-              <option value="H04">0.4 热端</option>
-              <option value="H02" selected>0.2 热端</option>
+              <option value="H04" selected>0.4 热端</option>
+              <option value="H02">0.2 热端</option>
             </select>
           </label>
         </div>
@@ -1061,8 +1061,10 @@ function clearOf(){
   return (h.clearByTile && h.clearByTile[sizeOf().tile]) || h.clearByTile[15] || 0.42;
 }
 function pinDOf(){ return +(holeDOf() - clearOf()).toFixed(3); }
-/* 默认档 = 0.2 热端（2026-10-30 用户定：H2 · T15×D17 是当前主力规格） */
-var HOTEND_DEFAULT = "H02";
+/* 默认档 = 0.4 热端（2026-11-09 用户定：「默认是用 0.4 喷头的」；与两个 Blender 插件的默认档一致）
+   ⛔ 历史 · 已作废：2026-10-30 曾把默认定成 0.2（理由「H2 · T15×D17 是当前主力规格」），
+      11-09 推翻 —— 插件侧默认一直是 H04，网页再默认 0.2 会让客户拿到与机器不符的孔径。 */
+var HOTEND_DEFAULT = "H04";
 var HOTEND_KEY = HOTEND_DEFAULT;
 function hotendOf(){ return HOTEND_PRESETS[HOTEND_KEY] || HOTEND_PRESETS[HOTEND_DEFAULT]; }
 function applyHotend(key){
