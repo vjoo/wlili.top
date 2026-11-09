@@ -74,3 +74,7 @@ tools/pose-gallery/img/*
 tools/pose-gallery/thumbs/*
 # 深度图与线稿是同一批版权素材的另一种渲染（README 素材节），同样只留本地不入库
 tools/pose-gallery/depth/*
+
+# 自签证书（server.py --https 用，进仓库等于公开私钥）
+certs/
+server.py.bak*
