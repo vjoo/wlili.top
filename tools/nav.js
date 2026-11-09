@@ -18,6 +18,27 @@
   }
   var IS_LOCAL = isLocalHost();
 
+  /* ------------------------------------------------------------------
+   * 需要 Web Crypto（crypto.subtle）的工具，在「局域网 IP + http」下拿不到加密接口
+   * （安全上下文只认 https / localhost / 127.0.0.1）。这些入口直接改指本地服务的
+   * HTTPS 8443（同一 host），用户点一下就落到能加密导出的地址。
+   * 公网 https、localhost、file:// 一律不改。端口常量与 server.py 的 HTTPS_PORT 对齐。
+   * ------------------------------------------------------------------ */
+  var SECURE_PORT = 8443;
+  function isLanIpHost() {
+    var h = location.hostname;
+    if (!h || !IS_LOCAL) return false;
+    return h !== 'localhost' && h !== '127.0.0.1' && h !== '::1';
+  }
+  function secureHref(href) {
+    if (location.protocol !== 'http:' || !isLanIpHost()) return href;
+    try {
+      var u = new URL(href, location.href);
+      return 'https://' + location.hostname + ':' + SECURE_PORT + u.pathname + u.search + u.hash;
+    } catch (e) { return href; }
+  }
+  window.WLiSecureHref = secureHref;
+
   function getCurrentFile() {
     var path = window.location.pathname;
     var decoded = decodeURIComponent(path);
@@ -60,7 +81,7 @@
            本文件是硬编码数组，过滤逻辑见下方 mega menu 的 !t.localOnly || IS_LOCAL。 */
         { name: '动作库', href: './pose-gallery.html', localOnly: true },
         { name: '构图编辑器', href: './composition-editor.html' },
-        { name: '魔方贴片字表', href: './cube-tile-table.html' },
+        { name: '魔方贴片字表', href: './cube-tile-table.html', secure: true },
         { name: '手轮贴片字表', href: './wheel-tile-table.html' },
         { name: '轮盘组装预览', href: './wheel-assembly.html' }
       ]
@@ -158,7 +179,8 @@
       var items = cat.tools.filter(function(t) { return !t.localOnly || IS_LOCAL; }).map(function(t) {
         var isActive = currentFile === t.href || currentFile === t.href.replace('./', '');
         var cls = isActive ? 'nav-mega-item active' : 'nav-mega-item';
-        return '<a href="' + t.href + '" class="' + cls + '" data-name="' + t.name.toLowerCase() + '">' + t.name + '</a>';
+        var href = t.secure ? secureHref(t.href) : t.href;
+        return '<a href="' + href + '" class="' + cls + '" data-name="' + t.name.toLowerCase() + '">' + t.name + '</a>';
       }).join('');
       megaHTML += '<div class="nav-mega-col" data-cat="' + cat.label + '">' +
         '<div class="nav-mega-cat">' + cat.label + '</div>' +

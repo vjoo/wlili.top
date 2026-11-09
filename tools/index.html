@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>W.-Studio Tools</title>
 <link rel="stylesheet" href="common.css?v=b6c1075a">
-<script src="nav.js?v=6f98d37a"></script>
+<script src="nav.js?v=a4c1e9f2"></script>
 <style>
 /* ============================================
    WLi Tools - 在线工具集
@@ -282,7 +282,7 @@
         <span class="tool-tag">创意生成</span>
       </a>
 
-      <a class="tool-card" href="./cube-tile-table.html" data-cat="creative" data-name="魔方贴片字表">
+      <a class="tool-card" href="./cube-tile-table.html" data-cat="creative" data-name="魔方贴片字表" data-secure="1">
         <div class="tool-icon purple">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
         </div>
@@ -461,6 +461,25 @@
     tag.style.opacity = '0';
     setTimeout(function(){ tag.remove(); }, 200);
     localStorage.setItem('privacyNoticeDismissed', '1');
+  });
+})();
+</script>
+
+<!-- 魔方贴片字表的「加密导出」要 Web Crypto：局域网 IP + http 下浏览器不给 crypto.subtle，
+     点进去再报错不如在入口就把地址换成 https:8443。判定与端口复用 nav.js 的 window.WLiSecureHref，
+     不在这里另写一套（条件不满足时函数原样返回，href 不动）。 -->
+<script>
+(function () {
+  if (!window.WLiSecureHref) return;
+  document.querySelectorAll('[data-secure="1"]').forEach(function (a) {
+    var old = a.getAttribute('href');
+    var next = window.WLiSecureHref(old);
+    if (!next || next === old) return;
+    a.setAttribute('href', next);
+    var host = '';
+    try { host = new URL(next).host; } catch (e) {}
+    a.setAttribute('title', '加密导出需要通过 HTTPS 打开，入口已指向 ' + (host || 'https 地址') +
+      '；首次进入浏览器提示证书不受信任时，点「高级 → 继续访问」即可');
   });
 })();
 </script>
