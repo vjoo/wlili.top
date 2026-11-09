@@ -704,7 +704,11 @@ window.__wheel3d = {
       const size = new three.Vector3(); box.getSize(size);
       const center = new three.Vector3(); box.getCenter(center);
       const maxd = Math.max(size.x, size.y, size.z)||1;
-      const dist = maxd * 2.0;
+      /* ⛔ 竖长视窗（手机 iframe，aspect<1）里横向装配的圆柱会被左右裁掉：
+         按相机 aspect 反比补偿取景距离。只在窄屏生效，桌面宽视窗取景零变化。 */
+      const aspect = camera.aspect || (w / h);
+      const narrow = aspect < 1 ? Math.min(2.2, 1 / Math.max(aspect, 0.35)) : 1;
+      const dist = maxd * 2.0 * narrow;
       camera.position.set(center.x + dist*0.6, center.y + dist*0.5, center.z + dist*0.75);
       camera.near = Math.max(maxd/200, 0.01); camera.far = maxd*100; camera.updateProjectionMatrix();
       controls.target.copy(center); controls.update();
