@@ -1765,9 +1765,19 @@ async function ctgStream(keyEnc, nonce, len){
   return out;
 }
 function ctgNeedCrypto(){
-  if(!(window.crypto && crypto.subtle && crypto.getRandomValues)){
-    throw new Error("当前浏览器不支持网页加密（crypto.subtle 不可用），请换 Chrome / Edge / Safari 新版本");
+  if(window.crypto && crypto.subtle && crypto.getRandomValues) return;
+  /* ⛔ HTTP + 局域网 IP（如 http://192.168.0.25:8080）不是「安全上下文」，
+     浏览器会直接不提供 crypto.subtle —— 与浏览器新旧无关，别让用户去升级浏览器。
+     只有 https / localhost / 127.0.0.1 / file:// 才开放 Web Crypto。 */
+  var err;
+  if(window.isSecureContext === false){
+    err = new Error("此页面不是安全上下文（" + location.origin + "），浏览器在这种地址下不开放加密接口。"
+      + "请改用 http://localhost:8080 或 http://127.0.0.1:8080 打开本页；线上 https 链接不受影响。");
+  }else{
+    err = new Error("当前浏览器不支持网页加密（crypto.subtle 不可用），请换新版 Chrome / Edge / Safari。");
   }
+  err.ctgNoHint = true;
+  throw err;
 }
 async function ctgEncrypt(plain){
   ctgNeedCrypto();
@@ -2069,7 +2079,7 @@ async function refreshExp(){
     if(seq !== expSeq) return;
     pkBox.classList.add("err");
     pkT.textContent = "加密包生成失败";
-    pkS.textContent = (e && e.message ? e.message : String(e)) + "　（建议换新版 Chrome / Edge / Safari）";
+    pkS.textContent = (e && e.message ? e.message : String(e)) + (e && e.ctgNoHint ? "" : "　（建议换新版 Chrome / Edge / Safari）");
   }
 }
 /* 调试模式：明文导出（md/json/py）平时藏起来，只给内部排查用。
@@ -2124,7 +2134,10 @@ function exportFileName(kind){
 }
 document.getElementById("exp_download").addEventListener("click", function(){
   var text = expTab === "ctgz" ? expPackText : expTa.value;
-  if(expTab === "ctgz" && !/^\s*CTGTILE\//.test(text)){ toast("加密包还没生成好，稍等一下再点"); return; }
+  if(expTab === "ctgz" && !/^\s*CTGTILE\//.test(text)){
+    toast(pkBox && pkBox.classList.contains("err") ? "加密包生成失败，先按上面那行提示处理" : "加密包还没生成好，稍等一下再点");
+    return;
+  }
   var f = expFileName(expTab), mime;
   if(expTab==="md"){ mime = "text/markdown;charset=utf-8"; }
   else if(expTab==="json"){ mime = "application/json;charset=utf-8"; }
