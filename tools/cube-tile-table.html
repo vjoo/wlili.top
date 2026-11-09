@@ -450,6 +450,22 @@ body.dev .ctg-tab.dev-tab{display:flex;}
   .ctg-ta{min-height:min(46vh, 340px);}
   .pv-host{height:min(52vh, 360px);}
   .ctg-fld input[type=text]{font-size:16px;} /* iOS 聚焦不放大 */
+  /* 面头触控区（2026-11-09 用户反馈「手机上很小很难按到」）：
+     桌面那套 23px 高、15px 色块、18px 下拉是给鼠标的，手机上根本点不准。
+     移动端整行抬到 44px（iOS HIG / Material 的最小触控尺寸），三个目标都撑满这行。 */
+  .tb-head{height:auto; min-height:44px; padding:0; gap:10px;}
+  .tb-reset{min-height:44px; padding:0 8px; margin-left:-8px; gap:9px; font-size:13.5px;}
+  .tb-sq{width:20px; height:20px; border-radius:5px;}
+  .tb-sq svg{width:12px; height:12px;}
+  .tb-size{font-size:12.5px;}
+  .tb-size .sel-trigger,
+  .tb-size .sel-trigger.compact{
+    height:44px; min-height:44px; padding:0 22px 0 8px; border-radius:9px;
+    font-size:12.5px; line-height:44px;
+  }
+  .tb-size .sel-chevron{right:7px; width:12px; height:12px;}
+  /* 下拉面板打开时会被 portal 到 body（ui-select.js 的 floatPanel），所以选择器不能挂在 .tb-size 下 */
+  .sel-panel .sel-option{min-height:44px; padding:10px 12px; font-size:14px;}
 }
 @media (max-width:480px){
   :root{--fw:min(300px, 92vw);}
@@ -678,7 +694,7 @@ body.dev .ctg-tab.dev-tab{display:flex;}
 
 <div id="ctg_toast"></div>
 
-<script src="nav.js?v=a4c1e9f2"></script>
+<script src="nav.js?v=b7e2d5c1"></script>
 <script src="_shared/ui-select.js"></script>
 
 <script type="importmap">
