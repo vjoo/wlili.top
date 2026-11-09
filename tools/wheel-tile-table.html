@@ -149,18 +149,33 @@
 }
 .whl-cell:hover .whl-ano{opacity:1;}
 
-/* 右侧竖排分组：三组（重置+热端 / 操作 / 数量）照魔方 .tb-face 深底卡片 */
+/* 右侧竖排分组：每组 = 卡片外的浅色小标题 + 深底卡片（照魔方 .tb-face）
+   ⛔ 标题必须在深底**外面**（用户 2026-11-09 定，同魔方 .tb-head 规则：
+      塞进深色卡片就变成「黑框里的一行小字」，一眼半成品）。 */
 .whl-side{
   flex:0 0 auto;
-  display:flex; flex-direction:column; gap:10px; align-items:stretch;
+  /* 2px 上内边距 = .whl-grid 的同名留白，第一组标题才能和「面1」那行齐平 */
+  display:flex; flex-direction:column; gap:14px; align-items:stretch;
+  padding:2px 0 0;
 }
 .whl-grp{
+  /* gap:0 —— 标题自带 5px 下留白（同 .whl-col-head），再叠 gap 会把卡片顶边推离格顶 */
+  display:flex; flex-direction:column; gap:0; width:98px;
+}
+/* 组标题：与列头「面1」同规格（11px / 600 / 5px 下留白），
+   行高对齐列头那一行 —— 卡片顶边才能与贴片格顶边齐平 */
+.whl-grp-h{
+  display:flex; align-items:center; justify-content:center;
+  height:21px; box-sizing:border-box; padding:0 2px 5px;
+  font-size:11px; font-weight:600; color:var(--ink-tertiary);
+  line-height:1; letter-spacing:.2px; white-space:nowrap;
+}
+/* 深色卡片：只装控件，不装标题 */
+.whl-grp-body{
   display:flex; flex-direction:column; gap:6px;
-  padding:8px; border-radius:14px; background:#3a4356; width:98px;
+  padding:8px; border-radius:14px; background:#3a4356;
   box-shadow:0 10px 26px -14px rgba(43,48,65,.45);
 }
-.whl-grp-h{font-size:10px; color:#aab0c4; text-align:center;
-  padding:0 0 2px; letter-spacing:.5px;}
 /* 功能方块按钮：象牙白芯片；尺寸独立于填字白框，做得更大、文字更满更大（单行） */
 .whl-sq{
   position:relative; overflow:hidden;
@@ -301,6 +316,11 @@
   .whl-sec .section-inner{padding:0 12px;}
   .whl-col{width:142px;}
   .whl-pv-frame{height:min(66vh,480px);}
+  /* 触控 44px 基线（同魔方 2026-11-09 定稿）：热端两档 28px、翻页箭头 34px 在手机上点不准。
+     列宽 142px 里本来就留了余量，箭头放大到 44 不会挤到贴片。 */
+  .whl-hot button{min-height:44px; font-size:13.5px;}
+  .whl-col-pg{width:44px;}
+  .whl-pg-btn{width:44px; height:44px; font-size:15px;}
 }
 </style>
 </head>
@@ -320,24 +340,30 @@
         <!-- A 组：重置 + 热端（照魔方排版，置于生成预览上方） -->
         <div class="whl-grp">
           <div class="whl-grp-h">重置 / 热端</div>
-          <button class="whl-sq" id="btn_reset" type="button" data-act="reset" title="重置字表"><span>重置字表</span></button>
-          <div class="whl-hot" id="hotend" role="group" aria-label="贴片热端（喷嘴）">
-            <button type="button" data-h="H02" class="on" title="0.2 喷嘴：孔 φ2.25 / 销 φ2.10 / 间隙 0.15">0.2</button>
-            <button type="button" data-h="H04" title="0.4 喷嘴：孔 φ2.30 / 销 φ2.10 / 间隙 0.20">0.4</button>
+          <div class="whl-grp-body">
+            <button class="whl-sq" id="btn_reset" type="button" data-act="reset" title="重置字表"><span>重置字表</span></button>
+            <div class="whl-hot" id="hotend" role="group" aria-label="贴片热端（喷嘴）">
+              <button type="button" data-h="H02" class="on" title="0.2 喷嘴：孔 φ2.25 / 销 φ2.10 / 间隙 0.15">0.2</button>
+              <button type="button" data-h="H04" title="0.4 喷嘴：孔 φ2.30 / 销 φ2.10 / 间隙 0.20">0.4</button>
+            </div>
           </div>
         </div>
         <!-- B 组：操作（生成预览这组按钮） -->
         <div class="whl-grp">
           <div class="whl-grp-h">操作</div>
-          <button class="whl-sq" id="btn_preview" type="button" title="3D 预览"><span>生成预览</span></button>
-          <button class="whl-sq" id="btn_export" type="button" title="导出字表"><span>导出字表</span></button>
-          <button class="whl-sq" id="btn_import" type="button" title="导入字表"><span>导入字表</span></button>
+          <div class="whl-grp-body">
+            <button class="whl-sq" id="btn_preview" type="button" title="3D 预览"><span>生成预览</span></button>
+            <button class="whl-sq" id="btn_export" type="button" title="导出字表"><span>导出字表</span></button>
+            <button class="whl-sq" id="btn_import" type="button" title="导入字表"><span>导入字表</span></button>
+          </div>
         </div>
         <!-- C 组：数量（点击开弹窗编辑） -->
         <div class="whl-grp">
           <div class="whl-grp-h">数量</div>
-          <button class="whl-cnt" id="btn_n" type="button" title="设置轮盘面数"><b>10</b><span>轮盘面数</span></button>
-          <button class="whl-cnt" id="btn_m" type="button" title="设置轮盘数量"><b>5</b><span>轮盘数量</span></button>
+          <div class="whl-grp-body">
+            <button class="whl-cnt" id="btn_n" type="button" title="设置轮盘面数"><b>10</b><span>轮盘面数</span></button>
+            <button class="whl-cnt" id="btn_m" type="button" title="设置轮盘数量"><b>5</b><span>轮盘数量</span></button>
+          </div>
         </div>
       </div>
     </div>
