@@ -1773,11 +1773,20 @@ function ctgNeedCrypto(){
   if(window.isSecureContext === false){
     err = new Error("此页面不是安全上下文（" + location.origin + "），浏览器在这种地址下不开放加密接口。"
       + "请改用 http://localhost:8080 或 http://127.0.0.1:8080 打开本页；线上 https 链接不受影响。");
-  }else{
-    err = new Error("当前浏览器不支持网页加密（crypto.subtle 不可用），请换新版 Chrome / Edge / Safari。");
+    err.ctgInsecure = true;
+    err.ctgNoHint = true;
+    throw err;
   }
+  err = new Error("当前浏览器不支持网页加密（crypto.subtle 不可用），请换新版 Chrome / Edge / Safari。");
   err.ctgNoHint = true;
   throw err;
+}
+/* 局域网 HTTP 打开时，给出同一页面的 https 地址（本地服务 8443 监听，crypto.subtle 才可用） */
+function ctgHttpsHint(){
+  if(location.protocol === "https:") return "";
+  var h = location.hostname;
+  if(!h || h === "localhost" || h === "127.0.0.1") return "";
+  return "https://" + h + ":8443" + location.pathname + location.search;
 }
 async function ctgEncrypt(plain){
   ctgNeedCrypto();
@@ -2080,6 +2089,15 @@ async function refreshExp(){
     pkBox.classList.add("err");
     pkT.textContent = "加密包生成失败";
     pkS.textContent = (e && e.message ? e.message : String(e)) + (e && e.ctgNoHint ? "" : "　（建议换新版 Chrome / Edge / Safari）");
+    /* 局域网 HTTP：直接给一个能点的 https 地址，避免手打端口打错 */
+    if(e && e.ctgInsecure && ctgHttpsHint()){
+      pkS.appendChild(document.createTextNode("　"));
+      var aid = document.createElement("a");
+      aid.href = ctgHttpsHint();
+      aid.textContent = "点这里用 https 打开";
+      aid.style.cssText = "color:inherit;text-decoration:underline;font-weight:600";
+      pkS.appendChild(aid);
+    }
   }
 }
 /* 调试模式：明文导出（md/json/py）平时藏起来，只给内部排查用。
