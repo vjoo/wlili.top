@@ -191,6 +191,8 @@
 .ctg-dlg .btn-outline, .ctg-dlg .btn-filled{
   padding:6px 14px; font-size:14px; line-height:1.3; border-width:1px; gap:6px;
 }
+/* 加密包还在生成 / 生成失败时，卡片里的「下载文件」置灰（disabled 本身就不会触发 click） */
+.ctg-dlg .btn-outline:disabled, .ctg-dlg .btn-filled:disabled{opacity:.45; cursor:default;}
 .ctg-dlg h3{
   font-size:var(--fs-lg); font-weight:600; margin-bottom:var(--space-4);
   display:flex; align-items:center; gap:var(--space-2); flex:none;
@@ -301,6 +303,9 @@
 /* ---------- 导出弹窗 ---------- */
 .ctg-dlg.exp{width:min(1040px, 94vw);}
 .ctg-tabs{display:flex; gap:6px; margin-bottom:var(--space-3); flex-wrap:wrap; flex:none;}
+/* 客户只需要「一个导出入口」：非调试模式下整条标签栏都不出现（含「加密包 · ctgz」本尊）。
+   调试模式（?dev=1 或连点标题 5 次 → body.dev）恢复显示，方便在 md/json/py 之间切回来。 */
+body:not(.dev) .ctg-dlg.exp .ctg-tabs{display:none;}
 .ctg-tab{
   display:flex; align-items:center; gap:7px;
   padding:6px 14px; border-radius:var(--radius-sm); cursor:pointer; font-size:var(--fs-sm);
@@ -341,7 +346,7 @@ body.dev .ctg-tab.dev-tab{display:flex;}
    卡片撑一块高度，避免弹窗塌成一条、也顺手把「这只是个文件」表达清楚。 */
 .exp-pack{
   display:none; flex:1 1 auto; min-height:min(34vh, 300px);
-  align-items:center; justify-content:center; gap:var(--space-4);
+  flex-direction:column; align-items:center; justify-content:center; text-align:center;
   border:1px solid var(--border-light); border-radius:var(--radius-md);
   background:linear-gradient(180deg, #fbfcff 0%, #f5f7fb 100%);
   padding:var(--space-5);
@@ -353,9 +358,10 @@ body.dev .ctg-tab.dev-tab{display:flex;}
   background:#e8effc; color:#2f6be0;
 }
 .exp-pack .pk-ic svg{width:26px; height:26px; display:block;}
-.exp-pack .pk-body{min-width:0;}
-.exp-pack .pk-t{font-size:var(--fs-md); font-weight:600; color:var(--ink); line-height:1.4;}
-.exp-pack .pk-s{margin-top:4px; font-size:var(--fs-xs); color:var(--ink-tertiary); line-height:1.6;}
+/* 竖排：图标 → 标题 → 规格/体积 → 下载按钮，逐行水平居中，整块在卡片内垂直居中 */
+.exp-pack .pk-t{margin-top:16px; font-size:var(--fs-md); font-weight:600; color:var(--ink); line-height:1.4;}
+.exp-pack .pk-s{margin-top:7px; max-width:min(560px, 100%); font-size:var(--fs-xs); color:var(--ink-tertiary); line-height:1.6;}
+.exp-pack .pk-dl{margin-top:22px;}
 .exp-pack.err .pk-ic{background:#fdeaea; color:#c0392b;}
 .exp-pack.err .pk-t{color:#c0392b;}
 .ctg-tab.on{background:var(--fill-black); color:#fff; border-color:var(--fill-black);}
@@ -598,7 +604,8 @@ body.dev .ctg-tab.dev-tab{display:flex;}
       <span class="ext" id="exp_ext">.md</span>
       <button id="exp_name_def" title="恢复自动命名（尺寸+热端+日期）">自动</button>
     </div>
-    <!-- 加密包只露摘要，密文不进 DOM 文本（客户不需要、也不该看到那串 base64） -->
+    <!-- 加密包只露摘要，密文不进 DOM 文本（客户不需要、也不该看到那串 base64）。
+         竖排居中：图标 / 标题 / 规格体积 / 下载按钮，全部在这张卡片里（2026-11-09 按用户要求） -->
     <div class="exp-pack" id="exp_pack">
       <div class="pk-ic" aria-hidden="true">
         <svg viewBox="0 0 24 24">
@@ -609,10 +616,9 @@ body.dev .ctg-tab.dev-tab{display:flex;}
           <circle cx="12" cy="15.4" r="1.5" fill="currentColor"/>
         </svg>
       </div>
-      <div class="pk-body">
-        <div class="pk-t" id="exp_pack_t">正在生成加密包…</div>
-        <div class="pk-s" id="exp_pack_s"></div>
-      </div>
+      <div class="pk-t" id="exp_pack_t">正在生成加密包…</div>
+      <div class="pk-s" id="exp_pack_s"></div>
+      <button class="btn-outline pk-dl" id="exp_download_pk" type="button" disabled>下载文件</button>
     </div>
     <div class="ctg-ta-wrap" id="exp_ta_wrap"><textarea class="ctg-ta" id="exp_ta" readonly spellcheck="false"></textarea></div>
     <div class="exp-hint" id="exp_hint">点「下载文件」保存 <b>.ctgz</b>，原样发回给卖家即可（微信传文件 / 邮件附件都行）。文件已加密，不用打开、也改不了内容。</div>
@@ -2048,6 +2054,7 @@ var expPackText = "";
 var pkBox = document.getElementById("exp_pack");
 var pkT   = document.getElementById("exp_pack_t");
 var pkS   = document.getElementById("exp_pack_s");
+var pkDl  = document.getElementById("exp_download_pk");   // 卡片内的下载按钮（加密包档唯一入口）
 function expPackSummary(pack){
   var kb = (new Blob([pack]).size / 1024).toFixed(1);
   return "6 面 · " + countFilled(state.faces) + " / 54 格 · "
@@ -2067,6 +2074,10 @@ async function refreshExp(){
   pkBox.classList.toggle("on", isPack);
   document.getElementById("exp_hint").classList.toggle("on", isPack);
   document.getElementById("exp_copy").style.display = isPack ? "none" : "";
+  /* 加密包档：下载只有一个落点 —— 卡片里的 pk-dl，底部那个藏起来，避免同屏两个「下载文件」 */
+  var footLeft = document.querySelector(".exp-foot .left");
+  if(footLeft) footLeft.style.display = isPack ? "none" : "";
+  pkDl.disabled = true;                       // 生成中 / 失败都不让点，避免点了没反应
   if(!isPack){
     expTa.readOnly = true;
     expTa.value = expPlainText(expTab);
@@ -2084,6 +2095,7 @@ async function refreshExp(){
     expPackText = pack;
     pkT.textContent = "加密包已生成";
     pkS.textContent = expPackSummary(pack);
+    pkDl.disabled = false;
   }catch(e){
     if(seq !== expSeq) return;
     pkBox.classList.add("err");
@@ -2095,7 +2107,7 @@ async function refreshExp(){
       var aid = document.createElement("a");
       aid.href = ctgHttpsHint();
       aid.textContent = "点这里用 https 打开";
-      aid.style.cssText = "color:inherit;text-decoration:underline;font-weight:600";
+      aid.style.cssText = "color:inherit;text-decoration:underline;font-weight:600;white-space:nowrap";
       pkS.appendChild(aid);
     }
   }
@@ -2150,7 +2162,8 @@ function exportFileName(kind){
   var base = kind === "py" ? "魔方贴片_DATA_" : "魔方贴片字表_";
   return base + exportTag() + "_" + fileStamp() + ext;
 }
-document.getElementById("exp_download").addEventListener("click", function(){
+/* 下载入口两个，落盘逻辑一份：卡片里的 pk-dl（加密包档）+ 底部 exp_download（明文档档） */
+function downloadExpFile(){
   var text = expTab === "ctgz" ? expPackText : expTa.value;
   if(expTab === "ctgz" && !/^\s*CTGTILE\//.test(text)){
     toast(pkBox && pkBox.classList.contains("err") ? "加密包生成失败，先按上面那行提示处理" : "加密包还没生成好，稍等一下再点");
@@ -2165,7 +2178,9 @@ document.getElementById("exp_download").addEventListener("click", function(){
   a.href = URL.createObjectURL(blob); a.download = f; a.click();
   URL.revokeObjectURL(a.href);
   toast("已下载 " + f);
-});
+}
+document.getElementById("exp_download").addEventListener("click", downloadExpFile);
+document.getElementById("exp_download_pk").addEventListener("click", downloadExpFile);
 
 /* ================= 导入字表（.md / .json） =================
    导出格式的 .md 里带一段 ```json，直接抽出来用；.json 直接读。
