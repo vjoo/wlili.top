@@ -377,60 +377,139 @@ const PARTS = {};
    - 贴片局部 X = 切向、局部 Y = 装配轴 Y、法向 = n；
    - 尺寸按规格联动：宽 = 弦长 W − 0.14cm(退棱 0.7mm×2)，高 = 轮盘厚 − 0.10cm(轴向留边 0.5mm×2)。
    ⛔ 贴片必须挂进对应轮盘的 Group，单盘拖动旋转时字要跟着那一盘转。 */
-const GLYPH_TEX = new Map();     // 按「字符 + 片比例」缓存，跨 rebuild 复用
+const GLYPH_GEO = new Map();     // 按「字符 + 片比例」缓存挤出几何，跨 rebuild 复用
 let _GLYPH_RATIO = -1;           // 片宽/片高；比例变了必须清缓存，否则沿用旧尺寸会拉伸字
 const TILE_FONT_MM = 18.0;      // 默认字号（mm）= wheel_generator.py TILE.text_size（用户 2026-11-08 定稿）
 const TILE_TEXT_MARGIN = 0.8;   // 自动缩放内边距（mm）= WHL_TileText.margin 默认
 const TILE_AX_MM = 11.0;        // 轴向片宽（mm，默认 T−2×0.5）：只用来把字号的 mm 折算成 crop 像素
 const TILE_GLYPH_W_EM = 0.62;   // 数字/字母字宽经验值（em），判「读向是否超片」
-/* 字贴图：拆成「透明底彩字 map」+「黑底白字 bump」两张。
-   旧版是把白底 + 深墨字画在一张平面贴图上（贴片没有厚度、字也不凸）；
-   现在贴片底色交给有厚度的 BoxGeometry，字层单独抬起 TEXT_RAISE 并用 bumpMap 做浮雕法线。 */
-function glyphTex(three, ch, ratio, fgHex){
-  const r = Math.max(0.15, Math.min(3.0, ratio || 0.70));
-  if(Math.abs(r - _GLYPH_RATIO) > 1e-4){
-    GLYPH_TEX.forEach(pair => { try{ pair.map.dispose(); pair.bump.dispose(); }catch(e){} });
-    GLYPH_TEX.clear(); _GLYPH_RATIO = r;
-  }
-  const H = 256;
-  const W = Math.max(48, Math.round(H * r));   // canvas 宽高比 = 贴片真实宽高比，字才不被拉伸
-  const glyph = String(ch == null ? '' : ch);
-  const fg = /^#[0-9a-fA-F]{6}$/.test(fgHex || '') ? fgHex : '#262b3b';
-  const key = W + '|' + glyph + '|' + fg;      // 宽度放前面：字本身是「|」也不会被切错
-  if(GLYPH_TEX.has(key)) return GLYPH_TEX.get(key);
-  // 字号 = 插件默认 18 mm（超贴片按内边距自动缩放，与字表页 / build_tile 同口径）：
-  // canvas 高 H ↔ 周向片高 cir(mm)、宽 W ↔ 轴向片宽 ax(mm)，故 px = mm / cir × H。
+const GLYPH_PX = 384;           // 字形轮廓栅格分辨率（越高越平滑）
+/* 字形 → alpha 栅格：用 canvas 系统字体把单字画成实心白字，返回二值 alpha。
+   字体无关（与字表页同一套 DengXian/等线/YaHei），无需外部字体文件。 */
+function glyphRaster(ch){
+  const r = _GLYPH_RATIO > 0 ? _GLYPH_RATIO : 0.7;
+  const H = GLYPH_PX;
+  const W = Math.max(16, Math.round(H * r));
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d');
+  g.clearRect(0,0,W,H);
   const cirMM = TILE_AX_MM / r;
   const capY  = Math.max(0.5, cirMM - 2 * TILE_TEXT_MARGIN);
   const capX  = Math.max(0.5, TILE_AX_MM - 2 * TILE_TEXT_MARGIN);
   const fsMM  = Math.min(TILE_FONT_MM, capY, capX / TILE_GLYPH_W_EM);
   const font  = 'bold ' + Math.round(fsMM / cirMM * H) + 'px "DengXian","等线","Microsoft YaHei",sans-serif';
-
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  const g = cv.getContext('2d');
-  g.clearRect(0, 0, W, H);
-  g.fillStyle = fg; g.font = font;
+  g.fillStyle = '#fff'; g.font = font;
   g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(glyph, W/2, H/2 + 3);
-
-  const bv = document.createElement('canvas'); bv.width = W; bv.height = H;
-  const b = bv.getContext('2d');
-  b.fillStyle = '#000000'; b.fillRect(0, 0, W, H);
-  b.fillStyle = '#ffffff'; b.font = font;
-  b.textAlign = 'center'; b.textBaseline = 'middle';
-  b.fillText(glyph, W/2, H/2 + 3);
-
-  const map = new three.CanvasTexture(cv);
-  if(three.SRGBColorSpace) map.colorSpace = three.SRGBColorSpace;
-  map.anisotropy = 4;
-  const bump = new three.CanvasTexture(bv);
-  bump.anisotropy = 4;
-  const pair = {map, bump};
-  GLYPH_TEX.set(key, pair);
-  return pair;
+  g.fillText(String(ch), W/2, H/2 + 3);
+  const data = g.getImageData(0,0,W,H).data;
+  const a = new Uint8Array(W*H);
+  for(let i=0,p=3;i<W*H;i++,p+=4) a[i] = data[p] >= 128 ? 1 : 0;
+  return {a, W, H};
 }
 
-function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tilePlaneGeo, tilePlateGeo,
+/* marching squares：把二值栅格的轮廓提取成闭合环（像素坐标，y 向下）。
+   外轮廓与孔都能正确分离，供后面按面积符号 + 包含关系分组。 */
+function msContours(a, W, H){
+  const val = (x,y)=> (x<0||y<0||x>=W||y>=H) ? 0 : a[y*W+x];
+  const cr = (x,y,ex,ey)=>{ const v0=val(x,y), v1=val(ex,ey); const t=(0.5-v0)/(v1-v0); return {x:x+(ex-x)*t, y:y+(ey-y)*t}; };
+  const segs = [];
+  for(let y=0;y<H-1;y++) for(let x=0;x<W-1;x++){
+    const c0=val(x,y), c1=val(x+1,y), c2=val(x+1,y+1), c3=val(x,y+1);
+    const idx=(c0<<3)|(c1<<2)|(c2<<1)|c3;
+    if(idx===0||idx===15) continue;
+    const top=()=>cr(x,y,x+1,y), right=()=>cr(x+1,y,x+1,y+1), bottom=()=>cr(x,y+1,x+1,y+1), left=()=>cr(x,y,x,y+1);
+    let pr;
+    switch(idx){
+      case 1:  pr=[[left,bottom]]; break;
+      case 2:  pr=[[bottom,right]]; break;
+      case 3:  pr=[[left,right]]; break;
+      case 4:  pr=[[top,right]]; break;
+      case 5:  pr=[[top,right],[bottom,left]]; break;
+      case 6:  pr=[[top,bottom]]; break;
+      case 7:  pr=[[top,left]]; break;
+      case 8:  pr=[[top,left]]; break;
+      case 9:  pr=[[top,bottom]]; break;
+      case 10: pr=[[top,left],[bottom,right]]; break;
+      case 11: pr=[[top,right]]; break;
+      case 12: pr=[[left,right]]; break;
+      case 13: pr=[[bottom,right]]; break;
+      case 14: pr=[[left,bottom]]; break;
+    }
+    for(const [ea,eb] of pr) segs.push([ea(), eb()]);
+  }
+  const key = p => Math.round(p.x*100)/100 + ',' + Math.round(p.y*100)/100;
+  const adj = new Map();
+  for(const [s,e] of segs){ const ks=key(s), ke=key(e);
+    if(!adj.has(ks)) adj.set(ks,[]); if(!adj.has(ke)) adj.set(ke,[]);
+    adj.get(ks).push(ke); adj.get(ke).push(ks); }
+  const used = new Set(); const loops = [];
+  for(const start of adj.keys()){
+    if(used.has(start)) continue;
+    const loop=[]; let cur=start, prev=null;
+    while(cur && !used.has(cur)){
+      used.add(cur); loop.push(cur);
+      const nx=(adj.get(cur)||[]).find(n=>n!==prev) || (adj.get(cur)||[])[0];
+      prev=cur; cur=nx; if(cur===start) break;
+    }
+    if(loop.length>2) loops.push(loop.map(s=>{ const [x,y]=s.split(',').map(Number); return {x,y}; }));
+  }
+  return loops;
+}
+
+/* 单字 → 一组挤出几何（每部件/每孔一个 Shape 各挤出一个，组合后即为完整凸字）。
+   几何为归一化坐标（高=1、宽=片比例），由调用方按贴片尺寸缩放；底座 z=0、向外挤出 TEXT_RAISE。
+   这是真正的立体凸字——解决旧版「叠平面 + 硬偏假阴影」的纸片感/悬浮感。 */
+function glyphShapes(three, ch, ratio){
+  const r = Math.max(0.15, Math.min(3.0, ratio||0.7));
+  if(Math.abs(r - _GLYPH_RATIO) > 1e-4){
+    GLYPH_GEO.forEach(g=>{ try{ g.dispose(); }catch(e){} });
+    GLYPH_GEO.clear(); _GLYPH_RATIO = r;
+  }
+  const key = String(ch) + '|' + r.toFixed(3);
+  if(GLYPH_GEO.has(key)) return GLYPH_GEO.get(key);
+  const {a,W,H} = glyphRaster(ch);
+  const loops = msContours(a, W, H);
+  if(!loops.length){ GLYPH_GEO.set(key, []); return []; }
+  const toLocal = p => ({ x:(p.x - W/2)/H, y:(H/2 - p.y)/H });
+  const area = lp => { let s=0; for(let i=0;i<lp.length;i++){ const A=lp[i],B=lp[(i+1)%lp.length]; s += A.x*B.y - B.x*A.y; } return s/2; };
+  const cen  = lp => { let x=0,y=0; for(const p of lp){x+=p.x;y+=p.y;} return {x:x/lp.length,y:y/lp.length}; };
+  const inside = (pt,lp)=>{ let c=false; for(let i=0,j=lp.length-1;i<lp.length;j=i++){ const A=lp[i],B=lp[j];
+    if(((A.y>pt.y)!==(B.y>pt.y)) && (pt.x < (B.x-A.x)*(pt.y-A.y)/(B.y-A.y)+A.x)) c=!c; } return c; };
+  const polys = loops.map(lp=>{ const lpL = lp.map(toLocal); return {pts:lpL, sa:area(lp), c:cen(lpL), parent:null}; });
+  // 用「包含关系」判定外轮廓 / 孔：marching squares 不保证孔与外轮廓绕向相反，
+  // 单纯按面积符号会把带孔的实心字拆成两个互不相干的轮廓。改用「质心被更大的轮廓包含」定父子。
+  for(const p of polys){
+    let parent=null, best=Infinity;
+    for(const q of polys){
+      if(q===p) continue;
+      if(Math.abs(q.sa) < Math.abs(p.sa)) continue;   // q 必须更大才可能包含 p
+      if(inside(p.c, q.pts) && Math.abs(q.sa) < best){ best=Math.abs(q.sa); parent=q; }
+    }
+    p.parent = parent;
+  }
+  const isOuter = p => !p.parent || p.parent.parent;  // 顶层轮廓，或孔中孔里的实心岛
+  const outers = polys.filter(isOuter);
+  const shapes = [];
+  for(const o of outers){
+    const shp = new three.Shape();
+    o.pts.forEach((p,i)=> i ? shp.lineTo(p.x,p.y) : shp.moveTo(p.x,p.y));
+    shp.closePath();
+    for(const h of polys){
+      if(h.parent === o){                              // h 是 o 的直接子（孔）
+        const hp = new three.Path();
+        h.pts.forEach((p,i)=> i ? hp.lineTo(p.x,p.y) : hp.moveTo(p.x,p.y));
+        hp.closePath(); shp.holes.push(hp);
+      }
+    }
+    shapes.push(shp);
+  }
+  if(!shapes.length){ GLYPH_GEO.set(key, []); return []; }
+  const geos = shapes.map(shp => new three.ExtrudeGeometry(shp, { depth:TEXT_RAISE, bevelEnabled:false, curveSegments:2 }));
+  GLYPH_GEO.set(key, geos);
+  return geos;
+}
+
+function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tilePlateGeo,
                        tileRatio, pv, colorHex, bgHex){
   const aOut = RO*Math.cos(Math.PI/N);
   const off  = aOut + 0.018;                     // 外凸 0.18mm，避免与外环面 Z-fighting
@@ -454,51 +533,36 @@ function addTilePlanes(three, group, k, chars, N, RO, Tdisc, tilePlaneGeo, tileP
     const yA = new three.Vector3(-Math.sin(th), 0, Math.cos(th));
     const m4 = new three.Matrix4().makeBasis(xA, yA, n);
     const q  = new three.Quaternion().setFromRotationMatrix(m4);
-    const tex = glyphTex(three, ch, tileRatio, textCol);
+        // 贴片每面尺寸（与 buildModel 同口径）：宽 = 弦长−退棱 0.14，高 = 轮盘实厚−轴向留边 0.10
+    const W2 = 2*RO*Math.sin(Math.PI/N);
+    const tileCir2 = Math.max(0.2, W2 - 0.14);
+    const tileAx2  = Math.max(0.2, Tdisc - 0.10);
+    const ratio2   = tileAx2 / tileCir2;
 
-    // ① 贴片板：有厚度 TILE_T（插件 tile_t 1.2mm），底色按模式白 / 轮盘色
+    // ① 贴片板：有厚度 TILE_T（插件 tile_t 1.2mm），底色按模式白 / 轮盘色 / 黑
     const plate = new three.Mesh(tilePlateGeo, plateMat);
     plate.position.copy(n.clone().multiplyScalar(off + TILE_T/2));
     plate.quaternion.copy(q);
+    plate.receiveShadow = true;
     plate.userData = {discIndex:k, isTile:true, faceIndex:i, glyph:String(ch), mode:mode};
     group.add(plate);
 
-    // ② 投影：贴在板面上、沿光照方向微偏移的半透明黑字。
-    //    0.60mm 的实体抬高在这个尺度下正面几乎看不出，投影才是「字浮起来」最有效的视觉线索。
-    const sh = new three.Mesh(tilePlaneGeo, new three.MeshBasicMaterial({
-      map:tex.map, color:0x000000, transparent:true, opacity:0.5,
-      depthWrite:false, side:three.DoubleSide, toneMapped:false
-    }));
-    /* 0.050cm = 0.5mm 偏移 ≈ 0.60mm 凸起 × tan(40° 主光)，物理上自洽且肉眼能看出 */
-    sh.position.copy(n.clone().multiplyScalar(off + TILE_T + 0.004))
-      .addScaledVector(xA, 0.050).addScaledVector(yA, -0.050);
-    sh.quaternion.copy(q);
-    sh.userData = {discIndex:k, isGlyphShadow:true, faceIndex:i};
-    group.add(sh);
-
-    // ③ 凸字侧壁：同字形贴图压暗，落在半高，斜视角能看出字有厚度。
-    //    黑底白字时侧壁提亮成近白，否则深色侧壁在黑片上完全消失、0.60mm 凸起看不出来。
-    const side = new three.Mesh(tilePlaneGeo, new three.MeshStandardMaterial({
-      map:tex.map, color:mode === 2 ? 0xe9edf4 : 0x2b2b2b, transparent:true, alphaTest:0.03,
-      roughness:0.8, metalness:0, side:three.DoubleSide, depthWrite:false
-    }));
-    side.position.copy(n.clone().multiplyScalar(off + TILE_T + TEXT_RAISE*0.45));
-    side.quaternion.copy(q);
-    side.userData = {discIndex:k, isGlyphSide:true, faceIndex:i};
-    group.add(side);
-
-    // ④ 凸字顶面：字层抬起 TEXT_RAISE=0.060cm（插件 text_raise 0.60mm），
-    //    bumpMap 让字形有浮雕法线明暗；toneMapped:false 保住字色不被色调映射洗淡。
-    const word = new three.Mesh(tilePlaneGeo, new three.MeshStandardMaterial({
-      map:tex.map, bumpMap:tex.bump, bumpScale:0.075,
-      transparent:true, alphaTest:0.03, roughness:0.5, metalness:0,
-      side:three.DoubleSide, depthWrite:false, toneMapped:false
-    }));
-    word.position.copy(n.clone().multiplyScalar(off + TILE_T + TEXT_RAISE));
-    word.quaternion.copy(q);
-    word.userData = {discIndex:k, isGlyph:true, faceIndex:i, glyph:String(ch),
-                     fg:textCol, raise:TILE_T + TEXT_RAISE};
-    group.add(word);
+    // ② 真·挤出凸字：底座与贴片顶面齐平（off+TILE_T），沿法向外挤出 TEXT_RAISE，
+    //    是真正的立体字、与贴片是一体的；由真实软阴影表现「浮起」，不再用假阴影平面。
+    const geos = glyphShapes(three, ch, ratio2);
+    if(geos && geos.length){
+      const tmat = new three.MeshStandardMaterial({ color:new three.Color(textCol),
+        roughness:0.45, metalness:0, side:three.DoubleSide });
+      for(const g of geos){
+        const word = new three.Mesh(g, tmat);
+        word.position.copy(n.clone().multiplyScalar(off + TILE_T));
+        word.quaternion.copy(q);
+        word.scale.set(tileCir2, tileCir2, 1);   // 归一化几何 -> 贴片真实尺寸（z 不缩放，保留挤出厚度）
+        word.castShadow = true;
+        word.userData = {discIndex:k, isGlyph:true, faceIndex:i, glyph:String(ch), fg:textCol};
+        group.add(word);
+      }
+    }
   }
 }
 
@@ -533,8 +597,7 @@ function buildModel(params, three){
   const tileAx        = Math.max(0.2, Tdisc - 0.10);   // 轴向贴片宽（cm）
   const tileCir       = Math.max(0.2, W - 0.14);       // 周向贴片高（cm）
   const tileRatio     = tileAx / tileCir;              // 供 canvas 按真实比例绘制，字不拉伸
-  const tilePlaneGeo  = glyphs ? new three.PlaneGeometry(tileAx, tileCir) : null;        // 字层（平面）
-  const tilePlateGeo  = glyphs ? new three.BoxGeometry(tileAx, tileCir, TILE_T) : null; // 贴片板（有厚度）
+  const tilePlateGeo  = glyphs ? new three.BoxGeometry(tileAx, tileCir, TILE_T) : null; // 贴片板（有厚度；字为挤出几何，不再用平面层）
   // ↑ width 沿局部 X(=装配轴)、height 沿局部 Y(=周向)、depth 沿局部 Z(=盘面法向)：与 canvas 同向
 
   /* 材质选项由字表页预览弹窗（同源 iframe 父页）传入；独立打开时用全黑默认。
@@ -553,11 +616,12 @@ function buildModel(params, three){
     const body = new three.Mesh(discGeoShared, mat);
     const skirt = new three.Mesh(skirtGeo, mat);
     skirt.position.y = -Tdisc/2 + SKIRT_H/2;  // 裙边贴轮盘 -Y 端面（靠母盖法兰侧）
+    body.castShadow = true; body.receiveShadow = true; skirt.receiveShadow = true;
     body.userData.discIndex = k; skirt.userData.discIndex = k;   // 射线命中后向上找到所属轮盘
     g.userData.discIndex = k; g.userData.discMat = mat;
     g.add(body, skirt);
     if(glyphs && glyphs[k-1]) addTilePlanes(three, g, k, glyphs[k-1], N, RO, Tdisc,
-      tilePlaneGeo, tilePlateGeo, tileRatio, pv,
+      tilePlateGeo, tileRatio, pv,
       (pv.colors && pv.colors[k-1]) || '#262b3b',
       (pv.bgs && pv.bgs[k-1]) || '#fffdf8');
     return g;
@@ -640,6 +704,8 @@ window.__wheel3d = {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
     renderer.toneMapping = three.NeutralToneMapping || three.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = three.PCFSoftShadowMap;
     let w = host.clientWidth||640, h = host.clientHeight||420;
     renderer.setSize(w, h, false);
     renderer.domElement.style.width='100%'; renderer.domElement.style.height='100%';
@@ -682,6 +748,22 @@ window.__wheel3d = {
     const fill = new three.DirectionalLight(0xdce6ff, 0.4); fill.position.set(-1.4,-0.5,1.2);
     const rim = new three.DirectionalLight(0xffffff, 0.35); rim.position.set(0.2,0.9,-1.6);
     camera.add(key, fill, rim); scene.add(camera);
+
+    // 真实软阴影：固定主阴影光（不跟相机），凸字 / 轮盘在贴片与地面投出柔和接触阴影。
+    // 旧版靠「硬偏半透明黑字平面」做假阴影，错位生硬；现改用 PCFSoftShadowMap 真实投影。
+    const shadowLight = new three.DirectionalLight(0xffffff, 0.45);
+    shadowLight.position.set(5, 9, 6);
+    shadowLight.castShadow = true;
+    shadowLight.shadow.mapSize.set(2048, 2048);
+    const _sc = shadowLight.shadow.camera;
+    _sc.near = 0.5; _sc.far = 40; _sc.left = -6; _sc.right = 6; _sc.top = 6; _sc.bottom = -6;
+    shadowLight.shadow.bias = -0.0006; shadowLight.shadow.normalBias = 0.02;
+    shadowLight.target.position.set(0, 0, 0);
+    scene.add(shadowLight); scene.add(shadowLight.target);
+    // 阴影承接地面（隐形，只显阴影）：拆解 / 正视时给模型一个落地感
+    const ground = new three.Mesh(new three.PlaneGeometry(60, 60), new three.ShadowMaterial({ opacity:0.25 }));
+    ground.rotation.x = -Math.PI/2; ground.position.y = -2.41; ground.receiveShadow = true;
+    scene.add(ground);
 
     // 模型容器：拆解只改各 part 的 y 偏移
     let model = null;
