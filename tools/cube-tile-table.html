@@ -1062,7 +1062,7 @@ function clearOf(){
 }
 function pinDOf(){ return +(holeDOf() - clearOf()).toFixed(3); }
 /* 默认档 = 0.2 热端（魔方贴片**小文字**，打印默认用 0.2 喷嘴；2026-10-30 定，11-09 用户重申）
-   ⛔⛔ 别跟手轮页「统一」：轮盘贴片的字很大，那边默认 0.4 才实用。
+   ⛔⛔ 别跟轮盘页「统一」：轮盘贴片的字很大，那边默认 0.4 才实用。
       两个产品默认不同是**产品设计差异**，不是不一致 bug —— 曾误改成 H04，已回退。
       插件场景默认 H04 不影响这里：字表包 meta.hotend 会被 ctg_tile_generator._table_keys() 读走并覆盖场景档。 */
 var HOTEND_DEFAULT = "H02";

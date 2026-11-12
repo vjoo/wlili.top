@@ -291,7 +291,7 @@
     },
     {
       "id": "wheel-tile-table",
-      "name": "手轮贴片字表",
+      "name": "轮盘贴片字表",
       "file": "wheel-tile-table.html",
       "category": "creative",
       "icon": "grid",

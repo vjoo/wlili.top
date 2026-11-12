@@ -5,10 +5,10 @@
 <link rel="stylesheet" href="common.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>手轮贴片字表 - WLi Tools</title>
+<title>轮盘贴片字表 - WLi Tools</title>
 <style>
 /* ============================================================
-   手轮贴片字表（wlili tools）
+   轮盘贴片字表（wlili tools）
    视觉骨架照 cube-tile-table.html（3D 魔方字表）：
    深灰底板 #2B3041 + 象牙白芯片 #fffdf8 + 虚线空槽 #4a5064。
    ⛔ 与魔方不同：这里是「M 列轮盘 × N 行面序」，一列 = 一套 N 字字表。
@@ -609,7 +609,7 @@ body.dev .whl-tab.dev-tab{display:flex;}
 <script src="nav.js?v=e5f3a7b9"></script>
 <script>
 /* ============================================================
-   手轮贴片字表 · 数据 / 渲染 / 导出 / 导入 / 预览 / 单格编辑
+   轮盘贴片字表 · 数据 / 渲染 / 导出 / 导入 / 预览 / 单格编辑
    - state.cols[m][n] = 单字；一列 = 一个轮盘的一套 N 字字表
    - state.style[m][n] = null | {size(mm), font, auto, kind}：单格样式覆盖
    - 导出默认 .ctgz（CTGTILE/3，与 3D 魔方同一套容器/密钥，插件用私钥解）；
@@ -1429,7 +1429,11 @@ body.dev .whl-tab.dev-tab{display:flex;}
     return new TextDecoder().decode(pt);
   }
 
-  var PLUGIN_VER = 'v0.9.18';        // 写进 payload meta，仅用于排查
+  /* 插件版本：导出 payload 的 meta.plugin 要写「源自插件 vX」；
+     与 wheel_generator.py 的 VERSION 是同一份事实来源，插件升版只改这一行。
+     2026-11-12：插件已到 v0.9.28（端盖筋加凸 + 公母标签修正），本行此前停在 v0.9.18。
+     ⛔ 插件 parse_table_all() 不读 meta.plugin，改这里不影响字表导入。 */
+  var PLUGIN_VER = 'v0.9.28';        // 写进 payload meta，仅用于排查
   function stamp(){
     var d = new Date(), p = function(x){ return (x<10?'0':'')+x; };
     return d.getFullYear() + p(d.getMonth()+1) + p(d.getDate());
@@ -1448,7 +1452,7 @@ body.dev .whl-tab.dev-tab{display:flex;}
       palette:state.palette.slice(),
       wcols:state.wcols.map(function(w){ return {bg:w.bg, fg:w.fg}; }),
       meta:{
-        tool:'手轮贴片字表编辑器（wlili.top/tools/wheel-tile-table.html）',
+        tool:'轮盘贴片字表编辑器（wlili.top/tools/wheel-tile-table.html）',
         exported:new Date().toLocaleString('zh-CN'),
         plugin:'wheel_generator ' + PLUGIN_VER + '（Blender 5.2 插件）',
         n:state.n, m:state.m, hotend:state.hotend,
@@ -1458,14 +1462,14 @@ body.dev .whl-tab.dev-tab{display:flex;}
     };
   }
   function autoBase(){
-    return '手轮贴片字表_N' + state.n + '_M' + state.m + '_' + state.hotend + '_' + stamp();
+    return '轮盘贴片字表_N' + state.n + '_M' + state.m + '_' + state.hotend + '_' + stamp();
   }
   /* md：**全套导出**，每个轮盘一节（## 轮盘 k + N 行表）——插件按节读，不再一次一个 */
   function buildMD(){
     var L = [];
-    L.push('# 手轮贴片字表（全套 ' + state.m + ' 个轮盘）');
+    L.push('# 轮盘贴片字表（全套 ' + state.m + ' 个轮盘）');
     L.push('');
-    L.push('> 来源：wlili.top 手轮贴片字表');
+    L.push('> 来源：wlili.top 轮盘贴片字表');
     L.push('> 面数 N=' + state.n + ' · 轮盘数 M=' + state.m + ' · 热端 ' + state.hotend
          + ' · 已填 ' + filledCount() + ' / ' + (state.n * state.m) + ' 格 · 生成 ' + stamp());
     L.push('> ⚠ 轮盘外径 / 面宽由 Blender 插件设置，本表不含尺寸参数，也不驱动插件。');
@@ -1622,10 +1626,11 @@ body.dev .whl-tab.dev-tab{display:flex;}
     return imp;
   }
   /* md：按「## 轮盘 k」分节，每节一张 N 行表 —— 一次读完全部轮盘。
-     旧格式（单节无 ##，标题写「· 轮盘 k」）仍兼容：只回填那一个轮盘。 */
+     旧格式（单节无 ##，标题写「· 轮盘 k」）仍兼容：只回填那一个轮盘。
+     2026-11-12 页面更名「手轮贴片字表」→「轮盘贴片字表」，标题正则双认，旧字表照旧可导。 */
   function parseMD(text){
     var lines = text.split(/\r?\n/), secs = [], cur = null, legacyPick = 0;
-    var mt = text.match(/^#\s*手轮贴片字表\s*·\s*轮盘\s*(\d+)/m);
+    var mt = text.match(/^#\s*(?:手轮|轮盘)贴片字表\s*·\s*轮盘\s*(\d+)/m);
     if(mt) legacyPick = Math.max(0, parseInt(mt[1], 10) - 1);
     for(var k=0;k<lines.length;k++){
       var s = lines[k].trim();
