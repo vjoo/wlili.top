@@ -496,7 +496,7 @@ body.dev .ctg-tab.dev-tab{display:flex;}
               <option value="M15" selected>T15*D17</option>
             </select>
           </label>
-          <label class="tb-size tb-hotend" title="热端档：决定孔径 + 销径 + 配合间隙（0.4：孔 2.45 / 销 2.03 / 间隙 0.42；0.2：T15 孔 2.25 / 销 2.10 / 间隙 0.15，T17 孔 2.28 / 销 2.14 / 间隙 0.14）">
+          <label class="tb-size tb-hotend" title="热端档：决定孔径 + 销径 + 配合间隙（插件 v1.29.25 起两档统一：孔 2.30 / 销 2.10 / 间隙 0.20；只有销长不同 —— 0.4 档 1.65、0.2 档 1.70）">
             <select id="hotend_sel" class="form-select" data-sel-inline data-sel-compact aria-label="热端档">
               <option value="H04">0.4 热端</option>
               <option value="H02" selected>0.2 热端</option>
@@ -1014,13 +1014,15 @@ function resolved(t){ return t.kind || window.__detectKind(t.sub, t.main) || 'TW
 <script>
 "use strict";
 /* ================= 常量（与 ctg_tile_generator 插件保持一致） ================= */
-// 插件 PAL_TEXT_DEFAULT 6 个默认文字色
+// 插件 PAL_TEXT_DEFAULT 6 个默认文字色（数组下标 = 面1…面6 的默认面色，见 defaultFaces()）
+// ⭐ 2026-11-14 用户指定：面1 紫 / 面4 橙 / 面5 绿（六面装配方位修正后，按实体魔方对位重排）。
+//    只调顺序、不动任何色值；面色弹层按本数组顺序渲染，故色板排列随之变化（仅视觉，无功能影响）。
 var PALETTE = [
-  {name:"文字_橙", hex:"#F27317", rgb:[0.950,0.450,0.090]},
+  {name:"文字_紫", hex:"#7340B3", rgb:[0.450,0.250,0.700]},
   {name:"文字_红", hex:"#D91F1F", rgb:[0.850,0.120,0.120]},
   {name:"文字_蓝", hex:"#1A61CC", rgb:[0.100,0.380,0.800]},
+  {name:"文字_橙", hex:"#F27317", rgb:[0.950,0.450,0.090]},
   {name:"文字_绿", hex:"#219E40", rgb:[0.130,0.620,0.250]},
-  {name:"文字_紫", hex:"#7340B3", rgb:[0.450,0.250,0.700]},
   {name:"文字_黑", hex:"#0F0F12", rgb:[0.060,0.060,0.070]}
 ];
 var KIND_LABEL = {MAIN_SUB:"单字+拼音", TWO_LINE:"两行", SINGLE:"单行",
@@ -1043,7 +1045,7 @@ var TILE_MM = 17;
 var FACE_MM = 15.23;                 // 顶面凸台（板 17 内缩 0.885）
 /* 插件版本：导出文本里要写「源自插件 vX」，以前每升一版都要手改两处字符串、漏了就写错。
    现在只改这一行（插件那边 `VERSION` 是同一份事实来源）。 */
-var PLUGIN_VER = "v1.29.21";
+var PLUGIN_VER = "v1.29.25";
 
 /* ---- 尺寸预设（与 Blender 插件 PRESET_GEO / PRESET_SHORT 一一对应）----
    tile = 贴片边长 · base = 底座（销板）边长 · cr = 贴片圆角 · holeDx = 孔心距
@@ -1056,23 +1058,27 @@ var SIZE_PRESETS = {
 /* ---- 热端档（与 Blender 插件的 HOTEND_FIT / HOLE_D_BY_HOTEND 一一对应）----
    ⛔ 2026-10-30 起：**孔径也随「热端 × 贴片尺寸」变** —— 原来「孔径 φ2.45 与热端无关」
       这个前提已被实测推翻：0.2 喷嘴的孔缩比 0.4 小得多，同一名义孔径打出来差 0.2 以上。
-        0.4 档：T15 / T17 都是 孔 2.45 + 间隙 0.42（销 2.03）
-        0.2 档：T15 孔 2.25 + 间隙 0.15（销 2.10）· T17 孔 2.28 + 间隙 0.14（销 2.14）
+   ⭐ 2026-11-13（插件 v1.29.25）两档已**统一**：T15 / T17 都是 孔 2.30 + 间隙 0.20 = 销 2.10。
+      H04：销径锁死 φ2.10，间隙由孔径反推（pin_clear = hole_d − 2.10）；
+      H02：H4 销 11-01 改粗 2.03→2.10 后，旧孔 2.25 配 φ2.10 = 间隙 0.15 偏紧插不进（用户实测）
+           → 孔径抬到 2.30，间隙同步 0.20。
+      下表留的历史值只用于**读旧字表时对照**，不要再拿去生成：
+      H02 原 T15 孔 2.25 / 销 2.10 / 间隙 0.15、T17 孔 2.28 / 销 2.14 / 间隙 0.14；H04 原 孔 2.45 / 间隙 0.42（销 2.03）。
    ⛔ 销径**不要手写**：一律由 pinDOf() = 孔径 − 间隙 派生，两处写死必然漂。
    ⛔ 改这里必须同步插件 `HOLE_D_BY_HOTEND` / `PIN_CLEAR_BY_HOTEND` 与两个 `_build_*.py`。 */
 var HOTEND_PRESETS = {
   H04:{label:"0.4 热端", pinLen:1.65, lenClear:0.15,
-       holeD:{15:2.45, 17:2.45}, clearByTile:{15:0.42, 17:0.42}},
+       holeD:{15:2.30, 17:2.30}, clearByTile:{15:0.20, 17:0.20}},
   H02:{label:"0.2 热端", pinLen:1.70, lenClear:0.10,
-       holeD:{15:2.25, 17:2.28}, clearByTile:{15:0.15, 17:0.14}}
+       holeD:{15:2.30, 17:2.30}, clearByTile:{15:0.20, 17:0.20}}
 };
 function holeDOf(){
   var h = hotendOf();
-  return (h.holeD && h.holeD[sizeOf().tile]) || 2.45;
+  return (h.holeD && h.holeD[sizeOf().tile]) || 2.30;
 }
 function clearOf(){
   var h = hotendOf();
-  return (h.clearByTile && h.clearByTile[sizeOf().tile]) || h.clearByTile[15] || 0.42;
+  return (h.clearByTile && h.clearByTile[sizeOf().tile]) || h.clearByTile[15] || 0.20;
 }
 function pinDOf(){ return +(holeDOf() - clearOf()).toFixed(3); }
 /* 默认档 = 0.2 热端（魔方贴片**小文字**，打印默认用 0.2 喷嘴；2026-10-30 定，11-09 用户重申）
@@ -1968,7 +1974,7 @@ function buildMD(){
   L.push("");
   L.push("| 项 | 取值 |");
   L.push("|---|---|");
-  L.push("| 热端 | **" + hotendOf().label + "**（决定孔径 + 销径 + 间隙：0.4 全套 2.45 / 2.03 / 0.42；0.2 的 T15 是 2.25 / 2.10 / 0.15、T17 是 2.28 / 2.14 / 0.14） |");
+  L.push("| 热端 | **" + hotendOf().label + "**（决定孔径 + 销径 + 间隙：两档统一 孔 2.30 / 销 2.10 / 间隙 0.20，只有销长不同 —— 0.4 档 1.65、0.2 档 1.70） |");
   L.push("| 尺寸预设 | " + sizeOf().label + " |");
   L.push("| 贴片 | " + TILE_MM + " × " + TILE_MM + " × **2.66** mm，圆角 " + CR_MM + " |");
   L.push("| 底座销板 | " + sizeOf().base + " × " + sizeOf().base + " × 1.4 mm（销位跟贴片孔位） |");
