@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <!-- ⛔ 只支持浅色（2026-11-09）：安卓 Chrome / 各家 Chromium 内核浏览器的「夜间模式」
      默认会对页面做自动反色（Auto Dark）。实测反色只作用于 SVG <text> 的 fill，
-     不作用于 <rect> 底板 —— 面5（文字_黑 #0F0F12）变成「白底白字」直接消失，
+     不作用于 <rect> 底板 —— 面6（文字_黑 #0F0F12）变成「白底白字」直接消失，
      彩色面因为反色后仍有对比才没被发现。声明 color-scheme:light 后浏览器整页跳过反色。
      字表编辑器必须显示真实耗材配色，不允许被反色扭曲。 -->
 <meta name="color-scheme" content="light">
@@ -756,16 +756,28 @@ function plateGeo(w, d, r, bt){
   g.computeVertexNormals();
   return g;
 }
-// 六面朝向：0 上 / 1 左 / 2 前 / 3 右 / 4 后 / 5 下（与页面十字展开顺序一致）
-// 每组 (n,u,v) 必须正交右手：u × v = n（makeBasis 用它定 plane 的姿态，错一个就整面转 90°/镜像）
+/* 六面装配方位（2026-11-13 修正）：面1 顶紫 / 面2 前红春 / 面3 右绿夏 /
+   面4 后橙秋 / 面5 左蓝冬 / 面6 底灰 —— 与用户确认的布局表、Blender 运营图一致。
+   ⛔ 页面十字展开是「编辑版面」（面1上 / 面2左 / 面3中 / 面4右 / 面5最右 / 面6下），
+      不是装配方位：旧版把展开顺序直接当空间方位，2/3/4/5 整体错位 90°，
+      连带顶面九字与侧面错配、字头指向蓝冬面而非橙秋面（用户两张参考图的箭头）。
+   每组 (n,u,v) 必须正交右手：u × v = n（makeBasis 定 plane 姿态，错一个就整面转 90°/镜像）。
+   three.js 坐标：+Y 上 / +Z 前（朝默认观察者）/ +X 右；
+   顶面 v=[0,0,-1] 即九字字头统一朝后(-Z) = 面4 橙秋面（A 朝向）。 */
 const DIRS = [
-  {n:[ 0, 1, 0], u:[ 1,0, 0], v:[0,0,-1]},   // 上 +Y
-  {n:[-1, 0, 0], u:[ 0,0, 1], v:[0, 1,0]},   // 左 -X
-  {n:[ 0, 0, 1], u:[ 1,0, 0], v:[0, 1,0]},   // 前 +Z
-  {n:[ 1, 0, 0], u:[ 0,0,-1], v:[0, 1,0]},   // 右 +X
-  {n:[ 0, 0,-1], u:[-1,0, 0], v:[0, 1,0]},   // 后 -Z
-  {n:[ 0,-1, 0], u:[ 1,0, 0], v:[0,0, 1]}    // 下 -Y
+  {n:[ 0, 1, 0], u:[ 1,0, 0], v:[0,0,-1]},   // 面1 顶 +Y（紫·季节总览）
+  {n:[ 0, 0, 1], u:[ 1,0, 0], v:[0, 1,0]},   // 面2 前 +Z（红·春）
+  {n:[ 1, 0, 0], u:[ 0,0,-1], v:[0, 1,0]},   // 面3 右 +X（绿·夏）
+  {n:[ 0, 0,-1], u:[-1,0, 0], v:[0, 1,0]},   // 面4 后 -Z（橙·秋）
+  {n:[-1, 0, 0], u:[ 0,0, 1], v:[0, 1,0]},   // 面5 左 -X（蓝·冬）
+  {n:[ 0,-1, 0], u:[ 1,0, 0], v:[0,0, 1]}    // 面6 底 -Y（灰·行星）
 ];
+/* 顶面九片槽位重排：源字表按「春在左 / 夏在前 / 秋在右 / 冬在后」排，
+   装配方位改成「红春在前 / 绿夏在右 / 橙秋在后 / 蓝冬在左」后，九字须绕法线逆时针 90°
+   才能重新正对各自季节面，且「春」与红面「立春」同竖列。
+   与 Blender 运营图 build_cube_v2.py 的 TOP_SLOT 完全一致；只作用于 3D 预览，
+   ⛔ 不动 state.faces / 十字展开 / md·json·py 导出（那几处仍按字表 pos 1-9）。 */
+const TOP_SLOT = {1:3, 2:6, 3:9, 4:2, 5:5, 6:8, 7:1, 8:4, 9:7};
 function svgToTexture(svgStr){
   return new Promise(function(resolve){
     const img = new Image();
@@ -887,7 +899,7 @@ window.__cube3d = {
     };
     const baseMatW = mkCeramic(0xf9f8f3, 0.42);
     const tileMatW = mkCeramic(0xfcfbf7, 0.32);
-    /* 近黑面色「提亮成深灰」（2026-11-07 用户要求）：面 5 的数据色是「文字_黑」#0F0F12，
+    /* 近黑面色「提亮成深灰」（2026-11-07 用户要求）：面 6 的数据色是「文字_黑」#0F0F12，
        和黑芯 #17181d / 黑底座 #14151a 几乎同色，3D 里贴片轮廓会糊成一片。
        底座同步配套：贴片提亮后底座若仍纯黑，贴片看着像浮在黑芯上；
        故近黑面的底座也抬到 LIFT_DARK_BASE（比贴片暗一档，保住「底座/贴片」两层层次）。
@@ -927,7 +939,9 @@ window.__cube3d = {
       const d = DIRS[f];
       const n = new THREE.Vector3(...d.n), u = new THREE.Vector3(...d.u), v = new THREE.Vector3(...d.v);
       for(let i=0; i<9; i++){
-        const t = face.tiles[i] || {};
+        // 预览槽位 → 字表 pos：顶面九片按 TOP_SLOT 重排，其余五面 1:1
+        const srcPos = (f === 0) ? TOP_SLOT[i+1] - 1 : i;
+        const t = face.tiles[srcPos] || {};
         const col = i % 3, row = Math.floor(i / 3);
         const m = new THREE.Matrix4().makeBasis(u, v, n);
         // 底座：贴在黑芯面上，凸出 BASE_T
@@ -947,7 +961,7 @@ window.__cube3d = {
         mesh.position.copy(n).multiplyScalar(HALF + BASE_T + TILE_T/2)
           .addScaledVector(u, (col-1) * PITCH)
           .addScaledVector(v, -(row-1) * PITCH);
-        mesh.userData = {face:f, pos:i};
+        mesh.userData = {face:f, pos:srcPos};
         scene.add(mesh);
         // 文字贴图：贴在贴片顶面。用不受光的 Basic + toneMapped:false，
         // 让字保持 SVG 原色，不被灯光/色调映射洗淡（此前「蒙层白纱」的元凶）。
@@ -956,7 +970,7 @@ window.__cube3d = {
         })));
         decal.quaternion.copy(mesh.quaternion);
         decal.position.copy(mesh.position).addScaledVector(n, TILE_T/2 + 0.003);
-        decal.userData = {face:f, pos:i};
+        decal.userData = {face:f, pos:srcPos};
         scene.add(decal);
         used.push(mesh, decal);
       }
@@ -1006,8 +1020,8 @@ var PALETTE = [
   {name:"文字_红", hex:"#D91F1F", rgb:[0.850,0.120,0.120]},
   {name:"文字_蓝", hex:"#1A61CC", rgb:[0.100,0.380,0.800]},
   {name:"文字_绿", hex:"#219E40", rgb:[0.130,0.620,0.250]},
-  {name:"文字_黑", hex:"#0F0F12", rgb:[0.060,0.060,0.070]},
-  {name:"文字_紫", hex:"#7340B3", rgb:[0.450,0.250,0.700]}
+  {name:"文字_紫", hex:"#7340B3", rgb:[0.450,0.250,0.700]},
+  {name:"文字_黑", hex:"#0F0F12", rgb:[0.060,0.060,0.070]}
 ];
 var KIND_LABEL = {MAIN_SUB:"单字+拼音", TWO_LINE:"两行", SINGLE:"单行",
                   CN_NUM:"中文+数字", NUM_EN:"数字+英文", MIXED:"中文+数字（旧 MIXED）"};
